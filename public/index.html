@@ -39,7 +39,11 @@
 
     #map { width: 100%; height: 100%; z-index: 1; background-color: #0F172A; }
 
-    .location-banner { position: absolute; top: 12px; left: 12px; z-index: 1000; background-color: rgba(15, 23, 42, 0.9); border: 1px solid #0288D1; color: white; padding: 8px 12px; border-radius: 10px; font-size: 11px; backdrop-filter: blur(8px); display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); max-width: 280px; }
+    /* BARRA DE BÚSQUEDA DE CALLES (LUPA INTERACTIVA) */
+    .search-box { position: absolute; top: 12px; left: 12px; z-index: 1000; display: flex; align-items: center; background-color: rgba(30, 41, 59, 0.95); border: 1px solid #FF6D00; border-radius: 12px; padding: 4px 10px; width: calc(100% - 170px); max-width: 320px; backdrop-filter: blur(8px); box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+    .search-box i { color: #FF6D00; margin-right: 8px; font-size: 14px; }
+    .search-box input { background: none; border: none; color: white; width: 100%; font-size: 12px; outline: none; }
+    .search-box input::placeholder { color: #94A3B8; }
 
     .map-controls { position: absolute; top: 12px; right: 12px; z-index: 1000; background-color: rgba(30, 41, 59, 0.95); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 6px; backdrop-filter: blur(8px); display: flex; flex-direction: column; gap: 4px; }
     .map-style-btn { background: none; border: none; color: white; padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: 500; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 8px; }
@@ -102,9 +106,10 @@
     <div class="tab-content active" id="tab0">
       <div id="map"></div>
 
-      <div class="location-banner">
-        <i class="fa-solid fa-hand-pointer" style="color: #FF6D00; font-size: 16px;"></i>
-        <span>Arrastra la casa 🏠 o haz clic en el mapa para fijar tu dirección exacta de pedido.</span>
+      <!-- BARRA CON LUPA PARA BUSCAR CALLES EN EL MAPA -->
+      <div class="search-box">
+        <i class="fa-solid fa-magnifying-glass" onclick="buscarCalle()"></i>
+        <input type="text" id="inputSearchStreet" placeholder="🔍 Buscar calle, avenida u OTB..." onkeypress="if(event.key==='Enter') buscarCalle()">
       </div>
 
       <div class="map-controls">
@@ -228,7 +233,7 @@
     const truckMarker = L.marker([-17.3910, -66.1550], { icon: truckIcon }).addTo(map).bindPopup('<b>Camión GLP N° 42</b><br>En Ruta en tu OTB');
     
     let userMarker = L.marker([-17.3935, -66.1570], { icon: userIcon, draggable: true }).addTo(map);
-    userMarker.bindPopup('<b>📍 Tu Dirección de Entrega</b><br><small>Arrastra este icono o haz clic en el mapa para ajustar la casa exacta de entrega.</small>').openPopup();
+    userMarker.bindPopup('<b>📍 Tu Dirección de Entrega</b><br><small>Arrastra este icono o usa la lupa 🔍 para buscar tu calle exacto.</small>').openPopup();
 
     userMarker.on('dragend', function (e) {
       const coord = e.target.getLatLng();
@@ -239,6 +244,29 @@
       userMarker.setLatLng(e.latlng);
       userMarker.setPopupContent(`<b>📍 Dirección Ajustada por Clic</b><br><small>Lat: ${e.latlng.lat.toFixed(5)}, Lng: ${e.latlng.lng.toFixed(5)}</small>`).openPopup();
     });
+
+    // FUNCIÓN DE BÚSQUEDA DE CALLES CON LUPA
+    function buscarCalle() {
+      const query = document.getElementById('inputSearchStreet').value.trim();
+      if (!query) return;
+
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Bolivia')}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.length > 0) {
+            const lat = parseFloat(data[0].lat);
+            const lon = parseFloat(data[0].lon);
+            const displayName = data[0].display_name;
+
+            map.flyTo([lat, lon], 17);
+            userMarker.setLatLng([lat, lon]);
+            userMarker.setPopupContent(`<b>📍 Calle Encontrada</b><br><small>${displayName}</small>`).openPopup();
+          } else {
+            alert('Calle o zona no encontrada. Intenta especificar la ciudad (ej: Av Heroinas Cochabamba).');
+          }
+        })
+        .catch(() => alert('Error al buscar la calle.'));
+    }
 
     document.getElementById('btnGps').addEventListener('click', () => {
       if (navigator.geolocation) {
