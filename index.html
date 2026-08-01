@@ -108,10 +108,8 @@
       </div>
 
       <div class="map-controls">
-        <button class="map-style-btn active" onclick="setMapStyle('geoBolivia')"><i class="fa-solid fa-map"></i> GeoBolivia HD</button>
-        <button class="map-style-btn" onclick="setMapStyle('googleStatic')"><i class="fa-solid fa-location-dot"></i> Google Maps HD</button>
+        <button class="map-style-btn active" onclick="setMapStyle('googleStatic')"><i class="fa-solid fa-location-dot"></i> Google Maps HD</button>
         <button class="map-style-btn" onclick="setMapStyle('satelite')"><i class="fa-solid fa-satellite"></i> Satélite HD</button>
-        <button class="map-style-btn" onclick="setMapStyle('modoNoche')"><i class="fa-solid fa-moon"></i> Noche HD</button>
       </div>
 
       <div class="floating-actions">
@@ -197,13 +195,11 @@
     const map = L.map('map', { zoomControl: false }).setView([-17.3935, -66.1570], 15);
 
     const tileLayers = {
-      geoBolivia: L.tileLayer('https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png', { maxZoom: 19 }),
       googleStatic: L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 19 }),
-      satelite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }),
-      modoNoche: L.tileLayer('https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png', { maxZoom: 19 })
+      satelite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 })
     };
 
-    let currentTileLayer = tileLayers.geoBolivia;
+    let currentTileLayer = tileLayers.googleStatic;
     currentTileLayer.addTo(map);
 
     function setMapStyle(styleKey) {
