@@ -2,9 +2,9 @@
   "name": "notigas-server",
   "version": "1.0.0",
   "description": "NOTIGAS Node.js Web App for Hostinger Deployment",
-  "main": "server.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "node index.js",
     "build": "echo 'Hostinger build completed successfully'"
   },
   "dependencies": {
