@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -58,18 +59,26 @@ app.post('/api/admin/ban', (req, res) => {
 // ──────────────────────────────────────────────
 // SERVIDORES DE ARCHIVOS ESTÁTICOS FLUTTER WEB
 // ──────────────────────────────────────────────
-const publicPath = path.join(__dirname, 'public');
-const webDistPath = path.join(__dirname, 'web_dist');
-
-const staticPath = require('fs').existsSync(publicPath) ? publicPath : webDistPath;
-
-app.use(express.static(staticPath));
+app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'web_dist')));
 
 app.get('*', (req, res) => {
-  res.sendFile(path.join(staticPath, 'index.html'));
+  const rootIndex = path.join(__dirname, 'index.html');
+  const publicIndex = path.join(__dirname, 'public', 'index.html');
+  const distIndex = path.join(__dirname, 'web_dist', 'index.html');
+
+  if (fs.existsSync(rootIndex)) {
+    res.sendFile(rootIndex);
+  } else if (fs.existsSync(publicIndex)) {
+    res.sendFile(publicIndex);
+  } else if (fs.existsSync(distIndex)) {
+    res.sendFile(distIndex);
+  } else {
+    res.send('<h1>NOTIGAS Web App Active</h1>');
+  }
 });
 
 app.listen(PORT, () => {
   console.log(`🚀 Servidor NOTIGAS Node.js ejecutándose en Hostinger (Puerto ${PORT})`);
-  console.log(`📁 Sirviendo aplicación Web desde: ${staticPath}`);
 });
