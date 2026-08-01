@@ -1,11 +1,12 @@
 {
-  "name": "notigas-server",
+  "name": "notigaswebdeploy",
   "version": "1.0.0",
-  "description": "NOTIGAS Node.js Web App for Hostinger Deployment",
+  "description": "NOTIGAS Node.js Web Application",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "build": "echo 'Hostinger build completed successfully'"
+    "build": "node -e \"console.log('Build OK')\"",
+    "hostinger-build": "node -e \"console.log('Hostinger Build OK')\""
   },
   "dependencies": {
     "express": "^4.19.2",
