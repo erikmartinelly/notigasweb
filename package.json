@@ -1,12 +1,11 @@
 {
   "name": "notigas-server",
   "version": "1.0.0",
-  "description": "NOTIGAS Node.js Server for Hostinger Deployment with Google Ads & Admin Control",
+  "description": "NOTIGAS Node.js Web App for Hostinger Deployment",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js",
-    "build": "node -e \"console.log('Hostinger Node.js build ready')\""
+    "build": "echo 'Hostinger build completed successfully'"
   },
   "dependencies": {
     "express": "^4.19.2",

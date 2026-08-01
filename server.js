@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// In-Memory Admin & Ads State
+// State de Publicidad & Administración
 let configPublicidad = {
   googleAdsensePubId: process.env.GOOGLE_ADSENSE_PUB_ID || 'ca-pub-XXXXXXXXXXXXXX',
   textoAnuncioNativo: 'Servicios técnicos & Comercio local verificado en la OTB',
@@ -23,73 +23,48 @@ let usuariosBaneados = [];
 // ENDPOINTS API ADMINISTRACIÓN & PUBLICIDAD GOOGLE
 // ──────────────────────────────────────────────
 
-// Obtener Configuración de Anuncios Google y Banners
 app.get('/api/admin/ads', (req, res) => {
-  res.json({
-    status: 'success',
-    data: configPublicidad,
-  });
+  res.json({ status: 'success', data: configPublicidad });
 });
 
-// Actualizar Configuración de Anuncios desde Panel Admin
 app.post('/api/admin/ads', (req, res) => {
   const { textoAnuncioNativo, urlAnuncioContacto, mostrarAnunciosGoogle } = req.body;
   if (textoAnuncioNativo) configPublicidad.textoAnuncioNativo = textoAnuncioNativo;
   if (urlAnuncioContacto !== undefined) configPublicidad.urlAnuncioContacto = urlAnuncioContacto;
   if (mostrarAnunciosGoogle !== undefined) configPublicidad.mostrarAnunciosGoogle = mostrarAnunciosGoogle;
 
-  res.json({
-    status: 'success',
-    message: 'Configuración de publicidad actualizada correctamente en Hostinger.',
-    data: configPublicidad,
-  });
+  res.json({ status: 'success', message: 'Configuración actualizada.', data: configPublicidad });
 });
 
-// Verificación de Credenciales de Administrador
 app.post('/api/admin/login', (req, res) => {
-  const { email, password } = req.body;
+  const { password } = req.body;
   const adminPass = process.env.ADMIN_PASS || 'NOTIGAS_ADMIN_2026';
 
   if (password === adminPass) {
-    res.json({
-      status: 'success',
-      authenticated: true,
-      role: 'administrador',
-      message: 'Acceso de Administrador Autorizado.',
-    });
+    res.json({ status: 'success', authenticated: true, role: 'administrador' });
   } else {
-    res.status(401).json({
-      status: 'error',
-      authenticated: false,
-      message: 'Contraseña de Administrador incorrecta.',
-    });
+    res.status(401).json({ status: 'error', authenticated: false, message: 'Contraseña incorrecta.' });
   }
 });
 
-// Baneo de Usuarios
 app.post('/api/admin/ban', (req, res) => {
   const { userEmail } = req.body;
   if (userEmail && !usuariosBaneados.includes(userEmail)) {
     usuariosBaneados.push(userEmail);
   }
-  res.json({
-    status: 'success',
-    message: `Usuario ${userEmail} añadido a la lista de baneos.`,
-    usuariosBaneados,
-  });
+  res.json({ status: 'success', message: `Usuario ${userEmail} baneado.`, usuariosBaneados });
 });
 
 // ──────────────────────────────────────────────
 // SERVIDORES DE ARCHIVOS ESTÁTICOS FLUTTER WEB
 // ──────────────────────────────────────────────
+const publicPath = path.join(__dirname, 'public');
 const webDistPath = path.join(__dirname, 'web_dist');
-const buildWebPath = path.join(__dirname, 'build', 'web');
 
-const staticPath = require('fs').existsSync(webDistPath) ? webDistPath : buildWebPath;
+const staticPath = require('fs').existsSync(publicPath) ? publicPath : webDistPath;
 
 app.use(express.static(staticPath));
 
-// Fallback SPA Routing para Flutter Web
 app.get('*', (req, res) => {
   res.sendFile(path.join(staticPath, 'index.html'));
 });
