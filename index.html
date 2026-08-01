@@ -6,6 +6,9 @@
   <title>NOTIGAS - Gas, Chatarra, Detergentes, Agua & Otros Pedidos en Vivo</title>
   <meta name="description" content="NOTIGAS - Plataforma de mapa interactivo en vivo para pedidos de gas GLP, agua 20L, chatarra y encargos barriales en Bolivia.">
 
+  <!-- FontAwesome 6.5 Vector Icons CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
   <!-- Leaflet CSS & JS para Mapas HD Interactivos -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
@@ -23,15 +26,15 @@
 
     /* HEADER APP BAR */
     header { background-color: #1E293B; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
-    .brand { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 900; color: #FF6D00; letter-spacing: 0.5px; }
-    .brand-icon { font-size: 22px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 900; color: #FF6D00; letter-spacing: 0.5px; }
+    .brand-icon { font-size: 22px; color: #FF6D00; }
     .header-actions { display: flex; align-items: center; gap: 10px; }
-    .btn-badge { background-color: #0288D1; color: white; border: none; padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; }
-    .btn-admin { background-color: #E65100; color: white; border: none; padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; }
+    .btn-badge { background-color: #0288D1; color: white; border: none; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+    .btn-admin { background-color: #E65100; color: white; border: none; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; }
 
     /* NAVEGACIÓN DE PESTAÑAS */
     nav { background-color: #1E293B; display: flex; border-bottom: 1px solid rgba(255,255,255,0.08); z-index: 999; }
-    .tab-btn { flex: 1; padding: 12px 6px; background: none; border: none; color: #94A3B8; font-size: 12px; font-weight: 700; cursor: pointer; text-align: center; border-bottom: 3px solid transparent; transition: all 0.2s; }
+    .tab-btn { flex: 1; padding: 12px 6px; background: none; border: none; color: #94A3B8; font-size: 12px; font-weight: 700; cursor: pointer; text-align: center; border-bottom: 3px solid transparent; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
     .tab-btn.active { color: #FF6D00; border-bottom-color: #FF6D00; background-color: rgba(255,109,0,0.05); }
 
     /* CONTENEDOR PRINCIPAL */
@@ -44,7 +47,7 @@
 
     /* SELECTOR DE ESTILOS DE MAPA FLOATING */
     .map-controls { position: absolute; top: 12px; right: 12px; z-index: 1000; background-color: rgba(30, 41, 59, 0.95); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 6px; backdrop-filter: blur(8px); display: flex; flex-direction: column; gap: 4px; }
-    .map-style-btn { background: none; border: none; color: white; padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: 500; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+    .map-style-btn { background: none; border: none; color: white; padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: 500; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 8px; }
     .map-style-btn:hover, .map-style-btn.active { background-color: #FF6D00; color: white; font-weight: 700; }
 
     /* BOTONES FLOTANTES DE ACCIÓN (PÁNICO Y PEDIDO) */
@@ -65,7 +68,7 @@
     /* TAB 3: COMERCIOS & PROMOS */
     .shop-container { flex: 1; overflow-y: auto; padding: 16px; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
     .shop-card { background-color: #1E293B; border-radius: 14px; padding: 14px; border: 1px solid rgba(255,255,255,0.08); display: flex; gap: 12px; align-items: center; }
-    .shop-icon { width: 50px; height: 50px; border-radius: 12px; background-color: rgba(2,136,209,0.15); color: #0288D1; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900; }
+    .shop-icon { width: 50px; height: 50px; border-radius: 12px; background-color: rgba(2,136,209,0.15); color: #0288D1; display: flex; align-items: center; justify-content: center; font-size: 22px; }
     .shop-info { flex: 1; }
     .shop-title { font-size: 14px; font-weight: 700; color: white; }
     .shop-price { font-size: 13px; color: #00E676; font-weight: 700; margin-top: 2px; }
@@ -92,19 +95,19 @@
   <!-- HEADER -->
   <header>
     <div class="brand">
-      <span class="brand-icon">🚛</span> NOTIGAS
+      <i class="fa-solid fa-truck-fast brand-icon"></i> NOTIGAS
     </div>
     <div class="header-actions">
-      <button class="btn-badge" id="btnGps">📍 GPS Auto</button>
-      <button class="btn-admin" id="btnOpenAdmin">⚙️ Admin</button>
+      <button class="btn-badge" id="btnGps"><i class="fa-solid fa-crosshairs"></i> GPS Auto</button>
+      <button class="btn-admin" id="btnOpenAdmin"><i class="fa-solid fa-user-shield"></i> Admin</button>
     </div>
   </header>
 
   <!-- NAVEGACIÓN -->
   <nav>
-    <button class="tab-btn active" onclick="switchTab(0)">📌 MAPA EN VIVO</button>
-    <button class="tab-btn" onclick="switchTab(1)">💬 FORO VECINAL</button>
-    <button class="tab-btn" onclick="switchTab(2)">🏪 COMERCIOS & PROMOS</button>
+    <button class="tab-btn active" onclick="switchTab(0)"><i class="fa-solid fa-map-location-dot"></i> MAPA EN VIVO</button>
+    <button class="tab-btn" onclick="switchTab(1)"><i class="fa-solid fa-comments"></i> FORO VECINAL</button>
+    <button class="tab-btn" onclick="switchTab(2)"><i class="fa-solid fa-store"></i> COMERCIOS & PROMOS</button>
   </nav>
 
   <!-- CONTENIDO PRINCIPAL -->
@@ -115,16 +118,16 @@
 
       <!-- CONTROLES DE CAPAS DE MAPA -->
       <div class="map-controls">
-        <button class="map-style-btn active" onclick="setMapStyle('geoBolivia')">🗺️ GeoBolivia HD</button>
-        <button class="map-style-btn" onclick="setMapStyle('googleStatic')">📍 Google Maps HD</button>
-        <button class="map-style-btn" onclick="setMapStyle('satelite')">🛰️ Satélite HD</button>
-        <button class="map-style-btn" onclick="setMapStyle('modoNoche')">🌙 Noche HD</button>
+        <button class="map-style-btn active" onclick="setMapStyle('geoBolivia')"><i class="fa-solid fa-map"></i> GeoBolivia HD</button>
+        <button class="map-style-btn" onclick="setMapStyle('googleStatic')"><i class="fa-solid fa-location-dot"></i> Google Maps HD</button>
+        <button class="map-style-btn" onclick="setMapStyle('satelite')"><i class="fa-solid fa-satellite"></i> Satélite HD</button>
+        <button class="map-style-btn" onclick="setMapStyle('modoNoche')"><i class="fa-solid fa-moon"></i> Noche HD</button>
       </div>
 
       <!-- BOTONES FLOTANTES ACCIÓN -->
       <div class="floating-actions">
-        <button class="btn-panic" onclick="lanzarEspecialEsperame()">🛑 ESPÉRAME</button>
-        <button class="btn-order" onclick="hacerPedidoRapido()">📦 PEDIR GARRAFA</button>
+        <button class="btn-panic" onclick="lanzarEspecialEsperame()"><i class="fa-solid fa-hand-paper"></i> 🛑 ESPÉRAME</button>
+        <button class="btn-order" onclick="hacerPedidoRapido()"><i class="fa-solid fa-truck-moving"></i> 📦 PEDIR GARRAFA</button>
       </div>
     </div>
 
@@ -132,17 +135,17 @@
     <div class="tab-content" id="tab1">
       <div class="forum-container">
         <div class="forum-card">
-          <div class="forum-votes">▲<br>19<br>▼</div>
+          <div class="forum-votes"><i class="fa-solid fa-caret-up"></i><br>19<br><i class="fa-solid fa-caret-down"></i></div>
           <div class="forum-body">
-            <span class="forum-cat">🗣️ QUEJA VECINAL</span>
+            <span class="forum-cat"><i class="fa-solid fa-triangle-exclamation"></i> QUEJA VECINAL</span>
             <div class="forum-title">⚠️ ¿Alguien más sin luz en la calle 3 por la OTB?</div>
             <div class="forum-desc">Lleva 2 horas parpadeando el foco de la esquina. ¿A quién llamamos?</div>
           </div>
         </div>
         <div class="forum-card">
-          <div class="forum-votes">▲<br>34<br>▼</div>
+          <div class="forum-votes"><i class="fa-solid fa-caret-up"></i><br>34<br><i class="fa-solid fa-caret-down"></i></div>
           <div class="forum-body">
-            <span class="forum-cat">🤝 APOYO VECINAL</span>
+            <span class="forum-cat"><i class="fa-solid fa-handshake"></i> APOYO VECINAL</span>
             <div class="forum-title">🐶 Perrito extraviado cerca de la plaza principal</div>
             <div class="forum-desc">Es un perrito caniche blanco con collar rojo. Si lo ven, me avisan.</div>
           </div>
@@ -154,14 +157,14 @@
     <div class="tab-content" id="tab2">
       <div class="shop-container">
         <div class="shop-card">
-          <div class="shop-icon">🔥</div>
+          <div class="shop-icon"><i class="fa-solid fa-fire-flame-curved" style="color: #FF6D00;"></i></div>
           <div class="shop-info">
             <div class="shop-title">Garrafa de Gas GLP (22.5 Bs)</div>
             <div class="shop-price">Distribuidor Autorizado OTB • En Ruta 🚛</div>
           </div>
         </div>
         <div class="shop-card">
-          <div class="shop-icon">💧</div>
+          <div class="shop-icon"><i class="fa-solid fa-bottle-water" style="color: #0288D1;"></i></div>
           <div class="shop-info">
             <div class="shop-title">Botellón Agua Purificada 20L</div>
             <div class="shop-price">12 Bs • Entrega Inmediata</div>
@@ -175,14 +178,14 @@
   <footer class="ad-banner" onclick="abrirAnuncioWhatsApp()">
     <span class="ad-badge">Anuncio</span>
     <span class="ad-text" id="adText">Servicios técnicos & Comercio local verificado en la OTB</span>
-    <span class="ad-link-icon">↗</span>
+    <i class="fa-solid fa-arrow-up-right-from-square ad-link-icon"></i>
   </footer>
 
   <!-- MODAL ADMIN -->
   <div class="modal" id="modalAdmin">
     <div class="modal-content">
       <div class="modal-title">
-        <span>⚙️ Panel de Administración</span>
+        <span><i class="fa-solid fa-user-gear"></i> Panel de Administración</span>
         <button class="btn-close" onclick="closeAdminModal()">✕</button>
       </div>
       <div class="form-group">
@@ -220,16 +223,16 @@
       event.target.classList.add('active');
     }
 
-    // MARCADORES EN EL MAPA (CAMIÓN EN VIVO Y COMPRADOR)
+    // MARCADORES VECTORES EN EL MAPA (CAMIÓN Y COMPRADOR)
     const truckIcon = L.divIcon({
-      html: '<div style="font-size:32px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6));">🚛</div>',
+      html: '<div style="font-size:28px; color:#FF6D00; background:#1E293B; border-radius:50%; padding:6px; border:2px solid #FF6D00; box-shadow:0 4px 10px rgba(0,0,0,0.5);"><i class="fa-solid fa-truck-fast"></i></div>',
       className: 'custom-icon',
       iconSize: [40, 40],
       iconAnchor: [20, 20]
     });
 
     const userIcon = L.divIcon({
-      html: '<div style="font-size:28px; background:#E65100; border-radius:50%; padding:4px; border:2px solid white; box-shadow:0 0 12px #FF6D00;">🏠</div>',
+      html: '<div style="font-size:24px; color:white; background:#E65100; border-radius:50%; padding:6px; border:2px solid white; box-shadow:0 0 12px #FF6D00;"><i class="fa-solid fa-house-chimney"></i></div>',
       className: 'custom-icon',
       iconSize: [36, 36],
       iconAnchor: [18, 18]
