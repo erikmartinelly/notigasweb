@@ -1,0 +1,44 @@
+# NOTIGAS Web App - Git Ignore Rules
+
+# Archivos de Entorno y Claves Sensibles
+.env
+.env.local
+.env.production
+*.pem
+*.key
+
+# Archivos de Build y Binarios Pesados
+*.apk
+*.aab
+*.exe
+*.zip
+*.rar
+*.tar.gz
+*.mp4
+*.mov
+*.avi
+*.xlsx
+*.xls
+
+# Flutter / Dart Residuals
+.last_build_id
+main.dart.js
+flutter.js
+flutter_bootstrap.js
+flutter_service_worker.js
+canvaskit/
+android/
+ios/
+build/
+.dart_tool/
+.pub/
+
+# Dependencias Node.js y Logs
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Archivos del Sistema Operativo
+.DS_Store
+Thumbs.db
