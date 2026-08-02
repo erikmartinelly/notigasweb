@@ -72,7 +72,7 @@
     .submenu-card i, .submenu-card svg { font-size: 24px; color: #FF6D00; }
     .submenu-title { font-size: 12px; font-weight: 700; color: white; }
 
-    /* FORO VECINAL TIPO REDDIT (3ª PESTAÑA) */
+    /* FORO VECINAL TIPO REDDIT (PESTAÑA 3) */
     .forum-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background-color: #1E293B; border-bottom: 1px solid rgba(255,255,255,0.08); }
     .btn-new-post { background-color: #FF6D00; color: white; border: none; padding: 8px 14px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; }
     .forum-container { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
@@ -110,10 +110,6 @@
     .btn-submit { width: 100%; background-color: #FF6D00; color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 8px; }
     .btn-submit-google { width: 100%; background-color: #DB4437; color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; }
 
-    /* BOTÓN DESCARGA DE CORREOS CSV */
-    .btn-csv-download { width: 100%; background-color: #0288D1; color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(2,136,209,0.4); }
-    .btn-csv-download:hover { background-color: #0277BD; }
-
     /* PESTAÑAS DENTRO DE MODAL DE CONFIGURACIÓN */
     .modal-tab-nav { display: flex; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 14px; gap: 6px; }
     .modal-tab-btn { flex: 1; background: none; border: none; color: #94A3B8; padding: 8px; font-size: 11px; font-weight: 700; cursor: pointer; border-bottom: 2px solid transparent; }
@@ -135,11 +131,10 @@
     </div>
   </header>
 
-  <!-- PESTAÑAS DE NAVEGACIÓN PRINCIPALES (3ª PESTAÑA: FORO VECINAL REDDIT) -->
   <nav>
-    <button class="tab-btn active" onclick="switchTab(0)"><i class="fa-solid fa-map-location-dot"></i> 1ª MAPA EN VIVO</button>
-    <button class="tab-btn" onclick="switchTab(1)"><i class="fa-solid fa-store"></i> 2ª PEDIDOS & SERVICIOS</button>
-    <button class="tab-btn" onclick="switchTab(2)"><i class="fa-solid fa-comments"></i> 3ª FORO VECINAL CHAT</button>
+    <button class="tab-btn active" onclick="switchTab(0)"><i class="fa-solid fa-map-location-dot"></i> MAPA EN VIVO</button>
+    <button class="tab-btn" onclick="switchTab(1)"><i class="fa-solid fa-store"></i> PEDIDOS & SERVICIOS</button>
+    <button class="tab-btn" onclick="switchTab(2)"><i class="fa-solid fa-comments"></i> FORO VECINAL</button>
   </nav>
 
   <main>
@@ -176,7 +171,7 @@
           <div class="shop-info">
             <div class="shop-title">🔥 Garrafa de Gas GLP</div>
             <div class="shop-price">Distribuidor Autorizado OTB • En Ruta 🚛</div>
-            <button class="btn-chat-vendor" onclick="event.stopPropagation(); abrirChatVendedor('Gas GLP')"><i class="fa-brands fa-whatsapp"></i> Chat con Gasero (+591 70712345)</button>
+            <button class="btn-chat-vendor" onclick="event.stopPropagation(); abrirChatVendedor('Gas GLP')"><i class="fa-brands fa-whatsapp"></i> Chat con Gasero</button>
           </div>
         </div>
 
@@ -185,7 +180,7 @@
           <div class="shop-info">
             <div class="shop-title">💧 Botellón Agua Purificada 20L</div>
             <div class="shop-price">Agua Tratada Purificada • Entrega Inmediata</div>
-            <button class="btn-chat-vendor" onclick="event.stopPropagation(); abrirChatVendedor('Agua 20L')"><i class="fa-brands fa-whatsapp"></i> Chat con Repartidor Agua (+591 70712346)</button>
+            <button class="btn-chat-vendor" onclick="event.stopPropagation(); abrirChatVendedor('Agua 20L')"><i class="fa-brands fa-whatsapp"></i> Chat con Repartidor Agua</button>
           </div>
         </div>
 
@@ -194,16 +189,16 @@
           <div class="shop-info">
             <div class="shop-title">🍎 Frutas & Verduras de Vendedores Locales</div>
             <div class="shop-price">Fruta fresca y verdura de camión agrícola</div>
-            <button class="btn-chat-vendor" onclick="event.stopPropagation(); abrirChatVendedor('Frutas y Verduras')"><i class="fa-brands fa-whatsapp"></i> Chat con Frutero (+591 70712347)</button>
+            <button class="btn-chat-vendor" onclick="event.stopPropagation(); abrirChatVendedor('Frutas y Verduras')"><i class="fa-brands fa-whatsapp"></i> Chat con Frutero</button>
           </div>
         </div>
 
         <div class="shop-card" onclick="seleccionarYPedirDirecto('♻️ Venta / Recolección de Chatarra')">
           <div class="shop-icon"><i class="fa-solid fa-recycle" style="color: #00E676;"></i></div>
           <div class="shop-info">
-            <div class="shop-title">♻️ Venta / Recolección de Chatarra y Papel</div>
+            <div class="shop-title">♻️ Venta / Recolección de Chatarra</div>
             <div class="shop-price">Compradores y Recolectores Barriales en Ruta</div>
-            <button class="btn-chat-vendor" onclick="event.stopPropagation(); abrirChatVendedor('Chatarra')"><i class="fa-brands fa-whatsapp"></i> Chat con Chatarrero (+591 70712348)</button>
+            <button class="btn-chat-vendor" onclick="event.stopPropagation(); abrirChatVendedor('Chatarra')"><i class="fa-brands fa-whatsapp"></i> Chat con Chatarrero</button>
           </div>
         </div>
 
@@ -212,7 +207,7 @@
           <div class="shop-info">
             <div class="shop-title">🧼 Detergentes & Productos de Limpieza</div>
             <div class="shop-price">Venta al por mayor y menor para el hogar</div>
-            <button class="btn-chat-vendor" onclick="event.stopPropagation(); abrirChatVendedor('Detergentes')"><i class="fa-brands fa-whatsapp"></i> Chat con Vendedor Limpieza (+591 70712349)</button>
+            <button class="btn-chat-vendor" onclick="event.stopPropagation(); abrirChatVendedor('Detergentes')"><i class="fa-brands fa-whatsapp"></i> Chat con Vendedor Limpieza</button>
           </div>
         </div>
 
@@ -221,16 +216,16 @@
           <div class="shop-info">
             <div class="shop-title">📦 Encargos & Otros Pedidos Barriales</div>
             <div class="shop-price">Entregas y pedidos especiales entre vecinos</div>
-            <button class="btn-chat-vendor" onclick="event.stopPropagation(); abrirChatVendedor('Encargos Barriales')"><i class="fa-brands fa-whatsapp"></i> Chat con Encargos Barriales (+591 70712350)</button>
+            <button class="btn-chat-vendor" onclick="event.stopPropagation(); abrirChatVendedor('Encargos Barriales')"><i class="fa-brands fa-whatsapp"></i> Chat con Encargos Barriales</button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- PESTAÑA 3: FORO VECINAL CHAT TIPO REDDIT (TERCERA PESTAÑA REQUERIDA) -->
+    <!-- PESTAÑA 3: FORO VECINAL TIPO REDDIT (RESTAURADO) -->
     <div class="tab-content" id="tab2">
       <div class="forum-header">
-        <span style="font-weight:900; font-size:13px; color:#FF6D00;"><i class="fa-solid fa-comments"></i> Comunidad OTB - Chat Reddit</span>
+        <span style="font-weight:900; font-size:13px; color:#FF6D00;"><i class="fa-solid fa-comments"></i> Comunidad OTB</span>
         <button class="btn-new-post" onclick="abrirModalNuevoPost()"><i class="fa-solid fa-plus"></i> Publicar Aviso / Queja</button>
       </div>
       <div class="forum-container" id="forumFeed">
@@ -273,19 +268,19 @@
     <i class="fa-solid fa-arrow-up-right-from-square ad-link-icon"></i>
   </footer>
 
-  <!-- MODAL DE INGRESO OBLIGATORIO CON GMAIL (SIN SOLICITAR TELÉFONO A COMPRADORES) -->
+  <!-- MODAL DE INGRESO OBLIGATORIO DE UNA SOLA VEZ (GMAIL / CHOFER) -->
   <div class="modal" id="modalWelcomeAuth">
     <div class="modal-content">
       <div class="modal-title">
-        <span>👋 Verificación de Google Gmail</span>
+        <span>👋 Registro de Usuario por Única Vez</span>
       </div>
-      <p style="font-size: 11px; color: #94A3B8; margin-bottom: 12px;">Para ingresar a NOTIGAS debes autenticarte únicamente con tu cuenta de Google (Gmail). Como comprador no necesitas registrar tu teléfono.</p>
-
+      <p style="font-size: 11px; color: #94A3B8; margin-bottom: 12px;">Para ingresar a NOTIGAS debes registrar tu cuenta de Google (Gmail). Este registro se guarda de forma permanente en tu dispositivo.</p>
+      
       <div class="form-group">
         <label>Tipo de Usuario:</label>
         <select id="regRole" onchange="toggleRegFields()">
-          <option value="vecino">🏠 Comprador / Vecino (Verificación por Gmail)</option>
-          <option value="chofer">🚛 Vendedor / Chofer (Requiere Datos y Teléfono de Contacto)</option>
+          <option value="vecino">🏠 Vecino / Cliente (Pedir Gas, Agua y Servicios)</option>
+          <option value="chofer">🚛 Chofer / Repartidor (Atender Pedidos en Ruta)</option>
         </select>
       </div>
 
@@ -294,7 +289,12 @@
         <input type="email" id="regGmail" placeholder="tu_correo@gmail.com">
       </div>
 
-      <!-- CAMPOS ÚNICAMENTE PARA VENDEDORES / CHOFERES -->
+      <div class="form-group">
+        <label>Número de WhatsApp (con código de país):</label>
+        <input type="tel" id="regWhatsapp" placeholder="+591 70000000">
+      </div>
+
+      <!-- CAMPOS ADICIONALES DE CHOFER -->
       <div id="choferExtraFields" style="display: none;">
         <div class="form-group">
           <label>Nombre:</label>
@@ -305,16 +305,12 @@
           <input type="text" id="regApellido" placeholder="Tu apellido">
         </div>
         <div class="form-group">
-          <label>Teléfono / WhatsApp de Vendedor:</label>
-          <input type="tel" id="regWhatsapp" placeholder="+591 70000000">
-        </div>
-        <div class="form-group">
           <label>Placa del Vehículo / Número de Camión:</label>
           <input type="text" id="regPlaca" placeholder="Ej: 3842-XYZ / Camión Garrafero N° 42">
         </div>
       </div>
 
-      <button class="btn-submit-google" onclick="guardarRegistroUnico()"><i class="fa-brands fa-google"></i> Verificar con Google e Ingresar</button>
+      <button class="btn-submit-google" onclick="guardarRegistroUnico()"><i class="fa-brands fa-google"></i> Completar Registro e Ingresar</button>
     </div>
   </div>
 
@@ -361,11 +357,11 @@
     </div>
   </div>
 
-  <!-- MODAL DE CONFIRMACIÓN DE PEDIDO (SIN SOLICITAR TELÉFONO AL COMPRADOR) -->
+  <!-- MODAL DE FORMULARIO DE CONFIRMACIÓN DE PEDIDO -->
   <div class="modal" id="modalPedido">
     <div class="modal-content">
       <div class="modal-title">
-        <span>📦 Confirmar Pedido en Vivo</span>
+        <span>📦 Confirmar Pedido a Domicilio</span>
         <button class="btn-close" onclick="closePedidoModal()">✕</button>
       </div>
       <div class="form-group">
@@ -383,8 +379,11 @@
         <label>Cantidad o Detalle del Pedido:</label>
         <input type="text" id="inputCantidad" placeholder="Ej: 1 Garrafa / 2 Botellones / 5kg Manzanas" value="1 unidad">
       </div>
-      <p style="font-size:11px; color:#00E676; margin: 8px 0;">✔ Verificado con tu cuenta Gmail de comprador (No requiere número de teléfono).</p>
-      <button class="btn-submit" onclick="confirmarPedido()"><i class="fa-solid fa-paper-plane"></i> Confirmar y Solicitar en Mapa Vivo</button>
+      <div class="form-group">
+        <label>Número de WhatsApp para Confirmación:</label>
+        <input type="tel" id="inputUserPhone" placeholder="+591 70000000">
+      </div>
+      <button class="btn-submit" onclick="confirmarPedido()"><i class="fa-solid fa-paper-plane"></i> Confirmar y Solicitar en Vivo</button>
     </div>
   </div>
 
@@ -416,38 +415,38 @@
     </div>
   </div>
 
-  <!-- MODAL DE INGRESO PARA VENDEDORES / CHOFERES (ELLOS SÍ COLOCAN SU TELÉFONO DE CONTACTO) -->
+  <!-- MODAL DE INGRESO PARA CHOFERES / REPARTIDORES -->
   <div class="modal" id="modalDriver">
     <div class="modal-content">
       <div class="modal-title">
-        <span><i class="fa-solid fa-truck-fast"></i> Acceso para Vendedores y Repartidores</span>
+        <span><i class="fa-solid fa-truck-fast"></i> Acceso para Choferes y Repartidores</span>
         <button class="btn-close" onclick="closeDriverModal()">✕</button>
       </div>
       <div class="form-group">
         <label>Cuenta de Google (Gmail):</label>
-        <input type="email" id="inputDriverGmail" placeholder="vendedor@gmail.com">
+        <input type="email" id="inputDriverGmail" placeholder="chofer@gmail.com">
       </div>
       <div class="form-group">
-        <label>Nombre del Vendedor:</label>
+        <label>Nombre:</label>
         <input type="text" id="inputDriverNombre" placeholder="Tu nombre">
       </div>
       <div class="form-group">
-        <label>Apellido del Vendedor:</label>
+        <label>Apellido:</label>
         <input type="text" id="inputDriverApellido" placeholder="Tu apellido">
       </div>
       <div class="form-group">
-        <label>Teléfono / WhatsApp de Venta (Público para Clientes):</label>
+        <label>Número de WhatsApp (con código de país):</label>
         <input type="tel" id="inputDriverWhatsapp" placeholder="+591 70000000">
       </div>
       <div class="form-group">
         <label>Placa del Vehículo / Número de Camión:</label>
         <input type="text" id="inputDriverPlate" placeholder="Ej: 3842-XYZ / Camión GLP N° 42">
       </div>
-      <button class="btn-submit-google" onclick="iniciarSesionChofer()"><i class="fa-brands fa-google"></i> Activar Cuenta de Vendedor</button>
+      <button class="btn-submit-google" onclick="iniciarSesionChofer()"><i class="fa-brands fa-google"></i> Entrar con Google & WhatsApp</button>
     </div>
   </div>
 
-  <!-- MODAL ADMIN CON BOTÓN PARA DESCARGAR LISTA DE CORREOS CSV -->
+  <!-- MODAL ADMIN Y CONFIGURACIÓN CON SUBMENÚ INTERNO (ANUNCIOS Y AJUSTES) -->
   <div class="modal" id="modalAdmin">
     <div class="modal-content">
       <div class="modal-title">
@@ -458,7 +457,7 @@
       <div class="modal-tab-nav">
         <button class="modal-tab-btn active" onclick="switchModalTab(0)"><i class="fa-solid fa-rectangle-ad"></i> Anuncios</button>
         <button class="modal-tab-btn" onclick="switchModalTab(1)"><i class="fa-solid fa-user-shield"></i> Acceso Admin</button>
-        <button class="modal-tab-btn" onclick="switchModalTab(2)"><i class="fa-solid fa-file-csv"></i> Descargar Correos (.CSV)</button>
+        <button class="modal-tab-btn" onclick="switchModalTab(2)"><i class="fa-solid fa-truck-monster"></i> Choferes</button>
       </div>
 
       <!-- SUBMENÚ 1: GESTIÓN DE ANUNCIOS PUBLICITARIOS -->
@@ -487,11 +486,12 @@
         <button class="btn-submit" onclick="guardarAdminConfig()">Ingresar a Modo Administrador</button>
       </div>
 
-      <!-- SUBMENÚ 3: BOTÓN DE DESCARGA DE LISTA DE CORREOS (.CSV) -->
+      <!-- SUBMENÚ 3: CHOFERES EN RUTA -->
       <div class="modal-tab-pane" id="modalPane2">
-        <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Exportar todos los correos electrónicos Gmail de los usuarios registrados (compradores y vendedores):</p>
-        
-        <button class="btn-csv-download" onclick="descargarListaCorreosCSV()"><i class="fa-solid fa-download"></i> 📥 Descargar Correos Gmail (.CSV)</button>
+        <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Estado de Choferes Registrados en la OTB:</p>
+        <div style="background:#0F172A; padding:10px; border-radius:8px; font-size:11px;">
+          <b>🚛 Camión GLP N° 42</b><br>Placa: 3842-XYZ<br>Estado: En Ruta Activa
+        </div>
       </div>
     </div>
   </div>
@@ -501,21 +501,15 @@
     let tileLayers = {};
     let currentTileLayer = null;
 
-    // BASE DE DATOS DE CORREOS REGISTRADOS
-    let databaseEmails = [
-      { gmail: "vecino_cochabamba@gmail.com", role: "Comprador", fecha: "2026-08-01" },
-      { gmail: "chofer_glp_otb@gmail.com", role: "Vendedor / Chofer", fecha: "2026-08-01" }
-    ];
-
     document.addEventListener('DOMContentLoaded', () => {
-      // 1. VERIFICACIÓN DE REGISTRO ÚNICO (GMAIL)
+      // 1. VERIFICACIÓN DE REGISTRO ÚNICO (VECINO / CHOFER)
       const savedUser = localStorage.getItem('notigas_user_data');
       if (!savedUser) {
         document.getElementById('modalWelcomeAuth').style.display = 'flex';
       } else {
         const u = JSON.parse(savedUser);
-        if (u.gmail) {
-          databaseEmails.push({ gmail: u.gmail, role: u.role || "Comprador", fecha: new Date().toISOString().split('T')[0] });
+        if (u.whatsapp && document.getElementById('inputUserPhone')) {
+          document.getElementById('inputUserPhone').value = u.whatsapp;
         }
       }
 
@@ -576,7 +570,7 @@
       }
     });
 
-    // REGISTRO ÚNICO CON GMAIL (SIN SOLICITAR TELÉFONO A COMPRADORES)
+    // REGISTRO ÚNICO POR GMAIL / CHOFER
     function toggleRegFields() {
       const role = document.getElementById('regRole').value;
       document.getElementById('choferExtraFields').style.display = (role === 'chofer') ? 'block' : 'none';
@@ -585,36 +579,37 @@
     function guardarRegistroUnico() {
       const role = document.getElementById('regRole').value;
       const gmail = document.getElementById('regGmail').value.trim();
+      const whatsapp = document.getElementById('regWhatsapp').value.trim();
 
-      if (!gmail) {
-        alert('Por favor ingresa tu correo Gmail de Google.');
+      if (!gmail || !whatsapp) {
+        alert('Por favor ingresa tu correo Gmail y tu número de WhatsApp.');
         return;
       }
 
-      let data = { role, gmail };
+      let data = { role, gmail, whatsapp };
 
       if (role === 'chofer') {
         const nombre = document.getElementById('regNombre').value.trim();
         const apellido = document.getElementById('regApellido').value.trim();
-        const whatsapp = document.getElementById('regWhatsapp').value.trim();
         const placa = document.getElementById('regPlaca').value.trim();
 
-        if (!nombre || !apellido || !whatsapp || !placa) {
-          alert('Para vendedores/choferes es obligatorio ingresar Nombre, Apellido, Teléfono de Contacto y Placa.');
+        if (!nombre || !apellido || !placa) {
+          alert('Para choferes es obligatorio ingresar Nombre, Apellido y Placa del Vehículo.');
           return;
         }
         data.nombre = nombre;
         data.apellido = apellido;
-        data.whatsapp = whatsapp;
         data.placa = placa;
       }
 
       localStorage.setItem('notigas_user_data', JSON.stringify(data));
-      databaseEmails.push({ gmail: gmail, role: role, fecha: new Date().toISOString().split('T')[0] });
-
       document.getElementById('modalWelcomeAuth').style.display = 'none';
 
-      alert(`✅ REGISTRO VERIFICADO CON GOOGLE GMAIL\n\nBienvenido a NOTIGAS (${gmail}).`);
+      if (data.whatsapp && document.getElementById('inputUserPhone')) {
+        document.getElementById('inputUserPhone').value = data.whatsapp;
+      }
+
+      alert(`✅ REGISTRO DE ÚNICA VEZ COMPLETADO\n\nBienvenido a NOTIGAS (${data.role === 'chofer' ? 'Chofer ' + data.nombre + ' ' + data.apellido : 'Vecino'}). Tu cuenta ha sido vinculada.`);
     }
 
     function setMapStyle(btnElement, styleKey) {
@@ -692,13 +687,14 @@
       const cat = document.getElementById('selectCategoria').value;
       const cant = document.getElementById('inputCantidad').value || '1 unidad';
       closePedidoModal();
-      alert(`📦 PEDIDO EN VIVO REGISTRADO\n\nCategoría: ${cat}\nDetalle: ${cant}\n📍 Ubicación de Entrega: Lat ${pos.lat.toFixed(5)}, Lng ${pos.lng.toFixed(5)}\n\nEl vendedor en ruta ha recibido tu ubicación de entrega en el mapa.`);
+      alert(`📦 PEDIDO REGISTRADO EN VIVO\n\nCategoría: ${cat}\nDetalle: ${cant}\n📍 Ubicación de Entrega: Lat ${pos.lat.toFixed(5)}, Lng ${pos.lng.toFixed(5)}\n\nEl repartidor más cercano se contactará vía WhatsApp para acordar el precio y la entrega.`);
     }
 
+    // BOTÓN DE NOTIFICACIÓN VOLUNTARIA DE VECINOS
     function notificarEscucheCamion() {
       if (!userMarker) return;
       const pos = userMarker.getLatLng();
-      alert(`🔔 ¡GRACIAS VECINO!\n\nSe ha emitido tu aviso voluntario de que el camión de gas está pasando cerca (radio ~20m).`);
+      alert(`🔔 ¡GRACIAS VECINO!\n\nSe ha emitido tu aviso voluntario de que el camión de gas está pasando cerca (radio ~20m).\nEl mapa de la OTB se ha iluminado en tu zona para alertar al resto de los vecinos.`);
     }
 
     function abrirChatVendedor(tipo) {
@@ -747,7 +743,7 @@
       alert('¡Tu aviso ha sido publicado en la OTB!');
     }
 
-    // MODAL DE VENDEDORES / CHOFERES
+    // MODAL DE CHOFERES (GOOGLE & WHATSAPP)
     const modalDriver = document.getElementById('modalDriver');
     document.getElementById('btnOpenDriver').addEventListener('click', () => modalDriver.style.display = 'flex');
     function closeDriverModal() { modalDriver.style.display = 'none'; }
@@ -759,7 +755,7 @@
       const plate = document.getElementById('inputDriverPlate').value.trim();
 
       if (!gmail || !nombre || !apellido || !whatsapp || !plate) {
-        alert('Por favor completa todos los campos requeridos para Vendedor/Chofer.');
+        alert('Por favor completa todos los campos requeridos para Chofer: Gmail, Nombre, Apellido, WhatsApp y Placa del Vehículo.');
         return;
       }
 
@@ -767,10 +763,10 @@
       localStorage.setItem('notigas_user_data', JSON.stringify(choferData));
 
       closeDriverModal();
-      alert(`🟢 CUENTA DE VENDEDOR ACTIVADA\n\nVendedor: ${nombre} ${apellido}\nGmail: ${gmail}\nWhatsApp: ${whatsapp}\nPlaca: ${plate}`);
+      alert(`🟢 SESIÓN DE CHOFER ACTIVADA\n\nChofer: ${nombre} ${apellido}\nGmail: ${gmail}\nWhatsApp: ${whatsapp}\nPlaca: ${plate}\n\nTu camión está visible en el mapa en vivo.`);
       
       if (truckMarker) {
-        truckMarker.setPopupContent(`<b>🟢 Vendedor Activo: ${nombre} ${apellido}</b><br>Placa: ${plate}<br>📱 WhatsApp: ${whatsapp}`).openPopup();
+        truckMarker.setPopupContent(`<b>🟢 Chofer Activo: ${nombre} ${apellido}</b><br>Placa: ${plate}<br>📱 WhatsApp: ${whatsapp}`).openPopup();
       }
     }
 
@@ -811,24 +807,6 @@
       } else {
         alert('Por favor ingresa tu correo Gmail de Administrador.');
       }
-    }
-
-    // FUNCIÓN PARA DESCARGAR LISTA DE CORREOS SEPARADA POR COMAS (.CSV)
-    function descargarListaCorreosCSV() {
-      let csvContent = "data:text/csv;charset=utf-8,Email,Rol,Fecha\n";
-      databaseEmails.forEach(item => {
-        csvContent += `${item.gmail},${item.role},${item.fecha}\n`;
-      });
-
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", "lista_correos_notigas.csv");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      alert("📥 LISTA DE CORREOS DESCARGADA EN FORMATO .CSV");
     }
 
     function abrirAnuncioWhatsApp() {
