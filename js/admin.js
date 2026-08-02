@@ -1,5 +1,5 @@
 /* ==========================================================================
-   NOTIGAS - MÓDULO DE ADMINISTRACIÓN & EXPORTACIÓN CSV DE USUARIOS
+   NOTIGAS - MÓDULO DE ADMINISTRACIÓN, ADSENSE & CONFIGURACIÓN DE USUARIO
    ========================================================================== */
 
 const AUTHORIZED_ADMIN_EMAILS = [
@@ -7,6 +7,35 @@ const AUTHORIZED_ADMIN_EMAILS = [
   "leonmartinelly13@gmail.com"
 ];
 
+/* GESTIÓN DE MODAL DE CONFIGURACIÓN DE USUARIO (⚙️ HEADER) */
+function closeUserSettingsModal() {
+  const modal = document.getElementById('modalUserSettings');
+  if (modal) modal.style.display = 'none';
+}
+
+function abrirModalAdminLogin() {
+  closeUserSettingsModal();
+  const modalAdmin = document.getElementById('modalAdmin');
+  if (modalAdmin) modalAdmin.style.display = 'flex';
+}
+
+function guardarPrefUsuario() {
+  const prefStyle = document.getElementById('userPrefMapStyle')?.value || 'googleStatic';
+  const prefSound = document.getElementById('userPrefSound')?.value || 'enabled';
+
+  localStorage.setItem('notigas_pref_map_style', prefStyle);
+  localStorage.setItem('notigas_pref_sound', prefSound);
+
+  if (typeof setMapStyle === 'function') {
+    const btn = document.querySelector(`.map-style-btn[onclick*="${prefStyle}"]`);
+    setMapStyle(btn, prefStyle);
+  }
+
+  closeUserSettingsModal();
+  alert('⚙️ Preferencias de usuario guardadas con éxito.');
+}
+
+/* GESTIÓN DEL MODAL EXCLUSIVO DE ADMINISTRADOR */
 function closeAdminModal() { 
   const modalAdmin = document.getElementById('modalAdmin');
   if (modalAdmin) modalAdmin.style.display = 'none'; 
@@ -18,16 +47,26 @@ function switchModalTab(idx) {
 }
 
 function guardarSubmenuAnuncios() {
-  const inputAd = document.getElementById('inputAdText');
-  if (!inputAd) return;
+  const currentAdmin = sessionStorage.getItem('notigas_admin_session');
+  if (!currentAdmin || !AUTHORIZED_ADMIN_EMAILS.includes(currentAdmin.toLowerCase())) {
+    alert("⛔ ACCESO RESTRINGIDO\nDebes iniciar sesión con una cuenta de Administrador autorizada.");
+    switchModalTab(1);
+    return;
+  }
 
-  const text = inputAd.value.trim();
-  if (typeof actualizarAnunciosEnVivo === 'function') {
-    actualizarAnunciosEnVivo(text);
+  const adsenseId = document.getElementById('inputAdsenseId')?.value.trim();
+  const inputAd = document.getElementById('inputAdText')?.value.trim();
+
+  if (adsenseId) {
+    localStorage.setItem('notigas_adsense_id', adsenseId);
+  }
+
+  if (inputAd && typeof actualizarAnunciosEnVivo === 'function') {
+    actualizarAnunciosEnVivo(inputAd);
   }
 
   closeAdminModal();
-  alert('📢 Anuncio publicitario actualizado con éxito en todas las secciones.');
+  alert('📢 Configuración de Anuncios Google AdSense y Anuncios Nativos guardada con éxito.');
 }
 
 function guardarAdminConfig() {
@@ -46,7 +85,8 @@ function guardarAdminConfig() {
   }
 
   sessionStorage.setItem('notigas_admin_session', gmail);
-  alert(`🔐 ACCESO DE ADMINISTRADOR CONCEDIDO\n\nBienvenido Administrador (${gmail}). Tienes acceso total a la gestión de anuncios y exportación de listas CSV.`);
+  alert(`🔐 ACCESO DE ADMINISTRADOR CONCEDIDO\n\nBienvenido Administrador (${gmail}). Tienes acceso total a la gestión de Google AdSense, anuncios nativos y exportación de listas CSV.`);
+  switchModalTab(0);
 }
 
 /* DESCARGA COMPLETA DE CORREOS ELECTRONICOS REGISTRADOS (.CSV DE USUARIOS) */
@@ -64,12 +104,10 @@ function descargarListaCorreosCSV() {
 
   let emailsList = [];
 
-  // 1. Cargar base por defecto
   if (typeof databaseEmails !== 'undefined' && Array.isArray(databaseEmails)) {
     emailsList = [...databaseEmails];
   }
 
-  // 2. Agregar cuentas administradoras autorizadas
   AUTHORIZED_ADMIN_EMAILS.forEach(email => {
     emailsList.push({
       gmail: email,
@@ -78,7 +116,6 @@ function descargarListaCorreosCSV() {
     });
   });
 
-  // 3. Cargar usuario registrado en localStorage
   try {
     const saved = localStorage.getItem('notigas_user_data');
     if (saved) {
@@ -86,14 +123,13 @@ function descargarListaCorreosCSV() {
       if (u.gmail) {
         emailsList.push({
           gmail: u.gmail,
-          role: u.role === 'chofer' ? 'Repartidor' : 'Cliente',
+          role: u.role === 'repartidor' || u.role === 'chofer' ? 'Repartidor' : 'Cliente',
           fecha: new Date().toISOString().split('T')[0]
         });
       }
     }
   } catch(e){}
 
-  // 4. Eliminar duplicados por Gmail
   const uniqueEmailsMap = new Map();
   emailsList.forEach(item => {
     if (item.gmail && !uniqueEmailsMap.has(item.gmail.toLowerCase())) {
@@ -108,7 +144,6 @@ function descargarListaCorreosCSV() {
     return;
   }
 
-  // Generar contenido CSV con BOM UTF-8 para apertura directa en Microsoft Excel
   let csvRows = ["Email,Rol,Fecha Registro"];
   finalEmails.forEach(item => {
     csvRows.push(`"${item.gmail}","${item.role || 'Cliente'}","${item.fecha || new Date().toISOString().split('T')[0]}"`);

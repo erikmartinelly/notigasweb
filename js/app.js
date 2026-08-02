@@ -3,19 +3,38 @@
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
-  const btnOpenAdmin = document.getElementById('btnOpenAdmin');
+  const btnUserSettings = document.getElementById('btnOpenUserSettings');
   const btnOpenDriver = document.getElementById('btnOpenDriver');
-  const modalAdmin = document.getElementById('modalAdmin');
+  const modalUserSettings = document.getElementById('modalUserSettings');
   const modalDriver = document.getElementById('modalDriver');
 
-  if (btnOpenAdmin && modalAdmin) {
-    btnOpenAdmin.addEventListener('click', () => modalAdmin.style.display = 'flex');
+  if (btnUserSettings && modalUserSettings) {
+    btnUserSettings.addEventListener('click', () => modalUserSettings.style.display = 'flex');
   }
 
   if (btnOpenDriver && modalDriver) {
     btnOpenDriver.addEventListener('click', () => modalDriver.style.display = 'flex');
   }
+
+  // REQUERIR GPS OBLIGATORIO AL CARGAR LA APLICACIÓN
+  verificarGPSObligatorio();
 });
+
+function verificarGPSObligatorio() {
+  if ("geolocation" in navigator) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const banner = document.getElementById('gpsMandatoryBanner');
+        if (banner) banner.style.display = 'none';
+      },
+      (err) => {
+        const banner = document.getElementById('gpsMandatoryBanner');
+        if (banner) banner.style.display = 'block';
+      },
+      { timeout: 8000 }
+    );
+  }
+}
 
 function switchTab(index) {
   document.querySelectorAll('.tab-btn').forEach((btn, i) => btn.classList.toggle('active', i === index));

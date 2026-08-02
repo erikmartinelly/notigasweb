@@ -25,14 +25,20 @@
 </head>
 <body>
 
+  <!-- BANNER DE AVISO GPS OBLIGATORIO -->
+  <div id="gpsMandatoryBanner" style="display:none; background: linear-gradient(135deg, #D32F2F, #B71C1C); color: white; padding: 8px 12px; font-size: 11px; font-weight: 700; text-align: center; z-index: 2000; box-shadow: 0 2px 10px rgba(0,0,0,0.5);">
+    <i class="fa-solid fa-triangle-exclamation"></i> 📍 GPS Obligatorio: Activa tu ubicación para ubicar el camión garrafero y hacer pedidos a tu domicilio. 
+    <button onclick="conectarGPSAuto()" style="background: white; color: #D32F2F; border: none; padding: 2px 8px; border-radius: 4px; font-weight: 900; margin-left: 6px; cursor: pointer;">Activar GPS</button>
+  </div>
+
   <header>
     <div class="brand">
-      <img src="favicon.png?v=3" class="brand-img" alt="NOTIGAS Logo"> NOTIGAS
+      <img src="favicon.png?v=4" class="brand-img" alt="NOTIGAS Logo"> NOTIGAS
     </div>
     <div class="header-actions">
       <button class="btn-badge" id="btnGps"><i class="fa-solid fa-crosshairs"></i> GPS Auto</button>
-      <button class="btn-driver" id="btnOpenDriver"><i class="fa-solid fa-truck-fast"></i> Publicar Mi Negocio</button>
-      <button class="btn-config" id="btnOpenAdmin" title="Configuración / Modo Administrador"><i class="fa-solid fa-gear"></i></button>
+      <button class="btn-driver" id="btnOpenDriver"><i class="fa-solid fa-truck-fast"></i> Mi Ficha de Repartidor</button>
+      <button class="btn-config" id="btnOpenUserSettings" title="Configuración de Usuario"><i class="fa-solid fa-gear"></i></button>
     </div>
   </header>
 
@@ -90,7 +96,7 @@
       </div>
     </div>
 
-    <!-- PESTAÑA 3: MINI REDDIT VECINAL CON ANUNCIOS GRATIS, VOTOS, COMENTARIOS Y CHAT PRIVADO -->
+    <!-- PESTAÑA 3: TABLÓN DE ANUNCIOS VECINAL & CHAT PRIVADO INTERNO -->
     <div class="tab-content" id="tab2">
       <!-- SUB-NAVEGACIÓN INTERNA EN LA 3ª PESTAÑA -->
       <div class="subnav-3rd-tab">
@@ -98,10 +104,10 @@
         <button class="subtab-btn" id="subtabBtnDirect" onclick="switch3rdTabMode('direct')"><i class="fa-solid fa-comments"></i> 💬 Chat Privado Interno</button>
       </div>
 
-      <!-- VISTA 1: MINI REDDIT VECINAL (AVISOS GRATIS CON DURACIÓN 1 SEMANA) -->
+      <!-- VISTA 1: TABLÓN DE ANUNCIOS VECINAL (AVISOS GRATIS CON DURACIÓN 1 SEMANA) -->
       <div id="view3rdTabReddit" style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
         <div class="forum-header">
-          <span style="font-weight:900; font-size:12px; color:#FF6D00;"><i class="fa-solid fa-comments"></i> Tablón Vecinal (Publicaciones gratis duran 7 días)</span>
+          <span style="font-weight:900; font-size:12px; color:#FF6D00;"><i class="fa-solid fa-bullhorn"></i> Tablón Vecinal OTB (Avisos duran 7 días)</span>
           <button class="btn-new-post" onclick="abrirModalNuevoPost()"><i class="fa-solid fa-plus"></i> Publicar Anuncio Gratis</button>
         </div>
         <div class="forum-container" id="forumFeed">
@@ -148,6 +154,149 @@
     </div>
     <button class="btn-ad-contact" onclick="abrirAnuncioWhatsApp()"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver Anuncio</button>
   </footer>
+
+  <!-- MODAL CONFIGURACIÓN GENERAL DE USUARIO (⚙️) -->
+  <div class="modal" id="modalUserSettings">
+    <div class="modal-content">
+      <div class="modal-title">
+        <span>⚙️ Configuración de Usuario</span>
+        <button class="btn-close" onclick="closeUserSettingsModal()">✕</button>
+      </div>
+
+      <div class="form-group">
+        <label>Estilo de Mapa:</label>
+        <select id="userPrefMapStyle" onchange="cambiarEstiloMapaPref(this.value)">
+          <option value="googleStatic">🗺️ Google Maps HD (Normal)</option>
+          <option value="googleSatelite">🛰️ Google Satélite HD (Fotografía)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Notificaciones y Alertas Auditivas:</label>
+        <select id="userPrefSound">
+          <option value="enabled">🔔 Notificaciones con Sonido (Bocina de Camión y Avisos)</option>
+          <option value="disabled">🔇 Modo Silencioso (Sin Sonidos)</option>
+        </select>
+      </div>
+
+      <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 14px 0;">
+
+      <button class="btn-submit" onclick="guardarPrefUsuario()"><i class="fa-solid fa-floppy-disk"></i> Guardar Preferencias</button>
+      
+      <button style="width:100%; background:none; border:1px solid rgba(255,255,255,0.2); color:#94A3B8; padding:8px; border-radius:8px; margin-top:10px; cursor:pointer; font-size:11px;" onclick="closeUserSettingsModal(); abrirModalAdminLogin();">
+        <i class="fa-solid fa-user-shield"></i> Acceso Exclusivo Administrador
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL SETTINGS / CONFIGURACIÓN EXCLUSIVA DEL REPARTIDOR -->
+  <div class="modal" id="modalDriver">
+    <div class="modal-content">
+      <div class="modal-title">
+        <span><i class="fa-solid fa-truck-fast"></i> Mi Mini Página de Negocio (Repartidor)</span>
+        <button class="btn-close" onclick="closeDriverModal()">✕</button>
+      </div>
+
+      <div class="form-group">
+        <label>Transmisión de Recorrido en Vivo (GPS):</label>
+        <select id="driverGpsLive">
+          <option value="on">🟢 Transmitir mi ubicación en tiempo real en el mapa</option>
+          <option value="off">🔴 Pausar transmisión GPS en vivo</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Nombre del Repartidor o Negocio:</label>
+        <input type="text" id="inputDriverNombre" placeholder="Ej: Repartidor Agua Cristallina">
+      </div>
+      <div class="form-group">
+        <label>Número de WhatsApp (Uso interno):</label>
+        <input type="tel" id="inputDriverTelRef" placeholder="70712345">
+      </div>
+      <div class="form-group">
+        <label>Número de Placa del Vehículo / Medio de Transporte:</label>
+        <input type="text" id="inputDriverPlate" placeholder="Ej: 3842-XYZ">
+      </div>
+      <div class="form-group">
+        <label>Tipo de REPARTIDOR:</label>
+        <select id="inputDriverCat">
+          <option value="Gas GLP">🔥 Gas GLP</option>
+          <option value="Detergentes">🧼 Detergentes & Limpieza</option>
+          <option value="Chatarra">♻️ Chatarra</option>
+          <option value="Papel">📄 Papel / Reciclaje</option>
+          <option value="Frutas">🍎 Frutas & Verduras</option>
+          <option value="Otros">📦 Otros</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>¿Qué Vende / Oferta?:</label>
+        <input type="text" id="inputDriverProductos" placeholder="Ej: Garrafas GLP 10kg, reguladores, mangueras">
+      </div>
+      <div class="form-group">
+        <label>Zonas / OTBs de Recorrido:</label>
+        <input type="text" id="inputDriverZonas" placeholder="Ej: OTB Central, Av. Principal y calles vecinas">
+      </div>
+      <div class="form-group">
+        <label>Días y Horarios de Recorrido por Zona:</label>
+        <input type="text" id="inputDriverSchedule" placeholder="Ej: Lunes a Sábado: 07:00 a 18:00 (Mañanas: Norte, Tardes: Sur)">
+      </div>
+
+      <button class="btn-submit-google" onclick="iniciarSesionChofer()"><i class="fa-solid fa-store"></i> Activar y Publicar Mini Página de Negocio</button>
+    </div>
+  </div>
+
+  <!-- MODAL ADMINISTRADOR EXCLUSIVO (GOOGLE ADSENSE & ANUNCIOS NATIVOS) -->
+  <div class="modal" id="modalAdmin">
+    <div class="modal-content">
+      <div class="modal-title">
+        <span><i class="fa-solid fa-user-shield"></i> Panel de Administración NOTIGAS</span>
+        <button class="btn-close" onclick="closeAdminModal()">✕</button>
+      </div>
+
+      <div class="modal-tab-nav">
+        <button class="modal-tab-btn active" onclick="switchModalTab(0)"><i class="fa-solid fa-rectangle-ad"></i> Anuncios AdSense & Nativos</button>
+        <button class="modal-tab-btn" onclick="switchModalTab(1)"><i class="fa-solid fa-user-lock"></i> Acceso Admin</button>
+        <button class="modal-tab-btn" onclick="switchModalTab(2)"><i class="fa-solid fa-file-csv"></i> Descargar Correos (.CSV)</button>
+      </div>
+
+      <!-- SUBMENÚ 1: CONFIGURACIÓN DE GOOGLE ADSENSE Y ANUNCIOS NATIVOS -->
+      <div class="modal-tab-pane active" id="modalPane0">
+        <div class="form-group">
+          <label>ID de Cliente Google AdSense (ca-pub-xxxxxxxx):</label>
+          <input type="text" id="inputAdsenseId" value="ca-pub-9949962151180000" placeholder="ca-pub-xxxxxxxxxxxxxxxx">
+        </div>
+        <div class="form-group">
+          <label>Texto del Anuncio Nativo Intercalado en Feed:</label>
+          <input type="text" id="inputAdText" value="Promociona tu negocio o servicio profesional directamente en tu OTB">
+        </div>
+        <div class="form-group">
+          <label>Enlace WhatsApp / Web del Anuncio:</label>
+          <input type="text" id="inputAdUrl" value="https://wa.me/59170712345?text=Hola!%20Deseo%20publicar%20mi%20anuncio%20en%20NOTIGAS">
+        </div>
+        <button class="btn-submit" onclick="guardarSubmenuAnuncios()"><i class="fa-solid fa-floppy-disk"></i> Guardar Configuración de Publicidad</button>
+      </div>
+
+      <!-- SUBMENÚ 2: ACCESO RESTRINGIDO ADMINISTRADOR -->
+      <div class="modal-tab-pane" id="modalPane1">
+        <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Cuentas habilitadas: <strong>erikmartinelly@gmail.com</strong> y <strong>leonmartinelly13@gmail.com</strong></p>
+        <div class="form-group">
+          <label>Correo Gmail de Administrador:</label>
+          <input type="email" id="inputGmail" placeholder="erikmartinelly@gmail.com">
+        </div>
+        <div class="form-group">
+          <label>Contraseña / Token de Google:</label>
+          <input type="password" id="inputPass" placeholder="••••••••">
+        </div>
+        <button class="btn-submit" onclick="guardarAdminConfig()"><i class="fa-solid fa-key"></i> Iniciar Sesión de Administrador</button>
+      </div>
+
+      <!-- SUBMENÚ 3: EXPORTACIÓN DE CORREOS CSV -->
+      <div class="modal-tab-pane" id="modalPane2">
+        <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Exportar todos los correos electrónicos Gmail de usuarios registrados para campañas de Email Marketing:</p>
+        <button class="btn-csv-download" onclick="descargarListaCorreosCSV()"><i class="fa-solid fa-download"></i> 📥 Descargar Correos Gmail (.CSV)</button>
+      </div>
+    </div>
+  </div>
 
   <!-- MODAL AUTENTICACIÓN & REGISTRO DE USUARIOS -->
   <div class="modal" id="modalWelcomeAuth">
@@ -221,52 +370,6 @@
       </div>
 
       <button class="btn-submit-google" onclick="guardarRegistroUnico()"><i class="fa-solid fa-store"></i> Crear y Publicar Mi Mini Página de Negocio</button>
-    </div>
-  </div>
-
-  <!-- MODAL PUBLICAR MINI PÁGINA DE NEGOCIO PARA REPARTIDOR -->
-  <div class="modal" id="modalDriver">
-    <div class="modal-content">
-      <div class="modal-title">
-        <span><i class="fa-solid fa-truck-fast"></i> Registro de Repartidor (Mini Página de Negocio)</span>
-        <button class="btn-close" onclick="closeDriverModal()">✕</button>
-      </div>
-      <div class="form-group">
-        <label>Nombre del Repartidor o Negocio:</label>
-        <input type="text" id="inputDriverNombre" placeholder="Ej: Repartidor Agua Cristallina">
-      </div>
-      <div class="form-group">
-        <label>Número de WhatsApp:</label>
-        <input type="tel" id="inputDriverTelRef" placeholder="70712345">
-      </div>
-      <div class="form-group">
-        <label>Número de Placa del Vehículo:</label>
-        <input type="text" id="inputDriverPlate" placeholder="Ej: 3842-XYZ">
-      </div>
-      <div class="form-group">
-        <label>Tipo de REPARTIDOR:</label>
-        <select id="inputDriverCat">
-          <option value="Gas GLP">🔥 Gas GLP</option>
-          <option value="Detergentes">🧼 Detergentes & Limpieza</option>
-          <option value="Chatarra">♻️ Chatarra</option>
-          <option value="Papel">📄 Papel / Reciclaje</option>
-          <option value="Frutas">🍎 Frutas & Verduras</option>
-          <option value="Otros">📦 Otros</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>¿Qué reparte? / Detalle de la oferta:</label>
-        <input type="text" id="inputDriverProductos" placeholder="Ej: Botellones 20L, bombas de agua">
-      </div>
-      <div class="form-group">
-        <label>Zonas de Recorrido:</label>
-        <input type="text" id="inputDriverZonas" placeholder="Ej: OTB Norte y condominios">
-      </div>
-      <div class="form-group">
-        <label>Días y Horarios por Zona:</label>
-        <input type="text" id="inputDriverSchedule" placeholder="Ej: Lunes, Miércoles y Viernes: 08:00 a 17:00">
-      </div>
-      <button class="btn-submit-google" onclick="iniciarSesionChofer()"><i class="fa-solid fa-store"></i> Activar Ficha de Negocio de Repartidor</button>
     </div>
   </div>
 
@@ -411,52 +514,6 @@
         <textarea id="inputPostDesc" rows="3" placeholder="Escribe tu mensaje para los vecinos (Durará 7 días)..."></textarea>
       </div>
       <button class="btn-submit" onclick="crearNuevoPost()"><i class="fa-solid fa-paper-plane"></i> Publicar Anuncio Gratis (7 días)</button>
-    </div>
-  </div>
-
-  <!-- MODAL ADMIN CON EXPORTADOR CSV -->
-  <div class="modal" id="modalAdmin">
-    <div class="modal-content">
-      <div class="modal-title">
-        <span><i class="fa-solid fa-gear"></i> Configuración y Administración</span>
-        <button class="btn-close" onclick="closeAdminModal()">✕</button>
-      </div>
-
-      <div class="modal-tab-nav">
-        <button class="modal-tab-btn active" onclick="switchModalTab(0)"><i class="fa-solid fa-rectangle-ad"></i> Anuncios</button>
-        <button class="modal-tab-btn" onclick="switchModalTab(1)"><i class="fa-solid fa-user-shield"></i> Acceso Admin</button>
-        <button class="modal-tab-btn" onclick="switchModalTab(2)"><i class="fa-solid fa-file-csv"></i> Descargar Correos (.CSV)</button>
-      </div>
-
-      <div class="modal-tab-pane active" id="modalPane0">
-        <div class="form-group">
-          <label>Texto del Anuncio Nativo Minimalista:</label>
-          <input type="text" id="inputAdText" value="Servicios técnicos & Comercio local verificado en la OTB">
-        </div>
-        <div class="form-group">
-          <label>Enlace WhatsApp / Web del Anuncio:</label>
-          <input type="text" id="inputAdUrl" value="https://wa.me/59170712345?text=Hola!%20Deseo%20publicar%20anuncio">
-        </div>
-        <button class="btn-submit" onclick="guardarSubmenuAnuncios()">Guardar Cambios de Anuncio</button>
-      </div>
-
-      <div class="modal-tab-pane" id="modalPane1">
-        <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Acceso restringido únicamente para administradores autorizados (erikmartinelly@gmail.com / leonmartinelly13@gmail.com):</p>
-        <div class="form-group">
-          <label>Correo Gmail de Administrador:</label>
-          <input type="email" id="inputGmail" placeholder="erikmartinelly@gmail.com">
-        </div>
-        <div class="form-group">
-          <label>Contraseña de Administración / Google Token:</label>
-          <input type="password" id="inputPass" placeholder="••••••••">
-        </div>
-        <button class="btn-submit" onclick="guardarAdminConfig()">Ingresar a Modo Administrador</button>
-      </div>
-
-      <div class="modal-tab-pane" id="modalPane2">
-        <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Exportar todos los correos electrónicos Gmail registrados para campañas de Email Marketing / Ofertas Puntuales:</p>
-        <button class="btn-csv-download" onclick="descargarListaCorreosCSV()"><i class="fa-solid fa-download"></i> 📥 Descargar Correos Gmail (.CSV)</button>
-      </div>
     </div>
   </div>
 
