@@ -2,6 +2,11 @@
    NOTIGAS - MÓDULO DE ADMINISTRACIÓN & EXPORTACIÓN CSV DE USUARIOS
    ========================================================================== */
 
+const AUTHORIZED_ADMIN_EMAILS = [
+  "erikmartinelly@gmail.com",
+  "leonmartinelly13@gmail.com"
+];
+
 function closeAdminModal() { 
   const modalAdmin = document.getElementById('modalAdmin');
   if (modalAdmin) modalAdmin.style.display = 'none'; 
@@ -22,24 +27,41 @@ function guardarSubmenuAnuncios() {
   }
 
   closeAdminModal();
-  alert('Anuncio publicitario actualizado con éxito en todas las secciones.');
+  alert('📢 Anuncio publicitario actualizado con éxito en todas las secciones.');
 }
 
 function guardarAdminConfig() {
   const inputGmail = document.getElementById('inputGmail');
   if (!inputGmail) return;
 
-  const gmail = inputGmail.value.trim();
-  if (gmail) {
-    closeAdminModal();
-    alert(`Sesión de Administrador iniciada como (${gmail}).`);
-  } else {
+  const gmail = inputGmail.value.trim().toLowerCase();
+  if (!gmail) {
     alert('Por favor ingresa tu correo Gmail de Administrador.');
+    return;
   }
+
+  if (!AUTHORIZED_ADMIN_EMAILS.includes(gmail)) {
+    alert(`⛔ ACCESO DENEGADO\n\nLa cuenta (${gmail}) no cuenta con permisos de administración en NOTIGAS.\nCuentas habilitadas: erikmartinelly@gmail.com y leonmartinelly13@gmail.com`);
+    return;
+  }
+
+  sessionStorage.setItem('notigas_admin_session', gmail);
+  alert(`🔐 ACCESO DE ADMINISTRADOR CONCEDIDO\n\nBienvenido Administrador (${gmail}). Tienes acceso total a la gestión de anuncios y exportación de listas CSV.`);
 }
 
 /* DESCARGA COMPLETA DE CORREOS ELECTRONICOS REGISTRADOS (.CSV DE USUARIOS) */
 function descargarListaCorreosCSV() {
+  const currentAdmin = sessionStorage.getItem('notigas_admin_session');
+  
+  if (!currentAdmin || !AUTHORIZED_ADMIN_EMAILS.includes(currentAdmin.toLowerCase())) {
+    const promptGmail = prompt("🔐 Acceso Administrador Requerido:\nPor favor ingresa tu correo Gmail habilitado de Administrador:");
+    if (!promptGmail || !AUTHORIZED_ADMIN_EMAILS.includes(promptGmail.trim().toLowerCase())) {
+      alert("⛔ ACCESO DENEGADO\nSolo las cuentas erikmartinelly@gmail.com y leonmartinelly13@gmail.com pueden descargar la lista de usuarios.");
+      return;
+    }
+    sessionStorage.setItem('notigas_admin_session', promptGmail.trim().toLowerCase());
+  }
+
   let emailsList = [];
 
   // 1. Cargar base por defecto
@@ -47,7 +69,16 @@ function descargarListaCorreosCSV() {
     emailsList = [...databaseEmails];
   }
 
-  // 2. Cargar usuario registrado en localStorage
+  // 2. Agregar cuentas administradoras autorizadas
+  AUTHORIZED_ADMIN_EMAILS.forEach(email => {
+    emailsList.push({
+      gmail: email,
+      role: 'Administrador',
+      fecha: new Date().toISOString().split('T')[0]
+    });
+  });
+
+  // 3. Cargar usuario registrado en localStorage
   try {
     const saved = localStorage.getItem('notigas_user_data');
     if (saved) {
@@ -62,7 +93,7 @@ function descargarListaCorreosCSV() {
     }
   } catch(e){}
 
-  // 3. Eliminar duplicados por Gmail
+  // 4. Eliminar duplicados por Gmail
   const uniqueEmailsMap = new Map();
   emailsList.forEach(item => {
     if (item.gmail && !uniqueEmailsMap.has(item.gmail.toLowerCase())) {
