@@ -2,9 +2,9 @@
    NOTIGAS - MÓDULO DE AUTENTICACIÓN & GOOGLE IDENTITY SERVICES (1-TAP SIGN-IN)
    ========================================================================== */
 
-// CREDENCIAIS OFICIALES DE GOOGLE CLOUD CONSOLE (ORGANIZACIÓN erikmartinelly-org)
+// CREDENCIALES OFICIALES DE GOOGLE CLOUD CONSOLE (ORGANIZACIÓN erikmartinelly-org)
 const GOOGLE_CLIENT_ID = "994996215118-a3gvm7gtorr1nof9vaksr05ndc1raso3.apps.googleusercontent.com"; 
-const GOOGLE_CLIENT_SECRET = "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"; // Usado para verificación segura en backend
+const GOOGLE_CLIENT_SECRET = "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";
 
 let databaseEmails = [
   { gmail: "cliente_otb@gmail.com", role: "Cliente", fecha: "2026-08-01" },
@@ -53,7 +53,6 @@ function initGoogleOneTap() {
 /* MANEJADOR DEL TOKEN DE RESPUESTA DE GOOGLE */
 function handleCredentialResponse(response) {
   try {
-    // Decodificar el JWT ID Token de Google (payload base64)
     const base64Url = response.credential.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
     const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
@@ -102,58 +101,64 @@ function toggleRegFields() {
 
 function guardarRegistroUnico() {
   const roleSelect = document.getElementById('regRole');
-  const gmailInput = document.getElementById('regGmail');
-  
-  if (!roleSelect || !gmailInput) return;
+  if (!roleSelect) return;
 
   const role = roleSelect.value;
-  const gmail = gmailInput.value.trim();
-
-  if (!gmail) {
-    alert('Por favor ingresa tu correo Gmail de Google.');
-    return;
-  }
-
-  let data = { role, gmail };
 
   if (role === 'chofer') {
     const nombreNegocio = (document.getElementById('regNombreNegocio')?.value || '').trim();
-    const categoria = (document.getElementById('regCategoriaNegocio')?.value || 'Gas GLP').trim();
+    const whatsapp = (document.getElementById('regWhatsapp')?.value || '').trim();
     const placa = (document.getElementById('regPlaca')?.value || '').trim();
+    const categoria = (document.getElementById('regCategoriaNegocio')?.value || 'Gas GLP').trim();
     const productos = (document.getElementById('regProductos')?.value || '').trim();
-    const zonas = (document.getElementById('regZonas')?.value || '').trim();
-    const telReferencia = (document.getElementById('regTelReferencia')?.value || '').trim();
 
-    if (!nombreNegocio || !placa || !productos || !zonas || !telReferencia) {
-      alert('Para crear tu Mini Página de Negocio es obligatorio completar: Nombre de Negocio, Categoria, Placa, Productos, Zonas y Teléfono Privado.');
+    if (!nombreNegocio || !whatsapp || !placa || !productos) {
+      alert('Por favor completa los campos requeridos: Nombre del Repartidor, WhatsApp, Placa y ¿Qué reparte?.');
       return;
     }
 
-    data.nombre = nombreNegocio;
-    data.categoria = categoria;
-    data.placa = placa;
-    data.productos = productos;
-    data.zonas = zonas;
-    data.telReferencia = telReferencia;
+    const repartidorData = {
+      role: 'repartidor',
+      nombre: nombreNegocio,
+      whatsapp: whatsapp,
+      placa: placa,
+      categoria: categoria,
+      productos: productos
+    };
+
+    localStorage.setItem('notigas_user_data', JSON.stringify(repartidorData));
+
+    const modalAuth = document.getElementById('modalWelcomeAuth');
+    if (modalAuth) modalAuth.style.display = 'none';
+
+    alert(`🟢 MINI PÁGINA DE NEGOCIO PUBLICADA\n\n¡Bienvenido Repartidor ${nombreNegocio}! Tu Mini Página de Facebook ha sido creada automáticamente en la pestaña REPARTIDORES.`);
+
+    if (typeof renderVendorCards === 'function') {
+      renderVendorCards('TODOS');
+    }
+    if (typeof switchTab === 'function') {
+      switchTab(1); // Redirigir automáticamente a la Pestaña 2 (PÁGINAS DE NEGOCIO DE REPARTIDORES)
+    }
   } else {
+    const gmailInput = document.getElementById('regGmail');
+    const gmail = (gmailInput?.value || '').trim();
     const nombre = (document.getElementById('regNombre')?.value || '').trim();
     const apellido = (document.getElementById('regApellido')?.value || '').trim();
 
-    if (!nombre || !apellido) {
-      alert('Para clientes es obligatorio ingresar Nombre y Apellido.');
+    if (!gmail || !nombre || !apellido) {
+      alert('Para clientes es obligatorio ingresar Gmail de Google, Nombre y Apellido.');
       return;
     }
-    data.nombre = nombre;
-    data.apellido = apellido;
+
+    const clienteData = { role: 'vecino', gmail, nombre, apellido };
+    localStorage.setItem('notigas_user_data', JSON.stringify(clienteData));
+    databaseEmails.push({ gmail: gmail, role: 'Cliente', fecha: new Date().toISOString().split('T')[0] });
+
+    const modalAuth = document.getElementById('modalWelcomeAuth');
+    if (modalAuth) modalAuth.style.display = 'none';
+
+    alert(`✅ REGISTRO VERIFICADO CON GMAIL\n\nBienvenido a NOTIGAS (${gmail}).`);
   }
-
-  localStorage.setItem('notigas_user_data', JSON.stringify(data));
-  databaseEmails.push({ gmail: gmail, role: role, fecha: new Date().toISOString().split('T')[0] });
-
-  const modalAuth = document.getElementById('modalWelcomeAuth');
-  if (modalAuth) modalAuth.style.display = 'none';
-
-  alert(`✅ REGISTRO VERIFICADO CON GOOGLE GMAIL\n\nBienvenido a NOTIGAS (${gmail}).`);
 }
 
 function closeDriverModal() { 
@@ -162,35 +167,34 @@ function closeDriverModal() {
 }
 
 function iniciarSesionChofer() {
-  const gmail = (document.getElementById('inputDriverGmail')?.value || '').trim();
   const nombreNegocio = (document.getElementById('inputDriverNombre')?.value || '').trim();
-  const categoria = (document.getElementById('inputDriverCat')?.value || 'Gas GLP').trim();
+  const whatsapp = (document.getElementById('inputDriverTelRef')?.value || '').trim();
   const plate = (document.getElementById('inputDriverPlate')?.value || '').trim();
+  const categoria = (document.getElementById('inputDriverCat')?.value || 'Gas GLP').trim();
   const productos = (document.getElementById('inputDriverProductos')?.value || '').trim();
-  const zonas = (document.getElementById('inputDriverZonas')?.value || '').trim();
-  const telReferencia = (document.getElementById('inputDriverTelRef')?.value || '').trim();
 
-  if (!gmail || !nombreNegocio || !plate || !productos || !zonas || !telReferencia) {
+  if (!nombreNegocio || !whatsapp || !plate || !productos) {
     alert('Por favor completa todos los campos requeridos para publicar tu Mini Página de Negocio.');
     return;
   }
 
-  const choferData = { 
-    role: 'chofer', 
-    gmail, 
+  const repartidorData = { 
+    role: 'repartidor', 
     nombre: nombreNegocio,
-    categoria, 
+    whatsapp: whatsapp, 
     placa: plate, 
-    productos, 
-    zonas, 
-    telReferencia 
+    categoria: categoria, 
+    productos: productos 
   };
-  localStorage.setItem('notigas_user_data', JSON.stringify(choferData));
+  localStorage.setItem('notigas_user_data', JSON.stringify(repartidorData));
 
   closeDriverModal();
-  alert(`🟢 MINI PÁGINA DE NEGOCIO ACTIVADA EN NOTIGAS\n\nNegocio: ${nombreNegocio}\nCategoría: ${categoria}\nPlaca: ${plate}\nZonas: ${zonas}\n(Tu teléfono se mantiene privado. Clientes te contactarán por el chat interno).`);
+  alert(`🟢 MINI PÁGINA DE NEGOCIO ACTIVADA EN NOTIGAS\n\nRepartidor: ${nombreNegocio}\nCategoría: ${categoria}\nPlaca: ${plate}\nWhatsApp: ${whatsapp}\n\nSe ha abierto tu Mini Página en la pestaña REPARTIDORES.`);
   
   if (typeof renderVendorCards === 'function') {
     renderVendorCards('TODOS');
+  }
+  if (typeof switchTab === 'function') {
+    switchTab(1); // Abrir automáticamente la pestaña 2 de Repartidores
   }
 }
