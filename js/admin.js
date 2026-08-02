@@ -18,8 +18,22 @@ function closeUserSettingsModal() {
 function abrirModalAdminLogin() {
   closeUserSettingsModal();
   const modalAdmin = document.getElementById('modalAdmin');
-  if (modalAdmin) modalAdmin.style.display = 'flex';
-  renderAdminReports();
+  const loginScreen = document.getElementById('adminLoginScreen');
+  const dashboardScreen = document.getElementById('adminDashboardScreen');
+
+  if (!modalAdmin) return;
+
+  const currentAdmin = sessionStorage.getItem('notigas_admin_session');
+  if (currentAdmin && AUTHORIZED_ADMIN_EMAILS.includes(currentAdmin.toLowerCase())) {
+    if (loginScreen) loginScreen.style.display = 'none';
+    if (dashboardScreen) dashboardScreen.style.display = 'block';
+    renderAdminReports();
+  } else {
+    if (loginScreen) loginScreen.style.display = 'block';
+    if (dashboardScreen) dashboardScreen.style.display = 'none';
+  }
+
+  modalAdmin.style.display = 'flex';
 }
 
 function guardarPrefUsuario() {
@@ -61,14 +75,14 @@ function closeAdminModal() {
 function switchModalTab(idx) {
   document.querySelectorAll('.modal-tab-btn').forEach((btn, i) => btn.classList.toggle('active', i === idx));
   document.querySelectorAll('.modal-tab-pane').forEach((pane, i) => pane.classList.toggle('active', i === idx));
-  if (idx === 3) renderAdminReports();
+  if (idx === 2) renderAdminReports();
 }
 
 function guardarSubmenuAnuncios() {
   const currentAdmin = sessionStorage.getItem('notigas_admin_session');
   if (!currentAdmin || !AUTHORIZED_ADMIN_EMAILS.includes(currentAdmin.toLowerCase())) {
-    alert("⛔ ACCESO RESTRINGIDO\nDebes iniciar sesión con tu cuenta y contraseña de Administrador autorizada.");
-    switchModalTab(1);
+    alert("⛔ ACCESO RESTRINGIDO\nDebes ingresar tus credenciales de Administrador para modificar anuncios.");
+    abrirModalAdminLogin();
     return;
   }
 
@@ -101,18 +115,34 @@ function guardarAdminConfig() {
   }
 
   if (!AUTHORIZED_ADMIN_EMAILS.includes(gmail)) {
-    alert(`⛔ ACCESO DENEGADO\n\nLa cuenta (${gmail}) no cuenta con permisos de administración en NOTIGAS.`);
+    alert(`⛔ ACCESO DENEGADO\nLa cuenta (${gmail}) no cuenta con permisos de administración.`);
     return;
   }
 
   if (pass !== REQUIRED_ADMIN_PASSWORD) {
-    alert('⛔ CONTRASEÑA INCORRECTA\n\nLa contraseña de administración ingresada es incorrecta.');
+    alert('⛔ CONTRASEÑA INCORRECTA\nLa contraseña de administración ingresada es incorrecta.');
     return;
   }
 
   sessionStorage.setItem('notigas_admin_session', gmail);
-  alert(`🔐 ACCESO DE ADMINISTRADOR CONCEDIDO\n\nBienvenido Administrador (${gmail}). Tienes acceso total a la gestión de anuncios, moderación de denuncias y exportación CSV.`);
+  
+  const loginScreen = document.getElementById('adminLoginScreen');
+  const dashboardScreen = document.getElementById('adminDashboardScreen');
+  if (loginScreen) loginScreen.style.display = 'none';
+  if (dashboardScreen) dashboardScreen.style.display = 'block';
+
   switchModalTab(0);
+  renderAdminReports();
+  alert(`🔐 ACCESO DE ADMINISTRADOR DESBLOQUEADO\n\nBienvenido Administrador (${gmail}). Menús de administración activados.`);
+}
+
+function cerrarSesionAdminControl() {
+  sessionStorage.removeItem('notigas_admin_session');
+  const loginScreen = document.getElementById('adminLoginScreen');
+  const dashboardScreen = document.getElementById('adminDashboardScreen');
+  if (loginScreen) loginScreen.style.display = 'block';
+  if (dashboardScreen) dashboardScreen.style.display = 'none';
+  alert('🔒 Sesión de Administrador cerrada correctamente.');
 }
 
 /* DESCARGA COMPLETA DE CORREOS ELECTRONICOS REGISTRADOS (.CSV DE USUARIOS) */
@@ -120,20 +150,9 @@ function descargarListaCorreosCSV() {
   let currentAdmin = sessionStorage.getItem('notigas_admin_session');
   
   if (!currentAdmin || !AUTHORIZED_ADMIN_EMAILS.includes(currentAdmin.toLowerCase())) {
-    const promptGmail = prompt("🔐 Acceso Administrador Requerido:\nIngresa tu correo Gmail de Administrador:");
-    if (!promptGmail || !AUTHORIZED_ADMIN_EMAILS.includes(promptGmail.trim().toLowerCase())) {
-      alert("⛔ ACCESO DENEGADO\nCorreo de administrador no válido.");
-      return;
-    }
-
-    const promptPass = prompt("🔑 Ingresa la Contraseña de Administración:");
-    if (!promptPass || promptPass.trim() !== REQUIRED_ADMIN_PASSWORD) {
-      alert("⛔ CONTRASEÑA INCORRECTA\nNo se pudo verificar el acceso de administración.");
-      return;
-    }
-
-    currentAdmin = promptGmail.trim().toLowerCase();
-    sessionStorage.setItem('notigas_admin_session', currentAdmin);
+    alert("⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña.");
+    abrirModalAdminLogin();
+    return;
   }
 
   let emailsList = [];

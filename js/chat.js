@@ -97,14 +97,21 @@ function cambiarVendedorChat() {
     localStorage.setItem(historyKey, JSON.stringify(history));
   }
 
+  const currentAdmin = sessionStorage.getItem('notigas_admin_session');
+  const isAdmin = currentAdmin && (currentAdmin.includes('erikmartinelly') || currentAdmin.includes('leonmartinelly'));
+
   history.forEach(m => {
+    const escapedSender = (m.name || '').replace(/'/g, "\\'");
     if (m.sender === 'vendor') {
       htmlContent += `
         <div class="chat-msg vendor">
           <b>🚛 ${m.name}:</b><br>${m.text}
           <div class="chat-msg-footer">
             <span class="chat-msg-time">${m.timeStr}</span>
-            <button class="btn-report" onclick="abrirModalDenuncia('Chat Repartidor', 'Mensaje de Repartidor')"><i class="fa-solid fa-flag"></i> Denunciar</button>
+            <div style="display:flex; gap:4px; align-items:center;">
+              <button class="btn-report" onclick="abrirModalDenuncia('Chat Repartidor', 'Mensaje de ${escapedSender}')"><i class="fa-solid fa-flag"></i> Denunciar</button>
+              ${isAdmin ? `<button onclick="banearUsuarioAdmin('${escapedSender}')" style="background:#D32F2F; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; font-weight:700; cursor:pointer;" title="Banear Usuario desde Chat">🚫 Banear (Admin)</button>` : ''}
+            </div>
           </div>
         </div>
       `;
@@ -114,6 +121,7 @@ function cambiarVendedorChat() {
           <b>🏠 ${m.name}:</b><br>${m.text}
           <div class="chat-msg-footer">
             <span class="chat-msg-time">${m.timeStr}</span>
+            ${isAdmin ? `<button onclick="banearUsuarioAdmin('${escapedSender}')" style="background:#D32F2F; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; font-weight:700; cursor:pointer; margin-left:6px;" title="Banear Usuario desde Chat">🚫 Banear (Admin)</button>` : ''}
           </div>
         </div>
       `;

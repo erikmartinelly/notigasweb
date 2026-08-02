@@ -1,8 +1,8 @@
 /* ==========================================================================
-   NOTIGAS - MÓDULO DE MINI REDDIT VECINAL (AVISOS, VOTOS, COMENTARIOS Y EXPIRACIÓN DE 7 DÍAS)
+   NOTIGAS - MÓDULO DE MINI REDDIT VECINAL (AVISOS, VOTOS, COMENTARIOS Y EXPIRACIÓN AUTOMÁTICA DE 72 HORAS)
    ========================================================================== */
 
-const FORUM_POST_EXPIRATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 Días en milisegundos
+const FORUM_POST_EXPIRATION_MS = 72 * 60 * 60 * 1000; // 72 Horas (3 Días) en milisegundos
 
 let postCounterIndex = 1;
 let activePostCommentsRef = null;
