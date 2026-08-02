@@ -22,14 +22,13 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Roboto', sans-serif; }
     body { background-color: #0F172A; color: #FFFFFF; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-    header { background-color: #1E293B; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
-    .brand { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 900; color: #FF6D00; letter-spacing: 0.5px; }
+    header { background-color: #1E293B; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+    .brand { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 900; color: #FF6D00; letter-spacing: 0.5px; }
     .brand-img { width: 32px; height: 32px; border-radius: 8px; border: 1.5px solid #FF6D00; box-shadow: 0 0 10px rgba(255,109,0,0.4); object-fit: cover; }
-    .header-actions { display: flex; align-items: center; gap: 6px; }
+    .header-actions { display: flex; align-items: center; gap: 8px; }
     .btn-badge { background-color: #0288D1; color: white; border: none; padding: 6px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; }
     .btn-driver { background-color: #FF6D00; color: white; border: none; padding: 6px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; }
-    .btn-config { background-color: #475569; color: white; border: 1px solid rgba(255,255,255,0.2); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; transition: background 0.2s; }
-    .btn-config:hover { background-color: #64748B; color: #FF6D00; }
+    .btn-admin { background-color: #E65100; color: white; border: none; padding: 6px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; }
 
     nav { background-color: #1E293B; display: flex; border-bottom: 1px solid rgba(255,255,255,0.08); z-index: 999; }
     .tab-btn { flex: 1; padding: 12px 4px; background: none; border: none; color: #94A3B8; font-size: 11px; font-weight: 700; cursor: pointer; text-align: center; border-bottom: 3px solid transparent; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 4px; }
@@ -98,7 +97,7 @@
     <div class="header-actions">
       <button class="btn-badge" id="btnGps"><i class="fa-solid fa-crosshairs"></i> GPS Auto</button>
       <button class="btn-driver" id="btnOpenDriver"><i class="fa-solid fa-truck-fast"></i> Soy Chofer</button>
-      <button class="btn-config" id="btnOpenAdmin" title="Configuración / Modo Administrador"><i class="fa-solid fa-gear"></i></button>
+      <button class="btn-admin" id="btnOpenAdmin"><i class="fa-solid fa-envelope"></i> Ingreso Gmail</button>
     </div>
   </header>
 
@@ -200,35 +199,6 @@
     <i class="fa-solid fa-arrow-up-right-from-square ad-link-icon"></i>
   </footer>
 
-  <!-- MODAL DE PEDIDO MULTI-CATEGORÍA -->
-  <div class="modal" id="modalPedido">
-    <div class="modal-content">
-      <div class="modal-title">
-        <span>📦 Confirmar Pedido a Domicilio</span>
-        <button class="btn-close" onclick="closePedidoModal()">✕</button>
-      </div>
-      <div class="form-group">
-        <label>Categoría del Pedido:</label>
-        <select id="selectCategoria">
-          <option value="🔥 Garrafa de Gas GLP (22.5 Bs)">🔥 Garrafa de Gas GLP (22.5 Bs)</option>
-          <option value="💧 Botellón de Agua Purificada 20L (12 Bs)">💧 Botellón de Agua Purificada 20L (12 Bs)</option>
-          <option value="♻️ Venta / Recolección de Chatarra">♻️ Venta / Recolección de Chatarra</option>
-          <option value="🧼 Detergentes & Productos de Limpieza">🧼 Detergentes & Productos de Limpieza</option>
-          <option value="📦 Encargos & Otros Pedidos Barriales">📦 Encargos & Otros Pedidos Barriales</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Cantidad o Detalle:</label>
-        <input type="text" id="inputCantidad" placeholder="Ej: 1 Garrafa / 2 Botellones / 10kg Chatarra" value="1 Garrafa de GLP">
-      </div>
-      <div class="form-group">
-        <label>Número de WhatsApp para Confirmación:</label>
-        <input type="tel" id="inputUserPhone" placeholder="+591 70000000">
-      </div>
-      <button class="btn-submit" onclick="confirmarPedido()"><i class="fa-solid fa-paper-plane"></i> Confirmar y Solicitar en Vivo</button>
-    </div>
-  </div>
-
   <!-- MODAL DE INGRESO PARA CHOFERES / REPARTIDORES -->
   <div class="modal" id="modalDriver">
     <div class="modal-content">
@@ -252,7 +222,7 @@
     </div>
   </div>
 
-  <!-- MODAL ADMIN CONFIGURACIÓN POR INGRESO GMAIL -->
+  <!-- MODAL ADMIN POR INGRESO GMAIL -->
   <div class="modal" id="modalAdmin">
     <div class="modal-content">
       <div class="modal-title">
@@ -377,24 +347,6 @@
       }
     });
 
-    // MODAL DE PEDIDOS Y CATEGORÍAS
-    const modalPedido = document.getElementById('modalPedido');
-    function abrirModalPedido() { modalPedido.style.display = 'flex'; }
-    function closePedidoModal() { modalPedido.style.display = 'none'; }
-    function pedirItemCategoria(categoria, precio) {
-      document.getElementById('selectCategoria').value = document.querySelector(`#selectCategoria option[value*="${categoria}"]`) ? document.querySelector(`#selectCategoria option[value*="${categoria}"]`).value : document.getElementById('selectCategoria').options[0].value;
-      abrirModalPedido();
-    }
-    function confirmarPedido() {
-      if (!userMarker) return;
-      const pos = userMarker.getLatLng();
-      const cat = document.getElementById('selectCategoria').value;
-      const cant = document.getElementById('inputCantidad').value || '1 unidad';
-      closePedidoModal();
-      alert(`📦 PEDIDO REGISTRADO EN VIVO\n\nCategoría: ${cat}\nDetalle: ${cant}\n🏠 Ubicación de Entrega: Lat ${pos.lat.toFixed(5)}, Lng ${pos.lng.toFixed(5)}\n\nEl repartidor más cercano se contactará vía WhatsApp.`);
-    }
-
-    // MODAL DE CHOFERES (GOOGLE & WHATSAPP)
     const modalDriver = document.getElementById('modalDriver');
     document.getElementById('btnOpenDriver').addEventListener('click', () => modalDriver.style.display = 'flex');
     function closeDriverModal() { modalDriver.style.display = 'none'; }
