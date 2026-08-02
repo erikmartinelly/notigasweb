@@ -990,3 +990,53 @@ footer.ad-banner-container {
 .modal-tab-btn.active { color: #FF6D00; border-bottom-color: #FF6D00; }
 .modal-tab-pane { display: none; }
 .modal-tab-pane.active { display: block; }
+
+/* DISEÑO MEJORADO DE SUBMENÚ DE PEDIDOS BARRIALES */
+.submenu-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.submenu-card {
+  background: linear-gradient(145deg, #1E293B, #0F172A);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  transition: all 0.25s ease-in-out;
+  text-align: center;
+}
+
+.submenu-card:hover {
+  transform: translateY(-4px);
+  border-color: #FF6D00;
+  box-shadow: 0 8px 22px rgba(255, 109, 0, 0.4);
+  background: linear-gradient(145deg, #253347, #152033);
+}
+
+.submenu-card i {
+  font-size: 28px;
+  margin-bottom: 2px;
+}
+
+.submenu-card .garrafa-icon-svg {
+  width: 34px;
+  height: 34px;
+  fill: #FF6D00;
+  filter: drop-shadow(0 2px 8px rgba(255, 109, 0, 0.6));
+}
+
+.submenu-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: #FFFFFF;
+  line-height: 1.2;
+}

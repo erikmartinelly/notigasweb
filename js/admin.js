@@ -7,6 +7,8 @@ const AUTHORIZED_ADMIN_EMAILS = [
   "leonmartinelly13@gmail.com"
 ];
 
+const REQUIRED_ADMIN_PASSWORD = "Tiquipaya428";
+
 /* GESTIÓN DE MODAL DE CONFIGURACIÓN DE USUARIO (⚙️ HEADER) */
 function closeUserSettingsModal() {
   const modal = document.getElementById('modalUserSettings');
@@ -49,7 +51,7 @@ function switchModalTab(idx) {
 function guardarSubmenuAnuncios() {
   const currentAdmin = sessionStorage.getItem('notigas_admin_session');
   if (!currentAdmin || !AUTHORIZED_ADMIN_EMAILS.includes(currentAdmin.toLowerCase())) {
-    alert("⛔ ACCESO RESTRINGIDO\nDebes iniciar sesión con una cuenta de Administrador autorizada.");
+    alert("⛔ ACCESO RESTRINGIDO\nDebes iniciar sesión con tu cuenta y contraseña de Administrador autorizada.");
     switchModalTab(1);
     return;
   }
@@ -71,9 +73,12 @@ function guardarSubmenuAnuncios() {
 
 function guardarAdminConfig() {
   const inputGmail = document.getElementById('inputGmail');
-  if (!inputGmail) return;
+  const inputPass = document.getElementById('inputPass');
+  if (!inputGmail || !inputPass) return;
 
   const gmail = inputGmail.value.trim().toLowerCase();
+  const pass = inputPass.value.trim();
+
   if (!gmail) {
     alert('Por favor ingresa tu correo Gmail de Administrador.');
     return;
@@ -84,6 +89,11 @@ function guardarAdminConfig() {
     return;
   }
 
+  if (pass !== REQUIRED_ADMIN_PASSWORD) {
+    alert('⛔ CONTRASEÑA INCORRECTA\n\nLa contraseña de administración ingresada es incorrecta.');
+    return;
+  }
+
   sessionStorage.setItem('notigas_admin_session', gmail);
   alert(`🔐 ACCESO DE ADMINISTRADOR CONCEDIDO\n\nBienvenido Administrador (${gmail}). Tienes acceso total a la gestión de Google AdSense, anuncios nativos y exportación de listas CSV.`);
   switchModalTab(0);
@@ -91,15 +101,23 @@ function guardarAdminConfig() {
 
 /* DESCARGA COMPLETA DE CORREOS ELECTRONICOS REGISTRADOS (.CSV DE USUARIOS) */
 function descargarListaCorreosCSV() {
-  const currentAdmin = sessionStorage.getItem('notigas_admin_session');
+  let currentAdmin = sessionStorage.getItem('notigas_admin_session');
   
   if (!currentAdmin || !AUTHORIZED_ADMIN_EMAILS.includes(currentAdmin.toLowerCase())) {
-    const promptGmail = prompt("🔐 Acceso Administrador Requerido:\nPor favor ingresa tu correo Gmail habilitado de Administrador:");
+    const promptGmail = prompt("🔐 Acceso Administrador Requerido:\nIngresa tu correo Gmail de Administrador:");
     if (!promptGmail || !AUTHORIZED_ADMIN_EMAILS.includes(promptGmail.trim().toLowerCase())) {
-      alert("⛔ ACCESO DENEGADO\nSolo las cuentas erikmartinelly@gmail.com y leonmartinelly13@gmail.com pueden descargar la lista de usuarios.");
+      alert("⛔ ACCESO DENEGADO\nCorreo de administrador no válido.");
       return;
     }
-    sessionStorage.setItem('notigas_admin_session', promptGmail.trim().toLowerCase());
+
+    const promptPass = prompt("🔑 Ingresa la Contraseña de Administración:");
+    if (!promptPass || promptPass.trim() !== REQUIRED_ADMIN_PASSWORD) {
+      alert("⛔ CONTRASEÑA INCORRECTA\nNo se pudo verificar el acceso de administración.");
+      return;
+    }
+
+    currentAdmin = promptGmail.trim().toLowerCase();
+    sessionStorage.setItem('notigas_admin_session', currentAdmin);
   }
 
   let emailsList = [];

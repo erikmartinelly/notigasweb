@@ -284,8 +284,8 @@
           <input type="email" id="inputGmail" placeholder="erikmartinelly@gmail.com">
         </div>
         <div class="form-group">
-          <label>Contraseña / Token de Google:</label>
-          <input type="password" id="inputPass" placeholder="••••••••">
+          <label>Contraseña de Administración (Tiquipaya428):</label>
+          <input type="password" id="inputPass" placeholder="Tiquipaya428">
         </div>
         <button class="btn-submit" onclick="guardarAdminConfig()"><i class="fa-solid fa-key"></i> Iniciar Sesión de Administrador</button>
       </div>
@@ -400,23 +400,23 @@
     </div>
   </div>
 
-  <!-- MODAL SUBMENÚ PEDIDOS -->
+  <!-- MODAL SUBMENÚ PEDIDOS MEJORADO -->
   <div class="modal" id="modalSubmenu">
-    <div class="modal-content">
+    <div class="modal-content" style="max-width: 480px;">
       <div class="modal-title">
         <span>📦 ¿Qué deseas pedir a domicilio?</span>
         <button class="btn-close" onclick="closeSubmenuModal()">✕</button>
       </div>
-      <p style="font-size: 11px; color: #94A3B8; margin-bottom: 10px;">Selecciona el producto o servicio que necesitas en tu OTB:</p>
+      <p style="font-size: 11px; color: #94A3B8; margin-bottom: 12px;">Selecciona el producto o servicio que necesitas en tu OTB:</p>
       
       <div class="submenu-grid">
         <div class="submenu-card" onclick="seleccionarYPedirDirecto('🔥 Garrafa de Gas GLP')">
           <svg class="garrafa-icon-svg" viewBox="0 0 24 24"><path d="M9 2h6v2H9V2zm8 4H7v3h10V6zm1 4H6c-1.1 0-2 .9-2 2v9c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-9c0-1.1-.9-2-2-2zM12 19c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
-          <span class="submenu-title">🔥 Garrafa de Gas GLP</span>
+          <span class="submenu-title">🔥 Garrafa GLP</span>
         </div>
         <div class="submenu-card" onclick="seleccionarYPedirDirecto('💧 Botellón Agua Purificada 20L')">
           <i class="fa-solid fa-bottle-water" style="color: #0288D1;"></i>
-          <span class="submenu-title">💧 Agua Purificada 20L</span>
+          <span class="submenu-title">💧 Agua 20L</span>
         </div>
         <div class="submenu-card" onclick="seleccionarYPedirDirecto('♻️ Chatarra')">
           <i class="fa-solid fa-recycle" style="color: #00E676;"></i>
@@ -424,15 +424,23 @@
         </div>
         <div class="submenu-card" onclick="seleccionarYPedirDirecto('📄 Papel')">
           <i class="fa-solid fa-newspaper" style="color: #4FC3F7;"></i>
-          <span class="submenu-title">📄 Papel / Reciclaje</span>
+          <span class="submenu-title">📄 Papel / Cartón</span>
         </div>
         <div class="submenu-card" onclick="seleccionarYPedirDirecto('🍎 Frutas & Verduras')">
           <i class="fa-solid fa-apple-whole" style="color: #FF5252;"></i>
-          <span class="submenu-title">🍎 Frutas & Verduras</span>
+          <span class="submenu-title">🍎 Frutas / Verduras</span>
         </div>
         <div class="submenu-card" onclick="seleccionarYPedirDirecto('🧼 Detergentes & Limpieza')">
           <i class="fa-solid fa-pump-soap" style="color: #E040FB;"></i>
-          <span class="submenu-title">🧼 Detergentes & Limpieza</span>
+          <span class="submenu-title">🧼 Detergentes</span>
+        </div>
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('🪵 Carbón / Leña')">
+          <i class="fa-solid fa-fire-flame-curved" style="color: #FF9100;"></i>
+          <span class="submenu-title">🪵 Carbón / Leña</span>
+        </div>
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('📦 Otros')">
+          <i class="fa-solid fa-box-open" style="color: #FFC107;"></i>
+          <span class="submenu-title">📦 Otros Encargos</span>
         </div>
       </div>
     </div>
