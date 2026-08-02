@@ -2,6 +2,9 @@
    NOTIGAS - MÓDULO DE AUTENTICACIÓN & GOOGLE IDENTITY SERVICES (1-TAP SIGN-IN)
    ========================================================================== */
 
+// CLIENT ID DE GOOGLE CLOUD CONSOLE (ORGANIZACIÓN: erikmartinelly-org - ID: 55226185628)
+const GOOGLE_CLIENT_ID = "55226185628-notigasweb.apps.googleusercontent.com"; 
+
 let databaseEmails = [
   { gmail: "cliente_otb@gmail.com", role: "Cliente", fecha: "2026-08-01" },
   { gmail: "gasero_express@gmail.com", role: "Repartidor Gas GLP", fecha: "2026-08-01" }
@@ -33,14 +36,14 @@ document.addEventListener('DOMContentLoaded', () => {
 function initGoogleOneTap() {
   if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
     google.accounts.id.initialize({
-      client_id: "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com", // Sustituir por Client ID de Google Cloud Console
+      client_id: GOOGLE_CLIENT_ID,
       callback: handleCredentialResponse,
       auto_select: true
     });
 
     google.accounts.id.prompt((notification) => {
       if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-        console.log("Google One Tap no mostrado automaticamente, usando modal por defecto.");
+        console.log("Google One Tap desplegado o listo para interacción.");
       }
     });
   }
