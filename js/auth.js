@@ -31,9 +31,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function toggleRegFields() {
   const roleSelect = document.getElementById('regRole');
-  const extraFields = document.getElementById('choferExtraFields');
-  if (roleSelect && extraFields) {
-    extraFields.style.display = (roleSelect.value === 'chofer') ? 'block' : 'none';
+  const driverFields = document.getElementById('regDriverFields');
+  const buyerFields = document.getElementById('regBuyerFields');
+  
+  if (roleSelect) {
+    if (roleSelect.value === 'chofer') {
+      if (driverFields) driverFields.style.display = 'block';
+      if (buyerFields) buyerFields.style.display = 'none';
+    } else {
+      if (buyerFields) buyerFields.style.display = 'block';
+      if (driverFields) driverFields.style.display = 'none';
+    }
   }
 }
 
@@ -54,19 +62,25 @@ function guardarRegistroUnico() {
   let data = { role, gmail };
 
   if (role === 'chofer') {
+    const placa = (document.getElementById('regPlaca')?.value || '').trim();
+    const telReferencia = (document.getElementById('regTelReferencia')?.value || '').trim();
+
+    if (!placa || !telReferencia) {
+      alert('Para repartidores es obligatorio ingresar el Número de Placa y un Teléfono de Referencia privado.');
+      return;
+    }
+    data.placa = placa;
+    data.telReferencia = telReferencia; // Teléfono privado de referencia interna
+  } else {
     const nombre = (document.getElementById('regNombre')?.value || '').trim();
     const apellido = (document.getElementById('regApellido')?.value || '').trim();
-    const whatsapp = (document.getElementById('regWhatsapp')?.value || '').trim();
-    const placa = (document.getElementById('regPlaca')?.value || '').trim();
 
-    if (!nombre || !apellido || !whatsapp || !placa) {
-      alert('Para repartidores/choferes es obligatorio ingresar Nombre, Apellido, Teléfono y Placa.');
+    if (!nombre || !apellido) {
+      alert('Para compradores es obligatorio ingresar Nombre y Apellido.');
       return;
     }
     data.nombre = nombre;
     data.apellido = apellido;
-    data.whatsapp = whatsapp;
-    data.placa = placa;
   }
 
   localStorage.setItem('notigas_user_data', JSON.stringify(data));
@@ -75,7 +89,7 @@ function guardarRegistroUnico() {
   const modalAuth = document.getElementById('modalWelcomeAuth');
   if (modalAuth) modalAuth.style.display = 'none';
 
-  alert(`✅ REGISTRO VERIFICADO CON GOOGLE GMAIL\n\nBienvenido a NOTIGAS (${gmail}).`);
+  alert(`✅ REGISTRO REGISTRADO EN EL SISTEMA\n\nBienvenido a NOTIGAS (${gmail}).`);
 }
 
 function closeDriverModal() { 
@@ -85,23 +99,21 @@ function closeDriverModal() {
 
 function iniciarSesionChofer() {
   const gmail = (document.getElementById('inputDriverGmail')?.value || '').trim();
-  const nombre = (document.getElementById('inputDriverNombre')?.value || '').trim();
-  const apellido = (document.getElementById('inputDriverApellido')?.value || '').trim();
-  const whatsapp = (document.getElementById('inputDriverWhatsapp')?.value || '').trim();
   const plate = (document.getElementById('inputDriverPlate')?.value || '').trim();
+  const telReferencia = (document.getElementById('inputDriverTelRef')?.value || '').trim();
 
-  if (!gmail || !nombre || !apellido || !whatsapp || !plate) {
-    alert('Por favor completa todos los campos requeridos para Repartidor/Chofer.');
+  if (!gmail || !plate || !telReferencia) {
+    alert('Por favor ingresa tu Correo Gmail, Número de Placa y Teléfono de Referencia privado.');
     return;
   }
 
-  const choferData = { role: 'chofer', gmail, nombre, apellido, whatsapp, placa: plate };
+  const choferData = { role: 'chofer', gmail, placa: plate, telReferencia: telReferencia };
   localStorage.setItem('notigas_user_data', JSON.stringify(choferData));
 
   closeDriverModal();
-  alert(`🟢 CUENTA DE REPARTIDOR ACTIVADA\n\nRepartidor: ${nombre} ${apellido}\nGmail: ${gmail}\nWhatsApp: ${whatsapp}\nPlaca: ${plate}`);
+  alert(`🟢 CUENTA DE REPARTIDOR ACTIVADA\n\nRepartidor Placa: ${plate}\nGmail: ${gmail}\n(El teléfono de referencia se mantiene privado en el sistema).`);
   
   if (typeof truckMarker !== 'undefined' && truckMarker) {
-    truckMarker.setPopupContent(`<b>🟢 Repartidor Activo: ${nombre} ${apellido}</b><br>Placa: ${plate}<br>📱 WhatsApp: ${whatsapp}`).openPopup();
+    truckMarker.setPopupContent(`<b>🟢 Repartidor Activo (Placa: ${plate})</b><br><small>Comunicación por chat interno de NOTIGAS</small>`).openPopup();
   }
 }

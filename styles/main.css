@@ -405,7 +405,7 @@ main {
 .shop-price { font-size: 12px; color: #00E676; font-weight: 700; margin-top: 2px; }
 
 .btn-chat-vendor { 
-  background-color: #25D366; 
+  background-color: #0288D1; 
   color: white; 
   border: none; 
   padding: 6px 10px; 
@@ -486,6 +486,7 @@ main {
   border: 1px solid rgba(255,255,255,0.08); 
   display: flex; 
   gap: 14px; 
+  position: relative;
 }
 
 .forum-votes { 
@@ -521,9 +522,30 @@ main {
 
 .forum-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; color: white; }
 .forum-desc { font-size: 12px; color: #94A3B8; line-height: 1.4; }
-.forum-footer { display: flex; gap: 12px; margin-top: 8px; font-size: 11px; color: #64748B; font-weight: 500; }
+.forum-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 11px; color: #64748B; font-weight: 500; }
 
-/* CHAT DIRECTO COMPRADOR ↔ VENDEDOR */
+/* BOTÓN DE DENUNCIA / REPORTAR ACOSO O CONTENIDO INAPROPIADO */
+.btn-report {
+  background: none;
+  border: none;
+  color: #EF4444;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  opacity: 0.8;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+.btn-report:hover {
+  opacity: 1;
+  background-color: rgba(239, 68, 68, 0.15);
+}
+
+/* CHAT DIRECTO COMPRADOR ↔ REPARTIDOR */
 .direct-chat-container { flex: 1; display: flex; flex-direction: column; background-color: #0F172A; }
 
 .chat-vendor-selector { 
@@ -555,16 +577,17 @@ main {
 }
 
 .chat-msg { 
-  max-width: 80%; 
+  max-width: 85%; 
   padding: 10px 14px; 
   border-radius: 12px; 
   font-size: 12px; 
   line-height: 1.4; 
+  position: relative;
 }
 
 .chat-msg.buyer { align-self: flex-end; background-color: #FF6D00; color: white; border-bottom-right-radius: 2px; }
 .chat-msg.vendor { align-self: flex-start; background-color: #1E293B; color: white; border: 1px solid rgba(255,255,255,0.1); border-bottom-left-radius: 2px; }
-.chat-msg-time { font-size: 9px; opacity: 0.7; margin-top: 4px; text-align: right; }
+.chat-msg-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; font-size: 9px; opacity: 0.85; }
 
 .chat-input-bar { 
   padding: 10px 14px; 
@@ -596,7 +619,81 @@ main {
   font-size: 13px; 
 }
 
-/* PUBLICIDAD & GOOGLE ADS */
+/* TARJETA PATROCINADA ESTILO FACEBOOK FEED EN EL FORO Y TABLÓN */
+.ad-facebook-feed-card {
+  background-color: #1E293B;
+  border-radius: 14px;
+  border: 1px solid rgba(255,109,0,0.3);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: linear-gradient(180deg, rgba(30,41,59,0.95), rgba(15,23,42,0.95));
+}
+.ad-fb-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ad-fb-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ad-fb-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #FF6D00, #E65100);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+.ad-fb-info {
+  display: flex;
+  flex-direction: column;
+}
+.ad-fb-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: white;
+}
+.ad-fb-sub {
+  font-size: 10px;
+  color: #FF6D00;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.ad-fb-body {
+  font-size: 12px;
+  color: #CBD5E1;
+  line-height: 1.4;
+}
+.ad-fb-media {
+  background: #0F172A;
+  border-radius: 10px;
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ad-fb-media-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+}
+.ad-fb-media-desc {
+  font-size: 10px;
+  color: #94A3B8;
+}
+
+/* PUBLICIDAD FOOTER */
 footer.ad-banner-container { 
   background-color: #0F172A; 
   border-top: 1px solid rgba(255,109,0,0.25); 
@@ -678,11 +775,6 @@ footer.ad-banner-container {
 .shop-card.ad-sponsored { 
   border: 1px dashed rgba(255,109,0,0.4); 
   background: linear-gradient(135deg, rgba(30,41,59,0.95), rgba(15,23,42,0.95)); 
-}
-
-.forum-card.ad-sponsored { 
-  border: 1px dashed rgba(255,109,0,0.35); 
-  background: rgba(30,41,59,0.7); 
 }
 
 /* MODALES */

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   NOTIGAS - MÓDULO DE FORO VECINAL TIPO REDDIT Y COMENTARIOS INTERACTIVOS
+   NOTIGAS - MÓDULO DE FORO VECINAL TIPO REDDIT, COMENTARIOS Y DENUNCIAS
    ========================================================================== */
 
 let postCounterIndex = 3;
@@ -78,7 +78,8 @@ function crearNuevoPost() {
       <div class="forum-footer">
         <span style="cursor:pointer; color:#FF6D00; font-weight:700;" onclick="abrirComentariosPost(${newIndex}, '${escapedTitle}', '${escapedDesc}', '${tipo}', this)">
           💬 <span class="comment-count-num">0</span> comentarios
-        </span> • <span>Hace un momento</span>
+        </span>
+        <button class="btn-report" onclick="abrirModalDenuncia('Aviso OTB', '${escapedTitle}')"><i class="fa-solid fa-flag"></i> Denunciar</button>
       </div>
     </div>
   `;
@@ -121,10 +122,10 @@ function renderComments(postIndex) {
   }
 
   container.innerHTML = comments.map(c => `
-    <div style="background: #0F172A; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+    <div style="background: #0F172A; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 6px;">
       <div style="display: flex; justify-content: space-between; font-size: 10px; color: #FF6D00; font-weight: 700;">
         <span>👤 ${c.author}</span>
-        <span style="color: #64748B;">${c.time}</span>
+        <button class="btn-report" onclick="abrirModalDenuncia('Comentario OTB', 'Comentario de ${c.author}')"><i class="fa-solid fa-flag"></i></button>
       </div>
       <div style="font-size: 12px; color: #E2E8F0; margin-top: 3px;">${c.text}</div>
     </div>
@@ -140,9 +141,18 @@ function agregarComentarioPost() {
   
   const idx = activePostCommentsRef.index;
   if (!postCommentsStore[idx]) postCommentsStore[idx] = [];
-  
+
+  let userAlias = "Tú (Vecino OTB)";
+  try {
+    const saved = localStorage.getItem('notigas_user_data');
+    if (saved) {
+      const u = JSON.parse(saved);
+      if (u.nombre) userAlias = `${u.nombre} ${u.apellido ? u.apellido[0] + '.' : ''}`;
+    }
+  } catch(e){}
+
   postCommentsStore[idx].push({
-    author: "Tú (Vecino OTB)",
+    author: userAlias,
     text: text,
     time: "Hace un momento"
   });
@@ -154,8 +164,37 @@ function agregarComentarioPost() {
     const countSpan = activePostCommentsRef.btnElem.querySelector('.comment-count-num');
     if (countSpan) {
       countSpan.innerText = postCommentsStore[idx].length;
-    } else {
-      activePostCommentsRef.btnElem.innerText = `💬 ${postCommentsStore[idx].length} comentarios`;
     }
   }
+}
+
+/* SISTEMA DE DENUNCIAS DE ACOSO, BULLYING O CONTENIDO INAPROPIADO */
+function abrirModalDenuncia(contexto, objetoReportado) {
+  const modalReport = document.getElementById('modalReport');
+  const targetLabel = document.getElementById('reportTargetLabel');
+  const hiddenContext = document.getElementById('reportContext');
+
+  if (targetLabel) targetLabel.innerText = `${contexto}: "${objetoReportado}"`;
+  if (hiddenContext) hiddenContext.value = `${contexto} | ${objetoReportado}`;
+  if (modalReport) modalReport.style.display = 'flex';
+}
+
+function closeReportModal() {
+  const modalReport = document.getElementById('modalReport');
+  if (modalReport) modalReport.style.display = 'none';
+}
+
+function enviarDenuncia() {
+  const motivoSelect = document.getElementById('selectReportMotivo');
+  const detalleInput = document.getElementById('inputReportDetalle');
+  const contextVal = document.getElementById('reportContext')?.value || 'General';
+
+  if (!motivoSelect) return;
+
+  const motivo = motivoSelect.value;
+  const detalle = detalleInput ? detalleInput.value.trim() : '';
+
+  closeReportModal();
+
+  alert(`🚨 DENUNCIA REGISTRADA EN EL SISTEMA\n\nMotivo: ${motivo}\nContexto: ${contextVal}\n\nGracias por reportar. Nuestro equipo de moderación administrará esta publicación para mantener una comunidad segura en la OTB.`);
 }

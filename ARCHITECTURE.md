@@ -90,14 +90,19 @@ graph TD
 
 ## ⚙️ Reglas de Negocio e Integridad Estricta
 
-### 1. Autenticación y Privacidad de Datos:
-- **Compradores / Vecinos:** Se autentican únicamente con su **Correo Google Gmail**. **NO SE LES PIDE NÚMERO DE TELÉFONO EN NINGÚN MOMENTO**.
-- **Repartidores / Choferes:** Al registrarse como repartidores, ingresan Gmail, Nombre, Apellido, Número de WhatsApp (público para compradores) y Placa del Vehículo.
+### 1. Autenticación y Privacidad Anónima de Datos:
+- **Compradores / Vecinos:** Ingresan **Correo Google Gmail, Nombre y Apellido** para registrarse en el sistema. Su perfil público se mantiene anónimo mediante Alias.
+- **Repartidores / Conductores:** Ingresan **Correo Gmail, Número de Placa y Teléfono de Referencia**. El teléfono de referencia **ES PRIVADO DEL SISTEMA Y NO SE MUESTRA PÚBLICAMENTE**.
+- **Comunicación Interna:** Toda la coordinación y conversación entre compradores y repartidores se realiza **100% dentro del chat interno de la WebApp**, sin salir a WhatsApp u otra app externa.
+- **Expiración de Chats en 48 Horas:** Los mensajes del chat interno se eliminan y depuran automáticamente a las **48 horas** de su creación (`CHAT_EXPIRATION_MS`), optimizando el rendimiento y protegiendo la privacidad.
 - **Persistencia:** Se guarda de forma única y permanente en `localStorage` (`notigas_user_data`).
 
-### 2. Pestaña 3 (Foro Vecinal Reddit):
-- La **tercera pestaña** de la navegación (`tab2`, índice 2) está dedicada exclusivamente al **Foro Vecinal Estilo Reddit**.
-- Permite votos de subida/bajada (`▲` / `▼`), categorización de publicaciones (Queja Vecinal, Apoyo Vecinal, Aviso de Camión, Intercambio) y creación de temas en vivo.
+### 2. Sistema de Denuncias de Acoso, Bullying o Contenido Inapropiado:
+- **Botón de Reporte (`🚩 Denunciar`):** Habilitado en cada mensaje del **Chat Directo** y en cada aviso/comentario del **Tablón de Anuncios Vecinal**.
+- **Modal de Denuncia (`#modalReport`):** Permite a los usuarios notificar acoso, bullying, información falsa o conducta indebida a moderación.
+
+### 3. Propaganda Estilo Facebook Feed:
+- Tarjetas publicitarias integradas directamente al medio del feed de productos/servicios y del tablón de anuncios vecinal, simulando el estilo de los feeds de redes sociales.
 
 ### 3. Módulo de Administración y Exportación CSV:
 - El modal de administración (`#modalAdmin`) cuenta con pestañas de submenús internos:
