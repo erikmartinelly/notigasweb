@@ -39,8 +39,8 @@
   <!-- PESTAÑAS DE NAVEGACIÓN PRINCIPALES -->
   <nav>
     <button class="tab-btn active" onclick="switchTab(0)"><i class="fa-solid fa-map-location-dot"></i> 1ª MAPA EN VIVO</button>
-    <button class="tab-btn" onclick="switchTab(1)"><i class="fa-solid fa-store"></i> 2ª PÁGINAS DE NEGOCIO</button>
-    <button class="tab-btn" onclick="switchTab(2)"><i class="fa-solid fa-comments"></i> 3ª REDDIT VECINAL & CHAT</button>
+    <button class="tab-btn" onclick="switchTab(1)"><i class="fa-solid fa-store"></i> 2ª REPARTIDORES (NEGOCIOS)</button>
+    <button class="tab-btn" onclick="switchTab(2)"><i class="fa-solid fa-bullhorn"></i> 3ª TABLÓN DE ANUNCIOS & CHAT</button>
   </nav>
 
   <main>
@@ -94,8 +94,8 @@
     <div class="tab-content" id="tab2">
       <!-- SUB-NAVEGACIÓN INTERNA EN LA 3ª PESTAÑA -->
       <div class="subnav-3rd-tab">
-        <button class="subtab-btn active" id="subtabBtnReddit" onclick="switch3rdTabMode('reddit')"><i class="fa-solid fa-comments"></i> 💬 Mini Reddit Vecinal</button>
-        <button class="subtab-btn" id="subtabBtnDirect" onclick="switch3rdTabMode('direct')"><i class="fa-solid fa-headset"></i> 📱 Chat Privado con Repartidor</button>
+        <button class="subtab-btn active" id="subtabBtnReddit" onclick="switch3rdTabMode('reddit')"><i class="fa-solid fa-bullhorn"></i> 📌 Tablón de Anuncios Vecinal (7 Días)</button>
+        <button class="subtab-btn" id="subtabBtnDirect" onclick="switch3rdTabMode('direct')"><i class="fa-solid fa-comments"></i> 💬 Chat Privado Interno</button>
       </div>
 
       <!-- VISTA 1: MINI REDDIT VECINAL (AVISOS GRATIS CON DURACIÓN 1 SEMANA) -->
@@ -210,6 +210,14 @@
           <label>¿Qué reparte? / Detalle del servicio:</label>
           <input type="text" id="regProductos" placeholder="Ej: Garrafas GLP 10kg, mangueras, reguladores">
         </div>
+        <div class="form-group">
+          <label>Zonas / OTBs de Recorrido:</label>
+          <input type="text" id="regZonas" placeholder="Ej: OTB Central, Av. Principal y calles vecinas">
+        </div>
+        <div class="form-group">
+          <label>Días y Horarios de Recorrido por Zona:</label>
+          <input type="text" id="regSchedule" placeholder="Ej: Lunes a Sábado: 07:00 a 18:00 (Mañanas: Norte, Tardes: Sur)">
+        </div>
       </div>
 
       <button class="btn-submit-google" onclick="guardarRegistroUnico()"><i class="fa-solid fa-store"></i> Crear y Publicar Mi Mini Página de Negocio</button>
@@ -249,6 +257,14 @@
       <div class="form-group">
         <label>¿Qué reparte? / Detalle de la oferta:</label>
         <input type="text" id="inputDriverProductos" placeholder="Ej: Botellones 20L, bombas de agua">
+      </div>
+      <div class="form-group">
+        <label>Zonas de Recorrido:</label>
+        <input type="text" id="inputDriverZonas" placeholder="Ej: OTB Norte y condominios">
+      </div>
+      <div class="form-group">
+        <label>Días y Horarios por Zona:</label>
+        <input type="text" id="inputDriverSchedule" placeholder="Ej: Lunes, Miércoles y Viernes: 08:00 a 17:00">
       </div>
       <button class="btn-submit-google" onclick="iniciarSesionChofer()"><i class="fa-solid fa-store"></i> Activar Ficha de Negocio de Repartidor</button>
     </div>
