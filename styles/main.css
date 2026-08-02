@@ -1040,3 +1040,70 @@ footer.ad-banner-container {
   color: #FFFFFF;
   line-height: 1.2;
 }
+
+/* SELECCIONADOR DE ROL COMPRADOR VS REPARTIDOR */
+.role-selector-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.role-select-btn {
+  flex: 1;
+  background-color: #0F172A;
+  border: 2px solid rgba(255,255,255,0.12);
+  color: #94A3B8;
+  padding: 12px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.role-select-btn.active, .role-select-btn:hover {
+  background-color: rgba(255,109,0,0.12);
+  border-color: #FF6D00;
+  color: #FF6D00;
+  box-shadow: 0 4px 14px rgba(255,109,0,0.3);
+}
+
+.role-select-btn i {
+  font-size: 20px;
+}
+
+/* TABS MÉTODO DE INGRESO */
+.auth-method-tabs {
+  display: flex;
+  background-color: #0F172A;
+  border-radius: 10px;
+  padding: 4px;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.auth-method-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  color: #94A3B8;
+  padding: 8px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.auth-method-btn.active {
+  background-color: #FF6D00;
+  color: white;
+}

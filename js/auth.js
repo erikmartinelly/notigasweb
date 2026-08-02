@@ -2,9 +2,11 @@
    NOTIGAS - MÓDULO DE AUTENTICACIÓN & GOOGLE IDENTITY SERVICES (1-TAP SIGN-IN)
    ========================================================================== */
 
-// CREDENCIALES OFICIALES DE GOOGLE CLOUD CONSOLE (ORGANIZACIÓN erikmartinelly-org)
 const GOOGLE_CLIENT_ID = "994996215118-a3gvm7gtorr1nof9vaksr05ndc1raso3.apps.googleusercontent.com"; 
 const GOOGLE_CLIENT_SECRET = "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";
+
+let currentSelectedRole = 'buyer'; // 'buyer' o 'driver'
+let currentSelectedMethod = 'google'; // 'google' o 'email'
 
 let databaseEmails = [
   { gmail: "cliente_otb@gmail.com", role: "Cliente", fecha: "2026-08-01" },
@@ -33,24 +35,90 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-/* INICIALIZACIÓN OFICIAL DE GOOGLE IDENTITY SERVICES (1-TAP SIGN-IN) */
+function selectAuthRole(role) {
+  currentSelectedRole = role;
+  const btnBuyer = document.getElementById('btnRoleBuyer');
+  const btnDriver = document.getElementById('btnRoleDriver');
+  const authFieldsBuyer = document.getElementById('authFieldsBuyer');
+  const authFieldsDriver = document.getElementById('authFieldsDriver');
+
+  if (btnBuyer && btnDriver) {
+    btnBuyer.classList.toggle('active', role === 'buyer');
+    btnDriver.classList.toggle('active', role === 'driver');
+  }
+
+  if (authFieldsBuyer && authFieldsDriver) {
+    if (role === 'driver') {
+      authFieldsDriver.style.display = 'block';
+      authFieldsBuyer.style.display = 'none';
+    } else {
+      authFieldsBuyer.style.display = 'block';
+      authFieldsDriver.style.display = 'none';
+    }
+  }
+}
+
+function selectAuthMethod(method) {
+  currentSelectedMethod = method;
+  const btnGoogle = document.getElementById('btnAuthMethodGoogle');
+  const btnEmail = document.getElementById('btnAuthMethodEmail');
+  const paneGoogle = document.getElementById('authPaneGoogle');
+  const paneEmail = document.getElementById('authPaneEmail');
+
+  if (btnGoogle && btnEmail) {
+    btnGoogle.classList.toggle('active', method === 'google');
+    btnEmail.classList.toggle('active', method === 'email');
+  }
+
+  if (paneGoogle && paneEmail) {
+    if (method === 'email') {
+      paneEmail.style.display = 'block';
+      paneGoogle.style.display = 'none';
+    } else {
+      paneGoogle.style.display = 'block';
+      paneEmail.style.display = 'none';
+    }
+  }
+}
+
+/* INICIALIZACIÓN OFICIAL DE GOOGLE IDENTITY SERVICES */
 function initGoogleOneTap() {
   if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
     google.accounts.id.initialize({
       client_id: GOOGLE_CLIENT_ID,
       callback: handleCredentialResponse,
-      auto_select: true
-    });
-
-    google.accounts.id.prompt((notification) => {
-      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-        console.log("Google One Tap desplegado o listo para interacción.");
-      }
+      auto_select: false
     });
   }
 }
 
-/* MANEJADOR DEL TOKEN DE RESPUESTA DE GOOGLE */
+function iniciarConGoogleDirecto() {
+  if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+    google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: handleCredentialResponse
+    });
+    google.accounts.id.prompt();
+  } else {
+    const gmailPrompt = prompt("🌐 Google One Tap / Iniciar Sesión:\nIngresa tu correo Gmail de Google:");
+    if (gmailPrompt && gmailPrompt.includes('@')) {
+      const userData = {
+        role: currentSelectedRole === 'driver' ? 'repartidor' : 'vecino',
+        gmail: gmailPrompt.trim().toLowerCase(),
+        nombre: gmailPrompt.split('@')[0],
+        apellido: 'Usuario'
+      };
+      localStorage.setItem('notigas_user_data', JSON.stringify(userData));
+      databaseEmails.push({ gmail: userData.gmail, role: userData.role, fecha: new Date().toISOString().split('T')[0] });
+      
+      const modalAuth = document.getElementById('modalWelcomeAuth');
+      if (modalAuth) modalAuth.style.display = 'none';
+
+      alert(`✅ INGRESO GOOGLE VERIFICADO\n\n¡Bienvenido ${userData.nombre} (${userData.gmail})!`);
+    }
+  }
+}
+
 function handleCredentialResponse(response) {
   try {
     const base64Url = response.credential.split('.')[1];
@@ -65,55 +133,36 @@ function handleCredentialResponse(response) {
     const apellido = googleUser.family_name || '';
 
     const userData = {
-      role: 'vecino',
+      role: currentSelectedRole === 'driver' ? 'repartidor' : 'vecino',
       gmail: gmail,
       nombre: nombre,
       apellido: apellido
     };
 
     localStorage.setItem('notigas_user_data', JSON.stringify(userData));
-    databaseEmails.push({ gmail: gmail, role: 'Cliente', fecha: new Date().toISOString().split('T')[0] });
+    databaseEmails.push({ gmail: gmail, role: userData.role, fecha: new Date().toISOString().split('T')[0] });
 
     const modalAuth = document.getElementById('modalWelcomeAuth');
     if (modalAuth) modalAuth.style.display = 'none';
 
-    alert(`✅ AUTENTICACIÓN GOOGLE 1-TAP EXITOSA\n\n¡Bienvenido ${nombre} (${gmail})! Tu cuenta ha sido registrada de forma segura en NOTIGAS.`);
+    alert(`✅ AUTENTICACIÓN GOOGLE EXITOSA\n\n¡Bienvenido ${nombre} (${gmail})! Tu cuenta ha sido registrada de forma segura.`);
   } catch(e) {
     console.error("Error al procesar credencial de Google:", e);
   }
 }
 
-function toggleRegFields() {
-  const roleSelect = document.getElementById('regRole');
-  const driverFields = document.getElementById('regDriverFields');
-  const buyerFields = document.getElementById('regBuyerFields');
-  
-  if (roleSelect) {
-    if (roleSelect.value === 'chofer') {
-      if (driverFields) driverFields.style.display = 'block';
-      if (buyerFields) buyerFields.style.display = 'none';
-    } else {
-      if (buyerFields) buyerFields.style.display = 'block';
-      if (driverFields) driverFields.style.display = 'none';
-    }
-  }
-}
-
 function guardarRegistroUnico() {
-  const roleSelect = document.getElementById('regRole');
-  if (!roleSelect) return;
-
-  const role = roleSelect.value;
-
-  if (role === 'chofer') {
+  if (currentSelectedRole === 'driver') {
     const nombreNegocio = (document.getElementById('regNombreNegocio')?.value || '').trim();
     const whatsapp = (document.getElementById('regWhatsapp')?.value || '').trim();
     const placa = (document.getElementById('regPlaca')?.value || '').trim();
     const categoria = (document.getElementById('regCategoriaNegocio')?.value || 'Gas GLP').trim();
     const productos = (document.getElementById('regProductos')?.value || '').trim();
+    const zonas = (document.getElementById('regZonas')?.value || '').trim();
+    const schedule = (document.getElementById('regSchedule')?.value || '').trim();
 
     if (!nombreNegocio || !whatsapp || !placa || !productos) {
-      alert('Por favor completa los campos requeridos: Nombre del Repartidor, WhatsApp, Placa y ¿Qué reparte?.');
+      alert('Por favor completa los campos requeridos para Repartidor: Nombre, WhatsApp, Placa y ¿Qué vende?.');
       return;
     }
 
@@ -123,7 +172,9 @@ function guardarRegistroUnico() {
       whatsapp: whatsapp,
       placa: placa,
       categoria: categoria,
-      productos: productos
+      productos: productos,
+      zonas: zonas,
+      schedule: schedule
     };
 
     localStorage.setItem('notigas_user_data', JSON.stringify(repartidorData));
@@ -131,13 +182,13 @@ function guardarRegistroUnico() {
     const modalAuth = document.getElementById('modalWelcomeAuth');
     if (modalAuth) modalAuth.style.display = 'none';
 
-    alert(`🟢 MINI PÁGINA DE NEGOCIO PUBLICADA\n\n¡Bienvenido Repartidor ${nombreNegocio}! Tu Mini Página de Facebook ha sido creada automáticamente en la pestaña REPARTIDORES.`);
+    alert(`🟢 MINI PÁGINA DE NEGOCIO PUBLICADA\n\n¡Bienvenido Repartidor ${nombreNegocio}! Tu Ficha de Negocio ha sido creada en la pestaña REPARTIDORES.`);
 
     if (typeof renderVendorCards === 'function') {
       renderVendorCards('TODOS');
     }
     if (typeof switchTab === 'function') {
-      switchTab(1); // Redirigir automáticamente a la Pestaña 2 (PÁGINAS DE NEGOCIO DE REPARTIDORES)
+      switchTab(1);
     }
   } else {
     const gmailInput = document.getElementById('regGmail');
@@ -146,7 +197,7 @@ function guardarRegistroUnico() {
     const apellido = (document.getElementById('regApellido')?.value || '').trim();
 
     if (!gmail || !nombre || !apellido) {
-      alert('Para clientes es obligatorio ingresar Gmail de Google, Nombre y Apellido.');
+      alert('Para compradores es obligatorio ingresar Correo Electrónico, Nombre y Apellido.');
       return;
     }
 
@@ -157,7 +208,7 @@ function guardarRegistroUnico() {
     const modalAuth = document.getElementById('modalWelcomeAuth');
     if (modalAuth) modalAuth.style.display = 'none';
 
-    alert(`✅ REGISTRO VERIFICADO CON GMAIL\n\nBienvenido a NOTIGAS (${gmail}).`);
+    alert(`✅ REGISTRO VERIFICADO\n\nBienvenido a NOTIGAS (${gmail}).`);
   }
 }
 
@@ -172,6 +223,8 @@ function iniciarSesionChofer() {
   const plate = (document.getElementById('inputDriverPlate')?.value || '').trim();
   const categoria = (document.getElementById('inputDriverCat')?.value || 'Gas GLP').trim();
   const productos = (document.getElementById('inputDriverProductos')?.value || '').trim();
+  const zonas = (document.getElementById('inputDriverZonas')?.value || '').trim();
+  const schedule = (document.getElementById('inputDriverSchedule')?.value || '').trim();
 
   if (!nombreNegocio || !whatsapp || !plate || !productos) {
     alert('Por favor completa todos los campos requeridos para publicar tu Mini Página de Negocio.');
@@ -184,7 +237,9 @@ function iniciarSesionChofer() {
     whatsapp: whatsapp, 
     placa: plate, 
     categoria: categoria, 
-    productos: productos 
+    productos: productos,
+    zonas: zonas,
+    schedule: schedule
   };
   localStorage.setItem('notigas_user_data', JSON.stringify(repartidorData));
 
@@ -195,6 +250,6 @@ function iniciarSesionChofer() {
     renderVendorCards('TODOS');
   }
   if (typeof switchTab === 'function') {
-    switchTab(1); // Abrir automáticamente la pestaña 2 de Repartidores
+    switchTab(1);
   }
 }

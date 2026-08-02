@@ -298,78 +298,107 @@
     </div>
   </div>
 
-  <!-- MODAL AUTENTICACIÓN & REGISTRO DE USUARIOS -->
+  <!-- MODAL DE INGRESO / AUTENTICACIÓN MEJORADO CON SELECCIÓN DE ROL Y MÉTODOS DE INGRESO -->
   <div class="modal" id="modalWelcomeAuth">
-    <div class="modal-content">
-      <div class="modal-title">
-        <span>👋 Registro & Acceso NOTIGAS</span>
+    <div class="modal-content" style="max-width: 460px;">
+      <div class="modal-title" style="justify-content: center; text-align: center; font-size: 18px; margin-bottom: 4px;">
+        <span>👋 Bienvenido a NOTIGAS</span>
       </div>
-      <p style="font-size: 11px; color: #94A3B8; margin-bottom: 12px;">Ingresa para conectarte con repartidores en ruta y la comunidad de tu OTB.</p>
+      <p style="font-size: 11px; color: #94A3B8; text-align: center; margin-bottom: 14px;">
+        Selecciona tu rol e ingresa con tu Cuenta Google o Correo Electrónico.
+      </p>
 
-      <div class="form-group">
-        <label>Tipo de Usuario:</label>
-        <select id="regRole" onchange="toggleRegFields()">
-          <option value="vecino">🏠 Cliente / Vecino (Gmail + Nombre + Apellido)</option>
-          <option value="chofer">🚛 Repartidor (Mini Página de Negocio)</option>
-        </select>
-      </div>
-
-      <!-- CAMPOS CLIENTE / VECINO -->
-      <div id="regBuyerFields">
-        <div class="form-group">
-          <label>Correo Gmail de Google:</label>
-          <input type="email" id="regGmail" placeholder="tu_correo@gmail.com">
-        </div>
-        <div class="form-group">
-          <label>Nombre:</label>
-          <input type="text" id="regNombre" placeholder="Tu nombre">
-        </div>
-        <div class="form-group">
-          <label>Apellido:</label>
-          <input type="text" id="regApellido" placeholder="Tu apellido">
-        </div>
+      <!-- SELECCIONADOR VISUAL DE ROL: COMPRADOR VS REPARTIDOR -->
+      <div class="role-selector-container">
+        <button class="role-select-btn active" id="btnRoleBuyer" onclick="selectAuthRole('buyer')">
+          <i class="fa-solid fa-cart-shopping"></i>
+          <span>🛍️ COMPRADOR</span>
+        </button>
+        <button class="role-select-btn" id="btnRoleDriver" onclick="selectAuthRole('driver')">
+          <i class="fa-solid fa-truck-fast"></i>
+          <span>🚛 REPARTIDOR</span>
+        </button>
       </div>
 
-      <!-- CAMPOS REPARTIDOR (MINI PÁGINA DE NEGOCIO - SIN CORREO EXIGIDO) -->
-      <div id="regDriverFields" style="display: none;">
-        <div class="form-group">
-          <label>Nombre del Repartidor o Negocio:</label>
-          <input type="text" id="regNombreNegocio" placeholder="Ej: Gasero Express N° 42">
-        </div>
-        <div class="form-group">
-          <label>Número de WhatsApp:</label>
-          <input type="tel" id="regWhatsapp" placeholder="70712345">
-        </div>
-        <div class="form-group">
-          <label>Número de Placa del Vehículo / Camión:</label>
-          <input type="text" id="regPlaca" placeholder="3842-XYZ">
-        </div>
-        <div class="form-group">
-          <label>Tipo de REPARTIDOR:</label>
-          <select id="regCategoriaNegocio">
-            <option value="Gas GLP">🔥 Gas GLP</option>
-            <option value="Detergentes">🧼 Detergentes & Limpieza</option>
-            <option value="Chatarra">♻️ Chatarra</option>
-            <option value="Papel">📄 Papel / Reciclaje</option>
-            <option value="Frutas">🍎 Frutas & Verduras</option>
-            <option value="Otros">📦 Otros</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>¿Qué reparte? / Detalle del servicio:</label>
-          <input type="text" id="regProductos" placeholder="Ej: Garrafas GLP 10kg, mangueras, reguladores">
-        </div>
-        <div class="form-group">
-          <label>Zonas / OTBs de Recorrido:</label>
-          <input type="text" id="regZonas" placeholder="Ej: OTB Central, Av. Principal y calles vecinas">
-        </div>
-        <div class="form-group">
-          <label>Días y Horarios de Recorrido por Zona:</label>
-          <input type="text" id="regSchedule" placeholder="Ej: Lunes a Sábado: 07:00 a 18:00 (Mañanas: Norte, Tardes: Sur)">
-        </div>
+      <!-- SELECCIÓN DE MÉTODO DE INGRESO: CUENTA GOOGLE VS CORREO ELECTRÓNICO -->
+      <div class="auth-method-tabs">
+        <button class="auth-method-btn active" id="btnAuthMethodGoogle" onclick="selectAuthMethod('google')">
+          <i class="fa-brands fa-google"></i> Cuenta Google
+        </button>
+        <button class="auth-method-btn" id="btnAuthMethodEmail" onclick="selectAuthMethod('email')">
+          <i class="fa-solid fa-envelope"></i> Correo Electrónico
+        </button>
       </div>
 
-      <button class="btn-submit-google" onclick="guardarRegistroUnico()"><i class="fa-solid fa-store"></i> Crear y Publicar Mi Mini Página de Negocio</button>
+      <!-- PANE 1: ACCESO RÁPIDO CON CUENTA GOOGLE (1-TAP) -->
+      <div id="authPaneGoogle" class="auth-method-pane active">
+        <p style="font-size: 11px; color: #CBD5E1; margin: 14px 0; text-align: center;">
+          Ingresa con 1 solo clic utilizando tu cuenta verificada de Google Gmail:
+        </p>
+        <button class="btn-submit-google" onclick="iniciarConGoogleDirecto()">
+          <i class="fa-brands fa-google"></i> Continuar con Cuenta Google
+        </button>
+      </div>
+
+      <!-- PANE 2: FORMULARIO DE REGISTRO POR CORREO ELECTRÓNICO -->
+      <div id="authPaneEmail" class="auth-method-pane" style="display: none;">
+        <!-- CAMPOS COMPRADOR -->
+        <div id="authFieldsBuyer">
+          <div class="form-group">
+            <label>Correo Electrónico (Gmail / E-mail):</label>
+            <input type="email" id="regGmail" placeholder="tu_correo@gmail.com">
+          </div>
+          <div class="form-group">
+            <label>Nombre:</label>
+            <input type="text" id="regNombre" placeholder="Tu nombre">
+          </div>
+          <div class="form-group">
+            <label>Apellido:</label>
+            <input type="text" id="regApellido" placeholder="Tu apellido">
+          </div>
+        </div>
+
+        <!-- CAMPOS REPARTIDOR -->
+        <div id="authFieldsDriver" style="display: none;">
+          <div class="form-group">
+            <label>Nombre del Repartidor o Negocio:</label>
+            <input type="text" id="regNombreNegocio" placeholder="Ej: Gasero Express N° 42">
+          </div>
+          <div class="form-group">
+            <label>Número de WhatsApp (Uso interno):</label>
+            <input type="tel" id="regWhatsapp" placeholder="70712345">
+          </div>
+          <div class="form-group">
+            <label>Número de Placa del Vehículo / Camión:</label>
+            <input type="text" id="regPlaca" placeholder="3842-XYZ">
+          </div>
+          <div class="form-group">
+            <label>Tipo de REPARTIDOR:</label>
+            <select id="regCategoriaNegocio">
+              <option value="Gas GLP">🔥 Gas GLP</option>
+              <option value="Detergentes">🧼 Detergentes & Limpieza</option>
+              <option value="Chatarra">♻️ Chatarra</option>
+              <option value="Papel">📄 Papel / Reciclaje</option>
+              <option value="Frutas">🍎 Frutas & Verduras</option>
+              <option value="Otros">📦 Otros</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>¿Qué Vende / Oferta?:</label>
+            <input type="text" id="regProductos" placeholder="Ej: Garrafas GLP 10kg, mangueras, reguladores">
+          </div>
+          <div class="form-group">
+            <label>Zonas de Recorrido:</label>
+            <input type="text" id="regZonas" placeholder="Ej: OTB Central, Av. Principal y calles vecinas">
+          </div>
+          <div class="form-group">
+            <label>Días y Horarios por Zona:</label>
+            <input type="text" id="regSchedule" placeholder="Ej: Lunes a Sábado: 07:00 a 18:00">
+          </div>
+        </div>
+
+        <button class="btn-submit" onclick="guardarRegistroUnico()"><i class="fa-solid fa-right-to-bracket"></i> Ingresar con Correo Electrónico</button>
+      </div>
     </div>
   </div>
 

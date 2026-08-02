@@ -92,7 +92,7 @@ function initNotigasMap() {
       🔥 Tu Ubicación de Entrega (Punto GPS)
     </div>
     <div style="font-size: 10px; color: #94A3B8; margin-top: 2px;">
-      Buscando posición GPS exacta...
+      Obteniendo ubicación GPS en tiempo real...
     </div>
   `).openPopup();
 
@@ -114,6 +114,11 @@ function initNotigasMap() {
     userMarker.setLatLng(e.latlng);
   });
 
+  // ASEGURAR REFRESCO DE RENDERIZADO DEL MAPA
+  setTimeout(() => {
+    map.invalidateSize();
+  }, 250);
+
   // SOLICITAR E INICIAR POSICIONAMIENTO GPS OBLIGATORIO AUTOMÁTICO AL CARGAR
   conectarGPSAuto();
 
@@ -127,51 +132,72 @@ function initNotigasMap() {
   }
 }
 
-/* POSICIONAMIENTO GPS AUTOMÁTICO EN VIVO AL ABRIR LA APLICACIÓN */
+/* POSICIONAMIENTO GPS AUTOMÁTICO EN VIVO ROBUSTO Y CON FALLBACK AL ABRIR LA APLICACIÓN */
 function conectarGPSAuto() {
+  const applyGpsPosition = (lat, lng, sourceLabel) => {
+    currentGpsLat = lat;
+    currentGpsLng = lng;
+
+    if (map && userMarker) {
+      map.setView([currentGpsLat, currentGpsLng], 17);
+      userMarker.setLatLng([currentGpsLat, currentGpsLng]);
+
+      userMarker.getPopup().setContent(`
+        <div style="font-size: 12px; font-weight: 700; color: #FF6D00;">
+          📍 ${sourceLabel}
+        </div>
+        <div style="font-size: 10px; color: #94A3B8;">
+          Lat: ${currentGpsLat.toFixed(5)}, Lng: ${currentGpsLng.toFixed(5)}
+        </div>
+      `).openPopup();
+      map.invalidateSize();
+    }
+
+    const banner = document.getElementById('gpsMandatoryBanner');
+    if (banner) banner.style.display = 'none';
+  };
+
   if ("geolocation" in navigator) {
+    // 1. Intentar con Alta Precisión (High Accuracy)
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        currentGpsLat = pos.coords.latitude;
-        currentGpsLng = pos.coords.longitude;
-
-        if (map && userMarker) {
-          map.setView([currentGpsLat, currentGpsLng], 17);
-          userMarker.setLatLng([currentGpsLat, currentGpsLng]);
-
-          userMarker.getPopup().setContent(`
-            <div style="font-size: 12px; font-weight: 700; color: #FF6D00;">
-              📍 Tu Ubicación GPS Sincronizada en Vivo
-            </div>
-            <div style="font-size: 10px; color: #94A3B8;">
-              Lat: ${currentGpsLat.toFixed(5)}, Lng: ${currentGpsLng.toFixed(5)}
-            </div>
-          `).openPopup();
-        }
-
-        const banner = document.getElementById('gpsMandatoryBanner');
-        if (banner) banner.style.display = 'none';
+        applyGpsPosition(pos.coords.latitude, pos.coords.longitude, "Ubicación GPS Sincronizada en Vivo");
       },
       (err) => {
-        console.warn("GPS Hardware no otorgado aún:", err.message);
-        const banner = document.getElementById('gpsMandatoryBanner');
-        if (banner) banner.style.display = 'block';
+        console.warn("Intento alta precisión falló, reintentando con precisión estándar...", err.message);
+        // 2. Reintento con precisión estándar
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            applyGpsPosition(pos.coords.latitude, pos.coords.longitude, "Ubicación GPS Aproximada");
+          },
+          (fallbackErr) => {
+            console.warn("GPS Hardware inaccesible:", fallbackErr.message);
+            const banner = document.getElementById('gpsMandatoryBanner');
+            if (banner) banner.style.display = 'block';
+          },
+          { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
+        );
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
     );
 
     // RASTREO CONTINUO EN SEGUNDO PLANO VÍA WATCHPOSITION
-    navigator.geolocation.watchPosition(
-      (pos) => {
-        currentGpsLat = pos.coords.latitude;
-        currentGpsLng = pos.coords.longitude;
-        if (userMarker) {
-          userMarker.setLatLng([currentGpsLat, currentGpsLng]);
-        }
-      },
-      null,
-      { enableHighAccuracy: true, maximumAge: 3000 }
-    );
+    try {
+      navigator.geolocation.watchPosition(
+        (pos) => {
+          currentGpsLat = pos.coords.latitude;
+          currentGpsLng = pos.coords.longitude;
+          if (userMarker) {
+            userMarker.setLatLng([currentGpsLat, currentGpsLng]);
+          }
+        },
+        null,
+        { enableHighAccuracy: true, maximumAge: 5000 }
+      );
+    } catch(e){}
+  } else {
+    const banner = document.getElementById('gpsMandatoryBanner');
+    if (banner) banner.style.display = 'block';
   }
 }
 
