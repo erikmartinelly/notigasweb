@@ -49,10 +49,16 @@ graph TD
         ShopGrid -->|Clic WhatsApp| VendorWA[📱 WhatsApp Directo Vendedor]
     end
 
-    subgraph "Pestaña 3: Foro Vecinal Reddit"
-        Tab3 --> RedditFeed[💬 Feed Comunitario]
+    subgraph "Pestaña 3: Chats & Foro Vecinal"
+        Tab3 --> SubTab1[💬 Sub-Pestaña 1: Foro Reddit Vecinal]
+        SubTab1 --> RedditFeed[💬 Feed Comunitario OTB]
         RedditFeed --> UpvoteDownvote[▲ / ▼ Sistema de Votos]
-        Tab3 --> NewPostModal[➕ Modal Publicar Aviso / Queja]
+        RedditFeed --> CommentsModal[💬 Hilos de Comentarios en Vivo]
+        SubTab1 --> NewPostModal[➕ Modal Publicar Aviso / Queja]
+        
+        Tab3 --> SubTab2[📱 Sub-Pestaña 2: Chat Comprador ↔ Vendedor]
+        SubTab2 --> VendorSelector[🚛 Selección de Vendedor en Ruta]
+        SubTab2 --> LiveChatBox[💬 Chat Directo con Historial y Timestamp]
     end
 
     subgraph "Módulo de Configuración & Administración"
