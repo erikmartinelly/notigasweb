@@ -1,8 +1,21 @@
 /* ==========================================================================
-   NOTIGAS - MÓDULO DE CHAT INTERNO, PRIVADO Y DEPURACIÓN DE 48 HORAS
+   NOTIGAS - MÓDULO DE CHAT PRIVADO 1-A-1 (COMPRADOR ↔ DISTRIBUIDOR)
+   Y DEPURACIÓN AUTOMÁTICA DE 48 HORAS
    ========================================================================== */
 
 const CHAT_EXPIRATION_MS = 48 * 60 * 60 * 1000; // 48 Horas en milisegundos
+
+function getChatHistoryKey(vendorName) {
+  let userGmail = "anonimo";
+  try {
+    const saved = localStorage.getItem('notigas_user_data');
+    if (saved) {
+      const u = JSON.parse(saved);
+      if (u.gmail) userGmail = u.gmail.replace(/[^a-zA-Z0-9]/g, '_');
+    }
+  } catch(e){}
+  return `notigas_private_chat_${vendorName}_${userGmail}`;
+}
 
 function abrirChatDirectoVendedor(catNombre) {
   if (typeof switchTab === 'function') switchTab(2);
@@ -34,8 +47,8 @@ function cambiarVendedorChat() {
   const nowMs = Date.now();
   const timeStr = new Date(nowMs).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  // Cargar del historial local filtrando únicamente los mensajes de las últimas 48 horas
-  let historyKey = `notigas_chat_history_${vendorName}`;
+  // Clave privada aislada por usuario y por distribuidor
+  const historyKey = getChatHistoryKey(vendorName);
   let history = [];
   try {
     const raw = localStorage.getItem(historyKey);
@@ -60,24 +73,23 @@ function cambiarVendedorChat() {
       <span style="color: #94A3B8; font-size: 10px;">Ver anuncio <i class="fa-solid fa-chevron-right"></i></span>
     </div>
 
-    <div style="font-size: 9px; color: #64748B; text-align: center; margin-bottom: 8px;">
-      🔒 Los mensajes de este chat se eliminan automáticamente a las 48 horas para proteger tu privacidad.
+    <div style="font-size: 9px; color: #00E676; text-align: center; margin-bottom: 8px; background: rgba(0,230,118,0.08); padding: 6px; border-radius: 8px; border: 1px solid rgba(0,230,118,0.2);">
+      🔒 CHAT PRIVADO Y CONFIDENCIAL 1-A-1 ENTRE TÚ Y EL DISTRIBUIDOR.<br>Tus mensajes y datos compartidos solo se ven en esta sesión y expiran en 48h.
     </div>
   `;
 
   if (history.length === 0) {
-    // Mensaje de inicio de chat por defecto
     const defaultVendorMsg = {
       sender: 'vendor',
-      name: `Repartidor en Ruta (${vendorName})`,
-      text: `¡Hola vecino! Estoy atendiendo la zona de tu OTB. ¿Dónde deseas la entrega?`,
+      name: `Distribuidor / Repartidor de ${vendorName}`,
+      text: `¡Hola vecino! Estoy atendiendo tu zona en la OTB. ¿Cuántas unidades de ${vendorName} necesitas?`,
       timeStr: timeStr,
       timestamp: nowMs
     };
     const defaultBuyerMsg = {
       sender: 'buyer',
       name: userAlias,
-      text: `Hola, mi ubicación de entrega está fijada en el mapa en vivo de NOTIGAS.`,
+      text: `Hola, necesito atención para ${vendorName}. Mi ubicación exacta está en el mapa.`,
       timeStr: timeStr,
       timestamp: nowMs
     };
@@ -92,7 +104,7 @@ function cambiarVendedorChat() {
           <b>🚛 ${m.name}:</b><br>${m.text}
           <div class="chat-msg-footer">
             <span class="chat-msg-time">${m.timeStr}</span>
-            <button class="btn-report" onclick="abrirModalDenuncia('Chat Repartidor', 'Mensaje de Repartidor')"><i class="fa-solid fa-flag"></i> Denunciar</button>
+            <button class="btn-report" onclick="abrirModalDenuncia('Chat Distribuidor', 'Mensaje de Distribuidor')"><i class="fa-solid fa-flag"></i> Denunciar</button>
           </div>
         </div>
       `;
@@ -134,7 +146,7 @@ function enviarMensajeDirecto() {
     }
   } catch(e){}
 
-  let historyKey = `notigas_chat_history_${vendorName}`;
+  const historyKey = getChatHistoryKey(vendorName);
   let history = [];
   try {
     const raw = localStorage.getItem(historyKey);
@@ -160,8 +172,8 @@ function enviarMensajeDirecto() {
   setTimeout(() => {
     const vendorReply = {
       sender: 'vendor',
-      name: `Repartidor en Ruta (${vendorName})`,
-      text: `Entendido, recibido. Me aproximo a tu ubicación fijada en el mapa.`,
+      name: `Distribuidor / Repartidor de ${vendorName}`,
+      text: `Entendido, pedido recibido de forma privada. Me dirijo a tu ubicación fijada en el mapa.`,
       timeStr: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       timestamp: Date.now()
     };

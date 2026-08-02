@@ -91,10 +91,11 @@ graph TD
 ## ⚙️ Reglas de Negocio e Integridad Estricta
 
 ### 1. Autenticación y Privacidad Anónima de Datos:
-- **Compradores / Vecinos:** Ingresan **Correo Google Gmail, Nombre y Apellido** para registrarse en el sistema. Su perfil público se mantiene anónimo mediante Alias.
-- **Repartidores / Conductores:** Ingresan **Correo Gmail, Número de Placa y Teléfono de Referencia**. El teléfono de referencia **ES PRIVADO DEL SISTEMA Y NO SE MUESTRA PÚBLICAMENTE**.
-- **Comunicación Interna:** Toda la coordinación y conversación entre compradores y repartidores se realiza **100% dentro del chat interno de la WebApp**, sin salir a WhatsApp u otra app externa.
-- **Expiración de Chats en 48 Horas:** Los mensajes del chat interno se eliminan y depuran automáticamente a las **48 horas** de su creación (`CHAT_EXPIRATION_MS`), optimizando el rendimiento y protegiendo la privacidad.
+- **Compradores / Vecinos:** Ingresan **Correo Google Gmail, Nombre y Apellido** para registrarse en el sistema.
+- **Uso Exclusivo de Correos Gmail:** La aplicación recopila los correos únicamente para registrar a los usuarios en el sistema y enviar **ofertas puntuales, promociones y novedades por correo**.
+- **Repartidores / Distribuidores / Conductores:** Ingresan **Correo Gmail, Número de Placa y Teléfono de Referencia**. El teléfono de referencia **ES PRIVADO DEL SISTEMA Y NO SE MUESTRA PÚBLICAMENTE**.
+- **Comunicación 1-a-1 Privada y Confidencial:** Toda la coordinación (ej. *"necesito gas"*) se realiza **100% dentro del chat privado e interno entre el comprador específico y el distribuidor**. Ningún otro vecino ni tercero tiene acceso a estos chats ni a los datos compartidos en ellos.
+- **Expiración de Chats en 48 Horas:** Los mensajes del chat privado se eliminan automáticamente a las **48 horas** (`CHAT_EXPIRATION_MS`), optimizando el rendimiento y garantizando máxima privacidad.
 - **Persistencia:** Se guarda de forma única y permanente en `localStorage` (`notigas_user_data`).
 
 ### 2. Sistema de Denuncias de Acoso, Bullying o Contenido Inapropiado:
