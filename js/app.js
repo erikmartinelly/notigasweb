@@ -83,7 +83,7 @@ function confirmarPedido() {
   const cant = document.getElementById('inputCantidad')?.value || '1 unidad';
   
   closePedidoModal();
-  alert(`📦 PEDIDO EN VIVO REGISTRADO\n\nCategoría: ${cat}\nDetalle: ${cant}\n📍 Ubicación de Entrega: Lat ${pos.lat.toFixed(5)}, Lng ${pos.lng.toFixed(5)}\n\nEl vendedor en ruta ha recibido tu ubicación de entrega en el mapa.`);
+  alert(`📦 PEDIDO EN VIVO REGISTRADO\n\nCategoría: ${cat}\nDetalle: ${cant}\n📍 Ubicación de Entrega: Lat ${pos.lat.toFixed(5)}, Lng ${pos.lng.toFixed(5)}\n\nEl repartidor en ruta ha recibido tu ubicación de entrega en el mapa.`);
 }
 
 function notificarEscucheCamion() {

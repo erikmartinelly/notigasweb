@@ -22,13 +22,13 @@ graph TD
     subgraph "Capa de Autenticación por Única Vez"
         WebApp -->|Primera Visita| AuthModal[🔐 Modal Registro Google Gmail]
         AuthModal -->|Vecino / Comprador| LocalStoreVecino[(💾 localStorage: Gmail Únicamente)]
-        AuthModal -->|Vendedor / Chofer| LocalStoreChofer[(💾 localStorage: Gmail + Nombre + Apellido + WhatsApp + Placa)]
+        AuthModal -->|Repartidor / Chofer| LocalStoreChofer[(💾 localStorage: Gmail + Nombre + Apellido + WhatsApp + Placa)]
     end
 
     subgraph "Navegación Principal por Pestañas"
         WebApp --> Tab1[🗺️ Pestaña 1: MAPA EN VIVO]
         WebApp --> Tab2[🛍️ Pestaña 2: PEDIDOS & SERVICIOS]
-        WebApp --> Tab3[💬 Pestaña 3: FORO VECINAL CHAT TIPO REDDIT]
+        WebApp --> Tab3[💬 Pestaña 3: CHATS & FORO VECINAL]
     end
 
     subgraph "Pestaña 1: Mapa Interactivo & GPS"
@@ -46,7 +46,7 @@ graph TD
     subgraph "Pestaña 2: Catálogo de Servicios"
         Tab2 --> ShopGrid[🛒 6 Tarjetas de Productos y Servicios]
         ShopGrid -->|Clic Tarjeta| OrderConfirmModal
-        ShopGrid -->|Clic WhatsApp| VendorWA[📱 WhatsApp Directo Vendedor]
+        ShopGrid -->|Clic WhatsApp| VendorWA[📱 WhatsApp Directo Repartidor]
     end
 
     subgraph "Pestaña 3: Chats & Foro Vecinal"
@@ -56,8 +56,8 @@ graph TD
         RedditFeed --> CommentsModal[💬 Hilos de Comentarios en Vivo]
         SubTab1 --> NewPostModal[➕ Modal Publicar Aviso / Queja]
         
-        Tab3 --> SubTab2[📱 Sub-Pestaña 2: Chat Comprador ↔ Vendedor]
-        SubTab2 --> VendorSelector[🚛 Selección de Vendedor en Ruta]
+        Tab3 --> SubTab2[📱 Sub-Pestaña 2: Chat Comprador ↔ Repartidor]
+        SubTab2 --> VendorSelector[🚛 Selección de Repartidor en Ruta]
         SubTab2 --> LiveChatBox[💬 Chat Directo con Historial y Timestamp]
     end
 
@@ -79,7 +79,7 @@ graph TD
   - **Tarjetas y Header:** `#1E293B` (Dark Slate Container)
   - **Acento Primario NOTIGAS:** `#FF6D00` (Naranja Fuego GLP)
   - **Secundario Agua / GPS:** `#0288D1` (Azul Purificado)
-  - **WhatsApp / Vendedores:** `#25D366` & `#00E676` (Verde Esmeralda)
+  - **WhatsApp / Repartidores:** `#25D366` & `#00E676` (Verde Esmeralda)
   - **Botón de Pánico / Espérame:** `#D32F2F` & `#B71C1C` (Rojo Gradiente)
 - **Tipografía:** Google Font **Roboto** (`400`, `500`, `700`, `900`).
 - **Iconografía Oficial:**
@@ -92,7 +92,7 @@ graph TD
 
 ### 1. Autenticación y Privacidad de Datos:
 - **Compradores / Vecinos:** Se autentican únicamente con su **Correo Google Gmail**. **NO SE LES PIDE NÚMERO DE TELÉFONO EN NINGÚN MOMENTO**.
-- **Vendedores / Choferes:** Al registrarse como repartidores, ingresan Gmail, Nombre, Apellido, Número de WhatsApp (público para compradores) y Placa del Vehículo.
+- **Repartidores / Choferes:** Al registrarse como repartidores, ingresan Gmail, Nombre, Apellido, Número de WhatsApp (público para compradores) y Placa del Vehículo.
 - **Persistencia:** Se guarda de forma única y permanente en `localStorage` (`notigas_user_data`).
 
 ### 2. Pestaña 3 (Foro Vecinal Reddit):

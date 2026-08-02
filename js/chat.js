@@ -1,5 +1,5 @@
 /* ==========================================================================
-   NOTIGAS - MÓDULO DE CHAT DIRECTO COMPRADOR ↔ VENDEDOR
+   NOTIGAS - MÓDULO DE CHAT DIRECTO COMPRADOR ↔ REPARTIDOR
    ========================================================================== */
 
 function abrirChatDirectoVendedor(catNombre) {
@@ -32,7 +32,7 @@ function cambiarVendedorChat() {
       <span style="color: #94A3B8; font-size: 10px;">Ver anuncio <i class="fa-solid fa-chevron-right"></i></span>
     </div>
     <div class="chat-msg vendor">
-      <b>🚛 Vendedor de ${vendorName}:</b><br>¡Hola vecino! Estoy atendiendo la zona de tu OTB para ${vendorName}. ¿Dónde deseas la entrega?
+      <b>🚛 Repartidor de ${vendorName}:</b><br>¡Hola vecino! Estoy atendiendo la zona de tu OTB para ${vendorName}. ¿Dónde deseas la entrega?
       <div class="chat-msg-time">${now}</div>
     </div>
     <div class="chat-msg buyer">
@@ -63,7 +63,7 @@ function enviarMensajeDirecto() {
   setTimeout(() => {
     const vendorMsg = document.createElement('div');
     vendorMsg.className = 'chat-msg vendor';
-    vendorMsg.innerHTML = `<b>🚛 Vendedor en Ruta:</b><br>Entendido, recibido. Me aproximo a tu ubicación fijada en el mapa.<div class="chat-msg-time">${now}</div>`;
+    vendorMsg.innerHTML = `<b>🚛 Repartidor en Ruta:</b><br>Entendido, recibido. Me aproximo a tu ubicación fijada en el mapa.<div class="chat-msg-time">${now}</div>`;
     box.appendChild(vendorMsg);
     box.scrollTop = box.scrollHeight;
   }, 1000);

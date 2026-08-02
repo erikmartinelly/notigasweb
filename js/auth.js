@@ -1,10 +1,10 @@
 /* ==========================================================================
-   NOTIGAS - MÓDULO DE AUTENTICACIÓN Y REGISTRO ÚNICO (GMAIL & VENDEDORES)
+   NOTIGAS - MÓDULO DE AUTENTICACIÓN Y REGISTRO ÚNICO (GMAIL & REPARTIDORES)
    ========================================================================== */
 
 let databaseEmails = [
   { gmail: "vecino_cochabamba@gmail.com", role: "Comprador", fecha: "2026-08-01" },
-  { gmail: "chofer_glp_otb@gmail.com", role: "Vendedor / Chofer", fecha: "2026-08-01" }
+  { gmail: "repartidor_glp_otb@gmail.com", role: "Repartidor / Chofer", fecha: "2026-08-01" }
 ];
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -60,7 +60,7 @@ function guardarRegistroUnico() {
     const placa = (document.getElementById('regPlaca')?.value || '').trim();
 
     if (!nombre || !apellido || !whatsapp || !placa) {
-      alert('Para vendedores/choferes es obligatorio ingresar Nombre, Apellido, Teléfono y Placa.');
+      alert('Para repartidores/choferes es obligatorio ingresar Nombre, Apellido, Teléfono y Placa.');
       return;
     }
     data.nombre = nombre;
@@ -91,7 +91,7 @@ function iniciarSesionChofer() {
   const plate = (document.getElementById('inputDriverPlate')?.value || '').trim();
 
   if (!gmail || !nombre || !apellido || !whatsapp || !plate) {
-    alert('Por favor completa todos los campos requeridos para Vendedor/Chofer.');
+    alert('Por favor completa todos los campos requeridos para Repartidor/Chofer.');
     return;
   }
 
@@ -99,9 +99,9 @@ function iniciarSesionChofer() {
   localStorage.setItem('notigas_user_data', JSON.stringify(choferData));
 
   closeDriverModal();
-  alert(`🟢 CUENTA DE VENDEDOR ACTIVADA\n\nVendedor: ${nombre} ${apellido}\nGmail: ${gmail}\nWhatsApp: ${whatsapp}\nPlaca: ${plate}`);
+  alert(`🟢 CUENTA DE REPARTIDOR ACTIVADA\n\nRepartidor: ${nombre} ${apellido}\nGmail: ${gmail}\nWhatsApp: ${whatsapp}\nPlaca: ${plate}`);
   
   if (typeof truckMarker !== 'undefined' && truckMarker) {
-    truckMarker.setPopupContent(`<b>🟢 Vendedor Activo: ${nombre} ${apellido}</b><br>Placa: ${plate}<br>📱 WhatsApp: ${whatsapp}`).openPopup();
+    truckMarker.setPopupContent(`<b>🟢 Repartidor Activo: ${nombre} ${apellido}</b><br>Placa: ${plate}<br>📱 WhatsApp: ${whatsapp}`).openPopup();
   }
 }

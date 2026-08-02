@@ -29,7 +29,7 @@
     </div>
     <div class="header-actions">
       <button class="btn-badge" id="btnGps"><i class="fa-solid fa-crosshairs"></i> GPS Auto</button>
-      <button class="btn-driver" id="btnOpenDriver"><i class="fa-solid fa-truck-fast"></i> Soy Chofer</button>
+      <button class="btn-driver" id="btnOpenDriver"><i class="fa-solid fa-truck-fast"></i> Soy Repartidor</button>
       <button class="btn-config" id="btnOpenAdmin" title="Configuración / Modo Administrador"><i class="fa-solid fa-gear"></i></button>
     </div>
   </header>
@@ -91,13 +91,13 @@
         <div class="shop-card" onclick="seleccionarYPedirDirecto('🍎 Frutas & Verduras')">
           <div class="shop-icon"><i class="fa-solid fa-apple-whole" style="color: #FF5252;"></i></div>
           <div class="shop-info">
-            <div class="shop-title">🍎 Frutas & Verduras de Vendedores Locales</div>
+            <div class="shop-title">🍎 Frutas & Verduras de Repartidores Locales</div>
             <div class="shop-price">Fruta fresca y verdura de camión agrícola</div>
             <button class="btn-chat-vendor" onclick="event.stopPropagation(); abrirChatDirectoVendedor('Frutas y Verduras')"><i class="fa-solid fa-comments"></i> Chat en Vivo con Frutero</button>
           </div>
         </div>
 
-        <!-- TARJETA PATROCINADA / GOOGLE ADS EN EL MEDIO DEL TABLÓN DE VENDEDORES -->
+        <!-- TARJETA PATROCINADA / GOOGLE ADS EN EL MEDIO DEL TABLÓN DE REPARTIDORES -->
         <div class="shop-card ad-sponsored" onclick="abrirAnuncioWhatsApp()">
           <div class="shop-icon" style="background-color: rgba(255, 109, 0, 0.2); color: #FF6D00;"><i class="fa-solid fa-bullhorn"></i></div>
           <div class="shop-info">
@@ -105,8 +105,8 @@
               <div class="shop-title" id="adShopTitle">📢 Publicidad OTB & Google Ads</div>
               <span class="ad-badge" style="font-size: 8px;">PATROCINADO</span>
             </div>
-            <div class="shop-price" id="adShopSubtext" style="color: #94A3B8; font-weight: 500;">Anúnciate aquí • Promociona tu negocio a toda la OTB</div>
-            <button class="btn-ad-contact" style="margin-top: 6px;" onclick="event.stopPropagation(); abrirAnuncioWhatsApp()"><i class="fa-solid fa-rectangle-ad"></i> Anunciar mi Negocio</button>
+            <div class="shop-price" id="adShopSubtext" style="color: #94A3B8; font-weight: 500;">Anúnciate aquí • Promociona tu servicio a toda la OTB</div>
+            <button class="btn-ad-contact" style="margin-top: 6px;" onclick="event.stopPropagation(); abrirAnuncioWhatsApp()"><i class="fa-solid fa-rectangle-ad"></i> Anunciar mi Servicio</button>
           </div>
         </div>
 
@@ -139,12 +139,12 @@
       </div>
     </div>
 
-    <!-- PESTAÑA 3: CHAT COMPRADOR-VENDEDOR & FORO VECINAL REDDIT CON ADS INTEGRADOS -->
+    <!-- PESTAÑA 3: CHAT COMPRADOR-REPARTIDOR & FORO VECINAL REDDIT CON ADS INTEGRADOS -->
     <div class="tab-content" id="tab2">
       <!-- SUB-NAVEGACIÓN INTERNA EN LA 3ª PESTAÑA -->
       <div class="subnav-3rd-tab">
         <button class="subtab-btn active" id="subtabBtnReddit" onclick="switch3rdTabMode('reddit')"><i class="fa-solid fa-comments"></i> 💬 Foro Reddit Vecinal</button>
-        <button class="subtab-btn" id="subtabBtnDirect" onclick="switch3rdTabMode('direct')"><i class="fa-solid fa-headset"></i> 📱 Chat Comprador ↔ Vendedor</button>
+        <button class="subtab-btn" id="subtabBtnDirect" onclick="switch3rdTabMode('direct')"><i class="fa-solid fa-headset"></i> 📱 Chat Comprador ↔ Repartidor</button>
       </div>
 
       <!-- VISTA 1: FORO REDDIT VECINAL CON ANUNCIOS DENTRO DEL FEED -->
@@ -200,17 +200,17 @@
         </div>
       </div>
 
-      <!-- VISTA 2: CHAT DIRECTO COMPRADOR ↔ VENDEDOR CON BANNER DE ANUNCIO SUPERIOR -->
+      <!-- VISTA 2: CHAT DIRECTO COMPRADOR ↔ REPARTIDOR CON BANNER DE ANUNCIO SUPERIOR -->
       <div id="view3rdTabDirect" class="direct-chat-container" style="display:none; flex:1;">
         <div class="chat-vendor-selector">
-          <label style="font-size:11px; font-weight:700; color:#FF6D00;">Vendedor en Ruta:</label>
+          <label style="font-size:11px; font-weight:700; color:#FF6D00;">Repartidor en Ruta:</label>
           <select id="selectVendorChat" onchange="cambiarVendedorChat()">
             <option value="Gas GLP">🔥 Camión Garrafero de Gas GLP N° 42</option>
             <option value="Agua 20L">💧 Repartidor de Agua Purificada 20L</option>
-            <option value="Frutas y Verduras">🍎 Camión Agrícola de Frutas & Verduras</option>
-            <option value="Chatarra">♻️ Comprador de Chatarra y Reciclaje</option>
-            <option value="Detergentes">🧼 Distribuidor Productos de Limpieza</option>
-            <option value="Encargos Barriales">📦 Encargos & Servicio Barrial</option>
+            <option value="Frutas y Verduras">🍎 Repartidor de Frutas & Verduras</option>
+            <option value="Chatarra">♻️ Repartidor de Chatarra y Reciclaje</option>
+            <option value="Detergentes">🧼 Repartidor de Productos de Limpieza</option>
+            <option value="Encargos Barriales">📦 Repartidor de Encargos Barriales</option>
           </select>
         </div>
 
@@ -220,7 +220,7 @@
             <span style="color: #94A3B8; font-size: 10px;">Ver anuncio <i class="fa-solid fa-chevron-right"></i></span>
           </div>
           <div class="chat-msg vendor">
-            <b>🚛 Vendedor de Gas GLP:</b><br>¡Hola vecino! Estoy en la ruta principal de la OTB. ¿Necesitas garrafa hoy?
+            <b>🚛 Repartidor de Gas GLP:</b><br>¡Hola vecino! Estoy en la ruta principal de la OTB. ¿Necesitas garrafa hoy?
             <div class="chat-msg-time">12:30 PM</div>
           </div>
           <div class="chat-msg buyer">
@@ -230,7 +230,7 @@
         </div>
 
         <div class="chat-input-bar">
-          <input type="text" id="inputDirectMessage" placeholder="Escribe tu mensaje al vendedor en ruta..." onkeypress="if(event.key==='Enter') enviarMensajeDirecto()">
+          <input type="text" id="inputDirectMessage" placeholder="Escribe tu mensaje al repartidor en ruta..." onkeypress="if(event.key==='Enter') enviarMensajeDirecto()">
           <button onclick="enviarMensajeDirecto()"><i class="fa-solid fa-paper-plane"></i> Enviar</button>
         </div>
       </div>
@@ -261,7 +261,7 @@
         <label>Tipo de Usuario:</label>
         <select id="regRole" onchange="toggleRegFields()">
           <option value="vecino">🏠 Comprador / Vecino (Verificación por Gmail)</option>
-          <option value="chofer">🚛 Vendedor / Chofer (Requiere Datos y Teléfono de Contacto)</option>
+          <option value="chofer">🚛 Repartidor / Chofer (Requiere Datos y Teléfono de Contacto)</option>
         </select>
       </div>
 
@@ -280,7 +280,7 @@
           <input type="text" id="regApellido" placeholder="Tu apellido">
         </div>
         <div class="form-group">
-          <label>Teléfono / WhatsApp de Vendedor:</label>
+          <label>Teléfono / WhatsApp de Repartidor:</label>
           <input type="tel" id="regWhatsapp" placeholder="+591 70000000">
         </div>
         <div class="form-group">
@@ -409,34 +409,34 @@
     </div>
   </div>
 
-  <!-- MODAL CHOFER / VENDEDOR -->
+  <!-- MODAL REPARTIDOR / CHOFER -->
   <div class="modal" id="modalDriver">
     <div class="modal-content">
       <div class="modal-title">
-        <span><i class="fa-solid fa-truck-fast"></i> Acceso para Vendedores y Repartidores</span>
+        <span><i class="fa-solid fa-truck-fast"></i> Acceso para Repartidores y Choferes</span>
         <button class="btn-close" onclick="closeDriverModal()">✕</button>
       </div>
       <div class="form-group">
         <label>Cuenta de Google (Gmail):</label>
-        <input type="email" id="inputDriverGmail" placeholder="vendedor@gmail.com">
+        <input type="email" id="inputDriverGmail" placeholder="repartidor@gmail.com">
       </div>
       <div class="form-group">
-        <label>Nombre del Vendedor:</label>
+        <label>Nombre del Repartidor:</label>
         <input type="text" id="inputDriverNombre" placeholder="Tu nombre">
       </div>
       <div class="form-group">
-        <label>Apellido del Vendedor:</label>
+        <label>Apellido del Repartidor:</label>
         <input type="text" id="inputDriverApellido" placeholder="Tu apellido">
       </div>
       <div class="form-group">
-        <label>Teléfono / WhatsApp de Venta (Público para Clientes):</label>
+        <label>Teléfono / WhatsApp de Repartidor:</label>
         <input type="tel" id="inputDriverWhatsapp" placeholder="+591 70000000">
       </div>
       <div class="form-group">
         <label>Placa del Vehículo / Número de Camión:</label>
         <input type="text" id="inputDriverPlate" placeholder="Ej: 3842-XYZ / Camión GLP N° 42">
       </div>
-      <button class="btn-submit-google" onclick="iniciarSesionChofer()"><i class="fa-brands fa-google"></i> Activar Cuenta de Vendedor</button>
+      <button class="btn-submit-google" onclick="iniciarSesionChofer()"><i class="fa-brands fa-google"></i> Activar Cuenta de Repartidor</button>
     </div>
   </div>
 
@@ -479,7 +479,7 @@
       </div>
 
       <div class="modal-tab-pane" id="modalPane2">
-        <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Exportar todos los correos electrónicos Gmail de los usuarios registrados (compradores y vendedores):</p>
+        <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Exportar todos los correos electrónicos Gmail de los usuarios registrados (compradores y repartidores):</p>
         <button class="btn-csv-download" onclick="descargarListaCorreosCSV()"><i class="fa-solid fa-download"></i> 📥 Descargar Correos Gmail (.CSV)</button>
       </div>
     </div>
