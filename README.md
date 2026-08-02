@@ -1,4 +1,4 @@
-# 📦 NOTIGAS - Versión 1.0 (Bolivia & Paraguay)
+# 📦 NOTIGAS - Versión 1.0 (Bolivia)
 
 **NOTIGAS v1.0** es una plataforma móvil P2P y comunitaria para la señalización en tiempo real de garrafas de gas GLP, productos barriales (agua 20L, frutas/verduras, chatarra, detergentes) y foros de la OTB estilo Reddit, operando a **$0 costo de infraestructura de datos**.
 
