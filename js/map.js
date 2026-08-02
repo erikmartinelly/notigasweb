@@ -1,23 +1,13 @@
 /* ==========================================================================
-   NOTIGAS - MÓDULO DE MAPA EN VIVO, MOVIMIENTO REALISTA Y CONEXIÓN GPS HD
+   NOTIGAS - MÓDULO DE MAPA EN VIVO, POSICIONAMIENTO GPS OBLIGATORIO Y ANIMACIONES
    ========================================================================== */
 
-let map, userMarker, truckMarker, truckMarker2;
+let map, userMarker, truckMarker;
 let mapTileLayers = {};
 let routeIndex = 0;
 let animationTimer = null;
-
-// RUTA VIAL ANIMADA EN VIVO ALREDEDOR DE LA OTB (WAYPOINTS REALISTAS)
-const animatedRouteWaypoints = [
-  [-17.3895, -66.1568],
-  [-17.3898, -66.1558],
-  [-17.3905, -66.1552],
-  [-17.3912, -66.1555],
-  [-17.3918, -66.1565],
-  [-17.3915, -66.1578],
-  [-17.3905, -66.1582],
-  [-17.3898, -66.1575]
-];
+let currentGpsLat = -17.3895;
+let currentGpsLng = -66.1568;
 
 // SVG OFICIAL EN ALTA DEFINICIÓN - GARRAFA GLP PROBADA (NARANJA FUEGO CON GLOW 3D)
 const garrafaSvgMarkerHtml = `
@@ -66,11 +56,9 @@ function initNotigasMap() {
   const mapElement = document.getElementById('map');
   if (!mapElement) return;
 
-  const defaultLat = -17.3895;
-  const defaultLng = -66.1568;
-
+  // INICIALIZAR MAPA EN COORDENADAS BASE
   map = L.map('map', {
-    center: [defaultLat, defaultLng],
+    center: [currentGpsLat, currentGpsLng],
     zoom: 16,
     zoomControl: false
   });
@@ -86,25 +74,30 @@ function initNotigasMap() {
     attribution: '&copy; Google Satélite HD'
   });
 
-  mapTileLayers['googleStatic'].addTo(map);
+  const savedStyle = localStorage.getItem('notigas_pref_map_style') || 'googleStatic';
+  if (mapTileLayers[savedStyle]) {
+    mapTileLayers[savedStyle].addTo(map);
+  } else {
+    mapTileLayers['googleStatic'].addTo(map);
+  }
 
-  // MARCADOR INTERACTIVO DEL CLIENTE CON SILUETA SVG DE GARRAFA GLP
-  userMarker = L.marker([defaultLat, defaultLng], {
+  // MARCADOR DEL CLIENTE/USUARIO CON ICONO DE GARRAFA GLP
+  userMarker = L.marker([currentGpsLat, currentGpsLng], {
     icon: garrafaIcon,
     draggable: true
   }).addTo(map);
 
   userMarker.bindPopup(`
     <div style="font-size: 12px; font-weight: 700; color: #FF6D00;">
-      🔥 Ubicación de Entrega GLP (Punto Interactivo)
+      🔥 Tu Ubicación de Entrega (Punto GPS)
     </div>
-    <div style="font-size: 11px; color: #94A3B8; margin-top: 2px;">
-      Arrastra el marcador exacto a la puerta de tu domicilio.
+    <div style="font-size: 10px; color: #94A3B8; margin-top: 2px;">
+      Buscando posición GPS exacta...
     </div>
   `).openPopup();
 
-  // MARCADOR DINÁMICO DEL CAMIÓN REPARTIDOR EN MOVIMIENTO REALISTA
-  truckMarker = L.marker(animatedRouteWaypoints[0], {
+  // MARCADOR DEL CAMIÓN DE REPARTO EN VIVO
+  truckMarker = L.marker([currentGpsLat + 0.0012, currentGpsLng + 0.0015], {
     icon: truckIcon
   }).addTo(map);
 
@@ -113,51 +106,109 @@ function initNotigasMap() {
       🟢 Repartidor de Gas GLP N° 42 (En Ruta)
     </div>
     <div style="font-size: 10px; color: #CBD5E1; margin-top: 2px;">
-      Velocidad: 25 km/h • Cobertura activa OTB Central
+      Transmitiendo ubicación en vivo • OTB Central
     </div>
   `);
 
-  // CLICK EN EL MAPA PARA RE-POSICIONAR PIN DE CLIENTE
   map.on('click', (e) => {
     userMarker.setLatLng(e.latlng);
   });
 
-  // INICIAR MOVIMIENTO FLUIDO Y CONTINUO DEL REPARTIDOR POR LA OTB
+  // SOLICITAR E INICIAR POSICIONAMIENTO GPS OBLIGATORIO AUTOMÁTICO AL CARGAR
+  conectarGPSAuto();
+
+  // INICIAR ANIMACIÓN CONTINUA DE MOVIMIENTO DEL CAMIÓN DE REPARTO
   iniciarMovimientoRepartidor();
 
-  // CONECTAR BOTÓN GPS Y INICIAR RASTREO
+  // CONECTAR BOTÓN GPS
   const btnGps = document.getElementById('btnGps');
   if (btnGps) {
     btnGps.addEventListener('click', conectarGPSAuto);
   }
-
-  conectarGPSAuto();
 }
 
-/* MOVIMIENTO FLUIDO Y CONTINUO DEL REPARTIDOR A TRAVÉS DE WAYPOINTS */
+/* POSICIONAMIENTO GPS AUTOMÁTICO EN VIVO AL ABRIR LA APLICACIÓN */
+function conectarGPSAuto() {
+  if ("geolocation" in navigator) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        currentGpsLat = pos.coords.latitude;
+        currentGpsLng = pos.coords.longitude;
+
+        if (map && userMarker) {
+          map.setView([currentGpsLat, currentGpsLng], 17);
+          userMarker.setLatLng([currentGpsLat, currentGpsLng]);
+
+          userMarker.getPopup().setContent(`
+            <div style="font-size: 12px; font-weight: 700; color: #FF6D00;">
+              📍 Tu Ubicación GPS Sincronizada en Vivo
+            </div>
+            <div style="font-size: 10px; color: #94A3B8;">
+              Lat: ${currentGpsLat.toFixed(5)}, Lng: ${currentGpsLng.toFixed(5)}
+            </div>
+          `).openPopup();
+        }
+
+        const banner = document.getElementById('gpsMandatoryBanner');
+        if (banner) banner.style.display = 'none';
+      },
+      (err) => {
+        console.warn("GPS Hardware no otorgado aún:", err.message);
+        const banner = document.getElementById('gpsMandatoryBanner');
+        if (banner) banner.style.display = 'block';
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+
+    // RASTREO CONTINUO EN SEGUNDO PLANO VÍA WATCHPOSITION
+    navigator.geolocation.watchPosition(
+      (pos) => {
+        currentGpsLat = pos.coords.latitude;
+        currentGpsLng = pos.coords.longitude;
+        if (userMarker) {
+          userMarker.setLatLng([currentGpsLat, currentGpsLng]);
+        }
+      },
+      null,
+      { enableHighAccuracy: true, maximumAge: 3000 }
+    );
+  }
+}
+
+/* ANIMACIÓN DE MOVIMIENTO REALISTA DEL REPARTIDOR */
 function iniciarMovimientoRepartidor() {
   if (animationTimer) clearInterval(animationTimer);
 
-  let targetIndex = 1;
   let step = 0;
-  const totalSteps = 60; // Suavidad de interpolación entre puntos
+  const totalSteps = 60;
 
   animationTimer = setInterval(() => {
     if (!truckMarker) return;
 
-    const startPos = animatedRouteWaypoints[routeIndex];
-    const endPos = animatedRouteWaypoints[targetIndex];
+    // Crear waypoints dinámicos basados en la posición GPS actual
+    const waypoints = [
+      [currentGpsLat + 0.0010, currentGpsLng + 0.0012],
+      [currentGpsLat + 0.0005, currentGpsLng + 0.0018],
+      [currentGpsLat - 0.0005, currentGpsLng + 0.0015],
+      [currentGpsLat - 0.0010, currentGpsLng + 0.0005],
+      [currentGpsLat - 0.0008, currentGpsLng - 0.0008],
+      [currentGpsLat + 0.0002, currentGpsLng - 0.0012],
+      [currentGpsLat + 0.0012, currentGpsLng - 0.0005]
+    ];
+
+    let targetIndex = (routeIndex + 1) % waypoints.length;
+    const startPos = waypoints[routeIndex];
+    const endPos = waypoints[targetIndex];
 
     step++;
-    const currentLat = startPos[0] + (endPos[0] - startPos[0]) * (step / totalSteps);
-    const currentLng = startPos[1] + (endPos[1] - startPos[1]) * (step / totalSteps);
+    const lat = startPos[0] + (endPos[0] - startPos[0]) * (step / totalSteps);
+    const lng = startPos[1] + (endPos[1] - startPos[1]) * (step / totalSteps);
 
-    truckMarker.setLatLng([currentLat, currentLng]);
+    truckMarker.setLatLng([lat, lng]);
 
     if (step >= totalSteps) {
       step = 0;
       routeIndex = targetIndex;
-      targetIndex = (targetIndex + 1) % animatedRouteWaypoints.length;
     }
   }, 100);
 }
@@ -172,47 +223,6 @@ function setMapStyle(btnElem, styleKey) {
 
   if (mapTileLayers[styleKey]) {
     mapTileLayers[styleKey].addTo(map);
-  }
-}
-
-/* CONEXIÓN CON GPS EN VIVO Y SINCRONIZACIÓN DE COORDENADAS */
-function conectarGPSAuto() {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        if (map && userMarker) {
-          map.setView([lat, lng], 17);
-          userMarker.setLatLng([lat, lng]);
-          userMarker.getPopup().setContent(`
-            <div style="font-size: 12px; font-weight: 700; color: #FF6D00;">
-              📍 Ubicación GPS Sincronizada en Vivo
-            </div>
-            <div style="font-size: 10px; color: #94A3B8;">
-              Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}
-            </div>
-          `).openPopup();
-        }
-      },
-      (err) => {
-        console.warn("GPS Hardware inaccesible, usando coordenadas locales por defecto:", err.message);
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-
-    // Rastreo en tiempo real mediante watchPosition
-    navigator.geolocation.watchPosition(
-      (pos) => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        if (userMarker) {
-          userMarker.setLatLng([lat, lng]);
-        }
-      },
-      null,
-      { enableHighAccuracy: true, maximumAge: 5000 }
-    );
   }
 }
 
