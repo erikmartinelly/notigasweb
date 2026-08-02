@@ -6,7 +6,7 @@
 
 ## 📌 Datos Clave del Proyecto y Despliegue
 
-- **Nombre del Proyecto:** NOTIGAS (Gas GLP, Agua 20L, Carbón, Chatarra, Frutas, Detergentes & Foro Vecinal)
+- **Nombre del Proyecto:** NOTIGAS (Gas GLP, Agua 20L, Chatarra, Frutas, Detergentes, Carbón & Foro Vecinal)
 - **Repositorio Oficial GitHub:** `https://github.com/erikmartinelly/notigasweb.git`
 - **Dominio en Vivo (Hostinger):** `https://notigas.com`
 - **Ruta de Código Fuente Principal:** `C:\Users\FTL\Documents\APP NOTIGAS`
@@ -22,7 +22,7 @@ graph TD
     subgraph "Capa de Autenticación & Registro Anónimo"
         WebApp -->|Primera Visita| AuthModal[🔐 Registro con Google Gmail]
         AuthModal -->|Cliente / Vecino| StoreCliente[(💾 Gmail + Nombre + Apellido)]
-        AuthModal -->|Repartidor / Distribuidor| StoreDriver[(💾 Nombre Negocio + Placa + Productos + Zonas + Teléfono Privado)]
+        AuthModal -->|Repartidor| StoreDriver[(💾 Nombre Negocio + Placa + Productos + Zonas + Teléfono Privado)]
     end
 
     subgraph "Navegación Principal por Pestañas"
@@ -41,9 +41,9 @@ graph TD
     end
 
     subgraph "Pestaña 2: Mini Páginas de Negocio (Estilo Facebook)"
-        Tab2 --> FilterBar[🏷️ Chips Filtradores: Gas GLP, Agua 20L, Carbón, Chatarra, Frutas, Detergentes]
+        Tab2 --> FilterBar[🏷️ Chips Filtradores: Gas GLP, Agua 20L, Chatarra, Frutas, Detergentes, Carbón]
         Tab2 --> VendorGrid[🏪 Fichas de Negocio: Nombre, Placa, Productos, Zonas]
-        VendorGrid --> PrivateChatBtn[💬 CHAT PRIVADO 1-A-1]
+        VendorGrid --> PrivateChatBtn[💬 CHAT PRIVADO 1-A-1 CON REPARTIDOR]
         Tab2 --> FeedAds1[📢 Propaganda Intercalada en el Feed]
     end
 
@@ -56,7 +56,7 @@ graph TD
         RedditFeed --> Expiration7Days[⏱️ Expiración de Anuncios: 7 Días]
         SubTab1 --> FeedAds2[📢 Propaganda Intercalada en Feed Reddit]
 
-        Tab3 --> SubTab2[📱 Sub-Pestaña 2: Chat Privado Cliente ↔ Distribuidor]
+        Tab3 --> SubTab2[📱 Sub-Pestaña 2: Chat Privado Cliente ↔ Repartidor]
         SubTab2 --> PrivateChat[🔒 Chat 1-a-1 Aislado e Invisible a Terceros]
         PrivateChat --> Expiration48Hours[⏱️ Borrado Automático de Chats: 48 Horas]
     end
@@ -90,10 +90,10 @@ graph TD
 ### 1. Privacidad de Datos y Uso de Correos:
 - **Clientes / Vecinos:** Ingresan **Correo Gmail, Nombre y Apellido**.
 - **Uso Exclusivo de Correos:** Los correos electrónicos registrados se recopilan únicamente para dar acceso a la app y enviar **ofertas puntuales, promociones y novedades por e-mail**.
-- **Repartidores / Conductores:** Completan su ficha de negocio con Nombre, Categoría, Placa, Productos, Zonas de entrega y **Teléfono de Referencia (Privado del Sistema)**.
+- **Repartidores / Conductores:** Completan su ficha de negocio con Nombre, Categoría, Placa, Productos, Zonas de entrega y **Teléfono de Referencia (Privado del Sistema)**. No existen distribuidores externos, únicamente Repartidores registrados.
 
 ### 2. Chat 1-a-1 Privado y Borrado a las 48 Horas:
-- Toda la coordinación de pedidos (*"necesito gas"*) entre el cliente y el distribuidor es **100% privada e invisible para otros vecinos**.
+- Toda la coordinación de pedidos (*"necesito gas"*) entre el cliente y el repartidor es **100% privada e invisible para otros vecinos**.
 - Los chats expiran y se depuran automáticamente a las **48 horas** (`CHAT_EXPIRATION_MS`) para proteger la privacidad y mantener liviano el sistema.
 
 ### 3. Mini Reddit Vecinal con Publicaciones Gratuitas (7 Días):

@@ -92,7 +92,7 @@
       <!-- SUB-NAVEGACIÓN INTERNA EN LA 3ª PESTAÑA -->
       <div class="subnav-3rd-tab">
         <button class="subtab-btn active" id="subtabBtnReddit" onclick="switch3rdTabMode('reddit')"><i class="fa-solid fa-comments"></i> 💬 Mini Reddit Vecinal</button>
-        <button class="subtab-btn" id="subtabBtnDirect" onclick="switch3rdTabMode('direct')"><i class="fa-solid fa-headset"></i> 📱 Chat Privado con Distribuidor</button>
+        <button class="subtab-btn" id="subtabBtnDirect" onclick="switch3rdTabMode('direct')"><i class="fa-solid fa-headset"></i> 📱 Chat Privado con Repartidor</button>
       </div>
 
       <!-- VISTA 1: MINI REDDIT VECINAL (AVISOS GRATIS CON DURACIÓN 1 SEMANA) -->
@@ -109,13 +109,13 @@
       <!-- VISTA 2: CHAT DIRECTO PRIVADO 1-A-1 CLIENTE ↔ REPARTIDOR -->
       <div id="view3rdTabDirect" class="direct-chat-container" style="display:none; flex:1;">
         <div class="chat-vendor-selector">
-          <label style="font-size:11px; font-weight:700; color:#FF6D00;">Seleccionar Distribuidor:</label>
+          <label style="font-size:11px; font-weight:700; color:#FF6D00;">Seleccionar Repartidor:</label>
           <select id="selectVendorChat" onchange="cambiarVendedorChat()">
             <option value="Gas GLP">🔥 Camión Garrafero de Gas GLP N° 42</option>
             <option value="Agua 20L">💧 Repartidor de Agua Purificada 20L</option>
             <option value="Chatarra">♻️ Compra de Chatarra y Reciclaje El Vecino</option>
             <option value="Frutas">🍎 Camión Agrícola Frutas & Verduras</option>
-            <option value="Detergentes">🧼 Distribuidora Detergentes & Limpieza Barrial</option>
+            <option value="Detergentes">🧼 Repartidor Detergentes & Limpieza Barrial</option>
             <option value="Carbón">🪵 Carbonería & Leña El Fuego del Sur</option>
             <option value="Otros">📦 Servicio de Encargos & Paquetes</option>
           </select>
@@ -126,7 +126,7 @@
         </div>
 
         <div class="chat-input-bar">
-          <input type="text" id="inputDirectMessage" placeholder="Escribe tu mensaje privado al distribuidor en ruta..." onkeypress="if(event.key==='Enter') enviarMensajeDirecto()">
+          <input type="text" id="inputDirectMessage" placeholder="Escribe tu mensaje privado al repartidor en ruta..." onkeypress="if(event.key==='Enter') enviarMensajeDirecto()">
           <button onclick="enviarMensajeDirecto()"><i class="fa-solid fa-paper-plane"></i> Enviar</button>
         </div>
       </div>
@@ -157,7 +157,7 @@
         <label>Tipo de Usuario:</label>
         <select id="regRole" onchange="toggleRegFields()">
           <option value="vecino">🏠 Cliente / Vecino (Gmail + Nombre + Apellido)</option>
-          <option value="chofer">🚛 Repartidor / Distribuidor (Mini Página de Negocio)</option>
+          <option value="chofer">🚛 Repartidor (Mini Página de Negocio)</option>
         </select>
       </div>
 
@@ -178,7 +178,7 @@
         </div>
       </div>
 
-      <!-- CAMPOS REPARTIDOR / CONDUCTOR (MINI PÁGINA DE NEGOCIO) -->
+      <!-- CAMPOS REPARTIDOR (MINI PÁGINA DE NEGOCIO) -->
       <div id="regDriverFields" style="display: none;">
         <div class="form-group">
           <label>Nombre o Razón Social del Negocio:</label>

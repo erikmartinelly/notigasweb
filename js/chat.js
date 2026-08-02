@@ -1,5 +1,5 @@
 /* ==========================================================================
-   NOTIGAS - MÓDULO DE CHAT PRIVADO 1-A-1 (COMPRADOR ↔ DISTRIBUIDOR)
+   NOTIGAS - MÓDULO DE CHAT PRIVADO 1-A-1 (CLIENTE ↔ REPARTIDOR)
    Y DEPURACIÓN AUTOMÁTICA DE 48 HORAS
    ========================================================================== */
 
@@ -47,7 +47,7 @@ function cambiarVendedorChat() {
   const nowMs = Date.now();
   const timeStr = new Date(nowMs).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  // Clave privada aislada por usuario y por distribuidor
+  // Clave privada aislada por usuario y por repartidor
   const historyKey = getChatHistoryKey(vendorName);
   let history = [];
   try {
@@ -58,7 +58,7 @@ function cambiarVendedorChat() {
   history = depurarMensajesExpirados(history);
   localStorage.setItem(historyKey, JSON.stringify(history));
 
-  let userAlias = "Comprador (Tú)";
+  let userAlias = "Cliente (Tú)";
   try {
     const saved = localStorage.getItem('notigas_user_data');
     if (saved) {
@@ -74,14 +74,14 @@ function cambiarVendedorChat() {
     </div>
 
     <div style="font-size: 9px; color: #00E676; text-align: center; margin-bottom: 8px; background: rgba(0,230,118,0.08); padding: 6px; border-radius: 8px; border: 1px solid rgba(0,230,118,0.2);">
-      🔒 CHAT PRIVADO Y CONFIDENCIAL 1-A-1 ENTRE TÚ Y EL DISTRIBUIDOR.<br>Tus mensajes y datos compartidos solo se ven en esta sesión y expiran en 48h.
+      🔒 CHAT PRIVADO Y CONFIDENCIAL 1-A-1 ENTRE TÚ Y EL REPARTIDOR.<br>Tus mensajes y datos compartidos solo se ven en esta sesión y expiran en 48h.
     </div>
   `;
 
   if (history.length === 0) {
     const defaultVendorMsg = {
       sender: 'vendor',
-      name: `Distribuidor / Repartidor de ${vendorName}`,
+      name: `Repartidor en Ruta (${vendorName})`,
       text: `¡Hola vecino! Estoy atendiendo tu zona en la OTB. ¿Cuántas unidades de ${vendorName} necesitas?`,
       timeStr: timeStr,
       timestamp: nowMs
@@ -104,7 +104,7 @@ function cambiarVendedorChat() {
           <b>🚛 ${m.name}:</b><br>${m.text}
           <div class="chat-msg-footer">
             <span class="chat-msg-time">${m.timeStr}</span>
-            <button class="btn-report" onclick="abrirModalDenuncia('Chat Distribuidor', 'Mensaje de Distribuidor')"><i class="fa-solid fa-flag"></i> Denunciar</button>
+            <button class="btn-report" onclick="abrirModalDenuncia('Chat Repartidor', 'Mensaje de Repartidor')"><i class="fa-solid fa-flag"></i> Denunciar</button>
           </div>
         </div>
       `;
@@ -137,7 +137,7 @@ function enviarMensajeDirecto() {
   const nowMs = Date.now();
   const timeStr = new Date(nowMs).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  let userAlias = "Comprador (Tú)";
+  let userAlias = "Cliente (Tú)";
   try {
     const saved = localStorage.getItem('notigas_user_data');
     if (saved) {
@@ -172,7 +172,7 @@ function enviarMensajeDirecto() {
   setTimeout(() => {
     const vendorReply = {
       sender: 'vendor',
-      name: `Distribuidor / Repartidor de ${vendorName}`,
+      name: `Repartidor en Ruta (${vendorName})`,
       text: `Entendido, pedido recibido de forma privada. Me dirijo a tu ubicación fijada en el mapa.`,
       timeStr: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       timestamp: Date.now()

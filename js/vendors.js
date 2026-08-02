@@ -5,7 +5,7 @@
 const defaultVendorsList = [
   {
     id: "v1",
-    name: "Distribuidora Express Gas GLP N° 42",
+    name: "Repartidor Express Gas GLP N° 42",
     category: "Gas GLP",
     icon: "🔥",
     plate: "3842-XYZ (Camión Garrafero)",
@@ -15,7 +15,7 @@ const defaultVendorsList = [
   },
   {
     id: "v2",
-    name: "Agua Purificada Cristallina 20L",
+    name: "Repartidor Agua Purificada Cristallina 20L",
     category: "Agua 20L",
     icon: "💧",
     plate: "2910-ABC (Camión Cisterna/Repartidor)",
@@ -45,7 +45,7 @@ const defaultVendorsList = [
   },
   {
     id: "v5",
-    name: "Distribuidora de Detergentes & Limpieza Barrial",
+    name: "Repartidor de Detergentes & Limpieza Barrial",
     category: "Detergentes",
     icon: "🧼",
     plate: "6234-VWX (Furgón de Venta)",
@@ -55,7 +55,7 @@ const defaultVendorsList = [
   },
   {
     id: "v6",
-    name: "Carbonería & Leña El Fuego del Sur",
+    name: "Repartidor de Carbón & Leña El Fuego del Sur",
     category: "Carbón",
     icon: "🪵",
     plate: "1845-KLM (Camioneta de Reparto)",
@@ -89,7 +89,6 @@ function renderVendorCards(filterCat) {
   const container = document.getElementById('vendorGridContainer');
   if (!container) return;
 
-  // Cargar vendedores registrados de localStorage + por defecto
   let allVendors = [...defaultVendorsList];
   try {
     const saved = localStorage.getItem('notigas_user_data');
@@ -117,7 +116,7 @@ function renderVendorCards(filterCat) {
   if (filtered.length === 0) {
     container.innerHTML = `
       <div style="text-align:center; color:#94A3B8; padding:30px; font-size:12px;">
-        No hay repartidores o distribuidores registrados en esta categoría aún.<br>
+        No hay repartidores registrados en esta categoría aún.<br>
         <button class="btn-driver" style="margin: 10px auto;" onclick="document.getElementById('modalDriver').style.display='flex'">➕ Publicar mi Mini Página de Negocio</button>
       </div>
     `;
@@ -147,7 +146,7 @@ function renderVendorCards(filterCat) {
 
         <div class="vendor-fb-footer">
           <button class="btn-vendor-chat" onclick="abrirChatDirectoVendedor('${v.category}')">
-            <i class="fa-solid fa-comments"></i> 💬 CHAT PRIVADO CON DISTRIBUIDOR
+            <i class="fa-solid fa-comments"></i> 💬 CHAT PRIVADO CON REPARTIDOR
           </button>
           <button class="btn-vendor-order" onclick="seleccionarYPedirDirecto('${v.category}')">
             <i class="fa-solid fa-paper-plane"></i> Hacer Pedido
