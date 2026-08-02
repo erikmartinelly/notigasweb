@@ -1,5 +1,5 @@
 /* ==========================================================================
-   NOTIGAS - MÓDULO DE AUTENTICACIÓN & REGISTRO DE MINI PÁGINAS DE NEGOCIO
+   NOTIGAS - MÓDULO DE AUTENTICACIÓN & GOOGLE IDENTITY SERVICES (1-TAP SIGN-IN)
    ========================================================================== */
 
 let databaseEmails = [
@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!savedUser) {
     const modalAuth = document.getElementById('modalWelcomeAuth');
     if (modalAuth) modalAuth.style.display = 'flex';
+    initGoogleOneTap();
   } else {
     try {
       const u = JSON.parse(savedUser);
@@ -27,6 +28,57 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 });
+
+/* INICIALIZACIÓN OFICIAL DE GOOGLE IDENTITY SERVICES (1-TAP SIGN-IN) */
+function initGoogleOneTap() {
+  if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+    google.accounts.id.initialize({
+      client_id: "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com", // Sustituir por Client ID de Google Cloud Console
+      callback: handleCredentialResponse,
+      auto_select: true
+    });
+
+    google.accounts.id.prompt((notification) => {
+      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+        console.log("Google One Tap no mostrado automaticamente, usando modal por defecto.");
+      }
+    });
+  }
+}
+
+/* MANEJADOR DEL TOKEN DE RESPUESTA DE GOOGLE */
+function handleCredentialResponse(response) {
+  try {
+    // Decodificar el JWT ID Token de Google (payload base64)
+    const base64Url = response.credential.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+
+    const googleUser = JSON.parse(jsonPayload);
+    const gmail = googleUser.email;
+    const nombre = googleUser.given_name || googleUser.name;
+    const apellido = googleUser.family_name || '';
+
+    const userData = {
+      role: 'vecino',
+      gmail: gmail,
+      nombre: nombre,
+      apellido: apellido
+    };
+
+    localStorage.setItem('notigas_user_data', JSON.stringify(userData));
+    databaseEmails.push({ gmail: gmail, role: 'Cliente', fecha: new Date().toISOString().split('T')[0] });
+
+    const modalAuth = document.getElementById('modalWelcomeAuth');
+    if (modalAuth) modalAuth.style.display = 'none';
+
+    alert(`✅ AUTENTICACIÓN GOOGLE 1-TAP EXITOSA\n\n¡Bienvenido ${nombre} (${gmail})! Tu cuenta ha sido registrada de forma segura en NOTIGAS.`);
+  } catch(e) {
+    console.error("Error al procesar credencial de Google:", e);
+  }
+}
 
 function toggleRegFields() {
   const roleSelect = document.getElementById('regRole');
@@ -78,7 +130,7 @@ function guardarRegistroUnico() {
     data.placa = placa;
     data.productos = productos;
     data.zonas = zonas;
-    data.telReferencia = telReferencia; // Privado en el sistema
+    data.telReferencia = telReferencia;
   } else {
     const nombre = (document.getElementById('regNombre')?.value || '').trim();
     const apellido = (document.getElementById('regApellido')?.value || '').trim();

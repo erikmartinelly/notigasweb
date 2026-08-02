@@ -156,7 +156,7 @@ main {
   flex-direction: column; 
 }
 
-/* PESTAÑA 1: MAPA & GPS CON SILUETA SVG OFICIAL GARRAFA GLP */
+/* PESTAÑA 1: MAPA & GPS CON SILUETA SVG OFICIAL GARRAFA GLP Y ANIMACIONES */
 #map { 
   width: 100%; 
   height: 100%; 
@@ -316,10 +316,22 @@ main {
   fill: currentColor; 
 }
 
+/* KEYFRAMES ANIMACIONES DE MAPA EN VIVO */
 @keyframes pulse { 
   0% { transform: scale(1); } 
   50% { transform: scale(1.02); } 
   100% { transform: scale(1); } 
+}
+
+@keyframes pulseGlow {
+  0% { transform: scale(0.85); opacity: 0.8; }
+  50% { transform: scale(1.15); opacity: 0.2; }
+  100% { transform: scale(0.85); opacity: 0.8; }
+}
+
+@keyframes radarPing {
+  0% { transform: scale(0.7); opacity: 0.9; }
+  100% { transform: scale(1.4); opacity: 0; }
 }
 
 /* PESTAÑA 2: MINI PÁGINAS DE NEGOCIO ESTILO FACEBOOK POR CATEGORÍA */

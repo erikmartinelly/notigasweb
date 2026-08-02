@@ -1,5 +1,5 @@
 /* ==========================================================================
-   NOTIGAS - MÓDULO DE ADMINISTRACIÓN & EXPORTACIÓN CSV
+   NOTIGAS - MÓDULO DE ADMINISTRACIÓN & EXPORTACIÓN CSV DE USUARIOS
    ========================================================================== */
 
 function closeAdminModal() { 
@@ -38,21 +38,61 @@ function guardarAdminConfig() {
   }
 }
 
+/* DESCARGA COMPLETA DE CORREOS ELECTRONICOS REGISTRADOS (.CSV DE USUARIOS) */
 function descargarListaCorreosCSV() {
-  if (typeof databaseEmails === 'undefined' || !databaseEmails) return;
+  let emailsList = [];
 
-  let csvContent = "data:text/csv;charset=utf-8,Email,Rol,Fecha\n";
-  databaseEmails.forEach(item => {
-    csvContent += `${item.gmail},${item.role},${item.fecha}\n`;
+  // 1. Cargar base por defecto
+  if (typeof databaseEmails !== 'undefined' && Array.isArray(databaseEmails)) {
+    emailsList = [...databaseEmails];
+  }
+
+  // 2. Cargar usuario registrado en localStorage
+  try {
+    const saved = localStorage.getItem('notigas_user_data');
+    if (saved) {
+      const u = JSON.parse(saved);
+      if (u.gmail) {
+        emailsList.push({
+          gmail: u.gmail,
+          role: u.role === 'chofer' ? 'Repartidor' : 'Cliente',
+          fecha: new Date().toISOString().split('T')[0]
+        });
+      }
+    }
+  } catch(e){}
+
+  // 3. Eliminar duplicados por Gmail
+  const uniqueEmailsMap = new Map();
+  emailsList.forEach(item => {
+    if (item.gmail && !uniqueEmailsMap.has(item.gmail.toLowerCase())) {
+      uniqueEmailsMap.set(item.gmail.toLowerCase(), item);
+    }
   });
 
-  const encodedUri = encodeURI(csvContent);
+  const finalEmails = Array.from(uniqueEmailsMap.values());
+
+  if (finalEmails.length === 0) {
+    alert('No hay correos electrónicos de usuarios registrados aún.');
+    return;
+  }
+
+  // Generar contenido CSV con BOM UTF-8 para apertura directa en Microsoft Excel
+  let csvRows = ["Email,Rol,Fecha Registro"];
+  finalEmails.forEach(item => {
+    csvRows.push(`"${item.gmail}","${item.role || 'Cliente'}","${item.fecha || new Date().toISOString().split('T')[0]}"`);
+  });
+
+  const csvString = "\uFEFF" + csvRows.join("\n");
+  const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  
   const link = document.createElement("a");
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", "lista_correos_notigas.csv");
+  link.setAttribute("href", url);
+  link.setAttribute("download", `lista_usuarios_notigas_${new Date().toISOString().split('T')[0]}.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
 
-  alert("📥 LISTA DE CORREOS DESCARGADA EN FORMATO .CSV");
+  alert(`📥 DESCARGA COMPLETADA EN FORMATO .CSV\n\nSe exportaron ${finalEmails.length} correos electrónicos de usuarios para campañas de Email Marketing.`);
 }
