@@ -64,9 +64,11 @@
         <button class="map-style-btn" onclick="setMapStyle(this, 'googleSatelite')"><i class="fa-solid fa-satellite"></i> Google Satélite HD</button>
       </div>
 
-      <!-- BOTÓN PRINCIPAL UNIFICADO CON SILUETA SVG DE GARRAFA GLP -->
+      <!-- BOTÓN PRINCIPAL UNIFICADO CON SILUETA SVG DE GARRAFA GLP Y BOTÓN CANCELAR -->
       <div class="floating-actions-container">
-        <button class="btn-main-order" onclick="abrirSubmenuPedidos()"><svg class="garrafa-icon-svg" viewBox="0 0 24 24"><path d="M9 2h6v2H9V2zm8 4H7v3h10V6zm1 4H6c-1.1 0-2 .9-2 2v9c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-9c0-1.1-.9-2-2-2zM12 19c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg> 📦 HACER UN PEDIDO EN VIVO</button>
+        <button class="btn-main-order" id="btnMainOrder" onclick="abrirSubmenuPedidos()"><svg class="garrafa-icon-svg" viewBox="0 0 24 24"><path d="M9 2h6v2H9V2zm8 4H7v3h10V6zm1 4H6c-1.1 0-2 .9-2 2v9c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-9c0-1.1-.9-2-2-2zM12 19c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg> 📦 HACER UN PEDIDO EN VIVO</button>
+        
+        <button class="btn-cancel-order" id="btnCancelOrder" style="display: none;" onclick="cancelarPedidoActivo()"><i class="fa-solid fa-circle-xmark"></i> ❌ CANCELAR PEDIDO EN VIVO</button>
         
         <div class="action-row">
           <button class="btn-panic" onclick="lanzarEspecialEsperame()"><i class="fa-solid fa-hand-paper"></i> 🛑 ESPÉRAME</button>
@@ -183,6 +185,10 @@
 
       <button class="btn-submit" onclick="guardarPrefUsuario()"><i class="fa-solid fa-floppy-disk"></i> Guardar Preferencias</button>
       
+      <button style="width:100%; background: linear-gradient(135deg, #D32F2F, #B71C1C); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 10px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(211,47,47,0.4);" onclick="cerrarSesionUsuario()">
+        <i class="fa-solid fa-right-from-bracket"></i> 🚪 Cerrar Sesión
+      </button>
+
       <button style="width:100%; background:none; border:1px solid rgba(255,255,255,0.2); color:#94A3B8; padding:8px; border-radius:8px; margin-top:10px; cursor:pointer; font-size:11px;" onclick="closeUserSettingsModal(); abrirModalAdminLogin();">
         <i class="fa-solid fa-user-shield"></i> Acceso Exclusivo Administrador
       </button>
@@ -245,18 +251,19 @@
     </div>
   </div>
 
-  <!-- MODAL ADMINISTRADOR EXCLUSIVO (GOOGLE ADSENSE & ANUNCIOS NATIVOS) -->
+  <!-- MODAL ADMINISTRADOR EXCLUSIVO (GOOGLE ADSENSE, ANUNCIOS, BANEOS Y MODERACIÓN) -->
   <div class="modal" id="modalAdmin">
-    <div class="modal-content">
+    <div class="modal-content" style="max-width: 520px;">
       <div class="modal-title">
         <span><i class="fa-solid fa-user-shield"></i> Panel de Administración NOTIGAS</span>
         <button class="btn-close" onclick="closeAdminModal()">✕</button>
       </div>
 
       <div class="modal-tab-nav">
-        <button class="modal-tab-btn active" onclick="switchModalTab(0)"><i class="fa-solid fa-rectangle-ad"></i> Anuncios AdSense & Nativos</button>
+        <button class="modal-tab-btn active" onclick="switchModalTab(0)"><i class="fa-solid fa-rectangle-ad"></i> Anuncios & AdSense</button>
         <button class="modal-tab-btn" onclick="switchModalTab(1)"><i class="fa-solid fa-user-lock"></i> Acceso Admin</button>
-        <button class="modal-tab-btn" onclick="switchModalTab(2)"><i class="fa-solid fa-file-csv"></i> Descargar Correos (.CSV)</button>
+        <button class="modal-tab-btn" onclick="switchModalTab(2)"><i class="fa-solid fa-file-csv"></i> Exportar CSV</button>
+        <button class="modal-tab-btn" onclick="switchModalTab(3)"><i class="fa-solid fa-shield-halved"></i> Moderación & Baneos</button>
       </div>
 
       <!-- SUBMENÚ 1: CONFIGURACIÓN DE GOOGLE ADSENSE Y ANUNCIOS NATIVOS -->
@@ -278,14 +285,14 @@
 
       <!-- SUBMENÚ 2: ACCESO RESTRINGIDO ADMINISTRADOR -->
       <div class="modal-tab-pane" id="modalPane1">
-        <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Cuentas habilitadas: <strong>erikmartinelly@gmail.com</strong> y <strong>leonmartinelly13@gmail.com</strong></p>
+        <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Acceso restringido únicamente a administradores autorizados del sistema.</p>
         <div class="form-group">
           <label>Correo Gmail de Administrador:</label>
-          <input type="email" id="inputGmail" placeholder="erikmartinelly@gmail.com">
+          <input type="email" id="inputGmail" placeholder="correo@ejemplo.com">
         </div>
         <div class="form-group">
-          <label>Contraseña de Administración (Tiquipaya428):</label>
-          <input type="password" id="inputPass" placeholder="Tiquipaya428">
+          <label>Contraseña de Administración:</label>
+          <input type="password" id="inputPass" placeholder="••••••••">
         </div>
         <button class="btn-submit" onclick="guardarAdminConfig()"><i class="fa-solid fa-key"></i> Iniciar Sesión de Administrador</button>
       </div>
@@ -294,6 +301,29 @@
       <div class="modal-tab-pane" id="modalPane2">
         <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Exportar todos los correos electrónicos Gmail de usuarios registrados para campañas de Email Marketing:</p>
         <button class="btn-csv-download" onclick="descargarListaCorreosCSV()"><i class="fa-solid fa-download"></i> 📥 Descargar Correos Gmail (.CSV)</button>
+      </div>
+
+      <!-- SUBMENÚ 4: MODERACIÓN, DENUNCIAS Y GESTIÓN DE BANEOS -->
+      <div class="modal-tab-pane" id="modalPane3">
+        <p style="font-size: 11px; color: #94A3B8; margin-bottom: 10px;">Gestión de Denuncias por Spam/Acoso y Lista de Usuarios Baneados:</p>
+        
+        <div style="background-color: #0F172A; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 12px;">
+          <h4 style="font-size: 12px; color: #FF6D00; margin-bottom: 8px;"><i class="fa-solid fa-flag"></i> Denuncias Pendientes de Moderación:</h4>
+          <div id="adminReportsContainer" style="max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
+            <!-- Renderizado dinámico de denuncias -->
+          </div>
+        </div>
+
+        <div style="background-color: #0F172A; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.08);">
+          <h4 style="font-size: 12px; color: #EF4444; margin-bottom: 8px;"><i class="fa-solid fa-user-slash"></i> Banear Usuario Manualmente:</h4>
+          <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+            <input type="text" id="inputBanIdentifier" placeholder="Correo o Nombre a banear..." style="flex:1; padding: 8px; font-size: 11px; border-radius: 6px; background: #1E293B; border: 1px solid rgba(255,255,255,0.1); color: white;">
+            <button onclick="banearUsuarioAdmin()" style="background-color: #D32F2F; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: 700; font-size: 11px; cursor: pointer;">Banear</button>
+          </div>
+          <div id="adminBannedList" style="max-height: 100px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; font-size: 10px; color: #94A3B8;">
+            <!-- Renderizado dinámico de baneados -->
+          </div>
+        </div>
       </div>
     </div>
   </div>

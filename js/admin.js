@@ -1,5 +1,5 @@
 /* ==========================================================================
-   NOTIGAS - MÓDULO DE ADMINISTRACIÓN, ADSENSE & CONFIGURACIÓN DE USUARIO
+   NOTIGAS - MÓDULO DE ADMINISTRACIÓN, ADSENSE, MODERACIÓN & BANEOS
    ========================================================================== */
 
 const AUTHORIZED_ADMIN_EMAILS = [
@@ -19,6 +19,7 @@ function abrirModalAdminLogin() {
   closeUserSettingsModal();
   const modalAdmin = document.getElementById('modalAdmin');
   if (modalAdmin) modalAdmin.style.display = 'flex';
+  renderAdminReports();
 }
 
 function guardarPrefUsuario() {
@@ -37,6 +38,20 @@ function guardarPrefUsuario() {
   alert('⚙️ Preferencias de usuario guardadas con éxito.');
 }
 
+function cerrarSesionUsuario() {
+  if (confirm("🚪 ¿Deseas cerrar la sesión activa de NOTIGAS?")) {
+    localStorage.removeItem('notigas_user_data');
+    sessionStorage.removeItem('notigas_admin_session');
+    
+    closeUserSettingsModal();
+    
+    const modalWelcome = document.getElementById('modalWelcomeAuth');
+    if (modalWelcome) modalWelcome.style.display = 'flex';
+    
+    alert("🚪 Sesión cerrada correctamente. Puedes ingresar nuevamente como Comprador o Repartidor.");
+  }
+}
+
 /* GESTIÓN DEL MODAL EXCLUSIVO DE ADMINISTRADOR */
 function closeAdminModal() { 
   const modalAdmin = document.getElementById('modalAdmin');
@@ -46,6 +61,7 @@ function closeAdminModal() {
 function switchModalTab(idx) {
   document.querySelectorAll('.modal-tab-btn').forEach((btn, i) => btn.classList.toggle('active', i === idx));
   document.querySelectorAll('.modal-tab-pane').forEach((pane, i) => pane.classList.toggle('active', i === idx));
+  if (idx === 3) renderAdminReports();
 }
 
 function guardarSubmenuAnuncios() {
@@ -85,7 +101,7 @@ function guardarAdminConfig() {
   }
 
   if (!AUTHORIZED_ADMIN_EMAILS.includes(gmail)) {
-    alert(`⛔ ACCESO DENEGADO\n\nLa cuenta (${gmail}) no cuenta con permisos de administración en NOTIGAS.\nCuentas habilitadas: erikmartinelly@gmail.com y leonmartinelly13@gmail.com`);
+    alert(`⛔ ACCESO DENEGADO\n\nLa cuenta (${gmail}) no cuenta con permisos de administración en NOTIGAS.`);
     return;
   }
 
@@ -95,7 +111,7 @@ function guardarAdminConfig() {
   }
 
   sessionStorage.setItem('notigas_admin_session', gmail);
-  alert(`🔐 ACCESO DE ADMINISTRADOR CONCEDIDO\n\nBienvenido Administrador (${gmail}). Tienes acceso total a la gestión de Google AdSense, anuncios nativos y exportación de listas CSV.`);
+  alert(`🔐 ACCESO DE ADMINISTRADOR CONCEDIDO\n\nBienvenido Administrador (${gmail}). Tienes acceso total a la gestión de anuncios, moderación de denuncias y exportación CSV.`);
   switchModalTab(0);
 }
 
@@ -179,4 +195,117 @@ function descargarListaCorreosCSV() {
   document.body.removeChild(link);
 
   alert(`📥 DESCARGA COMPLETADA EN FORMATO .CSV\n\nSe exportaron ${finalEmails.length} correos electrónicos de usuarios para campañas de Email Marketing.`);
+}
+
+/* MODERACIÓN DE DENUNCIAS Y GESTIÓN DE BANEOS DE USUARIOS */
+function renderAdminReports() {
+  const container = document.getElementById('adminReportsContainer');
+  const bannedContainer = document.getElementById('adminBannedList');
+  if (!container || !bannedContainer) return;
+
+  let reports = [];
+  try {
+    const raw = localStorage.getItem('notigas_user_reports');
+    if (raw) reports = JSON.parse(raw);
+  } catch(e){}
+
+  if (reports.length === 0) {
+    container.innerHTML = '<div style="color:#64748B; font-style:italic;">No hay denuncias pendientes de revisión.</div>';
+  } else {
+    let html = '';
+    reports.forEach((rep, idx) => {
+      html += `
+        <div style="background:#1E293B; padding:6px 8px; border-radius:6px; border-left:3px solid #EF4444; display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <strong>${rep.target || 'Publicación'}</strong>: ${rep.motivo}
+            <div style="font-size:9px; color:#94A3B8;">${rep.detalle || 'Sin detalle'} • ${rep.fecha || 'Reciente'}</div>
+          </div>
+          <div style="display:flex; gap:4px;">
+            <button onclick="borrarDenunciaAdmin(${idx})" style="background:#0288D1; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; cursor:pointer;" title="Desestimar">✅ Ok</button>
+            <button onclick="banearUsuarioAdmin('${rep.target}')" style="background:#D32F2F; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; cursor:pointer;" title="Banear Usuario">🚫 Banear</button>
+          </div>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+  }
+
+  let banned = [];
+  try {
+    const raw = localStorage.getItem('notigas_banned_users');
+    if (raw) banned = JSON.parse(raw);
+  } catch(e){}
+
+  if (banned.length === 0) {
+    bannedContainer.innerHTML = '<div style="color:#64748B; font-style:italic;">No hay usuarios baneados actualmente.</div>';
+  } else {
+    let html = '';
+    banned.forEach((u, i) => {
+      html += `
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#1E293B; padding:4px 8px; border-radius:4px;">
+          <span>🚫 ${u}</span>
+          <button onclick="desbanearUsuarioAdmin(${i})" style="background:#00E676; color:#0F172A; border:none; padding:2px 6px; border-radius:4px; font-weight:700; font-size:9px; cursor:pointer;">Desbanear</button>
+        </div>
+      `;
+    });
+    bannedContainer.innerHTML = html;
+  }
+}
+
+function banearUsuarioAdmin(targetId) {
+  let identifier = targetId;
+  if (!identifier) {
+    const input = document.getElementById('inputBanIdentifier');
+    identifier = input ? input.value.trim() : '';
+  }
+
+  if (!identifier) {
+    alert('Ingresa el correo o nombre del usuario que deseas banear.');
+    return;
+  }
+
+  let banned = [];
+  try {
+    const raw = localStorage.getItem('notigas_banned_users');
+    if (raw) banned = JSON.parse(raw);
+  } catch(e){}
+
+  if (!banned.includes(identifier)) {
+    banned.push(identifier);
+    localStorage.setItem('notigas_banned_users', JSON.stringify(banned));
+    alert(`🚫 USUARIO BANEADO\nEl usuario (${identifier}) ha sido restringido de publicar en NOTIGAS.`);
+  }
+
+  renderAdminReports();
+}
+
+function desbanearUsuarioAdmin(index) {
+  let banned = [];
+  try {
+    const raw = localStorage.getItem('notigas_banned_users');
+    if (raw) banned = JSON.parse(raw);
+  } catch(e){}
+
+  if (index >= 0 && index < banned.length) {
+    const unbanned = banned.splice(index, 1);
+    localStorage.setItem('notigas_banned_users', JSON.stringify(banned));
+    alert(`🔓 USUARIO DESBANEADO\nSe ha retirado el ban a ${unbanned[0]}.`);
+  }
+
+  renderAdminReports();
+}
+
+function borrarDenunciaAdmin(index) {
+  let reports = [];
+  try {
+    const raw = localStorage.getItem('notigas_user_reports');
+    if (raw) reports = JSON.parse(raw);
+  } catch(e){}
+
+  if (index >= 0 && index < reports.length) {
+    reports.splice(index, 1);
+    localStorage.setItem('notigas_user_reports', JSON.stringify(reports));
+  }
+
+  renderAdminReports();
 }

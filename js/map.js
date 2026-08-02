@@ -96,20 +96,6 @@ function initNotigasMap() {
     </div>
   `).openPopup();
 
-  // MARCADOR DEL CAMIÓN DE REPARTO EN VIVO
-  truckMarker = L.marker([currentGpsLat + 0.0012, currentGpsLng + 0.0015], {
-    icon: truckIcon
-  }).addTo(map);
-
-  truckMarker.bindPopup(`
-    <div style="font-size: 12px; font-weight: 700; color: #00E676;">
-      🟢 Repartidor de Gas GLP N° 42 (En Ruta)
-    </div>
-    <div style="font-size: 10px; color: #CBD5E1; margin-top: 2px;">
-      Transmitiendo ubicación en vivo • OTB Central
-    </div>
-  `);
-
   map.on('click', (e) => {
     userMarker.setLatLng(e.latlng);
   });
@@ -122,13 +108,60 @@ function initNotigasMap() {
   // SOLICITAR E INICIAR POSICIONAMIENTO GPS OBLIGATORIO AUTOMÁTICO AL CARGAR
   conectarGPSAuto();
 
-  // INICIAR ANIMACIÓN CONTINUA DE MOVIMIENTO DEL CAMIÓN DE REPARTO
-  iniciarMovimientoRepartidor();
+  // MOSTRAR CAMIÓN EN MOVIMIENTO SOLO CUANDO HAY REPARTIDORES REGISTRADOS Y TRANSMITIENDO EN VIVO
+  verificarYMostrarRepartidorGPS();
 
   // CONECTAR BOTÓN GPS
   const btnGps = document.getElementById('btnGps');
   if (btnGps) {
     btnGps.addEventListener('click', conectarGPSAuto);
+  }
+}
+
+/* MOSTRAR Y ANIMAR EL CAMIÓN EN MOVIMIENTO ÚNICAMENTE SI EXISTE UN REPARTIDOR REGISTRADO Y TRANSMITIENDO GPS */
+function verificarYMostrarRepartidorGPS() {
+  let hasActiveDriver = false;
+  let driverName = "Repartidor";
+
+  try {
+    const savedUser = localStorage.getItem('notigas_user_data');
+    if (savedUser) {
+      const u = JSON.parse(savedUser);
+      if (u.role === 'repartidor' || u.role === 'chofer') {
+        const livePref = localStorage.getItem('notigas_driver_gps_live') || 'on';
+        if (livePref !== 'off') {
+          hasActiveDriver = true;
+          driverName = u.nombre || "Repartidor en Ruta";
+        }
+      }
+    }
+  } catch(e){}
+
+  if (hasActiveDriver) {
+    if (map && !truckMarker) {
+      truckMarker = L.marker([currentGpsLat + 0.0012, currentGpsLng + 0.0015], {
+        icon: truckIcon
+      }).addTo(map);
+
+      truckMarker.bindPopup(`
+        <div style="font-size: 12px; font-weight: 700; color: #00E676;">
+          🟢 ${driverName} (Transmisión GPS en Vivo)
+        </div>
+        <div style="font-size: 10px; color: #CBD5E1; margin-top: 2px;">
+          Navegando en ruta por las calles de tu OTB
+        </div>
+      `);
+    }
+    iniciarMovimientoRepartidor();
+  } else {
+    if (truckMarker && map) {
+      map.removeLayer(truckMarker);
+      truckMarker = null;
+    }
+    if (animationTimer) {
+      clearInterval(animationTimer);
+      animationTimer = null;
+    }
   }
 }
 
@@ -158,14 +191,11 @@ function conectarGPSAuto() {
   };
 
   if ("geolocation" in navigator) {
-    // 1. Intentar con Alta Precisión (High Accuracy)
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         applyGpsPosition(pos.coords.latitude, pos.coords.longitude, "Ubicación GPS Sincronizada en Vivo");
       },
       (err) => {
-        console.warn("Intento alta precisión falló, reintentando con precisión estándar...", err.message);
-        // 2. Reintento con precisión estándar
         navigator.geolocation.getCurrentPosition(
           (pos) => {
             applyGpsPosition(pos.coords.latitude, pos.coords.longitude, "Ubicación GPS Aproximada");
@@ -181,7 +211,6 @@ function conectarGPSAuto() {
       { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
     );
 
-    // RASTREO CONTINUO EN SEGUNDO PLANO VÍA WATCHPOSITION
     try {
       navigator.geolocation.watchPosition(
         (pos) => {
@@ -211,7 +240,6 @@ function iniciarMovimientoRepartidor() {
   animationTimer = setInterval(() => {
     if (!truckMarker) return;
 
-    // Crear waypoints dinámicos basados en la posición GPS actual
     const waypoints = [
       [currentGpsLat + 0.0010, currentGpsLng + 0.0012],
       [currentGpsLat + 0.0005, currentGpsLng + 0.0018],

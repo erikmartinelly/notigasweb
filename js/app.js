@@ -18,7 +18,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // REQUERIR GPS OBLIGATORIO AL CARGAR LA APLICACIÓN
   verificarGPSObligatorio();
+  checkActiveOrderStatus();
 });
+
+function checkActiveOrderStatus() {
+  const btnCancel = document.getElementById('btnCancelOrder');
+  const activeOrder = localStorage.getItem('notigas_active_order');
+  if (btnCancel) {
+    if (activeOrder) {
+      btnCancel.style.display = 'flex';
+    } else {
+      btnCancel.style.display = 'none';
+    }
+  }
+}
 
 function verificarGPSObligatorio() {
   if ("geolocation" in navigator) {
@@ -101,14 +114,33 @@ function confirmarPedido() {
   const cat = document.getElementById('selectCategoria')?.value || 'Garrafa de Gas GLP';
   const cant = document.getElementById('inputCantidad')?.value || '1 unidad';
   
+  const activeOrderData = {
+    categoria: cat,
+    cantidad: cant,
+    lat: pos.lat,
+    lng: pos.lng,
+    timestamp: Date.now()
+  };
+
+  localStorage.setItem('notigas_active_order', JSON.stringify(activeOrderData));
   closePedidoModal();
-  alert(`📦 PEDIDO EN VIVO REGISTRADO\n\nCategoría: ${cat}\nDetalle: ${cant}\n📍 Ubicación de Entrega: Lat ${pos.lat.toFixed(5)}, Lng ${pos.lng.toFixed(5)}\n\nEl repartidor en ruta ha recibido tu ubicación de entrega en el mapa.`);
+  checkActiveOrderStatus();
+
+  alert(`📦 PEDIDO EN VIVO REGISTRADO\n\nCategoría: ${cat}\nDetalle: ${cant}\n📍 Ubicación de Entrega: Lat ${pos.lat.toFixed(5)}, Lng ${pos.lng.toFixed(5)}\n\nEl repartidor en ruta ha recibido tu ubicación. Se ha activado el botón "❌ CANCELAR PEDIDO EN VIVO" por si necesitas anular tu pedido.`);
+}
+
+function cancelarPedidoActivo() {
+  if (confirm("❌ ¿Estás seguro de que deseas cancelar tu pedido activo en vivo?")) {
+    localStorage.removeItem('notigas_active_order');
+    checkActiveOrderStatus();
+    alert("❌ TU PEDIDO HA SIDO CANCELADO\nSe ha notificado al repartidor en ruta que la solicitud fue anulada.");
+  }
 }
 
 function notificarEscucheCamion() {
   if (typeof userMarker === 'undefined' || !userMarker) return;
   const pos = userMarker.getLatLng();
-  alert(`🔔 ¡GRACIAS VECINO!\n\nSe ha emitido tu aviso voluntario de que el camión de gas está pasando cerca (radio ~20m).`);
+  alert(`🔔 ¡GRACIAS VECINO!\n\nSe ha emitido tu aviso voluntario de que el camión de gas está pasando cerca.`);
 }
 
 function lanzarEspecialEsperame() {

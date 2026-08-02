@@ -4,49 +4,11 @@
 
 const FORUM_POST_EXPIRATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 Días en milisegundos
 
-let postCounterIndex = 3;
+let postCounterIndex = 1;
 let activePostCommentsRef = null;
 
-const defaultForumPosts = [
-  {
-    id: 0,
-    cat: "QUEJA VECINAL",
-    title: "⚠️ Foco parpadeando en la esquina de la Calle 3 por la OTB",
-    desc: "Lleva 2 horas parpadeando el foco de la esquina. ¿Alguien ya llamó a la alcaldía o a alumbrado público?",
-    votes: 24,
-    timestamp: Date.now() - (1000 * 60 * 45) // hace 45 min
-  },
-  {
-    id: 1,
-    cat: "APOYO VECINAL",
-    title: "🐶 Perrito caniche blanco extraviado cerca de la plaza",
-    desc: "Lleva collar rojo sin placa. Si lo ven por favor reténganlo y me avisan por aquí.",
-    votes: 41,
-    timestamp: Date.now() - (1000 * 60 * 120) // hace 2 horas
-  },
-  {
-    id: 2,
-    cat: "AVISO DE CAMIÓN",
-    title: "🚛 Camión de agua purificada 20L pasando por la Av. Principal",
-    desc: "El camión azul de agua acaba de doblar por el parque. Apúrense los que necesiten botellón.",
-    votes: 18,
-    timestamp: Date.now() - (1000 * 60 * 10) // hace 10 min
-  }
-];
-
-const postCommentsStore = {
-  0: [
-    { author: "Vecino Calle 2", text: "Ya reportamos a alumbrado público, dijeron que pasan en la tarde.", time: "Hace 30 min" },
-    { author: "Doña Martha", text: "Gracias por avisar, dejé encendido el foco de mi puerta.", time: "Hace 15 min" }
-  ],
-  1: [
-    { author: "Carlos M.", text: "¡Lo vi corriendo por la cancha sintética hace 20 min!", time: "Hace 1 hora" },
-    { author: "Familia Rojas", text: "Ya lo tenemos resguardado en la casa #45, pueden venir.", time: "Hace 10 min" }
-  ],
-  2: [
-    { author: "Don Pedro", text: "¡Llegó a tiempo el agua! Gracias vecina.", time: "Hace 5 min" }
-  ]
-};
+const defaultForumPosts = []; // SIN EJEMPLOS DUMMY PREDETERMINADOS
+const postCommentsStore = {};
 
 document.addEventListener('DOMContentLoaded', () => {
   renderForumFeed();
@@ -61,18 +23,29 @@ function renderForumFeed() {
   const feed = document.getElementById('forumFeed');
   if (!feed) return;
 
+  const currentAdmin = sessionStorage.getItem('notigas_admin_session');
+  const isAdmin = currentAdmin && (currentAdmin.includes('erikmartinelly') || currentAdmin.includes('leonmartinelly'));
+
   let localPosts = [];
   try {
     const raw = localStorage.getItem('notigas_forum_posts');
     if (raw) localPosts = JSON.parse(raw);
   } catch(e){}
 
-  if (localPosts.length === 0) {
-    localPosts = [...defaultForumPosts];
-  }
-
   localPosts = depurarPostsExpirados(localPosts);
   localStorage.setItem('notigas_forum_posts', JSON.stringify(localPosts));
+
+  if (localPosts.length === 0) {
+    feed.innerHTML = `
+      <div style="text-align:center; color:#94A3B8; padding:40px 14px; font-size:13px; background: #1E293B; border-radius: 14px; border: 1px dashed rgba(255,255,255,0.15);">
+        <i class="fa-solid fa-comments" style="font-size:32px; color:#FF6D00; margin-bottom:10px;"></i><br>
+        <strong>El Tablón de Anuncios Vecinal está limpio.</strong><br>
+        <span style="font-size: 11px; color: #64748B;">Sé el primero en publicar un aviso, alerta u oferta para los vecinos de tu OTB.</span><br><br>
+        <button class="btn-new-post" style="margin: 0 auto; padding: 10px 16px; font-size: 12px;" onclick="abrirModalNuevoPost()">📌 Publicar Nuevo Aviso (7 Días)</button>
+      </div>
+    `;
+    return;
+  }
 
   let html = '';
   localPosts.forEach((post, index) => {
@@ -95,14 +68,17 @@ function renderForumFeed() {
             <span style="cursor:pointer; color:#FF6D00; font-weight:700;" onclick="abrirComentariosPost(${post.id}, '${escapedTitle}', '${escapedDesc}', '${post.cat}', this)">
               💬 <span class="comment-count-num">${commentCount}</span> comentarios
             </span>
-            <button class="btn-report" onclick="abrirModalDenuncia('Aviso Reddit', '${escapedTitle}')"><i class="fa-solid fa-flag"></i> Denunciar Publicación</button>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <button class="btn-report" onclick="abrirModalDenuncia('Aviso Reddit', '${escapedTitle}')"><i class="fa-solid fa-flag"></i> Denunciar</button>
+              ${isAdmin ? `<button onclick="borrarPostForumAdmin(${post.id})" style="background:#D32F2F; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; font-weight:700; cursor:pointer;" title="Borrar como Admin"><i class="fa-solid fa-trash"></i> Borrar (Admin)</button>` : ''}
+            </div>
           </div>
         </div>
       </div>
     `;
 
     // PROPAGANDA FACEBOOK FEED AL MEDIO DEL TABLÓN DE ANUNCIOS REDDIT
-    if (index === 1) {
+    if (index === 0) {
       html += `
         <div class="ad-facebook-feed-card" onclick="abrirAnuncioWhatsApp()" style="cursor:pointer;">
           <div class="ad-fb-header">
@@ -133,38 +109,55 @@ function renderForumFeed() {
   feed.innerHTML = html;
 }
 
+function borrarPostForumAdmin(postId) {
+  if (confirm("🗑️ ¿Deseas eliminar permanentemente esta publicación del Tablón Vecinal?")) {
+    let localPosts = [];
+    try {
+      const raw = localStorage.getItem('notigas_forum_posts');
+      if (raw) localPosts = JSON.parse(raw);
+    } catch(e){}
+    localPosts = localPosts.filter(p => p.id !== postId);
+    localStorage.setItem('notigas_forum_posts', JSON.stringify(localPosts));
+    renderForumFeed();
+    alert("🗑️ Publicación eliminada con éxito.");
+  }
+}
+
 function votarPost(el, delta, postId) {
   const span = el.parentElement.querySelector('.v-count');
   if (span) {
     let val = parseInt(span.innerText) || 0;
     val += delta;
     span.innerText = val;
+
+    try {
+      let localPosts = JSON.parse(localStorage.getItem('notigas_forum_posts') || '[]');
+      const p = localPosts.find(item => item.id === postId);
+      if (p) {
+        p.votes = val;
+        localStorage.setItem('notigas_forum_posts', JSON.stringify(localPosts));
+      }
+    } catch(e){}
   }
 }
 
-function abrirModalNuevoPost() { 
-  const modal = document.getElementById('modalNuevoPost');
-  if (modal) modal.style.display = 'flex'; 
+function abrirModalNuevoPost() {
+  const modal = document.getElementById('modalNewPost');
+  if (modal) modal.style.display = 'flex';
 }
 
-function closeNuevoPostModal() { 
-  const modal = document.getElementById('modalNuevoPost');
-  if (modal) modal.style.display = 'none'; 
+function closeNewPostModal() {
+  const modal = document.getElementById('modalNewPost');
+  if (modal) modal.style.display = 'none';
 }
 
 function crearNuevoPost() {
-  const selectTipo = document.getElementById('selectPostTipo');
-  const inputTitulo = document.getElementById('inputPostTitulo');
-  const inputDesc = document.getElementById('inputPostDesc');
+  const title = (document.getElementById('inputPostTitle')?.value || '').trim();
+  const desc = (document.getElementById('inputPostDesc')?.value || '').trim();
+  const cat = document.getElementById('selectPostCat')?.value || 'AVISO VECINAL';
 
-  if (!selectTipo || !inputTitulo || !inputDesc) return;
-
-  const tipo = selectTipo.value;
-  const titulo = inputTitulo.value.trim();
-  const desc = inputDesc.value.trim();
-
-  if (!titulo || !desc) {
-    alert('Por favor escribe un título y la descripción de tu aviso para la OTB.');
+  if (!title || !desc) {
+    alert('Por favor ingresa un título y una descripción para tu publicación vecinal.');
     return;
   }
 
@@ -174,132 +167,102 @@ function crearNuevoPost() {
     if (raw) localPosts = JSON.parse(raw);
   } catch(e){}
 
-  const newPost = {
+  const newObj = {
     id: Date.now(),
-    cat: tipo,
-    title: titulo,
+    cat: cat,
+    title: title,
     desc: desc,
     votes: 1,
     timestamp: Date.now()
   };
 
-  localPosts.unshift(newPost);
+  localPosts.unshift(newObj);
   localStorage.setItem('notigas_forum_posts', JSON.stringify(localPosts));
 
-  postCommentsStore[newPost.id] = [];
+  closeNewPostModal();
+  document.getElementById('inputPostTitle').value = '';
+  document.getElementById('inputPostDesc').value = '';
 
   renderForumFeed();
-  closeNuevoPostModal();
-
-  inputTitulo.value = '';
-  inputDesc.value = '';
-  alert('📢 ¡Tu aviso gratis ha sido publicado en el Mini Reddit Vecinal! Permanecerá visible durante 1 semana.');
+  alert('📌 ¡Aviso publicado exitosamente! Tu publicación estará activa durante 7 días.');
 }
 
-function abrirComentariosPost(postIndex, title, desc, cat, btnElem) {
-  activePostCommentsRef = { index: postIndex, btnElem: btnElem };
-  const modalCat = document.getElementById('commentsPostCat');
-  const modalTitle = document.getElementById('commentsPostTitle');
-  const modalDesc = document.getElementById('commentsPostDesc');
-  const modalComments = document.getElementById('modalComments');
+function abrirComentariosPost(postId, title, desc, cat, el) {
+  activePostCommentsRef = { id: postId, element: el };
+  const modal = document.getElementById('modalPostComments');
+  if (!modal) return;
 
-  if (modalCat) modalCat.innerText = cat;
-  if (modalTitle) modalTitle.innerText = title;
-  if (modalDesc) modalDesc.innerText = desc;
+  document.getElementById('modalCommentsTitle').innerText = title;
+  document.getElementById('modalCommentsDesc').innerText = desc;
+  document.getElementById('modalCommentsCat').innerHTML = `<i class="fa-solid fa-comments"></i> ${cat}`;
 
-  renderComments(postIndex);
-  if (modalComments) modalComments.style.display = 'flex';
+  renderCommentsList(postId);
+  modal.style.display = 'flex';
 }
 
 function closeCommentsModal() {
-  const modalComments = document.getElementById('modalComments');
-  if (modalComments) modalComments.style.display = 'none';
+  const modal = document.getElementById('modalPostComments');
+  if (modal) modal.style.display = 'none';
+  activePostCommentsRef = null;
 }
 
-function renderComments(postIndex) {
-  const container = document.getElementById('commentsList');
-  if (!container) return;
+function renderCommentsList(postId) {
+  const box = document.getElementById('commentsContainer');
+  if (!box) return;
 
-  const comments = postCommentsStore[postIndex] || [];
+  const comments = postCommentsStore[postId] || [];
   if (comments.length === 0) {
-    container.innerHTML = '<div style="font-size: 11px; color: #64748B; text-align: center; padding: 12px;">Sé el primero en comentar este aviso vecinal...</div>';
+    box.innerHTML = '<div style="color:#64748B; font-size:11px; text-align:center; padding:10px;">Sé el primero en comentar este aviso vecinal.</div>';
     return;
   }
 
-  container.innerHTML = comments.map(c => `
-    <div style="background: #0F172A; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 6px;">
-      <div style="display: flex; justify-content: space-between; font-size: 10px; color: #FF6D00; font-weight: 700;">
-        <span>👤 ${c.author}</span>
-        <button class="btn-report" onclick="abrirModalDenuncia('Comentario Reddit', 'Comentario de ${c.author}')"><i class="fa-solid fa-flag"></i></button>
+  let html = '';
+  comments.forEach(c => {
+    html += `
+      <div style="background:#0F172A; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.05); margin-bottom:6px;">
+        <div style="display:flex; justify-content:space-between; font-size:10px; font-weight:700; color:#FF6D00;">
+          <span>${c.author}</span>
+          <span style="color:#64748B; font-weight:400;">${c.time}</span>
+        </div>
+        <div style="font-size:12px; color:white; margin-top:2px;">${c.text}</div>
       </div>
-      <div style="font-size: 12px; color: #E2E8F0; margin-top: 3px;">${c.text}</div>
-    </div>
-  `).join('');
+    `;
+  });
+  box.innerHTML = html;
 }
 
 function agregarComentarioPost() {
-  const input = document.getElementById('inputNewComment');
-  if (!input) return;
+  if (!activePostCommentsRef) return;
+  const input = document.getElementById('inputNuevoComentario');
+  const text = (input?.value || '').trim();
 
-  const text = input.value.trim();
-  if (!text || !activePostCommentsRef) return;
-  
-  const idx = activePostCommentsRef.index;
-  if (!postCommentsStore[idx]) postCommentsStore[idx] = [];
+  if (!text) return;
 
-  let userAlias = "Cliente (Vecino OTB)";
+  const postId = activePostCommentsRef.id;
+  if (!postCommentsStore[postId]) postCommentsStore[postId] = [];
+
+  let authorName = "Vecino de la OTB";
   try {
     const saved = localStorage.getItem('notigas_user_data');
     if (saved) {
       const u = JSON.parse(saved);
-      if (u.nombre) userAlias = `${u.nombre} ${u.apellido ? u.apellido[0] + '.' : ''}`;
+      if (u.nombre) authorName = u.nombre;
     }
   } catch(e){}
 
-  postCommentsStore[idx].push({
-    author: userAlias,
+  postCommentsStore[postId].push({
+    author: authorName,
     text: text,
-    time: "Hace un momento"
+    time: "Ahora mismo"
   });
-  
+
   input.value = '';
-  renderComments(idx);
-  
-  if (activePostCommentsRef.btnElem) {
-    const countSpan = activePostCommentsRef.btnElem.querySelector('.comment-count-num');
-    if (countSpan) {
-      countSpan.innerText = postCommentsStore[idx].length;
+  renderCommentsList(postId);
+
+  if (activePostCommentsRef.element) {
+    const numSpan = activePostCommentsRef.element.querySelector('.comment-count-num');
+    if (numSpan) {
+      numSpan.innerText = postCommentsStore[postId].length;
     }
   }
-}
-
-/* SISTEMA DE DENUNCIAS DE ACOSO, BULLYING O CONTENIDO INAPROPIADO */
-function abrirModalDenuncia(contexto, objetoReportado) {
-  const modalReport = document.getElementById('modalReport');
-  const targetLabel = document.getElementById('reportTargetLabel');
-  const hiddenContext = document.getElementById('reportContext');
-
-  if (targetLabel) targetLabel.innerText = `${contexto}: "${objetoReportado}"`;
-  if (hiddenContext) hiddenContext.value = `${contexto} | ${objetoReportado}`;
-  if (modalReport) modalReport.style.display = 'flex';
-}
-
-function closeReportModal() {
-  const modalReport = document.getElementById('modalReport');
-  if (modalReport) modalReport.style.display = 'none';
-}
-
-function enviarDenuncia() {
-  const motivoSelect = document.getElementById('selectReportMotivo');
-  const detalleInput = document.getElementById('inputReportDetalle');
-  const contextVal = document.getElementById('reportContext')?.value || 'General';
-
-  if (!motivoSelect) return;
-
-  const motivo = motivoSelect.value;
-  const detalle = detalleInput ? detalleInput.value.trim() : '';
-
-  closeReportModal();
-
-  alert(`🚨 DENUNCIA REGISTRADA EN EL SISTEMA\n\nMotivo: ${motivo}\nContexto: ${contextVal}\n\nGracias por reportar. Nuestro equipo de moderación administrará esta publicación para mantener una comunidad segura en la OTB.`);
 }
