@@ -1,15 +1,15 @@
-# 📐 ARQUITECTURA, DISEÑO Y LÓGICA COMPLETA DE LA APLICACIÓN WEB NOTIGAS
+# 📐 ARQUITECTURA Y LÓGICA DE NEGOCIO NOTIGAS: MINI FACEBOOK DE NEGOCIOS & MINI REDDIT VECINAL
 
-> **Propósito:** Este documento consolida el 100% de la arquitectura, diseño visual, flujo de datos, grafos mermaid de componentes y reglas de negocio de la plataforma web **NOTIGAS**. Sirve como guía técnica de continuidad para el cambio de conversación.
+> **Propósito:** Este documento consolida la arquitectura completa, el flujo de datos, reglas de privacidad y sistema visual de la plataforma web **NOTIGAS**, diseñada como una solución barrial híbrida entre **Mini Páginas de Negocio estilo Facebook** y un **Mini Reddit Vecinal**.
 
 ---
 
 ## 📌 Datos Clave del Proyecto y Despliegue
 
-- **Nombre del Proyecto:** NOTIGAS (Gas GLP, Agua 20L, Frutas, Chatarra, Detergentes & Foro Vecinal)
+- **Nombre del Proyecto:** NOTIGAS (Gas GLP, Agua 20L, Carbón, Chatarra, Frutas, Detergentes & Foro Vecinal)
 - **Repositorio Oficial GitHub:** `https://github.com/erikmartinelly/notigasweb.git`
 - **Dominio en Vivo (Hostinger):** `https://notigas.com`
-- **Ruta de Código Fuente Principal:** `C:\Users\FTL\Documents\Codex\2026-07-24\referenced-chatgpt-conversation-this-is-untrusted\outputs\notigas\notigasweb\index.html`
+- **Ruta de Código Fuente Principal:** `C:\Users\FTL\Documents\APP NOTIGAS`
 
 ---
 
@@ -17,56 +17,53 @@
 
 ```mermaid
 graph TD
-    User([👤 Usuario / Vecino / Chofer]) -->|Accede a notigas.com| WebApp[🌐 WebApp NOTIGAS index.html]
+    User([👤 Cliente / Vecino / Repartidor]) -->|Accede a notigas.com| WebApp[🌐 WebApp NOTIGAS index.html]
     
-    subgraph "Capa de Autenticación por Única Vez"
-        WebApp -->|Primera Visita| AuthModal[🔐 Modal Registro Google Gmail]
-        AuthModal -->|Vecino / Comprador| LocalStoreVecino[(💾 localStorage: Gmail Únicamente)]
-        AuthModal -->|Repartidor / Chofer| LocalStoreChofer[(💾 localStorage: Gmail + Nombre + Apellido + WhatsApp + Placa)]
+    subgraph "Capa de Autenticación & Registro Anónimo"
+        WebApp -->|Primera Visita| AuthModal[🔐 Registro con Google Gmail]
+        AuthModal -->|Cliente / Vecino| StoreCliente[(💾 Gmail + Nombre + Apellido)]
+        AuthModal -->|Repartidor / Distribuidor| StoreDriver[(💾 Nombre Negocio + Placa + Productos + Zonas + Teléfono Privado)]
     end
 
     subgraph "Navegación Principal por Pestañas"
-        WebApp --> Tab1[🗺️ Pestaña 1: MAPA EN VIVO]
-        WebApp --> Tab2[🛍️ Pestaña 2: PEDIDOS & SERVICIOS]
-        WebApp --> Tab3[💬 Pestaña 3: CHATS & FORO VECINAL]
+        WebApp --> Tab1[🗺️ Pestaña 1: MAPA EN VIVO & GPS]
+        WebApp --> Tab2[🏪 Pestaña 2: MINI PÁGINAS DE NEGOCIO FACEBOOK]
+        WebApp --> Tab3[💬 Pestaña 3: MINI REDDIT VECINAL & CHAT]
     end
 
-    subgraph "Pestaña 1: Mapa Interactivo & GPS"
-        Tab1 --> GPSAuto[🛰️ Conexión Automática GPS Hardware]
+    subgraph "Pestaña 1: Mapa GPS HD & Silueta GLP"
+        Tab1 --> GPSAuto[🛰️ Conexión GPS Hardware Automática]
         Tab1 --> LeafletMap[🌍 Mapa Leaflet + Google Maps / Satélite HD]
-        LeafletMap --> MarkerGarrafa[🔥 Marcador Ubicación SVG Garrafa GLP]
+        LeafletMap --> MarkerGarrafa[🔥 Marcador Silueta SVG Garrafa GLP]
         Tab1 --> SearchBox[🔍 Búsqueda Nominatim por Calle/OTB]
         Tab1 --> MainBtn[📦 Botón Único: HACER UN PEDIDO EN VIVO]
-        MainBtn --> SubmenuModal[📋 Submenú Grid 6 Categorías]
-        SubmenuModal --> OrderConfirmModal[📦 Modal Confirmar Pedido - Sin Teléfono]
         Tab1 --> PanicBtn[🛑 Botón Pánico ESPÉRAME]
-        Tab1 --> HearTruckBtn[🔔 Botón ESCUCHÉ AL CAMIÓN]
     end
 
-    subgraph "Pestaña 2: Catálogo de Servicios"
-        Tab2 --> ShopGrid[🛒 6 Tarjetas de Productos y Servicios]
-        ShopGrid -->|Clic Tarjeta| OrderConfirmModal
-        ShopGrid -->|Clic WhatsApp| VendorWA[📱 WhatsApp Directo Repartidor]
+    subgraph "Pestaña 2: Mini Páginas de Negocio (Estilo Facebook)"
+        Tab2 --> FilterBar[🏷️ Chips Filtradores: Gas GLP, Agua 20L, Carbón, Chatarra, Frutas, Detergentes]
+        Tab2 --> VendorGrid[🏪 Fichas de Negocio: Nombre, Placa, Productos, Zonas]
+        VendorGrid --> PrivateChatBtn[💬 CHAT PRIVADO 1-A-1]
+        Tab2 --> FeedAds1[📢 Propaganda Intercalada en el Feed]
     end
 
-    subgraph "Pestaña 3: Chats & Foro Vecinal"
-        Tab3 --> SubTab1[💬 Sub-Pestaña 1: Foro Reddit Vecinal]
+    subgraph "Pestaña 3: Mini Reddit Vecinal & Chat 1-a-1"
+        Tab3 --> SubTab1[💬 Sub-Pestaña 1: Mini Reddit Vecinal]
         SubTab1 --> RedditFeed[💬 Feed Comunitario OTB]
-        RedditFeed --> UpvoteDownvote[▲ / ▼ Sistema de Votos]
-        RedditFeed --> CommentsModal[💬 Hilos de Comentarios en Vivo]
-        SubTab1 --> NewPostModal[➕ Modal Publicar Aviso / Queja]
-        
-        Tab3 --> SubTab2[📱 Sub-Pestaña 2: Chat Comprador ↔ Repartidor]
-        SubTab2 --> VendorSelector[🚛 Selección de Repartidor en Ruta]
-        SubTab2 --> LiveChatBox[💬 Chat Directo con Historial y Timestamp]
+        RedditFeed --> UpvoteDownvote[▲ / ▼ Votos Me Gusta / Me Disgusta]
+        RedditFeed --> CommentsModal[💬 Hilos de Comentarios]
+        RedditFeed --> ReportBtn[🚩 Denunciar Publicación / Acoso]
+        RedditFeed --> Expiration7Days[⏱️ Expiración de Anuncios: 7 Días]
+        SubTab1 --> FeedAds2[📢 Propaganda Intercalada en Feed Reddit]
+
+        Tab3 --> SubTab2[📱 Sub-Pestaña 2: Chat Privado Cliente ↔ Distribuidor]
+        SubTab2 --> PrivateChat[🔒 Chat 1-a-1 Aislado e Invisible a Terceros]
+        PrivateChat --> Expiration48Hours[⏱️ Borrado Automático de Chats: 48 Horas]
     end
 
-    subgraph "Módulo de Configuración & Administración"
-        HeaderGear[⚙️ Botón Rueda Dentada Header] --> AdminModal[⚙️ Modal Configuración Submenús]
-        AdminModal --> SubAd[📢 Submenú 1: Anuncios Publicitarios]
-        AdminModal --> SubAuth[🔐 Submenú 2: Acceso Admin Gmail]
-        AdminModal --> SubCSV[📥 Submenú 3: Descargar Correos CSV]
-        SubCSV --> CSVExport[📄 Generación lista_correos_notigas.csv]
+    subgraph "Administración & CRM Email Marketing"
+        HeaderGear[⚙️ Configuración] --> AdminModal[⚙️ Modal Administración]
+        AdminModal --> CSVExport[📥 Descargar Correos Gmail .CSV para Ofertas Puntuales]
     end
 ```
 
@@ -74,50 +71,43 @@ graph TD
 
 ## 🎨 Sistema de Diseño Visual y Estilos (Design System)
 
-- **Paleta de Colores Curada (Modo Oscuro Premium Glassmorphism):**
+- **Paleta de Colores Curada (Dark Glassmorphism):**
   - **Fondo Base:** `#0F172A` (Slate Dark)
   - **Tarjetas y Header:** `#1E293B` (Dark Slate Container)
-  - **Acento Primario NOTIGAS:** `#FF6D00` (Naranja Fuego GLP)
-  - **Secundario Agua / GPS:** `#0288D1` (Azul Purificado)
-  - **WhatsApp / Repartidores:** `#25D366` & `#00E676` (Verde Esmeralda)
-  - **Botón de Pánico / Espérame:** `#D32F2F` & `#B71C1C` (Rojo Gradiente)
+  - **Acento Primario GLP:** `#FF6D00` (Naranja Fuego GLP)
+  - **Agua / GPS / Chat:** `#0288D1` (Azul Purificado)
+  - **Reciclaje / Chatarra / Exito:** `#00E676` (Verde Esmeralda)
+  - **Botón de Pánico / Reporte:** `#D32F2F` (Rojo Caramelo)
 - **Tipografía:** Google Font **Roboto** (`400`, `500`, `700`, `900`).
 - **Iconografía Oficial:**
   - Marcador de ubicación en el mapa: Silueta vectorial SVG oficial de **Garrafa de Gas GLP** (`<svg class="garrafa-icon-svg">`).
-  - Iconos PWA y Favicon en alta definición con cache-busting `?v=2`.
+  - Favicon e Iconos PWA actualizados con cache-busting `?v=3`.
 
 ---
 
 ## ⚙️ Reglas de Negocio e Integridad Estricta
 
-### 1. Autenticación y Privacidad Anónima de Datos:
-- **Compradores / Vecinos:** Ingresan **Correo Google Gmail, Nombre y Apellido** para registrarse en el sistema.
-- **Uso Exclusivo de Correos Gmail:** La aplicación recopila los correos únicamente para registrar a los usuarios en el sistema y enviar **ofertas puntuales, promociones y novedades por correo**.
-- **Repartidores / Distribuidores / Conductores:** Ingresan **Correo Gmail, Número de Placa y Teléfono de Referencia**. El teléfono de referencia **ES PRIVADO DEL SISTEMA Y NO SE MUESTRA PÚBLICAMENTE**.
-- **Comunicación 1-a-1 Privada y Confidencial:** Toda la coordinación (ej. *"necesito gas"*) se realiza **100% dentro del chat privado e interno entre el comprador específico y el distribuidor**. Ningún otro vecino ni tercero tiene acceso a estos chats ni a los datos compartidos en ellos.
-- **Expiración de Chats en 48 Horas:** Los mensajes del chat privado se eliminan automáticamente a las **48 horas** (`CHAT_EXPIRATION_MS`), optimizando el rendimiento y garantizando máxima privacidad.
-- **Persistencia:** Se guarda de forma única y permanente en `localStorage` (`notigas_user_data`).
+### 1. Privacidad de Datos y Uso de Correos:
+- **Clientes / Vecinos:** Ingresan **Correo Gmail, Nombre y Apellido**.
+- **Uso Exclusivo de Correos:** Los correos electrónicos registrados se recopilan únicamente para dar acceso a la app y enviar **ofertas puntuales, promociones y novedades por e-mail**.
+- **Repartidores / Conductores:** Completan su ficha de negocio con Nombre, Categoría, Placa, Productos, Zonas de entrega y **Teléfono de Referencia (Privado del Sistema)**.
 
-### 2. Sistema de Denuncias de Acoso, Bullying o Contenido Inapropiado:
-- **Botón de Reporte (`🚩 Denunciar`):** Habilitado en cada mensaje del **Chat Directo** y en cada aviso/comentario del **Tablón de Anuncios Vecinal**.
-- **Modal de Denuncia (`#modalReport`):** Permite a los usuarios notificar acoso, bullying, información falsa o conducta indebida a moderación.
+### 2. Chat 1-a-1 Privado y Borrado a las 48 Horas:
+- Toda la coordinación de pedidos (*"necesito gas"*) entre el cliente y el distribuidor es **100% privada e invisible para otros vecinos**.
+- Los chats expiran y se depuran automáticamente a las **48 horas** (`CHAT_EXPIRATION_MS`) para proteger la privacidad y mantener liviano el sistema.
 
-### 3. Propaganda Estilo Facebook Feed:
-- Tarjetas publicitarias integradas directamente al medio del feed de productos/servicios y del tablón de anuncios vecinal, simulando el estilo de los feeds de redes sociales.
+### 3. Mini Reddit Vecinal con Publicaciones Gratuitas (7 Días):
+- Cualquiera puede publicar avisos gratis en el tablón.
+- Incluye votos estilo Reddit (`▲ Me Gusta` / `▼ Me Disgusta`), comentarios e icono **`🚩 Denunciar Publicación`** para acoso, bullying o contenido inapropiado.
+- Los anuncios del tablón duran **1 semana (7 días)** y luego se eliminan automáticamente.
 
-### 3. Módulo de Administración y Exportación CSV:
-- El modal de administración (`#modalAdmin`) cuenta con pestañas de submenús internos:
-  - **Anuncios:** Permite editar el texto del banner inferior y el enlace de contacto.
-  - **Acceso Admin:** Validación con Gmail y clave.
-  - **Descargar Correos (.CSV):** Botón `📥 Descargar Correos Gmail (.CSV)` que ejecuta `descargarListaCorreosCSV()`, produciendo un archivo delimitado por comas (`Email,Rol,Fecha`).
-
-### 4. Geolocalización Automática:
-- Al iniciar la WebApp, `navigator.geolocation.getCurrentPosition` posiciona de inmediato el mapa y el punto de pedido en las coordenadas exactas del hardware GPS del dispositivo.
+### 4. Propaganda Intercalada en el Feed:
+- Banners publicitarios estilizados como tarjetas patrocinadas de redes sociales (Facebook Feed Style), intercalados al medio de la Pestaña 2 (Páginas de Negocio) y Pestaña 3 (Reddit Vecinal).
 
 ---
 
 ## 🛠️ Instrucciones de Despliegue en GitHub Desktop e Hostinger
 
-1. Abrir **GitHub Desktop** en el repositorio `notigasweb` (`C:\Users\FTL\Documents\Codex\2026-07-24\referenced-chatgpt-conversation-this-is-untrusted\outputs\notigas\notigasweb`).
+1. Abrir **GitHub Desktop** en el repositorio `APP NOTIGAS` (`C:\Users\FTL\Documents\APP NOTIGAS`).
 2. Presionar el botón **"Push origin"** arriba a la derecha.
 3. En el panel de control de **Hostinger**, presionar el botón **"Re-desplegar" (Redeploy)** en el sitio `notigas.com`.

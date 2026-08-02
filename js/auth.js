@@ -1,14 +1,13 @@
 /* ==========================================================================
-   NOTIGAS - MÓDULO DE AUTENTICACIÓN Y REGISTRO ÚNICO (GMAIL & REPARTIDORES)
+   NOTIGAS - MÓDULO DE AUTENTICACIÓN & REGISTRO DE MINI PÁGINAS DE NEGOCIO
    ========================================================================== */
 
 let databaseEmails = [
-  { gmail: "vecino_cochabamba@gmail.com", role: "Comprador", fecha: "2026-08-01" },
-  { gmail: "repartidor_glp_otb@gmail.com", role: "Repartidor / Chofer", fecha: "2026-08-01" }
+  { gmail: "cliente_otb@gmail.com", role: "Cliente", fecha: "2026-08-01" },
+  { gmail: "gasero_express@gmail.com", role: "Repartidor Gas GLP", fecha: "2026-08-01" }
 ];
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Verificación de Registro Único en localStorage
   const savedUser = localStorage.getItem('notigas_user_data');
   if (!savedUser) {
     const modalAuth = document.getElementById('modalWelcomeAuth');
@@ -19,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (u.gmail) {
         databaseEmails.push({ 
           gmail: u.gmail, 
-          role: u.role || "Comprador", 
+          role: u.role || "Cliente", 
           fecha: new Date().toISOString().split('T')[0] 
         });
       }
@@ -62,21 +61,30 @@ function guardarRegistroUnico() {
   let data = { role, gmail };
 
   if (role === 'chofer') {
+    const nombreNegocio = (document.getElementById('regNombreNegocio')?.value || '').trim();
+    const categoria = (document.getElementById('regCategoriaNegocio')?.value || 'Gas GLP').trim();
     const placa = (document.getElementById('regPlaca')?.value || '').trim();
+    const productos = (document.getElementById('regProductos')?.value || '').trim();
+    const zonas = (document.getElementById('regZonas')?.value || '').trim();
     const telReferencia = (document.getElementById('regTelReferencia')?.value || '').trim();
 
-    if (!placa || !telReferencia) {
-      alert('Para repartidores es obligatorio ingresar el Número de Placa y un Teléfono de Referencia privado.');
+    if (!nombreNegocio || !placa || !productos || !zonas || !telReferencia) {
+      alert('Para crear tu Mini Página de Negocio es obligatorio completar: Nombre de Negocio, Categoria, Placa, Productos, Zonas y Teléfono Privado.');
       return;
     }
+
+    data.nombre = nombreNegocio;
+    data.categoria = categoria;
     data.placa = placa;
-    data.telReferencia = telReferencia; // Teléfono privado de referencia interna
+    data.productos = productos;
+    data.zonas = zonas;
+    data.telReferencia = telReferencia; // Privado en el sistema
   } else {
     const nombre = (document.getElementById('regNombre')?.value || '').trim();
     const apellido = (document.getElementById('regApellido')?.value || '').trim();
 
     if (!nombre || !apellido) {
-      alert('Para compradores es obligatorio ingresar Nombre y Apellido.');
+      alert('Para clientes es obligatorio ingresar Nombre y Apellido.');
       return;
     }
     data.nombre = nombre;
@@ -89,7 +97,7 @@ function guardarRegistroUnico() {
   const modalAuth = document.getElementById('modalWelcomeAuth');
   if (modalAuth) modalAuth.style.display = 'none';
 
-  alert(`✅ REGISTRO REGISTRADO EN EL SISTEMA\n\nBienvenido a NOTIGAS (${gmail}).`);
+  alert(`✅ REGISTRO VERIFICADO CON GOOGLE GMAIL\n\nBienvenido a NOTIGAS (${gmail}).`);
 }
 
 function closeDriverModal() { 
@@ -99,21 +107,34 @@ function closeDriverModal() {
 
 function iniciarSesionChofer() {
   const gmail = (document.getElementById('inputDriverGmail')?.value || '').trim();
+  const nombreNegocio = (document.getElementById('inputDriverNombre')?.value || '').trim();
+  const categoria = (document.getElementById('inputDriverCat')?.value || 'Gas GLP').trim();
   const plate = (document.getElementById('inputDriverPlate')?.value || '').trim();
+  const productos = (document.getElementById('inputDriverProductos')?.value || '').trim();
+  const zonas = (document.getElementById('inputDriverZonas')?.value || '').trim();
   const telReferencia = (document.getElementById('inputDriverTelRef')?.value || '').trim();
 
-  if (!gmail || !plate || !telReferencia) {
-    alert('Por favor ingresa tu Correo Gmail, Número de Placa y Teléfono de Referencia privado.');
+  if (!gmail || !nombreNegocio || !plate || !productos || !zonas || !telReferencia) {
+    alert('Por favor completa todos los campos requeridos para publicar tu Mini Página de Negocio.');
     return;
   }
 
-  const choferData = { role: 'chofer', gmail, placa: plate, telReferencia: telReferencia };
+  const choferData = { 
+    role: 'chofer', 
+    gmail, 
+    nombre: nombreNegocio,
+    categoria, 
+    placa: plate, 
+    productos, 
+    zonas, 
+    telReferencia 
+  };
   localStorage.setItem('notigas_user_data', JSON.stringify(choferData));
 
   closeDriverModal();
-  alert(`🟢 CUENTA DE REPARTIDOR ACTIVADA\n\nRepartidor Placa: ${plate}\nGmail: ${gmail}\n(El teléfono de referencia se mantiene privado en el sistema).`);
+  alert(`🟢 MINI PÁGINA DE NEGOCIO ACTIVADA EN NOTIGAS\n\nNegocio: ${nombreNegocio}\nCategoría: ${categoria}\nPlaca: ${plate}\nZonas: ${zonas}\n(Tu teléfono se mantiene privado. Clientes te contactarán por el chat interno).`);
   
-  if (typeof truckMarker !== 'undefined' && truckMarker) {
-    truckMarker.setPopupContent(`<b>🟢 Repartidor Activo (Placa: ${plate})</b><br><small>Comunicación por chat interno de NOTIGAS</small>`).openPopup();
+  if (typeof renderVendorCards === 'function') {
+    renderVendorCards('TODOS');
   }
 }

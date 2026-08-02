@@ -1,5 +1,5 @@
 /* ==========================================================================
-   NOTIGAS - SISTEMA DE DISEÑO VISUAL & ESTILOS (DARK GLASSMORPHISM)
+   NOTIGAS - MINI FACEBOOK DE NEGOCIOS & MINI REDDIT VECINAL (DARK GLASSMORPHISM)
    ========================================================================== */
 
 * { 
@@ -18,7 +18,7 @@ body {
   overflow: hidden; 
 }
 
-/* HEADER & NAVBAR */
+/* HEADER & BRANDING */
 header { 
   background-color: #1E293B; 
   padding: 10px 14px; 
@@ -104,6 +104,7 @@ header {
   transform: rotate(45deg); 
 }
 
+/* NAVEGACIÓN 3 PESTAÑAS */
 nav { 
   background-color: #1E293B; 
   display: flex; 
@@ -155,7 +156,7 @@ main {
   flex-direction: column; 
 }
 
-/* PESTAÑA 1: MAPA & BÚSQUEDA GPS */
+/* PESTAÑA 1: MAPA & GPS CON SILUETA SVG OFICIAL GARRAFA GLP */
 #map { 
   width: 100%; 
   height: 100%; 
@@ -236,7 +237,7 @@ main {
   font-weight: 700; 
 }
 
-/* ACCIONES FLOTANTES MAPA */
+/* ACCIONES FLOTANTES EN MAPA */
 .floating-actions-container { 
   position: absolute; 
   bottom: 20px; 
@@ -310,8 +311,8 @@ main {
 }
 
 .garrafa-icon-svg { 
-  width: 22px; 
-  height: 22px; 
+  width: 24px; 
+  height: 24px; 
   fill: currentColor; 
 }
 
@@ -321,105 +322,177 @@ main {
   100% { transform: scale(1); } 
 }
 
-/* SUBMENÚ PEDIDOS GRID */
-.submenu-grid { 
-  display: grid; 
-  grid-template-columns: repeat(2, 1fr); 
-  gap: 10px; 
-  margin-top: 10px; 
+/* PESTAÑA 2: MINI PÁGINAS DE NEGOCIO ESTILO FACEBOOK POR CATEGORÍA */
+.category-filter-bar {
+  display: flex;
+  overflow-x: auto;
+  gap: 8px;
+  padding: 10px 14px;
+  background-color: #1E293B;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  scrollbar-width: thin;
 }
 
-.submenu-card { 
-  background-color: #0F172A; 
-  border: 1px solid rgba(255,255,255,0.12); 
-  border-radius: 12px; 
-  padding: 12px; 
-  display: flex; 
-  flex-direction: column; 
-  align-items: center; 
-  justify-content: center; 
-  text-align: center; 
-  cursor: pointer; 
-  transition: transform 0.2s, border-color 0.2s, background-color 0.2s; 
-  gap: 6px; 
+.cat-chip {
+  background-color: #0F172A;
+  color: #94A3B8;
+  border: 1px solid rgba(255,255,255,0.12);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
 }
 
-.submenu-card:hover { 
-  transform: translateY(-2px); 
-  border-color: #FF6D00; 
-  background-color: rgba(255,109,0,0.1); 
+.cat-chip.active, .cat-chip:hover {
+  background-color: #FF6D00;
+  color: white;
+  border-color: #FF6D00;
 }
 
-.submenu-card i, .submenu-card svg { 
-  font-size: 24px; 
-  color: #FF6D00; 
+.vendor-grid-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.submenu-title { 
-  font-size: 12px; 
-  font-weight: 700; 
-  color: white; 
+/* FICHA / MINI PÁGINA DE NEGOCIO ESTILO FACEBOOK */
+.vendor-fb-card {
+  background-color: #1E293B;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  transition: border-color 0.2s;
 }
 
-/* PESTAÑA 2: SHOP CATALOG */
-.shop-container { 
-  flex: 1; 
-  overflow-y: auto; 
-  padding: 16px; 
-  display: grid; 
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
-  gap: 12px; 
+.vendor-fb-card:hover {
+  border-color: #FF6D00;
 }
 
-.shop-card { 
-  background-color: #1E293B; 
-  border-radius: 14px; 
-  padding: 14px; 
-  border: 1px solid rgba(255,255,255,0.08); 
-  display: flex; 
-  gap: 12px; 
-  align-items: center; 
-  cursor: pointer; 
-  transition: transform 0.2s, border-color 0.2s; 
+.vendor-fb-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-.shop-card:hover { 
-  transform: translateY(-2px); 
-  border-color: #FF6D00; 
+.vendor-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.shop-icon { 
-  width: 50px; 
-  height: 50px; 
-  border-radius: 12px; 
-  background-color: rgba(255,109,0,0.15); 
-  color: #FF6D00; 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  font-size: 22px; 
+.vendor-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(255,109,0,0.15);
+  color: #FF6D00;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  border: 1px solid rgba(255,109,0,0.3);
 }
 
-.shop-info { flex: 1; }
-.shop-title { font-size: 14px; font-weight: 700; color: white; }
-.shop-price { font-size: 12px; color: #00E676; font-weight: 700; margin-top: 2px; }
-
-.btn-chat-vendor { 
-  background-color: #0288D1; 
-  color: white; 
-  border: none; 
-  padding: 6px 10px; 
-  border-radius: 8px; 
-  font-size: 10px; 
-  font-weight: 700; 
-  cursor: pointer; 
-  display: flex; 
-  align-items: center; 
-  gap: 4px; 
-  margin-top: 6px; 
+.vendor-meta {
+  display: flex;
+  flex-direction: column;
 }
 
-/* PESTAÑA 3: CHATS & FORO VECINAL */
+.vendor-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: white;
+}
+
+.vendor-badge-cat {
+  font-size: 10px;
+  color: #00E676;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.vendor-fb-body {
+  background-color: #0F172A;
+  border-radius: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vendor-field {
+  font-size: 11px;
+  color: #CBD5E1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vendor-field strong {
+  color: #FF6D00;
+}
+
+.vendor-fb-footer {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.btn-vendor-chat {
+  flex: 1;
+  background-color: #0288D1;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background-color 0.2s;
+}
+
+.btn-vendor-chat:hover {
+  background-color: #0277BD;
+}
+
+.btn-vendor-order {
+  flex: 1;
+  background-color: #FF6D00;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* PESTAÑA 3: MINI REDDIT VECINAL & CHAT PRIVADO */
 .subnav-3rd-tab { 
   display: flex; 
   background-color: #0F172A; 
@@ -446,12 +519,12 @@ main {
   background-color: rgba(255,109,0,0.1); 
 }
 
-/* FORO VECINAL TIPO REDDIT */
+/* FORO VECINAL REDDIT */
 .forum-header { 
   display: flex; 
   justify-content: space-between; 
   align-items: center; 
-  padding: 12px 16px; 
+  padding: 12px 14px; 
   background-color: #1E293B; 
   border-bottom: 1px solid rgba(255,255,255,0.08); 
 }
@@ -462,7 +535,7 @@ main {
   border: none; 
   padding: 8px 14px; 
   border-radius: 10px; 
-  font-size: 12px; 
+  font-size: 11px; 
   font-weight: 700; 
   cursor: pointer; 
   display: flex; 
@@ -473,7 +546,7 @@ main {
 .forum-container { 
   flex: 1; 
   overflow-y: auto; 
-  padding: 16px; 
+  padding: 14px; 
   display: flex; 
   flex-direction: column; 
   gap: 12px; 
@@ -485,7 +558,7 @@ main {
   padding: 14px; 
   border: 1px solid rgba(255,255,255,0.08); 
   display: flex; 
-  gap: 14px; 
+  gap: 12px; 
   position: relative;
 }
 
@@ -497,7 +570,7 @@ main {
   color: #94A3B8; 
   font-weight: 900; 
   font-size: 13px; 
-  width: 30px; 
+  width: 32px; 
 }
 
 .forum-votes i { 
@@ -524,7 +597,6 @@ main {
 .forum-desc { font-size: 12px; color: #94A3B8; line-height: 1.4; }
 .forum-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 11px; color: #64748B; font-weight: 500; }
 
-/* BOTÓN DE DENUNCIA / REPORTAR ACOSO O CONTENIDO INAPROPIADO */
 .btn-report {
   background: none;
   border: none;
@@ -540,6 +612,7 @@ main {
   border-radius: 4px;
   transition: all 0.2s;
 }
+
 .btn-report:hover {
   opacity: 1;
   background-color: rgba(239, 68, 68, 0.15);
@@ -619,7 +692,7 @@ main {
   font-size: 13px; 
 }
 
-/* TARJETA PATROCINADA ESTILO FACEBOOK FEED EN EL FORO Y TABLÓN */
+/* PUBLICIDAD INTEGRADAS AL MEDIO (FACEBOOK FEED STYLE) */
 .ad-facebook-feed-card {
   background-color: #1E293B;
   border-radius: 14px;
@@ -770,11 +843,6 @@ footer.ad-banner-container {
 .btn-ad-contact:hover { 
   background-color: #FF6D00; 
   color: white; 
-}
-
-.shop-card.ad-sponsored { 
-  border: 1px dashed rgba(255,109,0,0.4); 
-  background: linear-gradient(135deg, rgba(30,41,59,0.95), rgba(15,23,42,0.95)); 
 }
 
 /* MODALES */

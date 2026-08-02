@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>NOTIGAS - Gas GLP, Agua 20L, Frutas, Chatarra, Detergentes & Foro Vecinal</title>
-  <meta name="description" content="NOTIGAS - Plataforma de mapa interactivo en vivo con GPS automático, pedidos a domicilio y foro vecinal tipo Reddit en Bolivia.">
+  <title>NOTIGAS - Mini Páginas de Negocio & Foro Vecinal OTB</title>
+  <meta name="description" content="NOTIGAS - Plataforma barrial en vivo con mapa GPS, mini páginas de negocio estilo Facebook para repartidores y mini Reddit vecinal.">
 
-  <!-- FAVICON E ICONOS PWA OFICIALES NOTIGAS (CON CACHE-BUSTING V2) -->
-  <link rel="icon" type="image/png" href="favicon.png?v=2"/>
-  <link rel="shortcut icon" href="favicon.ico?v=2"/>
-  <link rel="apple-touch-icon" href="icons/Icon-192.png?v=2">
+  <!-- FAVICON E ICONOS PWA OFICIALES NOTIGAS (CON CACHE-BUSTING V3) -->
+  <link rel="icon" type="image/png" href="favicon.png?v=3"/>
+  <link rel="shortcut icon" href="favicon.ico?v=3"/>
+  <link rel="apple-touch-icon" href="icons/Icon-192.png?v=3">
 
   <!-- LIBRERÍAS EXTERNAS (FONT AWESOME, LEAFLET & ROBOTO) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -25,11 +25,11 @@
 
   <header>
     <div class="brand">
-      <img src="favicon.png?v=2" class="brand-img" alt="NOTIGAS Logo"> NOTIGAS
+      <img src="favicon.png?v=3" class="brand-img" alt="NOTIGAS Logo"> NOTIGAS
     </div>
     <div class="header-actions">
       <button class="btn-badge" id="btnGps"><i class="fa-solid fa-crosshairs"></i> GPS Auto</button>
-      <button class="btn-driver" id="btnOpenDriver"><i class="fa-solid fa-truck-fast"></i> Soy Repartidor</button>
+      <button class="btn-driver" id="btnOpenDriver"><i class="fa-solid fa-truck-fast"></i> Publicar Mi Negocio</button>
       <button class="btn-config" id="btnOpenAdmin" title="Configuración / Modo Administrador"><i class="fa-solid fa-gear"></i></button>
     </div>
   </header>
@@ -37,8 +37,8 @@
   <!-- PESTAÑAS DE NAVEGACIÓN PRINCIPALES -->
   <nav>
     <button class="tab-btn active" onclick="switchTab(0)"><i class="fa-solid fa-map-location-dot"></i> 1ª MAPA EN VIVO</button>
-    <button class="tab-btn" onclick="switchTab(1)"><i class="fa-solid fa-store"></i> 2ª PEDIDOS & SERVICIOS</button>
-    <button class="tab-btn" onclick="switchTab(2)"><i class="fa-solid fa-comments"></i> 3ª CHATS & FORO VECINAL</button>
+    <button class="tab-btn" onclick="switchTab(1)"><i class="fa-solid fa-store"></i> 2ª PÁGINAS DE NEGOCIO</button>
+    <button class="tab-btn" onclick="switchTab(2)"><i class="fa-solid fa-comments"></i> 3ª REDDIT VECINAL & CHAT</button>
   </nav>
 
   <main>
@@ -67,205 +67,66 @@
       </div>
     </div>
 
-    <!-- PESTAÑA 2: CATÁLOGO DE PEDIDOS Y SERVICIOS CON CHAT INTERNO -->
+    <!-- PESTAÑA 2: MINI PÁGINAS DE NEGOCIO ESTILO FACEBOOK POR CATEGORÍA CON PUBLICIDAD -->
     <div class="tab-content" id="tab1">
-      <div class="shop-container">
-        <div class="shop-card" onclick="seleccionarYPedirDirecto('🔥 Garrafa de Gas GLP')">
-          <div class="shop-icon"><svg class="garrafa-icon-svg" style="width:26px; height:26px; fill:#FF6D00;" viewBox="0 0 24 24"><path d="M9 2h6v2H9V2zm8 4H7v3h10V6zm1 4H6c-1.1 0-2 .9-2 2v9c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-9c0-1.1-.9-2-2-2zM12 19c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg></div>
-          <div class="shop-info">
-            <div class="shop-title">🔥 Garrafa de Gas GLP</div>
-            <div class="shop-price">Distribuidor Autorizado OTB • En Ruta 🚛</div>
-            <button class="btn-chat-vendor" onclick="event.stopPropagation(); abrirChatDirectoVendedor('Gas GLP')"><i class="fa-solid fa-comments"></i> Chat Interno con Repartidor Gas</button>
-          </div>
-        </div>
+      <!-- BARRA FILTRADORA DE CATEGORÍAS -->
+      <div class="category-filter-bar">
+        <button class="cat-chip active" onclick="filterVendorCategory('TODOS', this)">🌐 Todos</button>
+        <button class="cat-chip" onclick="filterVendorCategory('Gas GLP', this)">🔥 Gas GLP</button>
+        <button class="cat-chip" onclick="filterVendorCategory('Agua 20L', this)">💧 Agua 20L</button>
+        <button class="cat-chip" onclick="filterVendorCategory('Carbón', this)">🪵 Carbón</button>
+        <button class="cat-chip" onclick="filterVendorCategory('Chatarra', this)">♻️ Chatarra & Papel</button>
+        <button class="cat-chip" onclick="filterVendorCategory('Frutas', this)">🍎 Frutas & Verduras</button>
+        <button class="cat-chip" onclick="filterVendorCategory('Detergentes', this)">🧼 Detergentes</button>
+        <button class="cat-chip" onclick="filterVendorCategory('Otros', this)">📦 Otros Pedidos</button>
+      </div>
 
-        <div class="shop-card" onclick="seleccionarYPedirDirecto('💧 Botellón Agua Purificada 20L')">
-          <div class="shop-icon"><i class="fa-solid fa-bottle-water" style="color: #0288D1;"></i></div>
-          <div class="shop-info">
-            <div class="shop-title">💧 Botellón Agua Purificada 20L</div>
-            <div class="shop-price">Agua Tratada Purificada • Entrega Inmediata</div>
-            <button class="btn-chat-vendor" onclick="event.stopPropagation(); abrirChatDirectoVendedor('Agua 20L')"><i class="fa-solid fa-comments"></i> Chat Interno con Repartidor Agua</button>
-          </div>
-        </div>
-
-        <div class="shop-card" onclick="seleccionarYPedirDirecto('🍎 Frutas & Verduras')">
-          <div class="shop-icon"><i class="fa-solid fa-apple-whole" style="color: #FF5252;"></i></div>
-          <div class="shop-info">
-            <div class="shop-title">🍎 Frutas & Verduras de Repartidores Locales</div>
-            <div class="shop-price">Fruta fresca y verdura de camión agrícola</div>
-            <button class="btn-chat-vendor" onclick="event.stopPropagation(); abrirChatDirectoVendedor('Frutas y Verduras')"><i class="fa-solid fa-comments"></i> Chat Interno con Frutero</button>
-          </div>
-        </div>
-
-        <!-- TARJETA PATROCINADA / GOOGLE ADS ESTILO FACEBOOK EN EL MEDIO DEL TABLÓN DE REPARTIDORES -->
-        <div class="ad-facebook-feed-card" onclick="abrirAnuncioWhatsApp()" style="cursor:pointer;">
-          <div class="ad-fb-header">
-            <div class="ad-fb-profile">
-              <div class="ad-fb-icon"><i class="fa-solid fa-rectangle-ad"></i></div>
-              <div class="ad-fb-info">
-                <div class="ad-fb-name" id="adShopTitle">📢 Publicidad OTB & Google Ads</div>
-                <div class="ad-fb-sub"><i class="fa-solid fa-globe"></i> PUBLICIDAD PATROCINADA</div>
-              </div>
-            </div>
-            <span class="ad-badge">SPONSOR</span>
-          </div>
-          <div class="ad-fb-body" id="adShopSubtext">
-            Promociona tu comercio, servicio o emprendimiento barrial ante todos los vecinos de la OTB.
-          </div>
-          <div class="ad-fb-media">
-            <div>
-              <div class="ad-fb-media-title">Anúnciate en NOTIGAS</div>
-              <div class="ad-fb-media-desc">Espacio publicitario integrado en el feed OTB</div>
-            </div>
-            <button class="btn-ad-contact" onclick="event.stopPropagation(); abrirAnuncioWhatsApp()"><i class="fa-solid fa-bullhorn"></i> Contactar</button>
-          </div>
-        </div>
-
-        <div class="shop-card" onclick="seleccionarYPedirDirecto('♻️ Venta / Recolección de Chatarra')">
-          <div class="shop-icon"><i class="fa-solid fa-recycle" style="color: #00E676;"></i></div>
-          <div class="shop-info">
-            <div class="shop-title">♻️ Venta / Recolección de Chatarra y Papel</div>
-            <div class="shop-price">Compradores y Recolectores Barriales en Ruta</div>
-            <button class="btn-chat-vendor" onclick="event.stopPropagation(); abrirChatDirectoVendedor('Chatarra')"><i class="fa-solid fa-comments"></i> Chat Interno con Recolector</button>
-          </div>
-        </div>
-
-        <div class="shop-card" onclick="seleccionarYPedirDirecto('🧼 Detergentes & Productos de Limpieza')">
-          <div class="shop-icon"><i class="fa-solid fa-pump-soap" style="color: #E040FB;"></i></div>
-          <div class="shop-info">
-            <div class="shop-title">🧼 Detergentes & Productos de Limpieza</div>
-            <div class="shop-price">Venta al por mayor y menor para el hogar</div>
-            <button class="btn-chat-vendor" onclick="event.stopPropagation(); abrirChatDirectoVendedor('Detergentes')"><i class="fa-solid fa-comments"></i> Chat Interno con Limpieza</button>
-          </div>
-        </div>
-
-        <div class="shop-card" onclick="seleccionarYPedirDirecto('📦 Encargos & Otros Pedidos')">
-          <div class="shop-icon"><i class="fa-solid fa-box-open" style="color: #FFAB00;"></i></div>
-          <div class="shop-info">
-            <div class="shop-title">📦 Encargos & Otros Pedidos Barriales</div>
-            <div class="shop-price">Entregas y pedidos especiales entre vecinos</div>
-            <button class="btn-chat-vendor" onclick="event.stopPropagation(); abrirChatDirectoVendedor('Encargos Barriales')"><i class="fa-solid fa-comments"></i> Chat Interno Encargos</button>
-          </div>
-        </div>
+      <!-- FEED DE MINI PÁGINAS DE NEGOCIO Y ANUNCIOS -->
+      <div class="vendor-grid-container" id="vendorGridContainer">
+        <!-- Renderizado dinámico desde js/vendors.js -->
       </div>
     </div>
 
-    <!-- PESTAÑA 3: CHAT COMPRADOR-REPARTIDOR & FORO VECINAL REDDIT CON DENUNCIAS Y ADS INTEGRADOS -->
+    <!-- PESTAÑA 3: MINI REDDIT VECINAL CON ANUNCIOS GRATIS, VOTOS, COMENTARIOS Y CHAT PRIVADO -->
     <div class="tab-content" id="tab2">
       <!-- SUB-NAVEGACIÓN INTERNA EN LA 3ª PESTAÑA -->
       <div class="subnav-3rd-tab">
-        <button class="subtab-btn active" id="subtabBtnReddit" onclick="switch3rdTabMode('reddit')"><i class="fa-solid fa-comments"></i> 💬 Foro Reddit Vecinal</button>
-        <button class="subtab-btn" id="subtabBtnDirect" onclick="switch3rdTabMode('direct')"><i class="fa-solid fa-headset"></i> 📱 Chat Comprador ↔ Repartidor</button>
+        <button class="subtab-btn active" id="subtabBtnReddit" onclick="switch3rdTabMode('reddit')"><i class="fa-solid fa-comments"></i> 💬 Mini Reddit Vecinal</button>
+        <button class="subtab-btn" id="subtabBtnDirect" onclick="switch3rdTabMode('direct')"><i class="fa-solid fa-headset"></i> 📱 Chat Privado con Distribuidor</button>
       </div>
 
-      <!-- VISTA 1: FORO REDDIT VECINAL CON DENUNCIAS Y ANUNCIOS ESTILO FACEBOOK FEED -->
+      <!-- VISTA 1: MINI REDDIT VECINAL (AVISOS GRATIS CON DURACIÓN 1 SEMANA) -->
       <div id="view3rdTabReddit" style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
         <div class="forum-header">
-          <span style="font-weight:900; font-size:13px; color:#FF6D00;"><i class="fa-solid fa-comments"></i> Comunidad OTB - Foro Vecinal</span>
-          <button class="btn-new-post" onclick="abrirModalNuevoPost()"><i class="fa-solid fa-plus"></i> Publicar Aviso / Queja</button>
+          <span style="font-weight:900; font-size:12px; color:#FF6D00;"><i class="fa-solid fa-comments"></i> Tablón Vecinal (Publicaciones gratis duran 7 días)</span>
+          <button class="btn-new-post" onclick="abrirModalNuevoPost()"><i class="fa-solid fa-plus"></i> Publicar Anuncio Gratis</button>
         </div>
         <div class="forum-container" id="forumFeed">
-          <div class="forum-card">
-            <div class="forum-votes"><i class="fa-solid fa-circle-chevron-up" onclick="votarPost(this, 1)"></i><span class="v-count" style="color:#FF6D00;">24</span><i class="fa-solid fa-circle-chevron-down" onclick="votarPost(this, -1)"></i></div>
-            <div class="forum-body">
-              <span class="forum-cat"><i class="fa-solid fa-triangle-exclamation"></i> QUEJA VECINAL</span>
-              <div class="forum-title">⚠️ Foco parpadeando en la esquina de la Calle 3 por la OTB</div>
-              <div class="forum-desc">Lleva 2 horas parpadeando el foco de la esquina. ¿Alguien ya llamó a la alcaldía o a alumbrado público?</div>
-              <div class="forum-footer">
-                <span style="cursor:pointer; color:#FF6D00; font-weight:700;" onclick="abrirComentariosPost(0, '⚠️ Foco parpadeando en la esquina de la Calle 3 por la OTB', 'Lleva 2 horas parpadeando el foco de la esquina. ¿Alguien ya llamó a la alcaldía o a alumbrado público?', 'QUEJA VECINAL', this)">💬 <span class="comment-count-num">2</span> comentarios</span>
-                <button class="btn-report" onclick="abrirModalDenuncia('Aviso OTB', '⚠️ Foco parpadeando en la esquina')"><i class="fa-solid fa-flag"></i> Denunciar</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- ANUNCIO INTEGRADO ESTILO FACEBOOK FEED AL MEDIO DEL FORO VECINAL -->
-          <div class="ad-facebook-feed-card" onclick="abrirAnuncioWhatsApp()" style="cursor:pointer;">
-            <div class="ad-fb-header">
-              <div class="ad-fb-profile">
-                <div class="ad-fb-icon"><i class="fa-solid fa-bullhorn"></i></div>
-                <div class="ad-fb-info">
-                  <div class="ad-fb-name" id="adForumTitle">🏢 Servicios Técnicos, Comercio Local & Anuncios OTB</div>
-                  <div class="ad-fb-sub"><i class="fa-solid fa-earth-americas"></i> PUBLICIDAD PATROCINADA EN EL FEED</div>
-                </div>
-              </div>
-              <span class="ad-badge">SPONSOR</span>
-            </div>
-            <div class="ad-fb-body" id="adForumDesc">
-              ¿Tienes un negocio en el barrio o deseas anunciar tu servicio profesional? Promociónate ante toda la comunidad vecinal en NOTIGAS.
-            </div>
-            <div class="ad-fb-media">
-              <div>
-                <div class="ad-fb-media-title">Anuncia tu Servicio Local</div>
-                <div class="ad-fb-media-desc">Llega directamente a los vecinos de tu OTB</div>
-              </div>
-              <button class="btn-ad-contact" onclick="event.stopPropagation(); abrirAnuncioWhatsApp()"><i class="fa-solid fa-arrow-up-right-from-square"></i> Anunciar</button>
-            </div>
-          </div>
-
-          <div class="forum-card">
-            <div class="forum-votes"><i class="fa-solid fa-circle-chevron-up" onclick="votarPost(this, 1)"></i><span class="v-count" style="color:#FF6D00;">41</span><i class="fa-solid fa-circle-chevron-down" onclick="votarPost(this, -1)"></i></div>
-            <div class="forum-body">
-              <span class="forum-cat"><i class="fa-solid fa-handshake"></i> APOYO VECINAL</span>
-              <div class="forum-title">🐶 Perrito caniche blanco extraviado cerca de la plaza</div>
-              <div class="forum-desc">Lleva collar rojo sin placa. Si lo ven por favor reténganlo y me avisan por aquí.</div>
-              <div class="forum-footer">
-                <span style="cursor:pointer; color:#FF6D00; font-weight:700;" onclick="abrirComentariosPost(1, '🐶 Perrito caniche blanco extraviado cerca de la plaza', 'Lleva collar rojo sin placa. Si lo ven por favor reténganlo y me avisan por aquí.', 'APOYO VECINAL', this)">💬 <span class="comment-count-num">2</span> comentarios</span>
-                <button class="btn-report" onclick="abrirModalDenuncia('Aviso OTB', '🐶 Perrito caniche blanco extraviado')"><i class="fa-solid fa-flag"></i> Denunciar</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="forum-card">
-            <div class="forum-votes"><i class="fa-solid fa-circle-chevron-up" onclick="votarPost(this, 1)"></i><span class="v-count" style="color:#FF6D00;">18</span><i class="fa-solid fa-circle-chevron-down" onclick="votarPost(this, -1)"></i></div>
-            <div class="forum-body">
-              <span class="forum-cat"><i class="fa-solid fa-truck-moving"></i> AVISO DE CAMIÓN</span>
-              <div class="forum-title">🚛 Camión de agua purificada 20L pasando por la Av. Principal</div>
-              <div class="forum-desc">El camión azul de agua acaba de doblar por el parque. Apúrense los que necesiten botellón.</div>
-              <div class="forum-footer">
-                <span style="cursor:pointer; color:#FF6D00; font-weight:700;" onclick="abrirComentariosPost(2, '🚛 Camión de agua purificada 20L pasando por la Av. Principal', 'El camión azul de agua acaba de doblar por el parque. Apúrense los que necesiten botellón.', 'AVISO DE CAMIÓN', this)">💬 <span class="comment-count-num">1</span> comentarios</span>
-                <button class="btn-report" onclick="abrirModalDenuncia('Aviso OTB', '🚛 Camión de agua purificada 20L')"><i class="fa-solid fa-flag"></i> Denunciar</button>
-              </div>
-            </div>
-          </div>
+          <!-- Renderizado dinámico desde js/forum.js con expiración de 7 días y anuncios al medio -->
         </div>
       </div>
 
-      <!-- VISTA 2: CHAT DIRECTO INTERNO COMPRADOR ↔ REPARTIDOR CON DENUNCIAS Y ADS -->
+      <!-- VISTA 2: CHAT DIRECTO PRIVADO 1-A-1 CLIENTE ↔ REPARTIDOR -->
       <div id="view3rdTabDirect" class="direct-chat-container" style="display:none; flex:1;">
         <div class="chat-vendor-selector">
-          <label style="font-size:11px; font-weight:700; color:#FF6D00;">Repartidor en Ruta:</label>
+          <label style="font-size:11px; font-weight:700; color:#FF6D00;">Seleccionar Distribuidor:</label>
           <select id="selectVendorChat" onchange="cambiarVendedorChat()">
             <option value="Gas GLP">🔥 Camión Garrafero de Gas GLP N° 42</option>
             <option value="Agua 20L">💧 Repartidor de Agua Purificada 20L</option>
-            <option value="Frutas y Verduras">🍎 Repartidor de Frutas & Verduras</option>
-            <option value="Chatarra">♻️ Repartidor de Chatarra y Reciclaje</option>
-            <option value="Detergentes">🧼 Repartidor de Productos de Limpieza</option>
-            <option value="Encargos Barriales">📦 Repartidor de Encargos Barriales</option>
+            <option value="Carbón">🪵 Carbonería & Leña El Fuego del Sur</option>
+            <option value="Chatarra">♻️ Compra de Chatarra y Reciclaje El Vecino</option>
+            <option value="Frutas">🍎 Camión Agrícola Frutas & Verduras</option>
+            <option value="Detergentes">🧼 Distribuidora Detergentes Barrial</option>
+            <option value="Otros">📦 Servicio de Encargos & Paquetes</option>
           </select>
         </div>
 
         <div class="chat-messages-box" id="chatMessagesBox">
-          <div style="background: rgba(255,109,0,0.08); border: 1px dashed rgba(255,109,0,0.3); border-radius: 10px; padding: 8px 12px; margin-bottom: 6px; font-size: 11px; display: flex; align-items: center; justify-content: space-between; cursor: pointer;" onclick="abrirAnuncioWhatsApp()">
-            <span style="color: #FF6D00; font-weight: 700;"><i class="fa-solid fa-rectangle-ad"></i> Publicidad OTB / Google Ads</span>
-            <span style="color: #94A3B8; font-size: 10px;">Ver anuncio <i class="fa-solid fa-chevron-right"></i></span>
-          </div>
-          <div class="chat-msg vendor">
-            <b>🚛 Repartidor en Ruta (Gas GLP):</b><br>¡Hola vecino! Estoy en la ruta principal de la OTB. ¿Dónde deseas la entrega?
-            <div class="chat-msg-footer">
-              <span class="chat-msg-time">12:30 PM</span>
-              <button class="btn-report" onclick="abrirModalDenuncia('Chat Repartidor', 'Mensaje Inicial Gas GLP')"><i class="fa-solid fa-flag"></i> Denunciar</button>
-            </div>
-          </div>
-          <div class="chat-msg buyer">
-            <b>🏠 Comprador (Tú):</b><br>Hola, mi ubicación de entrega está fijada en el mapa en vivo de NOTIGAS.
-            <div class="chat-msg-footer">
-              <span class="chat-msg-time">12:32 PM</span>
-            </div>
-          </div>
+          <!-- Renderizado dinámico de chat 1-a-1 desde js/chat.js con borrado en 48h -->
         </div>
 
         <div class="chat-input-bar">
-          <input type="text" id="inputDirectMessage" placeholder="Escribe tu mensaje al repartidor en ruta..." onkeypress="if(event.key==='Enter') enviarMensajeDirecto()">
+          <input type="text" id="inputDirectMessage" placeholder="Escribe tu mensaje privado al distribuidor en ruta..." onkeypress="if(event.key==='Enter') enviarMensajeDirecto()">
           <button onclick="enviarMensajeDirecto()"><i class="fa-solid fa-paper-plane"></i> Enviar</button>
         </div>
       </div>
@@ -284,19 +145,19 @@
     <button class="btn-ad-contact" onclick="abrirAnuncioWhatsApp()"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver Anuncio</button>
   </footer>
 
-  <!-- MODAL AUTENTICACIÓN GMAIL PARA REGISTRO EN EL SISTEMA -->
+  <!-- MODAL AUTENTICACIÓN & REGISTRO DE USUARIOS -->
   <div class="modal" id="modalWelcomeAuth">
     <div class="modal-content">
       <div class="modal-title">
-        <span>👋 Verificación & Registro de Google Gmail</span>
+        <span>👋 Registro & Acceso NOTIGAS</span>
       </div>
-      <p style="font-size: 11px; color: #94A3B8; margin-bottom: 12px;">Para ingresar a NOTIGAS debes autenticarte únicamente con tu cuenta de Google (Gmail). Mantenemos tus datos protegidos de forma anónima para terceros.</p>
+      <p style="font-size: 11px; color: #94A3B8; margin-bottom: 12px;">Autentícate con tu cuenta Google Gmail. Tu correo se usará únicamente para registrarte y enviarte ofertas puntuales por e-mail.</p>
 
       <div class="form-group">
         <label>Tipo de Usuario:</label>
         <select id="regRole" onchange="toggleRegFields()">
-          <option value="vecino">🏠 Comprador / Vecino (Gmail + Nombre + Apellido)</option>
-          <option value="chofer">🚛 Repartidor / Conductor (Gmail + Placa + Teléfono Privado)</option>
+          <option value="vecino">🏠 Cliente / Vecino (Gmail + Nombre + Apellido)</option>
+          <option value="chofer">🚛 Repartidor / Distribuidor (Mini Página de Negocio)</option>
         </select>
       </div>
 
@@ -305,7 +166,7 @@
         <input type="email" id="regGmail" placeholder="tu_correo@gmail.com">
       </div>
 
-      <!-- CAMPOS COMPRADOR / VECINO -->
+      <!-- CAMPOS CLIENTE / VECINO -->
       <div id="regBuyerFields">
         <div class="form-group">
           <label>Nombre:</label>
@@ -317,16 +178,40 @@
         </div>
       </div>
 
-      <!-- CAMPOS REPARTIDOR / CONDUCTOR -->
+      <!-- CAMPOS REPARTIDOR / CONDUCTOR (MINI PÁGINA DE NEGOCIO) -->
       <div id="regDriverFields" style="display: none;">
         <div class="form-group">
+          <label>Nombre o Razón Social del Negocio:</label>
+          <input type="text" id="regNombreNegocio" placeholder="Ej: Gasero Express N° 42">
+        </div>
+        <div class="form-group">
+          <label>Categoría del Negocio:</label>
+          <select id="regCategoriaNegocio">
+            <option value="Gas GLP">🔥 Gas GLP</option>
+            <option value="Agua 20L">💧 Agua Purificada 20L</option>
+            <option value="Carbón">🪵 Carbón / Leña</option>
+            <option value="Chatarra">♻️ Chatarra & Reciclaje</option>
+            <option value="Frutas">🍎 Frutas & Verduras</option>
+            <option value="Detergentes">🧼 Detergentes & Limpieza</option>
+            <option value="Otros">📦 Otros Pedidos & Encargos</option>
+          </select>
+        </div>
+        <div class="form-group">
           <label>Número de Placa del Vehículo / Camión:</label>
-          <input type="text" id="regPlaca" placeholder="Ej: 3842-XYZ / Camión GLP N° 42">
+          <input type="text" id="regPlaca" placeholder="Ej: 3842-XYZ">
+        </div>
+        <div class="form-group">
+          <label>Productos / Servicios Ofrecidos:</label>
+          <input type="text" id="regProductos" placeholder="Ej: Garrafas GLP 10kg, mangueras, reguladores">
+        </div>
+        <div class="form-group">
+          <label>Zonas / OTBs que atiende:</label>
+          <input type="text" id="regZonas" placeholder="Ej: OTB Central, Av. Principal y calles vecinas">
         </div>
         <div class="form-group">
           <label>Teléfono de Referencia (Privado del Sistema):</label>
-          <input type="tel" id="regTelReferencia" placeholder="+591 70000000 (No es público)">
-          <small style="font-size: 10px; color: #94A3B8; margin-top: 2px; display: block;">🔒 Este teléfono es de uso interno del sistema. La comunicación con clientes es 100% por el chat interno.</small>
+          <input type="tel" id="regTelReferencia" placeholder="+591 70000000">
+          <small style="font-size: 10px; color: #94A3B8;">🔒 Teléfono de uso interno. La comunicación con clientes es 100% por el chat privado.</small>
         </div>
       </div>
 
@@ -334,11 +219,11 @@
     </div>
   </div>
 
-  <!-- MODAL REPARTIDOR / CONDUCTOR -->
+  <!-- MODAL PUBLICAR MINI PÁGINA DE NEGOCIO PARA REPARTIDOR -->
   <div class="modal" id="modalDriver">
     <div class="modal-content">
       <div class="modal-title">
-        <span><i class="fa-solid fa-truck-fast"></i> Acceso para Repartidores y Conductores</span>
+        <span><i class="fa-solid fa-truck-fast"></i> Publicar Mini Página de Negocio</span>
         <button class="btn-close" onclick="closeDriverModal()">✕</button>
       </div>
       <div class="form-group">
@@ -346,23 +231,47 @@
         <input type="email" id="inputDriverGmail" placeholder="repartidor@gmail.com">
       </div>
       <div class="form-group">
-        <label>Número de Placa del Vehículo / Camión:</label>
-        <input type="text" id="inputDriverPlate" placeholder="Ej: 3842-XYZ / Camión GLP N° 42">
+        <label>Nombre o Razón Social del Negocio:</label>
+        <input type="text" id="inputDriverNombre" placeholder="Ej: Agua Cristallina 20L">
+      </div>
+      <div class="form-group">
+        <label>Categoría:</label>
+        <select id="inputDriverCat">
+          <option value="Gas GLP">🔥 Gas GLP</option>
+          <option value="Agua 20L">💧 Agua Purificada 20L</option>
+          <option value="Carbón">🪵 Carbón / Leña</option>
+          <option value="Chatarra">♻️ Chatarra & Reciclaje</option>
+          <option value="Frutas">🍎 Frutas & Verduras</option>
+          <option value="Detergentes">🧼 Detergentes & Limpieza</option>
+          <option value="Otros">📦 Otros Pedidos & Encargos</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Número de Placa del Vehículo:</label>
+        <input type="text" id="inputDriverPlate" placeholder="Ej: 3842-XYZ">
+      </div>
+      <div class="form-group">
+        <label>Productos u Oferta:</label>
+        <input type="text" id="inputDriverProductos" placeholder="Ej: Botellones 20L, bombas de agua">
+      </div>
+      <div class="form-group">
+        <label>Zonas de Entrega:</label>
+        <input type="text" id="inputDriverZonas" placeholder="Ej: OTB Norte y condominios">
       </div>
       <div class="form-group">
         <label>Teléfono de Referencia (Privado del Sistema):</label>
-        <input type="tel" id="inputDriverTelRef" placeholder="+591 70000000 (No es público)">
-        <small style="font-size: 10px; color: #94A3B8; margin-top: 2px; display: block;">🔒 Tu teléfono no será expuesto públicamente. Te comunicarás por el chat interno.</small>
+        <input type="tel" id="inputDriverTelRef" placeholder="+591 70000000">
+        <small style="font-size: 10px; color: #94A3B8;">🔒 No es público. Los clientes chatearán contigo de forma privada en la app.</small>
       </div>
-      <button class="btn-submit-google" onclick="iniciarSesionChofer()"><i class="fa-brands fa-google"></i> Activar Cuenta de Repartidor</button>
+      <button class="btn-submit-google" onclick="iniciarSesionChofer()"><i class="fa-brands fa-google"></i> Activar Ficha de Negocio</button>
     </div>
   </div>
 
-  <!-- MODAL DE DENUNCIA PARA REPORTAR ACOSO, BULLYING O CONTENIDO INAPROPIADO -->
+  <!-- MODAL DE DENUNCIA PARA REPORTAR ACOSO O CONTENIDO INAPROPIADO -->
   <div class="modal" id="modalReport">
     <div class="modal-content">
       <div class="modal-title">
-        <span>🚨 Denunciar Acoso o Contenido Inapropiado</span>
+        <span>🚨 Denunciar Publicación o Acoso</span>
         <button class="btn-close" onclick="closeReportModal()">✕</button>
       </div>
       <p style="font-size: 11px; color: #94A3B8; margin-bottom: 10px;" id="reportTargetLabel">Reportar elemento seleccionado:</p>
@@ -374,7 +283,7 @@
           <option value="Acoso o Bullying">🛑 Acoso o Bullying a un vecino</option>
           <option value="Contenido Ofensivo / Inapropiado">⚠️ Contenido Ofensivo o Lenguaje Inapropiado</option>
           <option value="Información Falsa / Spam">❌ Información Falsa o Spam</option>
-          <option value="Conducta Indebida del Repartidor / Comprador">🚨 Conducta Indebida</option>
+          <option value="Conducta Indebida del Repartidor / Cliente">🚨 Conducta Indebida</option>
         </select>
       </div>
       <div class="form-group">
@@ -403,21 +312,21 @@
           <i class="fa-solid fa-bottle-water" style="color: #0288D1;"></i>
           <span class="submenu-title">💧 Agua Purificada 20L</span>
         </div>
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('🪵 Carbón / Leña')">
+          <i class="fa-solid fa-fire-flame-curved" style="color: #FF9100;"></i>
+          <span class="submenu-title">🪵 Carbón / Leña</span>
+        </div>
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('♻️ Chatarra & Reciclaje')">
+          <i class="fa-solid fa-recycle" style="color: #00E676;"></i>
+          <span class="submenu-title">♻️ Chatarra / Papel</span>
+        </div>
         <div class="submenu-card" onclick="seleccionarYPedirDirecto('🍎 Frutas & Verduras')">
           <i class="fa-solid fa-apple-whole" style="color: #FF5252;"></i>
           <span class="submenu-title">🍎 Frutas & Verduras</span>
         </div>
-        <div class="submenu-card" onclick="seleccionarYPedirDirecto('♻️ Venta / Recolección de Chatarra')">
-          <i class="fa-solid fa-recycle" style="color: #00E676;"></i>
-          <span class="submenu-title">♻️ Chatarra / Reciclaje</span>
-        </div>
-        <div class="submenu-card" onclick="seleccionarYPedirDirecto('🧼 Detergentes & Productos de Limpieza')">
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('🧼 Detergentes & Limpieza')">
           <i class="fa-solid fa-pump-soap" style="color: #E040FB;"></i>
           <span class="submenu-title">🧼 Detergentes & Limpieza</span>
-        </div>
-        <div class="submenu-card" onclick="seleccionarYPedirDirecto('📦 Encargos & Otros Pedidos')">
-          <i class="fa-solid fa-box-open" style="color: #FFAB00;"></i>
-          <span class="submenu-title">📦 Encargos & Otros</span>
         </div>
       </div>
     </div>
@@ -435,9 +344,10 @@
         <select id="selectCategoria">
           <option value="🔥 Garrafa de Gas GLP">🔥 Garrafa de Gas GLP</option>
           <option value="💧 Botellón Agua Purificada 20L">💧 Botellón Agua Purificada 20L</option>
+          <option value="🪵 Carbón / Leña">🪵 Carbón / Leña</option>
+          <option value="♻️ Chatarra & Reciclaje">♻️ Chatarra & Reciclaje</option>
           <option value="🍎 Frutas & Verduras">🍎 Frutas & Verduras</option>
-          <option value="♻️ Venta / Recolección de Chatarra">♻️ Venta / Recolección de Chatarra</option>
-          <option value="🧼 Detergentes & Productos de Limpieza">🧼 Detergentes & Productos de Limpieza</option>
+          <option value="🧼 Detergentes & Limpieza">🧼 Detergentes & Limpieza</option>
           <option value="📦 Encargos & Otros Pedidos">📦 Encargos & Otros Pedidos</option>
         </select>
       </div>
@@ -445,7 +355,7 @@
         <label>Cantidad o Detalle del Pedido:</label>
         <input type="text" id="inputCantidad" placeholder="Ej: 1 Garrafa / 2 Botellones / 5kg Manzanas" value="1 unidad">
       </div>
-      <p style="font-size:11px; color:#00E676; margin: 8px 0;">✔ Comunicación por el chat interno anónimo de NOTIGAS.</p>
+      <p style="font-size:11px; color:#00E676; margin: 8px 0;">✔ Coordinación por el chat privado 1-a-1 de NOTIGAS.</p>
       <button class="btn-submit" onclick="confirmarPedido()"><i class="fa-solid fa-paper-plane"></i> Confirmar y Solicitar en Mapa Vivo</button>
     </div>
   </div>
@@ -477,7 +387,7 @@
   <div class="modal" id="modalNuevoPost">
     <div class="modal-content">
       <div class="modal-title">
-        <span>💬 Publicar Aviso en Foro Vecinal</span>
+        <span>💬 Publicar Anuncio Gratis en la OTB</span>
         <button class="btn-close" onclick="closeNuevoPostModal()">✕</button>
       </div>
       <div class="form-group">
@@ -490,14 +400,14 @@
         </select>
       </div>
       <div class="form-group">
-        <label>Título del Aviso:</label>
-        <input type="text" id="inputPostTitulo" placeholder="Ej: Camión de verdura pasando por la plaza">
+        <label>Título del Anuncio:</label>
+        <input type="text" id="inputPostTitulo" placeholder="Ej: Camión de leña y carbón en la OTB">
       </div>
       <div class="form-group">
         <label>Descripción / Detalle:</label>
-        <textarea id="inputPostDesc" rows="3" placeholder="Escribe tu mensaje para los vecinos..."></textarea>
+        <textarea id="inputPostDesc" rows="3" placeholder="Escribe tu mensaje para los vecinos (Durará 7 días)..."></textarea>
       </div>
-      <button class="btn-submit" onclick="crearNuevoPost()"><i class="fa-solid fa-paper-plane"></i> Publicar en la OTB</button>
+      <button class="btn-submit" onclick="crearNuevoPost()"><i class="fa-solid fa-paper-plane"></i> Publicar Anuncio Gratis (7 días)</button>
     </div>
   </div>
 
@@ -540,7 +450,7 @@
       </div>
 
       <div class="modal-tab-pane" id="modalPane2">
-        <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Exportar todos los correos electrónicos Gmail de los usuarios registrados (compradores y repartidores):</p>
+        <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Exportar todos los correos electrónicos Gmail registrados para campañas de Email Marketing / Ofertas Puntuales:</p>
         <button class="btn-csv-download" onclick="descargarListaCorreosCSV()"><i class="fa-solid fa-download"></i> 📥 Descargar Correos Gmail (.CSV)</button>
       </div>
     </div>
@@ -548,6 +458,7 @@
 
   <!-- INCLUSIÓN DE MÓDULOS JAVASCRIPT ARQUITECTURALES DESACOPLADOS -->
   <script src="js/auth.js"></script>
+  <script src="js/vendors.js"></script>
   <script src="js/map.js"></script>
   <script src="js/forum.js"></script>
   <script src="js/chat.js"></script>
