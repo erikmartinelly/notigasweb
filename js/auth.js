@@ -2,8 +2,9 @@
    NOTIGAS - MÓDULO DE AUTENTICACIÓN & GOOGLE IDENTITY SERVICES (1-TAP SIGN-IN)
    ========================================================================== */
 
-// CLIENT ID DE GOOGLE CLOUD CONSOLE (ORGANIZACIÓN: erikmartinelly-org - ID: 55226185628)
-const GOOGLE_CLIENT_ID = "55226185628-notigasweb.apps.googleusercontent.com"; 
+// CREDENCIAIS OFICIALES DE GOOGLE CLOUD CONSOLE (ORGANIZACIÓN erikmartinelly-org)
+const GOOGLE_CLIENT_ID = "994996215118-a3gvm7gtorr1nof9vaksr05ndc1raso3.apps.googleusercontent.com"; 
+const GOOGLE_CLIENT_SECRET = "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"; // Usado para verificación segura en backend
 
 let databaseEmails = [
   { gmail: "cliente_otb@gmail.com", role: "Cliente", fecha: "2026-08-01" },
