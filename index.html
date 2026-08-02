@@ -74,10 +74,10 @@
         <button class="cat-chip active" onclick="filterVendorCategory('TODOS', this)">🌐 Todos</button>
         <button class="cat-chip" onclick="filterVendorCategory('Gas GLP', this)">🔥 Gas GLP</button>
         <button class="cat-chip" onclick="filterVendorCategory('Agua 20L', this)">💧 Agua 20L</button>
-        <button class="cat-chip" onclick="filterVendorCategory('Carbón', this)">🪵 Carbón</button>
         <button class="cat-chip" onclick="filterVendorCategory('Chatarra', this)">♻️ Chatarra & Papel</button>
         <button class="cat-chip" onclick="filterVendorCategory('Frutas', this)">🍎 Frutas & Verduras</button>
-        <button class="cat-chip" onclick="filterVendorCategory('Detergentes', this)">🧼 Detergentes</button>
+        <button class="cat-chip" onclick="filterVendorCategory('Detergentes', this)">🧼 Detergentes & Limpieza</button>
+        <button class="cat-chip" onclick="filterVendorCategory('Carbón', this)">🪵 Carbón / Leña</button>
         <button class="cat-chip" onclick="filterVendorCategory('Otros', this)">📦 Otros Pedidos</button>
       </div>
 
@@ -113,10 +113,10 @@
           <select id="selectVendorChat" onchange="cambiarVendedorChat()">
             <option value="Gas GLP">🔥 Camión Garrafero de Gas GLP N° 42</option>
             <option value="Agua 20L">💧 Repartidor de Agua Purificada 20L</option>
-            <option value="Carbón">🪵 Carbonería & Leña El Fuego del Sur</option>
             <option value="Chatarra">♻️ Compra de Chatarra y Reciclaje El Vecino</option>
             <option value="Frutas">🍎 Camión Agrícola Frutas & Verduras</option>
-            <option value="Detergentes">🧼 Distribuidora Detergentes Barrial</option>
+            <option value="Detergentes">🧼 Distribuidora Detergentes & Limpieza Barrial</option>
+            <option value="Carbón">🪵 Carbonería & Leña El Fuego del Sur</option>
             <option value="Otros">📦 Servicio de Encargos & Paquetes</option>
           </select>
         </div>
@@ -189,10 +189,10 @@
           <select id="regCategoriaNegocio">
             <option value="Gas GLP">🔥 Gas GLP</option>
             <option value="Agua 20L">💧 Agua Purificada 20L</option>
-            <option value="Carbón">🪵 Carbón / Leña</option>
             <option value="Chatarra">♻️ Chatarra & Reciclaje</option>
             <option value="Frutas">🍎 Frutas & Verduras</option>
             <option value="Detergentes">🧼 Detergentes & Limpieza</option>
+            <option value="Carbón">🪵 Carbón / Leña</option>
             <option value="Otros">📦 Otros Pedidos & Encargos</option>
           </select>
         </div>
@@ -232,17 +232,17 @@
       </div>
       <div class="form-group">
         <label>Nombre o Razón Social del Negocio:</label>
-        <input type="text" id="inputDriverNombre" placeholder="Ej: Agua Cristallina 20L">
+        <input type="text" id="inputDriverNombre" placeholder="Ej: Detergentes & Limpieza Express">
       </div>
       <div class="form-group">
         <label>Categoría:</label>
         <select id="inputDriverCat">
           <option value="Gas GLP">🔥 Gas GLP</option>
           <option value="Agua 20L">💧 Agua Purificada 20L</option>
-          <option value="Carbón">🪵 Carbón / Leña</option>
           <option value="Chatarra">♻️ Chatarra & Reciclaje</option>
           <option value="Frutas">🍎 Frutas & Verduras</option>
           <option value="Detergentes">🧼 Detergentes & Limpieza</option>
+          <option value="Carbón">🪵 Carbón / Leña</option>
           <option value="Otros">📦 Otros Pedidos & Encargos</option>
         </select>
       </div>
@@ -252,7 +252,7 @@
       </div>
       <div class="form-group">
         <label>Productos u Oferta:</label>
-        <input type="text" id="inputDriverProductos" placeholder="Ej: Botellones 20L, bombas de agua">
+        <input type="text" id="inputDriverProductos" placeholder="Ej: Detergentes 5L, desinfectantes, jabón líquido">
       </div>
       <div class="form-group">
         <label>Zonas de Entrega:</label>
@@ -312,10 +312,6 @@
           <i class="fa-solid fa-bottle-water" style="color: #0288D1;"></i>
           <span class="submenu-title">💧 Agua Purificada 20L</span>
         </div>
-        <div class="submenu-card" onclick="seleccionarYPedirDirecto('🪵 Carbón / Leña')">
-          <i class="fa-solid fa-fire-flame-curved" style="color: #FF9100;"></i>
-          <span class="submenu-title">🪵 Carbón / Leña</span>
-        </div>
         <div class="submenu-card" onclick="seleccionarYPedirDirecto('♻️ Chatarra & Reciclaje')">
           <i class="fa-solid fa-recycle" style="color: #00E676;"></i>
           <span class="submenu-title">♻️ Chatarra / Papel</span>
@@ -327,6 +323,10 @@
         <div class="submenu-card" onclick="seleccionarYPedirDirecto('🧼 Detergentes & Limpieza')">
           <i class="fa-solid fa-pump-soap" style="color: #E040FB;"></i>
           <span class="submenu-title">🧼 Detergentes & Limpieza</span>
+        </div>
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('🪵 Carbón / Leña')">
+          <i class="fa-solid fa-fire-flame-curved" style="color: #FF9100;"></i>
+          <span class="submenu-title">🪵 Carbón / Leña</span>
         </div>
       </div>
     </div>
@@ -344,10 +344,10 @@
         <select id="selectCategoria">
           <option value="🔥 Garrafa de Gas GLP">🔥 Garrafa de Gas GLP</option>
           <option value="💧 Botellón Agua Purificada 20L">💧 Botellón Agua Purificada 20L</option>
-          <option value="🪵 Carbón / Leña">🪵 Carbón / Leña</option>
           <option value="♻️ Chatarra & Reciclaje">♻️ Chatarra & Reciclaje</option>
           <option value="🍎 Frutas & Verduras">🍎 Frutas & Verduras</option>
           <option value="🧼 Detergentes & Limpieza">🧼 Detergentes & Limpieza</option>
+          <option value="🪵 Carbón / Leña">🪵 Carbón / Leña</option>
           <option value="📦 Encargos & Otros Pedidos">📦 Encargos & Otros Pedidos</option>
         </select>
       </div>
@@ -401,7 +401,7 @@
       </div>
       <div class="form-group">
         <label>Título del Anuncio:</label>
-        <input type="text" id="inputPostTitulo" placeholder="Ej: Camión de leña y carbón en la OTB">
+        <input type="text" id="inputPostTitulo" placeholder="Ej: Camión de lavandina y detergente pasando por la plaza">
       </div>
       <div class="form-group">
         <label>Descripción / Detalle:</label>

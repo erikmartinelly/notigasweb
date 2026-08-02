@@ -25,16 +25,6 @@ const defaultVendorsList = [
   },
   {
     id: "v3",
-    name: "Carbonería & Leña El Fuego del Sur",
-    category: "Carbón",
-    icon: "🪵",
-    plate: "1845-KLM (Camioneta de Reparto)",
-    products: "Bolsas de Carbón Vegetal 5kg/10kg, Leña seca para parrilla y restaurantes.",
-    zones: "OTB Norte, Zona de Parrilleros y Mercado Local.",
-    active: true
-  },
-  {
-    id: "v4",
     name: "Recicladora & Compra de Chatarra El Vecino",
     category: "Chatarra",
     icon: "♻️",
@@ -44,7 +34,7 @@ const defaultVendorsList = [
     active: true
   },
   {
-    id: "v5",
+    id: "v4",
     name: "Camión Agrícola Frutas & Verduras Frescas",
     category: "Frutas",
     icon: "🍎",
@@ -54,13 +44,23 @@ const defaultVendorsList = [
     active: true
   },
   {
-    id: "v6",
+    id: "v5",
     name: "Distribuidora de Detergentes & Limpieza Barrial",
     category: "Detergentes",
     icon: "🧼",
     plate: "6234-VWX (Furgón de Venta)",
     products: "Detergente en polvo a granel, lavavajillas, lavandina, desinfectantes 5L.",
     zones: "Tiendas de barrio, lavanderías y entregas a domicilio.",
+    active: true
+  },
+  {
+    id: "v6",
+    name: "Carbonería & Leña El Fuego del Sur",
+    category: "Carbón",
+    icon: "🪵",
+    plate: "1845-KLM (Camioneta de Reparto)",
+    products: "Bolsas de Carbón Vegetal 5kg/10kg, Leña seca para parrilla y restaurantes.",
+    zones: "OTB Norte, Zona de Parrilleros y Mercado Local.",
     active: true
   },
   {
@@ -192,9 +192,9 @@ function getIconForCategory(cat) {
   if (!cat) return "📦";
   if (cat.includes("Gas")) return "🔥";
   if (cat.includes("Agua")) return "💧";
-  if (cat.includes("Carbón")) return "🪵";
   if (cat.includes("Chatarra")) return "♻️";
   if (cat.includes("Fruta")) return "🍎";
   if (cat.includes("Deterg")) return "🧼";
+  if (cat.includes("Carbón")) return "🪵";
   return "📦";
 }
