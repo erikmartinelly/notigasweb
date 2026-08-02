@@ -3,11 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>NOTIGAS - Gas, Chatarra, Detergentes, Agua & Otros Pedidos en Vivo</title>
-  <meta name="description" content="NOTIGAS - Plataforma de mapa interactivo en vivo para pedidos de gas GLP, agua 20L, chatarra y encargos barriales en Bolivia.">
+  <title>NOTIGAS - Gas GLP, Agua 20L, Frutas, Chatarra, Detergentes & Foro Vecinal</title>
+  <meta name="description" content="NOTIGAS - Plataforma de mapa interactivo en vivo con GPS automático, pedidos a domicilio y foro vecinal tipo Reddit en Bolivia.">
 
-  <link rel="icon" type="image/png" href="favicon.png"/>
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <!-- FAVICON E ICONOS PWA OFICIALES NOTIGAS (CON CACHE-BUSTING V2) -->
+  <link rel="icon" type="image/png" href="favicon.png?v=2"/>
+  <link rel="shortcut icon" href="favicon.ico?v=2"/>
+  <link rel="apple-touch-icon" href="icons/Icon-192.png?v=2">
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
@@ -20,15 +22,19 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Roboto', sans-serif; }
     body { background-color: #0F172A; color: #FFFFFF; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-    header { background-color: #1E293B; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
-    .brand { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 900; color: #FF6D00; letter-spacing: 0.5px; }
-    .brand-img { width: 28px; height: 28px; border-radius: 6px; }
-    .header-actions { display: flex; align-items: center; gap: 10px; }
-    .btn-badge { background-color: #0288D1; color: white; border: none; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; }
-    .btn-admin { background-color: #E65100; color: white; border: none; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+    header { background-color: #1E293B; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+    .brand { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 900; color: #FF6D00; letter-spacing: 0.5px; }
+    .brand-img { width: 32px; height: 32px; border-radius: 8px; border: 1.5px solid #FF6D00; box-shadow: 0 0 10px rgba(255,109,0,0.4); object-fit: cover; }
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+    .btn-badge { background-color: #0288D1; color: white; border: none; padding: 6px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+    .btn-driver { background-color: #FF6D00; color: white; border: none; padding: 6px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+    
+    /* BOTÓN CONFIGURACIÓN CON RUEDA DENTADA ⚙️ */
+    .btn-config { background-color: #FF6D00; color: white; border: none; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; box-shadow: 0 2px 8px rgba(255,109,0,0.4); transition: transform 0.2s, background-color 0.2s; }
+    .btn-config:hover { background-color: #E65100; transform: rotate(45deg); }
 
     nav { background-color: #1E293B; display: flex; border-bottom: 1px solid rgba(255,255,255,0.08); z-index: 999; }
-    .tab-btn { flex: 1; padding: 12px 6px; background: none; border: none; color: #94A3B8; font-size: 12px; font-weight: 700; cursor: pointer; text-align: center; border-bottom: 3px solid transparent; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .tab-btn { flex: 1; padding: 12px 4px; background: none; border: none; color: #94A3B8; font-size: 11px; font-weight: 700; cursor: pointer; text-align: center; border-bottom: 3px solid transparent; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 4px; }
     .tab-btn.active { color: #FF6D00; border-bottom-color: #FF6D00; background-color: rgba(255,109,0,0.05); }
 
     main { flex: 1; position: relative; overflow: hidden; }
@@ -46,25 +52,48 @@
     .map-style-btn { background: none; border: none; color: white; padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: 500; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 8px; }
     .map-style-btn:hover, .map-style-btn.active { background-color: #FF6D00; color: white; font-weight: 700; }
 
-    .floating-actions { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; display: flex; gap: 12px; width: 90%; max-width: 450px; }
-    .btn-panic { flex: 1; background: linear-gradient(135deg, #D32F2F, #B71C1C); color: white; border: none; padding: 14px; border-radius: 14px; font-size: 14px; font-weight: 900; cursor: pointer; box-shadow: 0 4px 15px rgba(211,47,47,0.5); display: flex; align-items: center; justify-content: center; gap: 8px; animation: pulse 2s infinite; }
-    .btn-order { flex: 1.2; background: linear-gradient(135deg, #FF6D00, #E65100); color: white; border: none; padding: 14px; border-radius: 14px; font-size: 14px; font-weight: 900; cursor: pointer; box-shadow: 0 4px 15px rgba(255,109,0,0.5); display: flex; align-items: center; justify-content: center; gap: 8px; }
+    /* CONTENEDOR UNIFICADO CON UN SOLO BOTÓN PRINCIPAL DE PEDIDO */
+    .floating-actions-container { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; display: flex; flex-direction: column; gap: 8px; width: 94%; max-width: 480px; }
+    .action-row { display: flex; gap: 8px; width: 100%; }
+
+    /* BOTÓN UNIFICADO PRINCIPAL DE PEDIDO DE GAS */
+    .btn-main-order { flex: 1; background: linear-gradient(135deg, #FF6D00, #E65100); color: white; border: none; padding: 14px; border-radius: 14px; font-size: 14px; font-weight: 900; cursor: pointer; box-shadow: 0 4px 20px rgba(255,109,0,0.6); display: flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: 0.5px; }
+    .btn-panic { flex: 1; background: linear-gradient(135deg, #D32F2F, #B71C1C); color: white; border: none; padding: 10px 6px; border-radius: 12px; font-size: 11px; font-weight: 900; cursor: pointer; box-shadow: 0 4px 15px rgba(211,47,47,0.5); display: flex; align-items: center; justify-content: center; gap: 4px; animation: pulse 2s infinite; }
+    .btn-hear-truck { flex: 1; background: rgba(30, 41, 59, 0.95); color: #00E676; border: 1px solid #00E676; padding: 10px 6px; border-radius: 12px; font-size: 11px; font-weight: 700; cursor: pointer; backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; gap: 4px; }
+
+    .garrafa-icon-svg { width: 22px; height: 22px; fill: currentColor; }
+
     @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
 
+    /* SUBMENÚ DE SELECCIÓN DE CATEGORÍA DE PEDIDO */
+    .submenu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
+    .submenu-card { background-color: #0F172A; border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; cursor: pointer; transition: transform 0.2s, border-color 0.2s, background-color 0.2s; gap: 6px; }
+    .submenu-card:hover { transform: translateY(-2px); border-color: #FF6D00; background-color: rgba(255,109,0,0.1); }
+    .submenu-card i, .submenu-card svg { font-size: 24px; color: #FF6D00; }
+    .submenu-title { font-size: 12px; font-weight: 700; color: white; }
+
+    /* FORO VECINAL TIPO REDDIT (PESTAÑA 3) */
+    .forum-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background-color: #1E293B; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .btn-new-post { background-color: #FF6D00; color: white; border: none; padding: 8px 14px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; }
     .forum-container { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-    .forum-card { background-color: #1E293B; border-radius: 14px; padding: 14px; border: 1px solid rgba(255,255,255,0.08); display: flex; gap: 12px; }
-    .forum-votes { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #FF6D00; font-weight: 900; font-size: 13px; }
+    .forum-card { background-color: #1E293B; border-radius: 14px; padding: 14px; border: 1px solid rgba(255,255,255,0.08); display: flex; gap: 14px; }
+    .forum-votes { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94A3B8; font-weight: 900; font-size: 13px; width: 30px; }
+    .forum-votes i { cursor: pointer; padding: 4px; transition: color 0.2s; }
+    .forum-votes i:hover { color: #FF6D00; }
     .forum-body { flex: 1; }
     .forum-cat { display: inline-block; background-color: rgba(255,109,0,0.15); color: #FF6D00; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 6px; margin-bottom: 6px; }
     .forum-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; color: white; }
-    .forum-desc { font-size: 12px; color: #94A3B8; }
+    .forum-desc { font-size: 12px; color: #94A3B8; line-height: 1.4; }
+    .forum-footer { display: flex; gap: 12px; margin-top: 8px; font-size: 11px; color: #64748B; font-weight: 500; }
 
     .shop-container { flex: 1; overflow-y: auto; padding: 16px; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
-    .shop-card { background-color: #1E293B; border-radius: 14px; padding: 14px; border: 1px solid rgba(255,255,255,0.08); display: flex; gap: 12px; align-items: center; }
-    .shop-icon { width: 50px; height: 50px; border-radius: 12px; background-color: rgba(2,136,209,0.15); color: #0288D1; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+    .shop-card { background-color: #1E293B; border-radius: 14px; padding: 14px; border: 1px solid rgba(255,255,255,0.08); display: flex; gap: 12px; align-items: center; cursor: pointer; transition: transform 0.2s, border-color 0.2s; }
+    .shop-card:hover { transform: translateY(-2px); border-color: #FF6D00; }
+    .shop-icon { width: 50px; height: 50px; border-radius: 12px; background-color: rgba(255,109,0,0.15); color: #FF6D00; display: flex; align-items: center; justify-content: center; font-size: 22px; }
     .shop-info { flex: 1; }
     .shop-title { font-size: 14px; font-weight: 700; color: white; }
-    .shop-price { font-size: 13px; color: #00E676; font-weight: 700; margin-top: 2px; }
+    .shop-price { font-size: 12px; color: #00E676; font-weight: 700; margin-top: 2px; }
+    .btn-chat-vendor { background-color: #25D366; color: white; border: none; padding: 6px 10px; border-radius: 8px; font-size: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; margin-top: 6px; }
 
     footer.ad-banner { background-color: #0F172A; border-top: 1px solid rgba(255,255,255,0.12); padding: 8px 14px; display: flex; align-items: center; gap: 8px; z-index: 1000; text-decoration: none; cursor: pointer; }
     .ad-badge { background-color: rgba(230,81,0,0.2); color: #FF6D00; border: 0.8px solid #FF6D00; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
@@ -72,34 +101,44 @@
     .ad-link-icon { color: rgba(255,255,255,0.38); font-size: 12px; }
 
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
-    .modal-content { background-color: #1E293B; border-radius: 16px; padding: 20px; width: 90%; max-width: 450px; border: 1px solid rgba(255,255,255,0.15); }
+    .modal-content { background-color: #1E293B; border-radius: 16px; padding: 20px; width: 90%; max-width: 460px; border: 1px solid rgba(255,255,255,0.15); max-height: 90vh; overflow-y: auto; }
     .modal-title { font-size: 16px; font-weight: 900; color: #FF6D00; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
     .btn-close { background: none; border: none; color: white; font-size: 18px; cursor: pointer; }
     .form-group { margin-bottom: 12px; }
     .form-group label { display: block; font-size: 11px; color: #94A3B8; margin-bottom: 4px; font-weight: 700; }
-    .form-group input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background-color: #0F172A; color: white; font-size: 12px; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background-color: #0F172A; color: white; font-size: 12px; }
     .btn-submit { width: 100%; background-color: #FF6D00; color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 8px; }
+    .btn-submit-google { width: 100%; background-color: #DB4437; color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+    /* PESTAÑAS DENTRO DE MODAL DE CONFIGURACIÓN */
+    .modal-tab-nav { display: flex; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 14px; gap: 6px; }
+    .modal-tab-btn { flex: 1; background: none; border: none; color: #94A3B8; padding: 8px; font-size: 11px; font-weight: 700; cursor: pointer; border-bottom: 2px solid transparent; }
+    .modal-tab-btn.active { color: #FF6D00; border-bottom-color: #FF6D00; }
+    .modal-tab-pane { display: none; }
+    .modal-tab-pane.active { display: block; }
   </style>
 </head>
 <body>
 
   <header>
     <div class="brand">
-      <img src="favicon.png" class="brand-img" alt="NOTIGAS Logo"> NOTIGAS
+      <img src="favicon.png?v=2" class="brand-img" alt="NOTIGAS Logo"> NOTIGAS
     </div>
     <div class="header-actions">
       <button class="btn-badge" id="btnGps"><i class="fa-solid fa-crosshairs"></i> GPS Auto</button>
-      <button class="btn-admin" id="btnOpenAdmin"><i class="fa-solid fa-envelope"></i> Ingreso Gmail</button>
+      <button class="btn-driver" id="btnOpenDriver"><i class="fa-solid fa-truck-fast"></i> Soy Chofer</button>
+      <button class="btn-config" id="btnOpenAdmin" title="Configuración / Modo Administrador"><i class="fa-solid fa-gear"></i></button>
     </div>
   </header>
 
   <nav>
     <button class="tab-btn active" onclick="switchTab(0)"><i class="fa-solid fa-map-location-dot"></i> MAPA EN VIVO</button>
-    <button class="tab-btn" onclick="switchTab(1)"><i class="fa-solid fa-comments"></i> FORO VECINAL</button>
-    <button class="tab-btn" onclick="switchTab(2)"><i class="fa-solid fa-store"></i> COMERCIOS & PROMOS</button>
+    <button class="tab-btn" onclick="switchTab(1)"><i class="fa-solid fa-store"></i> PEDIDOS & SERVICIOS</button>
+    <button class="tab-btn" onclick="switchTab(2)"><i class="fa-solid fa-comments"></i> FORO VECINAL</button>
   </nav>
 
   <main>
+    <!-- PESTAÑA 1: MAPA EN VIVO -->
     <div class="tab-content active" id="tab0">
       <div id="map"></div>
 
@@ -110,50 +149,113 @@
 
       <div class="map-controls">
         <button class="map-style-btn active" onclick="setMapStyle(this, 'googleStatic')"><i class="fa-solid fa-location-dot"></i> Google Maps HD</button>
-        <button class="map-style-btn" onclick="setMapStyle(this, 'satelite')"><i class="fa-solid fa-satellite"></i> Satélite HD</button>
+        <button class="map-style-btn" onclick="setMapStyle(this, 'googleSatelite')"><i class="fa-solid fa-satellite"></i> Google Satélite HD</button>
       </div>
 
-      <div class="floating-actions">
-        <button class="btn-panic" onclick="lanzarEspecialEsperame()"><i class="fa-solid fa-hand-paper"></i> 🛑 ESPÉRAME</button>
-        <button class="btn-order" onclick="hacerPedidoRapido()"><i class="fa-solid fa-truck-moving"></i> 📦 PEDIR GARRAFA</button>
+      <!-- UN SOLO BOTÓN PRINCIPAL DE PEDIDO EN EL MAPA CON ICONO SVG DE GARRAFA DE GAS -->
+      <div class="floating-actions-container">
+        <button class="btn-main-order" onclick="abrirSubmenuPedidos()"><svg class="garrafa-icon-svg" viewBox="0 0 24 24"><path d="M9 2h6v2H9V2zm8 4H7v3h10V6zm1 4H6c-1.1 0-2 .9-2 2v9c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-9c0-1.1-.9-2-2-2zM12 19c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg> 📦 HACER UN PEDIDO EN VIVO</button>
+        
+        <div class="action-row">
+          <button class="btn-panic" onclick="lanzarEspecialEsperame()"><i class="fa-solid fa-hand-paper"></i> 🛑 ESPÉRAME</button>
+          <button class="btn-hear-truck" onclick="notificarEscucheCamion()"><i class="fa-solid fa-bell"></i> 🔔 ESCUCHÉ AL CAMIÓN</button>
+        </div>
       </div>
     </div>
 
+    <!-- PESTAÑA 2: PEDIDOS Y SERVICIOS -->
     <div class="tab-content" id="tab1">
-      <div class="forum-container">
-        <div class="forum-card">
-          <div class="forum-votes"><i class="fa-solid fa-caret-up"></i><br>19<br><i class="fa-solid fa-caret-down"></i></div>
-          <div class="forum-body">
-            <span class="forum-cat"><i class="fa-solid fa-triangle-exclamation"></i> QUEJA VECINAL</span>
-            <div class="forum-title">⚠️ ¿Alguien más sin luz en la calle 3 por la OTB?</div>
-            <div class="forum-desc">Lleva 2 horas parpadeando el foco de la esquina. ¿A quién llamamos?</div>
-          </div>
-        </div>
-        <div class="forum-card">
-          <div class="forum-votes"><i class="fa-solid fa-caret-up"></i><br>34<br><i class="fa-solid fa-caret-down"></i></div>
-          <div class="forum-body">
-            <span class="forum-cat"><i class="fa-solid fa-handshake"></i> APOYO VECINAL</span>
-            <div class="forum-title">🐶 Perrito extraviado cerca de la plaza principal</div>
-            <div class="forum-desc">Es un perrito caniche blanco con collar rojo. Si lo ven, me avisan.</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="tab-content" id="tab2">
       <div class="shop-container">
-        <div class="shop-card">
-          <div class="shop-icon"><i class="fa-solid fa-fire-flame-curved" style="color: #FF6D00;"></i></div>
+        <div class="shop-card" onclick="seleccionarYPedirDirecto('🔥 Garrafa de Gas GLP')">
+          <div class="shop-icon"><svg class="garrafa-icon-svg" style="width:26px; height:26px; fill:#FF6D00;" viewBox="0 0 24 24"><path d="M9 2h6v2H9V2zm8 4H7v3h10V6zm1 4H6c-1.1 0-2 .9-2 2v9c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-9c0-1.1-.9-2-2-2zM12 19c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg></div>
           <div class="shop-info">
-            <div class="shop-title">Garrafa de Gas GLP (22.5 Bs)</div>
+            <div class="shop-title">🔥 Garrafa de Gas GLP</div>
             <div class="shop-price">Distribuidor Autorizado OTB • En Ruta 🚛</div>
+            <button class="btn-chat-vendor" onclick="event.stopPropagation(); abrirChatVendedor('Gas GLP')"><i class="fa-brands fa-whatsapp"></i> Chat con Gasero</button>
           </div>
         </div>
-        <div class="shop-card">
+
+        <div class="shop-card" onclick="seleccionarYPedirDirecto('💧 Botellón Agua Purificada 20L')">
           <div class="shop-icon"><i class="fa-solid fa-bottle-water" style="color: #0288D1;"></i></div>
           <div class="shop-info">
-            <div class="shop-title">Botellón Agua Purificada 20L</div>
-            <div class="shop-price">12 Bs • Entrega Inmediata</div>
+            <div class="shop-title">💧 Botellón Agua Purificada 20L</div>
+            <div class="shop-price">Agua Tratada Purificada • Entrega Inmediata</div>
+            <button class="btn-chat-vendor" onclick="event.stopPropagation(); abrirChatVendedor('Agua 20L')"><i class="fa-brands fa-whatsapp"></i> Chat con Repartidor Agua</button>
+          </div>
+        </div>
+
+        <div class="shop-card" onclick="seleccionarYPedirDirecto('🍎 Frutas & Verduras')">
+          <div class="shop-icon"><i class="fa-solid fa-apple-whole" style="color: #FF5252;"></i></div>
+          <div class="shop-info">
+            <div class="shop-title">🍎 Frutas & Verduras de Vendedores Locales</div>
+            <div class="shop-price">Fruta fresca y verdura de camión agrícola</div>
+            <button class="btn-chat-vendor" onclick="event.stopPropagation(); abrirChatVendedor('Frutas y Verduras')"><i class="fa-brands fa-whatsapp"></i> Chat con Frutero</button>
+          </div>
+        </div>
+
+        <div class="shop-card" onclick="seleccionarYPedirDirecto('♻️ Venta / Recolección de Chatarra')">
+          <div class="shop-icon"><i class="fa-solid fa-recycle" style="color: #00E676;"></i></div>
+          <div class="shop-info">
+            <div class="shop-title">♻️ Venta / Recolección de Chatarra</div>
+            <div class="shop-price">Compradores y Recolectores Barriales en Ruta</div>
+            <button class="btn-chat-vendor" onclick="event.stopPropagation(); abrirChatVendedor('Chatarra')"><i class="fa-brands fa-whatsapp"></i> Chat con Chatarrero</button>
+          </div>
+        </div>
+
+        <div class="shop-card" onclick="seleccionarYPedirDirecto('🧼 Detergentes & Productos de Limpieza')">
+          <div class="shop-icon"><i class="fa-solid fa-pump-soap" style="color: #E040FB;"></i></div>
+          <div class="shop-info">
+            <div class="shop-title">🧼 Detergentes & Productos de Limpieza</div>
+            <div class="shop-price">Venta al por mayor y menor para el hogar</div>
+            <button class="btn-chat-vendor" onclick="event.stopPropagation(); abrirChatVendedor('Detergentes')"><i class="fa-brands fa-whatsapp"></i> Chat con Vendedor Limpieza</button>
+          </div>
+        </div>
+
+        <div class="shop-card" onclick="seleccionarYPedirDirecto('📦 Encargos & Otros Pedidos')">
+          <div class="shop-icon"><i class="fa-solid fa-box-open" style="color: #FFAB00;"></i></div>
+          <div class="shop-info">
+            <div class="shop-title">📦 Encargos & Otros Pedidos Barriales</div>
+            <div class="shop-price">Entregas y pedidos especiales entre vecinos</div>
+            <button class="btn-chat-vendor" onclick="event.stopPropagation(); abrirChatVendedor('Encargos Barriales')"><i class="fa-brands fa-whatsapp"></i> Chat con Encargos Barriales</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PESTAÑA 3: FORO VECINAL TIPO REDDIT (RESTAURADO) -->
+    <div class="tab-content" id="tab2">
+      <div class="forum-header">
+        <span style="font-weight:900; font-size:13px; color:#FF6D00;"><i class="fa-solid fa-comments"></i> Comunidad OTB</span>
+        <button class="btn-new-post" onclick="abrirModalNuevoPost()"><i class="fa-solid fa-plus"></i> Publicar Aviso / Queja</button>
+      </div>
+      <div class="forum-container" id="forumFeed">
+        <div class="forum-card">
+          <div class="forum-votes"><i class="fa-solid fa-circle-chevron-up" onclick="votarPost(this, 1)"></i><span class="v-count" style="color:#FF6D00;">24</span><i class="fa-solid fa-circle-chevron-down" onclick="votarPost(this, -1)"></i></div>
+          <div class="forum-body">
+            <span class="forum-cat"><i class="fa-solid fa-triangle-exclamation"></i> QUEJA VECINAL</span>
+            <div class="forum-title">⚠️ Foco parpadeando en la esquina de la Calle 3 por la OTB</div>
+            <div class="forum-desc">Lleva 2 horas parpadeando el foco de la esquina. ¿Alguien ya llamó a la alcaldía o a alumbrado público?</div>
+            <div class="forum-footer"><span>💬 8 comentarios</span> • <span>hace 45 min</span></div>
+          </div>
+        </div>
+
+        <div class="forum-card">
+          <div class="forum-votes"><i class="fa-solid fa-circle-chevron-up" onclick="votarPost(this, 1)"></i><span class="v-count" style="color:#FF6D00;">41</span><i class="fa-solid fa-circle-chevron-down" onclick="votarPost(this, -1)"></i></div>
+          <div class="forum-body">
+            <span class="forum-cat"><i class="fa-solid fa-handshake"></i> APOYO VECINAL</span>
+            <div class="forum-title">🐶 Perrito caniche blanco extraviado cerca de la plaza</div>
+            <div class="forum-desc">Lleva collar rojo sin placa. Si lo ven por favor reténganlo y me avisan por aquí.</div>
+            <div class="forum-footer"><span>💬 15 comentarios</span> • <span>hace 2 horas</span></div>
+          </div>
+        </div>
+
+        <div class="forum-card">
+          <div class="forum-votes"><i class="fa-solid fa-circle-chevron-up" onclick="votarPost(this, 1)"></i><span class="v-count" style="color:#FF6D00;">18</span><i class="fa-solid fa-circle-chevron-down" onclick="votarPost(this, -1)"></i></div>
+          <div class="forum-body">
+            <span class="forum-cat"><i class="fa-solid fa-truck-moving"></i> AVISO DE CAMIÓN</span>
+            <div class="forum-title">🚛 Camión de agua purificada 20L pasando por la Av. Principal</div>
+            <div class="forum-desc">El camión azul de agua acaba de doblar por el parque. Apúrense los que necesiten botellón.</div>
+            <div class="forum-footer"><span>💬 3 comentarios</span> • <span>hace 10 min</span></div>
           </div>
         </div>
       </div>
@@ -166,29 +268,231 @@
     <i class="fa-solid fa-arrow-up-right-from-square ad-link-icon"></i>
   </footer>
 
+  <!-- MODAL DE INGRESO OBLIGATORIO DE UNA SOLA VEZ (GMAIL / CHOFER) -->
+  <div class="modal" id="modalWelcomeAuth">
+    <div class="modal-content">
+      <div class="modal-title">
+        <span>👋 Registro de Usuario por Única Vez</span>
+      </div>
+      <p style="font-size: 11px; color: #94A3B8; margin-bottom: 12px;">Para ingresar a NOTIGAS debes registrar tu cuenta de Google (Gmail). Este registro se guarda de forma permanente en tu dispositivo.</p>
+      
+      <div class="form-group">
+        <label>Tipo de Usuario:</label>
+        <select id="regRole" onchange="toggleRegFields()">
+          <option value="vecino">🏠 Vecino / Cliente (Pedir Gas, Agua y Servicios)</option>
+          <option value="chofer">🚛 Chofer / Repartidor (Atender Pedidos en Ruta)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Correo Gmail de Google:</label>
+        <input type="email" id="regGmail" placeholder="tu_correo@gmail.com">
+      </div>
+
+      <div class="form-group">
+        <label>Número de WhatsApp (con código de país):</label>
+        <input type="tel" id="regWhatsapp" placeholder="+591 70000000">
+      </div>
+
+      <!-- CAMPOS ADICIONALES DE CHOFER -->
+      <div id="choferExtraFields" style="display: none;">
+        <div class="form-group">
+          <label>Nombre:</label>
+          <input type="text" id="regNombre" placeholder="Tu nombre">
+        </div>
+        <div class="form-group">
+          <label>Apellido:</label>
+          <input type="text" id="regApellido" placeholder="Tu apellido">
+        </div>
+        <div class="form-group">
+          <label>Placa del Vehículo / Número de Camión:</label>
+          <input type="text" id="regPlaca" placeholder="Ej: 3842-XYZ / Camión Garrafero N° 42">
+        </div>
+      </div>
+
+      <button class="btn-submit-google" onclick="guardarRegistroUnico()"><i class="fa-brands fa-google"></i> Completar Registro e Ingresar</button>
+    </div>
+  </div>
+
+  <!-- MODAL SUBMENÚ DE SELECCIÓN DE PEDIDO -->
+  <div class="modal" id="modalSubmenu">
+    <div class="modal-content">
+      <div class="modal-title">
+        <span>📦 ¿Qué deseas pedir a domicilio?</span>
+        <button class="btn-close" onclick="closeSubmenuModal()">✕</button>
+      </div>
+      <p style="font-size: 11px; color: #94A3B8; margin-bottom: 10px;">Selecciona el producto o servicio que necesitas en tu OTB:</p>
+      
+      <div class="submenu-grid">
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('🔥 Garrafa de Gas GLP')">
+          <svg class="garrafa-icon-svg" viewBox="0 0 24 24"><path d="M9 2h6v2H9V2zm8 4H7v3h10V6zm1 4H6c-1.1 0-2 .9-2 2v9c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-9c0-1.1-.9-2-2-2zM12 19c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
+          <span class="submenu-title">🔥 Garrafa de Gas GLP</span>
+        </div>
+
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('💧 Botellón Agua Purificada 20L')">
+          <i class="fa-solid fa-bottle-water" style="color: #0288D1;"></i>
+          <span class="submenu-title">💧 Agua Purificada 20L</span>
+        </div>
+
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('🍎 Frutas & Verduras')">
+          <i class="fa-solid fa-apple-whole" style="color: #FF5252;"></i>
+          <span class="submenu-title">🍎 Frutas & Verduras</span>
+        </div>
+
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('♻️ Venta / Recolección de Chatarra')">
+          <i class="fa-solid fa-recycle" style="color: #00E676;"></i>
+          <span class="submenu-title">♻️ Chatarra / Reciclaje</span>
+        </div>
+
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('🧼 Detergentes & Productos de Limpieza')">
+          <i class="fa-solid fa-pump-soap" style="color: #E040FB;"></i>
+          <span class="submenu-title">🧼 Detergentes & Limpieza</span>
+        </div>
+
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('📦 Encargos & Otros Pedidos')">
+          <i class="fa-solid fa-box-open" style="color: #FFAB00;"></i>
+          <span class="submenu-title">📦 Encargos & Otros</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE FORMULARIO DE CONFIRMACIÓN DE PEDIDO -->
+  <div class="modal" id="modalPedido">
+    <div class="modal-content">
+      <div class="modal-title">
+        <span>📦 Confirmar Pedido a Domicilio</span>
+        <button class="btn-close" onclick="closePedidoModal()">✕</button>
+      </div>
+      <div class="form-group">
+        <label>Producto / Servicio Seleccionado:</label>
+        <select id="selectCategoria">
+          <option value="🔥 Garrafa de Gas GLP">🔥 Garrafa de Gas GLP</option>
+          <option value="💧 Botellón Agua Purificada 20L">💧 Botellón Agua Purificada 20L</option>
+          <option value="🍎 Frutas & Verduras">🍎 Frutas & Verduras</option>
+          <option value="♻️ Venta / Recolección de Chatarra">♻️ Venta / Recolección de Chatarra</option>
+          <option value="🧼 Detergentes & Productos de Limpieza">🧼 Detergentes & Productos de Limpieza</option>
+          <option value="📦 Encargos & Otros Pedidos">📦 Encargos & Otros Pedidos</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Cantidad o Detalle del Pedido:</label>
+        <input type="text" id="inputCantidad" placeholder="Ej: 1 Garrafa / 2 Botellones / 5kg Manzanas" value="1 unidad">
+      </div>
+      <div class="form-group">
+        <label>Número de WhatsApp para Confirmación:</label>
+        <input type="tel" id="inputUserPhone" placeholder="+591 70000000">
+      </div>
+      <button class="btn-submit" onclick="confirmarPedido()"><i class="fa-solid fa-paper-plane"></i> Confirmar y Solicitar en Vivo</button>
+    </div>
+  </div>
+
+  <!-- MODAL PARA NUEVO POST EN FORO REDDIT -->
+  <div class="modal" id="modalNuevoPost">
+    <div class="modal-content">
+      <div class="modal-title">
+        <span>💬 Publicar Aviso en Foro Vecinal</span>
+        <button class="btn-close" onclick="closeNuevoPostModal()">✕</button>
+      </div>
+      <div class="form-group">
+        <label>Tipo de Publicación:</label>
+        <select id="selectPostTipo">
+          <option value="QUEJA VECINAL">⚠️ QUEJA VECINAL</option>
+          <option value="APOYO VECINAL">🤝 APOYO VECINAL</option>
+          <option value="AVISO DE CAMIÓN">🚛 AVISO DE CAMIÓN EN RUTA</option>
+          <option value="INTERCAMBIO">🔄 INTERCAMBIO / COMPRA VECINAL</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Título del Aviso:</label>
+        <input type="text" id="inputPostTitulo" placeholder="Ej: Camión de verdura pasando por la plaza">
+      </div>
+      <div class="form-group">
+        <label>Descripción / Detalle:</label>
+        <textarea id="inputPostDesc" rows="3" placeholder="Escribe tu mensaje para los vecinos..."></textarea>
+      </div>
+      <button class="btn-submit" onclick="crearNuevoPost()"><i class="fa-solid fa-paper-plane"></i> Publicar en la OTB</button>
+    </div>
+  </div>
+
+  <!-- MODAL DE INGRESO PARA CHOFERES / REPARTIDORES -->
+  <div class="modal" id="modalDriver">
+    <div class="modal-content">
+      <div class="modal-title">
+        <span><i class="fa-solid fa-truck-fast"></i> Acceso para Choferes y Repartidores</span>
+        <button class="btn-close" onclick="closeDriverModal()">✕</button>
+      </div>
+      <div class="form-group">
+        <label>Cuenta de Google (Gmail):</label>
+        <input type="email" id="inputDriverGmail" placeholder="chofer@gmail.com">
+      </div>
+      <div class="form-group">
+        <label>Nombre:</label>
+        <input type="text" id="inputDriverNombre" placeholder="Tu nombre">
+      </div>
+      <div class="form-group">
+        <label>Apellido:</label>
+        <input type="text" id="inputDriverApellido" placeholder="Tu apellido">
+      </div>
+      <div class="form-group">
+        <label>Número de WhatsApp (con código de país):</label>
+        <input type="tel" id="inputDriverWhatsapp" placeholder="+591 70000000">
+      </div>
+      <div class="form-group">
+        <label>Placa del Vehículo / Número de Camión:</label>
+        <input type="text" id="inputDriverPlate" placeholder="Ej: 3842-XYZ / Camión GLP N° 42">
+      </div>
+      <button class="btn-submit-google" onclick="iniciarSesionChofer()"><i class="fa-brands fa-google"></i> Entrar con Google & WhatsApp</button>
+    </div>
+  </div>
+
+  <!-- MODAL ADMIN Y CONFIGURACIÓN CON SUBMENÚ INTERNO (ANUNCIOS Y AJUSTES) -->
   <div class="modal" id="modalAdmin">
     <div class="modal-content">
       <div class="modal-title">
-        <span><i class="fa-solid fa-user-gear"></i> Autenticación vía Gmail</span>
+        <span><i class="fa-solid fa-gear"></i> Configuración y Administración</span>
         <button class="btn-close" onclick="closeAdminModal()">✕</button>
       </div>
-      <div class="form-group">
-        <label>Correo Gmail de Administrador:</label>
-        <input type="email" id="inputGmail" placeholder="tu_correo@gmail.com" value="">
+
+      <div class="modal-tab-nav">
+        <button class="modal-tab-btn active" onclick="switchModalTab(0)"><i class="fa-solid fa-rectangle-ad"></i> Anuncios</button>
+        <button class="modal-tab-btn" onclick="switchModalTab(1)"><i class="fa-solid fa-user-shield"></i> Acceso Admin</button>
+        <button class="modal-tab-btn" onclick="switchModalTab(2)"><i class="fa-solid fa-truck-monster"></i> Choferes</button>
       </div>
-      <div class="form-group">
-        <label>Contraseña de Administración:</label>
-        <input type="password" id="inputPass" placeholder="••••••••">
+
+      <!-- SUBMENÚ 1: GESTIÓN DE ANUNCIOS PUBLICITARIOS -->
+      <div class="modal-tab-pane active" id="modalPane0">
+        <div class="form-group">
+          <label>Texto del Anuncio Nativo Minimalista:</label>
+          <input type="text" id="inputAdText" value="Servicios técnicos & Comercio local verificado en la OTB">
+        </div>
+        <div class="form-group">
+          <label>Enlace WhatsApp / Web del Anuncio:</label>
+          <input type="text" id="inputAdUrl" value="https://wa.me/59170712345?text=Hola!%20Deseo%20publicar%20anuncio">
+        </div>
+        <button class="btn-submit" onclick="guardarSubmenuAnuncios()">Guardar Cambios de Anuncio</button>
       </div>
-      <div class="form-group">
-        <label>Texto del Anuncio Nativo Minimalista:</label>
-        <input type="text" id="inputAdText" value="Servicios técnicos & Comercio local verificado en la OTB">
+
+      <!-- SUBMENÚ 2: ACCESO ADMIN -->
+      <div class="modal-tab-pane" id="modalPane1">
+        <div class="form-group">
+          <label>Correo Gmail de Administrador:</label>
+          <input type="email" id="inputGmail" placeholder="admin@gmail.com">
+        </div>
+        <div class="form-group">
+          <label>Contraseña de Administración:</label>
+          <input type="password" id="inputPass" placeholder="••••••••">
+        </div>
+        <button class="btn-submit" onclick="guardarAdminConfig()">Ingresar a Modo Administrador</button>
       </div>
-      <div class="form-group">
-        <label>Enlace WhatsApp / Web del Anuncio:</label>
-        <input type="text" id="inputAdUrl" value="https://wa.me/59170712345?text=Hola!%20Deseo%20publicar%20anuncio">
+
+      <!-- SUBMENÚ 3: CHOFERES EN RUTA -->
+      <div class="modal-tab-pane" id="modalPane2">
+        <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Estado de Choferes Registrados en la OTB:</p>
+        <div style="background:#0F172A; padding:10px; border-radius:8px; font-size:11px;">
+          <b>🚛 Camión GLP N° 42</b><br>Placa: 3842-XYZ<br>Estado: En Ruta Activa
+        </div>
       </div>
-      <button class="btn-submit" onclick="guardarAdminConfig()">Ingresar & Guardar</button>
     </div>
   </div>
 
@@ -198,12 +502,24 @@
     let currentTileLayer = null;
 
     document.addEventListener('DOMContentLoaded', () => {
+      // 1. VERIFICACIÓN DE REGISTRO ÚNICO (VECINO / CHOFER)
+      const savedUser = localStorage.getItem('notigas_user_data');
+      if (!savedUser) {
+        document.getElementById('modalWelcomeAuth').style.display = 'flex';
+      } else {
+        const u = JSON.parse(savedUser);
+        if (u.whatsapp && document.getElementById('inputUserPhone')) {
+          document.getElementById('inputUserPhone').value = u.whatsapp;
+        }
+      }
+
+      // 2. INICIALIZACIÓN DEL MAPA CON GPS HARDWARE AUTOMÁTICO
       try {
         map = L.map('map', { zoomControl: false }).setView([-17.3935, -66.1570], 15);
 
         tileLayers = {
           googleStatic: L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 19 }),
-          satelite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 })
+          googleSatelite: L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 19 })
         };
 
         currentTileLayer = tileLayers.googleStatic;
@@ -216,31 +532,85 @@
           iconAnchor: [20, 20]
         });
 
+        /* ICONO DE MAPA DE PEDIDO / UBICACIÓN: EXCLUSIVO GARRAFA DE GAS GLP SVG */
         const userIcon = L.divIcon({
-          html: '<div style="font-size:24px; color:white; background:#E65100; border-radius:50%; padding:6px; border:2px solid white; box-shadow:0 0 14px #FF6D00; cursor:move;"><i class="fa-solid fa-house-chimney"></i></div>',
+          html: '<div style="font-size:24px; color:white; background:#E65100; border-radius:50%; padding:6px; border:2px solid white; box-shadow:0 0 14px #FF6D00; cursor:move; display:flex; align-items:center; justify-content:center;"><svg style="width:22px; height:22px; fill:white; display:block;" viewBox="0 0 24 24"><path d="M9 2h6v2H9V2zm8 4H7v3h10V6zm1 4H6c-1.1 0-2 .9-2 2v9c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-9c0-1.1-.9-2-2-2zM12 19c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg></div>',
           className: 'custom-icon',
-          iconSize: [36, 36],
-          iconAnchor: [18, 18]
+          iconSize: [38, 38],
+          iconAnchor: [19, 19]
         });
 
         truckMarker = L.marker([-17.3910, -66.1550], { icon: truckIcon }).addTo(map).bindPopup('<b>Camión GLP N° 42</b><br>En Ruta en tu OTB');
         
         userMarker = L.marker([-17.3935, -66.1570], { icon: userIcon, draggable: true }).addTo(map);
-        userMarker.bindPopup('<b>📍 Tu Dirección de Entrega</b><br><small>Arrastra este icono o usa la lupa 🔍 para buscar tu calle.</small>').openPopup();
+        userMarker.bindPopup('<b>🔥 Tu Punto de Pedido (Garrafa GLP)</b><br><small>Arrastra este icono o usa la lupa 🔍 para ubicar tu dirección exacta.</small>').openPopup();
 
         userMarker.on('dragend', function (e) {
           const coord = e.target.getLatLng();
-          userMarker.setPopupContent(`<b>📍 Dirección Ajustada</b><br><small>Lat: ${coord.lat.toFixed(5)}, Lng: ${coord.lng.toFixed(5)}</small>`).openPopup();
+          userMarker.setPopupContent(`<b>🔥 Punto de Pedido Ajustado</b><br><small>Lat: ${coord.lat.toFixed(5)}, Lng: ${coord.lng.toFixed(5)}</small>`).openPopup();
         });
 
         map.on('click', function(e) {
           userMarker.setLatLng(e.latlng);
-          userMarker.setPopupContent(`<b>📍 Dirección Ajustada por Clic</b><br><small>Lat: ${e.latlng.lat.toFixed(5)}, Lng: ${e.latlng.lng.toFixed(5)}</small>`).openPopup();
+          userMarker.setPopupContent(`<b>🔥 Punto de Pedido Ajustado por Clic</b><br><small>Lat: ${e.latlng.lat.toFixed(5)}, Lng: ${e.latlng.lng.toFixed(5)}</small>`).openPopup();
         });
+
+        // 3. CONEXIÓN AUTOMÁTICA AL GPS HARDWARE AL ABRIR LA APP
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(pos => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            if (userMarker) userMarker.setLatLng([lat, lng]);
+            if (map) map.setView([lat, lng], 16);
+            if (userMarker) userMarker.setPopupContent(`<b>🔥 Conectado por GPS Hardware</b><br><small>Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}</small>`).openPopup();
+          }, (err) => console.log('GPS no concedido o en espera de interacción.'));
+        }
       } catch (err) {
         console.error("Error al inicializar el mapa:", err);
       }
     });
+
+    // REGISTRO ÚNICO POR GMAIL / CHOFER
+    function toggleRegFields() {
+      const role = document.getElementById('regRole').value;
+      document.getElementById('choferExtraFields').style.display = (role === 'chofer') ? 'block' : 'none';
+    }
+
+    function guardarRegistroUnico() {
+      const role = document.getElementById('regRole').value;
+      const gmail = document.getElementById('regGmail').value.trim();
+      const whatsapp = document.getElementById('regWhatsapp').value.trim();
+
+      if (!gmail || !whatsapp) {
+        alert('Por favor ingresa tu correo Gmail y tu número de WhatsApp.');
+        return;
+      }
+
+      let data = { role, gmail, whatsapp };
+
+      if (role === 'chofer') {
+        const nombre = document.getElementById('regNombre').value.trim();
+        const apellido = document.getElementById('regApellido').value.trim();
+        const placa = document.getElementById('regPlaca').value.trim();
+
+        if (!nombre || !apellido || !placa) {
+          alert('Para choferes es obligatorio ingresar Nombre, Apellido y Placa del Vehículo.');
+          return;
+        }
+        data.nombre = nombre;
+        data.apellido = apellido;
+        data.placa = placa;
+      }
+
+      localStorage.setItem('notigas_user_data', JSON.stringify(data));
+      document.getElementById('modalWelcomeAuth').style.display = 'none';
+
+      if (data.whatsapp && document.getElementById('inputUserPhone')) {
+        document.getElementById('inputUserPhone').value = data.whatsapp;
+      }
+
+      alert(`✅ REGISTRO DE ÚNICA VEZ COMPLETADO\n\nBienvenido a NOTIGAS (${data.role === 'chofer' ? 'Chofer ' + data.nombre + ' ' + data.apellido : 'Vecino'}). Tu cuenta ha sido vinculada.`);
+    }
 
     function setMapStyle(btnElement, styleKey) {
       if (!map || !tileLayers[styleKey]) return;
@@ -285,10 +655,120 @@
           const lng = pos.coords.longitude;
           if (userMarker) userMarker.setLatLng([lat, lng]);
           if (map) map.setView([lat, lng], 16);
-          if (userMarker) userMarker.setPopupContent(`<b>📍 Dirección por GPS Hardware</b><br><small>Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}</small>`).openPopup();
+          if (userMarker) userMarker.setPopupContent(`<b>🔥 Punto de Pedido por GPS Hardware</b><br><small>Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}</small>`).openPopup();
         }, () => alert('Permiso de GPS no concedido.'));
       }
     });
+
+    // BOTÓN UNIFICADO DE PEDIDOS (DESPLIEGA SUBMENÚ)
+    const modalSubmenu = document.getElementById('modalSubmenu');
+    function abrirSubmenuPedidos() { modalSubmenu.style.display = 'flex'; }
+    function closeSubmenuModal() { modalSubmenu.style.display = 'none'; }
+
+    function seleccionarYPedirDirecto(catNombre) {
+      closeSubmenuModal();
+      const sel = document.getElementById('selectCategoria');
+      if (sel) {
+        for (let i = 0; i < sel.options.length; i++) {
+          if (sel.options[i].value.includes(catNombre)) {
+            sel.selectedIndex = i;
+            break;
+          }
+        }
+      }
+      document.getElementById('modalPedido').style.display = 'flex';
+    }
+
+    function closePedidoModal() { document.getElementById('modalPedido').style.display = 'none'; }
+
+    function confirmarPedido() {
+      if (!userMarker) return;
+      const pos = userMarker.getLatLng();
+      const cat = document.getElementById('selectCategoria').value;
+      const cant = document.getElementById('inputCantidad').value || '1 unidad';
+      closePedidoModal();
+      alert(`📦 PEDIDO REGISTRADO EN VIVO\n\nCategoría: ${cat}\nDetalle: ${cant}\n📍 Ubicación de Entrega: Lat ${pos.lat.toFixed(5)}, Lng ${pos.lng.toFixed(5)}\n\nEl repartidor más cercano se contactará vía WhatsApp para acordar el precio y la entrega.`);
+    }
+
+    // BOTÓN DE NOTIFICACIÓN VOLUNTARIA DE VECINOS
+    function notificarEscucheCamion() {
+      if (!userMarker) return;
+      const pos = userMarker.getLatLng();
+      alert(`🔔 ¡GRACIAS VECINO!\n\nSe ha emitido tu aviso voluntario de que el camión de gas está pasando cerca (radio ~20m).\nEl mapa de la OTB se ha iluminado en tu zona para alertar al resto de los vecinos.`);
+    }
+
+    function abrirChatVendedor(tipo) {
+      window.open(`https://wa.me/59170712345?text=Hola!%20Vengo%20de%20NOTIGAS%20y%20deseo%20hacer%20un%20pedido%20de%20${encodeURIComponent(tipo)}`, '_blank');
+    }
+
+    // FORO REDDIT (VOTOS Y NUEVO POST)
+    function votarPost(el, delta) {
+      const span = el.parentElement.querySelector('.v-count');
+      if (span) {
+        let val = parseInt(span.innerText) || 0;
+        val += delta;
+        span.innerText = val;
+      }
+    }
+
+    const modalNuevoPost = document.getElementById('modalNuevoPost');
+    function abrirModalNuevoPost() { modalNuevoPost.style.display = 'flex'; }
+    function closeNuevoPostModal() { modalNuevoPost.style.display = 'none'; }
+    function crearNuevoPost() {
+      const tipo = document.getElementById('selectPostTipo').value;
+      const titulo = document.getElementById('inputPostTitulo').value.trim();
+      const desc = document.getElementById('inputPostDesc').value.trim();
+
+      if (!titulo || !desc) {
+        alert('Por favor escribe un título y la descripción de tu aviso.');
+        return;
+      }
+
+      const feed = document.getElementById('forumFeed');
+      const card = document.createElement('div');
+      card.className = 'forum-card';
+      card.innerHTML = `
+        <div class="forum-votes"><i class="fa-solid fa-circle-chevron-up" onclick="votarPost(this, 1)"></i><span class="v-count" style="color:#FF6D00;">1</span><i class="fa-solid fa-circle-chevron-down" onclick="votarPost(this, -1)"></i></div>
+        <div class="forum-body">
+          <span class="forum-cat"><i class="fa-solid fa-comments"></i> ${tipo}</span>
+          <div class="forum-title">${titulo}</div>
+          <div class="forum-desc">${desc}</div>
+          <div class="forum-footer"><span>💬 0 comentarios</span> • <span>Hace un momento</span></div>
+        </div>
+      `;
+      feed.prepend(card);
+      closeNuevoPostModal();
+      document.getElementById('inputPostTitulo').value = '';
+      document.getElementById('inputPostDesc').value = '';
+      alert('¡Tu aviso ha sido publicado en la OTB!');
+    }
+
+    // MODAL DE CHOFERES (GOOGLE & WHATSAPP)
+    const modalDriver = document.getElementById('modalDriver');
+    document.getElementById('btnOpenDriver').addEventListener('click', () => modalDriver.style.display = 'flex');
+    function closeDriverModal() { modalDriver.style.display = 'none'; }
+    function iniciarSesionChofer() {
+      const gmail = document.getElementById('inputDriverGmail').value.trim();
+      const nombre = document.getElementById('inputDriverNombre').value.trim();
+      const apellido = document.getElementById('inputDriverApellido').value.trim();
+      const whatsapp = document.getElementById('inputDriverWhatsapp').value.trim();
+      const plate = document.getElementById('inputDriverPlate').value.trim();
+
+      if (!gmail || !nombre || !apellido || !whatsapp || !plate) {
+        alert('Por favor completa todos los campos requeridos para Chofer: Gmail, Nombre, Apellido, WhatsApp y Placa del Vehículo.');
+        return;
+      }
+
+      const choferData = { role: 'chofer', gmail, nombre, apellido, whatsapp, placa: plate };
+      localStorage.setItem('notigas_user_data', JSON.stringify(choferData));
+
+      closeDriverModal();
+      alert(`🟢 SESIÓN DE CHOFER ACTIVADA\n\nChofer: ${nombre} ${apellido}\nGmail: ${gmail}\nWhatsApp: ${whatsapp}\nPlaca: ${plate}\n\nTu camión está visible en el mapa en vivo.`);
+      
+      if (truckMarker) {
+        truckMarker.setPopupContent(`<b>🟢 Chofer Activo: ${nombre} ${apellido}</b><br>Placa: ${plate}<br>📱 WhatsApp: ${whatsapp}`).openPopup();
+      }
+    }
 
     function switchTab(index) {
       document.querySelectorAll('.tab-btn').forEach((btn, i) => btn.classList.toggle('active', i === index));
@@ -302,25 +782,33 @@
       alert(`🛑 AVISO DE PÁNICO "ESPÉRAME" ENVIADO AL CAMIÓN DE GLP CERCANO.\n📍 Ubicación Exacta: Lat ${pos.lat.toFixed(5)}, Lng ${pos.lng.toFixed(5)}`);
     }
 
-    function hacerPedidoRapido() {
-      if (!userMarker) return;
-      const pos = userMarker.getLatLng();
-      alert(`📦 Pedido de Garrafa de GLP (22.5 Bs) registrado.\n🏠 Dirección de entrega: Lat ${pos.lat.toFixed(5)}, Lng ${pos.lng.toFixed(5)}`);
-    }
-
+    // SUBMENÚS DEL MODAL DE CONFIGURACIÓN Y ADMINISTRACIÓN
     const modalAdmin = document.getElementById('modalAdmin');
     document.getElementById('btnOpenAdmin').addEventListener('click', () => modalAdmin.style.display = 'flex');
     function closeAdminModal() { modalAdmin.style.display = 'none'; }
+
+    function switchModalTab(idx) {
+      document.querySelectorAll('.modal-tab-btn').forEach((btn, i) => btn.classList.toggle('active', i === idx));
+      document.querySelectorAll('.modal-tab-pane').forEach((pane, i) => pane.classList.toggle('active', i === idx));
+    }
+
+    function guardarSubmenuAnuncios() {
+      const text = document.getElementById('inputAdText').value;
+      document.getElementById('adText').innerText = text;
+      closeAdminModal();
+      alert('Anuncio publicitario actualizado con éxito.');
+    }
+
     function guardarAdminConfig() {
       const gmail = document.getElementById('inputGmail').value;
       if (gmail) {
-        document.getElementById('adText').innerText = document.getElementById('inputAdText').value;
         closeAdminModal();
-        alert(`Sesión de Administrador iniciada como (${gmail}). Cambios guardados.`);
+        alert(`Sesión de Administrador iniciada como (${gmail}).`);
       } else {
         alert('Por favor ingresa tu correo Gmail de Administrador.');
       }
     }
+
     function abrirAnuncioWhatsApp() {
       window.open(document.getElementById('inputAdUrl').value, '_blank');
     }
