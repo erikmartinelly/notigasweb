@@ -48,12 +48,11 @@
     <i class="fa-solid fa-truck-fast"></i> <strong>MODO REPARTIDOR EN RUTA</strong> • Radar de Pedidos & Demanda en Vivo
   </div>
 
-  <!-- PESTAÑAS DE NAVEGACIÓN PRINCIPALES (4 PESTAÑAS INDEPENDIENTES) -->
+  <!-- PESTAÑAS DE NAVEGACIÓN PRINCIPALES (3 PESTAÑAS INDEPENDIENTES) -->
   <nav>
     <button class="tab-btn active" onclick="switchTab(0)"><i class="fa-solid fa-map-location-dot"></i> 1ª MAPA EN VIVO</button>
     <button class="tab-btn" onclick="switchTab(1)"><i class="fa-solid fa-store"></i> 2ª REPARTIDORES & SERVICIOS</button>
     <button class="tab-btn" onclick="switchTab(2)"><i class="fa-solid fa-comments"></i> 3ª NOTICIAS VECINALES</button>
-    <button class="tab-btn" onclick="switchTab(3)"><i class="fa-solid fa-message"></i> 4ª CHATS PRIVADOS</button>
   </nav>
 
   <main>
@@ -141,45 +140,6 @@
 
       <div class="forum-container" id="forumFeed" style="flex: 1; overflow-y: auto;">
         <!-- Renderizado dinámico desde js/forum.js con expiración a las 72h -->
-      </div>
-    </div>
-
-    <!-- PESTAÑA 4: CHATS PRIVADOS 1-A-1 INDEPENDIENTES (ESTILO FACEBOOK MESSENGER / GOOGLE MEET) -->
-    <div class="tab-content" id="tab3">
-      <!-- AVISO DE SEGURIDAD & DEPURACIÓN DE CHAT A LAS 48 HORAS -->
-      <div style="background: rgba(0,230,118,0.1); border: 1px solid rgba(0,230,118,0.3); border-radius: 12px; padding: 10px 14px; margin-bottom: 12px;">
-        <div style="font-weight: 900; font-size: 13px; color: #00E676; display: flex; align-items: center; gap: 6px;">
-          <i class="fa-solid fa-shield-halved"></i> 🔒 CHAT PRIVADO INTERNO 1-A-1 (MESSENGER OTB)
-        </div>
-        <div style="font-size: 11px; color: #CBD5E1; margin-top: 4px;">
-          ⚠️ <strong>Privacidad Garantizada:</strong> Por seguridad y optimización del sistema, todos los chats y mensajes privados expiran a las <strong>48 horas</strong> y son borrados por el sistema de manera automática.
-        </div>
-      </div>
-
-      <div class="direct-chat-container" style="flex:1; display:flex; flex-direction:column;">
-        <div class="chat-vendor-selector">
-          <label style="font-size:11px; font-weight:700; color:#FF6D00;">Conversación con:</label>
-          <select id="selectVendorChat" onchange="cambiarVendedorChat()">
-            <option value="Soporte OTB">🎧 Servicio al Cliente & Soporte OTB (Chat Directo)</option>
-            <option value="Gas GLP">🔥 Camión Garrafero de Gas GLP N° 42</option>
-            <option value="Agua 20L">💧 Repartidor de Agua Purificada 20L</option>
-            <option value="Chatarra">♻️ Compra de Chatarra El Vecino</option>
-            <option value="Papel">📄 Recolector de Papel & Cartón</option>
-            <option value="Frutas">🍎 Camión Agrícola Frutas & Verduras</option>
-            <option value="Detergentes">🧼 Repartidor Detergentes & Limpieza Barrial</option>
-            <option value="Carbón">🪵 Carbonería & Leña El Fuego del Sur</option>
-            <option value="Otros">📦 Servicio de Encargos & Paquetes</option>
-          </select>
-        </div>
-
-        <div class="chat-messages-box" id="chatMessagesBox" style="flex:1; max-height: unset; overflow-y: auto;">
-          <!-- Renderizado dinámico de chat 1-a-1 desde js/chat.js con borrado en 48h -->
-        </div>
-
-        <div class="chat-input-bar">
-          <input type="text" id="inputDirectMessage" placeholder="Escribe tu mensaje privado encriptado..." onkeypress="if(event.key==='Enter') enviarMensajeDirecto()">
-          <button onclick="enviarMensajeDirecto()"><i class="fa-solid fa-paper-plane"></i> Enviar</button>
-        </div>
       </div>
     </div>
   </main>
@@ -646,6 +606,44 @@
         <textarea id="inputPostDesc" rows="3" placeholder="Escribe tu mensaje para los vecinos (Durará 7 días)..."></textarea>
       </div>
       <button class="btn-submit" onclick="crearNuevoPost()"><i class="fa-solid fa-paper-plane"></i> Publicar Anuncio Gratis (7 días)</button>
+  <!-- WIDGET FLOTANTE DE CHAT PRIVADO ESTILO FACEBOOK MESSENGER / GOOGLE CHAT -->
+  <div id="floatingChatWidget" class="floating-chat-popup" style="display: none;">
+    <div class="chat-popup-header" onclick="minimizarFloatingChat()">
+      <div style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:900; color:white;">
+        <span style="width:8px; height:8px; border-radius:50%; background:#00E676; display:inline-block;"></span>
+        <i class="fa-solid fa-comments" style="color:#FF6D00;"></i>
+        <span id="chatPopupTitle">Chat Privado OTB</span>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button class="chat-popup-btn" onclick="event.stopPropagation(); minimizarFloatingChat()" title="Minimizar">_</button>
+        <button class="chat-popup-btn" onclick="event.stopPropagation(); cerrarFloatingChat()" title="Cerrar">✕</button>
+      </div>
+    </div>
+
+    <div class="chat-popup-body" id="chatPopupBody">
+      <div class="chat-vendor-selector" style="padding:6px 10px; background:#0F172A; border-bottom:1px solid rgba(255,255,255,0.08);">
+        <label style="font-size:10px; font-weight:700; color:#FF6D00;">Conversación con:</label>
+        <select id="selectVendorChat" onchange="cambiarVendedorChat()" style="font-size:11px; padding:4px;">
+          <option value="Soporte OTB">🎧 Servicio al Cliente & Soporte OTB (Chat Directo)</option>
+          <option value="Gas GLP">🔥 Camión Garrafero de Gas GLP N° 42</option>
+          <option value="Agua 20L">💧 Repartidor de Agua Purificada 20L</option>
+          <option value="Chatarra">♻️ Compra de Chatarra El Vecino</option>
+          <option value="Papel">📄 Recolector de Papel & Cartón</option>
+          <option value="Frutas">🍎 Camión Agrícola Frutas & Verduras</option>
+          <option value="Detergentes">🧼 Repartidor Detergentes & Limpieza Barrial</option>
+          <option value="Carbón">🪵 Carbonería & Leña El Fuego del Sur</option>
+          <option value="Otros">📦 Servicio de Encargos & Paquetes</option>
+        </select>
+      </div>
+
+      <div class="chat-messages-box" id="chatMessagesBox" style="flex:1; overflow-y:auto; padding:10px; font-size:11px; max-height:unset;">
+        <!-- Renderizado dinámico de chat 1-a-1 desde js/chat.js con borrado en 48h -->
+      </div>
+
+      <div class="chat-input-bar" style="padding:6px 8px; gap:6px;">
+        <input type="text" id="inputDirectMessage" placeholder="Escribe tu mensaje privado..." onkeypress="if(event.key==='Enter') enviarMensajeDirecto()" style="font-size:11px; padding:8px;">
+        <button onclick="enviarMensajeDirecto()" style="padding:8px 12px; font-size:11px;"><i class="fa-solid fa-paper-plane"></i></button>
+      </div>
     </div>
   </div>
 

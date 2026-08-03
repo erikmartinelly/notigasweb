@@ -1143,3 +1143,57 @@ footer.ad-banner-container {
   background-color: #FF6D00;
   color: white;
 }
+
+/* WIDGET FLOTANTE DE CHAT ESTILO MESSENGER / GOOGLE CHAT */
+.floating-chat-popup {
+  position: fixed;
+  bottom: 12px;
+  right: 16px;
+  width: 350px;
+  max-width: calc(100vw - 32px);
+  height: 480px;
+  max-height: calc(100vh - 100px);
+  background: #1E293B;
+  border-radius: 14px 14px 0 0;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.8);
+  z-index: 3000;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1.5px solid rgba(255, 109, 0, 0.5);
+  transition: all 0.25s ease;
+}
+
+.chat-popup-header {
+  background: linear-gradient(135deg, #0F172A, #1E293B);
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  user-select: none;
+}
+
+.chat-popup-btn {
+  background: none;
+  border: none;
+  color: #94A3B8;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.chat-popup-btn:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.chat-popup-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+

@@ -168,7 +168,7 @@ function renderVendorCards(filterCat) {
 }
 
 function abrirChatSoporteOficial() {
-  if (typeof switchTab === 'function') switchTab(3); // Pestaña 4: CHATS PRIVADOS
+  if (typeof abrirFloatingChat === 'function') abrirFloatingChat();
   const select = document.getElementById('selectVendorChat');
   if (select) {
     select.value = "Soporte OTB";
@@ -212,7 +212,7 @@ function getIconForCategory(cat) {
 }
 
 function abrirChatConRepartidor(vendorName, vendorCat) {
-  if (typeof switchTab === 'function') switchTab(3); // Pestaña 4: CHATS PRIVADOS
+  if (typeof abrirFloatingChat === 'function') abrirFloatingChat();
   const select = document.getElementById('selectVendorChat');
   if (select) {
     let found = false;

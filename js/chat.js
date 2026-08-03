@@ -17,8 +17,29 @@ function getChatHistoryKey(vendorName) {
   return `notigas_private_chat_${vendorName}_${userGmail}`;
 }
 
+function abrirFloatingChat() {
+  const widget = document.getElementById('floatingChatWidget');
+  const body = document.getElementById('chatPopupBody');
+  if (widget) {
+    widget.style.display = 'flex';
+    if (body) body.style.display = 'flex';
+  }
+}
+
+function cerrarFloatingChat() {
+  const widget = document.getElementById('floatingChatWidget');
+  if (widget) widget.style.display = 'none';
+}
+
+function minimizarFloatingChat() {
+  const body = document.getElementById('chatPopupBody');
+  if (body) {
+    body.style.display = (body.style.display === 'none') ? 'flex' : 'none';
+  }
+}
+
 function abrirChatDirectoVendedor(catNombre) {
-  if (typeof switchTab === 'function') switchTab(3); // Pestaña 4 independiente
+  abrirFloatingChat();
 
   const sel = document.getElementById('selectVendorChat');
   if (sel) {
