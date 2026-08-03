@@ -130,7 +130,7 @@ function renderVendorCards(filterCat) {
 
         <div class="vendor-fb-footer">
           <button class="btn-vendor-chat" onclick="abrirChatConRepartidor('${escapedName}', '${escapedCat}')"><i class="fa-solid fa-comments"></i> 💬 CHAT PRIVADO INTERNO</button>
-          <button class="btn-vendor-order" onclick="abrirSubmenuPedidos()"><i class="fa-solid fa-cart-plus"></i> Pedir Producto</button>
+          <button class="btn-vendor-order" onclick="seleccionarYPedirDirecto('${escapedCat}')"><i class="fa-solid fa-cart-plus"></i> Pedir Producto</button>
         </div>
       </div>
     `;

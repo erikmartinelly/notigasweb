@@ -330,6 +330,22 @@ function switchTab(index) {
   }
 }
 
+function getActiveUserLocation() {
+  let lat = (typeof currentGpsLat !== 'undefined' && currentGpsLat) ? currentGpsLat : -17.3895;
+  let lng = (typeof currentGpsLng !== 'undefined' && currentGpsLng) ? currentGpsLng : -66.1568;
+
+  if (typeof userMarker !== 'undefined' && userMarker && userMarker.getLatLng) {
+    try {
+      const pos = userMarker.getLatLng();
+      if (pos && pos.lat && pos.lng) {
+        lat = pos.lat;
+        lng = pos.lng;
+      }
+    } catch(e){}
+  }
+  return { lat, lng };
+}
+
 function abrirSubmenuPedidos() { 
   controlarColaTraficoUsuarios(() => {
     const modalSubmenu = document.getElementById('modalSubmenu');
@@ -345,12 +361,18 @@ function closeSubmenuModal() {
 function seleccionarYPedirDirecto(catNombre) {
   closeSubmenuModal();
   const sel = document.getElementById('selectCategoria');
-  if (sel) {
+  if (sel && catNombre) {
+    let foundIdx = -1;
+    const cleanSearch = catNombre.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
     for (let i = 0; i < sel.options.length; i++) {
-      if (sel.options[i].value.includes(catNombre) || catNombre.includes(sel.options[i].value)) {
-        sel.selectedIndex = i;
+      const cleanVal = sel.options[i].value.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+      if (cleanVal.includes(cleanSearch) || cleanSearch.includes(cleanVal)) {
+        foundIdx = i;
         break;
       }
+    }
+    if (foundIdx !== -1) {
+      sel.selectedIndex = foundIdx;
     }
   }
   const modalPedido = document.getElementById('modalPedido');
@@ -363,8 +385,7 @@ function closePedidoModal() {
 }
 
 function confirmarPedido() {
-  if (typeof userMarker === 'undefined' || !userMarker) return;
-  const pos = userMarker.getLatLng();
+  const pos = getActiveUserLocation();
   const cat = document.getElementById('selectCategoria')?.value || 'Garrafa de Gas GLP';
   const cant = document.getElementById('inputCantidad')?.value || '1 unidad';
   
@@ -380,23 +401,26 @@ function confirmarPedido() {
   closePedidoModal();
   checkActiveOrderStatus();
 
-  alert(`📦 PEDIDO EN VIVO REGISTRADO\n\nCategoría: ${cat}\nDetalle: ${cant}\n📍 Ubicación de Entrega: Lat ${pos.lat.toFixed(5)}, Lng ${pos.lng.toFixed(5)}\n\nEl icono de pestaña (favicon) y el título de tu navegador han sido actualizados para reflejar tu pedido de ${cat}.`);
+  if (typeof renderActiveOrdersMap === 'function') {
+    renderActiveOrdersMap();
+  }
+
+  alert(`📦 PEDIDO EN VIVO REGISTRADO\n\nCategoría: ${cat}\nDetalle: ${cant}\n📍 Ubicación de Entrega: Lat ${pos.lat.toFixed(5)}, Lng ${pos.lng.toFixed(5)}\n\nTu pedido se encuentra activo y visible para los repartidores en el mapa.`);
 }
 
 function cancelarPedidoActivo() {
   if (confirm("❌ ¿Estás seguro de que deseas cancelar tu pedido activo en vivo?")) {
     localStorage.removeItem('notigas_active_order');
     checkActiveOrderStatus();
-    alert("❌ TU PEDIDO HA SIDO CANCELADO\nSe ha restaurado el icono normal de la aplicación.");
+    if (typeof renderActiveOrdersMap === 'function') {
+      renderActiveOrdersMap();
+    }
+    alert("❌ TU PEDIDO HA SIDO CANCELADO\nSe ha restaurado el estado normal de la aplicación.");
   }
 }
 
 function notificarEscucheCamion() {
-  if (typeof userMarker === 'undefined' || !userMarker) {
-    alert("📍 Activa o conecta tu GPS para reportar la ubicación del camión.");
-    return;
-  }
-  const pos = userMarker.getLatLng();
+  const pos = getActiveUserLocation();
 
   // Guardar en el buffer de reportes de vecinos (validez por 30 minutos)
   let buffer = [];
@@ -436,11 +460,7 @@ function notificarEscucheCamion() {
 }
 
 function lanzarEspecialEsperame() {
-  if (typeof userMarker === 'undefined' || !userMarker) {
-    alert("📍 Activa o conecta tu GPS para emitir el aviso de pánico.");
-    return;
-  }
-  const pos = userMarker.getLatLng();
+  const pos = getActiveUserLocation();
 
   // Guardar solicitud en el buffer de reportes
   let buffer = [];

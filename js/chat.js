@@ -6,12 +6,17 @@
 const CHAT_EXPIRATION_MS = 48 * 60 * 60 * 1000; // 48 Horas en milisegundos
 
 function getChatHistoryKey(vendorName) {
+  if (vendorName === 'Soporte OTB') {
+    return 'notigas_support_global_channel';
+  }
+
   let userGmail = "anonimo";
   try {
     const saved = localStorage.getItem('notigas_user_data');
     if (saved) {
       const u = JSON.parse(saved);
       if (u.gmail) userGmail = u.gmail.replace(/[^a-zA-Z0-9]/g, '_');
+      else if (u.nombre) userGmail = u.nombre.replace(/[^a-zA-Z0-9]/g, '_');
     }
   } catch(e){}
   return `notigas_private_chat_${vendorName}_${userGmail}`;
@@ -86,7 +91,9 @@ function cambiarVendedorChat() {
   const nowMs = Date.now();
   const timeStr = new Date(nowMs).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  // Clave privada aislada por usuario y por repartidor
+  const currentAdmin = sessionStorage.getItem('notigas_admin_session');
+  const isAdmin = currentAdmin && (currentAdmin.includes('erikmartinelly') || currentAdmin.includes('leonmartinelly'));
+
   const historyKey = getChatHistoryKey(vendorName);
   let history = [];
   try {
@@ -106,15 +113,34 @@ function cambiarVendedorChat() {
     }
   } catch(e){}
 
+  let headerNotice = `
+    <div style="font-size: 9.5px; color: #00E676; text-align: center; margin-bottom: 8px; background: rgba(0,230,118,0.08); padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(0,230,118,0.2);">
+      🔒 CHAT NOTIGAS 1-A-1 • MÓDULO FLOTANTE<br>⚠️ Los mensajes expiran automáticamente a las 48h.
+    </div>
+  `;
+
+  if (vendorName === 'Soporte OTB') {
+    if (isAdmin) {
+      headerNotice = `
+        <div style="font-size: 10px; color: #F59E0B; text-align: center; margin-bottom: 8px; background: rgba(245,158,11,0.15); padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(245,158,11,0.4); font-weight:700;">
+          👑 CANAL DIRECTO DE ATENCIÓN AL CLIENTE (MODO ADMINISTRADOR LOGUEADO)<br><span style="font-size:9px; color:#CBD5E1; font-weight:400;">Responde en vivo a las consultas enviadas por los vecinos de la OTB.</span>
+        </div>
+      `;
+    } else {
+      headerNotice = `
+        <div style="font-size: 10px; color: #38BDF8; text-align: center; margin-bottom: 8px; background: rgba(56,189,248,0.15); padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(56,189,248,0.4); font-weight:700;">
+          🎧 CANAL DE ATENCIÓN DIRECTA CON EL ADMINISTRADOR OTB<br><span style="font-size:9px; color:#CBD5E1; font-weight:400;">Tu mensaje llegará directamente al Administrador cuando esté logueado.</span>
+        </div>
+      `;
+    }
+  }
+
   let htmlContent = `
     <div style="background: rgba(255,109,0,0.08); border: 1px dashed rgba(255,109,0,0.3); border-radius: 10px; padding: 8px 12px; margin-bottom: 6px; font-size: 11px; display: flex; align-items: center; justify-content: space-between; cursor: pointer;" onclick="abrirAnuncioWhatsApp()">
       <span style="color: #FF6D00; font-weight: 700;"><i class="fa-solid fa-rectangle-ad"></i> Publicidad OTB / Google Ads</span>
       <span style="color: #94A3B8; font-size: 10px;">Ver anuncio <i class="fa-solid fa-chevron-right"></i></span>
     </div>
-
-    <div style="font-size: 9.5px; color: #00E676; text-align: center; margin-bottom: 8px; background: rgba(0,230,118,0.08); padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(0,230,118,0.2);">
-      🔒 CHAT NOTIGAS 1-A-1 • MÓDULO FLOTANTE<br>⚠️ Por tu seguridad y rendimiento del sistema, los mensajes duran 48h y son eliminados automáticamente.
-    </div>
+    ${headerNotice}
   `;
 
   if (history.length === 0) {
@@ -122,12 +148,12 @@ function cambiarVendedorChat() {
     let initialVendorName = `Repartidor en Ruta (${vendorName})`;
 
     if (vendorName === 'Soporte OTB') {
-      initialVendorName = `🎧 Servicio al Cliente OTB`;
-      initialText = `¡Hola vecino! Bienvenido a Servicio al Cliente & Soporte OTB. ¿Tienes dudas sobre el recorrido de camiones o la aplicación? Escríbenos aquí.`;
+      initialVendorName = `👑 Administrador OTB (Soporte Oficial)`;
+      initialText = `¡Hola vecino! Bienvenido al Soporte Oficial NOTIGAS. Escribe tu consulta aquí y el Administrador te responderá directamente.`;
     }
 
     const defaultVendorMsg = {
-      sender: 'vendor',
+      sender: vendorName === 'Soporte OTB' ? 'admin' : 'vendor',
       name: initialVendorName,
       text: initialText,
       timeStr: timeStr,
@@ -136,7 +162,7 @@ function cambiarVendedorChat() {
     const defaultBuyerMsg = {
       sender: 'buyer',
       name: userAlias,
-      text: `Hola, requiero atención para ${vendorName}. Mi ubicación exacta está disponible.`,
+      text: `Hola, requiero atención para ${vendorName}.`,
       timeStr: timeStr,
       timestamp: nowMs
     };
@@ -144,12 +170,18 @@ function cambiarVendedorChat() {
     localStorage.setItem(historyKey, JSON.stringify(history));
   }
 
-  const currentAdmin = sessionStorage.getItem('notigas_admin_session');
-  const isAdmin = currentAdmin && (currentAdmin.includes('erikmartinelly') || currentAdmin.includes('leonmartinelly'));
-
   history.forEach(m => {
     const escapedSender = (m.name || '').replace(/'/g, "\\'");
-    if (m.sender === 'vendor') {
+    if (m.sender === 'admin') {
+      htmlContent += `
+        <div class="chat-msg vendor" style="background: linear-gradient(135deg, rgba(180,83,9,0.3), rgba(217,119,6,0.3)); border: 1px solid #FBBF24;">
+          <b style="color:#FBBF24;">👑 ${m.name}:</b><br>${m.text}
+          <div class="chat-msg-footer">
+            <span class="chat-msg-time">${m.timeStr}</span>
+          </div>
+        </div>
+      `;
+    } else if (m.sender === 'vendor') {
       htmlContent += `
         <div class="chat-msg vendor">
           <b>🚛 ${m.name}:</b><br>${m.text}
@@ -192,19 +224,28 @@ function enviarMensajeDirecto() {
   const nowMs = Date.now();
   const timeStr = new Date(nowMs).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  let userAlias = "Cliente (Tú)";
-  let isVendorSender = false;
-  try {
-    const saved = localStorage.getItem('notigas_user_data');
-    if (saved) {
-      const u = JSON.parse(saved);
-      if (u.nombre) userAlias = `${u.nombre} ${u.apellido ? u.apellido[0] + '.' : ''}`;
-      if (u.role === 'repartidor') isVendorSender = true;
-    }
-  } catch(e){}
+  const currentAdmin = sessionStorage.getItem('notigas_admin_session');
+  const isAdmin = currentAdmin && (currentAdmin.includes('erikmartinelly') || currentAdmin.includes('leonmartinelly'));
 
-  if (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver') {
-    isVendorSender = true;
+  let userAlias = "Cliente (Tú)";
+  let senderType = 'buyer';
+
+  if (isAdmin) {
+    senderType = 'admin';
+    userAlias = "👑 Administrador OTB";
+  } else {
+    try {
+      const saved = localStorage.getItem('notigas_user_data');
+      if (saved) {
+        const u = JSON.parse(saved);
+        if (u.nombre) userAlias = `${u.nombre} ${u.apellido ? u.apellido[0] + '.' : ''}`;
+        if (u.role === 'repartidor') senderType = 'vendor';
+      }
+    } catch(e){}
+
+    if (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver') {
+      senderType = 'vendor';
+    }
   }
 
   const historyKey = getChatHistoryKey(vendorName);
@@ -215,7 +256,7 @@ function enviarMensajeDirecto() {
   } catch(e){}
 
   const newMsg = {
-    sender: isVendorSender ? 'vendor' : 'buyer',
+    sender: senderType,
     name: userAlias,
     text: text,
     timeStr: timeStr,
