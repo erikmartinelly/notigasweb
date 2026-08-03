@@ -142,19 +142,23 @@ function votarPost(el, delta, postId) {
 }
 
 function abrirModalNuevoPost() {
-  const modal = document.getElementById('modalNewPost');
+  const modal = document.getElementById('modalNuevoPost') || document.getElementById('modalNewPost');
   if (modal) modal.style.display = 'flex';
 }
 
 function closeNewPostModal() {
-  const modal = document.getElementById('modalNewPost');
+  const modal = document.getElementById('modalNuevoPost') || document.getElementById('modalNewPost');
   if (modal) modal.style.display = 'none';
 }
 
+function closeNuevoPostModal() {
+  closeNewPostModal();
+}
+
 function crearNuevoPost() {
-  const title = (document.getElementById('inputPostTitle')?.value || '').trim();
+  const title = (document.getElementById('inputPostTitulo')?.value || document.getElementById('inputPostTitle')?.value || '').trim();
   const desc = (document.getElementById('inputPostDesc')?.value || '').trim();
-  const cat = document.getElementById('selectPostCat')?.value || 'AVISO VECINAL';
+  const cat = document.getElementById('selectPostTipo')?.value || document.getElementById('selectPostCat')?.value || 'AVISO VECINAL';
 
   if (!title || !desc) {
     alert('Por favor ingresa un título y una descripción para tu publicación vecinal.');
@@ -180,8 +184,9 @@ function crearNuevoPost() {
   localStorage.setItem('notigas_forum_posts', JSON.stringify(localPosts));
 
   closeNewPostModal();
-  document.getElementById('inputPostTitle').value = '';
-  document.getElementById('inputPostDesc').value = '';
+  if (document.getElementById('inputPostTitulo')) document.getElementById('inputPostTitulo').value = '';
+  if (document.getElementById('inputPostTitle')) document.getElementById('inputPostTitle').value = '';
+  if (document.getElementById('inputPostDesc')) document.getElementById('inputPostDesc').value = '';
 
   renderForumFeed();
   alert('📌 ¡Aviso publicado exitosamente! Tu publicación estará activa durante 7 días.');

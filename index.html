@@ -98,7 +98,7 @@
           <button class="btn-driver-orders-list" onclick="abrirModalDriverOrders()"><i class="fa-solid fa-list-check"></i> 📋 PEDIDOS RECIENTES EN VIVO</button>
         </div>
 
-        <button style="width: 100%; margin-top: 6px; background: linear-gradient(135deg, #00E676, #00C853); color: #0F172A; border: none; padding: 10px; border-radius: 10px; font-weight: 900; font-size: 11.5px; cursor: pointer; box-shadow: 0 4px 14px rgba(0,230,118,0.4); display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="calcularYTrazarRutaEficiente()">
+        <button class="btn-driver-route" onclick="calcularYTrazarRutaEficiente()">
           <i class="fa-solid fa-route"></i> 🗺️ TRAZAR RUTA OPTIMIZADA (0$ COSTO API)
         </button>
       </div>
@@ -601,17 +601,18 @@
         <label>Título del Anuncio:</label>
         <input type="text" id="inputPostTitulo" placeholder="Ej: Camión de lavandina y detergente pasando por la plaza">
       </div>
-            <label>Descripción / Detalle:</label>
-            <textarea id="inputPostDesc" rows="3" placeholder="Escribe tu mensaje para los vecinos (Durará 7 días)..."></textarea>
-          </div>
-          <button class="btn-submit" onclick="crearNuevoPost()"><i class="fa-solid fa-paper-plane"></i> Publicar Anuncio Gratis (7 días)</button>
-        </div>
+      <div class="form-group">
+        <label>Descripción / Detalle:</label>
+        <textarea id="inputPostDesc" rows="3" placeholder="Escribe tu mensaje para los vecinos (Durará 7 días)..."></textarea>
       </div>
+      <button class="btn-submit" onclick="crearNuevoPost()"><i class="fa-solid fa-paper-plane"></i> Publicar Anuncio Gratis (7 días)</button>
+    </div>
+  </div>
 
-  <!-- BOTÓN FLOTANTE PERMANENTE FAB DE LANZAMIENTO DE CHAT OTB (ESTILO MESSENGER) -->
-  <button class="chat-fab-launcher" onclick="toggleFloatingChat()" title="Abrir Chat Privado OTB">
+  <!-- BOTÓN FLOTANTE PERMANENTE FAB DE LANZAMIENTO DE CHAT NOTIGAS (ESTILO MESSENGER) -->
+  <button class="chat-fab-launcher" onclick="toggleFloatingChat()" title="Abrir CHAT NOTIGAS">
     <i class="fa-solid fa-comments"></i>
-    <span>Chat OTB</span>
+    <span>CHAT NOTIGAS</span>
   </button>
 
   <!-- WIDGET FLOTANTE DE CHAT PRIVADO ESTILO FACEBOOK MESSENGER / GOOGLE CHAT -->
@@ -620,7 +621,7 @@
       <div style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:900; color:white;">
         <span style="width:8px; height:8px; border-radius:50%; background:#00E676; display:inline-block;"></span>
         <i class="fa-solid fa-comments" style="color:#FF6D00;"></i>
-        <span id="chatPopupTitle">Chat Privado OTB</span>
+        <span id="chatPopupTitle">CHAT NOTIGAS</span>
       </div>
       <div style="display:flex; gap:6px;">
         <button class="chat-popup-btn" onclick="event.stopPropagation(); minimizarFloatingChat()" title="Minimizar">_</button>

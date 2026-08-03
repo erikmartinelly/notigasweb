@@ -1266,4 +1266,115 @@ button:active, .tab-btn:active, .cat-chip:active {
   filter: brightness(1.15);
 }
 
+/* DISEÑO ESTÉTICO DE ALTO RENDIMIENTO (0KB EXTRA) PARA MODO REPARTIDOR */
+.driver-mode-header-banner {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.18), rgba(16, 185, 129, 0.18));
+  border-bottom: 1px solid rgba(6, 182, 212, 0.4);
+  color: #38BDF8;
+  padding: 8px 14px;
+  text-align: center;
+  font-size: 11.5px;
+  font-weight: 800;
+  backdrop-filter: blur(8px);
+  letter-spacing: 0.5px;
+}
+
+.btn-driver-gps-toggle {
+  width: 100%;
+  background: linear-gradient(135deg, #059669, #10B981);
+  color: #FFFFFF;
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 12.5px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  letter-spacing: 0.5px;
+  transition: all 0.25s ease;
+}
+
+.btn-driver-gps-toggle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.7);
+  background: linear-gradient(135deg, #047857, #059669);
+}
+
+.btn-driver-heatmap {
+  flex: 1;
+  background: linear-gradient(135deg, #FF6D00, #EF4444);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 10px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(255, 109, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.25s ease;
+}
+
+.btn-driver-heatmap:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
+}
+
+.btn-driver-orders-list {
+  flex: 1;
+  background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 10px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.25s ease;
+}
+
+.btn-driver-orders-list:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.6);
+}
+
+.btn-driver-route {
+  width: 100%;
+  margin-top: 4px;
+  background: linear-gradient(135deg, #06B6D4, #10B981);
+  color: #0F172A;
+  border: 1.5px solid #A7F3D0;
+  padding: 11px;
+  border-radius: 12px;
+  font-weight: 900;
+  font-size: 11.5px;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(6, 182, 212, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  letter-spacing: 0.5px;
+  transition: all 0.25s ease;
+}
+
+.btn-driver-route:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.7);
+  background: linear-gradient(135deg, #0891B2, #059669);
+  color: #FFFFFF;
+}
+
 

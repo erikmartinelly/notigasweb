@@ -113,7 +113,7 @@ function cambiarVendedorChat() {
     </div>
 
     <div style="font-size: 9.5px; color: #00E676; text-align: center; margin-bottom: 8px; background: rgba(0,230,118,0.08); padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(0,230,118,0.2);">
-      🔒 CHAT ENCRIPTADO 1-A-1 • MÓDULO INDEPENDIENTE<br>⚠️ Por tu seguridad y rendimiento del sistema, los mensajes duran 48h y son eliminados automáticamente.
+      🔒 CHAT NOTIGAS 1-A-1 • MÓDULO FLOTANTE<br>⚠️ Por tu seguridad y rendimiento del sistema, los mensajes duran 48h y son eliminados automáticamente.
     </div>
   `;
 
