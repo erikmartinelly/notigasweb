@@ -1,6 +1,6 @@
 /* ==========================================================================
-   NOTIGAS - MÓDULO DE CHAT PRIVADO 1-A-1 (CLIENTE ↔ REPARTIDOR)
-   Y DEPURACIÓN AUTOMÁTICA DE 48 HORAS
+   NOTIGAS - MÓDULO DE CHAT PRIVADO INTERNO 1-A-1 INDEPENDIENTE (PESTAÑA 4)
+   Y DEPURACIÓN AUTOMÁTICA DE 48 HORAS POR PRIVACIDAD Y SEGURIDAD
    ========================================================================== */
 
 const CHAT_EXPIRATION_MS = 48 * 60 * 60 * 1000; // 48 Horas en milisegundos
@@ -18,13 +18,12 @@ function getChatHistoryKey(vendorName) {
 }
 
 function abrirChatDirectoVendedor(catNombre) {
-  if (typeof switchTab === 'function') switchTab(2);
-  if (typeof switch3rdTabMode === 'function') switch3rdTabMode('direct');
+  if (typeof switchTab === 'function') switchTab(3); // Pestaña 4 independiente
 
   const sel = document.getElementById('selectVendorChat');
   if (sel) {
     for (let i = 0; i < sel.options.length; i++) {
-      if (sel.options[i].value.includes(catNombre)) {
+      if (sel.options[i].value.includes(catNombre) || catNombre.includes(sel.options[i].value)) {
         sel.selectedIndex = i;
         break;
       }
@@ -73,23 +72,31 @@ function cambiarVendedorChat() {
       <span style="color: #94A3B8; font-size: 10px;">Ver anuncio <i class="fa-solid fa-chevron-right"></i></span>
     </div>
 
-    <div style="font-size: 9px; color: #00E676; text-align: center; margin-bottom: 8px; background: rgba(0,230,118,0.08); padding: 6px; border-radius: 8px; border: 1px solid rgba(0,230,118,0.2);">
-      🔒 CHAT PRIVADO Y CONFIDENCIAL 1-A-1 ENTRE TÚ Y EL REPARTIDOR.<br>Tus mensajes y datos compartidos solo se ven en esta sesión y expiran en 48h.
+    <div style="font-size: 9.5px; color: #00E676; text-align: center; margin-bottom: 8px; background: rgba(0,230,118,0.08); padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(0,230,118,0.2);">
+      🔒 CHAT ENCRIPTADO 1-A-1 • MÓDULO INDEPENDIENTE<br>⚠️ Por tu seguridad y rendimiento del sistema, los mensajes duran 48h y son eliminados automáticamente.
     </div>
   `;
 
   if (history.length === 0) {
+    let initialText = `¡Hola vecino! Estoy atendiendo tu zona en la OTB. ¿En qué te puedo colaborar hoy?`;
+    let initialVendorName = `Repartidor en Ruta (${vendorName})`;
+
+    if (vendorName === 'Soporte OTB') {
+      initialVendorName = `🎧 Servicio al Cliente OTB`;
+      initialText = `¡Hola vecino! Bienvenido a Servicio al Cliente & Soporte OTB. ¿Tienes dudas sobre el recorrido de camiones o la aplicación? Escríbenos aquí.`;
+    }
+
     const defaultVendorMsg = {
       sender: 'vendor',
-      name: `Repartidor en Ruta (${vendorName})`,
-      text: `¡Hola vecino! Estoy atendiendo tu zona en la OTB. ¿Cuántas unidades de ${vendorName} necesitas?`,
+      name: initialVendorName,
+      text: initialText,
       timeStr: timeStr,
       timestamp: nowMs
     };
     const defaultBuyerMsg = {
       sender: 'buyer',
       name: userAlias,
-      text: `Hola, necesito atención para ${vendorName}. Mi ubicación exacta está en el mapa.`,
+      text: `Hola, requiero atención para ${vendorName}. Mi ubicación exacta está disponible.`,
       timeStr: timeStr,
       timestamp: nowMs
     };
@@ -161,9 +168,7 @@ function enviarMensajeDirecto() {
     if (raw) history = JSON.parse(raw);
   } catch(e){}
 
-  history = depurarMensajesExpirados(history);
-
-  const newBuyerMsg = {
+  const newMsg = {
     sender: 'buyer',
     name: userAlias,
     text: text,
@@ -171,29 +176,10 @@ function enviarMensajeDirecto() {
     timestamp: nowMs
   };
 
-  history.push(newBuyerMsg);
+  history.push(newMsg);
+  history = depurarMensajesExpirados(history);
   localStorage.setItem(historyKey, JSON.stringify(history));
 
   input.value = '';
   cambiarVendedorChat();
-
-  setTimeout(() => {
-    const vendorReply = {
-      sender: 'vendor',
-      name: `Repartidor en Ruta (${vendorName})`,
-      text: `Entendido, pedido recibido de forma privada. Me dirijo a tu ubicación fijada en el mapa.`,
-      timeStr: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      timestamp: Date.now()
-    };
-    
-    let currentHist = [];
-    try {
-      const raw = localStorage.getItem(historyKey);
-      if (raw) currentHist = JSON.parse(raw);
-    } catch(e){}
-
-    currentHist.push(vendorReply);
-    localStorage.setItem(historyKey, JSON.stringify(currentHist));
-    cambiarVendedorChat();
-  }, 1000);
 }

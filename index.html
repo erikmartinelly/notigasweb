@@ -42,11 +42,12 @@
     </div>
   </header>
 
-  <!-- PESTAÑAS DE NAVEGACIÓN PRINCIPALES -->
+  <!-- PESTAÑAS DE NAVEGACIÓN PRINCIPALES (4 PESTAÑAS INDEPENDIENTES) -->
   <nav>
     <button class="tab-btn active" onclick="switchTab(0)"><i class="fa-solid fa-map-location-dot"></i> 1ª MAPA EN VIVO</button>
-    <button class="tab-btn" onclick="switchTab(1)"><i class="fa-solid fa-store"></i> 2ª REPARTIDORES (NEGOCIOS)</button>
-    <button class="tab-btn" onclick="switchTab(2)"><i class="fa-solid fa-bullhorn"></i> 3ª TABLÓN DE ANUNCIOS & CHAT</button>
+    <button class="tab-btn" onclick="switchTab(1)"><i class="fa-solid fa-store"></i> 2ª REPARTIDORES & SERVICIOS</button>
+    <button class="tab-btn" onclick="switchTab(2)"><i class="fa-solid fa-comments"></i> 3ª VECINOS REDDIT</button>
+    <button class="tab-btn" onclick="switchTab(3)"><i class="fa-solid fa-message"></i> 4ª CHATS PRIVADOS</button>
   </nav>
 
   <main>
@@ -77,7 +78,7 @@
       </div>
     </div>
 
-    <!-- PESTAÑA 2: MINI PÁGINAS DE NEGOCIO ESTILO FACEBOOK POR CATEGORÍA CON PUBLICIDAD -->
+    <!-- PESTAÑA 2: MINI PÁGINAS DE NEGOCIO ESTILO FACEBOOK POR CATEGORÍA & SERVICIO AL CLIENTE -->
     <div class="tab-content" id="tab1">
       <!-- BARRA FILTRADORA DE CATEGORÍAS -->
       <div class="category-filter-bar">
@@ -98,30 +99,41 @@
       </div>
     </div>
 
-    <!-- PESTAÑA 3: TABLÓN DE ANUNCIOS VECINAL & CHAT PRIVADO INTERNO -->
+    <!-- PESTAÑA 3: MINI REDDIT VECINAL (AVISOS, ALERTAS & OFERTAS CON EXPIRACIÓN A 72 HORAS) -->
     <div class="tab-content" id="tab2">
-      <!-- SUB-NAVEGACIÓN INTERNA EN LA 3ª PESTAÑA -->
-      <div class="subnav-3rd-tab">
-        <button class="subtab-btn active" id="subtabBtnReddit" onclick="switch3rdTabMode('reddit')"><i class="fa-solid fa-bullhorn"></i> 📌 Tablón de Anuncios Vecinal (7 Días)</button>
-        <button class="subtab-btn" id="subtabBtnDirect" onclick="switch3rdTabMode('direct')"><i class="fa-solid fa-comments"></i> 💬 Chat Privado Interno</button>
-      </div>
-
-      <!-- VISTA 1: TABLÓN DE ANUNCIOS VECINAL (AVISOS GRATIS CON DURACIÓN 1 SEMANA) -->
-      <div id="view3rdTabReddit" style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
-        <div class="forum-header">
-          <span style="font-weight:900; font-size:12px; color:#FF6D00;"><i class="fa-solid fa-bullhorn"></i> Tablón Vecinal OTB (Avisos duran 7 días)</span>
-          <button class="btn-new-post" onclick="abrirModalNuevoPost()"><i class="fa-solid fa-plus"></i> Publicar Anuncio Gratis</button>
+      <!-- AVISO DESTACADO SUPERIOR DE VECINOS REDDIT -->
+      <div style="background: linear-gradient(135deg, rgba(255,109,0,0.15), rgba(230,81,0,0.15)); border: 1px solid rgba(255,109,0,0.3); border-radius: 12px; padding: 10px 14px; margin-bottom: 12px;">
+        <div style="font-weight: 900; font-size: 13px; color: #FF6D00; display: flex; align-items: center; justify-content: space-between;">
+          <span><i class="fa-solid fa-comments"></i> 💬 TABLÓN VECINAL MINI REDDIT</span>
+          <button class="btn-new-post" style="padding: 4px 10px; font-size: 11px;" onclick="abrirModalNuevoPost()"><i class="fa-solid fa-plus"></i> Publicar Aviso</button>
         </div>
-        <div class="forum-container" id="forumFeed">
-          <!-- Renderizado dinámico desde js/forum.js con expiración de 7 días y anuncios al medio -->
+        <div style="font-size: 11px; color: #CBD5E1; margin-top: 4px;">
+          ⚠️ <strong>Aviso Comunitario:</strong> Todas las publicaciones y alertas de la OTB expiran y son borradas por el sistema de manera automática a las <strong>72 horas</strong> para mantener la velocidad de la aplicación.
         </div>
       </div>
 
-      <!-- VISTA 2: CHAT DIRECTO PRIVADO 1-A-1 CLIENTE ↔ REPARTIDOR -->
-      <div id="view3rdTabDirect" class="direct-chat-container" style="display:none; flex:1;">
+      <div class="forum-container" id="forumFeed" style="flex: 1; overflow-y: auto;">
+        <!-- Renderizado dinámico desde js/forum.js con expiración a las 72h -->
+      </div>
+    </div>
+
+    <!-- PESTAÑA 4: CHATS PRIVADOS 1-A-1 INDEPENDIENTES (ESTILO FACEBOOK MESSENGER / GOOGLE MEET) -->
+    <div class="tab-content" id="tab3">
+      <!-- AVISO DE SEGURIDAD & DEPURACIÓN DE CHAT A LAS 48 HORAS -->
+      <div style="background: rgba(0,230,118,0.1); border: 1px solid rgba(0,230,118,0.3); border-radius: 12px; padding: 10px 14px; margin-bottom: 12px;">
+        <div style="font-weight: 900; font-size: 13px; color: #00E676; display: flex; align-items: center; gap: 6px;">
+          <i class="fa-solid fa-shield-halved"></i> 🔒 CHAT PRIVADO INTERNO 1-A-1 (MESSENGER OTB)
+        </div>
+        <div style="font-size: 11px; color: #CBD5E1; margin-top: 4px;">
+          ⚠️ <strong>Privacidad Garantizada:</strong> Por seguridad y optimización del sistema, todos los chats y mensajes privados expiran a las <strong>48 horas</strong> y son borrados por el sistema de manera automática.
+        </div>
+      </div>
+
+      <div class="direct-chat-container" style="flex:1; display:flex; flex-direction:column;">
         <div class="chat-vendor-selector">
-          <label style="font-size:11px; font-weight:700; color:#FF6D00;">Seleccionar Repartidor:</label>
+          <label style="font-size:11px; font-weight:700; color:#FF6D00;">Conversación con:</label>
           <select id="selectVendorChat" onchange="cambiarVendedorChat()">
+            <option value="Soporte OTB">🎧 Servicio al Cliente & Soporte OTB (Chat Directo)</option>
             <option value="Gas GLP">🔥 Camión Garrafero de Gas GLP N° 42</option>
             <option value="Agua 20L">💧 Repartidor de Agua Purificada 20L</option>
             <option value="Chatarra">♻️ Compra de Chatarra El Vecino</option>
@@ -133,12 +145,12 @@
           </select>
         </div>
 
-        <div class="chat-messages-box" id="chatMessagesBox">
+        <div class="chat-messages-box" id="chatMessagesBox" style="flex:1; max-height: unset; overflow-y: auto;">
           <!-- Renderizado dinámico de chat 1-a-1 desde js/chat.js con borrado en 48h -->
         </div>
 
         <div class="chat-input-bar">
-          <input type="text" id="inputDirectMessage" placeholder="Escribe tu mensaje privado al repartidor en ruta..." onkeypress="if(event.key==='Enter') enviarMensajeDirecto()">
+          <input type="text" id="inputDirectMessage" placeholder="Escribe tu mensaje privado encriptado..." onkeypress="if(event.key==='Enter') enviarMensajeDirecto()">
           <button onclick="enviarMensajeDirecto()"><i class="fa-solid fa-paper-plane"></i> Enviar</button>
         </div>
       </div>

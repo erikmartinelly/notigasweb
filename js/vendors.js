@@ -61,9 +61,34 @@ function renderVendorCards(filterCat) {
     ? allVendors 
     : allVendors.filter(v => v.category.toLowerCase().includes(filterCat.toLowerCase()) || filterCat.toLowerCase().includes(v.category.toLowerCase()));
 
+  // TARJETA OFICIAL DE SERVICIO AL CLIENTE & SOPORTE OTB AL INICIO DEL FEED
+  let html = `
+    <div class="vendor-fb-card" style="border: 1px solid rgba(0, 230, 118, 0.4); background: linear-gradient(135deg, rgba(15,23,42,0.9), rgba(0,230,118,0.05));">
+      <div class="vendor-fb-header">
+        <div class="vendor-profile">
+          <div class="vendor-avatar" style="background: rgba(0, 230, 118, 0.2); color: #00E676;">🎧</div>
+          <div class="vendor-meta">
+            <span class="vendor-name" style="color: #00E676;">Servicio al Cliente & Soporte OTB</span>
+            <span class="vendor-badge-cat" style="background: rgba(0,230,118,0.2); color: #00E676;"><i class="fa-solid fa-headset"></i> Soporte Oficial NOTIGAS</span>
+          </div>
+        </div>
+        <span class="ad-badge" style="background: rgba(0,230,118,0.2); color: #00E676;">24/7 EN VIVO</span>
+      </div>
+
+      <div class="vendor-fb-body">
+        <div class="vendor-field"><strong>💁 ATENCIÓN AL VECINO:</strong> Consultas sobre el recorrido de camiones, dudas de uso y asistencia técnica en tu OTB.</div>
+        <div class="vendor-field"><strong>🔒 PRIVACIDAD:</strong> Chat privado 1-a-1 encriptado con expiración automática de mensajes a las 48h.</div>
+      </div>
+
+      <div class="vendor-fb-footer">
+        <button class="btn-vendor-chat" style="width: 100%; background: linear-gradient(135deg, #00E676, #00C853); color: #0F172A; font-weight: 900;" onclick="abrirChatSoporteOficial()"><i class="fa-solid fa-comments"></i> 💬 ABRIR CHAT PRIVADO CON SERVICIO AL CLIENTE</button>
+      </div>
+    </div>
+  `;
+
   if (filtered.length === 0) {
-    container.innerHTML = `
-      <div style="text-align:center; color:#94A3B8; padding:40px 14px; font-size:13px; background: #1E293B; border-radius: 14px; border: 1px dashed rgba(255,255,255,0.15);">
+    container.innerHTML = html + `
+      <div style="text-align:center; color:#94A3B8; padding:40px 14px; font-size:13px; background: #1E293B; border-radius: 14px; border: 1px dashed rgba(255,255,255,0.15); margin-top: 14px;">
         <i class="fa-solid fa-store-slash" style="font-size:32px; color:#FF6D00; margin-bottom:10px;"></i><br>
         <strong>Aún no hay Fichas de Repartidores registradas en esta categoría.</strong><br>
         <span style="font-size: 11px; color: #64748B;">¿Eres repartidor? Registra tu ficha de negocio gratis y conéctate con los vecinos de tu OTB.</span><br><br>
@@ -73,7 +98,6 @@ function renderVendorCards(filterCat) {
     return;
   }
 
-  let html = '';
   filtered.forEach((vendor, index) => {
     const escapedName = (vendor.name || '').replace(/'/g, "\\'");
     const escapedCat = (vendor.category || '').replace(/'/g, "\\'");
@@ -137,6 +161,15 @@ function renderVendorCards(filterCat) {
   container.innerHTML = html;
 }
 
+function abrirChatSoporteOficial() {
+  if (typeof switchTab === 'function') switchTab(3); // Pestaña 4: CHATS PRIVADOS
+  const select = document.getElementById('selectVendorChat');
+  if (select) {
+    select.value = "Soporte OTB";
+    if (typeof cambiarVendedorChat === 'function') cambiarVendedorChat();
+  }
+}
+
 function eliminarFichaAdmin(vendorId) {
   if (confirm("🗑️ ¿Deseas eliminar permanentemente esta Ficha de Repartidor?")) {
     let list = getStoredVendors();
@@ -161,13 +194,12 @@ function getIconForCategory(cat) {
 }
 
 function abrirChatConRepartidor(vendorName, vendorCat) {
-  if (typeof switchTab === 'function') switchTab(2);
-  if (typeof switch3rdTabMode === 'function') switch3rdTabMode('direct');
-  const select = document.getElementById('selectChatVendor');
+  if (typeof switchTab === 'function') switchTab(3); // Pestaña 4: CHATS PRIVADOS
+  const select = document.getElementById('selectVendorChat');
   if (select) {
     let found = false;
     for (let i = 0; i < select.options.length; i++) {
-      if (select.options[i].text.includes(vendorName)) {
+      if (select.options[i].text.includes(vendorName) || select.options[i].value.includes(vendorName)) {
         select.selectedIndex = i;
         found = true;
         break;
@@ -175,11 +207,11 @@ function abrirChatConRepartidor(vendorName, vendorCat) {
     }
     if (!found) {
       const opt = document.createElement('option');
-      opt.value = vendorName.toLowerCase().replace(/\s+/g, '_');
+      opt.value = vendorName;
       opt.text = `💬 ${vendorName} (${vendorCat})`;
       select.appendChild(opt);
       select.value = opt.value;
     }
-    if (typeof cargarMensajesChatPrivado === 'function') cargarMensajesChatPrivado();
+    if (typeof cambiarVendedorChat === 'function') cambiarVendedorChat();
   }
 }
