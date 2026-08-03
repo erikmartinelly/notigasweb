@@ -325,9 +325,6 @@ function switchTab(index) {
   if (index === 0 && typeof map !== 'undefined' && map) {
     setTimeout(() => map.invalidateSize(), 200);
   }
-  if (index === 3 && typeof cambiarVendedorChat === 'function') {
-    cambiarVendedorChat();
-  }
 }
 
 function getActiveUserLocation() {

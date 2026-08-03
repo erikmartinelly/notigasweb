@@ -2,8 +2,7 @@
    NOTIGAS - MÓDULO DE AUTENTICACIÓN & GOOGLE IDENTITY SERVICES (1-TAP SIGN-IN)
    ========================================================================== */
 
-const GOOGLE_CLIENT_ID = "994996215118-a3gvm7gtorr1nof9vaksr05ndc1raso3.apps.googleusercontent.com"; 
-const GOOGLE_CLIENT_SECRET = "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";
+const GOOGLE_CLIENT_ID = "994996215118-a3gvm7gtorr1nof9vaksr05ndc1raso3.apps.googleusercontent.com";
 
 let currentSelectedRole = 'buyer'; // 'buyer' o 'driver'
 let currentSelectedMethod = 'google'; // 'google' o 'email'

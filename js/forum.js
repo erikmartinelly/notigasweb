@@ -194,25 +194,29 @@ function crearNuevoPost() {
 
 function abrirComentariosPost(postId, title, desc, cat, el) {
   activePostCommentsRef = { id: postId, element: el };
-  const modal = document.getElementById('modalPostComments');
+  const modal = document.getElementById('modalComments') || document.getElementById('modalPostComments');
   if (!modal) return;
 
-  document.getElementById('modalCommentsTitle').innerText = title;
-  document.getElementById('modalCommentsDesc').innerText = desc;
-  document.getElementById('modalCommentsCat').innerHTML = `<i class="fa-solid fa-comments"></i> ${cat}`;
+  const elTitle = document.getElementById('commentsPostTitle') || document.getElementById('modalCommentsTitle');
+  const elDesc = document.getElementById('commentsPostDesc') || document.getElementById('modalCommentsDesc');
+  const elCat = document.getElementById('commentsPostCat') || document.getElementById('modalCommentsCat');
+
+  if (elTitle) elTitle.innerText = title;
+  if (elDesc) elDesc.innerText = desc;
+  if (elCat) elCat.innerHTML = `<i class="fa-solid fa-comments"></i> ${cat}`;
 
   renderCommentsList(postId);
   modal.style.display = 'flex';
 }
 
 function closeCommentsModal() {
-  const modal = document.getElementById('modalPostComments');
+  const modal = document.getElementById('modalComments') || document.getElementById('modalPostComments');
   if (modal) modal.style.display = 'none';
   activePostCommentsRef = null;
 }
 
 function renderCommentsList(postId) {
-  const box = document.getElementById('commentsContainer');
+  const box = document.getElementById('commentsList') || document.getElementById('commentsContainer');
   if (!box) return;
 
   const comments = postCommentsStore[postId] || [];
@@ -238,7 +242,7 @@ function renderCommentsList(postId) {
 
 function agregarComentarioPost() {
   if (!activePostCommentsRef) return;
-  const input = document.getElementById('inputNuevoComentario');
+  const input = document.getElementById('inputNewComment') || document.getElementById('inputNuevoComentario');
   const text = (input?.value || '').trim();
 
   if (!text) return;

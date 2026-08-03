@@ -124,14 +124,14 @@ function applyGpsPosition(lat, lng, label) {
   const now = Date.now();
   if (now - lastGpsBroadcastTime > DRIVER_GPS_BROADCAST_INTERVAL_MS) {
     lastGpsBroadcastTime = now;
-    transmitirUbicacionChoferServidorDB(lat, lng);
+    transmitirUbicacionRepartidorServidorDB(lat, lng);
   }
 
   verificarYMostrarRepartidorGPS();
 }
 
 /* FUNCIÓN DE TRANSMISIÓN DE POSICIONAMIENTO CON ESTRATEGIA UPSERT (CERO SATURACIÓN EN DB) */
-function transmitirUbicacionChoferServidorDB(lat, lng) {
+function transmitirUbicacionRepartidorServidorDB(lat, lng) {
   const driverGpsLive = localStorage.getItem('driverGpsLive');
   if (driverGpsLive === 'off') return;
 
@@ -139,10 +139,10 @@ function transmitirUbicacionChoferServidorDB(lat, lng) {
     const saved = localStorage.getItem('notigas_user_data');
     if (saved) {
       const u = JSON.parse(saved);
-      if (u.role === 'chofer' || u.role === 'repartidor') {
+      if (u.role === 'repartidor') {
         const driverLocationPayload = {
-          driver_id: u.gmail || u.nombre || "chofer_1",
-          nombre: u.nombre || "Chofer GLP",
+          driver_id: u.gmail || u.nombre || "repartidor_1",
+          nombre: u.nombre || "Repartidor GLP",
           lat: lat,
           lng: lng,
           timestamp: Date.now()
@@ -153,6 +153,7 @@ function transmitirUbicacionChoferServidorDB(lat, lng) {
     }
   } catch(e){}
 }
+const transmitirUbicacionChoferServidorDB = transmitirUbicacionRepartidorServidorDB;
 
 let reportedTrucksLayerGroup = null;
 
@@ -526,13 +527,18 @@ function iniciarMovimientoRepartidor() {
 function setMapStyle(btnElem, styleKey) {
   document.querySelectorAll('.map-style-btn').forEach(b => b.classList.remove('active'));
   if (btnElem) btnElem.classList.add('active');
+  cambiarEstiloMapaPref(styleKey);
+}
 
-  Object.keys(mapTileLayers).forEach(k => {
-    if (map.hasLayer(mapTileLayers[k])) map.removeLayer(mapTileLayers[k]);
-  });
-
-  if (mapTileLayers[styleKey]) {
-    mapTileLayers[styleKey].addTo(map);
+function cambiarEstiloMapaPref(styleKey) {
+  localStorage.setItem('notigas_pref_map_style', styleKey);
+  if (map && mapTileLayers) {
+    Object.keys(mapTileLayers).forEach(k => {
+      if (map.hasLayer(mapTileLayers[k])) map.removeLayer(mapTileLayers[k]);
+    });
+    if (mapTileLayers[styleKey]) {
+      mapTileLayers[styleKey].addTo(map);
+    }
   }
 }
 
