@@ -28,6 +28,7 @@ function abrirModalAdminLogin() {
     if (loginScreen) loginScreen.style.display = 'none';
     if (dashboardScreen) dashboardScreen.style.display = 'block';
     renderAdminReports();
+    if (typeof cargarAnunciosGuardados === 'function') cargarAnunciosGuardados();
   } else {
     if (loginScreen) loginScreen.style.display = 'block';
     if (dashboardScreen) dashboardScreen.style.display = 'none';
@@ -88,13 +89,22 @@ function guardarSubmenuAnuncios() {
 
   const adsenseId = document.getElementById('inputAdsenseId')?.value.trim();
   const inputAd = document.getElementById('inputAdText')?.value.trim();
+  const inputUrl = document.getElementById('inputAdUrl')?.value.trim();
 
   if (adsenseId) {
     localStorage.setItem('notigas_adsense_id', adsenseId);
   }
 
-  if (inputAd && typeof actualizarAnunciosEnVivo === 'function') {
-    actualizarAnunciosEnVivo(inputAd);
+  if (inputAd) {
+    localStorage.setItem('notigas_ad_text', inputAd);
+  }
+
+  if (inputUrl) {
+    localStorage.setItem('notigas_ad_url', inputUrl);
+  }
+
+  if (typeof actualizarAnunciosEnVivo === 'function') {
+    actualizarAnunciosEnVivo(inputAd, inputUrl);
   }
 
   closeAdminModal();
@@ -328,3 +338,49 @@ function borrarDenunciaAdmin(index) {
 
   renderAdminReports();
 }
+
+/* FUNCIONALIDAD DEL MODAL DE DENUNCIAS (REPORTAR CONTENIDO / USUARIO) */
+function abrirModalDenuncia(contextTitle, targetInfo) {
+  const modal = document.getElementById('modalReport');
+  const label = document.getElementById('reportTargetLabel');
+  const inputContext = document.getElementById('reportContext');
+
+  if (label) label.innerText = `Reportar ${contextTitle}: "${targetInfo}"`;
+  if (inputContext) inputContext.value = `${contextTitle} - ${targetInfo}`;
+
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeReportModal() {
+  const modal = document.getElementById('modalReport');
+  if (modal) modal.style.display = 'none';
+}
+
+function enviarDenuncia() {
+  const context = document.getElementById('reportContext')?.value || 'General';
+  const motivo = document.getElementById('selectReportMotivo')?.value || 'Contenido Ofensivo';
+  const detalle = document.getElementById('inputReportDetalle')?.value.trim() || '';
+
+  let reports = [];
+  try {
+    const raw = localStorage.getItem('notigas_user_reports');
+    if (raw) reports = JSON.parse(raw);
+  } catch(e){}
+
+  const newReport = {
+    target: context,
+    motivo: motivo,
+    detalle: detalle,
+    fecha: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  };
+
+  reports.unshift(newReport);
+  localStorage.setItem('notigas_user_reports', JSON.stringify(reports));
+
+  closeReportModal();
+  const inputDetalle = document.getElementById('inputReportDetalle');
+  if (inputDetalle) inputDetalle.value = '';
+
+  alert('🚨 Denuncia registrada de forma segura. El equipo de moderación revisará el elemento reportado.');
+}
+

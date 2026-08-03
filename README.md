@@ -1,6 +1,6 @@
 # 📦 NOTIGAS - Versión 1.0 (Bolivia)
 
-**NOTIGAS v1.0** es una plataforma móvil P2P y comunitaria para la señalización en tiempo real de garrafas de gas GLP, productos barriales (agua 20L, frutas/verduras, chatarra, detergentes) y foros de la OTB estilo Reddit, operando a **$0 costo de infraestructura de datos**.
+**NOTIGAS v1.0** es una plataforma móvil P2P y comunitaria para la señalización en tiempo real de garrafas de gas GLP, productos barriales (agua 20L, frutas/verduras, chatarra, detergentes) y noticias vecinales OTB, operando a **$0 costo de infraestructura de datos**.
 
 ---
 
@@ -9,7 +9,7 @@
 2. **🛑 Botón de Pánico Universal (`🛑 ¡ESPERA! TE SIGO`):** 1 Bip corto (0.5s) + destello LED rojo en la pantalla del chofer para todas las categorías.
 3. **✅ Desactivación Manual:** Botón **`✅ YA COMPRÉ MI GARRAFA`** para retirar señales del mapa al instante.
 4. **⏳ Expiración Diferenciada:** 72 horas para avisos/pedidos (evitando falsas expectativas a choferes) y 7 días para el Foro Barrial.
-5. **🗣️ Chat & Foro Barrial Estilo Reddit:** Muro continuo unificado de pantalla única con votos (`▲ / ▼`), flairs y moderación.
+5. **🗣️ Chat & Noticias Vecinales:** Muro continuo unificado de pantalla única con votos (`▲ / ▼`), flairs y moderación.
 6. **🔑 Panel Administrador por Gmail (`erikmartinelly@gmail.com`):** Control total de comunicados oficiales, baneos, administradores secundarios y banners de publicidad mimetizada.
 7. **💬 Redirección Directa a WhatsApp (`wa.me`):** Intercambio de fotos y ubicaciones sin saturar la base de datos.
 

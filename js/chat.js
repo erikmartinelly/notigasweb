@@ -153,13 +153,19 @@ function enviarMensajeDirecto() {
   const timeStr = new Date(nowMs).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   let userAlias = "Cliente (Tú)";
+  let isVendorSender = false;
   try {
     const saved = localStorage.getItem('notigas_user_data');
     if (saved) {
       const u = JSON.parse(saved);
       if (u.nombre) userAlias = `${u.nombre} ${u.apellido ? u.apellido[0] + '.' : ''}`;
+      if (u.role === 'chofer' || u.role === 'repartidor') isVendorSender = true;
     }
   } catch(e){}
+
+  if (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver') {
+    isVendorSender = true;
+  }
 
   const historyKey = getChatHistoryKey(vendorName);
   let history = [];
@@ -169,7 +175,7 @@ function enviarMensajeDirecto() {
   } catch(e){}
 
   const newMsg = {
-    sender: 'buyer',
+    sender: isVendorSender ? 'vendor' : 'buyer',
     name: userAlias,
     text: text,
     timeStr: timeStr,

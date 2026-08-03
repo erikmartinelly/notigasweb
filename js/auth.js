@@ -182,6 +182,10 @@ function guardarRegistroUnico() {
     const modalAuth = document.getElementById('modalWelcomeAuth');
     if (modalAuth) modalAuth.style.display = 'none';
 
+    if (typeof setAppMode === 'function') {
+      setAppMode('driver');
+    }
+
     alert(`🟢 MINI PÁGINA DE NEGOCIO PUBLICADA\n\n¡Bienvenido Repartidor ${nombreNegocio}! Tu Ficha de Negocio ha sido creada en la pestaña REPARTIDORES.`);
 
     if (typeof renderVendorCards === 'function') {
@@ -244,6 +248,11 @@ function iniciarSesionChofer() {
   localStorage.setItem('notigas_user_data', JSON.stringify(repartidorData));
 
   closeDriverModal();
+
+  if (typeof setAppMode === 'function') {
+    setAppMode('driver');
+  }
+
   alert(`🟢 MINI PÁGINA DE NEGOCIO ACTIVADA EN NOTIGAS\n\nRepartidor: ${nombreNegocio}\nCategoría: ${categoria}\nPlaca: ${plate}\nWhatsApp: ${whatsapp}\n\nSe ha abierto tu Mini Página en la pestaña REPARTIDORES.`);
   
   if (typeof renderVendorCards === 'function') {

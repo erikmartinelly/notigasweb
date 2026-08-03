@@ -16,19 +16,25 @@ function filterVendorCategory(cat, chipElem) {
 
 function getStoredVendors() {
   let list = [];
+  let deletedIds = [];
+  try {
+    const deletedRaw = localStorage.getItem('notigas_deleted_vendor_ids');
+    if (deletedRaw) deletedIds = JSON.parse(deletedRaw);
+  } catch(e){}
+
   try {
     const raw = localStorage.getItem('notigas_vendors_directory');
     if (raw) list = JSON.parse(raw);
   } catch(e){}
   
-  // Agregar también la ficha del repartidor actual si existe
+  // Agregar también la ficha del repartidor actual si existe y no ha sido eliminada por admin
   try {
     const saved = localStorage.getItem('notigas_user_data');
     if (saved) {
       const u = JSON.parse(saved);
       if ((u.role === 'chofer' || u.role === 'repartidor') && u.nombre) {
         const myId = `vendor_my_profile`;
-        if (!list.some(v => v.id === myId || v.name === u.nombre)) {
+        if (!deletedIds.includes(myId) && !list.some(v => v.id === myId || v.name === u.nombre)) {
           list.unshift({
             id: myId,
             name: u.nombre,
@@ -45,7 +51,7 @@ function getStoredVendors() {
     }
   } catch(e){}
 
-  return list;
+  return list.filter(v => !deletedIds.includes(v.id));
 }
 
 function renderVendorCards(filterCat) {
@@ -172,9 +178,21 @@ function abrirChatSoporteOficial() {
 
 function eliminarFichaAdmin(vendorId) {
   if (confirm("🗑️ ¿Deseas eliminar permanentemente esta Ficha de Repartidor?")) {
+    let deletedIds = [];
+    try {
+      const deletedRaw = localStorage.getItem('notigas_deleted_vendor_ids');
+      if (deletedRaw) deletedIds = JSON.parse(deletedRaw);
+    } catch(e){}
+
+    if (!deletedIds.includes(vendorId)) {
+      deletedIds.push(vendorId);
+      localStorage.setItem('notigas_deleted_vendor_ids', JSON.stringify(deletedIds));
+    }
+
     let list = getStoredVendors();
     list = list.filter(v => v.id !== vendorId);
     localStorage.setItem('notigas_vendors_directory', JSON.stringify(list));
+
     renderVendorCards('TODOS');
     alert("🗑️ Ficha de Repartidor eliminada con éxito.");
   }

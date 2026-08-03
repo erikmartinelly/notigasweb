@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>NOTIGAS - Mini Páginas de Negocio & Foro Vecinal OTB</title>
-  <meta name="description" content="NOTIGAS - Plataforma barrial en vivo con mapa GPS, mini páginas de negocio estilo Facebook para repartidores y mini Reddit vecinal.">
+  <meta name="description" content="NOTIGAS - Plataforma barrial en vivo con mapa GPS, mini páginas de negocio estilo Facebook para repartidores y noticias vecinales.">
 
   <!-- FAVICON E ICONOS PWA OFICIALES NOTIGAS (ICONO CAMIÓN DE GAS GLP V4) -->
   <link id="dynamicFavicon" rel="icon" type="image/svg+xml" href="favicon.svg?v=4"/>
@@ -36,17 +36,23 @@
       <img src="favicon.png?v=4" class="brand-img" alt="NOTIGAS Logo"> NOTIGAS
     </div>
     <div class="header-actions">
+      <button class="btn-mode-toggle" id="btnModeToggle" onclick="toggleAppMode()"><i class="fa-solid fa-repeat"></i> 🛍️ VECINO</button>
       <button class="btn-badge" id="btnGps"><i class="fa-solid fa-crosshairs"></i> GPS Auto</button>
       <button class="btn-driver" id="btnOpenDriver"><i class="fa-solid fa-truck-fast"></i> Mi Ficha de Repartidor</button>
       <button class="btn-config" id="btnOpenUserSettings" title="Configuración de Usuario"><i class="fa-solid fa-gear"></i></button>
     </div>
   </header>
 
+  <!-- BANNER INDICADOR DE MODO REPARTIDOR EN RUTA -->
+  <div class="driver-mode-header-banner" id="driverModeBanner" style="display: none;">
+    <i class="fa-solid fa-truck-fast"></i> <strong>MODO REPARTIDOR EN RUTA</strong> • Radar de Pedidos & Demanda en Vivo
+  </div>
+
   <!-- PESTAÑAS DE NAVEGACIÓN PRINCIPALES (4 PESTAÑAS INDEPENDIENTES) -->
   <nav>
     <button class="tab-btn active" onclick="switchTab(0)"><i class="fa-solid fa-map-location-dot"></i> 1ª MAPA EN VIVO</button>
     <button class="tab-btn" onclick="switchTab(1)"><i class="fa-solid fa-store"></i> 2ª REPARTIDORES & SERVICIOS</button>
-    <button class="tab-btn" onclick="switchTab(2)"><i class="fa-solid fa-comments"></i> 3ª VECINOS REDDIT</button>
+    <button class="tab-btn" onclick="switchTab(2)"><i class="fa-solid fa-comments"></i> 3ª NOTICIAS VECINALES</button>
     <button class="tab-btn" onclick="switchTab(3)"><i class="fa-solid fa-message"></i> 4ª CHATS PRIVADOS</button>
   </nav>
 
@@ -54,6 +60,11 @@
     <!-- PESTAÑA 1: MAPA EN VIVO CON CONEXIÓN GPS AUTOMÁTICA -->
     <div class="tab-content active" id="tab0">
       <div id="map"></div>
+
+      <!-- POPUP FLOTANTE DE ALERTA AL REPARTIDOR (CUANDO UN VECINO PRESIONA ESPÉRAME O ESCUCHÉ AL CAMIÓN) -->
+      <div class="driver-alert-popup" id="driverAlertPopup" style="display: none;">
+        <!-- Renderizado dinámico de alertas de pánico para repartidores -->
+      </div>
 
       <div class="search-box">
         <i class="fa-solid fa-magnifying-glass" onclick="buscarCalle()"></i>
@@ -65,8 +76,8 @@
         <button class="map-style-btn" onclick="setMapStyle(this, 'googleSatelite')"><i class="fa-solid fa-satellite"></i> Google Satélite HD</button>
       </div>
 
-      <!-- BOTÓN PRINCIPAL UNIFICADO CON SILUETA SVG DE GARRAFA GLP Y BOTÓN CANCELAR -->
-      <div class="floating-actions-container">
+      <!-- BOTONES Y ACCIONES PARA VISTA VECINO / COMPRADOR -->
+      <div class="floating-actions-container" id="buyerFloatingActions">
         <button class="btn-main-order" id="btnMainOrder" onclick="abrirSubmenuPedidos()"><svg class="garrafa-icon-svg" viewBox="0 0 24 24"><path d="M9 2h6v2H9V2zm8 4H7v3h10V6zm1 4H6c-1.1 0-2 .9-2 2v9c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-9c0-1.1-.9-2-2-2zM12 19c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg> 📦 HACER UN PEDIDO EN VIVO</button>
         
         <button class="btn-cancel-order" id="btnCancelOrder" style="display: none;" onclick="cancelarPedidoActivo()"><i class="fa-solid fa-circle-xmark"></i> ❌ CANCELAR PEDIDO EN VIVO</button>
@@ -75,6 +86,22 @@
           <button class="btn-panic" onclick="lanzarEspecialEsperame()"><i class="fa-solid fa-hand-paper"></i> 🛑 ESPÉRAME</button>
           <button class="btn-hear-truck" onclick="notificarEscucheCamion()"><i class="fa-solid fa-bell"></i> 🔔 ESCUCHÉ AL CAMIÓN</button>
         </div>
+      </div>
+
+      <!-- PANEL OPERATIVO FLOTANTE EXCLUSIVO PARA MODO REPARTIDOR (UBER EATS / PEDIDOSYA MODE) -->
+      <div class="floating-actions-container driver-actions-panel" id="driverFloatingActions" style="display: none;">
+        <button class="btn-driver-gps-toggle" id="btnDriverGpsToggle" onclick="toggleDriverGpsTransmission()">
+          <i class="fa-solid fa-location-arrow"></i> 🟢 INICIAR RECORRIDO EN VIVO (GPS ON)
+        </button>
+
+        <div class="action-row">
+          <button class="btn-driver-heatmap" onclick="toggleHeatmapOverlay()"><i class="fa-solid fa-fire"></i> 🔥 MAPA DE CALOR DE PEDIDOS</button>
+          <button class="btn-driver-orders-list" onclick="abrirModalDriverOrders()"><i class="fa-solid fa-list-check"></i> 📋 PEDIDOS RECIENTES EN VIVO</button>
+        </div>
+
+        <button style="width: 100%; margin-top: 6px; background: linear-gradient(135deg, #00E676, #00C853); color: #0F172A; border: none; padding: 10px; border-radius: 10px; font-weight: 900; font-size: 11.5px; cursor: pointer; box-shadow: 0 4px 14px rgba(0,230,118,0.4); display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="calcularYTrazarRutaEficiente()">
+          <i class="fa-solid fa-route"></i> 🗺️ TRAZAR RUTA OPTIMIZADA (0$ COSTO API)
+        </button>
       </div>
     </div>
 
@@ -99,12 +126,12 @@
       </div>
     </div>
 
-    <!-- PESTAÑA 3: MINI REDDIT VECINAL (AVISOS, ALERTAS & OFERTAS CON EXPIRACIÓN A 72 HORAS) -->
+    <!-- PESTAÑA 3: NOTICIAS VECINALES (AVISOS, ALERTAS & OFERTAS CON EXPIRACIÓN A 72 HORAS) -->
     <div class="tab-content" id="tab2">
-      <!-- AVISO DESTACADO SUPERIOR DE VECINOS REDDIT -->
+      <!-- AVISO DESTACADO SUPERIOR DE NOTICIAS VECINALES -->
       <div style="background: linear-gradient(135deg, rgba(255,109,0,0.15), rgba(230,81,0,0.15)); border: 1px solid rgba(255,109,0,0.3); border-radius: 12px; padding: 10px 14px; margin-bottom: 12px;">
         <div style="font-weight: 900; font-size: 13px; color: #FF6D00; display: flex; align-items: center; justify-content: space-between;">
-          <span><i class="fa-solid fa-comments"></i> 💬 TABLÓN VECINAL MINI REDDIT</span>
+          <span><i class="fa-solid fa-comments"></i> 💬 TABLÓN DE NOTICIAS VECINALES</span>
           <button class="btn-new-post" style="padding: 4px 10px; font-size: 11px;" onclick="abrirModalNuevoPost()"><i class="fa-solid fa-plus"></i> Publicar Aviso</button>
         </div>
         <div style="font-size: 11px; color: #CBD5E1; margin-top: 4px;">
@@ -554,7 +581,24 @@
     </div>
   </div>
 
-  <!-- MODAL COMENTARIOS REDDIT VECINAL -->
+  <!-- MODAL DE PEDIDOS RECIENTES EN VIVO PARA REPARTIDORES -->
+  <div class="modal" id="modalDriverOrders">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-title">
+        <span><i class="fa-solid fa-list-check"></i> Pedidos Recientes en Tu Zona (Repartidor)</span>
+        <button class="btn-close" onclick="closeDriverOrdersModal()">✕</button>
+      </div>
+      <p style="font-size: 11px; color: #94A3B8; margin-bottom: 10px;">
+        Lista en tiempo real de vecinos que solicitaron Garrafas GLP, Agua u otros productos cerca de tu ubicación:
+      </p>
+      
+      <div id="driverOrdersContainer" style="max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+        <!-- Renderizado dinámico de pedidos vecinos -->
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL COMENTARIOS NOTICIAS VECINALES -->
   <div class="modal" id="modalComments">
     <div class="modal-content" style="max-height: 85vh; display: flex; flex-direction: column;">
       <div class="modal-title">
@@ -577,7 +621,7 @@
     </div>
   </div>
 
-  <!-- MODAL NUEVO POST REDDIT -->
+  <!-- MODAL NUEVO POST NOTICIAS VECINALES -->
   <div class="modal" id="modalNuevoPost">
     <div class="modal-content">
       <div class="modal-title">

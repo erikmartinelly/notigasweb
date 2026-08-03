@@ -1,5 +1,5 @@
 /* ==========================================================================
-   NOTIGAS - MÓDULO DE MINI REDDIT VECINAL (AVISOS, VOTOS, COMENTARIOS Y EXPIRACIÓN AUTOMÁTICA DE 72 HORAS)
+   NOTIGAS - MÓDULO DE NOTICIAS VECINALES (AVISOS, VOTOS, COMENTARIOS Y EXPIRACIÓN AUTOMÁTICA DE 72 HORAS)
    ========================================================================== */
 
 const FORUM_POST_EXPIRATION_MS = 72 * 60 * 60 * 1000; // 72 Horas (3 Días) en milisegundos
@@ -69,7 +69,7 @@ function renderForumFeed() {
               💬 <span class="comment-count-num">${commentCount}</span> comentarios
             </span>
             <div style="display:flex; gap:6px; align-items:center;">
-              <button class="btn-report" onclick="abrirModalDenuncia('Aviso Reddit', '${escapedTitle}')"><i class="fa-solid fa-flag"></i> Denunciar</button>
+              <button class="btn-report" onclick="abrirModalDenuncia('Aviso Noticias Vecinales', '${escapedTitle}')"><i class="fa-solid fa-flag"></i> Denunciar</button>
               ${isAdmin ? `<button onclick="borrarPostForumAdmin(${post.id})" style="background:#D32F2F; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; font-weight:700; cursor:pointer;" title="Borrar como Admin"><i class="fa-solid fa-trash"></i> Borrar (Admin)</button>` : ''}
             </div>
           </div>
@@ -77,7 +77,7 @@ function renderForumFeed() {
       </div>
     `;
 
-    // PROPAGANDA FACEBOOK FEED AL MEDIO DEL TABLÓN DE ANUNCIOS REDDIT
+    // PROPAGANDA FACEBOOK FEED AL MEDIO DEL TABLÓN DE NOTICIAS VECINALES
     if (index === 0) {
       html += `
         <div class="ad-facebook-feed-card" onclick="abrirAnuncioWhatsApp()" style="cursor:pointer;">
@@ -86,7 +86,7 @@ function renderForumFeed() {
               <div class="ad-fb-icon"><i class="fa-solid fa-bullhorn"></i></div>
               <div class="ad-fb-info">
                 <div class="ad-fb-name" id="adForumTitle">🏢 Servicios Técnicos, Comercio Local & Anuncios OTB</div>
-                <div class="ad-fb-sub"><i class="fa-solid fa-earth-americas"></i> PUBLICIDAD PATROCINADA EN EL FEED REDDIT</div>
+                <div class="ad-fb-sub"><i class="fa-solid fa-earth-americas"></i> PUBLICIDAD PATROCINADA EN EL FEED DE NOTICIAS VECINALES</div>
               </div>
             </div>
             <span class="ad-badge">SPONSOR</span>

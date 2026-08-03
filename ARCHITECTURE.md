@@ -1,7 +1,7 @@
 # 🏗️ Arquitectura del Sistema NOTIGAS (Web App)
 
 ## 📌 Visión General
-**NOTIGAS** es una aplicación web barrial multiplataforma en tiempo real optimizada para alta afluencia de usuarios (hasta 1,000+ simultáneos), geolocalización GPS obligatoria de baja latencia, Mini Páginas de Negocio para Repartidores (estilo Facebook) y Foro Comunitario Vecinal (estilo Reddit).
+**NOTIGAS** es una aplicación web barrial multiplataforma en tiempo real optimizada para alta afluencia de usuarios (hasta 1,000+ simultáneos), geolocalización GPS obligatoria de baja latencia, Mini Páginas de Negocio para Repartidores (estilo Facebook) y Foro Comunitario (Noticias Vecinales).
 
 ---
 

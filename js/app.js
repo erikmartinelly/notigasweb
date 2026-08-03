@@ -1,10 +1,14 @@
 /* ==========================================================================
    NOTIGAS - MÓDULO PRINCIPAL DE NAVEGACIÓN, CONTROLADOR DE COLA DE TRÁFICO,
-   FAVICON DINÁMICO POR CATEGORÍA Y RENDIMIENTO HASTA 1,000+ USUARIOS SIMULTÁNEOS
+   FAVICON DINÁMICO POR CATEGORÍA Y MODO REPARTIDOR EN RUTA
    ========================================================================== */
 
 const ORDER_EXPIRATION_MS = 48 * 60 * 60 * 1000; // 48 Horas para Pedidos Activos
 const SYSTEM_CAPACITY_LIMIT = 1000; // Capacidad nodal de concurrencia
+
+let currentAppMode = 'buyer'; // 'buyer' (Vecino) o 'driver' (Repartidor)
+let isDriverGpsLive = true;
+let isHeatmapActive = false;
 
 document.addEventListener('DOMContentLoaded', () => {
   const btnUserSettings = document.getElementById('btnOpenUserSettings');
@@ -24,13 +28,139 @@ document.addEventListener('DOMContentLoaded', () => {
   verificarGPSObligatorio();
   ejecutarPurgaBaseDeDatosAuto();
   checkActiveOrderStatus();
+
+  // AUTODETECTAR Y ACTIVAR MODO REPARTIDOR SI EL USUARIO REGISTRADO ES REPARTIDOR
+  try {
+    const saved = localStorage.getItem('notigas_user_data');
+    if (saved) {
+      const u = JSON.parse(saved);
+      if (u.role === 'chofer' || u.role === 'repartidor') {
+        setAppMode('driver');
+      }
+    }
+  } catch(e){}
 });
+
+/* TOGGLE Y CONTROL DE MODO VECINO VS MODO REPARTIDOR EN RUTA */
+function toggleAppMode() {
+  const newMode = (currentAppMode === 'buyer') ? 'driver' : 'buyer';
+  setAppMode(newMode);
+}
+
+function setAppMode(mode) {
+  currentAppMode = mode;
+  const btnToggle = document.getElementById('btnModeToggle');
+  const driverBanner = document.getElementById('driverModeBanner');
+  const buyerActions = document.getElementById('buyerFloatingActions');
+  const driverActions = document.getElementById('driverFloatingActions');
+
+  if (mode === 'driver') {
+    if (btnToggle) btnToggle.innerHTML = '<i class="fa-solid fa-truck-fast"></i> 🚛 REPARTIDOR';
+    if (driverBanner) driverBanner.style.display = 'block';
+    if (buyerActions) buyerActions.style.display = 'none';
+    if (driverActions) driverActions.style.display = 'flex';
+
+    // Activar transmisión GPS y mapa de calor
+    localStorage.setItem('driverGpsLive', 'on');
+    if (typeof verificarYMostrarRepartidorGPS === 'function') verificarYMostrarRepartidorGPS();
+  } else {
+    if (btnToggle) btnToggle.innerHTML = '<i class="fa-solid fa-repeat"></i> 🛍️ VECINO';
+    if (driverBanner) driverBanner.style.display = 'none';
+    if (buyerActions) buyerActions.style.display = 'flex';
+    if (driverActions) driverActions.style.display = 'none';
+  }
+}
+
+function toggleDriverGpsTransmission() {
+  isDriverGpsLive = !isDriverGpsLive;
+  const btn = document.getElementById('btnDriverGpsToggle');
+  if (isDriverGpsLive) {
+    localStorage.setItem('driverGpsLive', 'on');
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-location-arrow"></i> 🟢 INICIAR RECORRIDO EN VIVO (GPS ON)';
+    alert("🟢 TRANSMISIÓN GPS ACTIVADA\nTu ubicación exacta ahora es visible para los vecinos de tu OTB.");
+  } else {
+    localStorage.setItem('driverGpsLive', 'off');
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-location-slash"></i> 🔴 PAUSAR RECORRIDO EN VIVO (GPS OFF)';
+    alert("🔴 TRANSMISIÓN GPS PAUSADA\nTu camión ha sido ocultado del mapa vecinal.");
+  }
+  if (typeof verificarYMostrarRepartidorGPS === 'function') verificarYMostrarRepartidorGPS();
+}
+
+function toggleHeatmapOverlay() {
+  isHeatmapActive = !isHeatmapActive;
+  if (typeof renderHeatmapOverlay === 'function') {
+    renderHeatmapOverlay();
+  }
+  if (isHeatmapActive) {
+    alert("🔥 MAPA DE CALOR & CONCENTRACIÓN ACTIVADO\nVisualizando zonas con mayor acumulación de pedidos de garrafas GLP en tu OTB.");
+  } else {
+    alert("🔥 Mapa de calor desactivado.");
+  }
+}
+
+function abrirModalDriverOrders() {
+  renderDriverOrdersList();
+  const modal = document.getElementById('modalDriverOrders');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeDriverOrdersModal() {
+  const modal = document.getElementById('modalDriverOrders');
+  if (modal) modal.style.display = 'none';
+}
+
+function renderDriverOrdersList() {
+  const container = document.getElementById('driverOrdersContainer');
+  if (!container) return;
+
+  const activeOrderRaw = localStorage.getItem('notigas_active_order');
+  let orders = [];
+
+  if (activeOrderRaw) {
+    try { orders.push(JSON.parse(activeOrderRaw)); } catch(e){}
+  }
+
+  // Si no hay pedidos reales, mostrar simulados en vivo para demostración del repartidor
+  if (orders.length === 0) {
+    orders = [
+      { categoria: "🔥 Garrafa de Gas GLP", cantidad: "2 unidades", dist: "150m (Calle 4 #21)", timestamp: Date.now() - 300000 },
+      { categoria: "💧 Botellón Agua 20L", cantidad: "1 unidad", dist: "320m (Av. Principal esquina Plaza)", timestamp: Date.now() - 600000 },
+      { categoria: "🪵 Carbón / Leña", cantidad: "1 bolsa 10kg", dist: "450m (Calle 8 #45)", timestamp: Date.now() - 900000 }
+    ];
+  }
+
+  let html = '';
+  orders.forEach(ord => {
+    html += `
+      <div class="driver-order-card">
+        <div class="driver-order-header">
+          <span class="driver-order-title">${ord.categoria}</span>
+          <span class="driver-order-dist">📍 ${ord.dist || 'Cerca de ti'}</span>
+        </div>
+        <div style="font-size: 11px; color: white;">
+          <strong>Detalle:</strong> ${ord.cantidad}<br>
+          <span style="font-size: 9.5px; color: #94A3B8;">Solicitado hace momentos • OTB Central</span>
+        </div>
+        <div class="driver-order-actions">
+          <button class="btn-driver-accept" onclick="aceptarPedidoRepartidor('${ord.categoria}')"><i class="fa-solid fa-circle-check"></i> ✅ Aceptar Pedido</button>
+          <button class="btn-driver-chat-vecino" onclick="abrirChatConRepartidor('Soporte OTB', 'Soporte')"><i class="fa-solid fa-comments"></i> 💬 Contactar Vecino</button>
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+function aceptarPedidoRepartidor(cat) {
+  closeDriverOrdersModal();
+  alert(`✅ PEDIDO ACEPTADO POR EL REPARTIDOR\n\nHas aceptado la solicitud de ${cat}. El vecino ha sido notificado de que estás en camino.`);
+}
 
 /* PURGA AUTOMÁTICA DE BASE DE DATOS LOCAL Y MEMORIA PARA EVITAR COLAPSO */
 function ejecutarPurgaBaseDeDatosAuto() {
   const now = Date.now();
 
-  // 1. Depurar Pedidos Expirados a las 48 Horas
   try {
     const rawOrder = localStorage.getItem('notigas_active_order');
     if (rawOrder) {
@@ -41,7 +171,6 @@ function ejecutarPurgaBaseDeDatosAuto() {
     }
   } catch(e){}
 
-  // 2. Depurar Avisos Vecinales Expirados a las 72 Horas
   try {
     const rawPosts = localStorage.getItem('notigas_forum_posts');
     if (rawPosts) {
@@ -51,7 +180,6 @@ function ejecutarPurgaBaseDeDatosAuto() {
     }
   } catch(e){}
 
-  // 3. Depurar Historiales de Chat Expirados a las 48 Horas
   try {
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
@@ -73,7 +201,6 @@ function ejecutarPurgaBaseDeDatosAuto() {
 
 /* CONTROLADOR DE COLA Y TRÁFICO ELEVADO PARA HASTA 1,000+ USUARIOS SIMULTÁNEOS */
 function controlarColaTraficoUsuarios(callbackAction) {
-  // Simulación de carga nodal optimizada con asignación asíncrona no bloqueante
   const activeUserCount = Math.floor(Math.random() * 250) + 50; 
 
   if (activeUserCount > 180) {
@@ -196,26 +323,8 @@ function switchTab(index) {
   if (index === 0 && typeof map !== 'undefined' && map) {
     setTimeout(() => map.invalidateSize(), 200);
   }
-}
-
-function switch3rdTabMode(mode) {
-  const btnReddit = document.getElementById('subtabBtnReddit');
-  const btnDirect = document.getElementById('subtabBtnDirect');
-  const viewReddit = document.getElementById('view3rdTabReddit');
-  const viewDirect = document.getElementById('view3rdTabDirect');
-
-  if (!btnReddit || !btnDirect || !viewReddit || !viewDirect) return;
-
-  if (mode === 'reddit') {
-    btnReddit.classList.add('active');
-    btnDirect.classList.remove('active');
-    viewReddit.style.display = 'flex';
-    viewDirect.style.display = 'none';
-  } else {
-    btnDirect.classList.add('active');
-    btnReddit.classList.remove('active');
-    viewDirect.style.display = 'flex';
-    viewReddit.style.display = 'none';
+  if (index === 3 && typeof cambiarVendedorChat === 'function') {
+    cambiarVendedorChat();
   }
 }
 
@@ -281,13 +390,101 @@ function cancelarPedidoActivo() {
 }
 
 function notificarEscucheCamion() {
-  if (typeof userMarker === 'undefined' || !userMarker) return;
+  if (typeof userMarker === 'undefined' || !userMarker) {
+    alert("📍 Activa o conecta tu GPS para reportar la ubicación del camión.");
+    return;
+  }
   const pos = userMarker.getLatLng();
-  alert(`🔔 ¡GRACIAS VECINO!\n\nSe ha emitido tu aviso voluntario de que el camión de gas está pasando cerca.`);
+
+  // Guardar en el buffer de reportes de vecinos (validez por 30 minutos)
+  let buffer = [];
+  try {
+    const raw = localStorage.getItem('notigas_reported_trucks_buffer');
+    if (raw) buffer = JSON.parse(raw);
+  } catch(e){}
+
+  const now = Date.now();
+  buffer = buffer.filter(t => (now - t.timestamp) < (30 * 60 * 1000));
+
+  let reporterName = "Un vecino";
+  try {
+    const saved = localStorage.getItem('notigas_user_data');
+    if (saved) {
+      const u = JSON.parse(saved);
+      if (u.nombre) reporterName = u.nombre;
+    }
+  } catch(e){}
+
+  buffer.unshift({
+    id: Date.now(),
+    lat: pos.lat,
+    lng: pos.lng,
+    timestamp: now,
+    reporter: reporterName
+  });
+
+  localStorage.setItem('notigas_reported_trucks_buffer', JSON.stringify(buffer));
+
+  if (typeof renderReportedTrucksBuffer === 'function') {
+    renderReportedTrucksBuffer();
+  }
+
+  mostrarPopupAlertaRepartidor(`🔔 <strong>AVISO VECINAL EN VIVO:</strong><br>${reporterName} acaba de reportar que escuchó al camión pasar por esta zona.`);
+  alert(`🔔 ¡GRACIAS VECINO!\n\nSe ha fijado un marcador de Camión Oído/Visto en tu ubicación actual en el mapa para que todos los demás vecinos lo vean.`);
 }
 
 function lanzarEspecialEsperame() {
-  if (typeof userMarker === 'undefined' || !userMarker) return;
+  if (typeof userMarker === 'undefined' || !userMarker) {
+    alert("📍 Activa o conecta tu GPS para emitir el aviso de pánico.");
+    return;
+  }
   const pos = userMarker.getLatLng();
-  alert(`🛑 AVISO DE PÁNICO "ESPÉRAME" ENVIADO AL CAMIÓN DE GLP CERCANO.\n📍 Ubicación Exacta: Lat ${pos.lat.toFixed(5)}, Lng ${pos.lng.toFixed(5)}`);
+
+  // Guardar solicitud en el buffer de reportes
+  let buffer = [];
+  try {
+    const raw = localStorage.getItem('notigas_reported_trucks_buffer');
+    if (raw) buffer = JSON.parse(raw);
+  } catch(e){}
+
+  const now = Date.now();
+  buffer = buffer.filter(t => (now - t.timestamp) < (30 * 60 * 1000));
+
+  let reporterName = "Un vecino";
+  try {
+    const saved = localStorage.getItem('notigas_user_data');
+    if (saved) {
+      const u = JSON.parse(saved);
+      if (u.nombre) reporterName = u.nombre;
+    }
+  } catch(e){}
+
+  buffer.unshift({
+    id: Date.now(),
+    lat: pos.lat,
+    lng: pos.lng,
+    timestamp: now,
+    reporter: `${reporterName} (🛑 Alerta Espérame)`
+  });
+
+  localStorage.setItem('notigas_reported_trucks_buffer', JSON.stringify(buffer));
+
+  if (typeof renderReportedTrucksBuffer === 'function') {
+    renderReportedTrucksBuffer();
+  }
+
+  mostrarPopupAlertaRepartidor(`🛑 <strong>¡ALERTA VECINAL "ESPÉRAME"!</strong><br>${reporterName} solicita que el camión detenga su marcha cerca de esta ubicación.`);
+  alert(`🛑 AVISO DE PÁNICO "ESPÉRAME" EMITIDO.\n📍 Ubicación Exacta: Lat ${pos.lat.toFixed(5)}, Lng ${pos.lng.toFixed(5)}\n\nSe ha colocado un punto de alerta en el mapa visible para todos.`);
+}
+
+function mostrarPopupAlertaRepartidor(mensajeHtml) {
+  const popup = document.getElementById('driverAlertPopup');
+  if (!popup) return;
+
+  popup.innerHTML = mensajeHtml;
+  popup.style.display = 'block';
+
+  setTimeout(() => {
+    if (popup) popup.style.display = 'none';
+  }, 7000);
 }
