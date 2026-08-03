@@ -221,7 +221,7 @@ function closeDriverModal() {
   if (modalDriver) modalDriver.style.display = 'none'; 
 }
 
-function iniciarSesionChofer() {
+function iniciarSesionRepartidor() {
   const nombreNegocio = (document.getElementById('inputDriverNombre')?.value || '').trim();
   const whatsapp = (document.getElementById('inputDriverTelRef')?.value || '').trim();
   const plate = (document.getElementById('inputDriverPlate')?.value || '').trim();
@@ -262,3 +262,5 @@ function iniciarSesionChofer() {
     switchTab(1);
   }
 }
+
+const iniciarSesionChofer = iniciarSesionRepartidor;

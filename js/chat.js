@@ -199,7 +199,7 @@ function enviarMensajeDirecto() {
     if (saved) {
       const u = JSON.parse(saved);
       if (u.nombre) userAlias = `${u.nombre} ${u.apellido ? u.apellido[0] + '.' : ''}`;
-      if (u.role === 'chofer' || u.role === 'repartidor') isVendorSender = true;
+      if (u.role === 'repartidor') isVendorSender = true;
     }
   } catch(e){}
 

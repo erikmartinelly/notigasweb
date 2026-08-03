@@ -29,19 +29,21 @@ document.addEventListener('DOMContentLoaded', () => {
   ejecutarPurgaBaseDeDatosAuto();
   checkActiveOrderStatus();
 
-  // AUTODETECTAR Y ACTIVAR MODO REPARTIDOR SI EL USUARIO REGISTRADO ES REPARTIDOR
+  // AUTODETECTAR Y ACTIVAR MODO SEGÚN ROL REGISTRADO (COMPRADOR VS REPARTIDOR)
   try {
     const saved = localStorage.getItem('notigas_user_data');
     if (saved) {
       const u = JSON.parse(saved);
-      if (u.role === 'chofer' || u.role === 'repartidor') {
+      if (u.role === 'repartidor') {
         setAppMode('driver');
+      } else {
+        setAppMode('buyer');
       }
     }
   } catch(e){}
 });
 
-/* TOGGLE Y CONTROL DE MODO VECINO VS MODO REPARTIDOR EN RUTA */
+/* TOGGLE Y CONTROL DE MODO COMPRADOR VS MODO REPARTIDOR EN RUTA */
 function toggleAppMode() {
   const newMode = (currentAppMode === 'buyer') ? 'driver' : 'buyer';
   setAppMode(newMode);
@@ -55,16 +57,16 @@ function setAppMode(mode) {
   const driverActions = document.getElementById('driverFloatingActions');
 
   if (mode === 'driver') {
-    if (btnToggle) btnToggle.innerHTML = '<i class="fa-solid fa-truck-fast"></i> 🚛 REPARTIDOR';
+    if (btnToggle) btnToggle.innerHTML = '<i class="fa-solid fa-truck-fast"></i> 🚛 MODO REPARTIDOR';
     if (driverBanner) driverBanner.style.display = 'block';
     if (buyerActions) buyerActions.style.display = 'none';
     if (driverActions) driverActions.style.display = 'flex';
 
-    // Activar transmisión GPS y mapa de calor
+    // Activar transmisión GPS
     localStorage.setItem('driverGpsLive', 'on');
     if (typeof verificarYMostrarRepartidorGPS === 'function') verificarYMostrarRepartidorGPS();
   } else {
-    if (btnToggle) btnToggle.innerHTML = '<i class="fa-solid fa-repeat"></i> 🛍️ VECINO';
+    if (btnToggle) btnToggle.innerHTML = '<i class="fa-solid fa-cart-shopping"></i> 🛍️ MODO COMPRADOR';
     if (driverBanner) driverBanner.style.display = 'none';
     if (buyerActions) buyerActions.style.display = 'flex';
     if (driverActions) driverActions.style.display = 'none';

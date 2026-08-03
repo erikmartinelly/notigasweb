@@ -399,7 +399,7 @@ function verificarYMostrarRepartidorGPS() {
     const saved = localStorage.getItem('notigas_user_data');
     if (saved) {
       const u = JSON.parse(saved);
-      if (u.role === 'chofer' || u.role === 'repartidor') {
+      if (u.role === 'repartidor') {
         hasActiveDriver = true;
       }
     }

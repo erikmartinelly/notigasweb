@@ -32,7 +32,7 @@ function getStoredVendors() {
     const saved = localStorage.getItem('notigas_user_data');
     if (saved) {
       const u = JSON.parse(saved);
-      if ((u.role === 'chofer' || u.role === 'repartidor') && u.nombre) {
+      if (u.role === 'repartidor' && u.nombre) {
         const myId = `vendor_my_profile`;
         if (!deletedIds.includes(myId) && !list.some(v => v.id === myId || v.name === u.nombre)) {
           list.unshift({
