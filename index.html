@@ -601,11 +601,19 @@
         <label>Título del Anuncio:</label>
         <input type="text" id="inputPostTitulo" placeholder="Ej: Camión de lavandina y detergente pasando por la plaza">
       </div>
-      <div class="form-group">
-        <label>Descripción / Detalle:</label>
-        <textarea id="inputPostDesc" rows="3" placeholder="Escribe tu mensaje para los vecinos (Durará 7 días)..."></textarea>
+            <label>Descripción / Detalle:</label>
+            <textarea id="inputPostDesc" rows="3" placeholder="Escribe tu mensaje para los vecinos (Durará 7 días)..."></textarea>
+          </div>
+          <button class="btn-submit" onclick="crearNuevoPost()"><i class="fa-solid fa-paper-plane"></i> Publicar Anuncio Gratis (7 días)</button>
+        </div>
       </div>
-      <button class="btn-submit" onclick="crearNuevoPost()"><i class="fa-solid fa-paper-plane"></i> Publicar Anuncio Gratis (7 días)</button>
+
+  <!-- BOTÓN FLOTANTE PERMANENTE FAB DE LANZAMIENTO DE CHAT OTB (ESTILO MESSENGER) -->
+  <button class="chat-fab-launcher" onclick="toggleFloatingChat()" title="Abrir Chat Privado OTB">
+    <i class="fa-solid fa-comments"></i>
+    <span>Chat OTB</span>
+  </button>
+
   <!-- WIDGET FLOTANTE DE CHAT PRIVADO ESTILO FACEBOOK MESSENGER / GOOGLE CHAT -->
   <div id="floatingChatWidget" class="floating-chat-popup" style="display: none;">
     <div class="chat-popup-header" onclick="minimizarFloatingChat()">

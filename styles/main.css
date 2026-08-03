@@ -1197,3 +1197,73 @@ footer.ad-banner-container {
   overflow: hidden;
 }
 
+/* BOTÓN FLOTANTE PERMANENTE FAB DE CHAT */
+.chat-fab-launcher {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 2999;
+  background: linear-gradient(135deg, #FF6D00, #E65100);
+  color: white;
+  border: 2px solid rgba(255,255,255,0.3);
+  padding: 12px 18px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 6px 25px rgba(255, 109, 0, 0.65);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.5px;
+}
+
+.chat-fab-launcher:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 10px 32px rgba(255, 109, 0, 0.85);
+  background: linear-gradient(135deg, #FF7D1A, #F55D00);
+}
+
+.chat-fab-launcher i {
+  font-size: 16px;
+}
+
+/* MEJORAS DE DISEÑO GRÁFICO GLOBAL PARA TODOS LOS BOTONES */
+button, .tab-btn, .cat-chip, .btn-submit, .btn-driver, .btn-badge {
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button:active, .tab-btn:active, .cat-chip:active {
+  transform: scale(0.96);
+}
+
+/* EFECTOS DE BRILLO Y ELEVACIÓN EN BOTONES PRINCIPALES */
+.btn-main-order {
+  transition: all 0.25s ease;
+}
+.btn-main-order:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(255,109,0,0.8);
+}
+
+.btn-panic {
+  transition: all 0.25s ease;
+}
+.btn-panic:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(211,47,47,0.7);
+}
+
+.btn-hear-truck:hover {
+  background: rgba(0, 230, 118, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,230,118,0.3);
+}
+
+.btn-badge:hover, .btn-driver:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.15);
+}
+
+

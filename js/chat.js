@@ -23,6 +23,7 @@ function abrirFloatingChat() {
   if (widget) {
     widget.style.display = 'flex';
     if (body) body.style.display = 'flex';
+    cambiarVendedorChat();
   }
 }
 
@@ -38,16 +39,34 @@ function minimizarFloatingChat() {
   }
 }
 
+function toggleFloatingChat() {
+  const widget = document.getElementById('floatingChatWidget');
+  if (widget) {
+    if (widget.style.display === 'none' || !widget.style.display) {
+      abrirFloatingChat();
+    } else {
+      cerrarFloatingChat();
+    }
+  }
+}
+
 function abrirChatDirectoVendedor(catNombre) {
   abrirFloatingChat();
 
   const sel = document.getElementById('selectVendorChat');
-  if (sel) {
+  if (sel && catNombre) {
+    let foundIndex = -1;
+    const search = catNombre.toLowerCase();
     for (let i = 0; i < sel.options.length; i++) {
-      if (sel.options[i].value.includes(catNombre) || catNombre.includes(sel.options[i].value)) {
-        sel.selectedIndex = i;
+      const val = sel.options[i].value.toLowerCase();
+      const txt = sel.options[i].text.toLowerCase();
+      if (val.includes(search) || txt.includes(search) || search.includes(val)) {
+        foundIndex = i;
         break;
       }
+    }
+    if (foundIndex !== -1) {
+      sel.selectedIndex = foundIndex;
     }
   }
   cambiarVendedorChat();
