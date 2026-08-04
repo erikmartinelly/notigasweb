@@ -45,8 +45,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* TOGGLE Y CONTROL DE MODO COMPRADOR VS MODO REPARTIDOR EN RUTA */
 function toggleAppMode() {
-  const newMode = (currentAppMode === 'buyer') ? 'driver' : 'buyer';
-  setAppMode(newMode);
+  const currentRoleLabel = (currentAppMode === 'driver') ? 'REPARTIDOR' : 'COMPRADOR';
+  const targetRoleLabel = (currentAppMode === 'driver') ? 'COMPRADOR' : 'REPARTIDOR';
+  
+  if (confirm(`🔑 MODO ACTUAL: ${currentRoleLabel}\n\nEl modo de uso se elige al iniciar sesión. Para ingresar como ${targetRoleLabel}, debes cerrar sesión e ingresar seleccionando tu nuevo rol.\n\n¿Deseas cerrar sesión ahora?`)) {
+    if (typeof cerrarSesionUsuario === 'function') {
+      cerrarSesionUsuario();
+    }
+  }
 }
 
 function setAppMode(mode) {
@@ -57,7 +63,10 @@ function setAppMode(mode) {
   const driverActions = document.getElementById('driverFloatingActions');
 
   if (mode === 'driver') {
-    if (btnToggle) btnToggle.innerHTML = '<i class="fa-solid fa-truck-fast"></i> 🚛 MODO REPARTIDOR';
+    if (btnToggle) {
+      btnToggle.innerHTML = '<i class="fa-solid fa-truck-fast"></i> 🚛 MODO REPARTIDOR';
+      btnToggle.title = 'Haz clic para cerrar sesión y cambiar de modo';
+    }
     if (driverBanner) driverBanner.style.display = 'block';
     if (buyerActions) buyerActions.style.display = 'none';
     if (driverActions) driverActions.style.display = 'flex';
@@ -66,7 +75,10 @@ function setAppMode(mode) {
     localStorage.setItem('driverGpsLive', 'on');
     if (typeof verificarYMostrarRepartidorGPS === 'function') verificarYMostrarRepartidorGPS();
   } else {
-    if (btnToggle) btnToggle.innerHTML = '<i class="fa-solid fa-cart-shopping"></i> 🛍️ MODO COMPRADOR';
+    if (btnToggle) {
+      btnToggle.innerHTML = '<i class="fa-solid fa-cart-shopping"></i> 🛍️ MODO COMPRADOR';
+      btnToggle.title = 'Haz clic para cerrar sesión y cambiar de modo';
+    }
     if (driverBanner) driverBanner.style.display = 'none';
     if (buyerActions) buyerActions.style.display = 'flex';
     if (driverActions) driverActions.style.display = 'none';

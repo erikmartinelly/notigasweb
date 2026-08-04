@@ -262,4 +262,33 @@ function iniciarSesionRepartidor() {
   }
 }
 
+function closeUserSettingsModal() {
+  const modal = document.getElementById('modalUserSettings');
+  if (modal) modal.style.display = 'none';
+}
+
+function cerrarSesionUsuario() {
+  if (confirm("🚪 ¿Estás seguro de que deseas cerrar sesión en NOTIGAS?\n\nAl cerrar sesión podrás elegir ingresar como Comprador o Repartidor.")) {
+    localStorage.removeItem('notigas_user_data');
+    localStorage.removeItem('driverGpsLive');
+    localStorage.removeItem('notigas_active_order');
+
+    closeUserSettingsModal();
+    closeDriverModal();
+
+    if (typeof setAppMode === 'function') {
+      setAppMode('buyer');
+    }
+
+    const modalAuth = document.getElementById('modalWelcomeAuth');
+    if (modalAuth) modalAuth.style.display = 'flex';
+
+    if (typeof checkActiveOrderStatus === 'function') {
+      checkActiveOrderStatus();
+    }
+
+    alert('🚪 SESIÓN CERRADA CON ÉXITO\n\nSelecciona tu rol para ingresar nuevamente.');
+  }
+}
+
 const iniciarSesionChofer = iniciarSesionRepartidor;

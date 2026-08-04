@@ -1267,113 +1267,133 @@ button:active, .tab-btn:active, .cat-chip:active {
 }
 
 /* DISEÑO ESTÉTICO DE ALTO RENDIMIENTO (0KB EXTRA) PARA MODO REPARTIDOR */
+/* DISEÑO ESTÉTICO DE ALTO RENDIMIENTO EJECUTIVO PARA MODO REPARTIDOR */
 .driver-mode-header-banner {
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.18), rgba(16, 185, 129, 0.18));
-  border-bottom: 1px solid rgba(6, 182, 212, 0.4);
-  color: #38BDF8;
-  padding: 8px 14px;
+  background: linear-gradient(90deg, rgba(14, 165, 233, 0.25) 0%, rgba(16, 185, 129, 0.25) 50%, rgba(245, 158, 11, 0.25) 100%);
+  border-bottom: 1.5px solid rgba(56, 189, 248, 0.6);
+  color: #F0F9FF;
+  padding: 10px 16px;
   text-align: center;
-  font-size: 11.5px;
-  font-weight: 800;
-  backdrop-filter: blur(8px);
-  letter-spacing: 0.5px;
+  font-size: 12px;
+  font-weight: 900;
+  backdrop-filter: blur(12px);
+  letter-spacing: 0.6px;
+  box-shadow: 0 4px 20px rgba(14, 165, 233, 0.35);
+  text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+}
+
+.driver-actions-panel {
+  background: rgba(15, 23, 42, 0.92) !important;
+  border: 1.5px solid rgba(56, 189, 248, 0.4) !important;
+  backdrop-filter: blur(16px);
+  border-radius: 18px !important;
+  padding: 14px !important;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.6), 0 0 20px rgba(14, 165, 233, 0.2) !important;
+  gap: 10px !important;
 }
 
 .btn-driver-gps-toggle {
   width: 100%;
-  background: linear-gradient(135deg, #059669, #10B981);
+  background: linear-gradient(135deg, #10B981 0%, #047857 100%);
   color: #FFFFFF;
-  border: 1.5px solid rgba(255, 255, 255, 0.25);
-  padding: 12px 14px;
-  border-radius: 12px;
-  font-size: 12.5px;
+  border: 1.5px solid rgba(167, 243, 208, 0.5);
+  padding: 13px 16px;
+  border-radius: 14px;
+  font-size: 12px;
   font-weight: 900;
   cursor: pointer;
-  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.45);
+  box-shadow: 0 4px 22px rgba(16, 185, 129, 0.5), inset 0 1px 0 rgba(255,255,255,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-driver-gps-toggle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(16, 185, 129, 0.8), inset 0 1px 0 rgba(255,255,255,0.4);
+  background: linear-gradient(135deg, #059669 0%, #065F46 100%);
+}
+
+.btn-driver-heatmap {
+  flex: 1;
+  background: linear-gradient(135deg, #FF6D00 0%, #EA580C 100%);
+  color: #FFFFFF;
+  border: 1.5px solid rgba(254, 215, 170, 0.4);
+  padding: 11px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(255, 109, 0, 0.45), inset 0 1px 0 rgba(255,255,255,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-driver-heatmap:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(234, 88, 12, 0.75);
+  background: linear-gradient(135deg, #E65100 0%, #C2410C 100%);
+}
+
+.btn-driver-orders-list {
+  flex: 1;
+  background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+  color: #FFFFFF;
+  border: 1.5px solid rgba(191, 219, 254, 0.4);
+  padding: 11px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(37, 99, 235, 0.45), inset 0 1px 0 rgba(255,255,255,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-driver-orders-list:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(37, 99, 235, 0.75);
+  background: linear-gradient(135deg, #1D4ED8 0%, #1E40AF 100%);
+}
+
+.btn-driver-route {
+  width: 100%;
+  background: linear-gradient(135deg, #0EA5E9 0%, #10B981 100%);
+  color: #0F172A;
+  border: 1.5px solid #A7F3D0;
+  padding: 13px;
+  border-radius: 14px;
+  font-weight: 900;
+  font-size: 12px;
+  cursor: pointer;
+  box-shadow: 0 6px 24px rgba(14, 165, 233, 0.5), inset 0 1px 0 rgba(255,255,255,0.4);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   letter-spacing: 0.5px;
-  transition: all 0.25s ease;
-}
-
-.btn-driver-gps-toggle:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.7);
-  background: linear-gradient(135deg, #047857, #059669);
-}
-
-.btn-driver-heatmap {
-  flex: 1;
-  background: linear-gradient(135deg, #FF6D00, #EF4444);
-  color: #FFFFFF;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 10px 8px;
-  border-radius: 10px;
-  font-size: 11px;
-  font-weight: 800;
-  cursor: pointer;
-  box-shadow: 0 4px 14px rgba(255, 109, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  transition: all 0.25s ease;
-}
-
-.btn-driver-heatmap:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
-}
-
-.btn-driver-orders-list {
-  flex: 1;
-  background: linear-gradient(135deg, #3B82F6, #1D4ED8);
-  color: #FFFFFF;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 10px 8px;
-  border-radius: 10px;
-  font-size: 11px;
-  font-weight: 800;
-  cursor: pointer;
-  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  transition: all 0.25s ease;
-}
-
-.btn-driver-orders-list:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.6);
-}
-
-.btn-driver-route {
-  width: 100%;
-  margin-top: 4px;
-  background: linear-gradient(135deg, #06B6D4, #10B981);
-  color: #0F172A;
-  border: 1.5px solid #A7F3D0;
-  padding: 11px;
-  border-radius: 12px;
-  font-weight: 900;
-  font-size: 11.5px;
-  cursor: pointer;
-  box-shadow: 0 4px 18px rgba(6, 182, 212, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  letter-spacing: 0.5px;
-  transition: all 0.25s ease;
+  text-transform: uppercase;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .btn-driver-route:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.7);
-  background: linear-gradient(135deg, #0891B2, #059669);
+  box-shadow: 0 10px 32px rgba(14, 165, 233, 0.8);
+  background: linear-gradient(135deg, #0284C7 0%, #059669 100%);
   color: #FFFFFF;
 }
 

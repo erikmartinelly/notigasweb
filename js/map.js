@@ -130,16 +130,39 @@ function applyGpsPosition(lat, lng, label) {
   verificarYMostrarRepartidorGPS();
 }
 
-/* FUNCIÓN DE TRANSMISIÓN DE POSICIONAMIENTO CON ESTRATEGIA UPSERT (CERO SATURACIÓN EN DB) */
+let lastBroadcastLat = null;
+let lastBroadcastLng = null;
+
+/* FUNCIÓN DE TRANSMISIÓN DE POSICIONAMIENTO CON ESTRATEGIA UPSERT (PROTECCIÓN ANTI-SOBRECARGA SUPABASE 0$ COSTO)
+   PROTECCIONES CLAVE:
+   1. Detención en pestaña inactiva (document.hidden) para ahorrar 100% de peticiones en segundo plano.
+   2. Umbral de movimiento mínimo (15 metros): Si el vehículo está detenido o con variación GPS insignificante, se omiten escrituras.
+   3. Frecuencia controlada (30 a 60 seg): Evita saturación de IOPS y límite de bandwidth en Supabase Free Tier.
+   4. Interpolación cliente 60 FPS: El mapa anima el movimiento suavemente sin solicitar datos extra a la BD.
+*/
 function transmitirUbicacionRepartidorServidorDB(lat, lng) {
+  // 1. Pausa si la pestaña está oculta/minimizada
+  if (document.hidden) return;
+
   const driverGpsLive = localStorage.getItem('driverGpsLive');
   if (driverGpsLive === 'off') return;
+
+  // 2. Umbral de movimiento mínimo (15 metros) para omitir escrituras cuando el camión está estacionado
+  if (lastBroadcastLat !== null && lastBroadcastLng !== null) {
+    const distMovida = calcularDistanciaMetros(lastBroadcastLat, lastBroadcastLng, lat, lng);
+    const tiempoTranscurrido = Date.now() - lastGpsBroadcastTime;
+    if (distMovida !== null && distMovida < 15 && tiempoTranscurrido < 60000) {
+      return; // Vehículo estacionado o variación insignificante
+    }
+  }
 
   try {
     const saved = localStorage.getItem('notigas_user_data');
     if (saved) {
       const u = JSON.parse(saved);
       if (u.role === 'repartidor') {
+        lastBroadcastLat = lat;
+        lastBroadcastLng = lng;
         const driverLocationPayload = {
           driver_id: u.gmail || u.nombre || "repartidor_1",
           nombre: u.nombre || "Repartidor GLP",
@@ -147,7 +170,7 @@ function transmitirUbicacionRepartidorServidorDB(lat, lng) {
           lng: lng,
           timestamp: Date.now()
         };
-        // Guardado de la última posición en caché (Reemplaza 1 sola fila sin acumular historial innecesario)
+        // Guardado UPSERT (reemplaza 1 sola fila en caché/BD sin acumular logs pesados)
         localStorage.setItem('notigas_driver_last_location', JSON.stringify(driverLocationPayload));
       }
     }
