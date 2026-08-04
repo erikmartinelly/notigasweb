@@ -148,6 +148,26 @@ function closeDriverOrdersModal() {
   if (modal) modal.style.display = 'none';
 }
 
+function obtenerIconoHtmlPorCategoria(catNombre) {
+  const c = (catNombre || '').toLowerCase();
+  if (c.includes('agua')) {
+    return `<i class="fa-solid fa-bottle-water" style="color:#00B0FF; font-size:22px; vertical-align:middle; margin-right:6px;"></i>`;
+  } else if (c.includes('chatarra')) {
+    return `<i class="fa-solid fa-recycle" style="color:#00E676; font-size:22px; vertical-align:middle; margin-right:6px;"></i>`;
+  } else if (c.includes('papel') || c.includes('cartón')) {
+    return `<i class="fa-solid fa-box-open" style="color:#FFB300; font-size:22px; vertical-align:middle; margin-right:6px;"></i>`;
+  } else if (c.includes('fruta') || c.includes('verdura')) {
+    return `<i class="fa-solid fa-apple-whole" style="color:#FF5252; font-size:22px; vertical-align:middle; margin-right:6px;"></i>`;
+  } else if (c.includes('detergente') || c.includes('limpieza')) {
+    return `<i class="fa-solid fa-pump-soap" style="color:#E040FB; font-size:22px; vertical-align:middle; margin-right:6px;"></i>`;
+  } else if (c.includes('carbón') || c.includes('leña')) {
+    return `<i class="fa-solid fa-fire" style="color:#FF6D00; font-size:22px; vertical-align:middle; margin-right:6px;"></i>`;
+  } else if (!c.includes('gas')) {
+    return `<i class="fa-solid fa-box" style="color:#94A3B8; font-size:22px; vertical-align:middle; margin-right:6px;"></i>`;
+  }
+  return `<img src="icons/garrafa_red_clean.svg" style="width:24px; height:24px; vertical-align:middle; margin-right:6px; filter:drop-shadow(0 0 4px #FF1744);" alt="Gas GLP">`;
+}
+
 function renderDriverOrdersList() {
   const container = document.getElementById('driverOrdersContainer');
   if (!container) return;
@@ -170,10 +190,11 @@ function renderDriverOrdersList() {
 
   let html = '';
   orders.forEach(ord => {
+    const iconHtml = obtenerIconoHtmlPorCategoria(ord.categoria);
     html += `
       <div class="driver-order-card">
         <div class="driver-order-header">
-          <span class="driver-order-title">${ord.categoria}</span>
+          <span class="driver-order-title" style="display:flex; align-items:center;">${iconHtml} ${ord.categoria}</span>
           <span class="driver-order-dist">📍 ${ord.dist || 'Cerca de ti'}</span>
         </div>
         <div style="font-size: 11.5px; color: white;">
@@ -294,12 +315,18 @@ function checkActiveOrderStatus() {
       const order = JSON.parse(rawOrder);
       if (btnCancel) btnCancel.style.display = 'flex';
       actualizarFaviconSegunPedido(order.categoria);
+      if (typeof renderActiveOrdersMap === 'function') {
+        renderActiveOrdersMap();
+      }
       return;
     } catch(e){}
   }
   
   if (btnCancel) btnCancel.style.display = 'none';
   actualizarFaviconSegunPedido(null);
+  if (typeof renderActiveOrdersMap === 'function') {
+    renderActiveOrdersMap();
+  }
 }
 
 /* CAMBIO DE FAVICON E ICONO DE PESTAÑA SEGÚN EL TIPO DE PEDIDO SELECCIONADO */

@@ -764,21 +764,11 @@ function cambiarCiudadCapital(cityKey) {
   currentGpsLng = mun.lon;
 
   if (map) {
-    map.flyTo([mun.lat, mun.lon], 14, { duration: 1.4 });
+    map.flyTo([mun.lat, mun.lon], 14, { duration: 1.0 });
   }
 
-  applyGpsPosition(mun.lat, mun.lon, `Ciudad: ${mun.nombre}`, false);
+  applyGpsPosition(mun.lat, mun.lon, '', false);
   localStorage.setItem('notigas_active_city', mun.nombre);
-
-  if (userMarker) {
-    userMarker.getPopup().setContent(`
-      <div style="font-family:'Roboto',sans-serif; text-align:center;">
-        <strong style="color:#FF6D00; font-size:13px;">📍 ${mun.nombre}</strong><br>
-        <span style="font-size:11px; color:#00E676; font-weight:700;">Ingresa tu calle principal arriba o arrastra la garrafa</span>
-      </div>
-    `);
-    userMarker.openPopup();
-  }
 }
 
 const alCambiarMunicipioSearch = cambiarCiudadCapital;
@@ -838,20 +828,14 @@ function buscarCalle() {
         if (inputPrin) inputPrin.value = callePrincipal;
         if (inputRef) inputRef.value = calleReferencia;
 
-        applyGpsPosition(lat, lon, `Calle: ${callePrincipal}`, false);
+        currentGpsLat = lat;
+        currentGpsLng = lon;
 
-        if (userMarker) {
-          userMarker.getPopup().setContent(`
-            <div style="font-family:'Roboto',sans-serif; text-align:center;">
-              <strong style="color:#FF6D00; font-size:13px;">🛣️ ${callePrincipal}</strong><br>
-              <span style="font-size:11px; color:#00E676; font-weight:700;">Ref: ${calleReferencia}</span><br>
-              <span style="font-size:9.5px; color:#94A3B8;">(Arrastra la garrafa a la puerta exacta)</span>
-            </div>
-          `);
-          userMarker.openPopup();
+        if (map) {
+          map.flyTo([lat, lon], 17, { duration: 1.0 });
         }
-        
-        alert(`📍 CALLE LOCALIZADA CON ÉXITO\n\nCalle Principal: ${callePrincipal}\nCalle de Referencia: ${calleReferencia}`);
+
+        applyGpsPosition(lat, lon, '', false);
       } else {
         fetch(`https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(query + ', Bolivia')}&countrycodes=bo`)
           .then(r => r.json())
@@ -868,16 +852,18 @@ function buscarCalle() {
               if (inputPrin) inputPrin.value = fbCallePrin;
               if (inputRef) inputRef.value = fbCalleRef;
 
-              applyGpsPosition(fbLat, fbLon, `Calle: ${fbCallePrin}`, false);
-              alert(`📍 CALLE ENCONTRADA\n\nCalle Principal: ${fbCallePrin}\nCalle de Referencia: ${fbCalleRef}`);
-            } else {
-              alert(`⚠️ No se encontró la calle "${query}". Puedes arrastrar la garrafa roja directamente sobre el mapa para fijar tu entrega.`);
+              currentGpsLat = fbLat;
+              currentGpsLng = fbLon;
+
+              if (map) {
+                map.flyTo([fbLat, fbLon], 17, { duration: 1.0 });
+              }
+
+              applyGpsPosition(fbLat, fbLon, '', false);
             }
           })
-          .catch(() => alert(`No se pudo geolocalizar "${query}". Arrastra el icono de la garrafa en el mapa.`));
+          .catch(() => {});
       }
     })
-    .catch(() => {
-      alert(`Error al buscar la calle. Verifica tu conexión a internet.`);
-    });
+    .catch(() => {});
 }
