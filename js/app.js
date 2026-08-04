@@ -4,7 +4,6 @@
    ========================================================================== */
 
 const ORDER_EXPIRATION_MS = 48 * 60 * 60 * 1000; // 48 Horas para Pedidos Activos
-const SYSTEM_CAPACITY_LIMIT = 1000; // Capacidad nodal de concurrencia
 
 let currentAppMode = 'buyer'; // 'buyer' (Vecino) o 'driver' (Repartidor)
 let isDriverGpsLive = true;
@@ -324,46 +323,6 @@ function ejecutarPurgaBaseDeDatosAuto() {
   } catch(e){}
 }
 
-/* CONTROLADOR DE COLA Y TRÁFICO ELEVADO PARA HASTA 1,000+ USUARIOS SIMULTÁNEOS */
-function controlarColaTraficoUsuarios(callbackAction) {
-  const activeUserCount = Math.floor(Math.random() * 250) + 50; 
-
-  if (activeUserCount > 180) {
-    let queueBanner = document.getElementById('notigasQueueBanner');
-    if (!queueBanner) {
-      queueBanner = document.createElement('div');
-      queueBanner.id = 'notigasQueueBanner';
-      queueBanner.style.cssText = `
-        position: fixed;
-        top: 60px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: linear-gradient(135deg, #FF6D00, #E65100);
-        color: white;
-        padding: 10px 16px;
-        border-radius: 12px;
-        font-size: 12px;
-        font-weight: 700;
-        z-index: 2500;
-        box-shadow: 0 4px 18px rgba(255,109,0,0.6);
-        text-align: center;
-        width: 90%;
-        max-width: 440px;
-      `;
-      document.body.appendChild(queueBanner);
-    }
-
-    queueBanner.innerHTML = `⏳ <strong>Alta afluencia de usuarios en tu OTB (+1,000 activos).</strong><br><span style="font-size:10px; opacity:0.95;">Procesando tu solicitud en cola (5 a 10 seg)...</span>`;
-    queueBanner.style.display = 'block';
-
-    setTimeout(() => {
-      if (queueBanner) queueBanner.style.display = 'none';
-      if (typeof callbackAction === 'function') callbackAction();
-    }, 4000);
-  } else {
-    if (typeof callbackAction === 'function') callbackAction();
-  }
-}
 
 function checkActiveOrderStatus() {
   ejecutarPurgaBaseDeDatosAuto();

@@ -74,7 +74,7 @@ function renderVendorCards(filterCat) {
         <div class="vendor-profile">
           <div class="vendor-avatar" style="background: rgba(0, 230, 118, 0.2); color: #00E676;">🎧</div>
           <div class="vendor-meta">
-            <span class="vendor-name" style="color: #00E676;">Servicio al Cliente & Soporte OTB</span>
+            <span class="vendor-name" style="color: #00E676;">Administrador NOTIGAS</span>
             <span class="vendor-badge-cat" style="background: rgba(0,230,118,0.2); color: #00E676;"><i class="fa-solid fa-headset"></i> Soporte Oficial NOTIGAS</span>
           </div>
         </div>

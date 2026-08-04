@@ -679,15 +679,21 @@ function conectarGPSAuto(forceReset = false) {
   // Asegurar que la posición inicial y el marcador existan de inmediato
   applyGpsPosition(currentGpsLat, currentGpsLng, "Ubicación Inicial", forceReset);
 
+  // En PC/Desktop el GPS del navegador no funciona — usar IP fallback directamente
+  const isDesktop = !/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (isDesktop) {
+    obtenerUbicacionIPFallbackDesktop(forceReset);
+    return;
+  }
+
   let gpsResolved = false;
 
-  // Temporizador de respaldo de 2.5s por si el navegador bloquea o congela la API de geolocalización
+  // Temporizador de respaldo de 1.5s por si el navegador bloquea la API de geolocalización
   const fallbackTimer = setTimeout(() => {
     if (!gpsResolved) {
-      console.log("⏱️ GPS Hardware en espera/bloqueado. Obteniendo posición de red...");
       obtenerUbicacionIPFallbackDesktop(forceReset);
     }
-  }, 2500);
+  }, 1500);
 
   if ("geolocation" in navigator) {
     try {
@@ -700,10 +706,9 @@ function conectarGPSAuto(forceReset = false) {
         (err) => {
           gpsResolved = true;
           clearTimeout(fallbackTimer);
-          console.warn("📌 Permiso o Hardware de GPS no disponible:", err.message);
           obtenerUbicacionIPFallbackDesktop(forceReset);
         },
-        { enableHighAccuracy: true, timeout: 3000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 1500, maximumAge: 0 }
       );
     } catch(e) {
       gpsResolved = true;
@@ -721,7 +726,7 @@ function conectarGPSAuto(forceReset = false) {
           applyGpsPosition(pos.coords.latitude, pos.coords.longitude, "Ubicación GPS en Vivo", false);
         },
         (watchErr) => {
-          console.warn("Watch position no activo:", watchErr?.message);
+          // silencioso — en mobile puede que tarde
         },
         { enableHighAccuracy: false, maximumAge: 15000 }
       );

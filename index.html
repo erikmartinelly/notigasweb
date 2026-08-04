@@ -48,15 +48,14 @@
       <img src="icons/garrafa_red_clean.svg" class="brand-img" alt="NOTIGAS Logo"> NOTIGAS
     </div>
     <div class="header-actions">
-      <button class="btn-mode-toggle" id="btnModeToggle" onclick="toggleAppMode()" aria-label="Cambiar modo de usuario"><i class="fa-solid fa-repeat"></i> 🛍️ VECINO</button>
       <button class="btn-badge" id="btnGps" aria-label="Conectar GPS"><i class="fa-solid fa-crosshairs"></i> GPS Auto</button>
-      <button class="btn-config" id="btnOpenUserSettings" title="Configuración" aria-label="Abrir configuración"><i class="fa-solid fa-gear"></i></button>
+      <button class="btn-config" id="btnOpenUserSettings" title="Configuración" aria-label="Abrir configuración">
+        <i class="fa-solid fa-gear"></i>
+        <span style="font-size:9px; font-weight:700; display:block; line-height:1; margin-top:2px;">Config.</span>
+      </button>
     </div>
   </header>
 
-  <!-- BANNER INDICADOR DE MODO REPARTIDOR EN RUTA -->
-  <div class="driver-mode-header-banner" id="driverModeBanner" style="display: none;">
-    <i class="fa-solid fa-truck-fast"></i> <strong>MODO REPARTIDOR EN RUTA</strong> • Radar de Pedidos & Demanda en Vivo
   </div>
 
   <!-- PESTAÑAS DE NAVEGACIÓN PRINCIPALES (3 PESTAÑAS INDEPENDIENTES) -->
@@ -216,16 +215,15 @@
 
         <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 14px 0;">
         <button class="btn-submit" onclick="guardarPrefUsuario()"><i class="fa-solid fa-floppy-disk"></i> Guardar Preferencias</button>
-        
-        <button style="width:100%; background: linear-gradient(135deg, #1565C0, #0D47A1); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 10px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="closeUserSettingsModal(); document.getElementById('modalDriver').style.display='flex';">
-          <i class="fa-solid fa-truck-fast"></i> 🚛 Registrarme como Repartidor
-        </button>
+
+        <!-- Botón de activar repartidor se inyecta por JS según si ya tiene ficha -->
+        <div id="buyerToDriverBtnContainer" style="margin-top:10px;"></div>
       </div>
 
-      <!-- SECCIÓN REPARTIDOR (solo visible si el usuario es repartidor) -->
+      <!-- SECCIÓN REPARTIDOR -->
       <div id="settingsDriverSection" style="display:none;">
         <div style="background: rgba(255,109,0,0.12); border: 1px solid rgba(255,109,0,0.3); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; font-size: 11.5px; color: #FF6D00; font-weight: 700;">
-          <i class="fa-solid fa-truck-fast"></i> Perfil: <span id="settingsDriverNameLabel">Repartidor</span>
+          <i class="fa-solid fa-truck-fast"></i> Repartidor en Ruta • <span id="settingsDriverNameLabel" style="color:#FFFFFF;">Repartidor</span>
         </div>
 
         <div class="form-group">
@@ -247,17 +245,22 @@
         <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 14px 0;">
         <button class="btn-submit" onclick="guardarPrefUsuario()"><i class="fa-solid fa-floppy-disk"></i> Guardar Preferencias</button>
 
-        <!-- ACCESO A EDITAR FICHA (OCULTO AQUÍ, NO EN HEADER) -->
+        <!-- EDITAR FICHA -->
         <button style="width:100%; background: linear-gradient(135deg, #FF6D00, #E65100); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 10px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="closeUserSettingsModal(); abrirFichaRepartidorEdicion();">
-          <i class="fa-solid fa-id-card"></i> Editar Mi Ficha de Negocio / Repartidor
+          <i class="fa-solid fa-id-card"></i> Ver / Editar Mi Ficha de Repartidor
+        </button>
+
+        <!-- CERRAR SESIÓN COMO REPARTIDOR → PASAR A COMPRADOR -->
+        <button style="width:100%; background: linear-gradient(135deg, #37474F, #263238); color: #CFD8DC; border: 1px solid rgba(255,255,255,0.15); padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 10px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="cerrarSesionRepartidorActivarComprador()">
+          <i class="fa-solid fa-arrow-right-arrow-left"></i> Cerrar sesión como Repartidor → Activar Comprador
         </button>
       </div>
 
-      <!-- ACCIONES COMUNES PARA AMBOS PERFILES -->
+      <!-- ACCIONES COMUNES -->
       <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 14px 0;">
 
       <button style="width:100%; background: linear-gradient(135deg, #D32F2F, #B71C1C); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 4px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(211,47,47,0.4);" onclick="cerrarSesionUsuario()">
-        <i class="fa-solid fa-right-from-bracket"></i> 🚪 Cerrar Sesión
+        <i class="fa-solid fa-right-from-bracket"></i> 🚪 Cerrar Sesión Completa
       </button>
 
       <button style="width:100%; background: linear-gradient(135deg, #B71C1C, #880E0E); color: #FF8A80; border: 1px solid #D32F2F; padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 10px; font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(183,28,28,0.5);" onclick="eliminarMiCuentaCompleta()">
@@ -788,7 +791,7 @@
       <div class="chat-vendor-selector" style="padding:6px 10px; background:#0F172A; border-bottom:1px solid rgba(255,255,255,0.08);">
         <label style="font-size:10px; font-weight:700; color:#FF6D00;">Conversación con:</label>
         <select id="selectVendorChat" onchange="cambiarVendedorChat()" style="font-size:11px; padding:4px;">
-          <option value="Soporte OTB">🎧 Servicio al Cliente & Soporte OTB (Chat Directo)</option>
+          <option value="Soporte OTB">🎧 Administrador NOTIGAS (Chat Directo)</option>
           <option value="Gas GLP">🔥 Camión Garrafero de Gas GLP N° 42</option>
           <option value="Agua 20L">💧 Repartidor de Agua Purificada 20L</option>
           <option value="Chatarra">♻️ Compra de Chatarra El Vecino</option>

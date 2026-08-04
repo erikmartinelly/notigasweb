@@ -183,7 +183,7 @@ function cambiarVendedorChat() {
   } else if (vendorName === 'Soporte OTB') {
     headerNotice = `
       <div style="font-size: 10px; color: #38BDF8; text-align: center; margin-bottom: 8px; background: rgba(56,189,248,0.15); padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(56,189,248,0.4); font-weight:700;">
-        🎧 CANAL DE ATENCIÓN DIRECTA CON EL ADMINISTRADOR OTB<br><span style="font-size:9px; color:#CBD5E1; font-weight:400;">Tu mensaje llegará directamente al Administrador cuando esté logueado.</span>
+        🎧 CANAL DE ATENCIÓN DIRECTA CON EL ADMINISTRADOR NOTIGAS<br><span style="font-size:9px; color:#CBD5E1; font-weight:400;">Tu mensaje llegará directamente al Administrador cuando esté logueado.</span>
       </div>
     `;
   }
@@ -269,7 +269,7 @@ function enviarMensajeDirecto() {
 
   if (isAdmin) {
     senderType = 'admin';
-    userAlias = "👑 Administrador OTB";
+    userAlias = "👑 Administrador NOTIGAS";
   } else {
     try {
       const saved = localStorage.getItem('notigas_user_data');
