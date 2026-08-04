@@ -179,8 +179,7 @@
       <div class="form-group">
         <label>Estilo de Mapa:</label>
         <select id="userPrefMapStyle" onchange="cambiarEstiloMapaPref(this.value)">
-          <option value="googleStatic">🗺️ Google Maps HD (Normal)</option>
-          <option value="googleSatelite">🛰️ Google Satélite HD (Fotografía)</option>
+          <option value="googleStatic">🗺️ Google Maps HD Ultra Rápido (Liviano)</option>
         </select>
       </div>
 
@@ -228,7 +227,7 @@
       </div>
       <div class="form-group">
         <label>Número de WhatsApp (Uso interno):</label>
-        <input type="tel" id="inputDriverTelRef" placeholder="70712345">
+        <input type="tel" id="inputDriverTelRef" placeholder="74xxxx28">
       </div>
       <div class="form-group">
         <label>Número de Placa del Vehículo / Medio de Transporte:</label>
@@ -359,7 +358,7 @@
           </div>
           <div class="form-group">
             <label>Enlace WhatsApp / Web del Anuncio:</label>
-            <input type="text" id="inputAdUrl" value="https://wa.me/59170712345?text=Hola!%20Deseo%20publicar%20mi%20anuncio%20en%20NOTIGAS">
+            <input type="text" id="inputAdUrl" value="https://wa.me/59174xxxx28?text=Hola!%20Deseo%20publicar%20mi%20anuncio%20en%20NOTIGAS">
           </div>
           <button class="btn-submit" onclick="guardarSubmenuAnuncios()"><i class="fa-solid fa-floppy-disk"></i> Guardar Configuración de Publicidad</button>
         </div>
@@ -387,10 +386,11 @@
           </div>
         </div>
 
-        <!-- SUBMENÚ 5: EXPORTACIÓN DE CORREOS CSV -->
+        <!-- SUBMENÚ 5: EXPORTACIÓN DE CORREOS Y REGISTROS CSV -->
         <div class="modal-tab-pane" id="modalPane5">
-          <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Exportar todos los correos electrónicos Gmail de usuarios registrados para campañas de Email Marketing:</p>
-          <button class="btn-csv-download" onclick="descargarListaCorreosCSV()"><i class="fa-solid fa-download"></i> 📥 Descargar Correos Gmail (.CSV)</button>
+          <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Exportación de Datos del Sistema en Formato .CSV para Excel / Google Sheets:</p>
+          <button class="btn-csv-download" onclick="descargarListaCorreosCSV()"><i class="fa-solid fa-download"></i> 📥 Descargar Lista de Correos Gmail (.CSV)</button>
+          <button class="btn-csv-download" style="background: linear-gradient(135deg, #059669, #10B981); margin-top: 8px;" onclick="descargarFichasRepartidoresCSV()"><i class="fa-solid fa-file-excel"></i> 📥 Descargar Fichas de Repartidores (.CSV)</button>
         </div>
 
         <button style="width:100%; background:none; border:1px solid rgba(255,255,255,0.15); color:#94A3B8; padding:8px; border-radius:8px; margin-top:14px; cursor:pointer; font-size:11px;" onclick="cerrarSesionAdminControl()">
@@ -469,7 +469,7 @@
           </div>
           <div class="form-group">
             <label>Número de WhatsApp (Uso interno):</label>
-            <input type="tel" id="regWhatsapp" placeholder="70712345">
+            <input type="tel" id="regWhatsapp" placeholder="74xxxx28">
           </div>
           <div class="form-group">
             <label>Número de Placa del Vehículo / Camión:</label>
@@ -543,7 +543,7 @@
       
       <div class="submenu-grid">
         <div class="submenu-card" onclick="seleccionarYPedirDirecto('🔥 Garrafa de Gas GLP')">
-          <svg class="garrafa-icon-svg" viewBox="0 0 24 24"><path d="M9 2h6v2H9V2zm8 4H7v3h10V6zm1 4H6c-1.1 0-2 .9-2 2v9c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-9c0-1.1-.9-2-2-2zM12 19c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
+          <img src="icons/garrafa_red_10kg.jpg" style="width: 38px; height: 38px; object-fit: contain; border-radius: 6px; margin-bottom: 4px;" alt="Garrafa GLP 10Kg">
           <span class="submenu-title">🔥 Garrafa GLP</span>
         </div>
         <div class="submenu-card" onclick="seleccionarYPedirDirecto('💧 Botellón Agua Purificada 20L')">

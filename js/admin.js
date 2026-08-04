@@ -153,30 +153,115 @@ function ejecutarPurgaBaseDeDatosManual() {
   }
 }
 
+function banearRepartidorAdmin(vendorId, vendorName) {
+  let deletedIds = [];
+  try {
+    const raw = localStorage.getItem('notigas_deleted_vendor_ids');
+    if (raw) deletedIds = JSON.parse(raw);
+  } catch(e){}
+
+  if (!deletedIds.includes(vendorId)) {
+    deletedIds.push(vendorId);
+    localStorage.setItem('notigas_deleted_vendor_ids', JSON.stringify(deletedIds));
+  }
+
+  // Agregar también a lista general de baneados
+  let banned = [];
+  try {
+    const raw = localStorage.getItem('notigas_banned_users');
+    if (raw) banned = JSON.parse(raw);
+  } catch(e){}
+  if (!banned.includes(vendorName)) {
+    banned.push(vendorName);
+    localStorage.setItem('notigas_banned_users', JSON.stringify(banned));
+  }
+
+  renderAdminVendorsList();
+  renderAdminDashboardKPIs();
+  if (typeof renderVendorCards === 'function') renderVendorCards('TODOS');
+
+  alert(`🚫 REPARTIDOR BANEADO\n\nEl repartidor "${vendorName}" ha sido bloqueado y su Ficha de Negocio fue removida del mapa y feed.`);
+}
+
+function desbanearRepartidorAdmin(vendorId, vendorName) {
+  let deletedIds = [];
+  try {
+    const raw = localStorage.getItem('notigas_deleted_vendor_ids');
+    if (raw) deletedIds = JSON.parse(raw);
+  } catch(e){}
+
+  deletedIds = deletedIds.filter(id => id !== vendorId);
+  localStorage.setItem('notigas_deleted_vendor_ids', JSON.stringify(deletedIds));
+
+  let banned = [];
+  try {
+    const raw = localStorage.getItem('notigas_banned_users');
+    if (raw) banned = JSON.parse(raw);
+  } catch(e){}
+  banned = banned.filter(b => b !== vendorName);
+  localStorage.setItem('notigas_banned_users', JSON.stringify(banned));
+
+  renderAdminVendorsList();
+  renderAdminDashboardKPIs();
+  if (typeof renderVendorCards === 'function') renderVendorCards('TODOS');
+
+  alert(`🔓 REPARTIDOR DESBANEADO\n\nSe restauró el acceso y la Ficha de Negocio de "${vendorName}".`);
+}
+
 function renderAdminVendorsList() {
   const container = document.getElementById('adminVendorsListContainer');
   if (!container) return;
 
+  let deletedIds = [];
+  try {
+    const raw = localStorage.getItem('notigas_deleted_vendor_ids');
+    if (raw) deletedIds = JSON.parse(raw);
+  } catch(e){}
+
+  let registeredDrivers = [];
+  try {
+    const raw = localStorage.getItem('notigas_registered_drivers_list');
+    if (raw) registeredDrivers = JSON.parse(raw);
+  } catch(e){}
+
   const defaultVendors = [
-    { name: "Gas GLP N° 42", category: "Gas GLP", plate: "3842-XYZ", verified: true },
-    { name: "Agua Cristallina 20L", category: "Agua 20L", plate: "2105-ABC", verified: true },
-    { name: "Chatarra El Vecino", category: "Chatarra", plate: "1892-DFG", verified: false },
-    { name: "EcoReciclaje Papel", category: "Papel", plate: "4412-KLS", verified: true },
-    { name: "Camión Agrícola Frutas", category: "Frutas", plate: "5011-BTR", verified: false },
-    { name: "Detergentes Limpieza", category: "Detergentes", plate: "1098-MMN", verified: true },
-    { name: "Carbonería El Fuego", category: "Carbón", plate: "2389-ZXP", verified: true }
+    { id: "vendor_1", name: "Gas GLP N° 42", category: "Gas GLP", plate: "3842-XYZ", verified: true },
+    { id: "vendor_2", name: "Agua Cristallina 20L", category: "Agua 20L", plate: "2105-ABC", verified: true },
+    { id: "vendor_3", name: "Chatarra El Vecino", category: "Chatarra", plate: "1892-DFG", verified: false },
+    { id: "vendor_4", name: "EcoReciclaje Papel", category: "Papel", plate: "4412-KLS", verified: true },
+    { id: "vendor_5", name: "Camión Agrícola Frutas", category: "Frutas", plate: "5011-BTR", verified: false },
+    { id: "vendor_6", name: "Detergentes Limpieza", category: "Detergentes", plate: "1098-MMN", verified: true },
+    { id: "vendor_7", name: "Carbonería El Fuego", category: "Carbón", plate: "2389-ZXP", verified: true }
   ];
+
+  registeredDrivers.forEach(d => {
+    if (!defaultVendors.some(v => v.name === d.nombre)) {
+      defaultVendors.unshift({
+        id: `driver_${d.id || d.whatsapp}`,
+        name: d.nombre,
+        category: d.categoria || 'Gas GLP',
+        plate: d.placa || 'Placa registrada',
+        verified: true
+      });
+    }
+  });
 
   let html = '';
   defaultVendors.forEach((v) => {
+    const isBanned = deletedIds.includes(v.id);
     html += `
-      <div style="background:#1E293B; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.08); display:flex; justify-content:space-between; align-items:center;">
+      <div style="background:#1E293B; padding:8px 10px; border-radius:8px; border:1px solid ${isBanned ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.08)'}; display:flex; justify-content:space-between; align-items:center; opacity: ${isBanned ? '0.65' : '1'};">
         <div>
-          <strong style="color:#FF6D00;">${v.verified ? '👑 ' : ''}${v.name}</strong> (${v.category})
-          <div style="font-size:9.5px; color:#94A3B8;">Placa: ${v.plate} • Estado: ${v.verified ? 'Verificado' : 'En revisión'}</div>
+          <strong style="color:${isBanned ? '#EF4444' : '#FF6D00'};">${isBanned ? '🚫 ' : (v.verified ? '👑 ' : '')}${v.name}</strong> (${v.category})
+          <div style="font-size:9.5px; color:#94A3B8;">Placa: ${v.plate} • Estado: ${isBanned ? '<span style="color:#EF4444; font-weight:700;">SUSPENDIDO / BANEADO</span>' : (v.verified ? 'Verificado' : 'En revisión')}</div>
         </div>
         <div style="display:flex; gap:4px;">
-          <button onclick="alert('👑 Estado de Verificación actualizado para ${v.name}')" style="background:#00E676; color:#0F172A; border:none; padding:3px 8px; border-radius:4px; font-weight:700; font-size:9.5px; cursor:pointer;">Verificar</button>
+          ${isBanned ? `
+            <button onclick="desbanearRepartidorAdmin('${v.id}', '${v.name}')" style="background:#00E676; color:#0F172A; border:none; padding:3px 8px; border-radius:4px; font-weight:700; font-size:9.5px; cursor:pointer;">🔓 Desbanear</button>
+          ` : `
+            <button onclick="alert('👑 Estado de Verificación actualizado para ${v.name}')" style="background:#0288D1; color:white; border:none; padding:3px 8px; border-radius:4px; font-weight:700; font-size:9.5px; cursor:pointer;">Verificar</button>
+            <button onclick="banearRepartidorAdmin('${v.id}', '${v.name}')" style="background:#D32F2F; color:white; border:none; padding:3px 8px; border-radius:4px; font-weight:700; font-size:9.5px; cursor:pointer;">🚫 Banear</button>
+          `}
         </div>
       </div>
     `;
@@ -361,6 +446,48 @@ function descargarListaCorreosCSV() {
   document.body.removeChild(link);
 
   alert(`📥 DESCARGA COMPLETADA EN FORMATO .CSV\n\nSe exportaron ${finalEmails.length} correos electrónicos de usuarios para campañas de Email Marketing.`);
+}
+
+/* DESCARGA COMPLETA DE FICHAS DE REPARTIDORES REGISTRADOS (.CSV DE REPARTIDORES) */
+function descargarFichasRepartidoresCSV() {
+  let currentAdmin = sessionStorage.getItem('notigas_admin_session');
+  
+  if (!currentAdmin || !AUTHORIZED_ADMIN_EMAILS.includes(currentAdmin.toLowerCase())) {
+    alert("⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña.");
+    abrirModalAdminLogin();
+    return;
+  }
+
+  let driversList = [];
+  try {
+    const raw = localStorage.getItem('notigas_registered_drivers_list');
+    if (raw) driversList = JSON.parse(raw);
+  } catch(e){}
+
+  if (driversList.length === 0) {
+    driversList = [
+      { nombre: "Gas GLP N° 42", whatsapp: "74xxxx28", placa: "3842-XYZ", categoria: "Gas GLP", productos: "Garrafas GLP 10kg, reguladores", zonas: "OTB Central", schedule: "07:00 a 18:00", fechaRegistro: "2026-08-01" },
+      { nombre: "Agua Cristallina 20L", whatsapp: "74xxxx28", placa: "2105-ABC", categoria: "Agua 20L", productos: "Botellones 20L, surtidores", zonas: "Zona Norte", schedule: "08:00 a 17:00", fechaRegistro: "2026-08-01" }
+    ];
+  }
+
+  let csvRows = ["Nombre Negocio/Repartidor,WhatsApp,Placa,Categoria,Productos,Zonas Recorrido,Horarios,Fecha Registro"];
+  driversList.forEach(d => {
+    csvRows.push(`"${d.nombre || ''}","${d.whatsapp || ''}","${d.placa || ''}","${d.categoria || ''}","${d.productos || ''}","${d.zonas || ''}","${d.schedule || ''}","${d.fechaRegistro || ''}"`);
+  });
+
+  const csvString = "\uFEFF" + csvRows.join("\n");
+  const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", `fichas_repartidores_notigas_${new Date().toISOString().split('T')[0]}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  alert(`📥 DESCARGA COMPLETADA EN FORMATO .CSV\n\nSe exportaron ${driversList.length} Fichas de Repartidores registradas para el panel de administración.`);
 }
 
 /* MODERACIÓN DE DENUNCIAS Y GESTIÓN DE BANEOS DE USUARIOS */

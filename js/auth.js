@@ -157,6 +157,10 @@ function fallbackIngresoGoogleManual() {
       setAppMode('driver');
     }
 
+    if (typeof verificarYActivarChatAdminAuto === 'function') {
+      verificarYActivarChatAdminAuto();
+    }
+
     alert(`✅ INGRESO GOOGLE VERIFICADO (FIREFOX OK)\n\n¡Bienvenido ${userData.nombre} (${cleanGmail})!`);
   }
 }
@@ -187,10 +191,36 @@ function handleCredentialResponse(response) {
     const modalAuth = document.getElementById('modalWelcomeAuth');
     if (modalAuth) modalAuth.style.display = 'none';
 
+    if (typeof verificarYActivarChatAdminAuto === 'function') {
+      verificarYActivarChatAdminAuto();
+    }
+
     alert(`✅ AUTENTICACIÓN GOOGLE EXITOSA\n\n¡Bienvenido ${nombre} (${gmail})! Tu cuenta ha sido registrada de forma segura.`);
   } catch(e) {
     console.error("Error al procesar credencial de Google:", e);
   }
+}
+
+function guardarRepartidorEnBaseDeDatos(repartidorObj) {
+  let driversList = [];
+  try {
+    const raw = localStorage.getItem('notigas_registered_drivers_list');
+    if (raw) driversList = JSON.parse(raw);
+  } catch(e){}
+
+  const cleanList = driversList.filter(d => 
+    d.whatsapp !== repartidorObj.whatsapp && 
+    d.nombre !== repartidorObj.nombre
+  );
+
+  const fullObj = {
+    id: Date.now(),
+    fechaRegistro: new Date().toISOString().split('T')[0],
+    ...repartidorObj
+  };
+
+  cleanList.unshift(fullObj);
+  localStorage.setItem('notigas_registered_drivers_list', JSON.stringify(cleanList));
 }
 
 function guardarRegistroUnico() {
@@ -203,8 +233,8 @@ function guardarRegistroUnico() {
     const zonas = (document.getElementById('regZonas')?.value || '').trim();
     const schedule = (document.getElementById('regSchedule')?.value || '').trim();
 
-    if (!nombreNegocio || !whatsapp || !placa || !productos) {
-      alert('Por favor completa los campos requeridos para Repartidor: Nombre, WhatsApp, Placa y ¿Qué vende?.');
+    if (!nombreNegocio || !whatsapp || !placa || !productos || !zonas) {
+      alert('⚠️ FICHA DE REPARTIDOR OBLIGATORIA\n\nPor favor completa los campos requeridos para Repartidor: Nombre de Negocio, WhatsApp, Placa, ¿Qué vende? y Zonas de recorrido.');
       return;
     }
 
@@ -216,10 +246,11 @@ function guardarRegistroUnico() {
       categoria: categoria,
       productos: productos,
       zonas: zonas,
-      schedule: schedule
+      schedule: schedule || 'Lunes a Sábado: 07:00 a 18:00'
     };
 
     localStorage.setItem('notigas_user_data', JSON.stringify(repartidorData));
+    guardarRepartidorEnBaseDeDatos(repartidorData);
 
     const modalAuth = document.getElementById('modalWelcomeAuth');
     if (modalAuth) modalAuth.style.display = 'none';
@@ -228,7 +259,7 @@ function guardarRegistroUnico() {
       setAppMode('driver');
     }
 
-    alert(`🟢 MINI PÁGINA DE NEGOCIO PUBLICADA\n\n¡Bienvenido Repartidor ${nombreNegocio}! Tu Ficha de Negocio ha sido creada en la pestaña REPARTIDORES.`);
+    alert(`🟢 MINI PÁGINA DE NEGOCIO PUBLICADA\n\n¡Bienvenido Repartidor ${nombreNegocio}! Tu Ficha de Negocio ha sido registrada y guardada para la administración.`);
 
     if (typeof renderVendorCards === 'function') {
       renderVendorCards('TODOS');
@@ -253,6 +284,10 @@ function guardarRegistroUnico() {
 
     const modalAuth = document.getElementById('modalWelcomeAuth');
     if (modalAuth) modalAuth.style.display = 'none';
+
+    if (typeof verificarYActivarChatAdminAuto === 'function') {
+      verificarYActivarChatAdminAuto();
+    }
 
     alert(`✅ REGISTRO VERIFICADO\n\nBienvenido a NOTIGAS (${gmail}).`);
   }
@@ -288,6 +323,7 @@ function iniciarSesionRepartidor() {
     schedule: schedule
   };
   localStorage.setItem('notigas_user_data', JSON.stringify(repartidorData));
+  guardarRepartidorEnBaseDeDatos(repartidorData);
 
   closeDriverModal();
 
@@ -295,7 +331,7 @@ function iniciarSesionRepartidor() {
     setAppMode('driver');
   }
 
-  alert(`🟢 MINI PÁGINA DE NEGOCIO ACTIVADA EN NOTIGAS\n\nRepartidor: ${nombreNegocio}\nCategoría: ${categoria}\nPlaca: ${plate}\nWhatsApp: ${whatsapp}\n\nSe ha abierto tu Mini Página en la pestaña REPARTIDORES.`);
+  alert(`🟢 MINI PÁGINA DE NEGOCIO ACTIVADA EN NOTIGAS\n\nRepartidor: ${nombreNegocio}\nCategoría: ${categoria}\nPlaca: ${plate}\nWhatsApp: ${whatsapp}\n\nFicha registrada correctamente.`);
   
   if (typeof renderVendorCards === 'function') {
     renderVendorCards('TODOS');

@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function abrirAnuncioWhatsApp() {
   const savedUrl = localStorage.getItem('notigas_ad_url');
   const inputUrl = document.getElementById('inputAdUrl');
-  const defaultUrl = 'https://wa.me/59170712345?text=Hola!%20Deseo%20publicar%20mi%20anuncio%20en%20NOTIGAS';
+  const defaultUrl = 'https://wa.me/59174xxxx28?text=Hola!%20Deseo%20publicar%20mi%20anuncio%20en%20NOTIGAS';
   
   const targetUrl = (savedUrl && savedUrl.trim() !== '') 
     ? savedUrl.trim() 

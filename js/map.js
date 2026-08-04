@@ -20,25 +20,23 @@ let currentGpsLat = -17.3895;
 let currentGpsLng = -66.1568;
 let heatmapLayerGroup = null;
 
-// SVG OFICIAL EN ALTA DEFINICIÓN - GARRAFA GLP PROBADA (NARANJA FUEGO CON GLOW 3D)
+// ICONO OFICIAL DE GARRAFA GLP RED 10KG CARGADA POR EL USUARIO
 const garrafaSvgMarkerHtml = `
   <div style="position: relative; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">
-    <div style="position: absolute; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,109,0,0.35); animation: pulseGlow 1.8s infinite ease-in-out;"></div>
-    <div style="position: relative; background: linear-gradient(135deg, #FF6D00, #E65100); width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2.5px solid #FFFFFF; box-shadow: 0 4px 15px rgba(255,109,0,0.8); cursor: pointer;">
-      <svg style="width: 22px; height: 22px; fill: #FFFFFF;" viewBox="0 0 24 24">
-        <path d="M9 2h6v2H9V2zm8 4H7v3h10V6zm1 4H6c-1.1 0-2 .9-2 2v9c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-9c0-1.1-.9-2-2-2zM12 19c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
-      </svg>
+    <div style="position: absolute; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,109,0,0.4); animation: pulseGlow 1.8s infinite ease-in-out;"></div>
+    <div style="position: relative; background: #0F172A; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2.5px solid #FF6D00; box-shadow: 0 4px 15px rgba(255,109,0,0.8); cursor: pointer; overflow: hidden;">
+      <img src="icons/garrafa_red_10kg.jpg" style="width: 34px; height: 34px; object-fit: contain; border-radius: 4px;" alt="Garrafa GLP 10Kg">
     </div>
   </div>
 `;
 
-// SVG E ICONO DE ALTA DEFINICIÓN DEL CAMIÓN GARRAFERO EN MOVIMIENTO EN VIVO
+// ICONO OFICIAL DEL CAMIÓN REPARTIDOR DE GARRAFA GLP EN MAPA EN VIVO
 const truckSvgMarkerHtml = `
   <div style="position: relative; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
-    <div style="position: absolute; width: 48px; height: 48px; border-radius: 50%; background: rgba(2,136,209,0.3); animation: radarPing 2s infinite ease-out;"></div>
-    <div style="position: relative; background: linear-gradient(135deg, #1E293B, #0F172A); width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2.5px solid #FF6D00; box-shadow: 0 4px 18px rgba(0,0,0,0.6); cursor: pointer;">
-      <i class="fa-solid fa-truck-fast" style="color: #FF6D00; font-size: 18px;"></i>
-      <span style="position: absolute; top: -3px; right: -3px; background: #00E676; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #1E293B;" title="En ruta activa (Actualización 30s)"></span>
+    <div style="position: absolute; width: 48px; height: 48px; border-radius: 50%; background: rgba(255,109,0,0.35); animation: radarPing 2s infinite ease-out;"></div>
+    <div style="position: relative; background: #0F172A; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2.5px solid #FF6D00; box-shadow: 0 4px 18px rgba(0,0,0,0.6); cursor: pointer; overflow: hidden;">
+      <img src="icons/garrafa_red_10kg.jpg" style="width: 36px; height: 36px; object-fit: contain; border-radius: 4px;" alt="Camión Repartidor GLP">
+      <span style="position: absolute; top: 0px; right: 0px; background: #00E676; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #1E293B;" title="En ruta activa (GPS)"></span>
     </div>
   </div>
 `;
@@ -92,29 +90,92 @@ function initNotigasMap() {
 
   const btnGps = document.getElementById('btnGps');
   if (btnGps) {
-    btnGps.addEventListener('click', () => conectarGPSAuto());
+    btnGps.addEventListener('click', () => conectarGPSAuto(true));
   }
 
-  conectarGPSAuto();
+  // HABILITAR AJUSTE DE UBICACIÓN AL HACER CLIC DIRECTO EN CUALQUIER PUNTO DEL MAPA
+  map.on('click', (e) => {
+    moverMarcadorUbicacionManual(e.latlng.lat, e.latlng.lng);
+  });
+
+  conectarGPSAuto(true);
   renderReportedTrucksBuffer();
 }
 
-function applyGpsPosition(lat, lng, label) {
+let isUserMarkerDraggedManually = false;
+
+function moverMarcadorUbicacionManual(lat, lng) {
+  isUserMarkerDraggedManually = true;
   currentGpsLat = lat;
   currentGpsLng = lng;
 
-  if (map) map.setView([lat, lng], 16);
+  if (!userMarker) {
+    applyGpsPosition(lat, lng, "Ajuste Manual", false);
+  } else {
+    userMarker.setLatLng([lat, lng]);
+  }
+
+  if (userMarker) {
+    userMarker.getPopup().setContent(`
+      <div style="font-family:'Roboto',sans-serif; text-align:center;">
+        <strong style="color:#FF6D00; font-size:13px;">📍 Ubicación de Entrega Ajustada</strong><br>
+        <span style="font-size:11px; color:#00E676; font-weight:700;">Punto fijado manualmente</span><br>
+        <span style="font-size:9.5px; color:#94A3B8;">(Arrastra para mover la puerta de entrega)</span>
+      </div>
+    `);
+    userMarker.openPopup();
+  }
+
+  verificarYMostrarRepartidorGPS();
+}
+
+function applyGpsPosition(lat, lng, label, forceReset = false) {
+  if (forceReset) {
+    isUserMarkerDraggedManually = false;
+  }
+
+  if (!isUserMarkerDraggedManually) {
+    currentGpsLat = lat;
+    currentGpsLng = lng;
+    if (map) map.setView([lat, lng], 16);
+  }
+
+  const activeLat = isUserMarkerDraggedManually ? currentGpsLat : lat;
+  const activeLng = isUserMarkerDraggedManually ? currentGpsLng : lng;
 
   if (!userMarker) {
-    userMarker = L.marker([lat, lng], { icon: garrafaIcon }).addTo(map);
+    userMarker = L.marker([activeLat, activeLng], { 
+      icon: garrafaIcon, 
+      draggable: true,
+      autoPan: true 
+    }).addTo(map);
+
     userMarker.bindPopup(`
       <div style="font-family:'Roboto',sans-serif; text-align:center;">
         <strong style="color:#FF6D00; font-size:13px;">📍 Ubicación de Entrega</strong><br>
-        <span style="font-size:11px; color:#64748B;">Punto de solicitud de pedidos</span>
+        <span style="font-size:11px; color:#64748B;">Arrastra este icono a tu puerta exacta</span>
       </div>
     `);
-  } else {
-    userMarker.setLatLng([lat, lng]);
+
+    // EVENTO DE ARRASTRE MANUAL DEL MARCADOR POR EL USUARIO
+    userMarker.on('dragend', function(e) {
+      const newPos = e.target.getLatLng();
+      isUserMarkerDraggedManually = true;
+      currentGpsLat = newPos.lat;
+      currentGpsLng = newPos.lng;
+      
+      userMarker.getPopup().setContent(`
+        <div style="font-family:'Roboto',sans-serif; text-align:center;">
+          <strong style="color:#FF6D00; font-size:13px;">📍 Ubicación de Entrega Ajustada</strong><br>
+          <span style="font-size:11px; color:#00E676; font-weight:700;">Ajustada manualmente en mapa</span><br>
+          <span style="font-size:9.5px; color:#94A3B8;">(Arrastra para mover la puerta de entrega)</span>
+        </div>
+      `);
+      userMarker.openPopup();
+      verificarYMostrarRepartidorGPS();
+    });
+  } else if (!isUserMarkerDraggedManually) {
+    userMarker.setLatLng([activeLat, activeLng]);
   }
 
   const banner = document.getElementById('gpsMandatoryBanner');
@@ -124,7 +185,7 @@ function applyGpsPosition(lat, lng, label) {
   const now = Date.now();
   if (now - lastGpsBroadcastTime > DRIVER_GPS_BROADCAST_INTERVAL_MS) {
     lastGpsBroadcastTime = now;
-    transmitirUbicacionRepartidorServidorDB(lat, lng);
+    transmitirUbicacionRepartidorServidorDB(activeLat, activeLng);
   }
 
   verificarYMostrarRepartidorGPS();
@@ -133,26 +194,36 @@ function applyGpsPosition(lat, lng, label) {
 let lastBroadcastLat = null;
 let lastBroadcastLng = null;
 
-/* FUNCIÓN DE TRANSMISIÓN DE POSICIONAMIENTO CON ESTRATEGIA UPSERT (PROTECCIÓN ANTI-SOBRECARGA SUPABASE 0$ COSTO)
-   PROTECCIONES CLAVE:
-   1. Detención en pestaña inactiva (document.hidden) para ahorrar 100% de peticiones en segundo plano.
-   2. Umbral de movimiento mínimo (15 metros): Si el vehículo está detenido o con variación GPS insignificante, se omiten escrituras.
-   3. Frecuencia controlada (30 a 60 seg): Evita saturación de IOPS y límite de bandwidth en Supabase Free Tier.
-   4. Interpolación cliente 60 FPS: El mapa anima el movimiento suavemente sin solicitar datos extra a la BD.
+/* ESTRATEGIA ADAPTATIVA INTELIGENTE DE TRANSMISIÓN GPS (AHORRO MÁXIMO DE DATOS MÓVILES + EXPERIENCIA DE VECINOS 100% PRECISA)
+   1. Pestaña en Segundo Plano / Bloqueada: Pausa 100% de emisiones (0 KB).
+   2. Camión Detenido (Movimiento < 15 metros): Emisión reducida a 1 vez cada 5 minutos (300,000 ms).
+   3. Camión en Movimiento (Movimiento >= 15 metros): Emisión óptima cada 35 segundos para permitir que vecinos salgan a tiempo.
+   4. Ahorro Total: Menos de 0.2 MB de consumo al día por repartidor.
 */
 function transmitirUbicacionRepartidorServidorDB(lat, lng) {
-  // 1. Pausa si la pestaña está oculta/minimizada
+  // 1. Pausa total si la pestaña está inactiva o pantalla bloqueada
   if (document.hidden) return;
 
   const driverGpsLive = localStorage.getItem('driverGpsLive');
   if (driverGpsLive === 'off') return;
 
-  // 2. Umbral de movimiento mínimo (15 metros) para omitir escrituras cuando el camión está estacionado
+  const now = Date.now();
+
+  // 2. Comprobar si el vehículo está detenido o en movimiento
   if (lastBroadcastLat !== null && lastBroadcastLng !== null) {
     const distMovida = calcularDistanciaMetros(lastBroadcastLat, lastBroadcastLng, lat, lng);
-    const tiempoTranscurrido = Date.now() - lastGpsBroadcastTime;
-    if (distMovida !== null && distMovida < 15 && tiempoTranscurrido < 60000) {
-      return; // Vehículo estacionado o variación insignificante
+    const tiempoTranscurrido = now - lastGpsBroadcastTime;
+
+    // Si avanzó menos de 15 metros (estacionado o en parada), emitir solo cada 5 minutos
+    if (distMovida !== null && distMovida < 15) {
+      if (tiempoTranscurrido < 300000) {
+        return; // Vehículo estacionado: Ahorro de megas y batería
+      }
+    } else {
+      // Si avanzó más de 15 metros (en movimiento activo), emitir cada 35 segundos
+      if (tiempoTranscurrido < 35000) {
+        return;
+      }
     }
   }
 
@@ -163,14 +234,15 @@ function transmitirUbicacionRepartidorServidorDB(lat, lng) {
       if (u.role === 'repartidor') {
         lastBroadcastLat = lat;
         lastBroadcastLng = lng;
+        lastGpsBroadcastTime = now;
         const driverLocationPayload = {
           driver_id: u.gmail || u.nombre || "repartidor_1",
           nombre: u.nombre || "Repartidor GLP",
           lat: lat,
           lng: lng,
-          timestamp: Date.now()
+          timestamp: now
         };
-        // Guardado UPSERT (reemplaza 1 sola fila en caché/BD sin acumular logs pesados)
+        // Guardado UPSERT (1 sola fila activa sin almacenamiento pesado)
         localStorage.setItem('notigas_driver_last_location', JSON.stringify(driverLocationPayload));
       }
     }
@@ -502,17 +574,17 @@ function renderHeatmapOverlay() {
   heatmapLayerGroup.addTo(map);
 }
 
-function conectarGPSAuto() {
+function conectarGPSAuto(forceReset = false) {
   if ("geolocation" in navigator) {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        applyGpsPosition(pos.coords.latitude, pos.coords.longitude, "Ubicación GPS Exacta");
+        applyGpsPosition(pos.coords.latitude, pos.coords.longitude, "Ubicación GPS Exacta", forceReset);
       },
       (err) => {
         console.warn("Retención de GPS estándar:", err.message);
         navigator.geolocation.getCurrentPosition(
           (pos) => {
-            applyGpsPosition(pos.coords.latitude, pos.coords.longitude, "Ubicación GPS Aproximada");
+            applyGpsPosition(pos.coords.latitude, pos.coords.longitude, "Ubicación GPS Aproximada", forceReset);
           },
           (fallbackErr) => {
             console.warn("GPS Hardware inaccesible:", fallbackErr.message);
@@ -528,7 +600,7 @@ function conectarGPSAuto() {
     try {
       navigator.geolocation.watchPosition(
         (pos) => {
-          applyGpsPosition(pos.coords.latitude, pos.coords.longitude, "Ubicación GPS en Vivo");
+          applyGpsPosition(pos.coords.latitude, pos.coords.longitude, "Ubicación GPS en Vivo", false);
         },
         null,
         { enableHighAccuracy: true, maximumAge: 5000 }

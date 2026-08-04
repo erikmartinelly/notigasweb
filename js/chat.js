@@ -10,6 +10,21 @@ function getChatHistoryKey(vendorName) {
     return 'notigas_support_global_channel';
   }
 
+  const currentAdmin = sessionStorage.getItem('notigas_admin_session');
+  const isAdmin = currentAdmin && (currentAdmin.includes('erikmartinelly') || currentAdmin.includes('leonmartinelly'));
+
+  // Si es Administrador, buscar cualquier canal de chat activo registrado para este negocio
+  if (isAdmin) {
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(`notigas_private_chat_${vendorName}_`)) {
+          return key;
+        }
+      }
+    } catch(e){}
+  }
+
   let userGmail = "anonimo";
   try {
     const saved = localStorage.getItem('notigas_user_data');
@@ -22,10 +37,42 @@ function getChatHistoryKey(vendorName) {
   return `notigas_private_chat_${vendorName}_${userGmail}`;
 }
 
+function poblarSelectorVendedoresChat() {
+  const sel = document.getElementById('selectVendorChat');
+  if (!sel) return;
+
+  const currentVal = sel.value;
+  let registeredDrivers = [];
+  try {
+    const raw = localStorage.getItem('notigas_registered_drivers_list');
+    if (raw) registeredDrivers = JSON.parse(raw);
+  } catch(e){}
+
+  registeredDrivers.forEach(d => {
+    const val = d.nombre;
+    let exists = false;
+    for (let i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value === val) {
+        exists = true;
+        break;
+      }
+    }
+    if (!exists && val) {
+      const opt = document.createElement('option');
+      opt.value = val;
+      opt.text = `🚛 ${val} (${d.categoria || 'Repartidor'})`;
+      sel.appendChild(opt);
+    }
+  });
+
+  if (currentVal) sel.value = currentVal;
+}
+
 function abrirFloatingChat() {
   const widget = document.getElementById('floatingChatWidget');
   const body = document.getElementById('chatPopupBody');
   if (widget) {
+    poblarSelectorVendedoresChat();
     widget.style.display = 'flex';
     if (body) body.style.display = 'flex';
     cambiarVendedorChat();
@@ -119,8 +166,8 @@ function cambiarVendedorChat() {
     </div>
   `;
 
-  if (vendorName === 'Soporte OTB') {
-    if (isAdmin) {
+  if (isAdmin) {
+    if (vendorName === 'Soporte OTB') {
       headerNotice = `
         <div style="font-size: 10px; color: #F59E0B; text-align: center; margin-bottom: 8px; background: rgba(245,158,11,0.15); padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(245,158,11,0.4); font-weight:700;">
           👑 CANAL DIRECTO DE ATENCIÓN AL CLIENTE (MODO ADMINISTRADOR LOGUEADO)<br><span style="font-size:9px; color:#CBD5E1; font-weight:400;">Responde en vivo a las consultas enviadas por los vecinos de la OTB.</span>
@@ -128,11 +175,17 @@ function cambiarVendedorChat() {
       `;
     } else {
       headerNotice = `
-        <div style="font-size: 10px; color: #38BDF8; text-align: center; margin-bottom: 8px; background: rgba(56,189,248,0.15); padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(56,189,248,0.4); font-weight:700;">
-          🎧 CANAL DE ATENCIÓN DIRECTA CON EL ADMINISTRADOR OTB<br><span style="font-size:9px; color:#CBD5E1; font-weight:400;">Tu mensaje llegará directamente al Administrador cuando esté logueado.</span>
+        <div style="font-size: 10px; color: #F59E0B; text-align: center; margin-bottom: 8px; background: rgba(245,158,11,0.15); padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(245,158,11,0.4); font-weight:700;">
+          👑 MONITOREO DE NEGOCIO EN VIVO (MODO ADMINISTRADOR LOGUEADO)<br><span style="font-size:9px; color:#CBD5E1; font-weight:400;">Supervisando consultas dirigidas al negocio (${vendorName}). Puedes responder como Administración.</span>
         </div>
       `;
     }
+  } else if (vendorName === 'Soporte OTB') {
+    headerNotice = `
+      <div style="font-size: 10px; color: #38BDF8; text-align: center; margin-bottom: 8px; background: rgba(56,189,248,0.15); padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(56,189,248,0.4); font-weight:700;">
+        🎧 CANAL DE ATENCIÓN DIRECTA CON EL ADMINISTRADOR OTB<br><span style="font-size:9px; color:#CBD5E1; font-weight:400;">Tu mensaje llegará directamente al Administrador cuando esté logueado.</span>
+      </div>
+    `;
   }
 
   let htmlContent = `
@@ -270,3 +323,41 @@ function enviarMensajeDirecto() {
   input.value = '';
   cambiarVendedorChat();
 }
+
+/* VERIFICACIÓN Y APERTURA AUTOMÁTICA DEL CHAT PARA CORREOS DE ADMINISTRADOR */
+function verificarYActivarChatAdminAuto() {
+  let userEmail = "";
+  try {
+    const saved = localStorage.getItem('notigas_user_data');
+    if (saved) {
+      const u = JSON.parse(saved);
+      if (u.gmail) userEmail = u.gmail.toLowerCase().trim();
+    }
+  } catch(e){}
+
+  const adminEmails = ["erikmartinelly@gmail.com", "leonmartinelly13@gmail.com"];
+  if (userEmail && adminEmails.includes(userEmail)) {
+    // 1. Iniciar sesión de administración automáticamente por coincidencia de correo
+    sessionStorage.setItem('notigas_admin_session', userEmail);
+
+    // 2. Desplegar el widget de chat flotante canalizado en Soporte OTB
+    setTimeout(() => {
+      const selectVendor = document.getElementById('selectVendorChat');
+      if (selectVendor) {
+        let foundIndex = -1;
+        for (let i = 0; i < selectVendor.options.length; i++) {
+          if (selectVendor.options[i].value === 'Soporte OTB') {
+            foundIndex = i;
+            break;
+          }
+        }
+        if (foundIndex !== -1) selectVendor.selectedIndex = foundIndex;
+      }
+      abrirFloatingChat();
+    }, 600);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  verificarYActivarChatAdminAuto();
+});
