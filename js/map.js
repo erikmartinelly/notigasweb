@@ -22,35 +22,35 @@ let heatmapLayerGroup = null;
 let activeGpsWatchId = null;
 window.isHeatmapActive = window.isHeatmapActive || false;
 
-// ICONO DE GARRAFA GLP ROJA LIMPIA SIN FONDO NI CÍRCULO CON DESTELLO ROJO
+// ICONO DE GARRAFA GLP ROJA LIMPIA SIN FONDO NI CÍRCULO CON DESTELLO ROJO EN LA GARRAFA
 const garrafaSvgMarkerHtml = `
-  <div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
-    <img src="icons/garrafa_red_clean.svg" style="width: 38px; height: 46px; object-fit: contain; filter: drop-shadow(0 0 10px #FF1744); animation: redBorderFlash 1.2s infinite alternate;" alt="Garrafa GLP Roja">
+  <div style="position: relative; width: 44px; height: 54px; display: flex; align-items: center; justify-content: center; cursor: grab;">
+    <img src="icons/garrafa_red_clean.svg" class="garrafa-red-flashing-img" alt="Garrafa GLP Roja">
   </div>
 `;
 
-// ICONO DE CAMIÓN REPARTIDOR DE GARRAFA ROJA LIMPIA SIN FONDO NI CÍRCULO CON DESTELLO ROJO
+// ICONO DE CAMIÓN REPARTIDOR CON GARRAFA ROJA LIMPIA SIN FONDO NI CÍRCULO
 const truckSvgMarkerHtml = `
-  <div style="position: relative; width: 50px; height: 56px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
-    <img src="icons/garrafa_red_clean.svg" style="width: 42px; height: 50px; object-fit: contain; filter: drop-shadow(0 0 14px #FF1744); animation: redBorderFlash 1s infinite alternate;" alt="Camión Repartidor GLP">
-    <span style="position: absolute; top: 2px; right: 2px; background: #00E676; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #0F172A; box-shadow: 0 0 8px #00E676;" title="En ruta activa (GPS)"></span>
+  <div style="position: relative; width: 50px; height: 58px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+    <img src="icons/garrafa_red_clean.svg" class="garrafa-red-flashing-img" style="width: 44px; height: 54px;" alt="Camión Repartidor GLP">
+    <span style="position: absolute; top: 0px; right: 0px; background: #00E676; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #0F172A; box-shadow: 0 0 8px #00E676;" title="En ruta activa (GPS)"></span>
   </div>
 `;
 
 const garrafaIcon = L.divIcon({
   className: 'garrafa-map-marker',
   html: garrafaSvgMarkerHtml,
-  iconSize: [44, 44],
-  iconAnchor: [22, 22],
-  popupAnchor: [0, -22]
+  iconSize: [44, 54],
+  iconAnchor: [22, 54],
+  popupAnchor: [0, -54]
 });
 
 const truckIcon = L.divIcon({
   className: 'truck-map-marker',
   html: truckSvgMarkerHtml,
-  iconSize: [48, 48],
-  iconAnchor: [24, 24],
-  popupAnchor: [0, -24]
+  iconSize: [50, 58],
+  iconAnchor: [25, 58],
+  popupAnchor: [0, -58]
 });
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -84,6 +84,9 @@ function initNotigasMap() {
     moverMarcadorUbicacionManual(e.latlng.lat, e.latlng.lng);
   });
 
+  // CREAR DE INMEDIATO EL MARCADOR DE ENTREGA PARA PERMITIR ARRASTRE MANUAL AL INSTANTE
+  applyGpsPosition(currentGpsLat, currentGpsLng, "Ubicación Inicial", false);
+
   conectarGPSAuto(true);
   renderReportedTrucksBuffer();
 }
@@ -106,7 +109,7 @@ function moverMarcadorUbicacionManual(lat, lng) {
       <div style="font-family:'Roboto',sans-serif; text-align:center;">
         <strong style="color:#FF6D00; font-size:13px;">📍 Ubicación de Entrega Ajustada</strong><br>
         <span style="font-size:11px; color:#00E676; font-weight:700;">Punto fijado manualmente</span><br>
-        <span style="font-size:9.5px; color:#94A3B8;">(Arrastra para mover la puerta de entrega)</span>
+        <span style="font-size:9.5px; color:#94A3B8;">(Arrastra la garrafa a la puerta exacta de tu casa)</span>
       </div>
     `);
     userMarker.openPopup();
@@ -129,21 +132,28 @@ function applyGpsPosition(lat, lng, label, forceReset = false) {
   const activeLat = isUserMarkerDraggedManually ? currentGpsLat : lat;
   const activeLng = isUserMarkerDraggedManually ? currentGpsLng : lng;
 
-  if (!userMarker) {
+  if (!userMarker && map) {
     userMarker = L.marker([activeLat, activeLng], { 
       icon: garrafaIcon, 
       draggable: true,
       autoPan: true 
     }).addTo(map);
 
+    if (userMarker.dragging) {
+      userMarker.dragging.enable();
+    }
+
     userMarker.bindPopup(`
       <div style="font-family:'Roboto',sans-serif; text-align:center;">
         <strong style="color:#FF6D00; font-size:13px;">📍 Ubicación de Entrega</strong><br>
-        <span style="font-size:11px; color:#64748B;">Arrastra este icono a tu puerta exacta</span>
+        <span style="font-size:11px; color:#64748B;">Arrastra la garrafa a la puerta exacta de tu casa</span>
       </div>
     `);
 
-    // EVENTO DE ARRASTRE MANUAL DEL MARCADOR POR EL USUARIO
+    userMarker.on('dragstart', function() {
+      isUserMarkerDraggedManually = true;
+    });
+
     userMarker.on('dragend', function(e) {
       const newPos = e.target.getLatLng();
       isUserMarkerDraggedManually = true;
@@ -154,13 +164,13 @@ function applyGpsPosition(lat, lng, label, forceReset = false) {
         <div style="font-family:'Roboto',sans-serif; text-align:center;">
           <strong style="color:#FF6D00; font-size:13px;">📍 Ubicación de Entrega Ajustada</strong><br>
           <span style="font-size:11px; color:#00E676; font-weight:700;">Ajustada manualmente en mapa</span><br>
-          <span style="font-size:9.5px; color:#94A3B8;">(Arrastra para mover la puerta de entrega)</span>
+          <span style="font-size:9.5px; color:#94A3B8;">(Arrastra la garrafa a la puerta exacta de tu casa)</span>
         </div>
       `);
       userMarker.openPopup();
       verificarYMostrarRepartidorGPS();
     });
-  } else if (!isUserMarkerDraggedManually) {
+  } else if (userMarker && !isUserMarkerDraggedManually) {
     userMarker.setLatLng([activeLat, activeLng]);
   }
 
@@ -313,6 +323,98 @@ function formatearDistanciaTriangulada(distMetros) {
 
 let activeOrderLayerGroup = null;
 
+function obtenerIconoCategoriaMapa(catNombre) {
+  const c = (catNombre || '').toLowerCase();
+  
+  let iconContent = '';
+  let badgeLabel = 'Gas GLP';
+  let badgeColor = '#FF1744';
+
+  if (c.includes('agua')) {
+    badgeLabel = '💧 Agua';
+    badgeColor = '#00B0FF';
+    iconContent = `
+      <div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #00B0FF);">
+        <i class="fa-solid fa-bottle-water" style="font-size: 36px; color: #00B0FF; animation: pulseGlow 1.2s infinite alternate;"></i>
+      </div>
+    `;
+  } else if (c.includes('chatarra')) {
+    badgeLabel = '♻️ Chatarra';
+    badgeColor = '#00E676';
+    iconContent = `
+      <div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #00E676);">
+        <i class="fa-solid fa-recycle" style="font-size: 36px; color: #00E676; animation: pulseGlow 1.2s infinite alternate;"></i>
+      </div>
+    `;
+  } else if (c.includes('papel') || c.includes('cartón')) {
+    badgeLabel = '📄 Papel';
+    badgeColor = '#FFB300';
+    iconContent = `
+      <div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #FFB300);">
+        <i class="fa-solid fa-box-open" style="font-size: 34px; color: #FFB300;"></i>
+      </div>
+    `;
+  } else if (c.includes('fruta') || c.includes('verdura')) {
+    badgeLabel = '🍎 Frutas';
+    badgeColor = '#FF5252';
+    iconContent = `
+      <div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #FF5252);">
+        <i class="fa-solid fa-apple-whole" style="font-size: 34px; color: #FF5252;"></i>
+      </div>
+    `;
+  } else if (c.includes('detergente') || c.includes('limpieza')) {
+    badgeLabel = '🧼 Detergente';
+    badgeColor = '#E040FB';
+    iconContent = `
+      <div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #E040FB);">
+        <i class="fa-solid fa-pump-soap" style="font-size: 34px; color: #E040FB;"></i>
+      </div>
+    `;
+  } else if (c.includes('carbón') || c.includes('leña')) {
+    badgeLabel = '🪵 Carbón';
+    badgeColor = '#FF6D00';
+    iconContent = `
+      <div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #FF6D00);">
+        <i class="fa-solid fa-fire" style="font-size: 34px; color: #FF6D00;"></i>
+      </div>
+    `;
+  } else if (!c.includes('gas')) {
+    badgeLabel = '📦 Otros';
+    badgeColor = '#94A3B8';
+    iconContent = `
+      <div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #94A3B8);">
+        <i class="fa-solid fa-box" style="font-size: 34px; color: #94A3B8;"></i>
+      </div>
+    `;
+  } else {
+    // GAS GLP - GARRAFA ROJA LIMPIA
+    badgeLabel = '🔥 Gas GLP';
+    badgeColor = '#FF1744';
+    iconContent = `
+      <div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center;">
+        <img src="icons/garrafa_red_clean.svg" class="garrafa-red-flashing-img" style="width:38px; height:46px;" alt="Garrafa GLP">
+      </div>
+    `;
+  }
+
+  const markerHtml = `
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+      ${iconContent}
+      <div style="margin-top: 2px; background: #0F172A; color: white; border: 1.5px solid ${badgeColor}; padding: 2px 7px; border-radius: 12px; font-size: 10px; font-weight: 900; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
+        ${badgeLabel}
+      </div>
+    </div>
+  `;
+
+  return L.divIcon({
+    className: 'category-order-marker',
+    html: markerHtml,
+    iconSize: [70, 75],
+    iconAnchor: [35, 75],
+    popupAnchor: [0, -75]
+  });
+}
+
 function renderActiveOrdersMap() {
   if (!map) return;
   if (!activeOrderLayerGroup) {
@@ -328,14 +430,15 @@ function renderActiveOrdersMap() {
     if (order.lat && order.lng) {
       const dist = calcularDistanciaMetros(currentGpsLat, currentGpsLng, order.lat, order.lng);
       const distStr = formatearDistanciaTriangulada(dist);
+      const categoryIcon = obtenerIconoCategoriaMapa(order.categoria);
 
-      const orderMarker = L.marker([order.lat, order.lng], { icon: garrafaIcon });
+      const orderMarker = L.marker([order.lat, order.lng], { icon: categoryIcon });
       orderMarker.bindPopup(`
         <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
           <strong style="color:#FF6D00; font-size:13px;">📦 Pedido Vecinal Solicitado</strong><br>
-          <span style="font-size:11px; color:#CBD5E1;">${order.categoria} (${order.cantidad})</span><br>
+          <span style="font-size:11px; color:#CBD5E1; font-weight:700;">${order.categoria} (${order.cantidad})</span><br>
           <span style="font-size:10px; color:#00E676; font-weight:700;">📍 Triangulación: ${distStr}</span><br>
-          <button style="margin-top:6px; background:#00E676; color:#0F172A; border:none; padding:4px 8px; border-radius:6px; font-size:10px; font-weight:900; cursor:pointer;" onclick="aceptarPedidoRepartidor('${order.categoria}')">✅ Atender Pedido</button>
+          <button style="margin-top:6px; background:#00E676; color:#0F172A; border:none; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:900; cursor:pointer;" onclick="aceptarPedidoRepartidor('${order.categoria}')">✅ Atender Pedido</button>
         </div>
       `);
       activeOrderLayerGroup.addLayer(orderMarker);
@@ -573,30 +676,40 @@ function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
 }
 
 function conectarGPSAuto(forceReset = false) {
+  // Asegurar que la posición inicial y el marcador existan de inmediato
+  applyGpsPosition(currentGpsLat, currentGpsLng, "Ubicación Inicial", forceReset);
+
+  let gpsResolved = false;
+
+  // Temporizador de respaldo de 2.5s por si el navegador bloquea o congela la API de geolocalización
+  const fallbackTimer = setTimeout(() => {
+    if (!gpsResolved) {
+      console.log("⏱️ GPS Hardware en espera/bloqueado. Obteniendo posición de red...");
+      obtenerUbicacionIPFallbackDesktop(forceReset);
+    }
+  }, 2500);
+
   if ("geolocation" in navigator) {
-    // 1. Intento primario ultra rápido (compatible con Navegadores de Computadora y Celulares)
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        applyGpsPosition(pos.coords.latitude, pos.coords.longitude, "Ubicación GPS Exacta", forceReset);
-      },
-      (err) => {
-        console.warn("📌 GPS Hardware no disponible o bloqueado en navegador PC:", err.message);
-        
-        // 2. Intento secundario con enableHighAccuracy = false (ideal para laptops y PCs de escritorio)
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            applyGpsPosition(pos.coords.latitude, pos.coords.longitude, "Ubicación Georeferenciada PC", forceReset);
-          },
-          (fallbackErr) => {
-            console.warn("📌 Fallback GPS PC finalizado:", fallbackErr.message);
-            // 3. Fallback terciario por Red IP para computadoras sin chip GPS
-            obtenerUbicacionIPFallbackDesktop(forceReset);
-          },
-          { enableHighAccuracy: false, timeout: 5000, maximumAge: 120000 }
-        );
-      },
-      { enableHighAccuracy: true, timeout: 4000, maximumAge: 0 }
-    );
+    try {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          gpsResolved = true;
+          clearTimeout(fallbackTimer);
+          applyGpsPosition(pos.coords.latitude, pos.coords.longitude, "Ubicación GPS Exacta", forceReset);
+        },
+        (err) => {
+          gpsResolved = true;
+          clearTimeout(fallbackTimer);
+          console.warn("📌 Permiso o Hardware de GPS no disponible:", err.message);
+          obtenerUbicacionIPFallbackDesktop(forceReset);
+        },
+        { enableHighAccuracy: true, timeout: 3000, maximumAge: 0 }
+      );
+    } catch(e) {
+      gpsResolved = true;
+      clearTimeout(fallbackTimer);
+      obtenerUbicacionIPFallbackDesktop(forceReset);
+    }
 
     try {
       if (activeGpsWatchId !== null && navigator.geolocation.clearWatch) {
@@ -608,12 +721,14 @@ function conectarGPSAuto(forceReset = false) {
           applyGpsPosition(pos.coords.latitude, pos.coords.longitude, "Ubicación GPS en Vivo", false);
         },
         (watchErr) => {
-          console.warn("Watch position no soportado en este PC:", watchErr?.message);
+          console.warn("Watch position no activo:", watchErr?.message);
         },
-        { enableHighAccuracy: false, maximumAge: 10000 }
+        { enableHighAccuracy: false, maximumAge: 15000 }
       );
     } catch(e){}
   } else {
+    gpsResolved = true;
+    clearTimeout(fallbackTimer);
     obtenerUbicacionIPFallbackDesktop(forceReset);
   }
 }
@@ -625,39 +740,48 @@ function iniciarMovimientoRepartidor() {
   }
 }
 
-function setMapStyle(btnElem, styleKey) {
-  document.querySelectorAll('.map-style-btn').forEach(b => b.classList.remove('active'));
-  if (btnElem) btnElem.classList.add('active');
-  cambiarEstiloMapaPref(styleKey);
-}
+/* COORDENADAS OFICIALES GEOBOLIVIA PARA LAS 9 CAPITALES DE BOLIVIA + EL ALTO Y MUNICIPIOS */
+const GEOBOLIVIA_MUNICIPIOS = [
+  { key: "cochabamba", nombre: "Cochabamba", keywords: ["cercado", "cochabamba", "cbba"], lat: -17.3895, lon: -66.1568, querySuffix: "Cercado, Cochabamba, Bolivia" },
+  { key: "lapaz", nombre: "La Paz", keywords: ["la paz", "lapaz"], lat: -16.4897, lon: -68.1193, querySuffix: "La Paz, Bolivia" },
+  { key: "santacruz", nombre: "Santa Cruz", keywords: ["santa cruz", "santacruz"], lat: -17.7833, lon: -63.1821, querySuffix: "Santa Cruz de la Sierra, Bolivia" },
+  { key: "sucre", nombre: "Sucre", keywords: ["sucre"], lat: -19.0333, lon: -65.2628, querySuffix: "Sucre, Bolivia" },
+  { key: "oruro", nombre: "Oruro", keywords: ["oruro"], lat: -17.9667, lon: -67.1167, querySuffix: "Oruro, Bolivia" },
+  { key: "potosi", nombre: "Potosí", keywords: ["potosi", "potosí"], lat: -19.5833, lon: -65.7500, querySuffix: "Potosí, Bolivia" },
+  { key: "tarija", nombre: "Tarija", keywords: ["tarija"], lat: -21.5333, lon: -64.7333, querySuffix: "Tarija, Bolivia" },
+  { key: "trinidad", nombre: "Trinidad", keywords: ["trinidad", "beni"], lat: -14.8333, lon: -64.9000, querySuffix: "Trinidad, Beni, Bolivia" },
+  { key: "cobija", nombre: "Cobija", keywords: ["cobija", "pando"], lat: -11.0333, lon: -68.7667, querySuffix: "Cobija, Pando, Bolivia" },
+  { key: "elalto", nombre: "El Alto", keywords: ["el alto", "elalto"], lat: -16.5000, lon: -68.1500, querySuffix: "El Alto, Bolivia" },
+  { key: "sacaba", nombre: "Sacaba", keywords: ["sacaba", "huayllani"], lat: -17.4041, lon: -66.0404, querySuffix: "Sacaba, Cochabamba, Bolivia" },
+  { key: "quillacollo", nombre: "Quillacollo", keywords: ["quillacollo", "urkupiña"], lat: -17.3939, lon: -66.2797, querySuffix: "Quillacollo, Cochabamba, Bolivia" },
+  { key: "tiquipaya", nombre: "Tiquipaya", keywords: ["tiquipaya"], lat: -17.3381, lon: -66.2189, querySuffix: "Tiquipaya, Cochabamba, Bolivia" },
+  { key: "colcapirhua", nombre: "Colcapirhua", keywords: ["colcapirhua"], lat: -17.3908, lon: -66.2386, querySuffix: "Colcapirhua, Cochabamba, Bolivia" }
+];
 
-function cambiarEstiloMapaPref(styleKey) {
-  localStorage.setItem('notigas_pref_map_style', styleKey);
-  if (map && mapTileLayers) {
-    Object.keys(mapTileLayers).forEach(k => {
-      if (map.hasLayer(mapTileLayers[k])) map.removeLayer(mapTileLayers[k]);
-    });
-    if (mapTileLayers[styleKey]) {
-      mapTileLayers[styleKey].addTo(map);
-    }
+function cambiarCiudadCapital(cityKey) {
+  const mun = GEOBOLIVIA_MUNICIPIOS.find(m => m.key === cityKey) || GEOBOLIVIA_MUNICIPIOS[0];
+  currentGpsLat = mun.lat;
+  currentGpsLng = mun.lon;
+
+  if (map) {
+    map.flyTo([mun.lat, mun.lon], 14, { duration: 1.4 });
+  }
+
+  applyGpsPosition(mun.lat, mun.lon, `Ciudad: ${mun.nombre}`, false);
+  localStorage.setItem('notigas_active_city', mun.nombre);
+
+  if (userMarker) {
+    userMarker.getPopup().setContent(`
+      <div style="font-family:'Roboto',sans-serif; text-align:center;">
+        <strong style="color:#FF6D00; font-size:13px;">📍 ${mun.nombre}</strong><br>
+        <span style="font-size:11px; color:#00E676; font-weight:700;">Ingresa tu calle principal arriba o arrastra la garrafa</span>
+      </div>
+    `);
+    userMarker.openPopup();
   }
 }
 
-/* DICCIONARIO Y COORDENADAS OFICIALES GEOBOLIVIA POR MUNICIPIO PARA COCHABAMBA Y BOLIVIA */
-const GEOBOLIVIA_MUNICIPIOS = [
-  { nombre: "Cochabamba (Cercado)", keywords: ["cercado", "cochabamba", "cbba"], lat: -17.3895, lon: -66.1568, querySuffix: "Cercado, Cochabamba, Bolivia" },
-  { nombre: "Sacaba", keywords: ["sacaba", "huayllani", "el morro"], lat: -17.4041, lon: -66.0404, querySuffix: "Sacaba, Cochabamba, Bolivia" },
-  { nombre: "Quillacollo", keywords: ["quillacollo", "urkupiña"], lat: -17.3939, lon: -66.2797, querySuffix: "Quillacollo, Cochabamba, Bolivia" },
-  { nombre: "Tiquipaya", keywords: ["tiquipaya", "trojes"], lat: -17.3383, lon: -66.2167, querySuffix: "Tiquipaya, Cochabamba, Bolivia" },
-  { nombre: "Colcapirhua", keywords: ["colcapirhua", "kami"], lat: -17.3878, lon: -66.2361, querySuffix: "Colcapirhua, Cochabamba, Bolivia" },
-  { nombre: "Vinto", keywords: ["vinto"], lat: -17.3961, lon: -66.3150, querySuffix: "Vinto, Cochabamba, Bolivia" },
-  { nombre: "Sipe Sipe", keywords: ["sipe sipe", "sipesipe"], lat: -17.4528, lon: -66.3575, querySuffix: "Sipe Sipe, Cochabamba, Bolivia" },
-  { nombre: "Punata", keywords: ["punata"], lat: -17.5458, lon: -65.8364, querySuffix: "Punata, Cochabamba, Bolivia" },
-  { nombre: "Cliza", keywords: ["cliza"], lat: -17.5878, lon: -65.9328, querySuffix: "Cliza, Cochabamba, Bolivia" },
-  { nombre: "La Paz", keywords: ["la paz", "lapaz"], lat: -16.4897, lon: -68.1193, querySuffix: "La Paz, Bolivia" },
-  { nombre: "El Alto", keywords: ["el alto", "elalto"], lat: -16.5000, lon: -68.1500, querySuffix: "El Alto, Bolivia" },
-  { nombre: "Santa Cruz", keywords: ["santa cruz", "santacruz"], lat: -17.7833, lon: -63.1821, querySuffix: "Santa Cruz de la Sierra, Bolivia" }
-];
+const alCambiarMunicipioSearch = cambiarCiudadCapital;
 
 function identificarMunicipioQuery(queryText) {
   const clean = queryText.toLowerCase().trim();
@@ -668,29 +792,35 @@ function identificarMunicipioQuery(queryText) {
       }
     }
   }
-  return GEOBOLIVIA_MUNICIPIOS[0];
+  return null;
 }
 
 function buscarCalle() {
   const input = document.getElementById('inputSearchStreet');
+  const selectCity = document.getElementById('selectCiudadCapital') || document.getElementById('selectMunicipioSearch');
   const query = (input?.value || '').trim();
+  const selectedKey = selectCity?.value || 'cochabamba';
+  
+  let munObj = GEOBOLIVIA_MUNICIPIOS.find(m => m.key === selectedKey) || GEOBOLIVIA_MUNICIPIOS[0];
+
+  const munTyped = identificarMunicipioQuery(query);
+  if (munTyped) {
+    munObj = munTyped;
+    if (selectCity) selectCity.value = munTyped.key;
+  }
 
   if (!query) {
-    alert("🔍 Ingresa el nombre de una calle o avenida para realizar la búsqueda.");
+    cambiarCiudadCapital(selectedKey);
     return;
   }
 
-  // Detectar municipio especificado en la consulta
-  const municipioDetectado = identificarMunicipioQuery(query);
-  
-  // Limpiar consulta para enviar solo la calle o avenida
   let calleQuery = query;
-  municipioDetectado.keywords.forEach(kw => {
+  munObj.keywords.forEach(kw => {
     calleQuery = calleQuery.replace(new RegExp(kw, 'gi'), '');
   });
   calleQuery = calleQuery.trim() || query;
 
-  const searchUrl = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(calleQuery + ', ' + municipioDetectado.querySuffix)}&countrycodes=bo`;
+  const searchUrl = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(calleQuery + ', ' + munObj.querySuffix)}&countrycodes=bo`;
 
   fetch(searchUrl)
     .then(res => res.json())
@@ -700,16 +830,29 @@ function buscarCalle() {
         const lat = parseFloat(item.lat);
         const lon = parseFloat(item.lon);
         
-        // Identificar municipio de forma limpia desde GeoBolivia / Nominatim
-        const municipioNom = item.address?.city || item.address?.town || item.address?.municipality || municipioDetectado.nombre;
+        const callePrincipal = item.address?.road || item.address?.pedestrian || calleQuery;
+        const calleReferencia = item.address?.suburb || item.address?.neighbourhood || item.address?.quarter || "Zona cercana";
+
+        const inputPrin = document.getElementById('inputCallePrincipal');
+        const inputRef = document.getElementById('inputCalleReferencia');
+        if (inputPrin) inputPrin.value = callePrincipal;
+        if (inputRef) inputRef.value = calleReferencia;
+
+        applyGpsPosition(lat, lon, `Calle: ${callePrincipal}`, false);
+
+        if (userMarker) {
+          userMarker.getPopup().setContent(`
+            <div style="font-family:'Roboto',sans-serif; text-align:center;">
+              <strong style="color:#FF6D00; font-size:13px;">🛣️ ${callePrincipal}</strong><br>
+              <span style="font-size:11px; color:#00E676; font-weight:700;">Ref: ${calleReferencia}</span><br>
+              <span style="font-size:9.5px; color:#94A3B8;">(Arrastra la garrafa a la puerta exacta)</span>
+            </div>
+          `);
+          userMarker.openPopup();
+        }
         
-        applyGpsPosition(lat, lon, `Calle: ${calleQuery}`, false);
-        
-        localStorage.setItem('notigas_last_searched_municipio', municipioNom);
-        
-        alert(`📍 CALLE LOCALIZADA CON ÉXITO\n\nCalle/Avenida: ${calleQuery}\nMunicipio: ${municipioNom}\nUbicación: ${item.display_name}`);
+        alert(`📍 CALLE LOCALIZADA CON ÉXITO\n\nCalle Principal: ${callePrincipal}\nCalle de Referencia: ${calleReferencia}`);
       } else {
-        // Fallback: Búsqueda libre por calle en Bolivia
         fetch(`https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(query + ', Bolivia')}&countrycodes=bo`)
           .then(r => r.json())
           .then(fallbackData => {
@@ -717,18 +860,24 @@ function buscarCalle() {
               const fbItem = fallbackData[0];
               const fbLat = parseFloat(fbItem.lat);
               const fbLon = parseFloat(fbItem.lon);
-              const fbMunicipio = fbItem.address?.city || fbItem.address?.town || fbItem.address?.municipality || "Cochabamba";
-              applyGpsPosition(fbLat, fbLon, `Calle: ${query}`, false);
-              localStorage.setItem('notigas_last_searched_municipio', fbMunicipio);
-              alert(`📍 CALLE ENCONTRADA\n\nCalle: ${query}\nMunicipio: ${fbMunicipio}`);
+              const fbCallePrin = fbItem.address?.road || query;
+              const fbCalleRef = fbItem.address?.suburb || "Zona cercana";
+
+              const inputPrin = document.getElementById('inputCallePrincipal');
+              const inputRef = document.getElementById('inputCalleReferencia');
+              if (inputPrin) inputPrin.value = fbCallePrin;
+              if (inputRef) inputRef.value = fbCalleRef;
+
+              applyGpsPosition(fbLat, fbLon, `Calle: ${fbCallePrin}`, false);
+              alert(`📍 CALLE ENCONTRADA\n\nCalle Principal: ${fbCallePrin}\nCalle de Referencia: ${fbCalleRef}`);
             } else {
-              alert(`⚠️ No se encontró la calle "${query}". Intenta agregando el municipio (Ej: "${query} Sacaba" o "${query} Quillacollo").`);
+              alert(`⚠️ No se encontró la calle "${query}". Puedes arrastrar la garrafa roja directamente sobre el mapa para fijar tu entrega.`);
             }
           })
-          .catch(() => alert(`No se encontró la calle "${query}". Intenta especificar la avenida principal.`));
+          .catch(() => alert(`No se pudo geolocalizar "${query}". Arrastra el icono de la garrafa en el mapa.`));
       }
     })
-    .catch(err => {
+    .catch(() => {
       alert(`Error al buscar la calle. Verifica tu conexión a internet.`);
     });
 }

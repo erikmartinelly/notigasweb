@@ -77,16 +77,41 @@
         <!-- Renderizado dinámico de alertas de pánico para repartidores -->
       </div>
 
-      <div class="search-box">
-        <i class="fa-solid fa-magnifying-glass" onclick="buscarCalle()"></i>
-        <input type="text" id="inputSearchStreet" placeholder="🔍 Buscar calle o avenida (Ej: Av. Blanco Galindo, Calle Heroínas)..." onkeypress="if(event.key==='Enter') buscarCalle()">
+      <div class="search-controls-wrapper">
+        <!-- DROPDOWN DE LAS 9 CAPITALES DE BOLIVIA SOBRE LA LUPA -->
+        <div class="city-selector-bar">
+          <span class="city-selector-label"><i class="fa-solid fa-map-location-dot"></i> Ciudad / Capital:</span>
+          <select id="selectCiudadCapital" onchange="cambiarCiudadCapital(this.value)">
+            <option value="cochabamba">📍 Cochabamba (Centro)</option>
+            <option value="lapaz">📍 La Paz (Sede de Gobierno)</option>
+            <option value="santacruz">📍 Santa Cruz de la Sierra</option>
+            <option value="sucre">📍 Sucre (Capital Constitucional)</option>
+            <option value="oruro">📍 Oruro</option>
+            <option value="potosi">📍 Potosí</option>
+            <option value="tarija">📍 Tarija</option>
+            <option value="trinidad">📍 Trinidad (Beni)</option>
+            <option value="cobija">📍 Cobija (Pando)</option>
+            <option value="elalto">📍 El Alto</option>
+            <option value="sacaba">📍 Sacaba (Cochabamba)</option>
+            <option value="quillacollo">📍 Quillacollo (Cochabamba)</option>
+            <option value="tiquipaya">📍 Tiquipaya (Cochabamba)</option>
+            <option value="colcapirhua">📍 Colcapirhua (Cochabamba)</option>
+          </select>
+        </div>
+
+        <!-- BÚSQUEDA DE CALLE Y LUPA -->
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass" onclick="buscarCalle()" style="color:#FF6D00; font-size:15px; cursor:pointer;" title="Buscar Calle"></i>
+          <input type="text" id="inputSearchStreet" placeholder="Ingresa la calle principal o avenida..." onkeypress="if(event.key==='Enter') buscarCalle()">
+          <button onclick="buscarCalle()" class="btn-search-trigger">Buscar</button>
+        </div>
       </div>
 
       <div class="floating-actions-container" id="buyerFloatingActions">
         <button class="btn-main-order" id="btnMainOrder" onclick="abrirSubmenuPedidos()">
           <span style="display:inline-flex; align-items:center; gap:6px;">
             <i class="fa-solid fa-truck-fast" style="color:#00E676; font-size:18px;"></i>
-            <img src="icons/garrafa_yellow_blue.png" style="width:24px; height:24px; object-fit:contain; border-radius:50%;" alt="Gas">
+            <img src="icons/garrafa_red_clean.svg" style="width:24px; height:24px; object-fit:contain; filter:drop-shadow(0 0 4px #FF1744);" alt="Gas">
           </span>
           <span>HACER UN PEDIDO EN VIVO</span>
         </button>
@@ -561,7 +586,7 @@
       
       <div class="submenu-grid">
         <div class="submenu-card" onclick="seleccionarYPedirDirecto('🔥 Garrafa de Gas GLP')">
-          <img src="icons/garrafa_yellow_blue.png" style="width: 38px; height: 38px; object-fit: contain; border-radius: 50%; margin-bottom: 4px;" alt="Garrafa GLP 10Kg Amarillo">
+          <img src="icons/garrafa_red_clean.svg" style="width: 38px; height: 42px; object-fit: contain; filter: drop-shadow(0 0 6px #FF1744); margin-bottom: 4px;" alt="Garrafa GLP 10Kg Roja">
           <span class="submenu-title">🔥 Garrafa GLP</span>
         </div>
         <div class="submenu-card" onclick="seleccionarYPedirDirecto('💧 Botellón Agua Purificada 20L')">
@@ -617,11 +642,21 @@
         </select>
       </div>
       <div class="form-group">
+        <label>Calle Principal (Dirección):</label>
+        <input type="text" id="inputCallePrincipal" placeholder="Ej: Av. Blanco Galindo / Calle Heroínas">
+      </div>
+
+      <div class="form-group">
+        <label>Calle de Referencia / Esquina / Casa:</label>
+        <input type="text" id="inputCalleReferencia" placeholder="Ej: Esq. Calle Abaroa / Casa portón azul #45">
+      </div>
+
+      <div class="form-group">
         <label>Cantidad o Detalle del Pedido:</label>
         <input type="text" id="inputCantidad" placeholder="Ej: 1 Garrafa / 2 Botellones / 5kg Manzanas" value="1 unidad">
       </div>
-      <p style="font-size:11px; color:#00E676; margin: 8px 0;">✔ Coordinación por el chat privado 1-a-1 de NOTIGAS.</p>
-      <button class="btn-submit" onclick="confirmarPedido()"><i class="fa-solid fa-truck-fast" style="color:#00E676;"></i> <img src="icons/garrafa_yellow_blue.png" style="width:20px; height:20px; vertical-align:middle; border-radius:50%;" alt="Gas"> Confirmar y Solicitar en Mapa Vivo</button>
+      <p style="font-size:11px; color:#00E676; margin: 8px 0;">✔ Coordinación directa con repartidor vía GPS y Chat 1-a-1.</p>
+      <button class="btn-submit" onclick="confirmarPedido()"><i class="fa-solid fa-truck-fast" style="color:#00E676;"></i> <img src="icons/garrafa_red_clean.svg" style="width:22px; height:22px; vertical-align:middle; filter:drop-shadow(0 0 4px #FF1744);" alt="Gas"> Confirmar y Solicitar en Mapa Vivo</button>
     </div>
   </div>
 

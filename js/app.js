@@ -176,9 +176,11 @@ function renderDriverOrdersList() {
           <span class="driver-order-title">${ord.categoria}</span>
           <span class="driver-order-dist">📍 ${ord.dist || 'Cerca de ti'}</span>
         </div>
-        <div style="font-size: 11px; color: white;">
+        <div style="font-size: 11.5px; color: white;">
           <strong>Detalle:</strong> ${ord.cantidad}<br>
-          <span style="font-size: 9.5px; color: #94A3B8;">Solicitado hace momentos • OTB Central</span>
+          ${ord.callePrincipal ? `<span style="color:#FFB300; font-weight:700;">🛣️ Calle Principal: ${ord.callePrincipal}</span><br>` : ''}
+          ${ord.calleReferencia ? `<span style="color:#94A3B8; font-size:10px;">📍 Referencia: ${ord.calleReferencia}</span><br>` : ''}
+          <span style="font-size: 9.5px; color: #64748B;">Solicitado hace momentos • Coordenada Georeferenciada</span>
         </div>
         <div class="driver-order-actions">
           <button class="btn-driver-accept" onclick="aceptarPedidoRepartidor('${ord.categoria}')"><i class="fa-solid fa-circle-check"></i> ✅ Aceptar Pedido</button>
@@ -424,12 +426,14 @@ function confirmarPedido() {
   const pos = getActiveUserLocation();
   const cat = document.getElementById('selectCategoria')?.value || 'Garrafa de Gas GLP';
   const cant = document.getElementById('inputCantidad')?.value || '1 unidad';
-  const municipio = localStorage.getItem('notigas_last_searched_municipio') || 'Cochabamba (Cercado)';
+  const callePrincipal = (document.getElementById('inputCallePrincipal')?.value || '').trim();
+  const calleReferencia = (document.getElementById('inputCalleReferencia')?.value || '').trim();
   
   const activeOrderData = {
     categoria: cat,
     cantidad: cant,
-    municipio: municipio,
+    callePrincipal: callePrincipal || 'Dirección fijada en mapa',
+    calleReferencia: calleReferencia || 'Sin referencia adicional',
     lat: pos.lat,
     lng: pos.lng,
     timestamp: Date.now()
@@ -443,7 +447,7 @@ function confirmarPedido() {
     renderActiveOrdersMap();
   }
 
-  alert(`📦 PEDIDO PUBLICADO EN MAPA VIVO\n\nProducto: ${cat}\nDetalle: ${cant}\nMunicipio: ${municipio}\nUbicación: Lat ${pos.lat.toFixed(5)}, Lng ${pos.lng.toFixed(5)}\n\nLos repartidores en ruta cercana recibirán tu solicitud.`);
+  alert(`🚀 PEDIDO EN VIVO PUBLICADO EN EL MAPA\n\nProducto: ${cat}\nCantidad: ${cant}\nCalle Principal: ${callePrincipal || 'En posición del mapa'}\nCalle de Referencia: ${calleReferencia || 'Sin referencia extra'}\n\nTu pedido ya está visible para los repartidores cercanos.`);
 }
 
 function cancelarPedidoActivo() {

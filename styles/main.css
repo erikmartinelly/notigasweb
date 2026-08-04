@@ -37,6 +37,42 @@ body {
 }
 
 /* ANIMACIONES DESTELLANTES ESTILO GIF EN COLOR ROJO VIVO PARA ICONO DE GARRAFA GLP */
+/* MARCADORES LEAFLET SIN FONDO NI RECTÁNGULO BLANCO DE LEAFLET */
+.leaflet-div-icon,
+.garrafa-map-marker,
+.truck-map-marker,
+.reported-truck-marker,
+.category-order-marker {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* ANIMACIÓN DE DESTELLO Y RESPLANDOR ROJO EN LA MISMA GARRAFA ROJA (SIN CÍRCULO NI FONDO) */
+@keyframes redCylinderGlowPulse {
+  0% {
+    filter: drop-shadow(0 0 4px #FF1744) drop-shadow(0 0 10px rgba(255, 23, 68, 0.85));
+    transform: scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 18px #FF1744) drop-shadow(0 0 28px rgba(255, 23, 68, 1));
+    transform: scale(1.12);
+  }
+  100% {
+    filter: drop-shadow(0 0 4px #FF1744) drop-shadow(0 0 10px rgba(255, 23, 68, 0.85));
+    transform: scale(1);
+  }
+}
+
+.garrafa-red-flashing-img {
+  width: 42px;
+  height: 52px;
+  object-fit: contain;
+  animation: redCylinderGlowPulse 1.2s infinite ease-in-out;
+  cursor: grab;
+  user-select: none;
+}
+
 @keyframes redPulseRing {
   0% {
     transform: scale(0.95);
@@ -220,78 +256,93 @@ main {
   background-color: #0F172A; 
 }
 
-.search-box { 
-  position: absolute; 
-  top: 12px; 
-  left: 12px; 
-  z-index: 1000; 
-  display: flex; 
-  align-items: center; 
-  background-color: rgba(30, 41, 59, 0.95); 
-  border: 1px solid #FF6D00; 
-  border-radius: 12px; 
-  padding: 4px 10px; 
-  width: calc(100% - 170px); 
-  max-width: 320px; 
-  backdrop-filter: blur(8px); 
-  box-shadow: 0 4px 15px rgba(0,0,0,0.4); 
+.search-controls-wrapper {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: calc(100% - 24px);
+  max-width: 480px;
 }
 
-.search-box i { 
-  color: #FF6D00; 
-  margin-right: 8px; 
-  font-size: 14px; 
-  cursor: pointer; 
+.city-selector-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: rgba(15, 23, 42, 0.95);
+  border: 1.5px solid #FF6D00;
+  border-radius: 12px;
+  padding: 6px 12px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.city-selector-label {
+  color: #FF6D00;
+  font-weight: 800;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.city-selector-bar select {
+  background: #1E293B;
+  color: white;
+  border: 1px solid rgba(255, 109, 0, 0.5);
+  padding: 4px 8px;
+  font-weight: 700;
+  font-size: 11px;
+  border-radius: 8px;
+  outline: none;
+  cursor: pointer;
+  width: 100%;
+}
+
+.search-box { 
+  display: flex; 
+  align-items: center; 
+  gap: 8px;
+  background-color: rgba(30, 41, 59, 0.95); 
+  border: 1.5px solid rgba(255, 255, 255, 0.15); 
+  border-radius: 12px; 
+  padding: 6px 12px; 
+  backdrop-filter: blur(12px); 
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4); 
 }
 
 .search-box input { 
   background: none; 
   border: none; 
   color: white; 
-  width: 100%; 
+  flex: 1; 
   font-size: 12px; 
   outline: none; 
+  font-weight: 500;
 }
 
 .search-box input::placeholder { 
   color: #94A3B8; 
 }
 
-.map-controls { 
-  position: absolute; 
-  top: 12px; 
-  right: 12px; 
-  z-index: 1000; 
-  background-color: rgba(30, 41, 59, 0.95); 
-  border: 1px solid rgba(255,255,255,0.15); 
-  border-radius: 12px; 
-  padding: 6px; 
-  backdrop-filter: blur(8px); 
-  display: flex; 
-  flex-direction: column; 
-  gap: 4px; 
+.btn-search-trigger {
+  background: #FF6D00;
+  color: white;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color 0.2s;
 }
 
-.map-style-btn { 
-  background: none; 
-  border: none; 
-  color: white; 
-  padding: 6px 10px; 
-  border-radius: 8px; 
-  font-size: 11px; 
-  font-weight: 500; 
-  text-align: left; 
-  cursor: pointer; 
-  display: flex; 
-  align-items: center; 
-  gap: 8px; 
+.btn-search-trigger:hover {
+  background: #E65100;
 }
 
-.map-style-btn:hover, .map-style-btn.active { 
-  background-color: #FF6D00; 
-  color: white; 
-  font-weight: 700; 
-}
+
 
 /* ACCIONES FLOTANTES EN MAPA */
 .floating-actions-container { 
