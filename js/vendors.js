@@ -189,8 +189,7 @@ function eliminarFichaAdmin(vendorId) {
       localStorage.setItem('notigas_deleted_vendor_ids', JSON.stringify(deletedIds));
     }
 
-    let list = getStoredVendors();
-    list = list.filter(v => v.id !== vendorId);
+    let list = getStoredVendors().filter(v => v.id !== vendorId && v.id !== 'vendor_my_profile');
     localStorage.setItem('notigas_vendors_directory', JSON.stringify(list));
 
     renderVendorCards('TODOS');

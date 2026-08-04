@@ -52,14 +52,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* TOGGLE Y CONTROL DE MODO COMPRADOR VS MODO REPARTIDOR EN RUTA */
 function toggleAppMode() {
-  const currentRoleLabel = (currentAppMode === 'driver') ? 'REPARTIDOR' : 'COMPRADOR';
-  const targetRoleLabel = (currentAppMode === 'driver') ? 'COMPRADOR' : 'REPARTIDOR';
-  
-  if (confirm(`🔑 MODO ACTUAL: ${currentRoleLabel}\n\nEl modo de uso se elige al iniciar sesión. Para ingresar como ${targetRoleLabel}, debes cerrar sesión e ingresar seleccionando tu nuevo rol.\n\n¿Deseas cerrar sesión ahora?`)) {
-    if (typeof cerrarSesionUsuario === 'function') {
-      cerrarSesionUsuario();
+  const nextMode = (currentAppMode === 'driver') ? 'buyer' : 'driver';
+
+  if (nextMode === 'driver') {
+    const savedData = localStorage.getItem('notigas_user_data');
+    let userData = null;
+    try { if (savedData) userData = JSON.parse(savedData); } catch(e){}
+
+    if (!userData || userData.role !== 'repartidor') {
+      const modalDriver = document.getElementById('modalDriver');
+      if (modalDriver) {
+        modalDriver.style.display = 'flex';
+        return;
+      }
     }
   }
+
+  setAppMode(nextMode);
+
+  try {
+    const savedData = localStorage.getItem('notigas_user_data') || '{}';
+    const u = JSON.parse(savedData);
+    u.role = (nextMode === 'driver') ? 'repartidor' : 'comprador';
+    localStorage.setItem('notigas_user_data', JSON.stringify(u));
+  } catch(e){}
+
+  const modeName = (nextMode === 'driver') ? '🚛 REPARTIDOR EN RUTA' : '🛍️ COMPRADOR / VECINO';
+  alert(`✨ MODO CAMBIADO CON ÉXITO\n\nModo Activo: ${modeName}`);
 }
 
 function setAppMode(mode) {
@@ -72,19 +91,18 @@ function setAppMode(mode) {
   if (mode === 'driver') {
     if (btnToggle) {
       btnToggle.innerHTML = '<i class="fa-solid fa-truck-fast"></i> 🚛 MODO REPARTIDOR';
-      btnToggle.title = 'Haz clic para cerrar sesión y cambiar de modo';
+      btnToggle.title = 'Haz clic para cambiar a Modo Comprador';
     }
     if (driverBanner) driverBanner.style.display = 'block';
     if (buyerActions) buyerActions.style.display = 'none';
     if (driverActions) driverActions.style.display = 'flex';
 
-    // Activar transmisión GPS
     localStorage.setItem('driverGpsLive', 'on');
     if (typeof verificarYMostrarRepartidorGPS === 'function') verificarYMostrarRepartidorGPS();
   } else {
     if (btnToggle) {
       btnToggle.innerHTML = '<i class="fa-solid fa-cart-shopping"></i> 🛍️ MODO COMPRADOR';
-      btnToggle.title = 'Haz clic para cerrar sesión y cambiar de modo';
+      btnToggle.title = 'Haz clic para cambiar a Modo Repartidor';
     }
     if (driverBanner) driverBanner.style.display = 'none';
     if (buyerActions) buyerActions.style.display = 'flex';
@@ -97,11 +115,11 @@ function toggleDriverGpsTransmission() {
   const btn = document.getElementById('btnDriverGpsToggle');
   if (isDriverGpsLive) {
     localStorage.setItem('driverGpsLive', 'on');
-    if (btn) btn.innerHTML = '<i class="fa-solid fa-location-arrow"></i> 🟢 INICIAR RECORRIDO EN VIVO (GPS ON)';
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-circle-stop"></i> 🔴 PAUSAR RECORRIDO EN VIVO (GPS ON)';
     alert("🟢 TRANSMISIÓN GPS ACTIVADA\nTu ubicación exacta ahora es visible para los vecinos de tu OTB.");
   } else {
     localStorage.setItem('driverGpsLive', 'off');
-    if (btn) btn.innerHTML = '<i class="fa-solid fa-location-slash"></i> 🔴 PAUSAR RECORRIDO EN VIVO (GPS OFF)';
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-location-arrow"></i> 🟢 INICIAR RECORRIDO EN VIVO (GPS OFF)';
     alert("🔴 TRANSMISIÓN GPS PAUSADA\nTu camión ha sido ocultado del mapa vecinal.");
   }
   if (typeof verificarYMostrarRepartidorGPS === 'function') verificarYMostrarRepartidorGPS();
@@ -202,6 +220,7 @@ function ejecutarPurgaBaseDeDatosAuto() {
   } catch(e){}
 
   try {
+    const keysToRemove = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (key && key.startsWith('notigas_private_chat_')) {
@@ -210,13 +229,14 @@ function ejecutarPurgaBaseDeDatosAuto() {
           let chat = JSON.parse(rawChat);
           const cleanChat = chat.filter(m => (now - m.timestamp) < (48 * 60 * 60 * 1000));
           if (cleanChat.length === 0) {
-            localStorage.removeItem(key);
+            keysToRemove.push(key);
           } else {
             localStorage.setItem(key, JSON.stringify(cleanChat));
           }
         }
       }
     }
+    keysToRemove.forEach(k => localStorage.removeItem(k));
   } catch(e){}
 }
 
@@ -382,7 +402,7 @@ function seleccionarYPedirDirecto(catNombre) {
     const cleanSearch = catNombre.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
     for (let i = 0; i < sel.options.length; i++) {
       const cleanVal = sel.options[i].value.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-      if (cleanVal.includes(cleanSearch) || cleanSearch.includes(cleanVal)) {
+      if (cleanVal && (cleanVal.includes(cleanSearch) || cleanSearch.includes(cleanVal))) {
         foundIdx = i;
         break;
       }

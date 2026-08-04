@@ -18,10 +18,10 @@
 
   <!-- MANIFEST PWA Y FAVICON E ICONOS -->
   <link rel="manifest" href="manifest.json">
-  <link id="dynamicFavicon" rel="icon" type="image/png" href="favicon.png?v=6"/>
-  <link rel="icon" type="image/png" href="icons/garrafa_yellow_blue.png?v=6"/>
-  <link rel="shortcut icon" href="favicon.png?v=6"/>
-  <link rel="apple-touch-icon" href="icons/Icon-192.png?v=6">
+  <link id="dynamicFavicon" rel="icon" type="image/svg+xml" href="icons/garrafa_red_clean.svg"/>
+  <link rel="icon" type="image/svg+xml" href="icons/garrafa_red_clean.svg"/>
+  <link rel="shortcut icon" href="icons/garrafa_red_clean.svg"/>
+  <link rel="apple-touch-icon" href="icons/garrafa_red_clean.svg">
 
   <!-- LIBRERÍAS EXTERNAS (FONT AWESOME, LEAFLET & ROBOTO) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -45,7 +45,7 @@
 
   <header>
     <div class="brand">
-      <img src="favicon.png?v=4" class="brand-img" alt="NOTIGAS Logo"> NOTIGAS
+      <img src="icons/garrafa_red_clean.svg" class="brand-img" alt="NOTIGAS Logo"> NOTIGAS
     </div>
     <div class="header-actions">
       <button class="btn-mode-toggle" id="btnModeToggle" onclick="toggleAppMode()" aria-label="Cambiar modo de usuario"><i class="fa-solid fa-repeat"></i> 🛍️ VECINO</button>
@@ -176,12 +176,7 @@
         <button class="btn-close" onclick="closeUserSettingsModal()">✕</button>
       </div>
 
-      <div class="form-group">
-        <label>Estilo de Mapa:</label>
-        <select id="userPrefMapStyle" onchange="cambiarEstiloMapaPref(this.value)">
-          <option value="googleStatic">🗺️ Google Maps HD Ultra Rápido (Liviano)</option>
-        </select>
-      </div>
+
 
       <div class="form-group">
         <label>Notificaciones y Alertas Auditivas:</label>
@@ -197,6 +192,10 @@
       
       <button style="width:100%; background: linear-gradient(135deg, #D32F2F, #B71C1C); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 10px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(211,47,47,0.4);" onclick="cerrarSesionUsuario()">
         <i class="fa-solid fa-right-from-bracket"></i> 🚪 Cerrar Sesión
+      </button>
+
+      <button style="width:100%; background: linear-gradient(135deg, #B71C1C, #880E0E); color: #FF8A80; border: 1px solid #D32F2F; padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 10px; font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(183,28,28,0.5);" onclick="eliminarMiCuentaCompleta()">
+        <i class="fa-solid fa-trash-can"></i> 🗑️ Eliminar Mi Cuenta y Todos Mis Datos
       </button>
 
       <button style="width:100%; background:none; border:1px solid rgba(255,255,255,0.2); color:#94A3B8; padding:8px; border-radius:8px; margin-top:10px; cursor:pointer; font-size:11px;" onclick="closeUserSettingsModal(); abrirModalAdminLogin();">

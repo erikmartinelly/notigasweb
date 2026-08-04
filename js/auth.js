@@ -167,7 +167,16 @@ function fallbackIngresoGoogleManual() {
 
 function handleCredentialResponse(response) {
   try {
-    const base64Url = response.credential.split('.')[1];
+    if (!response || !response.credential || typeof response.credential !== 'string') {
+      fallbackIngresoGoogleManual();
+      return;
+    }
+    const parts = response.credential.split('.');
+    if (parts.length < 2) {
+      fallbackIngresoGoogleManual();
+      return;
+    }
+    const base64Url = parts[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
     const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
       return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
@@ -368,6 +377,71 @@ function cerrarSesionUsuario() {
 
     alert('🚪 SESIÓN CERRADA CON ÉXITO\n\nSelecciona tu rol para ingresar nuevamente.');
   }
+}
+
+function eliminarMiCuentaCompleta() {
+  const confirmacion1 = confirm(
+    "⚠️ ATENCIÓN: ELIMINACIÓN PERMANENTE DE CUENTA\n\n" +
+    "Esta acción eliminará TODOS tus datos de NOTIGAS:\n\n" +
+    "• Tu perfil de usuario\n" +
+    "• Historial de pedidos\n" +
+    "• Mensajes de chat\n" +
+    "• Publicaciones en el foro\n" +
+    "• Ficha de repartidor (si aplica)\n" +
+    "• Preferencias guardadas\n\n" +
+    "Esta acción NO se puede deshacer.\n\n" +
+    "¿Deseas continuar?"
+  );
+
+  if (!confirmacion1) return;
+
+  const confirmacion2 = confirm(
+    "🗑️ CONFIRMACIÓN FINAL\n\n" +
+    "Escribe SÍ para confirmar.\n\n" +
+    "¿Realmente deseas eliminar tu cuenta y todos tus datos de forma permanente?"
+  );
+
+  if (!confirmacion2) return;
+
+  // Eliminar TODAS las claves de NOTIGAS en localStorage
+  const keysToRemove = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('notigas_')) {
+      keysToRemove.push(key);
+    }
+  }
+  keysToRemove.forEach(k => localStorage.removeItem(k));
+
+  // Eliminar claves adicionales conocidas
+  localStorage.removeItem('driverGpsLive');
+
+  // Limpiar sessionStorage
+  sessionStorage.clear();
+
+  // Cerrar modales
+  closeUserSettingsModal();
+  if (typeof closeDriverModal === 'function') closeDriverModal();
+
+  // Resetear modo a comprador
+  if (typeof setAppMode === 'function') {
+    setAppMode('buyer');
+  }
+
+  // Mostrar pantalla de login
+  const modalAuth = document.getElementById('modalWelcomeAuth');
+  if (modalAuth) modalAuth.style.display = 'flex';
+
+  alert(
+    "🗑️ CUENTA ELIMINADA CON ÉXITO\n\n" +
+    "Todos tus datos personales, historial de pedidos, mensajes y configuraciones han sido eliminados permanentemente de este dispositivo.\n\n" +
+    "Puedes crear una cuenta nueva en cualquier momento."
+  );
+
+  // Recargar la aplicación para limpiar estado en memoria
+  setTimeout(() => {
+    window.location.reload();
+  }, 500);
 }
 
 const iniciarSesionChofer = iniciarSesionRepartidor;

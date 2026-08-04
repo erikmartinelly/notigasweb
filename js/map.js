@@ -19,25 +19,21 @@ let lastGpsBroadcastTime = 0;
 let currentGpsLat = -17.3895;
 let currentGpsLng = -66.1568;
 let heatmapLayerGroup = null;
+let activeGpsWatchId = null;
+window.isHeatmapActive = window.isHeatmapActive || false;
 
-// ICONO DE GARRAFA GLP CON BORDE ROJO DESTELLANTE DINÁMICO (ESTILO GIF PULSANTE)
+// ICONO DE GARRAFA GLP ROJA LIMPIA SIN FONDO NI CÍRCULO CON DESTELLO ROJO
 const garrafaSvgMarkerHtml = `
-  <div style="position: relative; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center;">
-    <div style="position: absolute; width: 46px; height: 46px; border-radius: 50%; background: rgba(239,68,68,0.5); animation: redPulseRing 1.2s infinite ease-in-out;"></div>
-    <div style="position: relative; background: #0F172A; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid #EF4444; box-shadow: 0 0 16px rgba(239,68,68,0.9); cursor: pointer; overflow: hidden; animation: redBorderFlash 1s infinite alternate;">
-      <img src="icons/garrafa_yellow_blue.png" style="width: 32px; height: 32px; object-fit: contain; border-radius: 50%;" alt="Garrafa GLP">
-    </div>
+  <div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+    <img src="icons/garrafa_red_clean.svg" style="width: 38px; height: 46px; object-fit: contain; filter: drop-shadow(0 0 10px #FF1744); animation: redBorderFlash 1.2s infinite alternate;" alt="Garrafa GLP Roja">
   </div>
 `;
 
-// ICONO DE CAMIÓN REPARTIDOR CON BORDE ROJO DESTELLANTE EN MAPA EN VIVO
+// ICONO DE CAMIÓN REPARTIDOR DE GARRAFA ROJA LIMPIA SIN FONDO NI CÍRCULO CON DESTELLO ROJO
 const truckSvgMarkerHtml = `
-  <div style="position: relative; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
-    <div style="position: absolute; width: 50px; height: 50px; border-radius: 50%; background: rgba(239,68,68,0.45); animation: redPulseRing 1.2s infinite ease-in-out;"></div>
-    <div style="position: relative; background: #0F172A; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid #EF4444; box-shadow: 0 0 18px rgba(239,68,68,0.95); cursor: pointer; overflow: hidden; animation: redBorderFlash 1s infinite alternate;">
-      <img src="icons/garrafa_yellow_blue.png" style="width: 35px; height: 35px; object-fit: contain; border-radius: 50%;" alt="Camión Repartidor GLP">
-      <span style="position: absolute; top: 0px; right: 0px; background: #00E676; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #1E293B;" title="En ruta activa (GPS)"></span>
-    </div>
+  <div style="position: relative; width: 50px; height: 56px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+    <img src="icons/garrafa_red_clean.svg" style="width: 42px; height: 50px; object-fit: contain; filter: drop-shadow(0 0 14px #FF1744); animation: redBorderFlash 1s infinite alternate;" alt="Camión Repartidor GLP">
+    <span style="position: absolute; top: 2px; right: 2px; background: #00E676; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #0F172A; box-shadow: 0 0 8px #00E676;" title="En ruta activa (GPS)"></span>
   </div>
 `;
 
@@ -171,12 +167,8 @@ function applyGpsPosition(lat, lng, label, forceReset = false) {
   const banner = document.getElementById('gpsMandatoryBanner');
   if (banner) banner.style.display = 'none';
 
-  // CONTROL INTELIGENTE DE EMISIÓN DE GPS A BASE DE DATOS (CADA 30 SEGUNDOS)
-  const now = Date.now();
-  if (now - lastGpsBroadcastTime > DRIVER_GPS_BROADCAST_INTERVAL_MS) {
-    lastGpsBroadcastTime = now;
-    transmitirUbicacionRepartidorServidorDB(activeLat, activeLng);
-  }
+  // CONTROL INTELIGENTE DE EMISIÓN DE GPS A BASE DE DATOS
+  transmitirUbicacionRepartidorServidorDB(activeLat, activeLng);
 
   verificarYMostrarRepartidorGPS();
 }
@@ -301,7 +293,7 @@ function renderReportedTrucksBuffer() {
 
 /* FÓRMULA DE HAVERSINE PARA TRIANGULACIÓN DE DISTANCIA ENTRE COORDENADAS GPS */
 function calcularDistanciaMetros(lat1, lon1, lat2, lon2) {
-  if (!lat1 || !lon1 || !lat2 || !lon2) return null;
+  if (lat1 === undefined || lon1 === undefined || lat2 === undefined || lon2 === undefined || lat1 === null || lon1 === null || lat2 === null || lon2 === null) return null;
   const R = 6371000; // Radio de la Tierra en metros
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
@@ -607,7 +599,11 @@ function conectarGPSAuto(forceReset = false) {
     );
 
     try {
-      navigator.geolocation.watchPosition(
+      if (activeGpsWatchId !== null && navigator.geolocation.clearWatch) {
+        navigator.geolocation.clearWatch(activeGpsWatchId);
+        activeGpsWatchId = null;
+      }
+      activeGpsWatchId = navigator.geolocation.watchPosition(
         (pos) => {
           applyGpsPosition(pos.coords.latitude, pos.coords.longitude, "Ubicación GPS en Vivo", false);
         },

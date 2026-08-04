@@ -7,12 +7,36 @@ const FORUM_POST_EXPIRATION_MS = 72 * 60 * 60 * 1000; // 72 Horas (3 Días) en m
 let postCounterIndex = 1;
 let activePostCommentsRef = null;
 
-const defaultForumPosts = []; // SIN EJEMPLOS DUMMY PREDETERMINADOS
-const postCommentsStore = {};
+const defaultForumPosts = [];
+let postCommentsStore = {};
+
+function escapeHtmlStr(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 
 document.addEventListener('DOMContentLoaded', () => {
+  cargarComentariosGuardados();
   renderForumFeed();
 });
+
+function cargarComentariosGuardados() {
+  try {
+    const raw = localStorage.getItem('notigas_forum_comments_store');
+    if (raw) postCommentsStore = JSON.parse(raw);
+  } catch(e){}
+}
+
+function guardarComentariosStore() {
+  try {
+    localStorage.setItem('notigas_forum_comments_store', JSON.stringify(postCommentsStore));
+  } catch(e){}
+}
 
 function depurarPostsExpirados(posts) {
   const now = Date.now();
@@ -41,7 +65,7 @@ function renderForumFeed() {
         <i class="fa-solid fa-comments" style="font-size:32px; color:#FF6D00; margin-bottom:10px;"></i><br>
         <strong>El Tablón de Anuncios Vecinal está limpio.</strong><br>
         <span style="font-size: 11px; color: #64748B;">Sé el primero en publicar un aviso, alerta u oferta para los vecinos de tu OTB.</span><br><br>
-        <button class="btn-new-post" style="margin: 0 auto; padding: 10px 16px; font-size: 12px;" onclick="abrirModalNuevoPost()">📌 Publicar Nuevo Aviso (7 Días)</button>
+        <button class="btn-new-post" style="margin: 0 auto; padding: 10px 16px; font-size: 12px;" onclick="abrirModalNuevoPost()">📌 Publicar Nuevo Aviso (72 Horas)</button>
       </div>
     `;
     return;
@@ -189,7 +213,7 @@ function crearNuevoPost() {
   if (document.getElementById('inputPostDesc')) document.getElementById('inputPostDesc').value = '';
 
   renderForumFeed();
-  alert('📌 ¡Aviso publicado exitosamente! Tu publicación estará activa durante 7 días.');
+  alert('📌 ¡Aviso publicado exitosamente! Tu publicación estará activa durante 72 horas (3 Días).');
 }
 
 function abrirComentariosPost(postId, title, desc, cat, el) {
@@ -230,10 +254,10 @@ function renderCommentsList(postId) {
     html += `
       <div style="background:#0F172A; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.05); margin-bottom:6px;">
         <div style="display:flex; justify-content:space-between; font-size:10px; font-weight:700; color:#FF6D00;">
-          <span>${c.author}</span>
-          <span style="color:#64748B; font-weight:400;">${c.time}</span>
+          <span>${escapeHtmlStr(c.author)}</span>
+          <span style="color:#64748B; font-weight:400;">${escapeHtmlStr(c.time)}</span>
         </div>
-        <div style="font-size:12px; color:white; margin-top:2px;">${c.text}</div>
+        <div style="font-size:12px; color:white; margin-top:2px;">${escapeHtmlStr(c.text)}</div>
       </div>
     `;
   });
@@ -264,6 +288,8 @@ function agregarComentarioPost() {
     text: text,
     time: "Ahora mismo"
   });
+
+  guardarComentariosStore();
 
   input.value = '';
   renderCommentsList(postId);

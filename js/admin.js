@@ -308,31 +308,17 @@ function guardarSubmenuAnuncios() {
     return;
   }
 
-  const adsenseId = document.getElementById('inputAdsenseId')?.value.trim();
-  const adsenseSlot = document.getElementById('inputAdsenseSlotId')?.value.trim();
-  const adsenseMode = document.getElementById('inputAdsenseMode')?.value.trim();
-  const inputAd = document.getElementById('inputAdText')?.value.trim();
-  const inputUrl = document.getElementById('inputAdUrl')?.value.trim();
+  const adsenseId = (document.getElementById('inputAdsenseId')?.value || '').trim();
+  const adsenseSlot = (document.getElementById('inputAdsenseSlotId')?.value || '').trim();
+  const adsenseMode = (document.getElementById('inputAdsenseMode')?.value || '').trim();
+  const inputAd = (document.getElementById('inputAdText')?.value || '').trim();
+  const inputUrl = (document.getElementById('inputAdUrl')?.value || '').trim();
 
-  if (adsenseId) {
-    localStorage.setItem('notigas_adsense_id', adsenseId);
-  }
-
-  if (adsenseSlot) {
-    localStorage.setItem('notigas_adsense_slot_id', adsenseSlot);
-  }
-
-  if (adsenseMode) {
-    localStorage.setItem('notigas_adsense_mode', adsenseMode);
-  }
-
-  if (inputAd) {
-    localStorage.setItem('notigas_ad_text', inputAd);
-  }
-
-  if (inputUrl) {
-    localStorage.setItem('notigas_ad_url', inputUrl);
-  }
+  localStorage.setItem('notigas_adsense_id', adsenseId);
+  localStorage.setItem('notigas_adsense_slot_id', adsenseSlot);
+  localStorage.setItem('notigas_adsense_mode', adsenseMode);
+  localStorage.setItem('notigas_ad_text', inputAd);
+  localStorage.setItem('notigas_ad_url', inputUrl);
 
   if (adsenseMode === 'adsense' && adsenseId && typeof inyectarGoogleAdsenseScript === 'function') {
     inyectarGoogleAdsenseScript(adsenseId);
@@ -368,6 +354,8 @@ function guardarAdminConfig() {
     alert('⛔ CONTRASEÑA INCORRECTA\nLa contraseña de administración ingresada es incorrecta.');
     return;
   }
+
+  sessionStorage.setItem('notigas_admin_session', gmail);
 
   sessionStorage.setItem('notigas_admin_session', gmail);
   

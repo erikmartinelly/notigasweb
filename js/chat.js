@@ -197,52 +197,36 @@ function cambiarVendedorChat() {
   `;
 
   if (history.length === 0) {
-    let initialText = `¡Hola vecino! Estoy atendiendo tu zona en la OTB. ¿En qué te puedo colaborar hoy?`;
-    let initialVendorName = `Repartidor en Ruta (${vendorName})`;
-
-    if (vendorName === 'Soporte OTB') {
-      initialVendorName = `👑 Administrador OTB (Soporte Oficial)`;
-      initialText = `¡Hola vecino! Bienvenido al Soporte Oficial NOTIGAS. Escribe tu consulta aquí y el Administrador te responderá directamente.`;
-    }
-
-    const defaultVendorMsg = {
-      sender: vendorName === 'Soporte OTB' ? 'admin' : 'vendor',
-      name: initialVendorName,
-      text: initialText,
-      timeStr: timeStr,
-      timestamp: nowMs
-    };
-    const defaultBuyerMsg = {
-      sender: 'buyer',
-      name: userAlias,
-      text: `Hola, requiero atención para ${vendorName}.`,
-      timeStr: timeStr,
-      timestamp: nowMs
-    };
-    history.push(defaultVendorMsg, defaultBuyerMsg);
-    localStorage.setItem(historyKey, JSON.stringify(history));
+    htmlContent += `
+      <div style="text-align:center; color:#94A3B8; padding:20px 10px; font-size:11px; background:rgba(30,41,59,0.5); border-radius:10px; margin-top:10px;">
+        💬 Canal de chat privado activo con <strong>${escapeHtmlStr(vendorName)}</strong>.<br>Escribe tu mensaje abajo para iniciar la conversación.
+      </div>
+    `;
   }
 
   history.forEach(m => {
-    const escapedSender = (m.name || '').replace(/'/g, "\\'");
+    const safeName = escapeHtmlStr(m.name || 'Usuario');
+    const safeText = escapeHtmlStr(m.text || '');
+    const safeTime = escapeHtmlStr(m.timeStr || '');
+
     if (m.sender === 'admin') {
       htmlContent += `
         <div class="chat-msg vendor" style="background: linear-gradient(135deg, rgba(180,83,9,0.3), rgba(217,119,6,0.3)); border: 1px solid #FBBF24;">
-          <b style="color:#FBBF24;">👑 ${m.name}:</b><br>${m.text}
+          <b style="color:#FBBF24;">👑 ${safeName}:</b><br>${safeText}
           <div class="chat-msg-footer">
-            <span class="chat-msg-time">${m.timeStr}</span>
+            <span class="chat-msg-time">${safeTime}</span>
           </div>
         </div>
       `;
     } else if (m.sender === 'vendor') {
       htmlContent += `
         <div class="chat-msg vendor">
-          <b>🚛 ${m.name}:</b><br>${m.text}
+          <b>🚛 ${safeName}:</b><br>${safeText}
           <div class="chat-msg-footer">
-            <span class="chat-msg-time">${m.timeStr}</span>
+            <span class="chat-msg-time">${safeTime}</span>
             <div style="display:flex; gap:4px; align-items:center;">
-              <button class="btn-report" onclick="abrirModalDenuncia('Chat Repartidor', 'Mensaje de ${escapedSender}')"><i class="fa-solid fa-flag"></i> Denunciar</button>
-              ${isAdmin ? `<button onclick="banearUsuarioAdmin('${escapedSender}')" style="background:#D32F2F; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; font-weight:700; cursor:pointer;" title="Banear Usuario desde Chat">🚫 Banear (Admin)</button>` : ''}
+              <button class="btn-report" onclick="abrirModalDenuncia('Chat Repartidor', 'Mensaje de ${safeName}')"><i class="fa-solid fa-flag"></i> Denunciar</button>
+              ${isAdmin ? `<button onclick="banearUsuarioAdmin('${safeName}')" style="background:#D32F2F; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; font-weight:700; cursor:pointer;" title="Banear Usuario desde Chat">🚫 Banear (Admin)</button>` : ''}
             </div>
           </div>
         </div>
@@ -250,10 +234,10 @@ function cambiarVendedorChat() {
     } else {
       htmlContent += `
         <div class="chat-msg buyer">
-          <b>🏠 ${m.name}:</b><br>${m.text}
+          <b>🏠 ${safeName}:</b><br>${safeText}
           <div class="chat-msg-footer">
-            <span class="chat-msg-time">${m.timeStr}</span>
-            ${isAdmin ? `<button onclick="banearUsuarioAdmin('${escapedSender}')" style="background:#D32F2F; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; font-weight:700; cursor:pointer; margin-left:6px;" title="Banear Usuario desde Chat">🚫 Banear (Admin)</button>` : ''}
+            <span class="chat-msg-time">${safeTime}</span>
+            ${isAdmin ? `<button onclick="banearUsuarioAdmin('${safeName}')" style="background:#D32F2F; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; font-weight:700; cursor:pointer; margin-left:6px;" title="Banear Usuario desde Chat">🚫 Banear (Admin)</button>` : ''}
           </div>
         </div>
       `;
