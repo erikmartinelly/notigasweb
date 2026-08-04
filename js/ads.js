@@ -18,15 +18,74 @@ function abrirAnuncioWhatsApp() {
   window.open(targetUrl, '_blank');
 }
 
+function previewUploadAdImage(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  if (file.size > 2 * 1024 * 1024) {
+    alert("⚠️ La imagen seleccionada supera el límite de 2 MB. Por favor elige una imagen más ligera.");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const base64Data = e.target.result;
+    localStorage.setItem('notigas_ad_image_base64', base64Data);
+    mostrarVistaPreviaImagen(base64Data);
+    actualizarBannerConImagen(base64Data);
+    alert("📸 Imagen de anuncio cargada correctamente.");
+  };
+  reader.readAsDataURL(file);
+}
+
+function mostrarVistaPreviaImagen(base64Data) {
+  const box = document.getElementById('adImagePreviewBox');
+  const img = document.getElementById('adImagePreview');
+  if (box && img) {
+    img.src = base64Data;
+    box.style.display = 'flex';
+  }
+}
+
+function eliminarImagenAnuncio() {
+  localStorage.removeItem('notigas_ad_image_base64');
+  const box = document.getElementById('adImagePreviewBox');
+  const fileInput = document.getElementById('inputAdImageFile');
+  if (box) box.style.display = 'none';
+  if (fileInput) fileInput.value = '';
+  actualizarBannerConImagen(null);
+  alert("🗑️ Imagen de anuncio eliminada.");
+}
+
+function inyectarGoogleAdsenseScript(pubId) {
+  if (!pubId || !pubId.startsWith('ca-pub-')) return;
+  if (document.getElementById('adsenseScriptTag')) return;
+
+  const script = document.createElement('script');
+  script.id = 'adsenseScriptTag';
+  script.async = true;
+  script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${pubId}`;
+  script.crossOrigin = "anonymous";
+  document.head.appendChild(script);
+  console.log("🌐 Google AdSense Script inyectado con éxito:", pubId);
+}
+
 function cargarAnunciosGuardados() {
-  const savedAdsense = localStorage.getItem('notigas_adsense_id');
+  const savedAdsense = localStorage.getItem('notigas_adsense_id') || 'ca-pub-9949962151180000';
+  const savedSlot = localStorage.getItem('notigas_adsense_slot_id') || '1234567890';
+  const savedMode = localStorage.getItem('notigas_adsense_mode') || 'custom';
   const savedText = localStorage.getItem('notigas_ad_text');
   const savedUrl = localStorage.getItem('notigas_ad_url');
+  const savedImage = localStorage.getItem('notigas_ad_image_base64');
 
-  if (savedAdsense) {
-    const el = document.getElementById('inputAdsenseId');
-    if (el) el.value = savedAdsense;
-  }
+  const elId = document.getElementById('inputAdsenseId');
+  if (elId) elId.value = savedAdsense;
+
+  const elSlot = document.getElementById('inputAdsenseSlotId');
+  if (elSlot) elSlot.value = savedSlot;
+
+  const elMode = document.getElementById('inputAdsenseMode');
+  if (elMode) elMode.value = savedMode;
 
   if (savedText) {
     const el = document.getElementById('inputAdText');
@@ -37,6 +96,30 @@ function cargarAnunciosGuardados() {
   if (savedUrl) {
     const el = document.getElementById('inputAdUrl');
     if (el) el.value = savedUrl;
+  }
+
+  if (savedImage) {
+    mostrarVistaPreviaImagen(savedImage);
+    actualizarBannerConImagen(savedImage);
+  }
+
+  if (savedMode === 'adsense' && savedAdsense) {
+    inyectarGoogleAdsenseScript(savedAdsense);
+  }
+}
+
+function actualizarBannerConImagen(base64Data) {
+  const titleText = document.getElementById('adTitleText');
+  const adText = document.getElementById('adText');
+
+  if (base64Data) {
+    if (titleText) {
+      titleText.innerHTML = `<img src="${base64Data}" style="max-height: 28px; border-radius:4px; vertical-align:middle; margin-right:6px;" alt="Sponsor"> 📢 Publicidad Local OTB`;
+    }
+  } else {
+    if (titleText) {
+      titleText.innerHTML = `📢 Espacio de Publicidad Local & Google Adsense`;
+    }
   }
 }
 

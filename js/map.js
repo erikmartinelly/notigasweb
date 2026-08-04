@@ -20,22 +20,22 @@ let currentGpsLat = -17.3895;
 let currentGpsLng = -66.1568;
 let heatmapLayerGroup = null;
 
-// ICONO OFICIAL DE GARRAFA GLP RED 10KG CARGADA POR EL USUARIO
+// ICONO DE GARRAFA GLP CON BORDE ROJO DESTELLANTE DINÁMICO (ESTILO GIF PULSANTE)
 const garrafaSvgMarkerHtml = `
-  <div style="position: relative; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">
-    <div style="position: absolute; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,109,0,0.4); animation: pulseGlow 1.8s infinite ease-in-out;"></div>
-    <div style="position: relative; background: #0F172A; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2.5px solid #FF6D00; box-shadow: 0 4px 15px rgba(255,109,0,0.8); cursor: pointer; overflow: hidden;">
-      <img src="icons/garrafa_red_10kg.jpg" style="width: 34px; height: 34px; object-fit: contain; border-radius: 4px;" alt="Garrafa GLP 10Kg">
+  <div style="position: relative; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center;">
+    <div style="position: absolute; width: 46px; height: 46px; border-radius: 50%; background: rgba(239,68,68,0.5); animation: redPulseRing 1.2s infinite ease-in-out;"></div>
+    <div style="position: relative; background: #0F172A; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid #EF4444; box-shadow: 0 0 16px rgba(239,68,68,0.9); cursor: pointer; overflow: hidden; animation: redBorderFlash 1s infinite alternate;">
+      <img src="icons/garrafa_yellow_blue.png" style="width: 32px; height: 32px; object-fit: contain; border-radius: 50%;" alt="Garrafa GLP">
     </div>
   </div>
 `;
 
-// ICONO OFICIAL DEL CAMIÓN REPARTIDOR DE GARRAFA GLP EN MAPA EN VIVO
+// ICONO DE CAMIÓN REPARTIDOR CON BORDE ROJO DESTELLANTE EN MAPA EN VIVO
 const truckSvgMarkerHtml = `
-  <div style="position: relative; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
-    <div style="position: absolute; width: 48px; height: 48px; border-radius: 50%; background: rgba(255,109,0,0.35); animation: radarPing 2s infinite ease-out;"></div>
-    <div style="position: relative; background: #0F172A; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2.5px solid #FF6D00; box-shadow: 0 4px 18px rgba(0,0,0,0.6); cursor: pointer; overflow: hidden;">
-      <img src="icons/garrafa_red_10kg.jpg" style="width: 36px; height: 36px; object-fit: contain; border-radius: 4px;" alt="Camión Repartidor GLP">
+  <div style="position: relative; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+    <div style="position: absolute; width: 50px; height: 50px; border-radius: 50%; background: rgba(239,68,68,0.45); animation: redPulseRing 1.2s infinite ease-in-out;"></div>
+    <div style="position: relative; background: #0F172A; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid #EF4444; box-shadow: 0 0 18px rgba(239,68,68,0.95); cursor: pointer; overflow: hidden; animation: redBorderFlash 1s infinite alternate;">
+      <img src="icons/garrafa_yellow_blue.png" style="width: 35px; height: 35px; object-fit: contain; border-radius: 50%;" alt="Camión Repartidor GLP">
       <span style="position: absolute; top: 0px; right: 0px; background: #00E676; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #1E293B;" title="En ruta activa (GPS)"></span>
     </div>
   </div>
@@ -73,20 +73,10 @@ function initNotigasMap() {
 
   mapTileLayers['googleStatic'] = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
     maxZoom: 20,
-    attribution: '&copy; Google Maps HD'
+    attribution: '&copy; NOTIGAS Mapa Georeferenciado'
   });
 
-  mapTileLayers['googleSatelite'] = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
-    maxZoom: 20,
-    attribution: '&copy; Google Satélite HD'
-  });
-
-  const savedStyle = localStorage.getItem('notigas_pref_map_style') || 'googleStatic';
-  if (mapTileLayers[savedStyle]) {
-    mapTileLayers[savedStyle].addTo(map);
-  } else {
-    mapTileLayers['googleStatic'].addTo(map);
-  }
+  mapTileLayers['googleStatic'].addTo(map);
 
   const btnGps = document.getElementById('btnGps');
   if (btnGps) {
@@ -574,27 +564,46 @@ function renderHeatmapOverlay() {
   heatmapLayerGroup.addTo(map);
 }
 
+function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
+  fetch('https://ipapi.co/json/')
+    .then(res => res.json())
+    .then(data => {
+      if (data && data.latitude && data.longitude) {
+        applyGpsPosition(data.latitude, data.longitude, "Ubicación por Red/IP Desktop", forceReset);
+        console.log("📍 Ubicación Desktop por IP de Red obtenida:", data.latitude, data.longitude);
+      } else {
+        applyGpsPosition(-17.3895, -66.1568, "Ubicación Predeterminada OTB", forceReset);
+      }
+    })
+    .catch(() => {
+      applyGpsPosition(-17.3895, -66.1568, "Ubicación Predeterminada OTB", forceReset);
+    });
+}
+
 function conectarGPSAuto(forceReset = false) {
   if ("geolocation" in navigator) {
+    // 1. Intento primario ultra rápido (compatible con Navegadores de Computadora y Celulares)
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         applyGpsPosition(pos.coords.latitude, pos.coords.longitude, "Ubicación GPS Exacta", forceReset);
       },
       (err) => {
-        console.warn("Retención de GPS estándar:", err.message);
+        console.warn("📌 GPS Hardware no disponible o bloqueado en navegador PC:", err.message);
+        
+        // 2. Intento secundario con enableHighAccuracy = false (ideal para laptops y PCs de escritorio)
         navigator.geolocation.getCurrentPosition(
           (pos) => {
-            applyGpsPosition(pos.coords.latitude, pos.coords.longitude, "Ubicación GPS Aproximada", forceReset);
+            applyGpsPosition(pos.coords.latitude, pos.coords.longitude, "Ubicación Georeferenciada PC", forceReset);
           },
           (fallbackErr) => {
-            console.warn("GPS Hardware inaccesible:", fallbackErr.message);
-            const banner = document.getElementById('gpsMandatoryBanner');
-            if (banner) banner.style.display = 'block';
+            console.warn("📌 Fallback GPS PC finalizado:", fallbackErr.message);
+            // 3. Fallback terciario por Red IP para computadoras sin chip GPS
+            obtenerUbicacionIPFallbackDesktop(forceReset);
           },
-          { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
+          { enableHighAccuracy: false, timeout: 5000, maximumAge: 120000 }
         );
       },
-      { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 4000, maximumAge: 0 }
     );
 
     try {
@@ -602,13 +611,14 @@ function conectarGPSAuto(forceReset = false) {
         (pos) => {
           applyGpsPosition(pos.coords.latitude, pos.coords.longitude, "Ubicación GPS en Vivo", false);
         },
-        null,
-        { enableHighAccuracy: true, maximumAge: 5000 }
+        (watchErr) => {
+          console.warn("Watch position no soportado en este PC:", watchErr?.message);
+        },
+        { enableHighAccuracy: false, maximumAge: 10000 }
       );
     } catch(e){}
   } else {
-    const banner = document.getElementById('gpsMandatoryBanner');
-    if (banner) banner.style.display = 'block';
+    obtenerUbicacionIPFallbackDesktop(forceReset);
   }
 }
 
@@ -637,26 +647,89 @@ function cambiarEstiloMapaPref(styleKey) {
   }
 }
 
+/* DICCIONARIO Y COORDENADAS OFICIALES GEOBOLIVIA POR MUNICIPIO PARA COCHABAMBA Y BOLIVIA */
+const GEOBOLIVIA_MUNICIPIOS = [
+  { nombre: "Cochabamba (Cercado)", keywords: ["cercado", "cochabamba", "cbba"], lat: -17.3895, lon: -66.1568, querySuffix: "Cercado, Cochabamba, Bolivia" },
+  { nombre: "Sacaba", keywords: ["sacaba", "huayllani", "el morro"], lat: -17.4041, lon: -66.0404, querySuffix: "Sacaba, Cochabamba, Bolivia" },
+  { nombre: "Quillacollo", keywords: ["quillacollo", "urkupiña"], lat: -17.3939, lon: -66.2797, querySuffix: "Quillacollo, Cochabamba, Bolivia" },
+  { nombre: "Tiquipaya", keywords: ["tiquipaya", "trojes"], lat: -17.3383, lon: -66.2167, querySuffix: "Tiquipaya, Cochabamba, Bolivia" },
+  { nombre: "Colcapirhua", keywords: ["colcapirhua", "kami"], lat: -17.3878, lon: -66.2361, querySuffix: "Colcapirhua, Cochabamba, Bolivia" },
+  { nombre: "Vinto", keywords: ["vinto"], lat: -17.3961, lon: -66.3150, querySuffix: "Vinto, Cochabamba, Bolivia" },
+  { nombre: "Sipe Sipe", keywords: ["sipe sipe", "sipesipe"], lat: -17.4528, lon: -66.3575, querySuffix: "Sipe Sipe, Cochabamba, Bolivia" },
+  { nombre: "Punata", keywords: ["punata"], lat: -17.5458, lon: -65.8364, querySuffix: "Punata, Cochabamba, Bolivia" },
+  { nombre: "Cliza", keywords: ["cliza"], lat: -17.5878, lon: -65.9328, querySuffix: "Cliza, Cochabamba, Bolivia" },
+  { nombre: "La Paz", keywords: ["la paz", "lapaz"], lat: -16.4897, lon: -68.1193, querySuffix: "La Paz, Bolivia" },
+  { nombre: "El Alto", keywords: ["el alto", "elalto"], lat: -16.5000, lon: -68.1500, querySuffix: "El Alto, Bolivia" },
+  { nombre: "Santa Cruz", keywords: ["santa cruz", "santacruz"], lat: -17.7833, lon: -63.1821, querySuffix: "Santa Cruz de la Sierra, Bolivia" }
+];
+
+function identificarMunicipioQuery(queryText) {
+  const clean = queryText.toLowerCase().trim();
+  for (const m of GEOBOLIVIA_MUNICIPIOS) {
+    for (const kw of m.keywords) {
+      if (clean.includes(kw)) {
+        return m;
+      }
+    }
+  }
+  return GEOBOLIVIA_MUNICIPIOS[0];
+}
+
 function buscarCalle() {
   const input = document.getElementById('inputSearchStreet');
   const query = (input?.value || '').trim();
 
   if (!query) {
-    alert("Ingresa el nombre de una calle, avenida u OTB para buscar.");
+    alert("🔍 Ingresa el nombre de una calle o avenida para realizar la búsqueda.");
     return;
   }
 
-  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Cochabamba, Bolivia')}`)
+  // Detectar municipio especificado en la consulta
+  const municipioDetectado = identificarMunicipioQuery(query);
+  
+  // Limpiar consulta para enviar solo la calle o avenida
+  let calleQuery = query;
+  municipioDetectado.keywords.forEach(kw => {
+    calleQuery = calleQuery.replace(new RegExp(kw, 'gi'), '');
+  });
+  calleQuery = calleQuery.trim() || query;
+
+  const searchUrl = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(calleQuery + ', ' + municipioDetectado.querySuffix)}&countrycodes=bo`;
+
+  fetch(searchUrl)
     .then(res => res.json())
     .then(data => {
       if (data && data.length > 0) {
         const item = data[0];
         const lat = parseFloat(item.lat);
         const lon = parseFloat(item.lon);
-        applyGpsPosition(lat, lon, `Búsqueda: ${query}`);
-        alert(`📍 UBICACIÓN ENCONTRADA\n${item.display_name}`);
+        
+        // Identificar municipio de forma limpia desde GeoBolivia / Nominatim
+        const municipioNom = item.address?.city || item.address?.town || item.address?.municipality || municipioDetectado.nombre;
+        
+        applyGpsPosition(lat, lon, `Calle: ${calleQuery}`, false);
+        
+        localStorage.setItem('notigas_last_searched_municipio', municipioNom);
+        
+        alert(`📍 CALLE LOCALIZADA CON ÉXITO\n\nCalle/Avenida: ${calleQuery}\nMunicipio: ${municipioNom}\nUbicación: ${item.display_name}`);
       } else {
-        alert(`No se encontró la ubicación "${query}". Intenta con otra calle o avenida.`);
+        // Fallback: Búsqueda libre por calle en Bolivia
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(query + ', Bolivia')}&countrycodes=bo`)
+          .then(r => r.json())
+          .then(fallbackData => {
+            if (fallbackData && fallbackData.length > 0) {
+              const fbItem = fallbackData[0];
+              const fbLat = parseFloat(fbItem.lat);
+              const fbLon = parseFloat(fbItem.lon);
+              const fbMunicipio = fbItem.address?.city || fbItem.address?.town || fbItem.address?.municipality || "Cochabamba";
+              applyGpsPosition(fbLat, fbLon, `Calle: ${query}`, false);
+              localStorage.setItem('notigas_last_searched_municipio', fbMunicipio);
+              alert(`📍 CALLE ENCONTRADA\n\nCalle: ${query}\nMunicipio: ${fbMunicipio}`);
+            } else {
+              alert(`⚠️ No se encontró la calle "${query}". Intenta agregando el municipio (Ej: "${query} Sacaba" o "${query} Quillacollo").`);
+            }
+          })
+          .catch(() => alert(`No se encontró la calle "${query}". Intenta especificar la avenida principal.`));
       }
     })
     .catch(err => {

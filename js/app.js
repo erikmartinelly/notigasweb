@@ -404,10 +404,12 @@ function confirmarPedido() {
   const pos = getActiveUserLocation();
   const cat = document.getElementById('selectCategoria')?.value || 'Garrafa de Gas GLP';
   const cant = document.getElementById('inputCantidad')?.value || '1 unidad';
+  const municipio = localStorage.getItem('notigas_last_searched_municipio') || 'Cochabamba (Cercado)';
   
   const activeOrderData = {
     categoria: cat,
     cantidad: cant,
+    municipio: municipio,
     lat: pos.lat,
     lng: pos.lng,
     timestamp: Date.now()
@@ -421,7 +423,7 @@ function confirmarPedido() {
     renderActiveOrdersMap();
   }
 
-  alert(`📦 PEDIDO EN VIVO REGISTRADO\n\nCategoría: ${cat}\nDetalle: ${cant}\n📍 Ubicación de Entrega: Lat ${pos.lat.toFixed(5)}, Lng ${pos.lng.toFixed(5)}\n\nTu pedido se encuentra activo y visible para los repartidores en el mapa.`);
+  alert(`📦 PEDIDO PUBLICADO EN MAPA VIVO\n\nProducto: ${cat}\nDetalle: ${cant}\nMunicipio: ${municipio}\nUbicación: Lat ${pos.lat.toFixed(5)}, Lng ${pos.lng.toFixed(5)}\n\nLos repartidores en ruta cercana recibirán tu solicitud.`);
 }
 
 function cancelarPedidoActivo() {

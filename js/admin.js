@@ -309,11 +309,21 @@ function guardarSubmenuAnuncios() {
   }
 
   const adsenseId = document.getElementById('inputAdsenseId')?.value.trim();
+  const adsenseSlot = document.getElementById('inputAdsenseSlotId')?.value.trim();
+  const adsenseMode = document.getElementById('inputAdsenseMode')?.value.trim();
   const inputAd = document.getElementById('inputAdText')?.value.trim();
   const inputUrl = document.getElementById('inputAdUrl')?.value.trim();
 
   if (adsenseId) {
     localStorage.setItem('notigas_adsense_id', adsenseId);
+  }
+
+  if (adsenseSlot) {
+    localStorage.setItem('notigas_adsense_slot_id', adsenseSlot);
+  }
+
+  if (adsenseMode) {
+    localStorage.setItem('notigas_adsense_mode', adsenseMode);
   }
 
   if (inputAd) {
@@ -324,12 +334,16 @@ function guardarSubmenuAnuncios() {
     localStorage.setItem('notigas_ad_url', inputUrl);
   }
 
+  if (adsenseMode === 'adsense' && adsenseId && typeof inyectarGoogleAdsenseScript === 'function') {
+    inyectarGoogleAdsenseScript(adsenseId);
+  }
+
   if (typeof actualizarAnunciosEnVivo === 'function') {
     actualizarAnunciosEnVivo(inputAd, inputUrl);
   }
 
   closeAdminModal();
-  alert('📢 Configuración de Anuncios Google AdSense y Anuncios Nativos guardada con éxito.');
+  alert('📢 CONFIGURACIÓN DE PUBLICIDAD Y ADSENSE GUARDADA CON ÉXITO\n\nLos cambios en anuncios locales e integración con Google AdSense ya están activos.');
 }
 
 function guardarAdminConfig() {

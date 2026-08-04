@@ -3,25 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>NOTIGAS - Plataforma Vecinal & Mapa en Vivo OTB</title>
+  <title>NOTIGAS: Gas y otros pedidos</title>
   <meta name="description" content="NOTIGAS - Plataforma barrial en vivo con mapa GPS, mini páginas de negocio estilo Facebook para repartidores y noticias vecinales.">
-  <meta name="theme-color" content="#FF6D00">
+  <meta name="theme-color" content="#0288D1">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
   <!-- OPENGRAPH METADATA PARA REDES SOCIALES -->
   <meta property="og:type" content="website">
-  <meta property="og:title" content="NOTIGAS - Plataforma Vecinal en Vivo">
+  <meta property="og:title" content="NOTIGAS: Gas y otros pedidos">
   <meta property="og:description" content="Sigue en tiempo real el camión de gas GLP, agua purificada y servicios de tu barrio.">
   <meta property="og:image" content="favicon.png">
   <meta property="twitter:card" content="summary_large_image">
 
   <!-- MANIFEST PWA Y FAVICON E ICONOS -->
   <link rel="manifest" href="manifest.json">
-  <link id="dynamicFavicon" rel="icon" type="image/svg+xml" href="favicon.svg?v=4"/>
-  <link rel="icon" type="image/png" href="favicon.png?v=4"/>
-  <link rel="shortcut icon" href="favicon.ico?v=4"/>
-  <link rel="apple-touch-icon" href="icons/Icon-192.png?v=4">
+  <link id="dynamicFavicon" rel="icon" type="image/png" href="favicon.png?v=6"/>
+  <link rel="icon" type="image/png" href="icons/garrafa_yellow_blue.png?v=6"/>
+  <link rel="shortcut icon" href="favicon.png?v=6"/>
+  <link rel="apple-touch-icon" href="icons/Icon-192.png?v=6">
 
   <!-- LIBRERÍAS EXTERNAS (FONT AWESOME, LEAFLET & ROBOTO) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -79,17 +79,17 @@
 
       <div class="search-box">
         <i class="fa-solid fa-magnifying-glass" onclick="buscarCalle()"></i>
-        <input type="text" id="inputSearchStreet" placeholder="🔍 Buscar calle, avenida u OTB..." onkeypress="if(event.key==='Enter') buscarCalle()">
+        <input type="text" id="inputSearchStreet" placeholder="🔍 Buscar calle o avenida (Ej: Av. Blanco Galindo, Calle Heroínas)..." onkeypress="if(event.key==='Enter') buscarCalle()">
       </div>
 
-      <div class="map-controls">
-        <button class="map-style-btn active" onclick="setMapStyle(this, 'googleStatic')"><i class="fa-solid fa-location-dot"></i> Google Maps HD</button>
-        <button class="map-style-btn" onclick="setMapStyle(this, 'googleSatelite')"><i class="fa-solid fa-satellite"></i> Google Satélite HD</button>
-      </div>
-
-      <!-- BOTONES Y ACCIONES PARA VISTA VECINO / COMPRADOR -->
       <div class="floating-actions-container" id="buyerFloatingActions">
-        <button class="btn-main-order" id="btnMainOrder" onclick="abrirSubmenuPedidos()"><svg class="garrafa-icon-svg" viewBox="0 0 24 24"><path d="M9 2h6v2H9V2zm8 4H7v3h10V6zm1 4H6c-1.1 0-2 .9-2 2v9c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-9c0-1.1-.9-2-2-2zM12 19c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg> 📦 HACER UN PEDIDO EN VIVO</button>
+        <button class="btn-main-order" id="btnMainOrder" onclick="abrirSubmenuPedidos()">
+          <span style="display:inline-flex; align-items:center; gap:6px;">
+            <i class="fa-solid fa-truck-fast" style="color:#00E676; font-size:18px;"></i>
+            <img src="icons/garrafa_yellow_blue.png" style="width:24px; height:24px; object-fit:contain; border-radius:50%;" alt="Gas">
+          </span>
+          <span>HACER UN PEDIDO EN VIVO</span>
+        </button>
         
         <button class="btn-cancel-order" id="btnCancelOrder" style="display: none;" onclick="cancelarPedidoActivo()"><i class="fa-solid fa-circle-xmark"></i> ❌ CANCELAR PEDIDO EN VIVO</button>
         
@@ -346,11 +346,30 @@
           </div>
         </div>
 
-        <!-- SUBMENÚ 3: CONFIGURACIÓN DE PUBLICIDAD & ADSENSE -->
+        <!-- SUBMENÚ 3: CONFIGURACIÓN DE PUBLICIDAD, IMÁGENES & ADSENSE -->
         <div class="modal-tab-pane" id="modalPane3">
           <div class="form-group">
             <label>ID de Cliente Google AdSense (ca-pub-xxxxxxxx):</label>
-            <input type="text" id="inputAdsenseId" value="ca-pub-9949962151180000" placeholder="ca-pub-xxxxxxxxxxxxxxxx">
+            <input type="text" id="inputAdsenseId" value="ca-pub-9949962151180000" placeholder="ca-pub-9949962151180000">
+          </div>
+          <div class="form-group">
+            <label>ID de Slot de Anuncio Google AdSense (data-ad-slot):</label>
+            <input type="text" id="inputAdsenseSlotId" value="1234567890" placeholder="1234567890">
+          </div>
+          <div class="form-group">
+            <label>Modo de Publicidad:</label>
+            <select id="inputAdsenseMode">
+              <option value="custom">🖼️ Anuncio Local Personalizado (Imagen o Texto)</option>
+              <option value="adsense">🌐 Google AdSense Automático (Código Publicitario)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>🖼️ Subir Imagen Banner para Anuncio Local (PNG/JPG):</label>
+            <input type="file" id="inputAdImageFile" accept="image/*" onchange="previewUploadAdImage(event)" style="font-size:11px; background:#1E293B; padding:6px; border-radius:6px; color:white; width:100%;">
+            <div id="adImagePreviewBox" style="margin-top:8px; display:none; align-items:center; gap:10px;">
+              <img id="adImagePreview" style="max-height:60px; max-width:200px; border-radius:6px; border:1px solid #FF6D00; object-fit:cover;">
+              <button type="button" onclick="eliminarImagenAnuncio()" style="background:#D32F2F; color:white; border:none; padding:4px 8px; border-radius:4px; font-weight:700; font-size:10px; cursor:pointer;">✕ Eliminar Imagen</button>
+            </div>
           </div>
           <div class="form-group">
             <label>Texto del Anuncio Nativo Intercalado en Feed:</label>
@@ -543,7 +562,7 @@
       
       <div class="submenu-grid">
         <div class="submenu-card" onclick="seleccionarYPedirDirecto('🔥 Garrafa de Gas GLP')">
-          <img src="icons/garrafa_red_10kg.jpg" style="width: 38px; height: 38px; object-fit: contain; border-radius: 6px; margin-bottom: 4px;" alt="Garrafa GLP 10Kg">
+          <img src="icons/garrafa_yellow_blue.png" style="width: 38px; height: 38px; object-fit: contain; border-radius: 50%; margin-bottom: 4px;" alt="Garrafa GLP 10Kg Amarillo">
           <span class="submenu-title">🔥 Garrafa GLP</span>
         </div>
         <div class="submenu-card" onclick="seleccionarYPedirDirecto('💧 Botellón Agua Purificada 20L')">
@@ -603,7 +622,7 @@
         <input type="text" id="inputCantidad" placeholder="Ej: 1 Garrafa / 2 Botellones / 5kg Manzanas" value="1 unidad">
       </div>
       <p style="font-size:11px; color:#00E676; margin: 8px 0;">✔ Coordinación por el chat privado 1-a-1 de NOTIGAS.</p>
-      <button class="btn-submit" onclick="confirmarPedido()"><i class="fa-solid fa-paper-plane"></i> Confirmar y Solicitar en Mapa Vivo</button>
+      <button class="btn-submit" onclick="confirmarPedido()"><i class="fa-solid fa-truck-fast" style="color:#00E676;"></i> <img src="icons/garrafa_yellow_blue.png" style="width:20px; height:20px; vertical-align:middle; border-radius:50%;" alt="Gas"> Confirmar y Solicitar en Mapa Vivo</button>
     </div>
   </div>
 
