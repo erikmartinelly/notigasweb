@@ -138,10 +138,31 @@ function fallbackIngresoGoogleManual() {
   const gmailPrompt = prompt("🌐 AUTENTICACIÓN GOOGLE (Firefox OK):\nIngresa tu correo Gmail de Google:");
   if (gmailPrompt && gmailPrompt.includes('@')) {
     const cleanGmail = gmailPrompt.trim().toLowerCase();
+    const nombreGoogle = cleanGmail.split('@')[0];
+
+    if (currentSelectedRole === 'driver') {
+      const modalAuth = document.getElementById('modalWelcomeAuth');
+      if (modalAuth) modalAuth.style.display = 'none';
+
+      const inputDriverNombre = document.getElementById('inputDriverNombre');
+      if (inputDriverNombre) inputDriverNombre.value = nombreGoogle;
+      
+      const modalDriver = document.getElementById('modalDriver');
+      if (modalDriver) modalDriver.style.display = 'flex';
+      
+      const titleEl = document.getElementById('driverModalTitleText');
+      const subtitleEl = document.getElementById('driverModalSubtitle');
+      if (titleEl) titleEl.textContent = 'Registro de Repartidor';
+      if (subtitleEl) subtitleEl.textContent = 'Completa tu ficha de negocio. Aparecerá en la lista de repartidores de la OTB.';
+
+      sessionStorage.setItem('notigas_temp_gmail', cleanGmail);
+      return;
+    }
+
     const userData = {
-      role: currentSelectedRole === 'driver' ? 'repartidor' : 'vecino',
+      role: 'vecino',
       gmail: cleanGmail,
-      nombre: cleanGmail.split('@')[0],
+      nombre: nombreGoogle,
       apellido: 'Usuario'
     };
     localStorage.setItem('notigas_user_data', JSON.stringify(userData));
@@ -152,10 +173,6 @@ function fallbackIngresoGoogleManual() {
     
     const modalAuth = document.getElementById('modalWelcomeAuth');
     if (modalAuth) modalAuth.style.display = 'none';
-
-    if (userData.role === 'repartidor' && typeof setAppMode === 'function') {
-      setAppMode('driver');
-    }
 
     if (typeof verificarYActivarChatAdminAuto === 'function') {
       verificarYActivarChatAdminAuto();
@@ -187,8 +204,27 @@ function handleCredentialResponse(response) {
     const nombre = googleUser.given_name || googleUser.name;
     const apellido = googleUser.family_name || '';
 
+    if (currentSelectedRole === 'driver') {
+      const modalAuth = document.getElementById('modalWelcomeAuth');
+      if (modalAuth) modalAuth.style.display = 'none';
+
+      const inputDriverNombre = document.getElementById('inputDriverNombre');
+      if (inputDriverNombre) inputDriverNombre.value = `${nombre} ${apellido}`.trim();
+      
+      const modalDriver = document.getElementById('modalDriver');
+      if (modalDriver) modalDriver.style.display = 'flex';
+      
+      const titleEl = document.getElementById('driverModalTitleText');
+      const subtitleEl = document.getElementById('driverModalSubtitle');
+      if (titleEl) titleEl.textContent = 'Registro de Repartidor';
+      if (subtitleEl) subtitleEl.textContent = 'Completa tu ficha de negocio. Aparecerá en la lista de repartidores de la OTB.';
+
+      sessionStorage.setItem('notigas_temp_gmail', gmail);
+      return;
+    }
+
     const userData = {
-      role: currentSelectedRole === 'driver' ? 'repartidor' : 'vecino',
+      role: 'vecino',
       gmail: gmail,
       nombre: nombre,
       apellido: apellido
@@ -321,6 +357,16 @@ function iniciarSesionRepartidor() {
     return;
   }
 
+  const tempGmail = sessionStorage.getItem('notigas_temp_gmail') || '';
+  let existingGmail = tempGmail;
+  try {
+     const saved = localStorage.getItem('notigas_user_data');
+     if (saved) {
+       const u = JSON.parse(saved);
+       if (u.gmail) existingGmail = u.gmail;
+     }
+  } catch(e){}
+
   const repartidorData = { 
     role: 'repartidor', 
     nombre: nombreNegocio,
@@ -331,8 +377,11 @@ function iniciarSesionRepartidor() {
     zonas: zonas,
     schedule: schedule
   };
+  if (existingGmail) repartidorData.gmail = existingGmail;
+
   localStorage.setItem('notigas_user_data', JSON.stringify(repartidorData));
   guardarRepartidorEnBaseDeDatos(repartidorData);
+  sessionStorage.removeItem('notigas_temp_gmail');
 
   closeDriverModal();
 

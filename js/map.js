@@ -427,6 +427,11 @@ function renderActiveOrdersMap() {
 
   try {
     const order = JSON.parse(raw);
+
+    if (typeof isOrderCategoryMatchingDriver === 'function' && !isOrderCategoryMatchingDriver(order.categoria)) {
+      return; 
+    }
+
     if (order.lat && order.lng) {
       const dist = calcularDistanciaMetros(currentGpsLat, currentGpsLng, order.lat, order.lng);
       const distStr = formatearDistanciaTriangulada(dist);
@@ -638,12 +643,16 @@ function renderHeatmapOverlay() {
     return;
   }
 
-  const heatPoints = [
+  let heatPoints = [
     { lat: currentGpsLat + 0.0008, lng: currentGpsLng + 0.0010, count: 5, cat: "🔥 5 Garrafas GLP" },
     { lat: currentGpsLat - 0.0006, lng: currentGpsLng + 0.0015, count: 3, cat: "💧 3 Botellones Agua 20L" },
     { lat: currentGpsLat - 0.0012, lng: currentGpsLng - 0.0005, count: 8, cat: "🔥 8 Garrafas GLP (Zona Alta Demanda)" },
     { lat: currentGpsLat + 0.0015, lng: currentGpsLng - 0.0010, count: 4, cat: "🪵 4 Bolsas Carbón" }
   ];
+
+  if (typeof isOrderCategoryMatchingDriver === 'function') {
+    heatPoints = heatPoints.filter(pt => isOrderCategoryMatchingDriver(pt.cat));
+  }
 
   heatPoints.forEach(pt => {
     const circle = L.circle([pt.lat, pt.lng], {

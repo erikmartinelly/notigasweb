@@ -172,26 +172,47 @@ header {
   transform: translateY(0) scale(0.98);
 }
 
-.btn-config { 
+.btn-config-rect { 
   background: linear-gradient(135deg, #FF6D00 0%, #E65100 100%); 
   color: white; 
   border: none; 
-  width: 38px; 
-  height: 38px; 
-  border-radius: 50%; 
+  padding: 8px 12px; 
+  border-radius: 8px; 
   display: flex; 
   align-items: center; 
   justify-content: center; 
+  gap: 6px;
   cursor: pointer; 
-  font-size: 17px; 
+  font-size: 11.5px; 
+  font-weight: 800;
   box-shadow: 0 4px 14px rgba(255, 109, 0, 0.4); 
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
 }
 
-.btn-config:hover { 
+.btn-config-rect:hover { 
   background: linear-gradient(135deg, #FF8F00 0%, #FF6D00 100%); 
-  transform: rotate(90deg) scale(1.08); 
+  transform: translateY(-2px); 
   box-shadow: 0 6px 20px rgba(255, 109, 0, 0.7);
+}
+
+.btn-chat-service {
+  background: rgba(14, 165, 233, 0.15);
+  color: #38BDF8;
+  border: 1px solid rgba(14, 165, 233, 0.3);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.btn-chat-service:hover {
+  background: rgba(14, 165, 233, 0.3);
+  color: white;
 }
 
 /* NAVEGACIÓN 3 PESTAÑAS */

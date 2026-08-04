@@ -188,6 +188,31 @@ function obtenerIconoHtmlPorCategoria(catNombre) {
   return `<img src="icons/garrafa_red_clean.svg" style="width:24px; height:24px; vertical-align:middle; margin-right:6px; filter:drop-shadow(0 0 4px #FF1744);" alt="Gas GLP">`;
 }
 
+function isOrderCategoryMatchingDriver(orderCategory) {
+  try {
+    const saved = localStorage.getItem('notigas_user_data');
+    if (!saved) return true;
+    const u = JSON.parse(saved);
+    if (u.role !== 'repartidor') return true;
+    if (!u.categoria) return true;
+    
+    const driverCat = u.categoria.toLowerCase();
+    const oCat = (orderCategory || '').toLowerCase();
+    
+    if (driverCat.includes('gas') && oCat.includes('gas')) return true;
+    if (driverCat.includes('agua') && oCat.includes('agua')) return true;
+    if (driverCat.includes('chatarra') && oCat.includes('chatarra')) return true;
+    if ((driverCat.includes('papel') || driverCat.includes('cartón')) && (oCat.includes('papel') || oCat.includes('cartón'))) return true;
+    if ((driverCat.includes('fruta') || driverCat.includes('verdura')) && (oCat.includes('fruta') || oCat.includes('verdura'))) return true;
+    if ((driverCat.includes('detergente') || driverCat.includes('limpieza')) && (oCat.includes('detergente') || oCat.includes('limpieza'))) return true;
+    if ((driverCat.includes('carbón') || driverCat.includes('leña')) && (oCat.includes('carbón') || oCat.includes('leña'))) return true;
+    if (driverCat === oCat) return true;
+    return false;
+  } catch(e) {
+    return true;
+  }
+}
+
 function renderDriverOrdersList() {
   const container = document.getElementById('driverOrdersContainer');
   if (!container) return;
@@ -196,16 +221,27 @@ function renderDriverOrdersList() {
   let orders = [];
 
   if (activeOrderRaw) {
-    try { orders.push(JSON.parse(activeOrderRaw)); } catch(e){}
+    try { 
+      const parsedOrder = JSON.parse(activeOrderRaw);
+      if (isOrderCategoryMatchingDriver(parsedOrder.categoria)) {
+        orders.push(parsedOrder); 
+      }
+    } catch(e){}
   }
 
   // Si no hay pedidos reales, mostrar simulados en vivo para demostración del repartidor
   if (orders.length === 0) {
-    orders = [
+    const mockOrders = [
       { categoria: "🔥 Garrafa de Gas GLP", cantidad: "2 unidades", dist: "150m (Calle 4 #21)", timestamp: Date.now() - 300000 },
       { categoria: "💧 Botellón Agua 20L", cantidad: "1 unidad", dist: "320m (Av. Principal esquina Plaza)", timestamp: Date.now() - 600000 },
       { categoria: "🪵 Carbón / Leña", cantidad: "1 bolsa 10kg", dist: "450m (Calle 8 #45)", timestamp: Date.now() - 900000 }
     ];
+    orders = mockOrders.filter(o => isOrderCategoryMatchingDriver(o.categoria));
+    
+    if (orders.length === 0) {
+      container.innerHTML = `<div style="padding:20px; text-align:center; color:#94A3B8; font-size:13px;"><i class="fa-solid fa-inbox" style="font-size:24px; margin-bottom:8px;"></i><br>No hay pedidos activos de tu categoría en este momento.</div>`;
+      return;
+    }
   }
 
   let html = '';
