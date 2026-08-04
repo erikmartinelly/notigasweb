@@ -3,10 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>NOTIGAS - Mini Páginas de Negocio & Foro Vecinal OTB</title>
+  <title>NOTIGAS - Plataforma Vecinal & Mapa en Vivo OTB</title>
   <meta name="description" content="NOTIGAS - Plataforma barrial en vivo con mapa GPS, mini páginas de negocio estilo Facebook para repartidores y noticias vecinales.">
+  <meta name="theme-color" content="#FF6D00">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-  <!-- FAVICON E ICONOS PWA OFICIALES NOTIGAS (ICONO CAMIÓN DE GAS GLP V4) -->
+  <!-- OPENGRAPH METADATA PARA REDES SOCIALES -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="NOTIGAS - Plataforma Vecinal en Vivo">
+  <meta property="og:description" content="Sigue en tiempo real el camión de gas GLP, agua purificada y servicios de tu barrio.">
+  <meta property="og:image" content="favicon.png">
+  <meta property="twitter:card" content="summary_large_image">
+
+  <!-- MANIFEST PWA Y FAVICON E ICONOS -->
+  <link rel="manifest" href="manifest.json">
   <link id="dynamicFavicon" rel="icon" type="image/svg+xml" href="favicon.svg?v=4"/>
   <link rel="icon" type="image/png" href="favicon.png?v=4"/>
   <link rel="shortcut icon" href="favicon.ico?v=4"/>
@@ -18,6 +29,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
 
   <!-- HOJA DE ESTILOS MODULAR NOTIGAS -->
@@ -28,7 +40,7 @@
   <!-- BANNER DE AVISO GPS OBLIGATORIO -->
   <div id="gpsMandatoryBanner" style="display:none; background: linear-gradient(135deg, #D32F2F, #B71C1C); color: white; padding: 8px 12px; font-size: 11px; font-weight: 700; text-align: center; z-index: 2000; box-shadow: 0 2px 10px rgba(0,0,0,0.5);">
     <i class="fa-solid fa-triangle-exclamation"></i> 📍 GPS Obligatorio: Activa tu ubicación para ubicar el camión garrafero y hacer pedidos a tu domicilio. 
-    <button onclick="conectarGPSAuto()" style="background: white; color: #D32F2F; border: none; padding: 2px 8px; border-radius: 4px; font-weight: 900; margin-left: 6px; cursor: pointer;">Activar GPS</button>
+    <button onclick="conectarGPSAuto()" style="background: white; color: #D32F2F; border: none; padding: 2px 8px; border-radius: 4px; font-weight: 900; margin-left: 6px; cursor: pointer;" aria-label="Activar GPS en vivo">Activar GPS</button>
   </div>
 
   <header>
@@ -36,10 +48,10 @@
       <img src="favicon.png?v=4" class="brand-img" alt="NOTIGAS Logo"> NOTIGAS
     </div>
     <div class="header-actions">
-      <button class="btn-mode-toggle" id="btnModeToggle" onclick="toggleAppMode()"><i class="fa-solid fa-repeat"></i> 🛍️ VECINO</button>
-      <button class="btn-badge" id="btnGps"><i class="fa-solid fa-crosshairs"></i> GPS Auto</button>
-      <button class="btn-driver" id="btnOpenDriver"><i class="fa-solid fa-truck-fast"></i> Mi Ficha de Repartidor</button>
-      <button class="btn-config" id="btnOpenUserSettings" title="Configuración de Usuario"><i class="fa-solid fa-gear"></i></button>
+      <button class="btn-mode-toggle" id="btnModeToggle" onclick="toggleAppMode()" aria-label="Cambiar modo de usuario"><i class="fa-solid fa-repeat"></i> 🛍️ VECINO</button>
+      <button class="btn-badge" id="btnGps" aria-label="Conectar GPS"><i class="fa-solid fa-crosshairs"></i> GPS Auto</button>
+      <button class="btn-driver" id="btnOpenDriver" aria-label="Abrir mi ficha de repartidor"><i class="fa-solid fa-truck-fast"></i> Mi Ficha de Repartidor</button>
+      <button class="btn-config" id="btnOpenUserSettings" title="Configuración de Usuario" aria-label="Abrir configuración de usuario"><i class="fa-solid fa-gear"></i></button>
     </div>
   </header>
 

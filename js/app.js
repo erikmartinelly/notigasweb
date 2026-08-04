@@ -29,6 +29,13 @@ document.addEventListener('DOMContentLoaded', () => {
   ejecutarPurgaBaseDeDatosAuto();
   checkActiveOrderStatus();
 
+  // REGISTRO OFICIAL DE SERVICE WORKER PWA PARA SOPORTE OFFLINE Y VELOCIDAD
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    });
+  }
+
   // AUTODETECTAR Y ACTIVAR MODO SEGÚN ROL REGISTRADO (COMPRADOR VS REPARTIDOR)
   try {
     const saved = localStorage.getItem('notigas_user_data');
