@@ -1,5 +1,5 @@
 /* ==========================================================================
-   NOTIGAS - MÓDULO PRINCIPAL DE NAVEGACIÓN, CONTROLADOR DE COLA DE TRÁFICO,
+   NOTIGAS - MÓDULO PRINCIPAL DE NAVEGACIÓN,
    FAVICON DINÁMICO POR CATEGORÍA Y MODO REPARTIDOR EN RUTA
    ========================================================================== */
 
@@ -113,58 +113,18 @@ function abrirFichaRepartidorEdicion() {
   if (modal) modal.style.display = 'flex';
 }
 
-/* TOGGLE Y CONTROL DE MODO COMPRADOR VS MODO REPARTIDOR EN RUTA */
-function toggleAppMode() {
-  const nextMode = (currentAppMode === 'driver') ? 'buyer' : 'driver';
-
-  if (nextMode === 'driver') {
-    const savedData = localStorage.getItem('notigas_user_data');
-    let userData = null;
-    try { if (savedData) userData = JSON.parse(savedData); } catch(e){}
-
-    // Solo abrir la ficha si es la PRIMERA VEZ que se registra como repartidor
-    if (!userData || userData.role !== 'repartidor') {
-      // Poner título de registro por primera vez
-      const titleEl = document.getElementById('driverModalTitleText');
-      const subtitleEl = document.getElementById('driverModalSubtitle');
-      if (titleEl) titleEl.textContent = 'Registro de Repartidor';
-      if (subtitleEl) subtitleEl.textContent = 'Completa tu ficha de negocio. Aparecerá en la lista de repartidores de la OTB.';
-      const modalDriver = document.getElementById('modalDriver');
-      if (modalDriver) {
-        modalDriver.style.display = 'flex';
-        return;
-      }
-    }
-    // Si ya está registrado como repartidor, solo cambia de modo sin abrir ficha
-  }
-
-  setAppMode(nextMode);
-}
-
 function setAppMode(mode) {
   currentAppMode = mode;
-  const btnToggle = document.getElementById('btnModeToggle');
-  const driverBanner = document.getElementById('driverModeBanner');
   const buyerActions = document.getElementById('buyerFloatingActions');
   const driverActions = document.getElementById('driverFloatingActions');
 
   if (mode === 'driver') {
-    if (btnToggle) {
-      btnToggle.innerHTML = '<i class="fa-solid fa-truck-fast"></i> 🚛 MODO REPARTIDOR';
-      btnToggle.title = 'Haz clic para cambiar a Modo Comprador';
-    }
-    if (driverBanner) driverBanner.style.display = 'block';
     if (buyerActions) buyerActions.style.display = 'none';
     if (driverActions) driverActions.style.display = 'flex';
 
     localStorage.setItem('driverGpsLive', 'on');
     if (typeof verificarYMostrarRepartidorGPS === 'function') verificarYMostrarRepartidorGPS();
   } else {
-    if (btnToggle) {
-      btnToggle.innerHTML = '<i class="fa-solid fa-cart-shopping"></i> 🛍️ MODO COMPRADOR';
-      btnToggle.title = 'Haz clic para cambiar a Modo Repartidor';
-    }
-    if (driverBanner) driverBanner.style.display = 'none';
     if (buyerActions) buyerActions.style.display = 'flex';
     if (driverActions) driverActions.style.display = 'none';
   }
@@ -432,10 +392,8 @@ function getActiveUserLocation() {
 }
 
 function abrirSubmenuPedidos() { 
-  controlarColaTraficoUsuarios(() => {
-    const modalSubmenu = document.getElementById('modalSubmenu');
-    if (modalSubmenu) modalSubmenu.style.display = 'flex'; 
-  });
+  const modalSubmenu = document.getElementById('modalSubmenu');
+  if (modalSubmenu) modalSubmenu.style.display = 'flex'; 
 }
 
 function closeSubmenuModal() { 
