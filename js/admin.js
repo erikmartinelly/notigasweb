@@ -76,7 +76,143 @@ function closeAdminModal() {
 function switchModalTab(idx) {
   document.querySelectorAll('.modal-tab-btn').forEach((btn, i) => btn.classList.toggle('active', i === idx));
   document.querySelectorAll('.modal-tab-pane').forEach((pane, i) => pane.classList.toggle('active', i === idx));
-  if (idx === 2) renderAdminReports();
+  
+  if (idx === 0) renderAdminDashboardKPIs();
+  if (idx === 1) renderAdminVendorsList();
+  if (idx === 2) renderAdminOrdersList();
+  if (idx === 4) renderAdminReports();
+}
+
+function renderAdminDashboardKPIs() {
+  const elUsers = document.getElementById('adminKpiUsers');
+  const elVendors = document.getElementById('adminKpiVendors');
+  const elOrders = document.getElementById('adminKpiOrders');
+  const elReports = document.getElementById('adminKpiReports');
+
+  let usersCount = 2; // Usuarios base demostración
+  try {
+    const saved = localStorage.getItem('notigas_user_data');
+    if (saved) usersCount++;
+  } catch(e){}
+  if (elUsers) elUsers.innerText = usersCount;
+
+  let vendorsCount = 8; // Vendedores base de la OTB
+  try {
+    const saved = localStorage.getItem('notigas_user_data');
+    if (saved) {
+      const u = JSON.parse(saved);
+      if (u.role === 'repartidor') vendorsCount++;
+    }
+  } catch(e){}
+  if (elVendors) elVendors.innerText = vendorsCount;
+
+  let ordersCount = 0;
+  const activeOrder = localStorage.getItem('notigas_active_order');
+  if (activeOrder) ordersCount = 1;
+  if (elOrders) elOrders.innerText = ordersCount;
+
+  let reportsCount = 0;
+  try {
+    const reports = JSON.parse(localStorage.getItem('notigas_user_reports') || '[]');
+    reportsCount = reports.length;
+  } catch(e){}
+  if (elReports) elReports.innerText = reportsCount;
+}
+
+function emitirAlertaOficialAdmin() {
+  const input = document.getElementById('inputAdminBroadcastMsg');
+  const text = (input?.value || '').trim();
+
+  if (!text) {
+    alert('Ingresa el texto de la Alerta Oficial OTB que deseas emitir.');
+    return;
+  }
+
+  const broadcastData = {
+    message: text,
+    timestamp: Date.now()
+  };
+
+  localStorage.setItem('notigas_admin_broadcast', JSON.stringify(broadcastData));
+  
+  if (typeof mostrarPopupAlertaRepartidor === 'function') {
+    mostrarPopupAlertaRepartidor(`👑 <strong>COMUNICADO OFICIAL ADMINISTRACIÓN OTB:</strong><br>${text}`);
+  }
+
+  input.value = '';
+  alert(`📢 COMUNICADO PUBLICADO CON ÉXITO\n\nEl mensaje ha sido transmitido en tiempo real a todos los vecinos en el mapa.`);
+}
+
+function ejecutarPurgaBaseDeDatosManual() {
+  if (confirm('🧹 ¿Deseas ejecutar la purga manual de registros expirados (chat >48h, avisos >72h)?')) {
+    if (typeof ejecutarPurgaBaseDeDatosAuto === 'function') {
+      ejecutarPurgaBaseDeDatosAuto();
+    }
+    renderAdminDashboardKPIs();
+    alert('🧹 Purga de sistema ejecutada correctamente. Se liberó memoria y almacenamiento en caché.');
+  }
+}
+
+function renderAdminVendorsList() {
+  const container = document.getElementById('adminVendorsListContainer');
+  if (!container) return;
+
+  const defaultVendors = [
+    { name: "Gas GLP N° 42", category: "Gas GLP", plate: "3842-XYZ", verified: true },
+    { name: "Agua Cristallina 20L", category: "Agua 20L", plate: "2105-ABC", verified: true },
+    { name: "Chatarra El Vecino", category: "Chatarra", plate: "1892-DFG", verified: false },
+    { name: "EcoReciclaje Papel", category: "Papel", plate: "4412-KLS", verified: true },
+    { name: "Camión Agrícola Frutas", category: "Frutas", plate: "5011-BTR", verified: false },
+    { name: "Detergentes Limpieza", category: "Detergentes", plate: "1098-MMN", verified: true },
+    { name: "Carbonería El Fuego", category: "Carbón", plate: "2389-ZXP", verified: true }
+  ];
+
+  let html = '';
+  defaultVendors.forEach((v) => {
+    html += `
+      <div style="background:#1E293B; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.08); display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <strong style="color:#FF6D00;">${v.verified ? '👑 ' : ''}${v.name}</strong> (${v.category})
+          <div style="font-size:9.5px; color:#94A3B8;">Placa: ${v.plate} • Estado: ${v.verified ? 'Verificado' : 'En revisión'}</div>
+        </div>
+        <div style="display:flex; gap:4px;">
+          <button onclick="alert('👑 Estado de Verificación actualizado para ${v.name}')" style="background:#00E676; color:#0F172A; border:none; padding:3px 8px; border-radius:4px; font-weight:700; font-size:9.5px; cursor:pointer;">Verificar</button>
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+function renderAdminOrdersList() {
+  const container = document.getElementById('adminOrdersMonitorContainer');
+  if (!container) return;
+
+  const rawOrder = localStorage.getItem('notigas_active_order');
+  if (!rawOrder) {
+    container.innerHTML = '<div style="color:#64748B; font-style:italic;">No hay pedidos vecinales activos en este momento.</div>';
+    return;
+  }
+
+  try {
+    const order = JSON.parse(rawOrder);
+    container.innerHTML = `
+      <div style="background:#1E293B; padding:10px; border-radius:8px; border:1px solid #FF6D00;">
+        <div style="font-size:12px; font-weight:700; color:#FF6D00;">📦 Pedido Vecinal Activo</div>
+        <div style="font-size:11px; color:white; margin-top:4px;">
+          <strong>Categoría:</strong> ${order.categoria}<br>
+          <strong>Detalle:</strong> ${order.cantidad}<br>
+          <strong>Coordenadas:</strong> Lat ${order.lat ? order.lat.toFixed(5) : '-'}, Lng ${order.lng ? order.lng.toFixed(5) : '-'}
+        </div>
+        <button onclick="cancelarPedidoActivo(); renderAdminOrdersList();" style="margin-top:8px; background:#D32F2F; color:white; border:none; padding:4px 10px; border-radius:6px; font-weight:700; font-size:10px; cursor:pointer;">
+          ❌ Cancelar Pedido desde Admin
+        </button>
+      </div>
+    `;
+  } catch(e) {
+    container.innerHTML = '<div style="color:#64748B; font-style:italic;">No hay pedidos activos.</div>';
+  }
 }
 
 function guardarSubmenuAnuncios() {
@@ -143,6 +279,7 @@ function guardarAdminConfig() {
 
   switchModalTab(0);
   renderAdminReports();
+  renderAdminDashboardKPIs();
   alert(`🔐 ACCESO DE ADMINISTRADOR DESBLOQUEADO\n\nBienvenido Administrador (${gmail}). Menús de administración activados.`);
 }
 

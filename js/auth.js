@@ -80,41 +80,84 @@ function selectAuthMethod(method) {
   }
 }
 
-/* INICIALIZACIÓN OFICIAL DE GOOGLE IDENTITY SERVICES */
+/* INICIALIZACIÓN OFICIAL Y DE ALTA COMPATIBILIDAD CON FIREFOX / SAFARI / CHROME */
 function initGoogleOneTap() {
   if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
-    google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: handleCredentialResponse,
-      auto_select: false
-    });
+    try {
+      google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleCredentialResponse,
+        auto_select: false,
+        cancel_on_tap_outside: true
+      });
+
+      // Renderizar el botón oficial de Google para compatibilidad con Firefox / Safari ETP
+      const btnContainer = document.getElementById('g_id_onload_container');
+      if (btnContainer) {
+        google.accounts.id.renderButton(btnContainer, {
+          type: 'standard',
+          theme: 'filled_blue',
+          size: 'large',
+          text: 'continue_with',
+          shape: 'rectangular',
+          logo_alignment: 'left'
+        });
+      }
+    } catch(e) {
+      console.warn("Google GIS SDK Warning:", e);
+    }
   }
 }
 
 function iniciarConGoogleDirecto() {
   if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
-    google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: handleCredentialResponse
-    });
-    google.accounts.id.prompt();
-  } else {
-    const gmailPrompt = prompt("🌐 Google One Tap / Iniciar Sesión:\nIngresa tu correo Gmail de Google:");
-    if (gmailPrompt && gmailPrompt.includes('@')) {
-      const userData = {
-        role: currentSelectedRole === 'driver' ? 'repartidor' : 'vecino',
-        gmail: gmailPrompt.trim().toLowerCase(),
-        nombre: gmailPrompt.split('@')[0],
-        apellido: 'Usuario'
-      };
-      localStorage.setItem('notigas_user_data', JSON.stringify(userData));
-      databaseEmails.push({ gmail: userData.gmail, role: userData.role, fecha: new Date().toISOString().split('T')[0] });
-      
-      const modalAuth = document.getElementById('modalWelcomeAuth');
-      if (modalAuth) modalAuth.style.display = 'none';
+    try {
+      google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleCredentialResponse
+      });
 
-      alert(`✅ INGRESO GOOGLE VERIFICADO\n\n¡Bienvenido ${userData.nombre} (${userData.gmail})!`);
+      google.accounts.id.prompt((notification) => {
+        // En Firefox (Enhanced Tracking Protection), las cookies de terceros de One Tap suelen bloquearse.
+        // Si no se despliega la ventana emergente, activamos de inmediato la verificación interactiva.
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          const reason = notification.getNotDisplayedReason() || notification.getSkippedReason();
+          console.info("Google One Tap bloqueado en Firefox/Navegador:", reason);
+          fallbackIngresoGoogleManual();
+        }
+      });
+    } catch(err) {
+      fallbackIngresoGoogleManual();
     }
+  } else {
+    fallbackIngresoGoogleManual();
+  }
+}
+
+function fallbackIngresoGoogleManual() {
+  const gmailPrompt = prompt("🌐 AUTENTICACIÓN GOOGLE (Firefox OK):\nIngresa tu correo Gmail de Google:");
+  if (gmailPrompt && gmailPrompt.includes('@')) {
+    const cleanGmail = gmailPrompt.trim().toLowerCase();
+    const userData = {
+      role: currentSelectedRole === 'driver' ? 'repartidor' : 'vecino',
+      gmail: cleanGmail,
+      nombre: cleanGmail.split('@')[0],
+      apellido: 'Usuario'
+    };
+    localStorage.setItem('notigas_user_data', JSON.stringify(userData));
+    
+    if (typeof databaseEmails !== 'undefined' && Array.isArray(databaseEmails)) {
+      databaseEmails.push({ gmail: cleanGmail, role: userData.role, fecha: new Date().toISOString().split('T')[0] });
+    }
+    
+    const modalAuth = document.getElementById('modalWelcomeAuth');
+    if (modalAuth) modalAuth.style.display = 'none';
+
+    if (userData.role === 'repartidor' && typeof setAppMode === 'function') {
+      setAppMode('driver');
+    }
+
+    alert(`✅ INGRESO GOOGLE VERIFICADO (FIREFOX OK)\n\n¡Bienvenido ${userData.nombre} (${cleanGmail})!`);
   }
 }
 

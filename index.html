@@ -288,14 +288,67 @@
 
       <!-- PANTALLA 2: DASHBOARD DE ADMINISTRACIÓN (SOLO VISIBLE TRAS AUTENTICARSE) -->
       <div id="adminDashboardScreen" style="display: none;">
-        <div class="modal-tab-nav">
-          <button class="modal-tab-btn active" onclick="switchModalTab(0)"><i class="fa-solid fa-rectangle-ad"></i> Anuncios & AdSense</button>
-          <button class="modal-tab-btn" onclick="switchModalTab(1)"><i class="fa-solid fa-file-csv"></i> Exportar CSV</button>
-          <button class="modal-tab-btn" onclick="switchModalTab(2)"><i class="fa-solid fa-shield-halved"></i> Moderación & Baneos</button>
+        <div class="modal-tab-nav" style="overflow-x: auto; display: flex; gap: 4px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 6px; margin-bottom: 10px;">
+          <button class="modal-tab-btn active" onclick="switchModalTab(0)"><i class="fa-solid fa-chart-line"></i> Métricas</button>
+          <button class="modal-tab-btn" onclick="switchModalTab(1)"><i class="fa-solid fa-store"></i> Repartidores</button>
+          <button class="modal-tab-btn" onclick="switchModalTab(2)"><i class="fa-solid fa-boxes-packing"></i> Pedidos</button>
+          <button class="modal-tab-btn" onclick="switchModalTab(3)"><i class="fa-solid fa-rectangle-ad"></i> Anuncios</button>
+          <button class="modal-tab-btn" onclick="switchModalTab(4)"><i class="fa-solid fa-shield-halved"></i> Moderación</button>
+          <button class="modal-tab-btn" onclick="switchModalTab(5)"><i class="fa-solid fa-file-csv"></i> Exportar</button>
         </div>
 
-        <!-- SUBMENÚ 1: CONFIGURACIÓN DE GOOGLE ADSENSE Y ANUNCIOS NATIVOS -->
+        <!-- SUBMENÚ 0: MÉTRICAS EN VIVO, AVISO GENERAL & PURGA DE BD -->
         <div class="modal-tab-pane active" id="modalPane0">
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px;">
+            <div style="background: rgba(14,165,233,0.15); border: 1px solid rgba(14,165,233,0.3); border-radius: 10px; padding: 8px 10px; text-align: center;">
+              <div style="font-size: 10px; color: #38BDF8; font-weight: 700;">👥 VECINOS / USUARIOS</div>
+              <div id="adminKpiUsers" style="font-size: 20px; font-weight: 900; color: white;">0</div>
+            </div>
+            <div style="background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); border-radius: 10px; padding: 8px 10px; text-align: center;">
+              <div style="font-size: 10px; color: #FBBF24; font-weight: 700;">🚛 REPARTIDORES</div>
+              <div id="adminKpiVendors" style="font-size: 20px; font-weight: 900; color: white;">0</div>
+            </div>
+            <div style="background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); border-radius: 10px; padding: 8px 10px; text-align: center;">
+              <div style="font-size: 10px; color: #34D399; font-weight: 700;">📦 PEDIDOS ACTIVOS</div>
+              <div id="adminKpiOrders" style="font-size: 20px; font-weight: 900; color: white;">0</div>
+            </div>
+            <div style="background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); border-radius: 10px; padding: 8px 10px; text-align: center;">
+              <div style="font-size: 10px; color: #F87171; font-weight: 700;">🚨 DENUNCIAS OPEN</div>
+              <div id="adminKpiReports" style="font-size: 20px; font-weight: 900; color: white;">0</div>
+            </div>
+          </div>
+
+          <div style="background: #0F172A; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 10px;">
+            <label style="font-size: 11px; font-weight: 700; color: #FF6D00;"><i class="fa-solid fa-bullhorn"></i> Emitir Alerta / Comunicado Oficial OTB:</label>
+            <div style="display: flex; gap: 6px; margin-top: 6px;">
+              <input type="text" id="inputAdminBroadcastMsg" placeholder="Ej: AVISO OTB: Camión Cisterna en la plaza principal..." style="flex: 1; padding: 8px; font-size: 11px; border-radius: 6px; background: #1E293B; border: 1px solid rgba(255,255,255,0.1); color: white;">
+              <button onclick="emitirAlertaOficialAdmin()" style="background: #FF6D00; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: 700; font-size: 11px; cursor: pointer;">Emitir</button>
+            </div>
+          </div>
+
+          <button onclick="ejecutarPurgaBaseDeDatosManual()" style="width: 100%; background: rgba(239,68,68,0.2); color: #F87171; border: 1px solid rgba(239,68,68,0.4); padding: 8px; border-radius: 8px; font-weight: 700; font-size: 11px; cursor: pointer;">
+            <i class="fa-solid fa-broom"></i> Ejecutar Purga Manual de Base de Datos y Caché
+          </button>
+        </div>
+
+        <!-- SUBMENÚ 1: GESTIÓN DE REPARTIDORES -->
+        <div class="modal-tab-pane" id="modalPane1">
+          <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Listado de Repartidores Registrados y Fichas de Negocio:</p>
+          <div id="adminVendorsListContainer" style="max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
+            <!-- Renderizado dinámico de repartidores -->
+          </div>
+        </div>
+
+        <!-- SUBMENÚ 2: MONITOR DE PEDIDOS VECINALES EN VIVO -->
+        <div class="modal-tab-pane" id="modalPane2">
+          <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Monitor en Tiempo Real de Solicitudes y Pedidos Vecinales:</p>
+          <div id="adminOrdersMonitorContainer" style="max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
+            <!-- Renderizado dinámico de pedidos -->
+          </div>
+        </div>
+
+        <!-- SUBMENÚ 3: CONFIGURACIÓN DE PUBLICIDAD & ADSENSE -->
+        <div class="modal-tab-pane" id="modalPane3">
           <div class="form-group">
             <label>ID de Cliente Google AdSense (ca-pub-xxxxxxxx):</label>
             <input type="text" id="inputAdsenseId" value="ca-pub-9949962151180000" placeholder="ca-pub-xxxxxxxxxxxxxxxx">
@@ -311,14 +364,8 @@
           <button class="btn-submit" onclick="guardarSubmenuAnuncios()"><i class="fa-solid fa-floppy-disk"></i> Guardar Configuración de Publicidad</button>
         </div>
 
-        <!-- SUBMENÚ 2: EXPORTACIÓN DE CORREOS CSV -->
-        <div class="modal-tab-pane" id="modalPane1">
-          <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Exportar todos los correos electrónicos Gmail de usuarios registrados para campañas de Email Marketing:</p>
-          <button class="btn-csv-download" onclick="descargarListaCorreosCSV()"><i class="fa-solid fa-download"></i> 📥 Descargar Correos Gmail (.CSV)</button>
-        </div>
-
-        <!-- SUBMENÚ 3: MODERACIÓN, DENUNCIAS Y GESTIÓN DE BANEOS -->
-        <div class="modal-tab-pane" id="modalPane2">
+        <!-- SUBMENÚ 4: MODERACIÓN, DENUNCIAS Y BANEOS -->
+        <div class="modal-tab-pane" id="modalPane4">
           <p style="font-size: 11px; color: #94A3B8; margin-bottom: 10px;">Gestión de Denuncias por Spam/Acoso y Lista de Usuarios Baneados:</p>
           
           <div style="background-color: #0F172A; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 12px;">
@@ -338,6 +385,12 @@
               <!-- Renderizado dinámico de baneados -->
             </div>
           </div>
+        </div>
+
+        <!-- SUBMENÚ 5: EXPORTACIÓN DE CORREOS CSV -->
+        <div class="modal-tab-pane" id="modalPane5">
+          <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Exportar todos los correos electrónicos Gmail de usuarios registrados para campañas de Email Marketing:</p>
+          <button class="btn-csv-download" onclick="descargarListaCorreosCSV()"><i class="fa-solid fa-download"></i> 📥 Descargar Correos Gmail (.CSV)</button>
         </div>
 
         <button style="width:100%; background:none; border:1px solid rgba(255,255,255,0.15); color:#94A3B8; padding:8px; border-radius:8px; margin-top:14px; cursor:pointer; font-size:11px;" onclick="cerrarSesionAdminControl()">
@@ -384,6 +437,7 @@
         <p style="font-size: 11px; color: #CBD5E1; margin: 14px 0; text-align: center;">
           Ingresa con 1 solo clic utilizando tu cuenta verificada de Google Gmail:
         </p>
+        <div id="g_id_onload_container" style="display: flex; justify-content: center; margin-bottom: 10px;"></div>
         <button class="btn-submit-google" onclick="iniciarConGoogleDirecto()">
           <i class="fa-brands fa-google"></i> Continuar con Cuenta Google
         </button>
