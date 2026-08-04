@@ -12,16 +12,12 @@ let isHeatmapActive = false;
 
 document.addEventListener('DOMContentLoaded', () => {
   const btnUserSettings = document.getElementById('btnOpenUserSettings');
-  const btnOpenDriver = document.getElementById('btnOpenDriver');
   const modalUserSettings = document.getElementById('modalUserSettings');
-  const modalDriver = document.getElementById('modalDriver');
 
   if (btnUserSettings && modalUserSettings) {
-    btnUserSettings.addEventListener('click', () => modalUserSettings.style.display = 'flex');
-  }
-
-  if (btnOpenDriver && modalDriver) {
-    btnOpenDriver.addEventListener('click', () => modalDriver.style.display = 'flex');
+    btnUserSettings.addEventListener('click', () => {
+      abrirConfiguracionSegunRol();
+    });
   }
 
   // REQUERIR GPS OBLIGATORIO Y PURGA AUTOMÁTICA DE BASE DE DATOS AL CARGAR
@@ -50,6 +46,74 @@ document.addEventListener('DOMContentLoaded', () => {
   } catch(e){}
 });
 
+/* ABRE EL MODAL DE CONFIGURACIÓN MOSTRANDO LA SECCIÓN DEL ROL ACTIVO */
+function abrirConfiguracionSegunRol() {
+  const buyerSection = document.getElementById('settingsBuyerSection');
+  const driverSection = document.getElementById('settingsDriverSection');
+  const titleEl = document.getElementById('settingsModalTitle');
+  const driverNameLabel = document.getElementById('settingsDriverNameLabel');
+
+  let isDriver = false;
+  try {
+    const saved = localStorage.getItem('notigas_user_data');
+    if (saved) {
+      const u = JSON.parse(saved);
+      isDriver = (u.role === 'repartidor');
+      if (isDriver && driverNameLabel && u.nombre) {
+        driverNameLabel.textContent = u.nombre;
+      }
+    }
+  } catch(e){}
+
+  if (isDriver) {
+    if (buyerSection) buyerSection.style.display = 'none';
+    if (driverSection) driverSection.style.display = 'block';
+    if (titleEl) titleEl.textContent = '⚙️ Configuración Repartidor';
+
+    // Cargar estado GPS guardado
+    try {
+      const gpsVal = localStorage.getItem('driverGpsLive') || 'on';
+      const gpsSelect = document.getElementById('driverGpsLive');
+      if (gpsSelect) gpsSelect.value = gpsVal;
+    } catch(e){}
+  } else {
+    if (buyerSection) buyerSection.style.display = 'block';
+    if (driverSection) driverSection.style.display = 'none';
+    if (titleEl) titleEl.textContent = '⚙️ Configuración';
+  }
+
+  const modal = document.getElementById('modalUserSettings');
+  if (modal) modal.style.display = 'flex';
+}
+
+/* ABRE LA FICHA DEL REPARTIDOR EN MODO EDICIÓN (DESDE EL MENÚ CONFIG, NO DEL HEADER) */
+function abrirFichaRepartidorEdicion() {
+  // Cargar datos existentes del repartidor en el formulario
+  try {
+    const saved = localStorage.getItem('notigas_user_data');
+    if (saved) {
+      const u = JSON.parse(saved);
+      const setVal = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+      setVal('inputDriverNombre', u.nombre);
+      setVal('inputDriverTelRef', u.whatsapp);
+      setVal('inputDriverPlate', u.placa);
+      setVal('inputDriverCat', u.categoria);
+      setVal('inputDriverProductos', u.productos);
+      setVal('inputDriverZonas', u.zonas);
+      setVal('inputDriverSchedule', u.schedule);
+    }
+  } catch(e){}
+
+  // Cambiar título a modo edición
+  const titleEl = document.getElementById('driverModalTitleText');
+  const subtitleEl = document.getElementById('driverModalSubtitle');
+  if (titleEl) titleEl.textContent = 'Editar Mi Ficha de Repartidor';
+  if (subtitleEl) subtitleEl.textContent = 'Actualiza los datos de tu negocio. Los cambios se aplican de inmediato.';
+
+  const modal = document.getElementById('modalDriver');
+  if (modal) modal.style.display = 'flex';
+}
+
 /* TOGGLE Y CONTROL DE MODO COMPRADOR VS MODO REPARTIDOR EN RUTA */
 function toggleAppMode() {
   const nextMode = (currentAppMode === 'driver') ? 'buyer' : 'driver';
@@ -59,26 +123,23 @@ function toggleAppMode() {
     let userData = null;
     try { if (savedData) userData = JSON.parse(savedData); } catch(e){}
 
+    // Solo abrir la ficha si es la PRIMERA VEZ que se registra como repartidor
     if (!userData || userData.role !== 'repartidor') {
+      // Poner título de registro por primera vez
+      const titleEl = document.getElementById('driverModalTitleText');
+      const subtitleEl = document.getElementById('driverModalSubtitle');
+      if (titleEl) titleEl.textContent = 'Registro de Repartidor';
+      if (subtitleEl) subtitleEl.textContent = 'Completa tu ficha de negocio. Aparecerá en la lista de repartidores de la OTB.';
       const modalDriver = document.getElementById('modalDriver');
       if (modalDriver) {
         modalDriver.style.display = 'flex';
         return;
       }
     }
+    // Si ya está registrado como repartidor, solo cambia de modo sin abrir ficha
   }
 
   setAppMode(nextMode);
-
-  try {
-    const savedData = localStorage.getItem('notigas_user_data') || '{}';
-    const u = JSON.parse(savedData);
-    u.role = (nextMode === 'driver') ? 'repartidor' : 'comprador';
-    localStorage.setItem('notigas_user_data', JSON.stringify(u));
-  } catch(e){}
-
-  const modeName = (nextMode === 'driver') ? '🚛 REPARTIDOR EN RUTA' : '🛍️ COMPRADOR / VECINO';
-  alert(`✨ MODO CAMBIADO CON ÉXITO\n\nModo Activo: ${modeName}`);
 }
 
 function setAppMode(mode) {

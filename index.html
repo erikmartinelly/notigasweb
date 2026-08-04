@@ -50,8 +50,7 @@
     <div class="header-actions">
       <button class="btn-mode-toggle" id="btnModeToggle" onclick="toggleAppMode()" aria-label="Cambiar modo de usuario"><i class="fa-solid fa-repeat"></i> 🛍️ VECINO</button>
       <button class="btn-badge" id="btnGps" aria-label="Conectar GPS"><i class="fa-solid fa-crosshairs"></i> GPS Auto</button>
-      <button class="btn-driver" id="btnOpenDriver" aria-label="Abrir mi ficha de repartidor"><i class="fa-solid fa-truck-fast"></i> Mi Ficha de Repartidor</button>
-      <button class="btn-config" id="btnOpenUserSettings" title="Configuración de Usuario" aria-label="Abrir configuración de usuario"><i class="fa-solid fa-gear"></i></button>
+      <button class="btn-config" id="btnOpenUserSettings" title="Configuración" aria-label="Abrir configuración"><i class="fa-solid fa-gear"></i></button>
     </div>
   </header>
 
@@ -193,29 +192,71 @@
     <button class="btn-ad-contact" onclick="abrirAnuncioWhatsApp()"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver Anuncio</button>
   </footer>
 
-  <!-- MODAL CONFIGURACIÓN GENERAL DE USUARIO (⚙️) -->
+  <!-- MODAL CONFIGURACIÓN GENERAL (⚙️) - CONTENIDO DINÁMICO SEGÚN ROL -->
   <div class="modal" id="modalUserSettings">
     <div class="modal-content">
       <div class="modal-title">
-        <span>⚙️ Configuración de Usuario</span>
+        <span id="settingsModalTitle">⚙️ Configuración</span>
         <button class="btn-close" onclick="closeUserSettingsModal()">✕</button>
       </div>
 
+      <!-- SECCIÓN VECINO/COMPRADOR -->
+      <div id="settingsBuyerSection">
+        <div style="background: rgba(0,230,118,0.08); border: 1px solid rgba(0,230,118,0.2); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; font-size: 11.5px; color: #00E676; font-weight: 700;">
+          <i class="fa-solid fa-user"></i> Perfil: Vecino / Comprador
+        </div>
 
+        <div class="form-group">
+          <label>Notificaciones y Alertas Auditivas:</label>
+          <select id="userPrefSound">
+            <option value="enabled">🔔 Notificaciones con Sonido</option>
+            <option value="disabled">🔇 Modo Silencioso</option>
+          </select>
+        </div>
 
-      <div class="form-group">
-        <label>Notificaciones y Alertas Auditivas:</label>
-        <select id="userPrefSound">
-          <option value="enabled">🔔 Notificaciones con Sonido (Bocina de Camión y Avisos)</option>
-          <option value="disabled">🔇 Modo Silencioso (Sin Sonidos)</option>
-        </select>
+        <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 14px 0;">
+        <button class="btn-submit" onclick="guardarPrefUsuario()"><i class="fa-solid fa-floppy-disk"></i> Guardar Preferencias</button>
+        
+        <button style="width:100%; background: linear-gradient(135deg, #1565C0, #0D47A1); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 10px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="closeUserSettingsModal(); document.getElementById('modalDriver').style.display='flex';">
+          <i class="fa-solid fa-truck-fast"></i> 🚛 Registrarme como Repartidor
+        </button>
       </div>
 
+      <!-- SECCIÓN REPARTIDOR (solo visible si el usuario es repartidor) -->
+      <div id="settingsDriverSection" style="display:none;">
+        <div style="background: rgba(255,109,0,0.12); border: 1px solid rgba(255,109,0,0.3); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; font-size: 11.5px; color: #FF6D00; font-weight: 700;">
+          <i class="fa-solid fa-truck-fast"></i> Perfil: <span id="settingsDriverNameLabel">Repartidor</span>
+        </div>
+
+        <div class="form-group">
+          <label>Transmisión GPS en Vivo:</label>
+          <select id="driverGpsLive">
+            <option value="on">🟢 Transmitir ubicación en tiempo real</option>
+            <option value="off">🔴 Pausar transmisión GPS</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Notificaciones y Alertas Auditivas:</label>
+          <select id="userPrefSoundDriver">
+            <option value="enabled">🔔 Notificaciones con Sonido</option>
+            <option value="disabled">🔇 Modo Silencioso</option>
+          </select>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 14px 0;">
+        <button class="btn-submit" onclick="guardarPrefUsuario()"><i class="fa-solid fa-floppy-disk"></i> Guardar Preferencias</button>
+
+        <!-- ACCESO A EDITAR FICHA (OCULTO AQUÍ, NO EN HEADER) -->
+        <button style="width:100%; background: linear-gradient(135deg, #FF6D00, #E65100); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 10px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="closeUserSettingsModal(); abrirFichaRepartidorEdicion();">
+          <i class="fa-solid fa-id-card"></i> Editar Mi Ficha de Negocio / Repartidor
+        </button>
+      </div>
+
+      <!-- ACCIONES COMUNES PARA AMBOS PERFILES -->
       <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 14px 0;">
 
-      <button class="btn-submit" onclick="guardarPrefUsuario()"><i class="fa-solid fa-floppy-disk"></i> Guardar Preferencias</button>
-      
-      <button style="width:100%; background: linear-gradient(135deg, #D32F2F, #B71C1C); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 10px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(211,47,47,0.4);" onclick="cerrarSesionUsuario()">
+      <button style="width:100%; background: linear-gradient(135deg, #D32F2F, #B71C1C); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 4px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(211,47,47,0.4);" onclick="cerrarSesionUsuario()">
         <i class="fa-solid fa-right-from-bracket"></i> 🚪 Cerrar Sesión
       </button>
 
@@ -229,21 +270,16 @@
     </div>
   </div>
 
-  <!-- MODAL SETTINGS / CONFIGURACIÓN EXCLUSIVA DEL REPARTIDOR -->
+  <!-- MODAL REGISTRO/EDICIÓN DE FICHA DE REPARTIDOR (1ª VEZ AL REGISTRARSE, LUEGO DESDE CONFIG) -->
   <div class="modal" id="modalDriver">
     <div class="modal-content">
       <div class="modal-title">
-        <span><i class="fa-solid fa-truck-fast"></i> Mi Mini Página de Negocio (Repartidor)</span>
+        <span><i class="fa-solid fa-id-card"></i> <span id="driverModalTitleText">Registro de Repartidor</span></span>
         <button class="btn-close" onclick="closeDriverModal()">✕</button>
       </div>
+      <p style="font-size:11px; color:#94A3B8; margin-bottom:12px;" id="driverModalSubtitle">Completa tu ficha de negocio. Aparecerá en la lista de repartidores de la OTB.</p>
 
-      <div class="form-group">
-        <label>Transmisión de Recorrido en Vivo (GPS):</label>
-        <select id="driverGpsLive">
-          <option value="on">🟢 Transmitir mi ubicación en tiempo real en el mapa</option>
-          <option value="off">🔴 Pausar transmisión GPS en vivo</option>
-        </select>
-      </div>
+
 
       <div class="form-group">
         <label>Nombre del Repartidor o Negocio:</label>

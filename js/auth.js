@@ -355,6 +355,36 @@ function closeUserSettingsModal() {
   if (modal) modal.style.display = 'none';
 }
 
+function guardarPrefUsuario() {
+  // Detectar si es repartidor
+  let isDriver = false;
+  try {
+    const saved = localStorage.getItem('notigas_user_data');
+    if (saved) { const u = JSON.parse(saved); isDriver = (u.role === 'repartidor'); }
+  } catch(e){}
+
+  if (isDriver) {
+    // Guardar GPS
+    const gpsSelect = document.getElementById('driverGpsLive');
+    const gpsVal = gpsSelect ? gpsSelect.value : 'on';
+    localStorage.setItem('driverGpsLive', gpsVal);
+
+    // Guardar sonido repartidor
+    const soundSelect = document.getElementById('userPrefSoundDriver');
+    const soundVal = soundSelect ? soundSelect.value : 'enabled';
+    localStorage.setItem('notigas_pref_sound', soundVal);
+
+    if (typeof verificarYMostrarRepartidorGPS === 'function') verificarYMostrarRepartidorGPS();
+  } else {
+    // Guardar sonido comprador
+    const soundSelect = document.getElementById('userPrefSound');
+    const soundVal = soundSelect ? soundSelect.value : 'enabled';
+    localStorage.setItem('notigas_pref_sound', soundVal);
+  }
+
+  closeUserSettingsModal();
+}
+
 function cerrarSesionUsuario() {
   if (confirm("🚪 ¿Estás seguro de que deseas cerrar sesión en NOTIGAS?\n\nAl cerrar sesión podrás elegir ingresar como Comprador o Repartidor.")) {
     localStorage.removeItem('notigas_user_data');
