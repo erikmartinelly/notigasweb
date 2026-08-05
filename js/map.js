@@ -779,80 +779,68 @@ function renderHeatmapOverlay() {
 }
 
 function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
-  fetch('https://ipapi.co/json/')
+  // 1º Intento: ipwho.is (CORS libre, ultra rápido, sin límite de peticiones)
+  fetch('https://ipwho.is/')
     .then(res => res.json())
     .then(data => {
-      if (data && data.latitude && data.longitude) {
+      if (data && data.success && data.latitude && data.longitude) {
         applyGpsPosition(data.latitude, data.longitude, "Ubicación por Red/IP Desktop", forceReset);
-        console.log("📍 Ubicación Desktop por IP de Red obtenida:", data.latitude, data.longitude);
+        console.log("📍 Ubicación Desktop obtenida por IP (ipwho.is):", data.latitude, data.longitude);
       } else {
-        applyGpsPosition(-17.3895, -66.1568, "Ubicación Predeterminada OTB", forceReset);
+        throw new Error("Fallback ipwho.is sin respuesta válida");
       }
     })
     .catch(() => {
-      applyGpsPosition(-17.3895, -66.1568, "Ubicación Predeterminada OTB", forceReset);
+      // 2º Intento: ipapi.co
+      fetch('https://ipapi.co/json/')
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.latitude && data.longitude) {
+            applyGpsPosition(data.latitude, data.longitude, "Ubicación por Red/IP Desktop", forceReset);
+            console.log("📍 Ubicación Desktop obtenida por IP (ipapi.co):", data.latitude, data.longitude);
+          } else {
+            applyGpsPosition(-17.3895, -66.1568, "Ubicación Predeterminada OTB", forceReset);
+          }
+        })
+        .catch(() => {
+          applyGpsPosition(-17.3895, -66.1568, "Ubicación Predeterminada OTB", forceReset);
+        });
     });
 }
 
 function conectarGPSAuto(forceReset = false) {
-  // Asegurar que la posición inicial y el marcador existan de inmediato
   applyGpsPosition(currentGpsLat, currentGpsLng, "Ubicación Inicial", forceReset);
-
-  // En PC/Desktop el GPS del navegador no funciona — usar IP fallback directamente
-  const isDesktop = !/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  if (isDesktop) {
-    obtenerUbicacionIPFallbackDesktop(forceReset);
-    return;
-  }
 
   let gpsResolved = false;
 
-  // Temporizador de respaldo de 1.5s por si el navegador bloquea la API de geolocalización
-  const fallbackTimer = setTimeout(() => {
-    if (!gpsResolved) {
-      obtenerUbicacionIPFallbackDesktop(forceReset);
-    }
-  }, 1500);
-
+  // 1. Intentar geolocalización nativa del navegador (funciona en PC y Móviles)
   if ("geolocation" in navigator) {
     try {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           gpsResolved = true;
-          clearTimeout(fallbackTimer);
           applyGpsPosition(pos.coords.latitude, pos.coords.longitude, "Ubicación GPS Exacta", forceReset);
+          console.log("📍 Ubicación GPS obtenida con éxito:", pos.coords.latitude, pos.coords.longitude);
         },
         (err) => {
+          console.warn("⚠️ Geolocalización nativa no disponible o denegada. Activando fallback por IP:", err.message);
           gpsResolved = true;
-          clearTimeout(fallbackTimer);
           obtenerUbicacionIPFallbackDesktop(forceReset);
         },
-        { enableHighAccuracy: true, timeout: 1500, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 4000, maximumAge: 0 }
       );
     } catch(e) {
       gpsResolved = true;
-      clearTimeout(fallbackTimer);
       obtenerUbicacionIPFallbackDesktop(forceReset);
     }
 
-    try {
-      if (activeGpsWatchId !== null && navigator.geolocation.clearWatch) {
-        navigator.geolocation.clearWatch(activeGpsWatchId);
-        activeGpsWatchId = null;
+    // 2. Temporizador de seguridad (3 segundos) por si el navegador no responde
+    setTimeout(() => {
+      if (!gpsResolved) {
+        obtenerUbicacionIPFallbackDesktop(forceReset);
       }
-      activeGpsWatchId = navigator.geolocation.watchPosition(
-        (pos) => {
-          applyGpsPosition(pos.coords.latitude, pos.coords.longitude, "Ubicación GPS en Vivo", false);
-        },
-        (watchErr) => {
-          // silencioso — en mobile puede que tarde
-        },
-        { enableHighAccuracy: false, maximumAge: 15000 }
-      );
-    } catch(e){}
+    }, 3000);
   } else {
-    gpsResolved = true;
-    clearTimeout(fallbackTimer);
     obtenerUbicacionIPFallbackDesktop(forceReset);
   }
 }

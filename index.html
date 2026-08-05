@@ -76,9 +76,9 @@
 
       <div class="search-controls-wrapper">
         <!-- AVISO DE SELECCIÓN EN MAPA -->
-        <div style="background: rgba(15, 23, 42, 0.95); border: 1.5px solid rgba(56, 189, 248, 0.5); color: #38BDF8; padding: 7px 12px; border-radius: 12px; font-size: 11.5px; font-weight: 800; text-align: center; backdrop-filter: blur(12px); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4); display: flex; align-items: center; justify-content: center; gap: 6px;">
-          <i class="fa-solid fa-hand-pointer" style="color: #00E676; font-size: 14px;"></i>
-          <span>📍 Escoger en el mapa (Toca o Arrastra el marcador)</span>
+        <div style="background: rgba(15, 23, 42, 0.95); border: 1.5px solid rgba(56, 189, 248, 0.5); color: #38BDF8; padding: 4px 8px; border-radius: 8px; font-size: 10px; font-weight: 800; text-align: center; backdrop-filter: blur(12px); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4); display: flex; align-items: center; justify-content: center; gap: 4px;">
+          <i class="fa-solid fa-hand-pointer" style="color: #00E676; font-size: 11px;"></i>
+          <span>📍 Escoger en el mapa</span>
         </div>
 
         <!-- DROPDOWN DE CAPITALES Y MUNICIPIOS POR ÁREA METROPOLITANA -->
@@ -281,18 +281,19 @@
         <i class="fa-solid fa-right-from-bracket"></i> 🚪 Cerrar Sesión Completa
       </button>
 
-      <!-- SECCIÓN OCULTA SOBRE M ENU DE CONFIGURACIÓN -->
-      <details style="margin-top: 12px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 8px 12px; cursor: pointer;">
-        <summary style="font-size: 12px; font-weight: 800; color: #94A3B8; display: flex; align-items: center; gap: 6px; outline: none; user-select: none;">
-          <i class="fa-solid fa-gear" style="color: #FF6D00;"></i> ⚙️ CONFIGURACIÓN (Avanzado)
+      <!-- MENÚ DE CONFIGURACIÓN -->
+      <details style="margin-top: 14px; background: rgba(15, 23, 42, 0.8); border: 1.5px solid rgba(255, 109, 0, 0.4); border-radius: 12px; padding: 10px 14px; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,0.4);">
+        <summary style="font-size: 13px; font-weight: 900; color: #FF6D00; display: flex; align-items: center; justify-content: space-between; outline: none; user-select: none;">
+          <span><i class="fa-solid fa-gear"></i> CONFIGURACIÓN</span>
+          <span style="font-size: 10px; color: #94A3B8; font-weight: 700;">(Desplegar opciones)</span>
         </summary>
         
-        <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
-          <button style="width:100%; background: linear-gradient(135deg, #B71C1C, #880E0E); color: #FF8A80; border: 1px solid #D32F2F; padding: 9px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(183,28,28,0.5);" onclick="eliminarMiCuentaCompleta()">
+        <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 10px;">
+          <button style="width:100%; background: linear-gradient(135deg, #B71C1C, #880E0E); color: #FF8A80; border: 1px solid #D32F2F; padding: 10px; border-radius: 10px; font-weight: 800; cursor: pointer; font-size: 11.5px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(183,28,28,0.5);" onclick="eliminarMiCuentaCompleta()">
             <i class="fa-solid fa-trash-can"></i> 🗑️ Eliminar Mi Cuenta y Todos Mis Datos
           </button>
 
-          <button style="width:100%; background: rgba(30, 41, 59, 0.9); border: 1px solid rgba(255,255,255,0.2); color: #CBD5E1; padding: 8px; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="closeUserSettingsModal(); abrirModalAdminLogin();">
+          <button style="width:100%; background: rgba(30, 41, 59, 0.95); border: 1px solid rgba(255,255,255,0.25); color: #CBD5E1; padding: 10px; border-radius: 10px; cursor: pointer; font-size: 11.5px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="closeUserSettingsModal(); abrirModalAdminLogin();">
             <i class="fa-solid fa-user-shield" style="color: #FF6D00;"></i> 🛡️ Acceso Exclusivo Administrador
           </button>
         </div>
