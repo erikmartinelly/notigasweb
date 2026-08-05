@@ -1,5 +1,5 @@
-/* NOTIGAS SERVICE WORKER V9.0 - CACHÉ PROGRESIVO Y MODO OFFLINE */
-const CACHE_NAME = 'notigas-pwa-cache-v9';
+/* NOTIGAS SERVICE WORKER V12.0 - CACHÉ PROGRESIVO Y MODO OFFLINE */
+const CACHE_NAME = 'notigas-pwa-cache-v12';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

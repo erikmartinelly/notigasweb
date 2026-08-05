@@ -213,18 +213,39 @@ function isOrderCategoryMatchingDriver(orderCategory) {
     if (u.role !== 'repartidor') return true;
     if (!u.categoria) return true;
     
-    const driverCat = u.categoria.toLowerCase();
-    const oCat = (orderCategory || '').toLowerCase();
+    const driverCat = u.categoria.toLowerCase().trim();
+    const oCat = (orderCategory || '').toLowerCase().trim();
     
-    if (driverCat.includes('gas') && oCat.includes('gas')) return true;
-    if (driverCat.includes('agua') && oCat.includes('agua')) return true;
-    if (driverCat.includes('chatarra') && oCat.includes('chatarra')) return true;
-    if ((driverCat.includes('papel') || driverCat.includes('cartón')) && (oCat.includes('papel') || oCat.includes('cartón'))) return true;
-    if ((driverCat.includes('fruta') || driverCat.includes('verdura')) && (oCat.includes('fruta') || oCat.includes('verdura'))) return true;
-    if ((driverCat.includes('detergente') || driverCat.includes('limpieza')) && (oCat.includes('detergente') || oCat.includes('limpieza'))) return true;
-    if ((driverCat.includes('carbón') || driverCat.includes('leña')) && (oCat.includes('carbón') || oCat.includes('leña'))) return true;
-    if (driverCat === oCat) return true;
-    return false;
+    // Repartidor de GAS GLP: SOLO ve pedidos de Gas GLP
+    if (driverCat.includes('gas') || driverCat.includes('glp') || driverCat.includes('garrafa')) {
+      return (oCat.includes('gas') || oCat.includes('glp') || oCat.includes('garrafa'));
+    }
+    // Repartidor de AGUA 20L: SOLO ve pedidos de Agua 20L
+    if (driverCat.includes('agua') || driverCat.includes('botellón') || driverCat.includes('botellon')) {
+      return (oCat.includes('agua') || oCat.includes('botellón') || oCat.includes('botellon'));
+    }
+    // Repartidor de DETERGENTES / LIMPIEZA: SOLO ve pedidos de Detergentes o Productos de Limpieza
+    if (driverCat.includes('detergente') || driverCat.includes('limpieza') || driverCat.includes('jabón') || driverCat.includes('jabon')) {
+      return (oCat.includes('detergente') || oCat.includes('limpieza') || oCat.includes('jabón') || oCat.includes('jabon'));
+    }
+    // Repartidor de CHATARRA / METAL: SOLO ve pedidos de Chatarra
+    if (driverCat.includes('chatarra') || driverCat.includes('reciclaje') || driverCat.includes('metal')) {
+      return (oCat.includes('chatarra') || oCat.includes('reciclaje') || oCat.includes('metal'));
+    }
+    // Repartidor de PAPEL / CARTÓN: SOLO ve pedidos de Papel o Cartón
+    if (driverCat.includes('papel') || driverCat.includes('cartón') || driverCat.includes('carton')) {
+      return (oCat.includes('papel') || oCat.includes('cartón') || oCat.includes('carton'));
+    }
+    // Repartidor de FRUTAS / VERDURAS: SOLO ve pedidos de Frutas o Verduras
+    if (driverCat.includes('fruta') || driverCat.includes('verdura')) {
+      return (oCat.includes('fruta') || oCat.includes('verdura'));
+    }
+    // Repartidor de CARBÓN / LEÑA: SOLO ve pedidos de Carbón o Leña
+    if (driverCat.includes('carbón') || driverCat.includes('carbon') || driverCat.includes('leña') || driverCat.includes('lena')) {
+      return (oCat.includes('carbón') || oCat.includes('carbon') || oCat.includes('leña') || oCat.includes('lena'));
+    }
+
+    return driverCat.includes(oCat) || oCat.includes(driverCat);
   } catch(e) {
     return true;
   }
@@ -246,17 +267,24 @@ function renderDriverOrdersList() {
     } catch(e){}
   }
 
-  // Si no hay pedidos reales, mostrar simulados en vivo para demostración del repartidor
+  // Lista simulada de demostración para el repartidor según su categoría exclusiva
   if (orders.length === 0) {
     const mockOrders = [
       { categoria: "🔥 Garrafa de Gas GLP", cantidad: "2 unidades", dist: "150m (Calle 4 #21)", timestamp: Date.now() - 300000 },
       { categoria: "💧 Botellón Agua 20L", cantidad: "1 unidad", dist: "320m (Av. Principal esquina Plaza)", timestamp: Date.now() - 600000 },
+      { categoria: "🧹 Detergentes / Limpieza", cantidad: "2 galones lavandina", dist: "280m (Calle Bolivar #42)", timestamp: Date.now() - 450000 },
       { categoria: "🪵 Carbón / Leña", cantidad: "1 bolsa 10kg", dist: "450m (Calle 8 #45)", timestamp: Date.now() - 900000 }
     ];
     orders = mockOrders.filter(o => isOrderCategoryMatchingDriver(o.categoria));
     
     if (orders.length === 0) {
-      container.innerHTML = `<div style="padding:20px; text-align:center; color:#94A3B8; font-size:13px;"><i class="fa-solid fa-inbox" style="font-size:24px; margin-bottom:8px;"></i><br>No hay pedidos activos de tu categoría en este momento.</div>`;
+      let driverCategoryName = "tu categoría";
+      try {
+        const u = JSON.parse(localStorage.getItem('notigas_user_data') || '{}');
+        if (u.categoria) driverCategoryName = u.categoria;
+      } catch(e){}
+
+      container.innerHTML = `<div style="padding:24px; text-align:center; color:#94A3B8; font-size:13px;"><i class="fa-solid fa-filter-circle-xmark" style="font-size:28px; color:#F59E0B; margin-bottom:10px;"></i><br><strong style="color:white;">No hay pedidos activos de ${driverCategoryName}</strong><br><span style="font-size:11px; color:#64748B;">Solo recibes pedidos de tu rubro exclusivo en este momento.</span></div>`;
       return;
     }
   }

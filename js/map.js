@@ -620,8 +620,19 @@ async function calcularYTrazarRutaEficiente() {
     pointsToVisit = [
       { lat: currentGpsLat + 0.0012, lng: currentGpsLng + 0.0015, title: "🔥 Pedido GLP", desc: "2 garrafas (Calle 4 #21)" },
       { lat: currentGpsLat - 0.0008, lng: currentGpsLng + 0.0022, title: "💧 Agua 20L", desc: "1 botellón (Av. Principal)" },
-      { lat: currentGpsLat - 0.0015, lng: currentGpsLng - 0.0010, title: "🔥 Garrafas GLP", desc: "3 unidades (Zona Alta)" }
+      { lat: currentGpsLat - 0.0015, lng: currentGpsLng - 0.0010, title: "🔥 Garrafas GLP", desc: "3 unidades (Zona Alta)" },
+      { lat: currentGpsLat + 0.0018, lng: currentGpsLng - 0.0018, title: "🧹 Detergentes / Limpieza", desc: "2 galones lavandina (Calle Bolivar)" }
     ];
+  }
+
+  // Filtrar estrictamente por la categoría exclusiva del repartidor (Gas solo Gas, Agua solo Agua, etc.)
+  if (typeof isOrderCategoryMatchingDriver === 'function') {
+    pointsToVisit = pointsToVisit.filter(p => isOrderCategoryMatchingDriver(p.title));
+  }
+
+  if (pointsToVisit.length === 0) {
+    alert("ℹ️ No hay pedidos pendientes activos de tu categoría para trazar ruta en este momento.");
+    return;
   }
 
   const startPos = { lat: currentGpsLat, lng: currentGpsLng, title: "Inicio", desc: "Posición Repartidor" };
@@ -829,79 +840,103 @@ function renderHeatmapOverlay() {
 }
 
 function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
-  console.log("📡 Iniciando geolocalización por Red/IP para Windows PC...");
-  
-  // 1º Intento: freeipapi.com (HTTPS, libre de CORS, instantáneo)
-  fetch('https://freeipapi.com/api/json')
-    .then(res => res.json())
-    .then(data => {
-      if (data && data.latitude && data.longitude) {
-        applyGpsPosition(data.latitude, data.longitude, "Ubicación por Red/IP Desktop", forceReset);
-        console.log("📍 Ubicación Windows PC obtenida (freeipapi.com):", data.latitude, data.longitude);
-      } else {
-        throw new Error("freeipapi sin datos");
+  console.log("📡 Ejecutando resolución multicanal de ubicación por red (PC / Android)...");
+
+  const apis = [
+    () => fetch('https://freeipapi.com/api/json').then(r => r.json()).then(d => (d && d.latitude && d.longitude) ? { lat: d.latitude, lng: d.longitude } : null),
+    () => fetch('https://ipwho.is/').then(r => r.json()).then(d => (d && d.success && d.latitude && d.longitude) ? { lat: d.latitude, lng: d.longitude } : null),
+    () => fetch('https://ipapi.co/json/').then(r => r.json()).then(d => (d && d.latitude && d.longitude) ? { lat: d.latitude, lng: d.longitude } : null),
+    () => fetch('https://geolocation-db.com/json/').then(r => r.json()).then(d => (d && d.latitude && d.longitude) ? { lat: d.latitude, lng: d.longitude } : null)
+  ];
+
+  let resolved = false;
+
+  apis.forEach(fn => {
+    fn().then(coords => {
+      if (coords && !resolved) {
+        resolved = true;
+        applyGpsPosition(coords.lat, coords.lng, "Ubicación Georeferenciada por Red", forceReset);
+        console.log("📍 Ubicación resuelta con éxito por Red/IP:", coords.lat, coords.lng);
       }
-    })
-    .catch(() => {
-      // 2º Intento: ipwho.is
-      fetch('https://ipwho.is/')
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.success && data.latitude && data.longitude) {
-            applyGpsPosition(data.latitude, data.longitude, "Ubicación por Red/IP Desktop", forceReset);
-            console.log("📍 Ubicación Windows PC obtenida (ipwho.is):", data.latitude, data.longitude);
-          } else {
-            throw new Error("ipwho.is sin datos");
-          }
-        })
-        .catch(() => {
-          // 3º Intento: ipapi.co
-          fetch('https://ipapi.co/json/')
-            .then(res => res.json())
-            .then(data => {
-              if (data && data.latitude && data.longitude) {
-                applyGpsPosition(data.latitude, data.longitude, "Ubicación por Red/IP Desktop", forceReset);
-                console.log("📍 Ubicación Windows PC obtenida (ipapi.co):", data.latitude, data.longitude);
-              } else {
-                applyGpsPosition(-17.3895, -66.1568, "Ubicación Predeterminada OTB", forceReset);
-              }
-            })
-            .catch(() => {
-              applyGpsPosition(-17.3895, -66.1568, "Ubicación Predeterminada OTB", forceReset);
-            });
-        });
-    });
+    }).catch(() => {});
+  });
+}
+
+function solicitarGeolocalizacionNativaNavegador(isMobile, forceReset) {
+  return new Promise((resolve, reject) => {
+    if (!("geolocation" in navigator)) {
+      return reject(new Error("Geolocalización no soportada"));
+    }
+
+    const options = isMobile
+      ? { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+      : { enableHighAccuracy: false, timeout: 4000, maximumAge: 60000 };
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        applyGpsPosition(pos.coords.latitude, pos.coords.longitude, "Ubicación GPS Navegador", forceReset);
+        console.log("📍 Ubicación GPS obtenida con éxito:", pos.coords.latitude, pos.coords.longitude);
+        resolve(pos);
+      },
+      (err) => {
+        console.warn("⚠️ Geolocalización nativa inicial falló:", err.message);
+        if (isMobile) {
+          navigator.geolocation.getCurrentPosition(
+            (pos2) => {
+              applyGpsPosition(pos2.coords.latitude, pos2.coords.longitude, "Ubicación GPS Móvil (Red)", forceReset);
+              resolve(pos2);
+            },
+            (err2) => reject(err2),
+            { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
+          );
+        } else {
+          reject(err);
+        }
+      },
+      options
+    );
+  });
 }
 
 function conectarGPSAuto(forceReset = false) {
-  applyGpsPosition(currentGpsLat, currentGpsLng, "Ubicación Inicial", forceReset);
+  const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-  if ("geolocation" in navigator) {
-    let handled = false;
+  let gpsResolved = false;
 
-    // Intentar geolocalización del navegador con enableHighAccuracy: false (compatible con Windows PC)
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        handled = true;
-        applyGpsPosition(pos.coords.latitude, pos.coords.longitude, "Ubicación GPS Exacta", forceReset);
-        console.log("📍 Ubicación GPS Windows/Navegador obtenida con éxito:", pos.coords.latitude, pos.coords.longitude);
-      },
-      (err) => {
-        console.warn("⚠️ Geolocalización nativa rechazada o no disponible:", err.message);
-        handled = true;
-        obtenerUbicacionIPFallbackDesktop(forceReset);
-      },
-      { enableHighAccuracy: false, timeout: 8000, maximumAge: 30000 }
-    );
-
-    // Temporizador de respaldo de 4s por si el navegador ignora la llamada
-    setTimeout(() => {
-      if (!handled) {
+  // 1. Intentar geolocalización nativa del navegador
+  solicitarGeolocalizacionNativaNavegador(isMobile, forceReset)
+    .then(() => {
+      gpsResolved = true;
+    })
+    .catch((err) => {
+      console.warn("⚠️ Geolocalización nativa no disponible:", err.message);
+      if (!gpsResolved) {
         obtenerUbicacionIPFallbackDesktop(forceReset);
       }
-    }, 4000);
-  } else {
-    obtenerUbicacionIPFallbackDesktop(forceReset);
+    });
+
+  // 2. Disparar resolución multicanal por IP a los 1.2s por si el navegador tarda en responder
+  setTimeout(() => {
+    if (!gpsResolved) {
+      obtenerUbicacionIPFallbackDesktop(forceReset);
+    }
+  }, 1200);
+
+  // 3. En dispositivos móviles Android, activar watchPosition continuo
+  if (isMobile && "geolocation" in navigator) {
+    try {
+      if (activeGpsWatchId !== null && navigator.geolocation.clearWatch) {
+        navigator.geolocation.clearWatch(activeGpsWatchId);
+      }
+      activeGpsWatchId = navigator.geolocation.watchPosition(
+        (pos) => {
+          gpsResolved = true;
+          applyGpsPosition(pos.coords.latitude, pos.coords.longitude, "Ubicación GPS en Vivo", false);
+        },
+        (watchErr) => {},
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+      );
+    } catch(e){}
   }
 }
 
