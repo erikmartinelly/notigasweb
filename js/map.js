@@ -433,7 +433,7 @@ function obtenerIconoCategoriaMapa(catNombre) {
   }
 
   const markerHtml = `
-    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: grab; pointer-events: auto; touch-action: none;">
       ${iconContent}
       <div style="margin-top: 2px; background: #0F172A; color: white; border: 1.5px solid ${badgeColor}; padding: 2px 7px; border-radius: 12px; font-size: 10px; font-weight: 900; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
         ${badgeLabel}
@@ -458,7 +458,13 @@ function renderActiveOrdersMap() {
   activeOrderLayerGroup.clearLayers();
 
   const raw = localStorage.getItem('notigas_active_order');
-  if (!raw) return;
+  if (!raw) {
+    // Si no hay pedido activo, restaurar la visibilidad del userMarker base
+    if (userMarker && !map.hasLayer(userMarker)) {
+      userMarker.addTo(map);
+    }
+    return;
+  }
 
   try {
     const order = JSON.parse(raw);
@@ -468,8 +474,11 @@ function renderActiveOrdersMap() {
     }
 
     if (order.lat && order.lng) {
-      const dist = calcularDistanciaMetros(currentGpsLat, currentGpsLng, order.lat, order.lng);
-      const distStr = formatearDistanciaTriangulada(dist);
+      // Ocultar temporalmente el userMarker base para evitar que se apile debajo del pedido activo y bloquee el arrastre
+      if (userMarker && map.hasLayer(userMarker)) {
+        map.removeLayer(userMarker);
+      }
+
       const categoryIcon = obtenerIconoCategoriaMapa(order.categoria);
 
       const orderMarker = L.marker([order.lat, order.lng], { 
@@ -478,6 +487,10 @@ function renderActiveOrdersMap() {
         autoPan: true
       });
 
+      if (orderMarker.dragging) {
+        orderMarker.dragging.enable();
+      }
+
       orderMarker.on('dragend', function(e) {
         const newPos = e.target.getLatLng();
         isUserMarkerDraggedManually = true;
@@ -485,7 +498,6 @@ function renderActiveOrdersMap() {
         currentGpsLng = newPos.lng;
         
         actualizarCoordenadasPedidoActivo(newPos.lat, newPos.lng);
-        if (userMarker) userMarker.setLatLng([newPos.lat, newPos.lng]);
 
         alert("📍 Ubicación de tu pedido activo actualizada a la nueva posición.");
       });
@@ -496,7 +508,7 @@ function renderActiveOrdersMap() {
 
       orderMarker.bindPopup(`
         <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
-          <strong style="color:#FF6D00; font-size:13px;">📦 Pedido Activo en Vivo</strong><br>
+          <strong style="color:#FF6D00; font-size:13px;">📦 Tu Pedido Activo en Vivo</strong><br>
           <span style="font-size:11px; color:#CBD5E1; font-weight:700;">${order.categoria} (${order.cantidad})</span><br>
           <span style="font-size:10px; color:#00E676; font-weight:700;">📍 Arrastra este icono para mover tu pedido</span><br>
           ${btnAccion}
