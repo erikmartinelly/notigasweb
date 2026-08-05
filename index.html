@@ -48,9 +48,6 @@
       <img src="icons/garrafa_red_clean.svg" class="brand-img" alt="NOTIGAS Logo"> NOTIGAS
     </div>
     <div class="header-actions">
-      <button class="btn-chat-service" onclick="abrirChatConRepartidor('Servicio al Vecino OTB', 'Soporte')">
-        <i class="fa-solid fa-comments"></i> Chat Servicio al Vecino
-      </button>
       <button class="btn-config-rect" id="btnOpenUserSettings" title="Configuración" aria-label="Abrir configuración">
         <i class="fa-solid fa-gear"></i> Configuración
       </button>
@@ -142,6 +139,18 @@
 
     <!-- PESTAÑA 2: MINI PÁGINAS DE NEGOCIO ESTILO FACEBOOK POR CATEGORÍA & SERVICIO AL CLIENTE -->
     <div class="tab-content" id="tab1">
+
+      <!-- BANNER DE CHAT ACTIVO: solo visible cuando hay un pedido activo -->
+      <div id="chatActivoBanner" style="display:none; background: linear-gradient(135deg, rgba(2,136,209,0.2), rgba(0,176,255,0.1)); border-bottom: 1px solid rgba(2,136,209,0.4); padding: 9px 14px; display:none; align-items:center; justify-content:space-between; gap:10px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="width:8px; height:8px; border-radius:50%; background:#00E676; display:inline-block; animation: pulse 1.5s infinite;"></span>
+          <span style="font-size:11.5px; font-weight:800; color:#38BDF8;"><i class="fa-solid fa-comments"></i> Chat con Repartidor Disponible</span>
+          <span style="font-size:10px; color:#94A3B8;">Tienes un pedido activo en vivo</span>
+        </div>
+        <button onclick="toggleFloatingChat()" style="background: linear-gradient(135deg, #0288D1, #0277BD); color:white; border:none; padding:7px 14px; border-radius:8px; font-size:11.5px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow: 0 3px 12px rgba(2,136,209,0.5);">
+          <i class="fa-solid fa-comments"></i> Abrir Chat
+        </button>
+      </div>
       <!-- BARRA FILTRADORA DE CATEGORÍAS -->
       <div class="category-filter-bar">
         <button class="cat-chip active" onclick="filterVendorCategory('TODOS', this)">🌐 Todos</button>
@@ -768,13 +777,7 @@
     </div>
   </div>
 
-  <!-- BOTÓN FLOTANTE PERMANENTE FAB DE LANZAMIENTO DE CHAT NOTIGAS (ESTILO MESSENGER) -->
-  <button class="chat-fab-launcher" onclick="toggleFloatingChat()" title="Abrir CHAT NOTIGAS">
-    <i class="fa-solid fa-comments"></i>
-    <span>CHAT NOTIGAS</span>
-  </button>
-
-  <!-- WIDGET FLOTANTE DE CHAT PRIVADO ESTILO FACEBOOK MESSENGER / GOOGLE CHAT -->
+  <!-- WIDGET FLOTANTE DE CHAT PRIVADO (FAB launcher oculto, se activa desde el banner del tab2) -->
   <div id="floatingChatWidget" class="floating-chat-popup" style="display: none;">
     <div class="chat-popup-header" onclick="minimizarFloatingChat()">
       <div style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:900; color:white;">

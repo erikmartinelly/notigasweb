@@ -9,10 +9,19 @@ const AUTHORIZED_ADMIN_EMAILS = [
 
 const REQUIRED_ADMIN_PASSWORD = "Tiquipaya428";
 
-/* GESTIÓN DE MODAL DE CONFIGURACIÓN DE USUARIO (⚙️ HEADER) */
-function closeUserSettingsModal() {
-  const modal = document.getElementById('modalUserSettings');
-  if (modal) modal.style.display = 'none';
+/* closeUserSettingsModal, guardarPrefUsuario y cerrarSesionUsuario residen en auth.js (que carga primero).
+   Se eliminan aquí para evitar que admin.js sobreescriba las versiones correctas con soporte de rol Repartidor. */
+
+function cerrarSesionRepartidorActivarComprador() {
+  if (confirm("🔄 ¿Deseas cerrar tu modo Repartidor y pasar a modo Comprador?\n\nTu ficha de negocio se mantendrá guardada. Solo se cambiará tu modo de ingreso.")) {
+    localStorage.removeItem('notigas_user_data');
+    localStorage.removeItem('driverGpsLive');
+    if (typeof closeUserSettingsModal === 'function') closeUserSettingsModal();
+    if (typeof setAppMode === 'function') setAppMode('buyer');
+    const modalAuth = document.getElementById('modalWelcomeAuth');
+    if (modalAuth) modalAuth.style.display = 'flex';
+    alert('🛒 Modo Repartidor cerrado. Puedes iniciar sesión como Comprador.');
+  }
 }
 
 function abrirModalAdminLogin() {
@@ -37,35 +46,14 @@ function abrirModalAdminLogin() {
   modalAdmin.style.display = 'flex';
 }
 
-function guardarPrefUsuario() {
-  const prefStyle = document.getElementById('userPrefMapStyle')?.value || 'googleStatic';
-  const prefSound = document.getElementById('userPrefSound')?.value || 'enabled';
+/* guardarPrefUsuario reside en auth.js — eliminada de admin.js para que la versión con
+   detección de rol Repartidor (GPS) no sea sobreescrita. */
 
-  localStorage.setItem('notigas_pref_map_style', prefStyle);
-  localStorage.setItem('notigas_pref_sound', prefSound);
 
-  if (typeof setMapStyle === 'function') {
-    const btn = document.querySelector(`.map-style-btn[onclick*="${prefStyle}"]`);
-    setMapStyle(btn, prefStyle);
-  }
 
-  closeUserSettingsModal();
-  alert('⚙️ Preferencias de usuario guardadas con éxito.');
-}
+/* cerrarSesionUsuario reside en auth.js — eliminada de admin.js para evitar sobreescritura */
 
-function cerrarSesionUsuario() {
-  if (confirm("🚪 ¿Deseas cerrar la sesión activa de NOTIGAS?")) {
-    localStorage.removeItem('notigas_user_data');
-    sessionStorage.removeItem('notigas_admin_session');
-    
-    closeUserSettingsModal();
-    
-    const modalWelcome = document.getElementById('modalWelcomeAuth');
-    if (modalWelcome) modalWelcome.style.display = 'flex';
-    
-    alert("🚪 Sesión cerrada correctamente. Puedes ingresar nuevamente como Comprador o Repartidor.");
-  }
-}
+
 
 /* GESTIÓN DEL MODAL EXCLUSIVO DE ADMINISTRADOR */
 function closeAdminModal() { 
@@ -354,8 +342,6 @@ function guardarAdminConfig() {
     alert('⛔ CONTRASEÑA INCORRECTA\nLa contraseña de administración ingresada es incorrecta.');
     return;
   }
-
-  sessionStorage.setItem('notigas_admin_session', gmail);
 
   sessionStorage.setItem('notigas_admin_session', gmail);
   

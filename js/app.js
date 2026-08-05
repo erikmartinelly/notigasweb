@@ -5,9 +5,9 @@
 
 const ORDER_EXPIRATION_MS = 48 * 60 * 60 * 1000; // 48 Horas para Pedidos Activos
 
-let currentAppMode = 'buyer'; // 'buyer' (Vecino) o 'driver' (Repartidor)
+let currentAppMode = 'buyer';
 let isDriverGpsLive = true;
-let isHeatmapActive = false;
+window.isHeatmapActive = window.isHeatmapActive || false;
 
 document.addEventListener('DOMContentLoaded', () => {
   const btnUserSettings = document.getElementById('btnOpenUserSettings');
@@ -146,11 +146,11 @@ function toggleDriverGpsTransmission() {
 }
 
 function toggleHeatmapOverlay() {
-  isHeatmapActive = !isHeatmapActive;
+  window.isHeatmapActive = !window.isHeatmapActive;
   if (typeof renderHeatmapOverlay === 'function') {
     renderHeatmapOverlay();
   }
-  if (isHeatmapActive) {
+  if (window.isHeatmapActive) {
     alert("🔥 MAPA DE CALOR & CONCENTRACIÓN ACTIVADO\nVisualizando zonas con mayor acumulación de pedidos de garrafas GLP en tu OTB.");
   } else {
     alert("🔥 Mapa de calor desactivado.");
@@ -261,7 +261,7 @@ function renderDriverOrdersList() {
         </div>
         <div class="driver-order-actions">
           <button class="btn-driver-accept" onclick="aceptarPedidoRepartidor('${ord.categoria}')"><i class="fa-solid fa-circle-check"></i> ✅ Aceptar Pedido</button>
-          <button class="btn-driver-chat-vecino" onclick="abrirChatConRepartidor('Soporte OTB', 'Soporte')"><i class="fa-solid fa-comments"></i> 💬 Contactar Vecino</button>
+          <button class="btn-driver-chat-vecino" onclick="alert('Chat directo con el vecino no disponible: el vecino no ha iniciado sesión activa.')"><i class="fa-solid fa-comments"></i> 💬 Contactar Vecino</button>
         </div>
       </div>
     `;
@@ -324,12 +324,14 @@ function checkActiveOrderStatus() {
   ejecutarPurgaBaseDeDatosAuto();
 
   const btnCancel = document.getElementById('btnCancelOrder');
+  const chatBanner = document.getElementById('chatActivoBanner');
   const rawOrder = localStorage.getItem('notigas_active_order');
   
   if (rawOrder) {
     try {
       const order = JSON.parse(rawOrder);
       if (btnCancel) btnCancel.style.display = 'flex';
+      if (chatBanner) chatBanner.style.display = 'flex';
       actualizarFaviconSegunPedido(order.categoria);
       if (typeof renderActiveOrdersMap === 'function') {
         renderActiveOrdersMap();
@@ -339,6 +341,7 @@ function checkActiveOrderStatus() {
   }
   
   if (btnCancel) btnCancel.style.display = 'none';
+  if (chatBanner) chatBanner.style.display = 'none';
   actualizarFaviconSegunPedido(null);
   if (typeof renderActiveOrdersMap === 'function') {
     renderActiveOrdersMap();
@@ -500,6 +503,84 @@ function cancelarPedidoActivo() {
     }
     alert("❌ TU PEDIDO HA SIDO CANCELADO\nSe ha restaurado el estado normal de la aplicación.");
   }
+}
+
+/* PANORÁMICA DE PEDIDOS ACTIVOS */
+function abrirPanoramicaPedidos() {
+  let contenido = '';
+  const now = Date.now();
+
+  // Pedido propio activo
+  const rawPropio = localStorage.getItem('notigas_active_order');
+  if (rawPropio) {
+    try {
+      const o = JSON.parse(rawPropio);
+      const minutos = Math.floor((now - o.timestamp) / 60000);
+      contenido += `
+        <div style="background: linear-gradient(135deg, rgba(255,109,0,0.15), rgba(0,230,118,0.08)); border: 1px solid #FF6D00; border-radius: 12px; padding: 12px; margin-bottom: 10px;">
+          <div style="font-weight: 900; font-size: 13px; color: #FF6D00; margin-bottom: 6px;"><i class="fa-solid fa-box"></i> Tu Pedido Activo</div>
+          <div style="font-size: 12px; color: #CBD5E1;"><strong>📦 Producto:</strong> ${escapeHtmlStr(o.categoria)}</div>
+          <div style="font-size: 12px; color: #CBD5E1;"><strong>🔢 Cantidad:</strong> ${escapeHtmlStr(o.cantidad)}</div>
+          <div style="font-size: 12px; color: #CBD5E1;"><strong>🚦 Calle:</strong> ${escapeHtmlStr(o.callePrincipal || 'En mapa')}</div>
+          <div style="font-size: 11px; color: #64748B; margin-top: 4px;">⏱️ Publicado hace ${minutos} min</div>
+          <button onclick="cancelarPedidoActivo(); cerrarPanoramicaPedidos();" style="margin-top:8px; background:#D32F2F; color:white; border:none; padding:6px 12px; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer; width:100%;">❌ Cancelar este Pedido</button>
+        </div>
+      `;
+    } catch(e){}
+  }
+
+  // Pedidos de otros vecinos en el mapa de calor
+  const mockOrders = [
+    { categoria: '🔥 Garrafa de Gas GLP', cantidad: '2 unidades', dist: '150m', callePrincipal: 'Calle 4 #21', timestamp: now - 300000 },
+    { categoria: '💧 Botóllón Agua 20L', cantidad: '1 unidad', dist: '320m', callePrincipal: 'Av. Principal', timestamp: now - 600000 },
+    { categoria: '🪵 Carbón / Leña', cantidad: '1 bolsa 10kg', dist: '450m', callePrincipal: 'Calle 8 #45', timestamp: now - 900000 },
+  ];
+
+  const colors = ['#00B0FF', '#00E676', '#FFB300'];
+  mockOrders.forEach((o, i) => {
+    const min = Math.floor((now - o.timestamp) / 60000);
+    contenido += `
+      <div style="background: rgba(30,41,59,0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 10px; margin-bottom: 8px; display:flex; align-items:center; gap:10px;">
+        <div style="width:36px; height:36px; background: rgba(${i===0?'0,176,255':i===1?'0,230,118':'255,179,0'},0.15); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">${o.categoria.split(' ')[0]}</div>
+        <div style="flex:1;">
+          <div style="font-size:12px; font-weight:700; color:white;">${escapeHtmlStr(o.categoria)}</div>
+          <div style="font-size:11px; color:#94A3B8;">📦 ${escapeHtmlStr(o.cantidad)} • 📍 ${escapeHtmlStr(o.dist)} • ⏱️ hace ${min} min</div>
+        </div>
+        <span style="font-size:10px; background:rgba(0,230,118,0.15); color:#00E676; padding:3px 7px; border-radius:20px; font-weight:700;">ACTIVO</span>
+      </div>
+    `;
+  });
+
+  if (!contenido) {
+    contenido = `<div style="text-align:center; color:#64748B; padding:20px 0;"><i class="fa-solid fa-inbox" style="font-size:32px; margin-bottom:10px; display:block;"></i>No hay pedidos activos en tu zona en este momento.</div>`;
+  }
+
+  let modal = document.getElementById('modalPanoramicaPedidos');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'modalPanoramicaPedidos';
+    modal.className = 'modal';
+    modal.innerHTML = `
+      <div class="modal-content" style="max-width:480px; max-height:80vh; overflow-y:auto;">
+        <div class="modal-title">
+          <span><i class="fa-solid fa-chart-bar"></i> 📊 Panorámica de Pedidos Activos</span>
+          <button class="btn-close" onclick="cerrarPanoramicaPedidos()">✕</button>
+        </div>
+        <p style="font-size:11px; color:#94A3B8; margin-bottom:12px;">Resumen en tiempo real de los pedidos activos en tu zona. Los pedidos se actualizan automáticamente.</p>
+        <div id="panoramicaContent"></div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+
+  const contentEl = document.getElementById('panoramicaContent');
+  if (contentEl) contentEl.innerHTML = contenido;
+  modal.style.display = 'flex';
+}
+
+function cerrarPanoramicaPedidos() {
+  const modal = document.getElementById('modalPanoramicaPedidos');
+  if (modal) modal.style.display = 'none';
 }
 
 function notificarEscucheCamion() {
