@@ -772,22 +772,17 @@ function iniciarMovimientoRepartidor() {
   // TODO: implementar animación de movimiento sobre ruta optimizada
 }
 
-/* COORDENADAS OFICIALES GEOBOLIVIA PARA LAS 9 CAPITALES DE BOLIVIA + EL ALTO Y MUNICIPIOS */
+/* COORDENADAS OFICIALES GEOBOLIVIA Y ÁREAS METROPOLITANAS DE BOLIVIA */
 const GEOBOLIVIA_MUNICIPIOS = [
-  { key: "cochabamba", nombre: "Cochabamba", keywords: ["cercado", "cochabamba", "cbba"], lat: -17.3895, lon: -66.1568, querySuffix: "Cercado, Cochabamba, Bolivia" },
-  { key: "lapaz", nombre: "La Paz", keywords: ["la paz", "lapaz"], lat: -16.4897, lon: -68.1193, querySuffix: "La Paz, Bolivia" },
-  { key: "santacruz", nombre: "Santa Cruz", keywords: ["santa cruz", "santacruz"], lat: -17.7833, lon: -63.1821, querySuffix: "Santa Cruz de la Sierra, Bolivia" },
-  { key: "sucre", nombre: "Sucre", keywords: ["sucre"], lat: -19.0333, lon: -65.2628, querySuffix: "Sucre, Bolivia" },
+  { key: "cochabamba", nombre: "Cochabamba", keywords: ["cochabamba", "cbba", "cercado", "sacaba", "quillacollo", "tiquipaya", "colcapirhua", "vinto"], lat: -17.3895, lon: -66.1568, querySuffix: "Cochabamba, Bolivia" },
+  { key: "lapaz", nombre: "La Paz / El Alto", keywords: ["la paz", "lapaz", "el alto", "elalto", "viacha", "achocalla"], lat: -16.4897, lon: -68.1193, querySuffix: "La Paz, Bolivia" },
+  { key: "santacruz", nombre: "Santa Cruz", keywords: ["santa cruz", "santacruz", "warnes", "cotoca", "la guardia"], lat: -17.7833, lon: -63.1821, querySuffix: "Santa Cruz de la Sierra, Bolivia" },
+  { key: "sucre", nombre: "Sucre", keywords: ["sucre", "chuquisaca"], lat: -19.0333, lon: -65.2628, querySuffix: "Sucre, Bolivia" },
   { key: "oruro", nombre: "Oruro", keywords: ["oruro"], lat: -17.9667, lon: -67.1167, querySuffix: "Oruro, Bolivia" },
   { key: "potosi", nombre: "Potosí", keywords: ["potosi", "potosí"], lat: -19.5833, lon: -65.7500, querySuffix: "Potosí, Bolivia" },
   { key: "tarija", nombre: "Tarija", keywords: ["tarija"], lat: -21.5333, lon: -64.7333, querySuffix: "Tarija, Bolivia" },
   { key: "trinidad", nombre: "Trinidad", keywords: ["trinidad", "beni"], lat: -14.8333, lon: -64.9000, querySuffix: "Trinidad, Beni, Bolivia" },
-  { key: "cobija", nombre: "Cobija", keywords: ["cobija", "pando"], lat: -11.0333, lon: -68.7667, querySuffix: "Cobija, Pando, Bolivia" },
-  { key: "elalto", nombre: "El Alto", keywords: ["el alto", "elalto"], lat: -16.5000, lon: -68.1500, querySuffix: "El Alto, Bolivia" },
-  { key: "sacaba", nombre: "Sacaba", keywords: ["sacaba", "huayllani"], lat: -17.4041, lon: -66.0404, querySuffix: "Sacaba, Cochabamba, Bolivia" },
-  { key: "quillacollo", nombre: "Quillacollo", keywords: ["quillacollo", "urkupiña"], lat: -17.3939, lon: -66.2797, querySuffix: "Quillacollo, Cochabamba, Bolivia" },
-  { key: "tiquipaya", nombre: "Tiquipaya", keywords: ["tiquipaya"], lat: -17.3381, lon: -66.2189, querySuffix: "Tiquipaya, Cochabamba, Bolivia" },
-  { key: "colcapirhua", nombre: "Colcapirhua", keywords: ["colcapirhua"], lat: -17.3908, lon: -66.2386, querySuffix: "Colcapirhua, Cochabamba, Bolivia" }
+  { key: "cobija", nombre: "Cobija", keywords: ["cobija", "pando"], lat: -11.0333, lon: -68.7667, querySuffix: "Cobija, Pando, Bolivia" }
 ];
 
 function cambiarCiudadCapital(cityKey) {
@@ -802,8 +797,6 @@ function cambiarCiudadCapital(cityKey) {
   applyGpsPosition(mun.lat, mun.lon, '', false);
   localStorage.setItem('notigas_active_city', mun.nombre);
 }
-
-/* Alias eliminado (código muerto) — el selector HTML usa cambiarCiudadCapital directamente */
 
 function procesarResultadoBusqueda(item, queryOriginal) {
   const lat = parseFloat(item.lat);
@@ -841,52 +834,87 @@ function buscarCalle() {
     return;
   }
 
-  // Radio máximo estricto en metros desde el centro de la ciudad seleccionada (25 km máximo)
-  const MAX_MUNICIPIO_DIST_METROS = 25000;
+  // Radio metropolitano unificado (50 km para abarcar todo el eje metropolitano completo)
+  const MAX_METRO_DIST_METROS = 50000;
 
-  // Viewbox geográfico acotado (+/- 0.12 grados ~15km alrededor del centro)
-  const left = (munObj.lon - 0.12).toFixed(4);
-  const top = (munObj.lat + 0.12).toFixed(4);
-  const right = (munObj.lon + 0.12).toFixed(4);
-  const bottom = (munObj.lat - 0.12).toFixed(4);
+  // Bounding box amplio de área metropolitana (+/- 0.25 grados ~30km)
+  const left = (munObj.lon - 0.25).toFixed(4);
+  const top = (munObj.lat + 0.25).toFixed(4);
+  const right = (munObj.lon + 0.25).toFixed(4);
+  const bottom = (munObj.lat - 0.25).toFixed(4);
 
-  // La búsqueda es EXCLUSIVAMENTE el nombre de la calle/avenida ingresada por el usuario
   const calleQuery = query;
 
-  // 1ª Búsqueda: Nombre de calle en la ciudad seleccionada en el desplegable superior
-  const searchUrl = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(calleQuery + ', ' + munObj.querySuffix)}&viewbox=${left},${top},${right},${bottom}&bounded=1&countrycodes=bo`;
+  // 1º Motor: Nominatim con Viewbox Metropolitano Ampliado
+  const searchUrlNominatim = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(calleQuery + ', ' + munObj.querySuffix)}&viewbox=${left},${top},${right},${bottom}&bounded=1&countrycodes=bo`;
 
-  fetch(searchUrl)
+  fetch(searchUrlNominatim)
     .then(res => res.json())
     .then(data => {
-      // Filtrar resultados exclusivamente dentro de la ciudad del desplegable
       let validItems = (data || []).filter(item => {
         const itemLat = parseFloat(item.lat);
         const itemLon = parseFloat(item.lon);
         const dist = calcularDistanciaMetros(munObj.lat, munObj.lon, itemLat, itemLon);
-        return dist !== null && dist <= MAX_MUNICIPIO_DIST_METROS;
+        return dist !== null && dist <= MAX_METRO_DIST_METROS;
       });
 
       if (validItems.length > 0) {
         procesarResultadoBusqueda(validItems[0], calleQuery);
       } else {
-        // Fallback: Búsqueda de la calle dentro del municipio del desplegable
-        const fallbackUrl = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(calleQuery + ', ' + munObj.nombre + ', Bolivia')}&countrycodes=bo`;
-        fetch(fallbackUrl)
+        // 2º Motor: Photon (Komoot High-Performance Geocoder) especializado en números de inmueble y calles
+        const searchUrlPhoton = `https://photon.komoot.io/api/?q=${encodeURIComponent(calleQuery + ' ' + munObj.nombre)}&lat=${munObj.lat}&lon=${munObj.lon}&limit=5`;
+        fetch(searchUrlPhoton)
           .then(r => r.json())
-          .then(fallbackData => {
-            let fbValidItems = (fallbackData || []).filter(item => {
-              const itemLat = parseFloat(item.lat);
-              const itemLon = parseFloat(item.lon);
-              const dist = calcularDistanciaMetros(munObj.lat, munObj.lon, itemLat, itemLon);
-              return dist !== null && dist <= MAX_MUNICIPIO_DIST_METROS;
-            });
+          .then(photonData => {
+            if (photonData && photonData.features && photonData.features.length > 0) {
+              const feat = photonData.features[0];
+              const coords = feat.geometry.coordinates; // [lon, lat]
+              const pLat = coords[1];
+              const pLon = coords[0];
 
-            if (fbValidItems.length > 0) {
-              procesarResultadoBusqueda(fbValidItems[0], calleQuery);
-            } else {
-              alert(`📍 No se encontró la calle "${calleQuery}" en la ciudad de ${munObj.nombre}.\n\nAsegúrate de seleccionar la ciudad correcta en el desplegable superior.`);
+              const distP = calcularDistanciaMetros(munObj.lat, munObj.lon, pLat, pLon);
+              if (distP !== null && distP <= MAX_METRO_DIST_METROS) {
+                const props = feat.properties || {};
+                const houseNumStr = props.housenumber ? ` #${props.housenumber}` : '';
+                const callePrin = (props.name || props.street || calleQuery) + houseNumStr;
+                const calleRef = props.city || props.district || props.suburb || munObj.nombre;
+
+                const inputPrin = document.getElementById('inputCallePrincipal');
+                const inputRef = document.getElementById('inputCalleReferencia');
+                if (inputPrin) inputPrin.value = callePrin;
+                if (inputRef) inputRef.value = calleRef;
+
+                currentGpsLat = pLat;
+                currentGpsLng = pLon;
+
+                if (map) {
+                  map.flyTo([pLat, pLon], 17, { duration: 1.0 });
+                }
+
+                applyGpsPosition(pLat, pLon, '', false);
+                return;
+              }
             }
+
+            // 3º Fallback: Búsqueda metropolitana amplia
+            const searchUrlFallback = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(calleQuery + ', ' + munObj.nombre + ', Bolivia')}&countrycodes=bo`;
+            fetch(searchUrlFallback)
+              .then(r => r.json())
+              .then(fallbackData => {
+                let fbValidItems = (fallbackData || []).filter(item => {
+                  const itemLat = parseFloat(item.lat);
+                  const itemLon = parseFloat(item.lon);
+                  const dist = calcularDistanciaMetros(munObj.lat, munObj.lon, itemLat, itemLon);
+                  return dist !== null && dist <= MAX_METRO_DIST_METROS;
+                });
+
+                if (fbValidItems.length > 0) {
+                  procesarResultadoBusqueda(fbValidItems[0], calleQuery);
+                } else {
+                  alert(`📍 No se encontró la calle "${calleQuery}" en el Área Metropolitana de ${munObj.nombre}.\n\nVerifica que el nombre o número de la calle esté bien escrito.`);
+                }
+              })
+              .catch(() => {});
           })
           .catch(() => {});
       }
