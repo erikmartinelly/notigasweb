@@ -109,6 +109,21 @@ function initNotigasMap() {
 
 let isUserMarkerDraggedManually = false;
 
+function actualizarCoordenadasPedidoActivo(newLat, newLng) {
+  try {
+    const raw = localStorage.getItem('notigas_active_order');
+    if (raw) {
+      const order = JSON.parse(raw);
+      order.lat = newLat;
+      order.lng = newLng;
+      localStorage.setItem('notigas_active_order', JSON.stringify(order));
+      if (typeof renderActiveOrdersMap === 'function') {
+        renderActiveOrdersMap();
+      }
+    }
+  } catch(e){}
+}
+
 function moverMarcadorUbicacionManual(lat, lng) {
   isUserMarkerDraggedManually = true;
   currentGpsLat = lat;
@@ -119,6 +134,8 @@ function moverMarcadorUbicacionManual(lat, lng) {
   } else {
     userMarker.setLatLng([lat, lng]);
   }
+
+  actualizarCoordenadasPedidoActivo(lat, lng);
 
   if (userMarker) {
     userMarker.getPopup().setContent(`
@@ -176,11 +193,13 @@ function applyGpsPosition(lat, lng, label, forceReset = false) {
       currentGpsLat = newPos.lat;
       currentGpsLng = newPos.lng;
       
+      actualizarCoordenadasPedidoActivo(newPos.lat, newPos.lng);
+
       userMarker.getPopup().setContent(`
         <div style="font-family:'Roboto',sans-serif; text-align:center;">
           <strong style="color:#FF6D00; font-size:13px;">📍 Ubicación de Entrega Ajustada</strong><br>
           <span style="font-size:11px; color:#00E676; font-weight:700;">Ajustada manualmente en mapa</span><br>
-          <span style="font-size:9.5px; color:#94A3B8;">(Arrastra la garrafa a la puerta exacta de tu casa)</span>
+          <span style="font-size:9.5px; color:#94A3B8;">(Arrastra el marcador a la puerta exacta de tu casa)</span>
         </div>
       `);
       userMarker.openPopup();
@@ -453,13 +472,34 @@ function renderActiveOrdersMap() {
       const distStr = formatearDistanciaTriangulada(dist);
       const categoryIcon = obtenerIconoCategoriaMapa(order.categoria);
 
-      const orderMarker = L.marker([order.lat, order.lng], { icon: categoryIcon });
+      const orderMarker = L.marker([order.lat, order.lng], { 
+        icon: categoryIcon,
+        draggable: true,
+        autoPan: true
+      });
+
+      orderMarker.on('dragend', function(e) {
+        const newPos = e.target.getLatLng();
+        isUserMarkerDraggedManually = true;
+        currentGpsLat = newPos.lat;
+        currentGpsLng = newPos.lng;
+        
+        actualizarCoordenadasPedidoActivo(newPos.lat, newPos.lng);
+        if (userMarker) userMarker.setLatLng([newPos.lat, newPos.lng]);
+
+        alert("📍 Ubicación de tu pedido activo actualizada a la nueva posición.");
+      });
+
+      const btnAccion = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver')
+        ? `<button style="margin-top:6px; background:#00E676; color:#0F172A; border:none; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:900; cursor:pointer;" onclick="aceptarPedidoRepartidor('${order.categoria}')">✅ Atender Pedido</button>`
+        : `<button style="margin-top:6px; background:#D32F2F; color:white; border:none; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:900; cursor:pointer;" onclick="cancelarPedidoActivo()">❌ Cancelar Pedido</button>`;
+
       orderMarker.bindPopup(`
         <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
-          <strong style="color:#FF6D00; font-size:13px;">📦 Pedido Vecinal Solicitado</strong><br>
+          <strong style="color:#FF6D00; font-size:13px;">📦 Pedido Activo en Vivo</strong><br>
           <span style="font-size:11px; color:#CBD5E1; font-weight:700;">${order.categoria} (${order.cantidad})</span><br>
-          <span style="font-size:10px; color:#00E676; font-weight:700;">📍 Triangulación: ${distStr}</span><br>
-          <button style="margin-top:6px; background:#00E676; color:#0F172A; border:none; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:900; cursor:pointer;" onclick="aceptarPedidoRepartidor('${order.categoria}')">✅ Atender Pedido</button>
+          <span style="font-size:10px; color:#00E676; font-weight:700;">📍 Arrastra este icono para mover tu pedido</span><br>
+          ${btnAccion}
         </div>
       `);
       activeOrderLayerGroup.addLayer(orderMarker);
