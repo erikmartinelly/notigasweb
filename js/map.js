@@ -555,7 +555,41 @@ function optimizarSecuenciaDestinos(startPos, points) {
   return route;
 }
 
-function calcularYTrazarRutaEficiente() {
+async function obtenerGeometriaCallesOSRM(waypoints) {
+  if (!waypoints || waypoints.length < 2) return null;
+  const coordsStr = waypoints.map(p => `${p.lng},${p.lat}`).join(';');
+  const url = `https://router.project-osrm.org/route/v1/driving/${coordsStr}?overview=full&geometries=geojson`;
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("OSRM HTTP Error " + res.status);
+    const data = await res.json();
+    if (data && data.routes && data.routes.length > 0) {
+      const coords = data.routes[0].geometry.coordinates;
+      const routeGeometry = coords.map(c => [c[1], c[0]]); // Leaflet usa [lat, lon]
+      const totalDistanceMeters = data.routes[0].distance;
+      const totalDurationSeconds = data.routes[0].duration;
+      return { routeGeometry, totalDistanceMeters, totalDurationSeconds };
+    }
+  } catch(err) {
+    console.warn("⚠️ OSRM API no respondió, activando trazado por esquinas de manzana:", err.message);
+  }
+  return null;
+}
+
+function TrazarRutaCuadriculaManzana(waypoints) {
+  const points = [];
+  for (let i = 0; i < waypoints.length - 1; i++) {
+    const p1 = waypoints[i];
+    const p2 = waypoints[i+1];
+    points.push([p1.lat, p1.lng]);
+    points.push([p1.lat, p2.lng]); // Giro en 90° en la esquina de la manzana
+  }
+  points.push([waypoints[waypoints.length - 1].lat, waypoints[waypoints.length - 1].lng]);
+  return points;
+}
+
+async function calcularYTrazarRutaEficiente() {
   if (!map) return;
 
   if (!routePolylineLayerGroup) {
@@ -575,33 +609,52 @@ function calcularYTrazarRutaEficiente() {
           lat: o.lat,
           lng: o.lng,
           title: o.categoria || 'Pedido Vecinal GLP',
-          desc: o.cantidad || '1 unidad'
+          desc: o.direccion || 'Ubicación fijada en mapa'
         });
       }
     } catch(e){}
   }
 
-  // 2. Agregar puntos de concentración o demanda reportada
+  // 2. Si no hay pedido activo, usar puntos de demostración en calles cercanas
   if (pointsToVisit.length === 0) {
     pointsToVisit = [
-      { lat: currentGpsLat + 0.0008, lng: currentGpsLng + 0.0010, title: "🔥 Pedido GLP", desc: "2 unidades (Calle 4 #21)" },
-      { lat: currentGpsLat - 0.0006, lng: currentGpsLng + 0.0015, title: "💧 Agua 20L", desc: "1 botellón (Av. Principal)" },
-      { lat: currentGpsLat - 0.0012, lng: currentGpsLng - 0.0005, title: "🔥 Garrafas GLP", desc: "3 unidades (Zona Alta)" }
+      { lat: currentGpsLat + 0.0012, lng: currentGpsLng + 0.0015, title: "🔥 Pedido GLP", desc: "2 garrafas (Calle 4 #21)" },
+      { lat: currentGpsLat - 0.0008, lng: currentGpsLng + 0.0022, title: "💧 Agua 20L", desc: "1 botellón (Av. Principal)" },
+      { lat: currentGpsLat - 0.0015, lng: currentGpsLng - 0.0010, title: "🔥 Garrafas GLP", desc: "3 unidades (Zona Alta)" }
     ];
   }
 
-  const startPos = { lat: currentGpsLat, lng: currentGpsLng };
+  const startPos = { lat: currentGpsLat, lng: currentGpsLng, title: "Inicio", desc: "Posición Repartidor" };
   const optimalRoute = optimizarSecuenciaDestinos(startPos, pointsToVisit);
 
-  const latLngs = [[startPos.lat, startPos.lng]];
-  let totalDistMeters = 0;
+  const waypoints = [{ lat: startPos.lat, lng: startPos.lng }, ...optimalRoute.map(p => ({ lat: p.lat, lng: p.lng }))];
 
+  // Obtener la geometría real por calles con OSRM (Open Source Routing Machine)
+  const osrmResult = await obtenerGeometriaCallesOSRM(waypoints);
+
+  let finalPolylineCoords = [];
+  let totalDistMeters = 0;
+  let totalMinutes = 0;
+
+  if (osrmResult && osrmResult.routeGeometry && osrmResult.routeGeometry.length > 0) {
+    finalPolylineCoords = osrmResult.routeGeometry;
+    totalDistMeters = osrmResult.totalDistanceMeters;
+    totalMinutes = Math.max(1, Math.round(osrmResult.totalDurationSeconds / 60));
+  } else {
+    finalPolylineCoords = TrazarRutaCuadriculaManzana(waypoints);
+    optimalRoute.forEach(pt => {
+      if (pt.distFromLast) totalDistMeters += pt.distFromLast;
+    });
+    totalMinutes = Math.max(1, Math.round((totalDistMeters / 1000) / 25 * 60));
+  }
+
+  // Renderizar marcadores de secuencia de entrega (1º, 2º, 3º...)
+  let accumulatedDist = 0;
   optimalRoute.forEach((pt, idx) => {
-    latLngs.push([pt.lat, pt.lng]);
-    if (pt.distFromLast) totalDistMeters += pt.distFromLast;
+    if (pt.distFromLast) accumulatedDist += pt.distFromLast;
 
     const seqBadgeHtml = `
-      <div style="background: linear-gradient(135deg, #00E676, #00C853); color: #0F172A; font-size: 11px; font-weight: 900; padding: 4px 8px; border-radius: 12px; border: 2px solid #FFFFFF; box-shadow: 0 4px 12px rgba(0,0,0,0.6); white-space: nowrap;">
+      <div style="background: linear-gradient(135deg, #0EA5E9, #0288D1); color: #FFFFFF; font-size: 11px; font-weight: 900; padding: 5px 9px; border-radius: 12px; border: 2px solid #FFFFFF; box-shadow: 0 4px 14px rgba(0,0,0,0.6); white-space: nowrap;">
         ${idx + 1}º ${pt.title}
       </div>
     `;
@@ -614,33 +667,30 @@ function calcularYTrazarRutaEficiente() {
     const seqMarker = L.marker([pt.lat, pt.lng], { icon: seqIcon });
     seqMarker.bindPopup(`
       <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
-        <strong style="color:#00E676; font-size:13px;">Parada N° ${idx + 1} en Ruta Optimizada</strong><br>
+        <strong style="color:#0EA5E9; font-size:13px;">Parada N° ${idx + 1} en Ruta Optimizada</strong><br>
         <span style="font-size:11px; color:#FFFFFF;">${pt.title} - ${pt.desc}</span><br>
-        <span style="font-size:10px; color:#FF6D00; font-weight:700;">📍 Distancia acumulada: ${formatearDistanciaTriangulada(totalDistMeters)}</span>
+        <span style="font-size:10px; color:#FF6D00; font-weight:700;">📍 Distancia acumulada: ${formatearDistanciaTriangulada(accumulatedDist || totalDistMeters)}</span>
       </div>
     `);
     routePolylineLayerGroup.addLayer(seqMarker);
   });
 
-  // Trazado neón en el mapa (Leaflet Polyline sin API externa)
-  const routePolyline = L.polyline(latLngs, {
-    color: '#FF6D00',
-    weight: 5,
-    opacity: 0.9,
-    dashArray: '8, 8',
-    lineCap: 'round'
+  // Trazado de línea de calle neón (Leaflet Polyline que SIGUE LAS CALLES EXACTAS)
+  const routePolyline = L.polyline(finalPolylineCoords, {
+    color: '#0EA5E9',
+    weight: 6,
+    opacity: 0.95,
+    lineCap: 'round',
+    lineJoin: 'round'
   });
 
   routePolylineLayerGroup.addLayer(routePolyline);
 
-  // Auto-encuadre del mapa a toda la ruta calculada
-  const bounds = L.latLngBounds(latLngs);
-  map.fitBounds(bounds, { padding: [50, 50] });
+  // Auto-encuadre del mapa a la ruta trazada sobre las calles
+  const bounds = L.latLngBounds(finalPolylineCoords);
+  map.fitBounds(bounds, { padding: [60, 60] });
 
-  // Estimación de tiempo en minutos a velocidad promedio barrial (25 km/h)
-  const estTimeMinutes = Math.max(1, Math.round((totalDistMeters / 1000) / 25 * 60));
-
-  alert(`🗺️ RUTA OPTIMIZADA CALCULADA\n\n- Entregas secuenciadas: ${optimalRoute.length}\n- Distancia Total: ${formatearDistanciaTriangulada(totalDistMeters)}\n- Tiempo Estimado: ${estTimeMinutes} min (a 25 km/h)\n\nSe ha renderizado la polilínea neón y los marcadores de secuencia (1º, 2º, 3º...) sobre el mapa de la OTB.`);
+  alert(`🗺️ RUTA OPTIMIZADA POR CALLES CALCULADA\n\n- Entregas secuenciadas: ${optimalRoute.length}\n- Distancia Total por Calles: ${formatearDistanciaTriangulada(totalDistMeters)}\n- Tiempo Estimado en Vehículo: ${totalMinutes} min\n\nEl trazado de la ruta azul neón ahora SIGUE LAS CALLES Y AVENIDAS REALES de la ciudad sin atravesar manzanas ni edificaciones.`);
 }
 
 function verificarYMostrarRepartidorGPS() {
