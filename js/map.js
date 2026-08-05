@@ -37,10 +37,10 @@ const truckSvgMarkerHtml = `
 `;
 
 const userLocationSvgHtml = `
-  <div style="position: relative; width: 40px; height: 48px; display: flex; align-items: center; justify-content: center; cursor: grab;">
-    <div style="position: absolute; width: 40px; height: 40px; border-radius: 50%; background: rgba(0, 176, 255, 0.25); animation: radarPing 2s infinite ease-out;"></div>
-    <div style="position: relative; background: linear-gradient(135deg, #00B0FF, #0288D1); width: 36px; height: 36px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); display: flex; align-items: center; justify-content: center; border: 2.5px solid #FFFFFF; box-shadow: 0 4px 16px rgba(0,176,255,0.7);">
-      <i class="fa-solid fa-house-user" style="color: #FFFFFF; font-size: 16px; transform: rotate(45deg);"></i>
+  <div style="position: relative; width: 40px; height: 48px; display: flex; align-items: center; justify-content: center; pointer-events: none; user-select: none;">
+    <div style="position: absolute; width: 40px; height: 40px; border-radius: 50%; background: rgba(0, 176, 255, 0.25); animation: radarPing 2s infinite ease-out; pointer-events: none;"></div>
+    <div style="position: relative; background: linear-gradient(135deg, #00B0FF, #0288D1); width: 36px; height: 36px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); display: flex; align-items: center; justify-content: center; border: 2.5px solid #FFFFFF; box-shadow: 0 4px 16px rgba(0,176,255,0.7); pointer-events: none;">
+      <i class="fa-solid fa-house-user" style="color: #FFFFFF; font-size: 16px; transform: rotate(45deg); pointer-events: none;"></i>
     </div>
   </div>
 `;
@@ -109,7 +109,9 @@ function initNotigasMap() {
 
 let isUserMarkerDraggedManually = false;
 
-function actualizarCoordenadasPedidoActivo(newLat, newLng) {
+let currentActiveOrderMarker = null;
+
+function actualizarCoordenadasPedidoActivo(newLat, newLng, skipMarkerSet = false) {
   try {
     const raw = localStorage.getItem('notigas_active_order');
     if (raw) {
@@ -117,11 +119,12 @@ function actualizarCoordenadasPedidoActivo(newLat, newLng) {
       order.lat = newLat;
       order.lng = newLng;
       localStorage.setItem('notigas_active_order', JSON.stringify(order));
-      if (typeof renderActiveOrdersMap === 'function') {
-        renderActiveOrdersMap();
-      }
     }
   } catch(e){}
+
+  if (!skipMarkerSet && currentActiveOrderMarker) {
+    currentActiveOrderMarker.setLatLng([newLat, newLng]);
+  }
 }
 
 function moverMarcadorUbicacionManual(lat, lng) {
@@ -433,9 +436,9 @@ function obtenerIconoCategoriaMapa(catNombre) {
   }
 
   const markerHtml = `
-    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: grab; pointer-events: auto; touch-action: none;">
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; user-select: none;">
       ${iconContent}
-      <div style="margin-top: 2px; background: #0F172A; color: white; border: 1.5px solid ${badgeColor}; padding: 2px 7px; border-radius: 12px; font-size: 10px; font-weight: 900; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
+      <div style="margin-top: 2px; background: #0F172A; color: white; border: 1.5px solid ${badgeColor}; padding: 2px 7px; border-radius: 12px; font-size: 10px; font-weight: 900; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.5); pointer-events: none;">
         ${badgeLabel}
       </div>
     </div>
@@ -486,6 +489,7 @@ function renderActiveOrdersMap() {
         draggable: true,
         autoPan: true
       });
+      currentActiveOrderMarker = orderMarker;
 
       if (orderMarker.dragging) {
         orderMarker.dragging.enable();
@@ -497,9 +501,7 @@ function renderActiveOrdersMap() {
         currentGpsLat = newPos.lat;
         currentGpsLng = newPos.lng;
         
-        actualizarCoordenadasPedidoActivo(newPos.lat, newPos.lng);
-
-        alert("📍 Ubicación de tu pedido activo actualizada a la nueva posición.");
+        actualizarCoordenadasPedidoActivo(newPos.lat, newPos.lng, true);
       });
 
       const btnAccion = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver')
