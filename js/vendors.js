@@ -114,8 +114,8 @@ function renderVendorCards(filterCat) {
           <div class="vendor-profile">
             <div class="vendor-avatar">${vendor.icon || getIconForCategory(vendor.category)}</div>
             <div class="vendor-meta">
-              <span class="vendor-name">${vendor.name}</span>
-              <span class="vendor-badge-cat"><i class="fa-solid fa-circle-check"></i> ${vendor.category}</span>
+              <span class="vendor-name">${escapeHtmlStr(vendor.name)}</span>
+              <span class="vendor-badge-cat"><i class="fa-solid fa-circle-check"></i> ${escapeHtmlStr(vendor.category)}</span>
             </div>
           </div>
           ${isAdmin ? `<button onclick="eliminarFichaAdmin('${vendor.id}')" style="background:#D32F2F; color:white; border:none; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;" title="Borrar como Admin"><i class="fa-solid fa-trash"></i> Borrar (Admin)</button>` : `<span class="ad-badge" style="background: rgba(0,230,118,0.15); color: #00E676; border-color: rgba(0,230,118,0.4);">REPARTIDOR VERIFICADO</span>`}
@@ -168,12 +168,7 @@ function renderVendorCards(filterCat) {
 }
 
 function abrirChatSoporteOficial() {
-  if (typeof abrirFloatingChat === 'function') abrirFloatingChat();
-  const select = document.getElementById('selectVendorChat');
-  if (select) {
-    select.value = "Soporte OTB";
-    if (typeof cambiarVendedorChat === 'function') cambiarVendedorChat();
-  }
+  abrirChatConRepartidor('Soporte OTB', 'Soporte');
 }
 
 function eliminarFichaAdmin(vendorId) {
@@ -211,24 +206,40 @@ function getIconForCategory(cat) {
 }
 
 function abrirChatConRepartidor(vendorName, vendorCat) {
-  if (typeof abrirFloatingChat === 'function') abrirFloatingChat();
+  const modal = document.getElementById('modalChat') || document.getElementById('floatingChatWidget');
+  if (!modal) return;
+
+  if (typeof poblarSelectorVendedoresChat === 'function') {
+    poblarSelectorVendedoresChat();
+  }
+
   const select = document.getElementById('selectVendorChat');
-  if (select) {
+  if (select && vendorName) {
     let found = false;
+    const searchTarget = vendorName.toLowerCase().trim();
+
     for (let i = 0; i < select.options.length; i++) {
-      if (select.options[i].text.includes(vendorName) || select.options[i].value.includes(vendorName)) {
+      const optVal = (select.options[i].value || '').toLowerCase();
+      const optText = (select.options[i].text || '').toLowerCase();
+      if (optVal.includes(searchTarget) || optText.includes(searchTarget) || searchTarget.includes(optVal)) {
         select.selectedIndex = i;
         found = true;
         break;
       }
     }
+
     if (!found) {
       const opt = document.createElement('option');
       opt.value = vendorName;
-      opt.text = `💬 ${vendorName} (${vendorCat})`;
+      opt.text = `💬 ${vendorName} (${vendorCat || 'Repartidor'})`;
       select.appendChild(opt);
-      select.value = opt.value;
+      select.value = vendorName;
     }
-    if (typeof cambiarVendedorChat === 'function') cambiarVendedorChat();
+  }
+
+  modal.style.display = 'flex';
+
+  if (typeof cambiarVendedorChat === 'function') {
+    cambiarVendedorChat();
   }
 }
