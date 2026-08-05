@@ -406,11 +406,9 @@ main {
 
 
 
-/* ACCIONES FLOTANTES EN MAPA */
 .floating-actions-container { 
   position: absolute; 
-  bottom: 16px; 
-  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(32px + env(safe-area-inset-bottom, 16px)); 
   left: 50%; 
   transform: translateX(-50%); 
   z-index: 2000; 
@@ -419,6 +417,14 @@ main {
   gap: 8px; 
   width: calc(100% - 24px); 
   max-width: 480px; 
+  pointer-events: auto;
+}
+
+@media (max-width: 768px) {
+  .floating-actions-container {
+    bottom: calc(48px + env(safe-area-inset-bottom, 24px));
+    max-height: calc(100dvh - 120px);
+  }
 }
 
 .action-row { 
@@ -1617,11 +1623,6 @@ button:active, .tab-btn:active, .cat-chip:active {
   box-shadow: 0 4px 15px rgba(255, 109, 0, 0.6);
 }
 
-.btn-driver-accept:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.6);
-}
-
 .btn-driver-chat-vecino {
   flex: 1;
   background: rgba(255, 109, 0, 0.2);
@@ -1649,4 +1650,199 @@ button:active, .tab-btn:active, .cat-chip:active {
   flex-direction: column;
 }
 
+/* =====================================================
+   SISTEMA DE TOAST NOTIFICATIONS (ESTILO RAPPI / UBER EATS)
+   ===================================================== */
+#toastContainer {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+  width: calc(100% - 32px);
+  max-width: 420px;
+}
 
+.notigas-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #FFFFFF;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.2);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  animation: toastSlideIn 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  will-change: transform, opacity;
+  border: 1px solid rgba(255,255,255,0.12);
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.notigas-toast:hover {
+  opacity: 0.85;
+}
+
+.notigas-toast.toast-exit {
+  animation: toastSlideOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.notigas-toast .toast-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.notigas-toast .toast-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.notigas-toast .toast-title {
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.3px;
+}
+
+.notigas-toast .toast-msg {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.8);
+  line-height: 1.35;
+}
+
+.notigas-toast .toast-close {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.5);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 4px;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+.notigas-toast .toast-close:hover { color: white; }
+
+/* Variantes de color */
+.notigas-toast.toast-success { background: linear-gradient(135deg, #0D9E4F, #047A3A); border-color: rgba(0,230,118,0.3); }
+.notigas-toast.toast-error   { background: linear-gradient(135deg, #D32F2F, #B71C1C); border-color: rgba(239,68,68,0.3); }
+.notigas-toast.toast-warning { background: linear-gradient(135deg, #E65100, #BF360C); border-color: rgba(255,109,0,0.3); }
+.notigas-toast.toast-info    { background: linear-gradient(135deg, #0277BD, #01579B); border-color: rgba(2,136,209,0.3); }
+.notigas-toast.toast-order   { background: linear-gradient(135deg, #FF6D00, #E65100); border-color: rgba(245,158,11,0.3); }
+
+/* Barra de progreso de auto-cierre */
+.notigas-toast .toast-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  border-radius: 0 0 14px 14px;
+  background: rgba(255,255,255,0.35);
+  animation: toastProgress var(--toast-duration, 4s) linear forwards;
+}
+
+@keyframes toastSlideIn {
+  0%   { transform: translateY(-30px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes toastSlideOut {
+  0%   { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(-30px); opacity: 0; }
+}
+
+@keyframes toastProgress {
+  0%   { width: 100%; }
+  100% { width: 0%; }
+}
+
+/* =====================================================
+   MODAL DE CONFIRMACIÓN ELEGANTE (REEMPLAZO DE confirm())
+   ===================================================== */
+.confirm-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 99998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+
+.confirm-modal-box {
+  background: linear-gradient(145deg, #1E293B, #0F172A);
+  border: 1.5px solid rgba(255,255,255,0.12);
+  border-radius: 20px;
+  padding: 28px 24px 22px;
+  width: calc(100% - 48px);
+  max-width: 360px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  animation: scaleIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.confirm-modal-icon { font-size: 40px; margin-bottom: 12px; }
+.confirm-modal-title { font-size: 16px; font-weight: 900; color: #FFFFFF; margin-bottom: 8px; font-family: 'Roboto', sans-serif; }
+.confirm-modal-text { font-size: 12.5px; color: #94A3B8; line-height: 1.5; margin-bottom: 20px; font-family: 'Roboto', sans-serif; }
+
+.confirm-modal-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.confirm-modal-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  font-family: 'Roboto', sans-serif;
+}
+
+.confirm-cancel {
+  background: rgba(255,255,255,0.08);
+  color: #CBD5E1;
+  border: 1px solid rgba(255,255,255,0.12);
+}
+.confirm-cancel:hover { background: rgba(255,255,255,0.15); color: white; }
+
+.confirm-accept {
+  background: linear-gradient(135deg, #D32F2F, #B71C1C);
+  color: white;
+  box-shadow: 0 4px 16px rgba(211,47,47,0.4);
+}
+.confirm-accept:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(211,47,47,0.6); }
+
+@keyframes scaleIn {
+  0%   { transform: scale(0.85); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Pausar animaciones CSS infinitas cuando se reduce movimiento */
+@media (prefers-reduced-motion: reduce) {
+  .garrafa-red-flashing-img,
+  [style*="animation"] {
+    animation: none !important;
+  }
+}

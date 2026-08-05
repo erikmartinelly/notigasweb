@@ -9,6 +9,82 @@ let currentAppMode = 'buyer';
 let isDriverGpsLive = true;
 window.isHeatmapActive = window.isHeatmapActive || false;
 
+/* =====================================================
+   SISTEMA DE TOAST NOTIFICATIONS (Reemplazo de alert())
+   ===================================================== */
+function showToast(title, message, type = 'info', durationMs = 4000) {
+  const container = document.getElementById('toastContainer');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = `notigas-toast toast-${type}`;
+  toast.style.position = 'relative';
+  toast.style.overflow = 'hidden';
+  toast.style.setProperty('--toast-duration', `${durationMs}ms`);
+
+  const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️', order: '📦' };
+
+  toast.innerHTML = `
+    <span class="toast-icon">${icons[type] || 'ℹ️'}</span>
+    <div class="toast-body">
+      <span class="toast-title">${title}</span>
+      <span class="toast-msg">${message}</span>
+    </div>
+    <button class="toast-close" aria-label="Cerrar">&times;</button>
+    <div class="toast-progress"></div>
+  `;
+
+  const closeBtn = toast.querySelector('.toast-close');
+  const dismiss = () => {
+    toast.classList.add('toast-exit');
+    setTimeout(() => toast.remove(), 300);
+  };
+
+  closeBtn.addEventListener('click', dismiss);
+  toast.addEventListener('click', (e) => { if (e.target !== closeBtn) dismiss(); });
+
+  container.appendChild(toast);
+
+  // Auto-cierre
+  setTimeout(dismiss, durationMs);
+}
+
+/* Modal de confirmación elegante (Reemplazo de confirm()) */
+function showConfirmModal(icon, title, text, acceptLabel, acceptCallback) {
+  const overlay = document.getElementById('confirmModalOverlay');
+  if (!overlay) { if (confirm(text)) { acceptCallback(); } return; }
+
+  document.getElementById('confirmModalIcon').textContent = icon;
+  document.getElementById('confirmModalTitle').textContent = title;
+  document.getElementById('confirmModalText').textContent = text;
+
+  const btnAccept = document.getElementById('confirmModalAccept');
+  const btnCancel = document.getElementById('confirmModalCancel');
+
+  btnAccept.textContent = acceptLabel || 'Confirmar';
+
+  // Limpiar listeners previos
+  const newAccept = btnAccept.cloneNode(true);
+  const newCancel = btnCancel.cloneNode(true);
+  btnAccept.parentNode.replaceChild(newAccept, btnAccept);
+  btnCancel.parentNode.replaceChild(newCancel, btnCancel);
+
+  overlay.style.display = 'flex';
+
+  newAccept.addEventListener('click', () => {
+    overlay.style.display = 'none';
+    acceptCallback();
+  });
+
+  newCancel.addEventListener('click', () => {
+    overlay.style.display = 'none';
+  });
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.style.display = 'none';
+  }, { once: true });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then(regs => {
@@ -146,11 +222,11 @@ function toggleDriverGpsTransmission() {
   if (isDriverGpsLive) {
     localStorage.setItem('driverGpsLive', 'on');
     if (btn) btn.innerHTML = '<i class="fa-solid fa-circle-stop"></i> 🔴 PAUSAR RECORRIDO EN VIVO (GPS ON)';
-    alert("🟢 TRANSMISIÓN GPS ACTIVADA\nTu ubicación exacta ahora es visible para los vecinos de tu OTB.");
+    showToast('GPS Activado', 'Tu ubicación exacta ahora es visible para los vecinos de tu OTB.', 'success', 3500);
   } else {
     localStorage.setItem('driverGpsLive', 'off');
     if (btn) btn.innerHTML = '<i class="fa-solid fa-location-arrow"></i> 🟢 INICIAR RECORRIDO EN VIVO (GPS OFF)';
-    alert("🔴 TRANSMISIÓN GPS PAUSADA\nTu camión ha sido ocultado del mapa vecinal.");
+    showToast('GPS Pausado', 'Tu camión ha sido ocultado del mapa vecinal.', 'warning', 3500);
   }
   if (typeof verificarYMostrarRepartidorGPS === 'function') verificarYMostrarRepartidorGPS();
 }
@@ -292,6 +368,7 @@ function renderDriverOrdersList() {
   let html = '';
   orders.forEach(ord => {
     const iconHtml = obtenerIconoHtmlPorCategoria(ord.categoria);
+    const chatTarget = ord.buyerName || 'Comprador Vecinal';
     html += `
       <div class="driver-order-card">
         <div class="driver-order-header">
@@ -306,7 +383,7 @@ function renderDriverOrdersList() {
         </div>
         <div class="driver-order-actions">
           <button class="btn-driver-accept" onclick="aceptarPedidoRepartidor('${ord.categoria}')"><i class="fa-solid fa-circle-check"></i> ✅ Aceptar Pedido</button>
-          <button class="btn-driver-chat-vecino" onclick="alert('Chat directo con el vecino no disponible: el vecino no ha iniciado sesión activa.')"><i class="fa-solid fa-comments"></i> 💬 Contactar Vecino</button>
+          <button class="btn-driver-chat-vecino" onclick="abrirChatPrivadoConComprador('${encodeURIComponent(chatTarget)}')"><i class="fa-solid fa-comments"></i> 💬 Chat con Comprador</button>
         </div>
       </div>
     `;
@@ -317,7 +394,7 @@ function renderDriverOrdersList() {
 
 function aceptarPedidoRepartidor(cat) {
   closeDriverOrdersModal();
-  alert(`✅ PEDIDO ACEPTADO POR EL REPARTIDOR\n\nHas aceptado la solicitud de ${cat}. El vecino ha sido notificado de que estás en camino.`);
+  showToast('Pedido Aceptado', `Has aceptado la solicitud de ${cat}. El vecino ha sido notificado.`, 'success', 5000);
 }
 
 /* PURGA AUTOMÁTICA DE BASE DE DATOS LOCAL Y MEMORIA PARA EVITAR COLAPSO */
@@ -369,6 +446,7 @@ function checkActiveOrderStatus() {
   ejecutarPurgaBaseDeDatosAuto();
 
   const btnCancel = document.getElementById('btnCancelOrder');
+  const btnMain = document.getElementById('btnMainOrder');
   const chatBanner = document.getElementById('chatActivoBanner');
   const rawOrder = localStorage.getItem('notigas_active_order');
   
@@ -376,6 +454,7 @@ function checkActiveOrderStatus() {
     try {
       const order = JSON.parse(rawOrder);
       if (btnCancel) btnCancel.style.display = 'flex';
+      if (btnMain) btnMain.style.display = 'none'; // Ocultar Hacer Pedido para dar espacio limpio a Cancelar Pedido
       if (chatBanner) chatBanner.style.display = 'flex';
       actualizarFaviconSegunPedido(order.categoria);
       if (typeof renderActiveOrdersMap === 'function') {
@@ -386,6 +465,7 @@ function checkActiveOrderStatus() {
   }
   
   if (btnCancel) btnCancel.style.display = 'none';
+  if (btnMain) btnMain.style.display = 'flex'; // Restaurar Hacer Pedido
   if (chatBanner) chatBanner.style.display = 'none';
   actualizarFaviconSegunPedido(null);
   if (typeof renderActiveOrdersMap === 'function') {
@@ -534,18 +614,18 @@ function confirmarPedido() {
     renderActiveOrdersMap();
   }
 
-  alert(`🚀 PEDIDO PUBLICADO EN EL MAPA\n\nProducto: ${cat}\nDirección: ${direccion || 'Ubicación fijada en mapa'}\nCoordinación: Vía Chat Privado de la Aplicación.\n\nTu pedido ya está visible para los repartidores cercanos.`);
+  showToast('Pedido Publicado', `${cat} — ${direccion || 'Ubicación fijada en mapa'}. Tu pedido ya es visible para repartidores cercanos.`, 'order', 5000);
 }
 
 function cancelarPedidoActivo() {
-  if (confirm("❌ ¿Estás seguro de que deseas cancelar tu pedido activo en vivo?")) {
+  showConfirmModal('❌', '¿Cancelar tu pedido?', 'Tu pedido activo será eliminado del mapa y los repartidores dejarán de verlo.', 'Sí, cancelar', () => {
     localStorage.removeItem('notigas_active_order');
     checkActiveOrderStatus();
     if (typeof renderActiveOrdersMap === 'function') {
       renderActiveOrdersMap();
     }
-    alert("❌ TU PEDIDO HA SIDO CANCELADO\nSe ha restaurado el estado normal de la aplicación.");
-  }
+    showToast('Pedido Cancelado', 'Se ha restaurado el estado normal de la aplicación.', 'error', 4000);
+  });
 }
 
 /* PANORÁMICA DE PEDIDOS ACTIVOS */
@@ -663,7 +743,7 @@ function notificarEscucheCamion() {
   }
 
   mostrarPopupAlertaRepartidor(`🔔 <strong>AVISO VECINAL EN VIVO:</strong><br>${reporterName} acaba de reportar que escuchó al camión pasar por esta zona.`);
-  alert(`🔔 ¡GRACIAS VECINO!\n\nSe ha fijado un marcador de Camión Oído/Visto en tu ubicación actual en el mapa para que todos los demás vecinos lo vean.`);
+  showToast('¡Gracias Vecino!', 'Se ha fijado un marcador de Camión Oído/Visto en tu ubicación para que los demás vecinos lo vean.', 'success', 5000);
 }
 
 function lanzarEspecialEsperame() {
@@ -703,7 +783,8 @@ function lanzarEspecialEsperame() {
   }
 
   mostrarPopupAlertaRepartidor(`🛑 <strong>¡ALERTA VECINAL "ESPÉRAME"!</strong><br>${reporterName} solicita que el camión detenga su marcha cerca de esta ubicación.`);
-  alert(`🛑 AVISO DE PÁNICO "ESPÉRAME" EMITIDO.\n📍 Ubicación Exacta: Lat ${pos.lat.toFixed(5)}, Lng ${pos.lng.toFixed(5)}\n\nSe ha colocado un punto de alerta en el mapa visible para todos.`);
+  showToast('Alerta Emitida', `Se ha colocado un punto de alerta en el mapa visible para todos los vecinos y repartidores.`, 'warning', 5000);
+}
 }
 
 function mostrarPopupAlertaRepartidor(mensajeHtml) {

@@ -1,5 +1,5 @@
-/* NOTIGAS SERVICE WORKER V12.0 - CACHÉ PROGRESIVO Y MODO OFFLINE */
-const CACHE_NAME = 'notigas-pwa-cache-v12';
+/* NOTIGAS SERVICE WORKER V15.0 - CACHÉ PROGRESIVO Y MODO OFFLINE */
+const CACHE_NAME = 'notigas-pwa-cache-v15';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -14,6 +14,7 @@ const ASSETS_TO_CACHE = [
   './js/admin.js',
   './favicon.png',
   './favicon.svg',
+  './icons/garrafa_red_clean.svg',
   './manifest.json'
 ];
 
@@ -42,24 +43,36 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   
-  // Omitir peticiones externas a mapas tiles / apis dinámicas
   const url = event.request.url;
-  if (url.includes('google.com') || url.includes('openstreetmap.org') || url.includes('cloudflare.com')) {
+  if (url.includes('google.com') || url.includes('openstreetmap.org') || url.includes('cloudflare.com') || url.includes('ipapi') || url.includes('ipwho') || url.includes('freeipapi') || url.includes('osrm.org')) {
     return;
   }
 
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
-        // Retornar en caché e ir actualizando en segundo plano (Stale-While-Revalidate)
+        // Stale-While-Revalidate: servir caché y actualizar en segundo plano
         fetch(event.request).then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse));
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
           }
         }).catch(() => {});
         return cachedResponse;
       }
-      return fetch(event.request);
+      // Network-first para recursos no cacheados
+      return fetch(event.request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+        }
+        return networkResponse;
+      }).catch(() => {
+        // Fallback offline para páginas HTML
+        if (event.request.headers.get('accept')?.includes('text/html')) {
+          return caches.match('./index.html');
+        }
+      });
     })
   );
 });

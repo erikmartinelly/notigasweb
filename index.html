@@ -122,6 +122,8 @@
       </div>
 
       <div class="floating-actions-container" id="buyerFloatingActions">
+        <button class="btn-cancel-order" id="btnCancelOrder" style="display: none;" onclick="cancelarPedidoActivo()"><i class="fa-solid fa-circle-xmark"></i> ❌ CANCELAR PEDIDO</button>
+
         <button class="btn-main-order" id="btnMainOrder" onclick="abrirSubmenuPedidos()">
           <span style="display:inline-flex; align-items:center; gap:6px;">
             <img src="favicon.png" style="width:26px; height:26px; object-fit:contain; filter:drop-shadow(0 0 6px rgba(255,255,255,0.8));" alt="NOTIGAS Favicon">
@@ -129,8 +131,6 @@
           </span>
           <span>HACER UN PEDIDO</span>
         </button>
-        
-        <button class="btn-cancel-order" id="btnCancelOrder" style="display: none;" onclick="cancelarPedidoActivo()"><i class="fa-solid fa-circle-xmark"></i> ❌ CANCELAR PEDIDO</button>
         
         <div class="action-row">
           <button class="btn-panic" onclick="lanzarEspecialEsperame()"><i class="fa-solid fa-hand-paper"></i> 🛑 ESPÉRAME</button>
@@ -814,6 +814,22 @@
       <div style="display:flex; gap:6px;">
         <input type="text" id="inputDirectMessage" placeholder="Escribe tu mensaje privado..." onkeypress="if(event.key==='Enter') enviarMensajeDirecto()" style="flex:1; padding:10px; font-size:12px; background:#0F172A; border:1px solid rgba(255,255,255,0.15); border-radius:8px; color:white; outline:none;">
         <button onclick="enviarMensajeDirecto()" style="background:#FF6D00; color:white; border:none; padding:10px 16px; border-radius:8px; font-weight:800; font-size:12px; cursor:pointer;"><i class="fa-solid fa-paper-plane"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SISTEMA DE NOTIFICACIONES TOAST (ESTILO RAPPI / UBER EATS) -->
+  <div id="toastContainer" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- MODAL DE CONFIRMACIÓN ELEGANTE (REEMPLAZO DE confirm() NATIVO) -->
+  <div class="confirm-modal-overlay" id="confirmModalOverlay" style="display:none;">
+    <div class="confirm-modal-box">
+      <div class="confirm-modal-icon" id="confirmModalIcon">⚠️</div>
+      <div class="confirm-modal-title" id="confirmModalTitle">¿Estás seguro?</div>
+      <div class="confirm-modal-text" id="confirmModalText">Esta acción no se puede deshacer.</div>
+      <div class="confirm-modal-actions">
+        <button class="confirm-modal-btn confirm-cancel" id="confirmModalCancel">Cancelar</button>
+        <button class="confirm-modal-btn confirm-accept" id="confirmModalAccept">Confirmar</button>
       </div>
     </div>
   </div>

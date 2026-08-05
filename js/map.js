@@ -10,6 +10,7 @@
    ========================================================================== */
 
 const DRIVER_GPS_BROADCAST_INTERVAL_MS = 30000; // 30 Segundos (Recomendación Técnica Anti-Saturación)
+const TRUCK_ANIM_INTERVAL_MS = 80; // 80ms = ~12 FPS para movimiento suave del camión
 
 let map, userMarker, truckMarker;
 let mapTileLayers = {};
@@ -19,6 +20,10 @@ let currentGpsLat = -17.3895;
 let currentGpsLng = -66.1568;
 let heatmapLayerGroup = null;
 let activeGpsWatchId = null;
+let truckTargetLat = null;
+let truckTargetLng = null;
+let truckCurrentLat = null;
+let truckCurrentLng = null;
 window.isHeatmapActive = window.isHeatmapActive || false;
 
 // ICONO DE GARRAFA GLP ROJA LIMPIA SIN FONDO NI CÍRCULO CON DESTELLO ROJO EN LA GARRAFA
@@ -164,7 +169,10 @@ function applyGpsPosition(lat, lng, label, forceReset = false) {
   if (!isUserMarkerDraggedManually) {
     currentGpsLat = lat;
     currentGpsLng = lng;
-    if (map) map.setView([lat, lng], 16);
+    if (map) {
+      map.invalidateSize();
+      map.setView([lat, lng], 16);
+    }
   }
 
   const activeLat = isUserMarkerDraggedManually ? currentGpsLat : lat;
@@ -217,10 +225,17 @@ function applyGpsPosition(lat, lng, label, forceReset = false) {
   const banner = document.getElementById('gpsMandatoryBanner');
   if (banner) banner.style.display = 'none';
 
-  // CONTROL INTELIGENTE DE EMISIÓN DE GPS A BASE DE DATOS
-  transmitirUbicacionRepartidorServidorDB(activeLat, activeLng);
+  if (map) {
+    map.invalidateSize();
+  }
 
+  renderActiveOrdersMap();
   verificarYMostrarRepartidorGPS();
+
+  // Emitir posición GPS a base de datos si es repartidor activo
+  const _lat = isUserMarkerDraggedManually ? currentGpsLat : lat;
+  const _lng = isUserMarkerDraggedManually ? currentGpsLng : lng;
+  transmitirUbicacionRepartidorServidorDB(_lat, _lng);
 }
 
 let lastBroadcastLat = null;
@@ -474,7 +489,9 @@ function renderActiveOrdersMap() {
   try {
     const order = JSON.parse(raw);
 
-    if (typeof isOrderCategoryMatchingDriver === 'function' && !isOrderCategoryMatchingDriver(order.categoria)) {
+    // FILTRO DE CATEGORÍA: Solo aplicar al modo REPARTIDOR. Los compradores ven TODOS los pedidos (prueba social)
+    const isDriverMode = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver');
+    if (isDriverMode && typeof isOrderCategoryMatchingDriver === 'function' && !isOrderCategoryMatchingDriver(order.categoria)) {
       return; 
     }
 
@@ -713,6 +730,8 @@ function verificarYMostrarRepartidorGPS() {
 
   const driverGpsLive = localStorage.getItem('driverGpsLive');
   let hasActiveDriver = false;
+  let driverNombre = 'Repartidor';
+  let driverCategoria = 'Gas GLP';
 
   try {
     const saved = localStorage.getItem('notigas_user_data');
@@ -720,11 +739,13 @@ function verificarYMostrarRepartidorGPS() {
       const u = JSON.parse(saved);
       if (u.role === 'repartidor') {
         hasActiveDriver = true;
+        driverNombre = u.nombre || 'Repartidor';
+        driverCategoria = u.categoria || 'Gas GLP';
       }
     }
   } catch(e){}
 
-  // Solo mostrar marcador de camión en vivo si HAY un repartidor transmitiendo GPS en tiempo real
+  // Mostrar marcador de camión en vivo si HAY un repartidor transmitiendo GPS en tiempo real
   if (hasActiveDriver && driverGpsLive !== 'off') {
     let lat = currentGpsLat;
     let lng = currentGpsLng;
@@ -741,21 +762,30 @@ function verificarYMostrarRepartidorGPS() {
     } catch(e){}
 
     if (!truckMarker) {
-      truckMarker = L.marker([lat, lng], { icon: truckIcon }).addTo(map);
+      truckCurrentLat = lat;
+      truckCurrentLng = lng;
+      truckMarker = L.marker([lat, lng], { icon: truckIcon, zIndexOffset: 9000 }).addTo(map);
       truckMarker.bindPopup(`
         <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
-          <strong style="color:#FF6D00; font-size:13px;"><i class="fa-solid fa-truck-fast"></i> Camión Garrafero en Ruta Real</strong><br>
-          <span style="font-size:11px; color:#00E676;">🟢 Transmisión GPS en Tiempo Real</span><br>
-          <button style="margin-top:6px; background:#0288D1; color:white; border:none; padding:4px 8px; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer;" onclick="abrirChatDirectoVendedor('Gas GLP')">💬 Abrir Chat Directo</button>
+          <strong style="color:#FF6D00; font-size:13px;"><i class="fa-solid fa-truck-fast"></i> ${escapeHtmlStr(driverNombre)} — En Ruta</strong><br>
+          <span style="font-size:11px; color:#00E676;">🟢 GPS en Tiempo Real · ${escapeHtmlStr(driverCategoria)}</span><br>
+          <button style="margin-top:6px; background:#0288D1; color:white; border:none; padding:4px 8px; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer;" onclick="abrirChatDirectoVendedor('${escapeHtmlStr(driverCategoria)}')">💬 Chat Directo</button>
         </div>
       `);
-    } else {
-      truckMarker.setLatLng([lat, lng]);
+      iniciarMovimientoRepartidor();
     }
+
+    // Actualizar destino para animación suave
+    truckTargetLat = lat;
+    truckTargetLng = lng;
   } else {
     if (truckMarker) {
       map.removeLayer(truckMarker);
       truckMarker = null;
+    }
+    if (animationTimer) {
+      clearInterval(animationTimer);
+      animationTimer = null;
     }
   }
 }
@@ -801,7 +831,9 @@ function renderHeatmapOverlay() {
     } catch(e){}
   }
 
-  if (typeof isOrderCategoryMatchingDriver === 'function') {
+  // FILTRO DE CATEGORÍA EN HEATMAP: Solo para repartidores. Los compradores ven todas las zonas de demanda
+  const isDriverModeHeat = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver');
+  if (isDriverModeHeat && typeof isOrderCategoryMatchingDriver === 'function') {
     heatPoints = heatPoints.filter(pt => isOrderCategoryMatchingDriver(pt.cat));
   }
 
@@ -840,26 +872,22 @@ function renderHeatmapOverlay() {
 }
 
 function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
-  console.log("📡 Ejecutando resolución multicanal de ubicación por red (PC / Android)...");
+  console.log("📡 Resolviendo ubicación por red (el más rápido gana)...");
 
   const apis = [
-    () => fetch('https://freeipapi.com/api/json').then(r => r.json()).then(d => (d && d.latitude && d.longitude) ? { lat: d.latitude, lng: d.longitude } : null),
-    () => fetch('https://ipwho.is/').then(r => r.json()).then(d => (d && d.success && d.latitude && d.longitude) ? { lat: d.latitude, lng: d.longitude } : null),
-    () => fetch('https://ipapi.co/json/').then(r => r.json()).then(d => (d && d.latitude && d.longitude) ? { lat: d.latitude, lng: d.longitude } : null),
-    () => fetch('https://geolocation-db.com/json/').then(r => r.json()).then(d => (d && d.latitude && d.longitude) ? { lat: d.latitude, lng: d.longitude } : null)
+    fetch('https://freeipapi.com/api/json').then(r => r.json()).then(d => (d && d.latitude && d.longitude) ? { lat: d.latitude, lng: d.longitude } : Promise.reject()),
+    fetch('https://ipwho.is/').then(r => r.json()).then(d => (d && d.success && d.latitude && d.longitude) ? { lat: d.latitude, lng: d.longitude } : Promise.reject()),
+    fetch('https://ipapi.co/json/').then(r => r.json()).then(d => (d && d.latitude && d.longitude) ? { lat: d.latitude, lng: d.longitude } : Promise.reject())
   ];
 
-  let resolved = false;
-
-  apis.forEach(fn => {
-    fn().then(coords => {
-      if (coords && !resolved) {
-        resolved = true;
-        applyGpsPosition(coords.lat, coords.lng, "Ubicación Georeferenciada por Red", forceReset);
-        console.log("📍 Ubicación resuelta con éxito por Red/IP:", coords.lat, coords.lng);
-      }
-    }).catch(() => {});
-  });
+  Promise.any(apis)
+    .then(coords => {
+      applyGpsPosition(coords.lat, coords.lng, "Ubicación Georeferenciada por Red", forceReset);
+      console.log("📍 Ubicación resuelta por Red/IP:", coords.lat, coords.lng);
+    })
+    .catch(() => {
+      applyGpsPosition(-17.3895, -66.1568, "Ubicación Predeterminada OTB", forceReset);
+    });
 }
 
 function solicitarGeolocalizacionNativaNavegador(isMobile, forceReset) {
@@ -940,13 +968,54 @@ function conectarGPSAuto(forceReset = false) {
   }
 }
 
-/* iniciarMovimientoRepartidor: stub reservado para futura animación de ruta del repartidor */
+/* iniciarMovimientoRepartidor: Animación suave con requestAnimationFrame (ahorro de batería) */
 function iniciarMovimientoRepartidor() {
   if (animationTimer) {
-    clearInterval(animationTimer);
+    cancelAnimationFrame(animationTimer);
     animationTimer = null;
   }
-  // TODO: implementar animación de movimiento sobre ruta optimizada
+
+  let lastFrameTime = 0;
+  const FRAME_INTERVAL = 80; // ~12 FPS
+
+  function animateTruck(timestamp) {
+    // Pausar cuando la pestaña está oculta (ahorro de batería)
+    if (document.hidden || !truckMarker) {
+      animationTimer = requestAnimationFrame(animateTruck);
+      return;
+    }
+
+    if (timestamp - lastFrameTime < FRAME_INTERVAL) {
+      animationTimer = requestAnimationFrame(animateTruck);
+      return;
+    }
+    lastFrameTime = timestamp;
+
+    if (truckTargetLat === null || truckTargetLng === null) {
+      animationTimer = requestAnimationFrame(animateTruck);
+      return;
+    }
+    if (truckCurrentLat === null) truckCurrentLat = truckTargetLat;
+    if (truckCurrentLng === null) truckCurrentLng = truckTargetLng;
+
+    // Interpolación lineal suave (LERP) del 12% por tick → movimiento fluido sin saltos
+    const lerpFactor = 0.12;
+    const diffLat = truckTargetLat - truckCurrentLat;
+    const diffLng = truckTargetLng - truckCurrentLng;
+
+    if (Math.abs(diffLat) < 0.000001 && Math.abs(diffLng) < 0.000001) {
+      truckCurrentLat = truckTargetLat;
+      truckCurrentLng = truckTargetLng;
+    } else {
+      truckCurrentLat += diffLat * lerpFactor;
+      truckCurrentLng += diffLng * lerpFactor;
+    }
+
+    truckMarker.setLatLng([truckCurrentLat, truckCurrentLng]);
+    animationTimer = requestAnimationFrame(animateTruck);
+  }
+
+  animationTimer = requestAnimationFrame(animateTruck);
 }
 
 /* COORDENADAS OFICIALES GEOBOLIVIA Y MUNICIPIOS POR ÁREA METROPOLITANA */

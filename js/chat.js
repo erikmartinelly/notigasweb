@@ -385,3 +385,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* escapeHtmlStr está definida en forum.js (que carga primero) — se elimina aquí para evitar
    sobreescritura con la versión ligeramente distinta de chat.js. */
+
+/* CHAT PRIVADO DESDE REPARTIDOR HACIA COMPRADOR
+   Abre el widget de chat flotante y selecciona (o crea) el canal del comprador */
+function abrirChatPrivadoConComprador(encodedBuyerName) {
+  const buyerName = decodeURIComponent(encodedBuyerName || 'Comprador Vecinal');
+  
+  // Abrir el widget flotante de chat
+  abrirFloatingChat();
+
+  // Intentar seleccionar al comprador en el selector de vendedores
+  const sel = document.getElementById('selectVendorChat');
+  if (sel) {
+    // Buscar si ya existe una opción para este comprador
+    let found = false;
+    for (let i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value === buyerName || sel.options[i].text.includes(buyerName)) {
+        sel.selectedIndex = i;
+        found = true;
+        break;
+      }
+    }
+
+    // Si no existe, crear la opción del comprador en el selector
+    if (!found) {
+      const opt = document.createElement('option');
+      opt.value = buyerName;
+      opt.text = `🏠 ${buyerName} (Comprador)`;
+      sel.appendChild(opt);
+      sel.value = buyerName;
+    }
+  }
+
+  cambiarVendedorChat();
+}

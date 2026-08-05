@@ -67,8 +67,50 @@ function renderVendorCards(filterCat) {
     ? allVendors 
     : allVendors.filter(v => v.category.toLowerCase().includes(filterCat.toLowerCase()) || filterCat.toLowerCase().includes(v.category.toLowerCase()));
 
+  let html = '';
+
+  // SECCIÓN DESTACADA: PEDIDOS VECINALES EN VIVO SOLICITADOS POR COMPRADORES
+  const activeOrderRaw = localStorage.getItem('notigas_active_order');
+  if (activeOrderRaw) {
+    try {
+      const activeOrder = JSON.parse(activeOrderRaw);
+      if (typeof isOrderCategoryMatchingDriver !== 'function' || isOrderCategoryMatchingDriver(activeOrder.categoria)) {
+        const iconHtml = (typeof obtenerIconoHtmlPorCategoria === 'function') ? obtenerIconoHtmlPorCategoria(activeOrder.categoria) : '📦';
+        const mins = Math.floor((Date.now() - (activeOrder.timestamp || Date.now())) / 60000);
+        
+        html += `
+          <div class="vendor-fb-card" style="border: 2px solid #FF6D00; background: linear-gradient(135deg, rgba(255,109,0,0.18), rgba(15,23,42,0.95)); box-shadow: 0 6px 20px rgba(255,109,0,0.35); margin-bottom: 14px;">
+            <div class="vendor-fb-header">
+              <div class="vendor-profile">
+                <div class="vendor-avatar" style="background: rgba(255,109,0,0.25); color: #FF6D00;">🛒</div>
+                <div class="vendor-meta">
+                  <span class="vendor-name" style="color: #FF8F00; font-size: 13.5px; font-weight: 900;">🚨 PEDIDO DE COMPRADOR EN VIVO</span>
+                  <span class="vendor-badge-cat" style="background: rgba(255,109,0,0.25); color: #FF8F00; font-weight: 800;">${iconHtml} ${escapeHtmlStr(activeOrder.categoria)}</span>
+                </div>
+              </div>
+              <span class="ad-badge" style="background: rgba(239,68,68,0.2); color: #EF4444; border-color: #EF4444; animation: pulse 1.5s infinite; font-weight: 800;">⏱️ HACE ${mins} MIN</span>
+            </div>
+
+            <div class="vendor-fb-body">
+              <div class="vendor-field"><strong>📦 Producto Solicitado:</strong> <span style="color:white; font-weight:800;">${escapeHtmlStr(activeOrder.categoria)} (${escapeHtmlStr(activeOrder.cantidad || '1 unidad')})</span></div>
+              <div class="vendor-field"><strong>🛣️ Dirección de Entrega:</strong> <span style="color:#F59E0B; font-weight:800;">${escapeHtmlStr(activeOrder.callePrincipal || 'Ubicación georeferenciada en mapa')}</span></div>
+              <div class="vendor-field"><strong>💬 Coordinación:</strong> Chat Privado Interno 1-a-1 encriptado</div>
+            </div>
+
+            <div class="vendor-fb-footer" style="display:flex; gap:8px;">
+              <button class="btn-vendor-chat" style="flex:1;" onclick="abrirChatConRepartidor('Comprador Vecinal', decodeURIComponent('${encodeURIComponent(activeOrder.categoria)}'))"><i class="fa-solid fa-comments"></i> 💬 CHAT PRIVADO INTERNO</button>
+              <button class="btn-vendor-order" style="flex:1; background: linear-gradient(135deg, #FF6D00, #E65100); color:white; border:none; border-radius:8px; font-weight:900; cursor:pointer;" onclick="aceptarPedidoRepartidor(decodeURIComponent('${encodeURIComponent(activeOrder.categoria)}'))"><i class="fa-solid fa-circle-check"></i> ✅ Aceptar Pedido</button>
+            </div>
+          </div>
+        `;
+      }
+    } catch(e){
+      console.error("Error al renderizar pedido activo en pestaña repartidores:", e);
+    }
+  }
+
   // TARJETA OFICIAL DE SERVICIO AL CLIENTE & SOPORTE OTB AL INICIO DEL FEED
-  let html = `
+  html += `
     <div class="vendor-fb-card" style="border: 1px solid rgba(0, 230, 118, 0.4); background: linear-gradient(135deg, rgba(15,23,42,0.9), rgba(0,230,118,0.05));">
       <div class="vendor-fb-header">
         <div class="vendor-profile">
