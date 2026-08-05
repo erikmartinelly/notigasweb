@@ -13,7 +13,6 @@ const DRIVER_GPS_BROADCAST_INTERVAL_MS = 30000; // 30 Segundos (Recomendación T
 
 let map, userMarker, truckMarker;
 let mapTileLayers = {};
-let routeIndex = 0;
 let animationTimer = null;
 let lastGpsBroadcastTime = 0;
 let currentGpsLat = -17.3895;
@@ -240,7 +239,7 @@ function transmitirUbicacionRepartidorServidorDB(lat, lng) {
     }
   } catch(e){}
 }
-const transmitirUbicacionChoferServidorDB = transmitirUbicacionRepartidorServidorDB;
+/* Alias eliminado (código muerto) — se usa transmitirUbicacionRepartidorServidorDB directamente */
 
 let reportedTrucksLayerGroup = null;
 
@@ -747,11 +746,13 @@ function conectarGPSAuto(forceReset = false) {
   }
 }
 
+/* iniciarMovimientoRepartidor: stub reservado para futura animación de ruta del repartidor */
 function iniciarMovimientoRepartidor() {
   if (animationTimer) {
     clearInterval(animationTimer);
     animationTimer = null;
   }
+  // TODO: implementar animación de movimiento sobre ruta optimizada
 }
 
 /* COORDENADAS OFICIALES GEOBOLIVIA PARA LAS 9 CAPITALES DE BOLIVIA + EL ALTO Y MUNICIPIOS */
@@ -785,7 +786,7 @@ function cambiarCiudadCapital(cityKey) {
   localStorage.setItem('notigas_active_city', mun.nombre);
 }
 
-const alCambiarMunicipioSearch = cambiarCiudadCapital;
+/* Alias eliminado (código muerto) — el selector HTML usa cambiarCiudadCapital directamente */
 
 function identificarMunicipioQuery(queryText) {
   const clean = queryText.toLowerCase().trim();

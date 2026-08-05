@@ -54,8 +54,6 @@
     </div>
   </header>
 
-  </div>
-
   <!-- PESTAÑAS DE NAVEGACIÓN PRINCIPALES (3 PESTAÑAS INDEPENDIENTES) -->
   <nav>
     <button class="tab-btn active" onclick="switchTab(0)"><i class="fa-solid fa-map-location-dot"></i> 1ª MAPA EN VIVO</button>
@@ -117,6 +115,7 @@
         <div class="action-row">
           <button class="btn-panic" onclick="lanzarEspecialEsperame()"><i class="fa-solid fa-hand-paper"></i> 🛑 ESPÉRAME</button>
           <button class="btn-hear-truck" onclick="notificarEscucheCamion()"><i class="fa-solid fa-bell"></i> 🔔 ESCUCHÉ AL CAMIÓN</button>
+          <button class="btn-panorama" onclick="abrirPanoramicaPedidos()" title="Panorámica de pedidos activos"><i class="fa-solid fa-chart-bar"></i> 📊 PEDIDOS</button>
         </div>
       </div>
 
@@ -771,9 +770,9 @@
       </div>
       <div class="form-group">
         <label>Descripción / Detalle:</label>
-        <textarea id="inputPostDesc" rows="3" placeholder="Escribe tu mensaje para los vecinos (Durará 7 días)..."></textarea>
+        <textarea id="inputPostDesc" rows="3" placeholder="Escribe tu mensaje para los vecinos (dura 72 horas)..."></textarea>
       </div>
-      <button class="btn-submit" onclick="crearNuevoPost()"><i class="fa-solid fa-paper-plane"></i> Publicar Anuncio Gratis (7 días)</button>
+      <button class="btn-submit" onclick="crearNuevoPost()"><i class="fa-solid fa-paper-plane"></i> Publicar Anuncio Gratis (72 horas)</button>
     </div>
   </div>
 

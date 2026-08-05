@@ -400,7 +400,5 @@ document.addEventListener('DOMContentLoaded', () => {
   verificarYActivarChatAdminAuto();
 });
 
-function escapeHtmlStr(str) {
-  if (typeof str !== 'string') return '';
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
+/* escapeHtmlStr está definida en forum.js (que carga primero) — se elimina aquí para evitar
+   sobreescritura con la versión ligeramente distinta de chat.js. */

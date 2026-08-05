@@ -122,10 +122,10 @@ function renderVendorCards(filterCat) {
         </div>
 
         <div class="vendor-fb-body">
-          <div class="vendor-field"><strong>🚘 Vehículo/Placa:</strong> ${vendor.plate}</div>
-          <div class="vendor-field"><strong>📦 ¿Qué Vende/Oferta?:</strong> ${vendor.products}</div>
-          <div class="vendor-field"><strong>🗺️ Zonas de Recorrido:</strong> ${vendor.zones}</div>
-          <div class="vendor-field"><strong>📅 Días y Horarios:</strong> ${vendor.schedule}</div>
+          <div class="vendor-field"><strong>🚘 Vehículo/Placa:</strong> ${escapeHtmlStr(vendor.plate)}</div>
+          <div class="vendor-field"><strong>📦 ¿Qué Vende/Oferta?:</strong> ${escapeHtmlStr(vendor.products)}</div>
+          <div class="vendor-field"><strong>🗺️ Zonas de Recorrido:</strong> ${escapeHtmlStr(vendor.zones)}</div>
+          <div class="vendor-field"><strong>📅 Días y Horarios:</strong> ${escapeHtmlStr(vendor.schedule)}</div>
         </div>
 
         <div class="vendor-fb-footer">

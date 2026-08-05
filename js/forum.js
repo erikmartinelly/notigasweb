@@ -148,6 +148,11 @@ function borrarPostForumAdmin(postId) {
 }
 
 function votarPost(el, delta, postId) {
+  // Protección anti-votos múltiples por sesión
+  const voteKey = `notigas_voted_${postId}`;
+  if (sessionStorage.getItem(voteKey)) return;
+  sessionStorage.setItem(voteKey, '1');
+
   const span = el.parentElement.querySelector('.v-count');
   if (span) {
     let val = parseInt(span.innerText) || 0;
@@ -166,12 +171,12 @@ function votarPost(el, delta, postId) {
 }
 
 function abrirModalNuevoPost() {
-  const modal = document.getElementById('modalNuevoPost') || document.getElementById('modalNewPost');
+  const modal = document.getElementById('modalNuevoPost');
   if (modal) modal.style.display = 'flex';
 }
 
 function closeNewPostModal() {
-  const modal = document.getElementById('modalNuevoPost') || document.getElementById('modalNewPost');
+  const modal = document.getElementById('modalNuevoPost');
   if (modal) modal.style.display = 'none';
 }
 
@@ -180,9 +185,9 @@ function closeNuevoPostModal() {
 }
 
 function crearNuevoPost() {
-  const title = (document.getElementById('inputPostTitulo')?.value || document.getElementById('inputPostTitle')?.value || '').trim();
+  const title = (document.getElementById('inputPostTitulo')?.value || '').trim();
   const desc = (document.getElementById('inputPostDesc')?.value || '').trim();
-  const cat = document.getElementById('selectPostTipo')?.value || document.getElementById('selectPostCat')?.value || 'AVISO VECINAL';
+  const cat = document.getElementById('selectPostTipo')?.value || 'AVISO VECINAL';
 
   if (!title || !desc) {
     alert('Por favor ingresa un título y una descripción para tu publicación vecinal.');
