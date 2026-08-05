@@ -96,11 +96,10 @@ function initGoogleOneTap() {
         client_id: GOOGLE_CLIENT_ID,
         callback: handleCredentialResponse,
         auto_select: false,
-        ux_mode: 'popup',
         cancel_on_tap_outside: true
       });
 
-      // Renderizar el botón oficial de Google para compatibilidad con Firefox / Safari ETP
+      // Renderizar el botón oficial de Google para compatibilidad total
       const btnContainer = document.getElementById('g_id_onload_container');
       if (btnContainer) {
         btnContainer.innerHTML = '';
@@ -132,98 +131,62 @@ function tryInitGoogleGis() {
 
 window.addEventListener('load', tryInitGoogleGis);
 
+function parseGoogleJwt(token) {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+  } catch(e) {
+    console.error("Error al decodificar JWT de Google:", e);
+    return null;
+  }
+}
+
 function iniciarConGoogleDirecto() {
   if (typeof google !== 'undefined' && google && google.accounts && google.accounts.id) {
     try {
       google.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
-        callback: handleCredentialResponse,
-        ux_mode: 'popup'
+        callback: handleCredentialResponse
       });
 
       google.accounts.id.prompt((notification) => {
         if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          const reason = notification.getNotDisplayedReason() || notification.getSkippedReason();
-          console.info("Google One Tap no desplegado en navegador (Firefox/ETP):", reason);
-          fallbackIngresoGoogleManual();
+          console.info("Google One Tap no disponible en este navegador/origen. Alternando a formulario...");
+          selectAuthMethod('email');
+          const regGmail = document.getElementById('regGmail');
+          if (regGmail) regGmail.focus();
+          if (typeof showToast === 'function') {
+            showToast('Verificación de Correo', 'Ingresa tu correo Gmail en el formulario para ingresar.', 'info', 4000);
+          }
         }
       });
     } catch(err) {
-      fallbackIngresoGoogleManual();
+      selectAuthMethod('email');
     }
   } else {
-    fallbackIngresoGoogleManual();
-  }
-}
-
-function fallbackIngresoGoogleManual() {
-  const gmailPrompt = prompt("🌐 AUTENTICACIÓN GOOGLE (Firefox OK):\nIngresa tu correo Gmail de Google:");
-  if (gmailPrompt && gmailPrompt.includes('@')) {
-    const cleanGmail = gmailPrompt.trim().toLowerCase();
-    const nombreGoogle = cleanGmail.split('@')[0];
-
-    if (currentSelectedRole === 'driver') {
-      const modalAuth = document.getElementById('modalWelcomeAuth');
-      if (modalAuth) modalAuth.style.display = 'none';
-
-      const inputDriverNombre = document.getElementById('inputDriverNombre');
-      if (inputDriverNombre) inputDriverNombre.value = nombreGoogle;
-      
-      const modalDriver = document.getElementById('modalDriver');
-      if (modalDriver) modalDriver.style.display = 'flex';
-      
-      const titleEl = document.getElementById('driverModalTitleText');
-      const subtitleEl = document.getElementById('driverModalSubtitle');
-      if (titleEl) titleEl.textContent = 'Registro de Repartidor';
-      if (subtitleEl) subtitleEl.textContent = 'Completa tu ficha de negocio. Aparecerá en la lista de repartidores de la OTB.';
-
-      sessionStorage.setItem('notigas_temp_gmail', cleanGmail);
-      return;
-    }
-
-    const userData = {
-      role: 'vecino',
-      gmail: cleanGmail,
-      nombre: nombreGoogle,
-      apellido: 'Usuario'
-    };
-    localStorage.setItem('notigas_user_data', JSON.stringify(userData));
-    
-    if (typeof databaseEmails !== 'undefined' && Array.isArray(databaseEmails)) {
-      databaseEmails.push({ gmail: cleanGmail, role: userData.role, fecha: new Date().toISOString().split('T')[0] });
-    }
-    
-    const modalAuth = document.getElementById('modalWelcomeAuth');
-    if (modalAuth) modalAuth.style.display = 'none';
-
-    if (typeof verificarYActivarChatAdminAuto === 'function') {
-      verificarYActivarChatAdminAuto();
-    }
-
-    alert(`✅ INGRESO GOOGLE VERIFICADO (FIREFOX OK)\n\n¡Bienvenido ${userData.nombre} (${cleanGmail})!`);
+    selectAuthMethod('email');
   }
 }
 
 function handleCredentialResponse(response) {
   try {
     if (!response || !response.credential || typeof response.credential !== 'string') {
-      fallbackIngresoGoogleManual();
+      selectAuthMethod('email');
       return;
     }
-    const parts = response.credential.split('.');
-    if (parts.length < 2) {
-      fallbackIngresoGoogleManual();
-      return;
-    }
-    const base64Url = parts[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
 
-    const googleUser = JSON.parse(jsonPayload);
-    const gmail = googleUser.email;
-    const nombre = googleUser.given_name || googleUser.name;
+    const googleUser = parseGoogleJwt(response.credential);
+    if (!googleUser || !googleUser.email) {
+      selectAuthMethod('email');
+      return;
+    }
+
+    const gmail = googleUser.email.toLowerCase().trim();
+    const nombre = googleUser.given_name || googleUser.name || gmail.split('@')[0];
     const apellido = googleUser.family_name || '';
 
     if (currentSelectedRole === 'driver') {
@@ -253,7 +216,10 @@ function handleCredentialResponse(response) {
     };
 
     localStorage.setItem('notigas_user_data', JSON.stringify(userData));
-    databaseEmails.push({ gmail: gmail, role: userData.role, fecha: new Date().toISOString().split('T')[0] });
+
+    if (typeof databaseEmails !== 'undefined' && Array.isArray(databaseEmails)) {
+      databaseEmails.push({ gmail: gmail, role: userData.role, fecha: new Date().toISOString().split('T')[0] });
+    }
 
     const modalAuth = document.getElementById('modalWelcomeAuth');
     if (modalAuth) modalAuth.style.display = 'none';
@@ -262,9 +228,14 @@ function handleCredentialResponse(response) {
       verificarYActivarChatAdminAuto();
     }
 
-    alert(`✅ AUTENTICACIÓN GOOGLE EXITOSA\n\n¡Bienvenido ${nombre} (${gmail})! Tu cuenta ha sido registrada de forma segura.`);
+    if (typeof showToast === 'function') {
+      showToast('✅ Google Verificado', `¡Bienvenido ${nombre} (${gmail})!`, 'success', 4500);
+    } else {
+      alert(`✅ AUTENTICACIÓN GOOGLE EXITOSA\n\n¡Bienvenido ${nombre} (${gmail})!`);
+    }
   } catch(e) {
     console.error("Error al procesar credencial de Google:", e);
+    selectAuthMethod('email');
   }
 }
 
@@ -301,7 +272,7 @@ function guardarRegistroUnico() {
     const schedule = (document.getElementById('regSchedule')?.value || '').trim();
 
     if (!nombreNegocio || !whatsapp || !placa || !productos || !zonas) {
-      alert('⚠️ FICHA DE REPARTIDOR OBLIGATORIA\n\nPor favor completa los campos requeridos para Repartidor: Nombre de Negocio, WhatsApp, Placa, ¿Qué vende? y Zonas de recorrido.');
+      if (typeof showToast === 'function') showToast('⚠️ Ficha Incompleta', 'Completa Nombre, WhatsApp, Placa, Productos y Zonas.', 'warning', 2000);
       return;
     }
 
@@ -326,7 +297,7 @@ function guardarRegistroUnico() {
       setAppMode('driver');
     }
 
-    alert(`🟢 MINI PÁGINA DE NEGOCIO PUBLICADA\n\n¡Bienvenido Repartidor ${nombreNegocio}! Tu Ficha de Negocio ha sido registrada y guardada para la administración.`);
+    if (typeof showToast === 'function') showToast('🟢 Negocio Registrado', `¡Bienvenido Repartidor ${nombreNegocio}!`, 'success', 2000);
 
     if (typeof renderVendorCards === 'function') {
       renderVendorCards('TODOS');
@@ -341,7 +312,7 @@ function guardarRegistroUnico() {
     const apellido = (document.getElementById('regApellido')?.value || '').trim();
 
     if (!gmail || !nombre || !apellido) {
-      alert('Para compradores es obligatorio ingresar Correo Electrónico, Nombre y Apellido.');
+      if (typeof showToast === 'function') showToast('⚠️ Datos Incompletos', 'Ingresa Correo Electrónico, Nombre y Apellido.', 'warning', 2000);
       return;
     }
 
@@ -356,7 +327,7 @@ function guardarRegistroUnico() {
       verificarYActivarChatAdminAuto();
     }
 
-    alert(`✅ REGISTRO VERIFICADO\n\nBienvenido a NOTIGAS (${gmail}).`);
+    if (typeof showToast === 'function') showToast('✅ Registro Exitoso', `Bienvenido a NOTIGAS ${nombre}`, 'success', 2000);
   }
 }
 
@@ -375,7 +346,7 @@ function iniciarSesionRepartidor() {
   const schedule = (document.getElementById('inputDriverSchedule')?.value || '').trim();
 
   if (!nombreNegocio || !whatsapp || !plate || !productos) {
-    alert('Por favor completa todos los campos requeridos para publicar tu Mini Página de Negocio.');
+    if (typeof showToast === 'function') showToast('⚠️ Campos Requeridos', 'Por favor completa todos los campos requeridos.', 'warning', 2000);
     return;
   }
 
@@ -392,9 +363,7 @@ function iniciarSesionRepartidor() {
   // COMPROBACIÓN ESTRICTA DE BANEO POR LA ADMINISTRACIÓN
   if (typeof esRepartidorBaneado === 'function' && esRepartidorBaneado(nombreNegocio, plate, whatsapp, existingGmail)) {
     if (typeof showToast === 'function') {
-      showToast('⛔ Acceso Suspendido', 'Tu cuenta de repartidor ha sido suspendida/baneada por la administración de NOTIGAS.', 'error', 6000);
-    } else {
-      alert('⛔ ACCESO SUSPENDIDO\nTu cuenta de repartidor ha sido suspendida/baneada por la administración de NOTIGAS.');
+      showToast('⛔ Acceso Suspendido', 'Tu cuenta de repartidor ha sido suspendida/baneada por la administración de NOTIGAS.', 'error', 2000);
     }
     return;
   }
@@ -421,7 +390,7 @@ function iniciarSesionRepartidor() {
     setAppMode('driver');
   }
 
-  alert(`🟢 MINI PÁGINA DE NEGOCIO ACTIVADA EN NOTIGAS\n\nRepartidor: ${nombreNegocio}\nCategoría: ${categoria}\nPlaca: ${plate}\nWhatsApp: ${whatsapp}\n\nFicha registrada correctamente.`);
+  if (typeof showToast === 'function') showToast('🟢 Negocio Activado', `Ficha de ${nombreNegocio} registrada.`, 'success', 2000);
   
   if (typeof renderVendorCards === 'function') {
     renderVendorCards('TODOS');
@@ -486,35 +455,19 @@ function cerrarSesionUsuario() {
       checkActiveOrderStatus();
     }
 
-    alert('🚪 SESIÓN CERRADA CON ÉXITO\n\nSelecciona tu rol para ingresar nuevamente.');
+    if (typeof showToast === 'function') showToast('🚪 Sesión Cerrada', 'Selecciona tu rol para ingresar nuevamente.', 'info', 2000);
   }
 }
 
 function eliminarMiCuentaCompleta() {
-  const confirmacion1 = confirm(
-    "⚠️ ATENCIÓN: ELIMINACIÓN PERMANENTE DE CUENTA\n\n" +
-    "Esta acción eliminará TODOS tus datos de NOTIGAS:\n\n" +
-    "• Tu perfil de usuario\n" +
-    "• Historial de pedidos\n" +
-    "• Mensajes de chat\n" +
-    "• Publicaciones en el foro\n" +
-    "• Ficha de repartidor (si aplica)\n" +
-    "• Preferencias guardadas\n\n" +
-    "Esta acción NO se puede deshacer.\n\n" +
-    "¿Deseas continuar?"
-  );
+  if (typeof showConfirmModal === 'function') {
+    showConfirmModal('🗑️', '¿Eliminar Cuenta Completa?', 'Esta acción borrará permanentemente todos tus datos, pedidos y publicaciones.', 'Sí, eliminar', () => {
+      ejecutarEliminacionTotalCuenta();
+    });
+  }
+}
 
-  if (!confirmacion1) return;
-
-  const confirmacion2 = confirm(
-    "🗑️ CONFIRMACIÓN FINAL\n\n" +
-    "Escribe SÍ para confirmar.\n\n" +
-    "¿Realmente deseas eliminar tu cuenta y todos tus datos de forma permanente?"
-  );
-
-  if (!confirmacion2) return;
-
-  // Eliminar TODAS las claves de NOTIGAS en localStorage
+function ejecutarEliminacionTotalCuenta() {
   const keysToRemove = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
@@ -524,35 +477,24 @@ function eliminarMiCuentaCompleta() {
   }
   keysToRemove.forEach(k => localStorage.removeItem(k));
 
-  // Eliminar claves adicionales conocidas
   localStorage.removeItem('driverGpsLive');
-
-  // Limpiar sessionStorage
   sessionStorage.clear();
 
-  // Cerrar modales
   closeUserSettingsModal();
   if (typeof closeDriverModal === 'function') closeDriverModal();
 
-  // Resetear modo a comprador
   if (typeof setAppMode === 'function') {
     setAppMode('buyer');
   }
 
-  // Mostrar pantalla de login
   const modalAuth = document.getElementById('modalWelcomeAuth');
   if (modalAuth) modalAuth.style.display = 'flex';
 
-  alert(
-    "🗑️ CUENTA ELIMINADA CON ÉXITO\n\n" +
-    "Todos tus datos personales, historial de pedidos, mensajes y configuraciones han sido eliminados permanentemente de este dispositivo.\n\n" +
-    "Puedes crear una cuenta nueva en cualquier momento."
-  );
+  if (typeof showToast === 'function') showToast('🗑️ Cuenta Eliminada', 'Todos tus datos fueron eliminados de este dispositivo.', 'info', 2000);
 
-  // Recargar la aplicación para limpiar estado en memoria
   setTimeout(() => {
     window.location.reload();
-  }, 500);
+  }, 400);
 }
 
 const iniciarSesionChofer = iniciarSesionRepartidor;

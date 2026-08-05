@@ -13,14 +13,16 @@ const REQUIRED_ADMIN_PASSWORD = "Tiquipaya428";
    Se eliminan aquí para evitar que admin.js sobreescriba las versiones correctas con soporte de rol Repartidor. */
 
 function cerrarSesionRepartidorActivarComprador() {
-  if (confirm("🔄 ¿Deseas cerrar tu modo Repartidor y pasar a modo Comprador?\n\nTu ficha de negocio se mantendrá guardada. Solo se cambiará tu modo de ingreso.")) {
-    localStorage.removeItem('notigas_user_data');
-    localStorage.removeItem('driverGpsLive');
-    if (typeof closeUserSettingsModal === 'function') closeUserSettingsModal();
-    if (typeof setAppMode === 'function') setAppMode('buyer');
-    const modalAuth = document.getElementById('modalWelcomeAuth');
-    if (modalAuth) modalAuth.style.display = 'flex';
-    alert('🛒 Modo Repartidor cerrado. Puedes iniciar sesión como Comprador.');
+  if (typeof showConfirmModal === 'function') {
+    showConfirmModal('🔄', '¿Cambiar a Modo Comprador?', 'Tu ficha de negocio se mantendrá guardada. Solo se cambiará tu modo de ingreso.', 'Sí, cambiar', () => {
+      localStorage.removeItem('notigas_user_data');
+      localStorage.removeItem('driverGpsLive');
+      if (typeof closeUserSettingsModal === 'function') closeUserSettingsModal();
+      if (typeof setAppMode === 'function') setAppMode('buyer');
+      const modalAuth = document.getElementById('modalWelcomeAuth');
+      if (modalAuth) modalAuth.style.display = 'flex';
+      if (typeof showToast === 'function') showToast('🛒 Modo Comprador', 'Modo Repartidor cerrado. Puedes ingresar como Comprador.', 'info', 2000);
+    });
   }
 }
 
@@ -74,7 +76,7 @@ function activarMapaCalorAdminLive() {
     btn.style.background = 'linear-gradient(135deg, #D32F2F, #B71C1C)';
   }
 
-  alert("🔥 MONITOR EN VIVO DE ADMINISTRADOR ACTIVADO\n\nVisualizando todos los pedidos en tiempo real y las zonas de concentración en el mapa con buffers rojos.");
+  if (typeof showToast === 'function') showToast('🔥 Monitor Admin', 'Visualizando pedidos en vivo y zonas de concentración en mapa.', 'info', 2000);
 }
 
 function switchModalTab(idx) {
@@ -195,7 +197,7 @@ function emitirAlertaOficialAdmin() {
   const text = (input?.value || '').trim();
 
   if (!text) {
-    alert('Ingresa el texto de la Alerta Oficial OTB que deseas emitir.');
+    if (typeof showToast === 'function') showToast('⚠️ Texto Requerido', 'Ingresa el texto de la Alerta Oficial OTB.', 'warning', 2000);
     return;
   }
 
@@ -211,16 +213,18 @@ function emitirAlertaOficialAdmin() {
   }
 
   input.value = '';
-  alert(`📢 COMUNICADO PUBLICADO CON ÉXITO\n\nEl mensaje ha sido transmitido en tiempo real a todos los vecinos en el mapa.`);
+  if (typeof showToast === 'function') showToast('📢 Comunicado Emitido', 'Mensaje transmitido a todos los vecinos en el mapa.', 'success', 2000);
 }
 
 function ejecutarPurgaBaseDeDatosManual() {
-  if (confirm('🧹 ¿Deseas ejecutar la purga manual de registros expirados (chat >48h, avisos >72h)?')) {
-    if (typeof ejecutarPurgaBaseDeDatosAuto === 'function') {
-      ejecutarPurgaBaseDeDatosAuto();
-    }
-    renderAdminDashboardKPIs();
-    alert('🧹 Purga de sistema ejecutada correctamente. Se liberó memoria y almacenamiento en caché.');
+  if (typeof showConfirmModal === 'function') {
+    showConfirmModal('🧹', '¿Ejecutar Purga de Sistema?', 'Se limpiará el caché y los registros de chat >48h y avisos >72h.', 'Sí, purgar', () => {
+      if (typeof ejecutarPurgaBaseDeDatosAuto === 'function') {
+        ejecutarPurgaBaseDeDatosAuto();
+      }
+      renderAdminDashboardKPIs();
+      if (typeof showToast === 'function') showToast('🧹 Purga Completada', 'Se liberó almacenamiento y memoria en caché.', 'info', 2000);
+    });
   }
 }
 
