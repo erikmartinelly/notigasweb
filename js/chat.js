@@ -125,6 +125,20 @@ function toggleFloatingChat() {
   }
 }
 
+function abrirChatSoporteOficial() {
+  abrirFloatingChat();
+  const sel = document.getElementById('selectVendorChat');
+  if (sel) {
+    for (let i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value === 'Soporte OTB' || sel.options[i].text.includes('Administrador') || sel.options[i].text.includes('Soporte')) {
+        sel.selectedIndex = i;
+        break;
+      }
+    }
+  }
+  cambiarVendedorChat();
+}
+
 function abrirChatDirectoVendedor(catNombre) {
   abrirFloatingChat();
   const sel = document.getElementById('selectVendorChat');

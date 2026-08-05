@@ -134,16 +134,35 @@ function renderForumFeed() {
 }
 
 function borrarPostForumAdmin(postId) {
-  if (confirm("🗑️ ¿Deseas eliminar permanentemente esta publicación del Tablón Vecinal?")) {
+  const doDelete = () => {
     let localPosts = [];
     try {
       const raw = localStorage.getItem('notigas_forum_posts');
       if (raw) localPosts = JSON.parse(raw);
     } catch(e){}
+
     localPosts = localPosts.filter(p => p.id !== postId);
     localStorage.setItem('notigas_forum_posts', JSON.stringify(localPosts));
+
+    if (typeof postCommentsStore !== 'undefined' && postCommentsStore[postId]) {
+      delete postCommentsStore[postId];
+      if (typeof guardarComentariosStore === 'function') guardarComentariosStore();
+    }
+
     renderForumFeed();
-    alert("🗑️ Publicación eliminada con éxito.");
+    if (typeof renderAdminAdsAndPostsList === 'function') renderAdminAdsAndPostsList();
+
+    if (typeof showToast === 'function') {
+      showToast('🗑️ Publicación Borrada', 'El aviso o anuncio de la OTB fue eliminado del sistema.', 'info', 4000);
+    }
+  };
+
+  if (typeof showConfirmModal === 'function') {
+    showConfirmModal('🗑️', '¿Eliminar Publicación?', 'Esta acción borrará permanentemente el aviso del tablón vecinal.', 'Sí, eliminar', doDelete);
+  } else {
+    if (confirm("🗑️ ¿Deseas eliminar permanentemente esta publicación del Tablón Vecinal?")) {
+      doDelete();
+    }
   }
 }
 
@@ -307,25 +326,4 @@ function agregarComentarioPost() {
   }
 }
 
-function borrarPostForumAdmin(postId) {
-  let localPosts = [];
-  try {
-    const raw = localStorage.getItem('notigas_forum_posts');
-    if (raw) localPosts = JSON.parse(raw);
-  } catch(e){}
 
-  localPosts = localPosts.filter(p => p.id !== postId);
-  localStorage.setItem('notigas_forum_posts', JSON.stringify(localPosts));
-
-  if (postCommentsStore[postId]) {
-    delete postCommentsStore[postId];
-    guardarComentariosStore();
-  }
-
-  renderForumFeed();
-  if (typeof renderAdminAdsAndPostsList === 'function') renderAdminAdsAndPostsList();
-
-  if (typeof showToast === 'function') {
-    showToast('🗑️ Publicación Borrada', 'El aviso o anuncio de la OTB fue eliminado del sistema.', 'info', 4000);
-  }
-}
