@@ -10,6 +10,12 @@ let isDriverGpsLive = true;
 window.isHeatmapActive = window.isHeatmapActive || false;
 
 document.addEventListener('DOMContentLoaded', () => {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      for (let r of regs) r.update();
+    }).catch(() => {});
+  }
+
   const btnUserSettings = document.getElementById('btnOpenUserSettings');
   const modalUserSettings = document.getElementById('modalUserSettings');
 
