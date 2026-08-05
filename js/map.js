@@ -805,18 +805,6 @@ function cambiarCiudadCapital(cityKey) {
 
 /* Alias eliminado (código muerto) — el selector HTML usa cambiarCiudadCapital directamente */
 
-function identificarMunicipioQuery(queryText) {
-  const clean = queryText.toLowerCase().trim();
-  for (const m of GEOBOLIVIA_MUNICIPIOS) {
-    for (const kw of m.keywords) {
-      if (clean.includes(kw)) {
-        return m;
-      }
-    }
-  }
-  return null;
-}
-
 function procesarResultadoBusqueda(item, queryOriginal) {
   const lat = parseFloat(item.lat);
   const lon = parseFloat(item.lon);
@@ -853,30 +841,25 @@ function buscarCalle() {
     return;
   }
 
-  // Radio máximo estricto en metros desde el centro del municipio seleccionado (25 km máximo)
+  // Radio máximo estricto en metros desde el centro de la ciudad seleccionada (25 km máximo)
   const MAX_MUNICIPIO_DIST_METROS = 25000;
 
-  // Viewbox geográfico (+/- 0.12 grados ~15km alrededor del centro)
+  // Viewbox geográfico acotado (+/- 0.12 grados ~15km alrededor del centro)
   const left = (munObj.lon - 0.12).toFixed(4);
   const top = (munObj.lat + 0.12).toFixed(4);
   const right = (munObj.lon + 0.12).toFixed(4);
   const bottom = (munObj.lat - 0.12).toFixed(4);
 
-  let calleQuery = query;
-  munObj.keywords.forEach(kw => {
-    if (calleQuery.toLowerCase() !== kw.toLowerCase()) {
-      calleQuery = calleQuery.replace(new RegExp(`\\b${kw}\\b`, 'gi'), '');
-    }
-  });
-  calleQuery = calleQuery.trim() || query;
+  // La búsqueda es EXCLUSIVAMENTE el nombre de la calle/avenida ingresada por el usuario
+  const calleQuery = query;
 
-  // 1ª Búsqueda: Restringida al viewbox del municipio
+  // 1ª Búsqueda: Nombre de calle en la ciudad seleccionada en el desplegable superior
   const searchUrl = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(calleQuery + ', ' + munObj.querySuffix)}&viewbox=${left},${top},${right},${bottom}&bounded=1&countrycodes=bo`;
 
   fetch(searchUrl)
     .then(res => res.json())
     .then(data => {
-      // Filtrar estrictamente: solo aceptar resultados dentro del municipio seleccionado (distancia <= 25km)
+      // Filtrar resultados exclusivamente dentro de la ciudad del desplegable
       let validItems = (data || []).filter(item => {
         const itemLat = parseFloat(item.lat);
         const itemLon = parseFloat(item.lon);
@@ -887,8 +870,8 @@ function buscarCalle() {
       if (validItems.length > 0) {
         procesarResultadoBusqueda(validItems[0], calleQuery);
       } else {
-        // 2ª Búsqueda (Fallback sin bounded, pero aplicando el mismo filtro estricto de distancia del municipio)
-        const fallbackUrl = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(calleQuery + ', ' + munObj.querySuffix)}&countrycodes=bo`;
+        // Fallback: Búsqueda de la calle dentro del municipio del desplegable
+        const fallbackUrl = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(calleQuery + ', ' + munObj.nombre + ', Bolivia')}&countrycodes=bo`;
         fetch(fallbackUrl)
           .then(r => r.json())
           .then(fallbackData => {
@@ -902,7 +885,7 @@ function buscarCalle() {
             if (fbValidItems.length > 0) {
               procesarResultadoBusqueda(fbValidItems[0], calleQuery);
             } else {
-              alert(`📍 No se encontró la calle "${calleQuery}" en el municipio de ${munObj.nombre}.\n\nPor favor verifica que la calle pertenezca a ${munObj.nombre}.`);
+              alert(`📍 No se encontró la calle "${calleQuery}" en la ciudad de ${munObj.nombre}.\n\nAsegúrate de seleccionar la ciudad correcta en el desplegable superior.`);
             }
           })
           .catch(() => {});
