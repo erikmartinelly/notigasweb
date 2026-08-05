@@ -1420,9 +1420,9 @@ button:active, .tab-btn:active, .cat-chip:active {
 }
 
 .btn-hear-truck:hover {
-  background: rgba(0, 230, 118, 0.15);
+  background: rgba(245, 158, 11, 0.15);
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0,230,118,0.3);
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
 }
 
 .btn-badge:hover, .btn-driver:hover {
@@ -1734,7 +1734,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 .notigas-toast .toast-close:hover { color: white; }
 
 /* Variantes de color */
-.notigas-toast.toast-success { background: linear-gradient(135deg, #0D9E4F, #047A3A); border-color: rgba(0,230,118,0.3); }
+.notigas-toast.toast-success { background: linear-gradient(135deg, #0288D1, #01579B); border-color: rgba(2,136,209,0.4); }
 .notigas-toast.toast-error   { background: linear-gradient(135deg, #D32F2F, #B71C1C); border-color: rgba(239,68,68,0.3); }
 .notigas-toast.toast-warning { background: linear-gradient(135deg, #E65100, #BF360C); border-color: rgba(255,109,0,0.3); }
 .notigas-toast.toast-info    { background: linear-gradient(135deg, #0277BD, #01579B); border-color: rgba(2,136,209,0.3); }

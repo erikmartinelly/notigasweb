@@ -93,7 +93,8 @@ function renderVendorCards(filterCat) {
 
             <div class="vendor-fb-body">
               <div class="vendor-field"><strong>📦 Producto Solicitado:</strong> <span style="color:white; font-weight:800;">${escapeHtmlStr(activeOrder.categoria)} (${escapeHtmlStr(activeOrder.cantidad || '1 unidad')})</span></div>
-              <div class="vendor-field"><strong>🛣️ Dirección de Entrega:</strong> <span style="color:#F59E0B; font-weight:800;">${escapeHtmlStr(activeOrder.callePrincipal || 'Ubicación georeferenciada en mapa')}</span></div>
+              <div class="vendor-field"><strong>🏠 Dirección de Entrega:</strong> <span style="color:#F59E0B; font-weight:800;">${escapeHtmlStr(activeOrder.callePrincipal || 'Ubicación georeferenciada')}</span></div>
+              ${activeOrder.telefono ? `<div class="vendor-field"><strong>📞 Teléfono Contacto:</strong> <a href="tel:${activeOrder.telefono.replace(/[^0-9+]/g, '')}" style="color:#00E676; font-weight:800; text-decoration:none;">${escapeHtmlStr(activeOrder.telefono)} 📞 Llamar</a></div>` : ''}
               <div class="vendor-field"><strong>💬 Coordinación:</strong> Chat Privado Interno 1-a-1 encriptado</div>
             </div>
 
@@ -111,16 +112,16 @@ function renderVendorCards(filterCat) {
 
   // TARJETA OFICIAL DE SERVICIO AL CLIENTE & SOPORTE OTB AL INICIO DEL FEED
   html += `
-    <div class="vendor-fb-card" style="border: 1px solid rgba(0, 230, 118, 0.4); background: linear-gradient(135deg, rgba(15,23,42,0.9), rgba(0,230,118,0.05));">
+    <div class="vendor-fb-card" style="border: 1px solid rgba(56, 189, 248, 0.4); background: linear-gradient(135deg, rgba(15,23,42,0.9), rgba(2,136,209,0.08));">
       <div class="vendor-fb-header">
         <div class="vendor-profile">
-          <div class="vendor-avatar" style="background: rgba(0, 230, 118, 0.2); color: #00E676;">🎧</div>
+          <div class="vendor-avatar" style="background: rgba(56, 189, 248, 0.2); color: #38BDF8;">🎧</div>
           <div class="vendor-meta">
-            <span class="vendor-name" style="color: #00E676;">Administrador NOTIGAS</span>
-            <span class="vendor-badge-cat" style="background: rgba(0,230,118,0.2); color: #00E676;"><i class="fa-solid fa-headset"></i> Soporte Oficial NOTIGAS</span>
+            <span class="vendor-name" style="color: #38BDF8;">Administrador NOTIGAS</span>
+            <span class="vendor-badge-cat" style="background: rgba(56,189,248,0.2); color: #38BDF8;"><i class="fa-solid fa-headset"></i> Soporte Oficial NOTIGAS</span>
           </div>
         </div>
-        <span class="ad-badge" style="background: rgba(0,230,118,0.2); color: #00E676;">24/7 EN VIVO</span>
+        <span class="ad-badge" style="background: rgba(56,189,248,0.2); color: #38BDF8;">24/7 EN VIVO</span>
       </div>
 
       <div class="vendor-fb-body">
@@ -129,7 +130,7 @@ function renderVendorCards(filterCat) {
       </div>
 
       <div class="vendor-fb-footer">
-        <button class="btn-vendor-chat" style="width: 100%; background: linear-gradient(135deg, #00E676, #00C853); color: #0F172A; font-weight: 900;" onclick="abrirChatSoporteOficial()"><i class="fa-solid fa-comments"></i> 💬 ABRIR CHAT PRIVADO CON SERVICIO AL CLIENTE</button>
+        <button class="btn-vendor-chat" style="width: 100%; background: linear-gradient(135deg, #0288D1, #01579B); color: #FFFFFF; font-weight: 900;" onclick="abrirChatSoporteOficial()"><i class="fa-solid fa-comments"></i> 💬 ABRIR CHAT PRIVADO CON SERVICIO AL CLIENTE</button>
       </div>
     </div>
   `;

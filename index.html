@@ -85,32 +85,33 @@
         <div class="city-selector-bar">
           <i class="fa-solid fa-map-location-dot" style="color:#FF6D00; font-size:11px;"></i>
           <select id="selectCiudadCapital" onchange="cambiarCiudadCapital(this.value)">
-            <optgroup label="── COCHABAMBA ──">
-              <option value="cochabamba">📍 Cochabamba (Cercado)</option>
-              <option value="sacaba">📍 Sacaba</option>
-              <option value="quillacollo">📍 Quillacollo</option>
-              <option value="tiquipaya">📍 Tiquipaya</option>
-              <option value="colcapirhua">📍 Colcapirhua</option>
-              <option value="vinto">📍 Vinto</option>
-            </optgroup>
-            <optgroup label="── LA PAZ ──">
-              <option value="lapaz">📍 La Paz (Centro/Sur)</option>
-              <option value="elalto">📍 El Alto</option>
-              <option value="viacha">📍 Viacha</option>
-              <option value="achocalla">📍 Achocalla</option>
-            </optgroup>
-            <optgroup label="── SANTA CRUZ ──">
+            <optgroup label="── 1º SANTA CRUZ DE LA SIERRA ──">
               <option value="santacruz">📍 Santa Cruz de la Sierra</option>
               <option value="warnes">📍 Warnes</option>
               <option value="cotoca">📍 Cotoca</option>
               <option value="laguardia">📍 La Guardia</option>
               <option value="montero">📍 Montero</option>
+              <option value="porongo">📍 Porongo / Urubó</option>
             </optgroup>
-            <optgroup label="── TARIJA ──">
-              <option value="tarija">📍 Tarija (Cercado)</option>
-              <option value="sanlorenzo">📍 San Lorenzo</option>
+            <optgroup label="── 2º COCHABAMBA ──">
+              <option value="cochabamba">📍 Cochabamba</option>
+              <option value="sacaba">📍 Sacaba</option>
+              <option value="quillacollo">📍 Quillacollo</option>
+              <option value="tiquipaya">📍 Tiquipaya</option>
+              <option value="colcapirhua">📍 Colcapirhua</option>
+              <option value="vinto">📍 Vinto</option>
+              <option value="sipesipe">📍 Sipe Sipe</option>
             </optgroup>
-            <optgroup label="── OTRAS CAPITALES ──">
+            <optgroup label="── 3º LA PAZ ──">
+              <option value="lapaz">📍 La Paz</option>
+              <option value="viacha">📍 Viacha</option>
+              <option value="achocalla">📍 Achocalla</option>
+            </optgroup>
+            <optgroup label="── 4º EL ALTO ──">
+              <option value="elalto">📍 El Alto</option>
+            </optgroup>
+            <optgroup label="── 5º TARIJA Y OTROS DEPARTAMENTOS ──">
+              <option value="tarija">📍 Tarija</option>
               <option value="sucre">📍 Sucre</option>
               <option value="oruro">📍 Oruro</option>
               <option value="potosi">📍 Potosí</option>
@@ -125,9 +126,8 @@
         <button class="btn-cancel-order" id="btnCancelOrder" style="display: none;" onclick="cancelarPedidoActivo()"><i class="fa-solid fa-circle-xmark"></i> ❌ CANCELAR PEDIDO</button>
 
         <button class="btn-main-order" id="btnMainOrder" onclick="abrirSubmenuPedidos()">
-          <span style="display:inline-flex; align-items:center; gap:6px;">
-            <img src="favicon.png" style="width:26px; height:26px; object-fit:contain; filter:drop-shadow(0 0 6px rgba(255,255,255,0.8));" alt="NOTIGAS Favicon">
-            <img src="icons/garrafa_red_clean.svg" style="width:24px; height:24px; object-fit:contain; filter:drop-shadow(0 0 4px #FF1744);" alt="Gas">
+          <span style="display:inline-flex; align-items:center; gap:8px;">
+            <img src="icons/camion_red.svg" style="width:34px; height:34px; object-fit:contain; filter:drop-shadow(0 0 6px rgba(255,23,68,0.9));" alt="Camión NOTIGAS">
           </span>
           <span>HACER UN PEDIDO</span>
         </button>
@@ -144,15 +144,14 @@
           <i class="fa-solid fa-location-arrow"></i> 🟢 INICIAR RECORRIDO EN VIVO (GPS ON)
         </button>
 
+        <button class="btn-driver-heatmap" id="btnDriverHeatmap" onclick="toggleHeatmapOverlay()" style="background: linear-gradient(135deg, #FF6D00 0%, #E65100 100%); color: white; border: 1.5px solid #F59E0B; padding: 12px; border-radius: 12px; font-weight: 900; font-size: 12.5px; cursor: pointer; box-shadow: 0 4px 18px rgba(255,109,0,0.4);">
+          <i class="fa-solid fa-fire"></i> 🔥 MAPA DE CALOR Y ZONAS DE ALTA DEMANDA
+        </button>
+
         <div class="action-row">
-          <button class="btn-driver-heatmap" id="btnDriverHeatmap" onclick="toggleHeatmapOverlay()"><i class="fa-solid fa-fire"></i> 🔥 MAPA DE CALOR DE PEDIDOS</button>
           <button class="btn-driver-orders-list" onclick="abrirModalDriverOrders()"><i class="fa-solid fa-list-check"></i> 📋 RECIENTES</button>
           <button class="btn-panorama" onclick="abrirPanoramicaPedidos()" title="Panorámica de pedidos activos"><i class="fa-solid fa-chart-bar"></i> 📊 PEDIDOS</button>
         </div>
-
-        <button class="btn-driver-route" onclick="calcularYTrazarRutaEficiente()">
-          <i class="fa-solid fa-route"></i> 🗺️ TRAZAR RUTA OPTIMIZADA
-        </button>
       </div>
     </div>
 
@@ -471,6 +470,13 @@
             <input type="text" id="inputAdUrl" value="https://wa.me/59174xxxx28?text=Hola!%20Deseo%20publicar%20mi%20anuncio%20en%20NOTIGAS">
           </div>
           <button class="btn-submit" onclick="guardarSubmenuAnuncios()"><i class="fa-solid fa-floppy-disk"></i> Guardar Configuración de Publicidad</button>
+
+          <div style="background-color: #0F172A; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.08); margin-top: 12px;">
+            <h4 style="font-size: 12px; color: #FF6D00; margin-bottom: 8px;"><i class="fa-solid fa-rectangle-ad"></i> Anuncios y Avisos OTB Publicados (Tab 3):</h4>
+            <div id="adminAdsListContainer" style="max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
+              <!-- Renderizado dinámico de anuncios y avisos -->
+            </div>
+          </div>
         </div>
 
         <!-- SUBMENÚ 4: MODERACIÓN, DENUNCIAS Y BANEOS -->
@@ -484,10 +490,17 @@
             </div>
           </div>
 
+          <div style="background-color: #0F172A; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 12px;">
+            <h4 style="font-size: 12px; color: #38BDF8; margin-bottom: 8px;"><i class="fa-solid fa-comments"></i> 🛡️ Inspección de Chats Privados en Vivo:</h4>
+            <div id="adminChatInspectorContainer" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
+              <!-- Renderizado dinámico de inspección de chats -->
+            </div>
+          </div>
+
           <div style="background-color: #0F172A; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.08);">
-            <h4 style="font-size: 12px; color: #EF4444; margin-bottom: 8px;"><i class="fa-solid fa-user-slash"></i> Banear Usuario Manualmente:</h4>
+            <h4 style="font-size: 12px; color: #EF4444; margin-bottom: 8px;"><i class="fa-solid fa-user-slash"></i> Banear Usuario / Repartidor Manualmente:</h4>
             <div style="display: flex; gap: 6px; margin-bottom: 8px;">
-              <input type="text" id="inputBanIdentifier" placeholder="Correo o Nombre a banear..." style="flex:1; padding: 8px; font-size: 11px; border-radius: 6px; background: #1E293B; border: 1px solid rgba(255,255,255,0.1); color: white;">
+              <input type="text" id="inputBanIdentifier" placeholder="Correo, Nombre o Placa a banear..." style="flex:1; padding: 8px; font-size: 11px; border-radius: 6px; background: #1E293B; border: 1px solid rgba(255,255,255,0.1); color: white;">
               <button onclick="banearUsuarioAdmin()" style="background-color: #D32F2F; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: 700; font-size: 11px; cursor: pointer;">Banear</button>
             </div>
             <div id="adminBannedList" style="max-height: 100px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; font-size: 10px; color: #94A3B8;">
@@ -706,12 +719,17 @@
       </div>
 
       <div class="form-group">
-        <label>Dirección de Entrega:</label>
-        <input type="text" id="inputCallePrincipal" placeholder="Ej: Av. Blanco Galindo #1234, Casa portón azul">
+        <label>🏠 Dirección de Entrega (Opcional - GPS Ubicado en Mapa):</label>
+        <input type="text" id="inputCallePrincipal" placeholder="Ej: Av. Blanco Galindo #123 (Opcional)">
       </div>
 
-      <p style="font-size:11px; color:#00E676; margin: 8px 0;">✔ Coordinación directa con repartidor por Chat Privado 1-a-1 e indicación GPS.</p>
-      <button class="btn-submit" onclick="confirmarPedido()"><i class="fa-solid fa-truck-fast" style="color:#00E676;"></i> <img src="icons/garrafa_red_clean.svg" style="width:22px; height:22px; vertical-align:middle; filter:drop-shadow(0 0 4px #FF1744);" alt="Gas"> Confirmar y Solicitar en Mapa Vivo</button>
+      <div class="form-group">
+        <label>📞 Teléfono / WhatsApp de Contacto (Opcional):</label>
+        <input type="tel" id="inputTelefonoComprador" placeholder="Ej: 74xxxx28 (Opcional)">
+      </div>
+
+      <p style="font-size:11px; color:#38BDF8; margin: 8px 0;">✔ Coordinación directa con repartidor por Chat Privado 1-a-1 e indicación GPS.</p>
+      <button class="btn-submit" onclick="confirmarPedido()"><i class="fa-solid fa-truck-fast" style="color:#F59E0B;"></i> <img src="icons/garrafa_red_clean.svg" style="width:22px; height:22px; vertical-align:middle; filter:drop-shadow(0 0 4px #FF1744);" alt="Gas"> Confirmar y Solicitar en Mapa Vivo</button>
     </div>
   </div>
 
@@ -832,6 +850,16 @@
         <button class="confirm-modal-btn confirm-accept" id="confirmModalAccept">Confirmar</button>
       </div>
     </div>
+  </div>
+
+  <!-- PANTALLA DE BLOQUEO COMPLETO DE LA APLICACIÓN (BANEO ADMIN) -->
+  <div id="appLockoutOverlay" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:#0F172A; z-index:999999; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:28px; text-align:center;">
+    <div style="font-size:56px; margin-bottom:16px;">⛔</div>
+    <h2 style="color:#EF4444; font-size:22px; font-weight:900; margin-bottom:10px; font-family:'Roboto',sans-serif;">ACCESO BLOQUEADO POR LA ADMINISTRACIÓN</h2>
+    <p style="color:#CBD5E1; font-size:13px; max-width:380px; line-height:1.6; margin-bottom:24px; font-family:'Roboto',sans-serif;">
+      Tu cuenta y dispositivo han sido suspendidos/bloqueados por la administración debido a violaciones de las normas de NOTIGAS.
+    </p>
+    <div style="font-size:11px; color:#64748B; font-family:'Roboto',sans-serif;">Si consideras que se trata de un error, contacta al soporte oficial de NOTIGAS.</div>
   </div>
 
   <!-- INCLUSIÓN DE MÓDULOS JAVASCRIPT ARQUITECTURALES DESACOPLADOS -->

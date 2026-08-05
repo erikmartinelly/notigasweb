@@ -369,21 +369,23 @@ function renderDriverOrdersList() {
   orders.forEach(ord => {
     const iconHtml = obtenerIconoHtmlPorCategoria(ord.categoria);
     const chatTarget = ord.buyerName || 'Comprador Vecinal';
+    const telNum = ord.telefono ? ord.telefono.replace(/[^0-9+]/g, '') : '';
     html += `
       <div class="driver-order-card">
         <div class="driver-order-header">
-          <span class="driver-order-title" style="display:flex; align-items:center;">${iconHtml} ${ord.categoria}</span>
+          <span class="driver-order-title" style="display:flex; align-items:center;">${iconHtml} ${escapeHtmlStr(ord.categoria)}</span>
           <span class="driver-order-dist">📍 ${ord.dist || 'Cerca de ti'}</span>
         </div>
-        <div style="font-size: 11.5px; color: white;">
-          <strong>Detalle:</strong> ${ord.cantidad}<br>
-          ${ord.callePrincipal ? `<span style="color:#FFB300; font-weight:700;">🛣️ Calle Principal: ${ord.callePrincipal}</span><br>` : ''}
-          ${ord.calleReferencia ? `<span style="color:#94A3B8; font-size:10px;">📍 Referencia: ${ord.calleReferencia}</span><br>` : ''}
+        <div style="font-size: 11.5px; color: white; line-height:1.5;">
+          <strong>Cliente:</strong> ${escapeHtmlStr(chatTarget)}<br>
+          ${ord.callePrincipal ? `<span style="color:#FFB300; font-weight:700;">🏠 Dirección: ${escapeHtmlStr(ord.callePrincipal)}</span><br>` : ''}
+          ${ord.telefono ? `<span style="color:#00E676; font-weight:700;">📞 Teléfono: ${escapeHtmlStr(ord.telefono)}</span><br>` : ''}
           <span style="font-size: 9.5px; color: #64748B;">Solicitado hace momentos • Coordenada Georeferenciada</span>
         </div>
-        <div class="driver-order-actions">
-          <button class="btn-driver-accept" onclick="aceptarPedidoRepartidor('${ord.categoria}')"><i class="fa-solid fa-circle-check"></i> ✅ Aceptar Pedido</button>
-          <button class="btn-driver-chat-vecino" onclick="abrirChatPrivadoConComprador('${encodeURIComponent(chatTarget)}')"><i class="fa-solid fa-comments"></i> 💬 Chat con Comprador</button>
+        <div class="driver-order-actions" style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
+          <button class="btn-driver-accept" style="flex:1;" onclick="aceptarPedidoRepartidor('${escapeHtmlStr(ord.categoria)}')"><i class="fa-solid fa-circle-check"></i> ✅ Aceptar</button>
+          <button class="btn-driver-chat-vecino" style="flex:1;" onclick="abrirChatPrivadoConComprador('${encodeURIComponent(chatTarget)}')"><i class="fa-solid fa-comments"></i> 💬 Chat</button>
+          ${telNum ? `<a href="tel:${telNum}" style="background:#0288D1; color:white; padding:6px 10px; border-radius:8px; font-size:11px; font-weight:800; text-decoration:none; display:flex; align-items:center; gap:4px;"><i class="fa-solid fa-phone"></i> Llamar</a>` : ''}
         </div>
       </div>
     `;
@@ -594,13 +596,28 @@ function closePedidoModal() {
 function confirmarPedido() {
   const pos = getActiveUserLocation();
   const cat = document.getElementById('selectCategoria')?.value || 'Garrafa de Gas GLP';
-  const direccion = (document.getElementById('inputCallePrincipal')?.value || '').trim();
-  
+  const inputAddr = (document.getElementById('inputCallePrincipal')?.value || '').trim();
+  const inputTel = (document.getElementById('inputTelefonoComprador')?.value || '').trim();
+
+  // Tanto la dirección como el teléfono son OPCIONALES (el mapa ya ubica al comprador vía GPS)
+  const direccion = inputAddr || 'Ubicación fijada en mapa por GPS';
+  const telefono = inputTel || '';
+
+  let buyerName = 'Comprador Vecinal';
+  try {
+    const saved = localStorage.getItem('notigas_user_data');
+    if (saved) {
+      const u = JSON.parse(saved);
+      if (u.nombre) buyerName = `${u.nombre}${u.apellido ? ' ' + u.apellido[0] + '.' : ''}`;
+    }
+  } catch(e){}
+
   const activeOrderData = {
     categoria: cat,
     cantidad: '1 unidad',
-    callePrincipal: direccion || 'Dirección fijada en mapa',
-    calleReferencia: 'Coordinación por Chat Privado 1-a-1',
+    callePrincipal: direccion,
+    telefono: telefono,
+    buyerName: buyerName,
     lat: pos.lat,
     lng: pos.lng,
     timestamp: Date.now()
@@ -614,7 +631,7 @@ function confirmarPedido() {
     renderActiveOrdersMap();
   }
 
-  showToast('Pedido Publicado', `${cat} — ${direccion || 'Ubicación fijada en mapa'}. Tu pedido ya es visible para repartidores cercanos.`, 'order', 5000);
+  showToast('Pedido Publicado en Mapa', `🚀 ${cat}\n📍 ${direccion}${telefono ? '\n📞 Tel: ' + telefono : ''}`, 'order', 5000);
 }
 
 function cancelarPedidoActivo() {

@@ -306,3 +306,26 @@ function agregarComentarioPost() {
     }
   }
 }
+
+function borrarPostForumAdmin(postId) {
+  let localPosts = [];
+  try {
+    const raw = localStorage.getItem('notigas_forum_posts');
+    if (raw) localPosts = JSON.parse(raw);
+  } catch(e){}
+
+  localPosts = localPosts.filter(p => p.id !== postId);
+  localStorage.setItem('notigas_forum_posts', JSON.stringify(localPosts));
+
+  if (postCommentsStore[postId]) {
+    delete postCommentsStore[postId];
+    guardarComentariosStore();
+  }
+
+  renderForumFeed();
+  if (typeof renderAdminAdsAndPostsList === 'function') renderAdminAdsAndPostsList();
+
+  if (typeof showToast === 'function') {
+    showToast('🗑️ Publicación Borrada', 'El aviso o anuncio de la OTB fue eliminado del sistema.', 'info', 4000);
+  }
+}

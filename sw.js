@@ -1,5 +1,5 @@
-/* NOTIGAS SERVICE WORKER V15.0 - CACHÉ PROGRESIVO Y MODO OFFLINE */
-const CACHE_NAME = 'notigas-pwa-cache-v15';
+/* NOTIGAS SERVICE WORKER V27.0 - CACHÉ PROGRESIVO Y MODO OFFLINE */
+const CACHE_NAME = 'notigas-pwa-cache-v27';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -15,6 +15,7 @@ const ASSETS_TO_CACHE = [
   './favicon.png',
   './favicon.svg',
   './icons/garrafa_red_clean.svg',
+  './icons/camion_red.svg',
   './manifest.json'
 ];
 

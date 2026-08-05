@@ -183,13 +183,13 @@ function cambiarVendedorChat() {
   } catch(e){}
 
   const headerNotice = vendorName === 'Soporte OTB'
-    ? `<div style="font-size:10px; color:#38BDF8; text-align:center; margin-bottom:8px; background:rgba(56,189,248,0.15); padding:6px 10px; border-radius:8px; border:1px solid rgba(56,189,248,0.4); font-weight:700;">
+    ? `<div style="font-size:10px; color:#38BDF8; text-align:center; margin-bottom:8px; background:rgba(56,189,248,0.15); padding:8px 10px; border-radius:10px; border:1px solid rgba(56,189,248,0.4); font-weight:700;">
         🎧 CANAL DE ATENCIÓN DIRECTA CON EL ADMINISTRADOR NOTIGAS<br>
-        <span style="font-size:9px; color:#CBD5E1; font-weight:400;">Tus mensajes son privados. Solo tú y el Administrador pueden verlos.</span>
+        <span style="font-size:9.5px; color:#CBD5E1; font-weight:400;">Tus mensajes son privados. Solo tú y el Administrador pueden verlos.</span>
        </div>`
-    : `<div style="font-size:9.5px; color:#00E676; text-align:center; margin-bottom:8px; background:rgba(0,230,118,0.08); padding:6px 10px; border-radius:8px; border:1px solid rgba(0,230,118,0.2);">
-        🔒 Chat privado con <strong>${escapeHtmlStr(vendorName)}</strong><br>
-        <span style="font-size:9px; color:#CBD5E1;">Solo tú y el repartidor pueden ver estos mensajes. Expiran en 48h.</span>
+    : `<div style="font-size:10px; color:#FF8F00; text-align:center; margin-bottom:8px; background:rgba(255,109,0,0.14); padding:8px 10px; border-radius:10px; border:1px solid rgba(255,109,0,0.35); font-weight:800;">
+        🛡️ CHAT MONITOREADO POR LA ADMINISTRACIÓN<br>
+        <span style="font-size:9.5px; color:#CBD5E1; font-weight:400;">Canal directo con <strong>${escapeHtmlStr(vendorName)}</strong>. Monitoreado por la administración para seguridad de la OTB. Expiración automática a las 48h.</span>
        </div>`;
 
   let htmlContent = headerNotice;

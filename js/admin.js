@@ -84,7 +84,74 @@ function switchModalTab(idx) {
   if (idx === 0) renderAdminDashboardKPIs();
   if (idx === 1) renderAdminVendorsList();
   if (idx === 2) renderAdminOrdersList();
+  if (idx === 3) renderAdminAdsAndPostsList();
   if (idx === 4) renderAdminReports();
+}
+
+function renderAdminAdsAndPostsList() {
+  const container = document.getElementById('adminAdsListContainer');
+  if (!container) return;
+
+  let html = '';
+  let count = 0;
+
+  // 1. Anuncio Local Personalizado si existe
+  const savedAdText = localStorage.getItem('notigas_ad_text');
+  const savedAdImage = localStorage.getItem('notigas_ad_image_base64');
+  if (savedAdText || savedAdImage) {
+    count++;
+    html += `
+      <div style="background:#1E293B; padding:10px; border-radius:8px; border:1px solid #F59E0B; margin-bottom:8px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <strong style="color:#F59E0B; font-size:11.5px;"><i class="fa-solid fa-rectangle-ad"></i> Anuncio Local Banner OTB</strong>
+          <button onclick="borrarAnuncioLocalAdmin()" style="background:#D32F2F; color:white; border:none; padding:3px 8px; border-radius:4px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Borrar Anuncio</button>
+        </div>
+        <div style="font-size:11px; color:white; margin-top:4px;">
+          ${savedAdText ? `<strong>Texto:</strong> "${escapeHtmlStr(savedAdText)}"` : 'Banner con Imagen activa'}
+        </div>
+      </div>
+    `;
+  }
+
+  // 2. Avisos y Noticias de la OTB (Tab 3)
+  let localPosts = [];
+  try {
+    const raw = localStorage.getItem('notigas_forum_posts');
+    if (raw) localPosts = JSON.parse(raw);
+  } catch(e){}
+
+  localPosts.forEach(p => {
+    count++;
+    html += `
+      <div style="background:#1E293B; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.08); margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <span style="font-size:9px; background:rgba(255,109,0,0.2); color:#FF8F00; padding:1px 5px; border-radius:4px; font-weight:700;">${escapeHtmlStr(p.cat)}</span>
+          <strong style="color:white; font-size:11px; margin-left:4px;">${escapeHtmlStr(p.title)}</strong>
+        </div>
+        <button onclick="borrarPostForumAdmin(${p.id})" style="background:#D32F2F; color:white; border:none; padding:3px 8px; border-radius:4px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Borrar</button>
+      </div>
+    `;
+  });
+
+  if (count === 0) {
+    container.innerHTML = '<div style="color:#64748B; font-style:italic; font-size:11px; text-align:center; padding:12px;">No hay anuncios ni publicaciones activas en Tab 3.</div>';
+    return;
+  }
+
+  container.innerHTML = html;
+}
+
+function borrarAnuncioLocalAdmin() {
+  localStorage.removeItem('notigas_ad_text');
+  localStorage.removeItem('notigas_ad_url');
+  localStorage.removeItem('notigas_ad_image_base64');
+
+  if (typeof cargarAnunciosGuardados === 'function') cargarAnunciosGuardados();
+  renderAdminAdsAndPostsList();
+
+  if (typeof showToast === 'function') {
+    showToast('🗑️ Anuncio Eliminado', 'El anuncio local de la OTB fue borrado del sistema.', 'info', 4000);
+  }
 }
 
 function renderAdminDashboardKPIs() {
@@ -157,7 +224,35 @@ function ejecutarPurgaBaseDeDatosManual() {
   }
 }
 
-function banearRepartidorAdmin(vendorId, vendorName) {
+function esRepartidorBaneado(nombre, placa, whatsapp, gmail) {
+  let banned = [];
+  try {
+    const raw = localStorage.getItem('notigas_banned_users');
+    if (raw) banned = JSON.parse(raw);
+  } catch(e){}
+
+  let deletedIds = [];
+  try {
+    const raw = localStorage.getItem('notigas_deleted_vendor_ids');
+    if (raw) deletedIds = JSON.parse(raw);
+  } catch(e){}
+
+  const checkList = [nombre, placa, whatsapp, gmail].filter(Boolean).map(s => String(s).toLowerCase().trim());
+
+  for (const b of banned) {
+    const cleanB = String(b).toLowerCase().trim();
+    if (cleanB && checkList.some(c => c.includes(cleanB) || cleanB.includes(c))) return true;
+  }
+
+  for (const id of deletedIds) {
+    const cleanId = String(id).toLowerCase().trim();
+    if (cleanId && checkList.some(c => c.includes(cleanId) || cleanId.includes(c))) return true;
+  }
+
+  return false;
+}
+
+function banearRepartidorAdmin(vendorId, vendorName, plate = '', whatsapp = '') {
   let deletedIds = [];
   try {
     const raw = localStorage.getItem('notigas_deleted_vendor_ids');
@@ -169,22 +264,26 @@ function banearRepartidorAdmin(vendorId, vendorName) {
     localStorage.setItem('notigas_deleted_vendor_ids', JSON.stringify(deletedIds));
   }
 
-  // Agregar también a lista general de baneados
+  // Agregar a la lista de prohibición de acceso
   let banned = [];
   try {
     const raw = localStorage.getItem('notigas_banned_users');
     if (raw) banned = JSON.parse(raw);
   } catch(e){}
-  if (!banned.includes(vendorName)) {
-    banned.push(vendorName);
-    localStorage.setItem('notigas_banned_users', JSON.stringify(banned));
-  }
+
+  [vendorName, plate, whatsapp].filter(Boolean).forEach(item => {
+    if (!banned.includes(item)) banned.push(item);
+  });
+
+  localStorage.setItem('notigas_banned_users', JSON.stringify(banned));
 
   renderAdminVendorsList();
   renderAdminDashboardKPIs();
   if (typeof renderVendorCards === 'function') renderVendorCards('TODOS');
 
-  alert(`🚫 REPARTIDOR BANEADO\n\nEl repartidor "${vendorName}" ha sido bloqueado y su Ficha de Negocio fue removida del mapa y feed.`);
+  if (typeof showToast === 'function') {
+    showToast('🚫 Repartidor Baneado', `Se suspendió el acceso e ingreso de "${vendorName}". Su ficha ha sido bloqueada.`, 'error', 5000);
+  }
 }
 
 function desbanearRepartidorAdmin(vendorId, vendorName) {
@@ -209,7 +308,97 @@ function desbanearRepartidorAdmin(vendorId, vendorName) {
   renderAdminDashboardKPIs();
   if (typeof renderVendorCards === 'function') renderVendorCards('TODOS');
 
-  alert(`🔓 REPARTIDOR DESBANEADO\n\nSe restauró el acceso y la Ficha de Negocio de "${vendorName}".`);
+  if (typeof showToast === 'function') {
+    showToast('🔓 Repartidor Desbaneado', `Se restauró la cuenta e ingreso de "${vendorName}".`, 'success', 4000);
+  }
+}
+
+function borrarRepartidorPermanente(vendorId, vendorName) {
+  if (typeof showConfirmModal === 'function') {
+    showConfirmModal('🗑️', `¿Eliminar a ${vendorName}?`, `Esta acción borrará permanentemente la Ficha de Repartidor "${vendorName}" del directorio y la base de datos local.`, 'Sí, eliminar', () => {
+      ejecutarBorradoRepartidor(vendorId, vendorName);
+    });
+  } else {
+    if (confirm(`🗑️ ¿Eliminar permanentemente a ${vendorName}?`)) {
+      ejecutarBorradoRepartidor(vendorId, vendorName);
+    }
+  }
+}
+
+function ejecutarBorradoRepartidor(vendorId, vendorName) {
+  // 1. Eliminar de lista de repartidores registrados
+  try {
+    const raw = localStorage.getItem('notigas_registered_drivers_list');
+    if (raw) {
+      let registered = JSON.parse(raw);
+      registered = registered.filter(d => d.nombre !== vendorName && `driver_${d.id || d.whatsapp}` !== vendorId);
+      localStorage.setItem('notigas_registered_drivers_list', JSON.stringify(registered));
+    }
+  } catch(e){}
+
+  // 2. Eliminar de directorio de vendedores
+  try {
+    const raw = localStorage.getItem('notigas_vendors_directory');
+    if (raw) {
+      let vendors = JSON.parse(raw);
+      vendors = vendors.filter(v => v.id !== vendorId && v.name !== vendorName);
+      localStorage.setItem('notigas_vendors_directory', JSON.stringify(vendors));
+    }
+  } catch(e){}
+
+  // 3. Limpiar notigas_user_data si coincide con el usuario activo
+  try {
+    const saved = localStorage.getItem('notigas_user_data');
+    if (saved) {
+      const u = JSON.parse(saved);
+      if (u.nombre === vendorName) {
+        localStorage.removeItem('notigas_user_data');
+      }
+    }
+  } catch(e){}
+
+  renderAdminVendorsList();
+  renderAdminDashboardKPIs();
+  if (typeof renderVendorCards === 'function') renderVendorCards('TODOS');
+
+  if (typeof showToast === 'function') {
+    showToast('🗑️ Ficha Eliminada', `La Ficha de Repartidor "${vendorName}" fue eliminada permanentemente.`, 'info', 4000);
+  }
+}
+
+function borrarCompradorPermanente(gmail, nombre) {
+  if (typeof showConfirmModal === 'function') {
+    showConfirmModal('🗑️', `¿Eliminar Comprador ${nombre || gmail}?`, `Esta acción borrará la cuenta del comprador del sistema.`, 'Sí, eliminar', () => {
+      ejecutarBorradoComprador(gmail, nombre);
+    });
+  } else {
+    if (confirm(`🗑️ ¿Eliminar comprador ${nombre || gmail}?`)) {
+      ejecutarBorradoComprador(gmail, nombre);
+    }
+  }
+}
+
+function ejecutarBorradoComprador(gmail, nombre) {
+  if (typeof databaseEmails !== 'undefined' && Array.isArray(databaseEmails)) {
+    databaseEmails = databaseEmails.filter(e => e.gmail !== gmail);
+  }
+
+  try {
+    const saved = localStorage.getItem('notigas_user_data');
+    if (saved) {
+      const u = JSON.parse(saved);
+      if (u.gmail === gmail || u.nombre === nombre) {
+        localStorage.removeItem('notigas_user_data');
+      }
+    }
+  } catch(e){}
+
+  renderAdminVendorsList();
+  renderAdminDashboardKPIs();
+
+  if (typeof showToast === 'function') {
+    showToast('🗑️ Comprador Eliminado', `La cuenta de "${nombre || gmail}" fue eliminada del sistema.`, 'info', 4000);
+  }
 }
 
 function renderAdminVendorsList() {
@@ -250,57 +439,229 @@ function renderAdminVendorsList() {
     }
   });
 
-  let html = '';
+  let html = `<div style="font-weight:900; color:#FF6D00; margin-bottom:6px; font-size:11.5px;"><i class="fa-solid fa-truck-fast"></i> 🚛 REPARTIDORES Y NEGOCIOS DEL SISTEMA:</div>`;
+
   defaultVendors.forEach((v) => {
-    const isBanned = deletedIds.includes(v.id);
+    const isBanned = deletedIds.includes(v.id) || esRepartidorBaneado(v.name, v.plate, v.whatsapp);
     html += `
-      <div style="background:#1E293B; padding:8px 10px; border-radius:8px; border:1px solid ${isBanned ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.08)'}; display:flex; justify-content:space-between; align-items:center; opacity: ${isBanned ? '0.65' : '1'};">
+      <div style="background:#1E293B; padding:10px 12px; border-radius:10px; border:1px solid ${isBanned ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.08)'}; display:flex; justify-content:space-between; align-items:center; opacity: ${isBanned ? '0.7' : '1'}; margin-bottom:6px;">
         <div>
-          <strong style="color:${isBanned ? '#EF4444' : '#FF6D00'};">${isBanned ? '🚫 ' : (v.verified ? '👑 ' : '')}${v.name}</strong> (${v.category})
-          <div style="font-size:9.5px; color:#94A3B8;">Placa: ${v.plate} • Estado: ${isBanned ? '<span style="color:#EF4444; font-weight:700;">SUSPENDIDO / BANEADO</span>' : (v.verified ? 'Verificado' : 'En revisión')}</div>
+          <strong style="color:${isBanned ? '#EF4444' : '#FF6D00'}; font-size:12px;">${isBanned ? '🚫 [BLOQUEADO/BANEADO] ' : (v.verified ? '👑 ' : '')}${escapeHtmlStr(v.name)}</strong>
+          <span style="font-size:10.5px; color:#CBD5E1;"> (${escapeHtmlStr(v.category)})</span>
+          <div style="font-size:10px; color:#94A3B8; margin-top:2px;">Placa: ${escapeHtmlStr(v.plate)} • Estado: ${isBanned ? '<span style="color:#EF4444; font-weight:700;">ACCESO BLOQUEADO</span>' : '<span style="color:#00B0FF; font-weight:700;">ACTIVO</span>'}</div>
         </div>
         <div style="display:flex; gap:4px;">
           ${isBanned ? `
-            <button onclick="desbanearRepartidorAdmin('${v.id}', '${v.name}')" style="background:#00E676; color:#0F172A; border:none; padding:3px 8px; border-radius:4px; font-weight:700; font-size:9.5px; cursor:pointer;">🔓 Desbanear</button>
+            <button onclick="desbanearRepartidorAdmin('${v.id}', '${v.name}')" style="background:#0288D1; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-lock-open"></i> Desbanear</button>
           ` : `
-            <button onclick="alert('👑 Estado de Verificación actualizado para ${v.name}')" style="background:#0288D1; color:white; border:none; padding:3px 8px; border-radius:4px; font-weight:700; font-size:9.5px; cursor:pointer;">Verificar</button>
-            <button onclick="banearRepartidorAdmin('${v.id}', '${v.name}')" style="background:#D32F2F; color:white; border:none; padding:3px 8px; border-radius:4px; font-weight:700; font-size:9.5px; cursor:pointer;">🚫 Banear</button>
+            <button onclick="banearRepartidorAdmin('${v.id}', '${v.name}', '${v.plate}')" style="background:#E65100; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-user-slash"></i> Banear</button>
           `}
+          <button onclick="borrarRepartidorPermanente('${v.id}', '${v.name}')" style="background:#D32F2F; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Eliminar</button>
         </div>
       </div>
     `;
   });
 
+  // SECCIÓN COMPRADORES REGISTRADOS
+  html += `<div style="font-weight:900; color:#38BDF8; margin:12px 0 6px; font-size:11.5px;"><i class="fa-solid fa-users"></i> 🛍️ COMPRADORES Y USUARIOS VECINALES:</div>`;
+
+  let buyersList = [];
+  if (typeof databaseEmails !== 'undefined' && Array.isArray(databaseEmails)) {
+    buyersList = databaseEmails.filter(e => e.role === 'Cliente' || e.role === 'vecino' || !e.role);
+  }
+
+  try {
+    const saved = localStorage.getItem('notigas_user_data');
+    if (saved) {
+      const u = JSON.parse(saved);
+      if (u.role !== 'repartidor' && u.gmail && !buyersList.some(b => b.gmail === u.gmail)) {
+        buyersList.unshift({ gmail: u.gmail, role: 'Comprador Vecinal', nombre: u.nombre || 'Usuario' });
+      }
+    }
+  } catch(e){}
+
+  if (buyersList.length === 0) {
+    html += '<div style="color:#64748B; font-style:italic; font-size:10.5px;">No hay compradores registrados aún.</div>';
+  } else {
+    buyersList.forEach(b => {
+      const isBanned = esRepartidorBaneado(b.nombre || '', '', '', b.gmail);
+      html += `
+        <div style="background:#1E293B; padding:8px 10px; border-radius:8px; border:1px solid ${isBanned ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.08)'}; display:flex; justify-content:space-between; align-items:center; opacity: ${isBanned ? '0.7' : '1'}; margin-bottom:4px;">
+          <div>
+            <strong style="color:${isBanned ? '#EF4444' : '#38BDF8'}; font-size:11.5px;">${isBanned ? '🚫 [BLOQUEADO] ' : '👤 '}${escapeHtmlStr(b.nombre || b.gmail)}</strong>
+            <div style="font-size:9.5px; color:#94A3B8;">${escapeHtmlStr(b.gmail)} • ${isBanned ? '<span style="color:#EF4444; font-weight:700;">ACCESO BLOQUEADO</span>' : '<span style="color:#00B0FF;">Activo</span>'}</div>
+          </div>
+          <div style="display:flex; gap:4px;">
+            <button onclick="banearUsuarioAdmin('${escapeHtmlStr(b.gmail)}')" style="background:${isBanned ? '#0288D1' : '#E65100'}; color:white; border:none; padding:4px 8px; border-radius:6px; font-weight:800; font-size:9px; cursor:pointer;">${isBanned ? '🔓 Desbanear' : '🚫 Banear'}</button>
+            <button onclick="borrarCompradorPermanente('${escapeHtmlStr(b.gmail)}', '${escapeHtmlStr(b.nombre || b.gmail)}')" style="background:#D32F2F; color:white; border:none; padding:4px 8px; border-radius:6px; font-weight:800; font-size:9px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Eliminar</button>
+          </div>
+        </div>
+      `;
+    });
+  }
+
   container.innerHTML = html;
 }
 
+function verificarBloqueoAppUsuario() {
+  try {
+    const saved = localStorage.getItem('notigas_user_data');
+    if (!saved) return;
+    const u = JSON.parse(saved);
+
+    const isBanned = (typeof esRepartidorBaneado === 'function') 
+      ? esRepartidorBaneado(u.nombre, u.placa, u.whatsapp, u.gmail)
+      : false;
+
+    if (isBanned) {
+      activarBloqueoPantallaCompletaApp();
+    }
+  } catch(e){}
+}
+
+function activarBloqueoPantallaCompletaApp() {
+  const overlay = document.getElementById('appLockoutOverlay');
+  if (overlay) {
+    overlay.style.display = 'flex';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(verificarBloqueoAppUsuario, 400);
+});
+
+/* INSPECCIÓN Y ELIMINACIÓN DE PEDIDOS FANTASMA PARA EL ADMINISTRADOR */
 function renderAdminOrdersList() {
   const container = document.getElementById('adminOrdersMonitorContainer');
   if (!container) return;
 
+  let totalCount = 0;
+  let html = `
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <span style="font-size:11px; color:#94A3B8;">Inspecciona todos los pedidos y alertas activas en el mapa:</span>
+      <button onclick="limpiarTodosLosPedidosFantasmaAdmin()" style="background:#D32F2F; color:white; border:none; padding:5px 10px; border-radius:6px; font-weight:800; font-size:10px; cursor:pointer;"><i class="fa-solid fa-broom"></i> 🧹 Borrar TODOS los Pedidos Fantasma</button>
+    </div>
+  `;
+
+  // 1. Pedido Activo de Comprador
   const rawOrder = localStorage.getItem('notigas_active_order');
-  if (!rawOrder) {
-    container.innerHTML = '<div style="color:#64748B; font-style:italic;">No hay pedidos vecinales activos en este momento.</div>';
-    return;
+  if (rawOrder) {
+    try {
+      const order = JSON.parse(rawOrder);
+      totalCount++;
+      const mins = Math.floor((Date.now() - (order.timestamp || Date.now())) / 60000);
+      html += `
+        <div style="background:#1E293B; padding:12px; border-radius:10px; border:1.5px solid #FF6D00; margin-bottom:8px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:12.5px; font-weight:900; color:#FF6D00;"><i class="fa-solid fa-box"></i> Pedido Vecinal Activo en Mapa</span>
+            <span style="font-size:10px; background:rgba(255,109,0,0.2); color:#FF8F00; padding:2px 6px; border-radius:4px; font-weight:700;">⏱ Hace ${mins} min</span>
+          </div>
+          <div style="font-size:11.5px; color:white; margin-top:6px;">
+            <strong>Producto:</strong> ${escapeHtmlStr(order.categoria)} (${escapeHtmlStr(order.cantidad || '1 un')})<br>
+            <strong>Dirección:</strong> ${escapeHtmlStr(order.callePrincipal || 'Georeferenciada')}<br>
+            <strong>Teléfono:</strong> <span style="color:#00E676; font-weight:800;">${escapeHtmlStr(order.telefono || 'No especificado')}</span><br>
+            <span style="font-size:10px; color:#94A3B8;">Coordenadas: Lat ${order.lat ? order.lat.toFixed(5) : '-'}, Lng ${order.lng ? order.lng.toFixed(5) : '-'}</span>
+          </div>
+          <button onclick="borrarPedidoFantasmaAdmin('active_order')" style="margin-top:8px; width:100%; background:linear-gradient(135deg, #D32F2F, #B71C1C); color:white; border:none; padding:6px 12px; border-radius:8px; font-weight:800; font-size:11px; cursor:pointer;">
+            <i class="fa-solid fa-trash-can"></i> 🗑️ Borrar Pedido Fantasma
+          </button>
+        </div>
+      `;
+    } catch(e){}
   }
 
+  // 2. Alertas de Camión / Pánico reportadas por vecinos
+  let truckBuffer = [];
   try {
-    const order = JSON.parse(rawOrder);
-    container.innerHTML = `
-      <div style="background:#1E293B; padding:10px; border-radius:8px; border:1px solid #FF6D00;">
-        <div style="font-size:12px; font-weight:700; color:#FF6D00;">📦 Pedido Vecinal Activo</div>
-        <div style="font-size:11px; color:white; margin-top:4px;">
-          <strong>Categoría:</strong> ${order.categoria}<br>
-          <strong>Detalle:</strong> ${order.cantidad}<br>
-          <strong>Coordenadas:</strong> Lat ${order.lat ? order.lat.toFixed(5) : '-'}, Lng ${order.lng ? order.lng.toFixed(5) : '-'}
+    const raw = localStorage.getItem('notigas_reported_trucks_buffer');
+    if (raw) truckBuffer = JSON.parse(raw);
+  } catch(e){}
+
+  truckBuffer.forEach((t, idx) => {
+    totalCount++;
+    const mins = Math.floor((Date.now() - (t.timestamp || Date.now())) / 60000);
+    html += `
+      <div style="background:#1E293B; padding:12px; border-radius:10px; border:1px solid rgba(0,230,118,0.4); margin-bottom:8px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:12px; font-weight:800; color:#00E676;"><i class="fa-solid fa-bell"></i> Alerta Camión Oído / Visto (Reporte Vecinal)</span>
+          <span style="font-size:10px; background:rgba(0,230,118,0.15); color:#00E676; padding:2px 6px; border-radius:4px; font-weight:700;">Hace ${mins} min</span>
         </div>
-        <button onclick="cancelarPedidoActivo(); renderAdminOrdersList();" style="margin-top:8px; background:#D32F2F; color:white; border:none; padding:4px 10px; border-radius:6px; font-weight:700; font-size:10px; cursor:pointer;">
-          ❌ Cancelar Pedido desde Admin
+        <div style="font-size:11px; color:white; margin-top:4px;">
+          <strong>Reportado por:</strong> ${escapeHtmlStr(t.reporter || 'Vecino')}<br>
+          <span style="font-size:10px; color:#94A3B8;">Coordenadas: Lat ${t.lat ? t.lat.toFixed(5) : '-'}, Lng ${t.lng ? t.lng.toFixed(5) : '-'}</span>
+        </div>
+        <button onclick="borrarPedidoFantasmaAdmin('truck_report', ${idx})" style="margin-top:8px; width:100%; background:rgba(211,47,47,0.8); color:white; border:none; padding:6px 12px; border-radius:8px; font-weight:800; font-size:10px; cursor:pointer;">
+          <i class="fa-solid fa-trash-can"></i> 🗑️ Borrar Alerta Fantasma
         </button>
       </div>
     `;
-  } catch(e) {
-    container.innerHTML = '<div style="color:#64748B; font-style:italic;">No hay pedidos activos.</div>';
+  });
+
+  if (totalCount === 0) {
+    container.innerHTML = `
+      <div style="text-align:center; padding:24px 12px; color:#94A3B8; font-size:12px; background:#1E293B; border-radius:10px; border:1px dashed rgba(255,255,255,0.15);">
+        <i class="fa-solid fa-box-open" style="font-size:28px; color:#00E676; margin-bottom:8px;"></i><br>
+        <strong style="color:white;">No hay pedidos activos ni alertas en el mapa.</strong><br>
+        <span style="font-size:10px; color:#64748B;">El mapa está limpio. Todos los pedidos solicitados se mostrarán aquí para su inspección.</span>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = html;
+}
+
+function borrarPedidoFantasmaAdmin(tipo, index = null) {
+  if (tipo === 'active_order') {
+    localStorage.removeItem('notigas_active_order');
+  } else if (tipo === 'truck_report' && index !== null) {
+    try {
+      const raw = localStorage.getItem('notigas_reported_trucks_buffer');
+      if (raw) {
+        let buffer = JSON.parse(raw);
+        buffer.splice(index, 1);
+        localStorage.setItem('notigas_reported_trucks_buffer', JSON.stringify(buffer));
+      }
+    } catch(e){}
+  }
+
+  if (typeof checkActiveOrderStatus === 'function') checkActiveOrderStatus();
+  if (typeof renderActiveOrdersMap === 'function') renderActiveOrdersMap();
+  if (typeof renderReportedTrucksBuffer === 'function') renderReportedTrucksBuffer();
+
+  renderAdminOrdersList();
+  renderAdminDashboardKPIs();
+
+  if (typeof showToast === 'function') {
+    showToast('🗑️ Pedido Fantasma Removido', 'El pedido fue purgado y eliminado del mapa en tiempo real.', 'info', 4000);
+  }
+}
+
+function limpiarTodosLosPedidosFantasmaAdmin() {
+  if (typeof showConfirmModal === 'function') {
+    showConfirmModal('🧹', '¿Borrar TODOS los Pedidos Fantasma?', 'Se eliminarán de inmediato todos los pedidos activos y reportes del mapa.', 'Sí, limpiar todo', () => {
+      ejecutarLimpiezaTotalPedidos();
+    });
+  } else {
+    if (confirm('🧹 ¿Borrar TODOS los pedidos y reportes del mapa?')) {
+      ejecutarLimpiezaTotalPedidos();
+    }
+  }
+}
+
+function ejecutarLimpiezaTotalPedidos() {
+  localStorage.removeItem('notigas_active_order');
+  localStorage.removeItem('notigas_reported_trucks_buffer');
+
+  if (typeof checkActiveOrderStatus === 'function') checkActiveOrderStatus();
+  if (typeof renderActiveOrdersMap === 'function') renderActiveOrdersMap();
+  if (typeof renderReportedTrucksBuffer === 'function') renderReportedTrucksBuffer();
+
+  renderAdminOrdersList();
+  renderAdminDashboardKPIs();
+
+  if (typeof showToast === 'function') {
+    showToast('🧹 Limpieza Total Ejecutada', 'Todos los pedidos e indicadores del mapa fueron eliminados.', 'success', 4000);
   }
 }
 
@@ -540,12 +901,99 @@ function renderAdminReports() {
     banned.forEach((u, i) => {
       html += `
         <div style="display:flex; justify-content:space-between; align-items:center; background:#1E293B; padding:4px 8px; border-radius:4px;">
-          <span>🚫 ${u}</span>
+          <span>🚫 ${escapeHtmlStr(u)}</span>
           <button onclick="desbanearUsuarioAdmin(${i})" style="background:#00E676; color:#0F172A; border:none; padding:2px 6px; border-radius:4px; font-weight:700; font-size:9px; cursor:pointer;">Desbanear</button>
         </div>
       `;
     });
     bannedContainer.innerHTML = html;
+  }
+
+  // Renderizar también la sección de Inspección de Chats Privados
+  renderAdminChatInspector();
+}
+
+function renderAdminChatInspector() {
+  const container = document.getElementById('adminChatInspectorContainer');
+  if (!container) return;
+
+  const activeChats = [];
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('notigas_private_chat_')) {
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const msgs = JSON.parse(raw);
+          if (msgs.length > 0) {
+            const parts = key.split('notigas_private_chat_')[1]?.split('_') || [];
+            const vendorName = parts[0] || 'Repartidor';
+            const userName = parts.slice(1).join(' ') || 'Cliente';
+            const lastMsg = msgs[msgs.length - 1];
+            activeChats.push({ key, vendorName, userName, lastMsg, count: msgs.length });
+          }
+        }
+      }
+    }
+  } catch(e){}
+
+  if (activeChats.length === 0) {
+    container.innerHTML = '<div style="color:#64748B; font-style:italic; font-size:10.5px;">No hay conversaciones privadas activas registradas.</div>';
+    return;
+  }
+
+  let html = '';
+  activeChats.forEach(c => {
+    const snippet = escapeHtmlStr((c.lastMsg?.text || '').substring(0, 50));
+    html += `
+      <div style="background:#1E293B; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.08); margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <strong style="color:#38BDF8; font-size:11px;">💬 Chat: ${escapeHtmlStr(c.userName)} ↔ ${escapeHtmlStr(c.vendorName)}</strong>
+          <div style="font-size:10px; color:#94A3B8; margin-top:2px;">"${snippet}${(c.lastMsg?.text || '').length > 50 ? '...' : ''}" • <span style="color:#CBD5E1;">${c.count} msgs</span></div>
+        </div>
+        <div style="display:flex; gap:4px;">
+          <button onclick="abrirInspectorChatAdmin('${encodeURIComponent(c.vendorName)}', '${encodeURIComponent(c.key)}')" style="background:#FF6D00; color:white; border:none; padding:4px 8px; border-radius:4px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-eye"></i> Inspeccionar</button>
+          <button onclick="purgaChatEspecificoAdmin('${encodeURIComponent(c.key)}')" style="background:#D32F2F; color:white; border:none; padding:4px 8px; border-radius:4px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Purgar</button>
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+function abrirInspectorChatAdmin(encodedVendor, encodedKey) {
+  const vendorName = decodeURIComponent(encodedVendor || '');
+  const key = decodeURIComponent(encodedKey || '');
+
+  closeAdminModal();
+  if (typeof abrirFloatingChat === 'function') abrirFloatingChat();
+
+  const sel = document.getElementById('selectVendorChat');
+  if (sel && vendorName) {
+    for (let i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value.toLowerCase().includes(vendorName.toLowerCase())) {
+        sel.selectedIndex = i;
+        break;
+      }
+    }
+  }
+
+  if (key) {
+    sessionStorage.setItem('notigas_admin_viewing_user', key);
+  }
+
+  if (typeof cambiarVendedorChat === 'function') cambiarVendedorChat();
+}
+
+function purgaChatEspecificoAdmin(encodedKey) {
+  const key = decodeURIComponent(encodedKey || '');
+  if (key) {
+    localStorage.removeItem(key);
+    renderAdminChatInspector();
+    if (typeof showToast === 'function') {
+      showToast('🗑️ Chat Purgado', 'La conversación privada seleccionada fue eliminada permanentemente.', 'info', 4000);
+    }
   }
 }
 

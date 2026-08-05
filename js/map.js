@@ -166,17 +166,16 @@ function applyGpsPosition(lat, lng, label, forceReset = false) {
     isUserMarkerDraggedManually = false;
   }
 
-  if (!isUserMarkerDraggedManually) {
-    currentGpsLat = lat;
-    currentGpsLng = lng;
-    if (map) {
-      map.invalidateSize();
-      map.setView([lat, lng], 16);
-    }
-  }
+  currentGpsLat = lat;
+  currentGpsLng = lng;
 
   const activeLat = isUserMarkerDraggedManually ? currentGpsLat : lat;
   const activeLng = isUserMarkerDraggedManually ? currentGpsLng : lng;
+
+  if (map) {
+    map.invalidateSize();
+    map.setView([activeLat, activeLng], 16);
+  }
 
   if (!userMarker && map) {
     userMarker = L.marker([activeLat, activeLng], { 
@@ -211,14 +210,14 @@ function applyGpsPosition(lat, lng, label, forceReset = false) {
       userMarker.getPopup().setContent(`
         <div style="font-family:'Roboto',sans-serif; text-align:center;">
           <strong style="color:#FF6D00; font-size:13px;">📍 Ubicación de Entrega Ajustada</strong><br>
-          <span style="font-size:11px; color:#00E676; font-weight:700;">Ajustada manualmente en mapa</span><br>
+          <span style="font-size:11px; color:#38BDF8; font-weight:700;">Ajustada manualmente en mapa</span><br>
           <span style="font-size:9.5px; color:#94A3B8;">(Arrastra el marcador a la puerta exacta de tu casa)</span>
         </div>
       `);
       userMarker.openPopup();
       verificarYMostrarRepartidorGPS();
     });
-  } else if (userMarker && !isUserMarkerDraggedManually) {
+  } else if (userMarker) {
     userMarker.setLatLng([activeLat, activeLng]);
   }
 
@@ -524,14 +523,19 @@ function renderActiveOrdersMap() {
       });
 
       const btnAccion = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver')
-        ? `<button style="margin-top:6px; background:#00E676; color:#0F172A; border:none; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:900; cursor:pointer;" onclick="aceptarPedidoRepartidor('${order.categoria}')">✅ Atender Pedido</button>`
-        : `<button style="margin-top:6px; background:#D32F2F; color:white; border:none; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:900; cursor:pointer;" onclick="cancelarPedidoActivo()">❌ Cancelar Pedido</button>`;
+        ? `<button style="margin-top:6px; background:#00E676; color:#0F172A; border:none; padding:5px 12px; border-radius:6px; font-size:11px; font-weight:900; cursor:pointer;" onclick="aceptarPedidoRepartidor('${escapeHtmlStr(order.categoria)}')">✅ Atender Pedido</button>`
+        : `<button style="margin-top:6px; background:#D32F2F; color:white; border:none; padding:5px 12px; border-radius:6px; font-size:11px; font-weight:900; cursor:pointer;" onclick="cancelarPedidoActivo()">❌ Cancelar Pedido</button>`;
+
+      const telInfo = order.telefono ? `<br><span style="font-size:10.5px; color:#00E676; font-weight:800;">📞 Tel: ${escapeHtmlStr(order.telefono)}</span>` : '';
+      const addrInfo = order.callePrincipal ? `<br><span style="font-size:10.5px; color:#FFB300; font-weight:800;">🏠 ${escapeHtmlStr(order.callePrincipal)}</span>` : '';
 
       orderMarker.bindPopup(`
         <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
-          <strong style="color:#FF6D00; font-size:13px;">📦 Tu Pedido Activo en Vivo</strong><br>
-          <span style="font-size:11px; color:#CBD5E1; font-weight:700;">${order.categoria} (${order.cantidad})</span><br>
-          <span style="font-size:10px; color:#00E676; font-weight:700;">📍 Arrastra este icono para mover tu pedido</span><br>
+          <strong style="color:#FF6D00; font-size:13px;">📦 Pedido Activo en Vivo</strong><br>
+          <span style="font-size:11px; color:#CBD5E1; font-weight:700;">${escapeHtmlStr(order.categoria)} (${escapeHtmlStr(order.cantidad || '1 un')})</span>
+          ${addrInfo}
+          ${telInfo}<br>
+          <span style="font-size:9.5px; color:#94A3B8;">📍 Arrastra este icono para mover tu ubicación</span><br>
           ${btnAccion}
         </div>
       `);
@@ -842,22 +846,32 @@ function renderHeatmapOverlay() {
   heatPoints.forEach(pt => {
     allBounds.push([pt.lat, pt.lng]);
 
-    // Buffer rojo neón de alta demanda de pedidos
-    const circle = L.circle([pt.lat, pt.lng], {
+    // Anillo exterior de dispersión
+    const outerCircle = L.circle([pt.lat, pt.lng], {
       color: '#FF1744',
       fillColor: '#FF1744',
-      fillOpacity: 0.45,
-      weight: 3,
-      radius: 130 + (pt.count * 15)
+      fillOpacity: 0.25,
+      weight: 1.5,
+      radius: 180 + (pt.count * 18)
+    });
+
+    // Anillo interior de núcleo de alta intensidad (Garrafas / Demanda)
+    const innerCircle = L.circle([pt.lat, pt.lng], {
+      color: '#FF6D00',
+      fillColor: '#FF8F00',
+      fillOpacity: 0.55,
+      weight: 2.5,
+      radius: 90 + (pt.count * 10)
     }).bindPopup(`
-      <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
-        <strong style="color:#FF1744; font-size:13px;">🚨 BUFFER ROJO DE DEMANDA VECINAL</strong><br>
-        <span style="font-size:11.5px; color:#FFFFFF; font-weight:700;">${pt.cat}</span><br>
-        <span style="font-size:10px; color:#00E676;">📍 Buffer de concentración georeferenciada</span>
+      <div style="font-family:'Roboto',sans-serif; text-align:center; padding:6px;">
+        <strong style="color:#FF1744; font-size:13px;"><i class="fa-solid fa-fire"></i> ZONA DE ALTA DEMANDA VECINAL</strong><br>
+        <span style="font-size:12px; color:#FFFFFF; font-weight:800;">${escapeHtmlStr(pt.cat)}</span><br>
+        <span style="font-size:10px; color:#00E676; font-weight:700;">📍 Concentración de solicitudes de garrafas</span>
       </div>
     `);
 
-    heatmapLayerGroup.addLayer(circle);
+    heatmapLayerGroup.addLayer(outerCircle);
+    heatmapLayerGroup.addLayer(innerCircle);
   });
 
   heatmapLayerGroup.addTo(map);
@@ -931,6 +945,11 @@ function conectarGPSAuto(forceReset = false) {
 
   let gpsResolved = false;
 
+  // En PC (escritorio/laptop Windows), ejecutar resolución inmediata por Red IP (<200ms)
+  if (!isMobile) {
+    obtenerUbicacionIPFallbackDesktop(true);
+  }
+
   // 1. Intentar geolocalización nativa del navegador
   solicitarGeolocalizacionNativaNavegador(isMobile, forceReset)
     .then(() => {
@@ -939,16 +958,16 @@ function conectarGPSAuto(forceReset = false) {
     .catch((err) => {
       console.warn("⚠️ Geolocalización nativa no disponible:", err.message);
       if (!gpsResolved) {
-        obtenerUbicacionIPFallbackDesktop(forceReset);
+        obtenerUbicacionIPFallbackDesktop(true);
       }
     });
 
-  // 2. Disparar resolución multicanal por IP a los 1.2s por si el navegador tarda en responder
+  // 2. Disparar resolución multicanal por IP a los 800ms por si la nativa tarda en responder
   setTimeout(() => {
-    if (!gpsResolved) {
-      obtenerUbicacionIPFallbackDesktop(forceReset);
+    if (!gpsResolved && isMobile) {
+      obtenerUbicacionIPFallbackDesktop(true);
     }
-  }, 1200);
+  }, 800);
 
   // 3. En dispositivos móviles Android, activar watchPosition continuo
   if (isMobile && "geolocation" in navigator) {
@@ -1020,32 +1039,33 @@ function iniciarMovimientoRepartidor() {
 
 /* COORDENADAS OFICIALES GEOBOLIVIA Y MUNICIPIOS POR ÁREA METROPOLITANA */
 const GEOBOLIVIA_MUNICIPIOS = [
-  // COCHABAMBA
+  // 1º SANTA CRUZ DE LA SIERRA Y ÁREA METROPOLITANA
+  { key: "santacruz", nombre: "Santa Cruz de la Sierra", keywords: ["santa cruz", "santacruz"], lat: -17.7833, lon: -63.1821, querySuffix: "Santa Cruz de la Sierra, Bolivia" },
+  { key: "warnes", nombre: "Warnes", keywords: ["warnes"], lat: -17.5167, lon: -63.1667, querySuffix: "Warnes, Santa Cruz, Bolivia" },
+  { key: "cotoca", nombre: "Cotoca", keywords: ["cotoca"], lat: -17.7544, lon: -62.9961, querySuffix: "Cotoca, Santa Cruz, Bolivia" },
+  { key: "laguardia", nombre: "La Guardia", keywords: ["la guardia", "laguardia"], lat: -17.8833, lon: -63.3333, querySuffix: "La Guardia, Santa Cruz, Bolivia" },
+  { key: "montero", nombre: "Montero", keywords: ["montero"], lat: -17.3386, lon: -63.2553, querySuffix: "Montero, Santa Cruz, Bolivia" },
+  { key: "porongo", nombre: "Porongo / Urubó", keywords: ["porongo", "urubo"], lat: -17.7981, lon: -63.2425, querySuffix: "Porongo, Santa Cruz, Bolivia" },
+
+  // 2º COCHABAMBA Y ÁREA METROPOLITANA
   { key: "cochabamba", nombre: "Cochabamba", keywords: ["cochabamba", "cercado", "cbba"], lat: -17.3895, lon: -66.1568, querySuffix: "Cochabamba, Bolivia" },
   { key: "sacaba", nombre: "Sacaba", keywords: ["sacaba", "huayllani"], lat: -17.4041, lon: -66.0404, querySuffix: "Sacaba, Cochabamba, Bolivia" },
   { key: "quillacollo", nombre: "Quillacollo", keywords: ["quillacollo", "urkupiña"], lat: -17.3939, lon: -66.2797, querySuffix: "Quillacollo, Cochabamba, Bolivia" },
   { key: "tiquipaya", nombre: "Tiquipaya", keywords: ["tiquipaya"], lat: -17.3381, lon: -66.2189, querySuffix: "Tiquipaya, Cochabamba, Bolivia" },
   { key: "colcapirhua", nombre: "Colcapirhua", keywords: ["colcapirhua"], lat: -17.3908, lon: -66.2386, querySuffix: "Colcapirhua, Cochabamba, Bolivia" },
   { key: "vinto", nombre: "Vinto", keywords: ["vinto"], lat: -17.3964, lon: -66.3147, querySuffix: "Vinto, Cochabamba, Bolivia" },
+  { key: "sipesipe", nombre: "Sipe Sipe", keywords: ["sipe sipe", "sipesipe"], lat: -17.4478, lon: -66.3639, querySuffix: "Sipe Sipe, Cochabamba, Bolivia" },
 
-  // LA PAZ
+  // 3º LA PAZ
   { key: "lapaz", nombre: "La Paz", keywords: ["la paz", "lapaz"], lat: -16.4897, lon: -68.1193, querySuffix: "La Paz, Bolivia" },
-  { key: "elalto", nombre: "El Alto", keywords: ["el alto", "elalto"], lat: -16.5000, lon: -68.1500, querySuffix: "El Alto, Bolivia" },
   { key: "viacha", nombre: "Viacha", keywords: ["viacha"], lat: -16.6528, lon: -68.3014, querySuffix: "Viacha, La Paz, Bolivia" },
   { key: "achocalla", nombre: "Achocalla", keywords: ["achocalla"], lat: -16.5683, lon: -68.1633, querySuffix: "Achocalla, La Paz, Bolivia" },
 
-  // SANTA CRUZ
-  { key: "santacruz", nombre: "Santa Cruz de la Sierra", keywords: ["santa cruz", "santacruz"], lat: -17.7833, lon: -63.1821, querySuffix: "Santa Cruz de la Sierra, Bolivia" },
-  { key: "warnes", nombre: "Warnes", keywords: ["warnes"], lat: -17.5167, lon: -63.1667, querySuffix: "Warnes, Santa Cruz, Bolivia" },
-  { key: "cotoca", nombre: "Cotoca", keywords: ["cotoca"], lat: -17.7544, lon: -62.9961, querySuffix: "Cotoca, Santa Cruz, Bolivia" },
-  { key: "laguardia", nombre: "La Guardia", keywords: ["la guardia", "laguardia"], lat: -17.8833, lon: -63.3333, querySuffix: "La Guardia, Santa Cruz, Bolivia" },
-  { key: "montero", nombre: "Montero", keywords: ["montero"], lat: -17.3386, lon: -63.2553, querySuffix: "Montero, Santa Cruz, Bolivia" },
+  // 4º EL ALTO
+  { key: "elalto", nombre: "El Alto", keywords: ["el alto", "elalto"], lat: -16.5000, lon: -68.1500, querySuffix: "El Alto, Bolivia" },
 
-  // TARIJA
+  // 5º TARIJA Y OTROS DEPARTAMENTOS
   { key: "tarija", nombre: "Tarija", keywords: ["tarija", "cercado tarija"], lat: -21.5333, lon: -64.7333, querySuffix: "Tarija, Bolivia" },
-  { key: "sanlorenzo", nombre: "San Lorenzo", keywords: ["san lorenzo", "sanlorenzo"], lat: -21.4172, lon: -64.7492, querySuffix: "San Lorenzo, Tarija, Bolivia" },
-
-  // OTRAS CAPITALES
   { key: "sucre", nombre: "Sucre", keywords: ["sucre"], lat: -19.0333, lon: -65.2628, querySuffix: "Sucre, Bolivia" },
   { key: "oruro", nombre: "Oruro", keywords: ["oruro"], lat: -17.9667, lon: -67.1167, querySuffix: "Oruro, Bolivia" },
   { key: "potosi", nombre: "Potosí", keywords: ["potosi", "potosí"], lat: -19.5833, lon: -65.7500, querySuffix: "Potosí, Bolivia" },

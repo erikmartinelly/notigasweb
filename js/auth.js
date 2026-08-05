@@ -381,6 +381,16 @@ function iniciarSesionRepartidor() {
      }
   } catch(e){}
 
+  // COMPROBACIÓN ESTRICTA DE BANEO POR LA ADMINISTRACIÓN
+  if (typeof esRepartidorBaneado === 'function' && esRepartidorBaneado(nombreNegocio, plate, whatsapp, existingGmail)) {
+    if (typeof showToast === 'function') {
+      showToast('⛔ Acceso Suspendido', 'Tu cuenta de repartidor ha sido suspendida/baneada por la administración de NOTIGAS.', 'error', 6000);
+    } else {
+      alert('⛔ ACCESO SUSPENDIDO\nTu cuenta de repartidor ha sido suspendida/baneada por la administración de NOTIGAS.');
+    }
+    return;
+  }
+
   const repartidorData = { 
     role: 'repartidor', 
     nombre: nombreNegocio,
