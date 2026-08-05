@@ -12,7 +12,7 @@ window.isHeatmapActive = window.isHeatmapActive || false;
 /* =====================================================
    SISTEMA DE TOAST NOTIFICATIONS (Reemplazo de alert())
    ===================================================== */
-function showToast(title, message, type = 'info', durationMs = 4000) {
+function showToast(title, message, type = 'info', durationMs = 1000) {
   const container = document.getElementById('toastContainer');
   if (!container) return;
 
@@ -222,11 +222,11 @@ function toggleDriverGpsTransmission() {
   if (isDriverGpsLive) {
     localStorage.setItem('driverGpsLive', 'on');
     if (btn) btn.innerHTML = '<i class="fa-solid fa-circle-stop"></i> 🔴 PAUSAR RECORRIDO EN VIVO (GPS ON)';
-    showToast('GPS Activado', 'Tu ubicación exacta ahora es visible para los vecinos de tu OTB.', 'success', 3500);
+    showToast('GPS Activado', 'Tu ubicación exacta ahora es visible para los vecinos de tu OTB.', 'success', 1000);
   } else {
     localStorage.setItem('driverGpsLive', 'off');
     if (btn) btn.innerHTML = '<i class="fa-solid fa-location-arrow"></i> 🟢 INICIAR RECORRIDO EN VIVO (GPS OFF)';
-    showToast('GPS Pausado', 'Tu camión ha sido ocultado del mapa vecinal.', 'warning', 3500);
+    showToast('GPS Pausado', 'Tu camión ha sido ocultado del mapa vecinal.', 'warning', 1000);
   }
   if (typeof verificarYMostrarRepartidorGPS === 'function') verificarYMostrarRepartidorGPS();
 }
@@ -631,7 +631,7 @@ function confirmarPedido() {
     renderActiveOrdersMap();
   }
 
-  showToast('Pedido Publicado en Mapa', `🚀 ${cat}\n📍 ${direccion}${telefono ? '\n📞 Tel: ' + telefono : ''}`, 'order', 5000);
+  showToast('Pedido Publicado en Mapa', `🚀 ${cat}\n📍 ${direccion}${telefono ? '\n📞 Tel: ' + telefono : ''}`, 'order', 1000);
 }
 
 function cancelarPedidoActivo() {
@@ -800,7 +800,7 @@ function lanzarEspecialEsperame() {
   }
 
   mostrarPopupAlertaRepartidor(`🛑 <strong>¡ALERTA VECINAL "ESPÉRAME"!</strong><br>${reporterName} solicita que el camión detenga su marcha cerca de esta ubicación.`);
-  showToast('Alerta Emitida', `Se ha colocado un punto de alerta en el mapa visible para todos los vecinos y repartidores.`, 'warning', 5000);
+  showToast('Alerta Emitida', `Se ha colocado un punto de alerta en el mapa visible para todos los vecinos y repartidores.`, 'warning', 1000);
 }
 
 function mostrarPopupAlertaRepartidor(mensajeHtml) {
