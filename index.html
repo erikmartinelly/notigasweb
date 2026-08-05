@@ -76,14 +76,14 @@
 
       <div class="search-controls-wrapper">
         <!-- AVISO DE SELECCIÓN EN MAPA -->
-        <div style="background: rgba(15, 23, 42, 0.95); border: 1.5px solid rgba(56, 189, 248, 0.5); color: #38BDF8; padding: 4px 8px; border-radius: 8px; font-size: 10px; font-weight: 800; text-align: center; backdrop-filter: blur(12px); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4); display: flex; align-items: center; justify-content: center; gap: 4px;">
-          <i class="fa-solid fa-hand-pointer" style="color: #00E676; font-size: 11px;"></i>
+        <div style="background: rgba(15, 23, 42, 0.92); border: 1px solid rgba(56, 189, 248, 0.4); color: #38BDF8; padding: 3px 6px; border-radius: 6px; font-size: 9.5px; font-weight: 800; text-align: center; backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; gap: 4px;">
+          <i class="fa-solid fa-hand-pointer" style="color: #00E676; font-size: 10px;"></i>
           <span>📍 Escoger en el mapa</span>
         </div>
 
         <!-- DROPDOWN DE CAPITALES Y MUNICIPIOS POR ÁREA METROPOLITANA -->
         <div class="city-selector-bar">
-          <span class="city-selector-label"><i class="fa-solid fa-map-location-dot"></i> Municipio / Ciudad:</span>
+          <i class="fa-solid fa-map-location-dot" style="color:#FF6D00; font-size:11px;"></i>
           <select id="selectCiudadCapital" onchange="cambiarCiudadCapital(this.value)">
             <optgroup label="── COCHABAMBA ──">
               <option value="cochabamba">📍 Cochabamba (Cercado)</option>
@@ -124,18 +124,17 @@
       <div class="floating-actions-container" id="buyerFloatingActions">
         <button class="btn-main-order" id="btnMainOrder" onclick="abrirSubmenuPedidos()">
           <span style="display:inline-flex; align-items:center; gap:6px;">
-            <i class="fa-solid fa-truck-fast" style="color:#00E676; font-size:18px;"></i>
+            <img src="favicon.png" style="width:26px; height:26px; object-fit:contain; filter:drop-shadow(0 0 6px rgba(255,255,255,0.8));" alt="NOTIGAS Favicon">
             <img src="icons/garrafa_red_clean.svg" style="width:24px; height:24px; object-fit:contain; filter:drop-shadow(0 0 4px #FF1744);" alt="Gas">
           </span>
-          <span>HACER UN PEDIDO EN VIVO</span>
+          <span>HACER UN PEDIDO</span>
         </button>
         
-        <button class="btn-cancel-order" id="btnCancelOrder" style="display: none;" onclick="cancelarPedidoActivo()"><i class="fa-solid fa-circle-xmark"></i> ❌ CANCELAR PEDIDO EN VIVO</button>
+        <button class="btn-cancel-order" id="btnCancelOrder" style="display: none;" onclick="cancelarPedidoActivo()"><i class="fa-solid fa-circle-xmark"></i> ❌ CANCELAR PEDIDO</button>
         
         <div class="action-row">
           <button class="btn-panic" onclick="lanzarEspecialEsperame()"><i class="fa-solid fa-hand-paper"></i> 🛑 ESPÉRAME</button>
           <button class="btn-hear-truck" onclick="notificarEscucheCamion()"><i class="fa-solid fa-bell"></i> 🔔 ESCUCHÉ AL CAMIÓN</button>
-          <button class="btn-panorama" onclick="abrirPanoramicaPedidos()" title="Panorámica de pedidos activos"><i class="fa-solid fa-chart-bar"></i> 📊 PEDIDOS</button>
         </div>
       </div>
 
@@ -147,7 +146,8 @@
 
         <div class="action-row">
           <button class="btn-driver-heatmap" id="btnDriverHeatmap" onclick="toggleHeatmapOverlay()"><i class="fa-solid fa-fire"></i> 🔥 MAPA DE CALOR DE PEDIDOS</button>
-          <button class="btn-driver-orders-list" onclick="abrirModalDriverOrders()"><i class="fa-solid fa-list-check"></i> 📋 PEDIDOS RECIENTES EN VIVO</button>
+          <button class="btn-driver-orders-list" onclick="abrirModalDriverOrders()"><i class="fa-solid fa-list-check"></i> 📋 RECIENTES</button>
+          <button class="btn-panorama" onclick="abrirPanoramicaPedidos()" title="Panorámica de pedidos activos"><i class="fa-solid fa-chart-bar"></i> 📊 PEDIDOS</button>
         </div>
 
         <button class="btn-driver-route" onclick="calcularYTrazarRutaEficiente()">
@@ -342,10 +342,6 @@
       <div class="form-group">
         <label>Zonas / OTBs de Recorrido:</label>
         <input type="text" id="inputDriverZonas" placeholder="Ej: OTB Central, Av. Principal y calles vecinas">
-      </div>
-      <div class="form-group">
-        <label>Días y Horarios de Recorrido por Zona:</label>
-        <input type="text" id="inputDriverSchedule" placeholder="Ej: Lunes a Sábado: 07:00 a 18:00 (Mañanas: Norte, Tardes: Sur)">
       </div>
 
       <button class="btn-submit-google" onclick="iniciarSesionRepartidor()"><i class="fa-solid fa-store"></i> Activar y Publicar Mini Página de Negocio</button>
@@ -608,10 +604,6 @@
             <label>Zonas de Recorrido:</label>
             <input type="text" id="regZonas" placeholder="Ej: OTB Central, Av. Principal y calles vecinas">
           </div>
-          <div class="form-group">
-            <label>Días y Horarios por Zona:</label>
-            <input type="text" id="regSchedule" placeholder="Ej: Lunes a Sábado: 07:00 a 18:00">
-          </div>
         </div>
 
         <button class="btn-submit" onclick="guardarRegistroUnico()"><i class="fa-solid fa-right-to-bracket"></i> Ingresar con Correo Electrónico</button>
@@ -696,7 +688,7 @@
   <div class="modal" id="modalPedido">
     <div class="modal-content">
       <div class="modal-title">
-        <span>📦 Ficha de Pedido en Vivo</span>
+        <span>📦 Ficha de Pedido</span>
         <button class="btn-close" onclick="closePedidoModal()">✕</button>
       </div>
       <div class="form-group">

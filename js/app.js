@@ -506,7 +506,7 @@ function confirmarPedido() {
     renderActiveOrdersMap();
   }
 
-  alert(`🚀 PEDIDO EN VIVO PUBLICADO EN EL MAPA\n\nProducto: ${cat}\nDirección: ${direccion || 'Ubicación fijada en mapa'}\nCoordinación: Vía Chat Privado de la Aplicación.\n\nTu pedido ya está visible para los repartidores cercanos.`);
+  alert(`🚀 PEDIDO PUBLICADO EN EL MAPA\n\nProducto: ${cat}\nDirección: ${direccion || 'Ubicación fijada en mapa'}\nCoordinación: Vía Chat Privado de la Aplicación.\n\nTu pedido ya está visible para los repartidores cercanos.`);
 }
 
 function cancelarPedidoActivo() {

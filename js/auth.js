@@ -80,27 +80,30 @@ function selectAuthMethod(method) {
   }
 }
 
-/* INICIALIZACIÓN OFICIAL Y DE ALTA COMPATIBILIDAD CON FIREFOX / SAFARI / CHROME */
+/* INICIALIZACIÓN OFICIAL Y DE ALTA COMPATIBILIDAD CON FIREFOX / SAFARI / CHROME / BRAVE */
 function initGoogleOneTap() {
-  if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+  if (typeof google !== 'undefined' && google && google.accounts && google.accounts.id) {
     try {
       google.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
         callback: handleCredentialResponse,
         auto_select: false,
+        ux_mode: 'popup',
         cancel_on_tap_outside: true
       });
 
       // Renderizar el botón oficial de Google para compatibilidad con Firefox / Safari ETP
       const btnContainer = document.getElementById('g_id_onload_container');
       if (btnContainer) {
+        btnContainer.innerHTML = '';
         google.accounts.id.renderButton(btnContainer, {
           type: 'standard',
           theme: 'filled_blue',
           size: 'large',
           text: 'continue_with',
           shape: 'rectangular',
-          logo_alignment: 'left'
+          logo_alignment: 'left',
+          width: 280
         });
       }
     } catch(e) {
@@ -109,20 +112,31 @@ function initGoogleOneTap() {
   }
 }
 
+// Bucle de inicialización de alta resiliencia para Firefox / Safari (espera a que el SDK de Google cargue por completo)
+let googleGisRetryCount = 0;
+function tryInitGoogleGis() {
+  initGoogleOneTap();
+  if ((typeof google === 'undefined' || !google || !google.accounts || !google.accounts.id) && googleGisRetryCount < 12) {
+    googleGisRetryCount++;
+    setTimeout(tryInitGoogleGis, 350);
+  }
+}
+
+window.addEventListener('load', tryInitGoogleGis);
+
 function iniciarConGoogleDirecto() {
-  if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+  if (typeof google !== 'undefined' && google && google.accounts && google.accounts.id) {
     try {
       google.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
-        callback: handleCredentialResponse
+        callback: handleCredentialResponse,
+        ux_mode: 'popup'
       });
 
       google.accounts.id.prompt((notification) => {
-        // En Firefox (Enhanced Tracking Protection), las cookies de terceros de One Tap suelen bloquearse.
-        // Si no se despliega la ventana emergente, activamos de inmediato la verificación interactiva.
         if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
           const reason = notification.getNotDisplayedReason() || notification.getSkippedReason();
-          console.info("Google One Tap bloqueado en Firefox/Navegador:", reason);
+          console.info("Google One Tap no desplegado en navegador (Firefox/ETP):", reason);
           fallbackIngresoGoogleManual();
         }
       });

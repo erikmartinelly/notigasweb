@@ -779,31 +779,46 @@ function renderHeatmapOverlay() {
 }
 
 function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
-  // 1º Intento: ipwho.is (CORS libre, ultra rápido, sin límite de peticiones)
-  fetch('https://ipwho.is/')
+  console.log("📡 Iniciando geolocalización por Red/IP para Windows PC...");
+  
+  // 1º Intento: freeipapi.com (HTTPS, libre de CORS, instantáneo)
+  fetch('https://freeipapi.com/api/json')
     .then(res => res.json())
     .then(data => {
-      if (data && data.success && data.latitude && data.longitude) {
+      if (data && data.latitude && data.longitude) {
         applyGpsPosition(data.latitude, data.longitude, "Ubicación por Red/IP Desktop", forceReset);
-        console.log("📍 Ubicación Desktop obtenida por IP (ipwho.is):", data.latitude, data.longitude);
+        console.log("📍 Ubicación Windows PC obtenida (freeipapi.com):", data.latitude, data.longitude);
       } else {
-        throw new Error("Fallback ipwho.is sin respuesta válida");
+        throw new Error("freeipapi sin datos");
       }
     })
     .catch(() => {
-      // 2º Intento: ipapi.co
-      fetch('https://ipapi.co/json/')
+      // 2º Intento: ipwho.is
+      fetch('https://ipwho.is/')
         .then(res => res.json())
         .then(data => {
-          if (data && data.latitude && data.longitude) {
+          if (data && data.success && data.latitude && data.longitude) {
             applyGpsPosition(data.latitude, data.longitude, "Ubicación por Red/IP Desktop", forceReset);
-            console.log("📍 Ubicación Desktop obtenida por IP (ipapi.co):", data.latitude, data.longitude);
+            console.log("📍 Ubicación Windows PC obtenida (ipwho.is):", data.latitude, data.longitude);
           } else {
-            applyGpsPosition(-17.3895, -66.1568, "Ubicación Predeterminada OTB", forceReset);
+            throw new Error("ipwho.is sin datos");
           }
         })
         .catch(() => {
-          applyGpsPosition(-17.3895, -66.1568, "Ubicación Predeterminada OTB", forceReset);
+          // 3º Intento: ipapi.co
+          fetch('https://ipapi.co/json/')
+            .then(res => res.json())
+            .then(data => {
+              if (data && data.latitude && data.longitude) {
+                applyGpsPosition(data.latitude, data.longitude, "Ubicación por Red/IP Desktop", forceReset);
+                console.log("📍 Ubicación Windows PC obtenida (ipapi.co):", data.latitude, data.longitude);
+              } else {
+                applyGpsPosition(-17.3895, -66.1568, "Ubicación Predeterminada OTB", forceReset);
+              }
+            })
+            .catch(() => {
+              applyGpsPosition(-17.3895, -66.1568, "Ubicación Predeterminada OTB", forceReset);
+            });
         });
     });
 }
@@ -811,35 +826,30 @@ function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
 function conectarGPSAuto(forceReset = false) {
   applyGpsPosition(currentGpsLat, currentGpsLng, "Ubicación Inicial", forceReset);
 
-  let gpsResolved = false;
-
-  // 1. Intentar geolocalización nativa del navegador (funciona en PC y Móviles)
   if ("geolocation" in navigator) {
-    try {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          gpsResolved = true;
-          applyGpsPosition(pos.coords.latitude, pos.coords.longitude, "Ubicación GPS Exacta", forceReset);
-          console.log("📍 Ubicación GPS obtenida con éxito:", pos.coords.latitude, pos.coords.longitude);
-        },
-        (err) => {
-          console.warn("⚠️ Geolocalización nativa no disponible o denegada. Activando fallback por IP:", err.message);
-          gpsResolved = true;
-          obtenerUbicacionIPFallbackDesktop(forceReset);
-        },
-        { enableHighAccuracy: true, timeout: 4000, maximumAge: 0 }
-      );
-    } catch(e) {
-      gpsResolved = true;
-      obtenerUbicacionIPFallbackDesktop(forceReset);
-    }
+    let handled = false;
 
-    // 2. Temporizador de seguridad (3 segundos) por si el navegador no responde
+    // Intentar geolocalización del navegador con enableHighAccuracy: false (compatible con Windows PC)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        handled = true;
+        applyGpsPosition(pos.coords.latitude, pos.coords.longitude, "Ubicación GPS Exacta", forceReset);
+        console.log("📍 Ubicación GPS Windows/Navegador obtenida con éxito:", pos.coords.latitude, pos.coords.longitude);
+      },
+      (err) => {
+        console.warn("⚠️ Geolocalización nativa rechazada o no disponible:", err.message);
+        handled = true;
+        obtenerUbicacionIPFallbackDesktop(forceReset);
+      },
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 30000 }
+    );
+
+    // Temporizador de respaldo de 4s por si el navegador ignora la llamada
     setTimeout(() => {
-      if (!gpsResolved) {
+      if (!handled) {
         obtenerUbicacionIPFallbackDesktop(forceReset);
       }
-    }, 3000);
+    }, 4000);
   } else {
     obtenerUbicacionIPFallbackDesktop(forceReset);
   }
