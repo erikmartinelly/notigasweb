@@ -61,6 +61,22 @@ function closeAdminModal() {
   if (modalAdmin) modalAdmin.style.display = 'none'; 
 }
 
+function activarMapaCalorAdminLive() {
+  closeAdminModal();
+  if (typeof switchTab === 'function') switchTab(0);
+  window.isHeatmapActive = true;
+  if (typeof renderHeatmapOverlay === 'function') renderHeatmapOverlay();
+  if (typeof renderActiveOrdersMap === 'function') renderActiveOrdersMap();
+
+  const btn = document.getElementById('btnDriverHeatmap');
+  if (btn) {
+    btn.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> ❌ SALIR MAPA DE CALOR';
+    btn.style.background = 'linear-gradient(135deg, #D32F2F, #B71C1C)';
+  }
+
+  alert("🔥 MONITOR EN VIVO DE ADMINISTRADOR ACTIVADO\n\nVisualizando todos los pedidos en tiempo real y las zonas de concentración en el mapa con buffers rojos.");
+}
+
 function switchModalTab(idx) {
   document.querySelectorAll('.modal-tab-btn').forEach((btn, i) => btn.classList.toggle('active', i === idx));
   document.querySelectorAll('.modal-tab-pane').forEach((pane, i) => pane.classList.toggle('active', i === idx));

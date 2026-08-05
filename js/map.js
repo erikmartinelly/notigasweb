@@ -83,6 +83,8 @@ function initNotigasMap() {
     zoomControl: false
   });
 
+  L.control.zoom({ position: 'topright' }).addTo(map);
+
   mapTileLayers['googleStatic'] = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
     maxZoom: 20,
     attribution: '&copy; NOTIGAS Mapa Georeferenciado'
@@ -638,7 +640,7 @@ function calcularYTrazarRutaEficiente() {
   // Estimación de tiempo en minutos a velocidad promedio barrial (25 km/h)
   const estTimeMinutes = Math.max(1, Math.round((totalDistMeters / 1000) / 25 * 60));
 
-  alert(`🗺️ RUTA RÁPIDA OPTIMIZADA (0$ COSTO DE API)\n\n- Entregas secuenciadas: ${optimalRoute.length}\n- Distancia Total: ${formatearDistanciaTriangulada(totalDistMeters)}\n- Tiempo Estimado: ${estTimeMinutes} min (a 25 km/h)\n\nSe ha renderizado la polilínea neón y los marcadores de secuencia (1º, 2º, 3º...) sobre el mapa de la OTB.`);
+  alert(`🗺️ RUTA OPTIMIZADA CALCULADA\n\n- Entregas secuenciadas: ${optimalRoute.length}\n- Distancia Total: ${formatearDistanciaTriangulada(totalDistMeters)}\n- Tiempo Estimado: ${estTimeMinutes} min (a 25 km/h)\n\nSe ha renderizado la polilínea neón y los marcadores de secuencia (1º, 2º, 3º...) sobre el mapa de la OTB.`);
 }
 
 function verificarYMostrarRepartidorGPS() {
@@ -710,32 +712,70 @@ function renderHeatmapOverlay() {
     if (map.hasLayer(heatmapLayerGroup)) {
       map.removeLayer(heatmapLayerGroup);
     }
+    // Restaurar vista al salir del mapa de calor
+    map.flyTo([currentGpsLat, currentGpsLng], 16);
     return;
   }
 
   let heatPoints = [
-    { lat: currentGpsLat + 0.0008, lng: currentGpsLng + 0.0010, count: 5, cat: "🔥 5 Garrafas GLP" },
-    { lat: currentGpsLat - 0.0006, lng: currentGpsLng + 0.0015, count: 3, cat: "💧 3 Botellones Agua 20L" },
-    { lat: currentGpsLat - 0.0012, lng: currentGpsLng - 0.0005, count: 8, cat: "🔥 8 Garrafas GLP (Zona Alta Demanda)" },
-    { lat: currentGpsLat + 0.0015, lng: currentGpsLng - 0.0010, count: 4, cat: "🪵 4 Bolsas Carbón" }
+    { lat: currentGpsLat + 0.0025, lng: currentGpsLng + 0.0030, count: 5, cat: "🔥 5 Garrafas GLP (Zona Alta Demanda)" },
+    { lat: currentGpsLat - 0.0020, lng: currentGpsLng + 0.0035, count: 3, cat: "💧 3 Botellones Agua 20L" },
+    { lat: currentGpsLat - 0.0040, lng: currentGpsLng - 0.0025, count: 8, cat: "🔥 8 Garrafas GLP (Concentración OTB)" },
+    { lat: currentGpsLat + 0.0035, lng: currentGpsLng - 0.0030, count: 4, cat: "🪵 4 Bolsas Carbón / Leña" }
   ];
+
+  // Si hay un pedido activo real del cliente, incluirlo con buffer rojo de prioridad
+  const rawOrder = localStorage.getItem('notigas_active_order');
+  if (rawOrder) {
+    try {
+      const o = JSON.parse(rawOrder);
+      if (o.lat && o.lng) {
+        heatPoints.unshift({
+          lat: o.lat,
+          lng: o.lng,
+          count: 10,
+          cat: `🚨 PEDIDO ACTIVO VECINAL: ${o.categoria}`
+        });
+      }
+    } catch(e){}
+  }
 
   if (typeof isOrderCategoryMatchingDriver === 'function') {
     heatPoints = heatPoints.filter(pt => isOrderCategoryMatchingDriver(pt.cat));
   }
 
+  const allBounds = [[currentGpsLat, currentGpsLng]];
+
   heatPoints.forEach(pt => {
+    allBounds.push([pt.lat, pt.lng]);
+
+    // Buffer rojo neón de alta demanda de pedidos
     const circle = L.circle([pt.lat, pt.lng], {
-      color: '#FF6D00',
-      fillColor: '#FF5252',
-      fillOpacity: 0.35,
-      radius: 60 + (pt.count * 10)
-    }).bindPopup(`<div style="font-size:11px; font-weight:700; color:#FF6D00;">🔥 Alta Demanda Vecinal:<br>${pt.cat}</div>`);
+      color: '#FF1744',
+      fillColor: '#FF1744',
+      fillOpacity: 0.45,
+      weight: 3,
+      radius: 130 + (pt.count * 15)
+    }).bindPopup(`
+      <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
+        <strong style="color:#FF1744; font-size:13px;">🚨 BUFFER ROJO DE DEMANDA VECINAL</strong><br>
+        <span style="font-size:11.5px; color:#FFFFFF; font-weight:700;">${pt.cat}</span><br>
+        <span style="font-size:10px; color:#00E676;">📍 Buffer de concentración georeferenciada</span>
+      </div>
+    `);
 
     heatmapLayerGroup.addLayer(circle);
   });
 
   heatmapLayerGroup.addTo(map);
+
+  // ZOOM OUT AUTOMÁTICO PARA ENCUADRAR TODAS LAS ZONAS DE DEMANDA CON BUFFERS ROJOS
+  if (allBounds.length > 1) {
+    const bounds = L.latLngBounds(allBounds);
+    map.fitBounds(bounds, { padding: [80, 80], maxZoom: 13.5 });
+  } else {
+    map.setZoom(13.5);
+  }
 }
 
 function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
@@ -826,15 +866,37 @@ function iniciarMovimientoRepartidor() {
   // TODO: implementar animación de movimiento sobre ruta optimizada
 }
 
-/* COORDENADAS OFICIALES GEOBOLIVIA Y ÁREAS METROPOLITANAS DE BOLIVIA */
+/* COORDENADAS OFICIALES GEOBOLIVIA Y MUNICIPIOS POR ÁREA METROPOLITANA */
 const GEOBOLIVIA_MUNICIPIOS = [
-  { key: "cochabamba", nombre: "Cochabamba", keywords: ["cochabamba", "cbba", "cercado", "sacaba", "quillacollo", "tiquipaya", "colcapirhua", "vinto"], lat: -17.3895, lon: -66.1568, querySuffix: "Cochabamba, Bolivia" },
-  { key: "lapaz", nombre: "La Paz / El Alto", keywords: ["la paz", "lapaz", "el alto", "elalto", "viacha", "achocalla"], lat: -16.4897, lon: -68.1193, querySuffix: "La Paz, Bolivia" },
-  { key: "santacruz", nombre: "Santa Cruz", keywords: ["santa cruz", "santacruz", "warnes", "cotoca", "la guardia"], lat: -17.7833, lon: -63.1821, querySuffix: "Santa Cruz de la Sierra, Bolivia" },
-  { key: "sucre", nombre: "Sucre", keywords: ["sucre", "chuquisaca"], lat: -19.0333, lon: -65.2628, querySuffix: "Sucre, Bolivia" },
+  // COCHABAMBA
+  { key: "cochabamba", nombre: "Cochabamba", keywords: ["cochabamba", "cercado", "cbba"], lat: -17.3895, lon: -66.1568, querySuffix: "Cochabamba, Bolivia" },
+  { key: "sacaba", nombre: "Sacaba", keywords: ["sacaba", "huayllani"], lat: -17.4041, lon: -66.0404, querySuffix: "Sacaba, Cochabamba, Bolivia" },
+  { key: "quillacollo", nombre: "Quillacollo", keywords: ["quillacollo", "urkupiña"], lat: -17.3939, lon: -66.2797, querySuffix: "Quillacollo, Cochabamba, Bolivia" },
+  { key: "tiquipaya", nombre: "Tiquipaya", keywords: ["tiquipaya"], lat: -17.3381, lon: -66.2189, querySuffix: "Tiquipaya, Cochabamba, Bolivia" },
+  { key: "colcapirhua", nombre: "Colcapirhua", keywords: ["colcapirhua"], lat: -17.3908, lon: -66.2386, querySuffix: "Colcapirhua, Cochabamba, Bolivia" },
+  { key: "vinto", nombre: "Vinto", keywords: ["vinto"], lat: -17.3964, lon: -66.3147, querySuffix: "Vinto, Cochabamba, Bolivia" },
+
+  // LA PAZ
+  { key: "lapaz", nombre: "La Paz", keywords: ["la paz", "lapaz"], lat: -16.4897, lon: -68.1193, querySuffix: "La Paz, Bolivia" },
+  { key: "elalto", nombre: "El Alto", keywords: ["el alto", "elalto"], lat: -16.5000, lon: -68.1500, querySuffix: "El Alto, Bolivia" },
+  { key: "viacha", nombre: "Viacha", keywords: ["viacha"], lat: -16.6528, lon: -68.3014, querySuffix: "Viacha, La Paz, Bolivia" },
+  { key: "achocalla", nombre: "Achocalla", keywords: ["achocalla"], lat: -16.5683, lon: -68.1633, querySuffix: "Achocalla, La Paz, Bolivia" },
+
+  // SANTA CRUZ
+  { key: "santacruz", nombre: "Santa Cruz de la Sierra", keywords: ["santa cruz", "santacruz"], lat: -17.7833, lon: -63.1821, querySuffix: "Santa Cruz de la Sierra, Bolivia" },
+  { key: "warnes", nombre: "Warnes", keywords: ["warnes"], lat: -17.5167, lon: -63.1667, querySuffix: "Warnes, Santa Cruz, Bolivia" },
+  { key: "cotoca", nombre: "Cotoca", keywords: ["cotoca"], lat: -17.7544, lon: -62.9961, querySuffix: "Cotoca, Santa Cruz, Bolivia" },
+  { key: "laguardia", nombre: "La Guardia", keywords: ["la guardia", "laguardia"], lat: -17.8833, lon: -63.3333, querySuffix: "La Guardia, Santa Cruz, Bolivia" },
+  { key: "montero", nombre: "Montero", keywords: ["montero"], lat: -17.3386, lon: -63.2553, querySuffix: "Montero, Santa Cruz, Bolivia" },
+
+  // TARIJA
+  { key: "tarija", nombre: "Tarija", keywords: ["tarija", "cercado tarija"], lat: -21.5333, lon: -64.7333, querySuffix: "Tarija, Bolivia" },
+  { key: "sanlorenzo", nombre: "San Lorenzo", keywords: ["san lorenzo", "sanlorenzo"], lat: -21.4172, lon: -64.7492, querySuffix: "San Lorenzo, Tarija, Bolivia" },
+
+  // OTRAS CAPITALES
+  { key: "sucre", nombre: "Sucre", keywords: ["sucre"], lat: -19.0333, lon: -65.2628, querySuffix: "Sucre, Bolivia" },
   { key: "oruro", nombre: "Oruro", keywords: ["oruro"], lat: -17.9667, lon: -67.1167, querySuffix: "Oruro, Bolivia" },
   { key: "potosi", nombre: "Potosí", keywords: ["potosi", "potosí"], lat: -19.5833, lon: -65.7500, querySuffix: "Potosí, Bolivia" },
-  { key: "tarija", nombre: "Tarija", keywords: ["tarija"], lat: -21.5333, lon: -64.7333, querySuffix: "Tarija, Bolivia" },
   { key: "trinidad", nombre: "Trinidad", keywords: ["trinidad", "beni"], lat: -14.8333, lon: -64.9000, querySuffix: "Trinidad, Beni, Bolivia" },
   { key: "cobija", nombre: "Cobija", keywords: ["cobija", "pando"], lat: -11.0333, lon: -68.7667, querySuffix: "Cobija, Pando, Bolivia" }
 ];

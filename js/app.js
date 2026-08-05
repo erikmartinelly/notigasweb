@@ -47,8 +47,12 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         setAppMode('buyer');
       }
+    } else {
+      setAppMode('buyer');
     }
-  } catch(e){}
+  } catch(e){
+    setAppMode('buyer');
+  }
 });
 
 /* ABRE EL MODAL DE CONFIGURACIÓN MOSTRANDO LA SECCIÓN DEL ROL ACTIVO */
@@ -73,7 +77,7 @@ function abrirConfiguracionSegunRol() {
   if (isDriver) {
     if (buyerSection) buyerSection.style.display = 'none';
     if (driverSection) driverSection.style.display = 'block';
-    if (titleEl) titleEl.textContent = '⚙️ Configuración Repartidor';
+    if (titleEl) titleEl.textContent = '⚙️ MENÚ Repartidor';
 
     // Cargar estado GPS guardado
     try {
@@ -84,7 +88,7 @@ function abrirConfiguracionSegunRol() {
   } else {
     if (buyerSection) buyerSection.style.display = 'block';
     if (driverSection) driverSection.style.display = 'none';
-    if (titleEl) titleEl.textContent = '⚙️ Configuración';
+    if (titleEl) titleEl.textContent = '⚙️ MENÚ';
   }
 
   const modal = document.getElementById('modalUserSettings');
@@ -153,13 +157,20 @@ function toggleDriverGpsTransmission() {
 
 function toggleHeatmapOverlay() {
   window.isHeatmapActive = !window.isHeatmapActive;
+  const btn = document.getElementById('btnDriverHeatmap');
+
   if (typeof renderHeatmapOverlay === 'function') {
     renderHeatmapOverlay();
   }
-  if (window.isHeatmapActive) {
-    alert("🔥 MAPA DE CALOR & CONCENTRACIÓN ACTIVADO\nVisualizando zonas con mayor acumulación de pedidos de garrafas GLP en tu OTB.");
-  } else {
-    alert("🔥 Mapa de calor desactivado.");
+
+  if (btn) {
+    if (window.isHeatmapActive) {
+      btn.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> ❌ SALIR MAPA DE CALOR';
+      btn.style.background = 'linear-gradient(135deg, #D32F2F, #B71C1C)';
+    } else {
+      btn.innerHTML = '<i class="fa-solid fa-fire"></i> 🔥 MAPA DE CALOR DE PEDIDOS';
+      btn.style.background = '';
+    }
   }
 }
 
@@ -475,15 +486,13 @@ function closePedidoModal() {
 function confirmarPedido() {
   const pos = getActiveUserLocation();
   const cat = document.getElementById('selectCategoria')?.value || 'Garrafa de Gas GLP';
-  const cant = document.getElementById('inputCantidad')?.value || '1 unidad';
-  const callePrincipal = (document.getElementById('inputCallePrincipal')?.value || '').trim();
-  const calleReferencia = (document.getElementById('inputCalleReferencia')?.value || '').trim();
+  const direccion = (document.getElementById('inputCallePrincipal')?.value || '').trim();
   
   const activeOrderData = {
     categoria: cat,
-    cantidad: cant,
-    callePrincipal: callePrincipal || 'Dirección fijada en mapa',
-    calleReferencia: calleReferencia || 'Sin referencia adicional',
+    cantidad: '1 unidad',
+    callePrincipal: direccion || 'Dirección fijada en mapa',
+    calleReferencia: 'Coordinación por Chat Privado 1-a-1',
     lat: pos.lat,
     lng: pos.lng,
     timestamp: Date.now()
@@ -497,7 +506,7 @@ function confirmarPedido() {
     renderActiveOrdersMap();
   }
 
-  alert(`🚀 PEDIDO EN VIVO PUBLICADO EN EL MAPA\n\nProducto: ${cat}\nCantidad: ${cant}\nCalle Principal: ${callePrincipal || 'En posición del mapa'}\nCalle de Referencia: ${calleReferencia || 'Sin referencia extra'}\n\nTu pedido ya está visible para los repartidores cercanos.`);
+  alert(`🚀 PEDIDO EN VIVO PUBLICADO EN EL MAPA\n\nProducto: ${cat}\nDirección: ${direccion || 'Ubicación fijada en mapa'}\nCoordinación: Vía Chat Privado de la Aplicación.\n\nTu pedido ya está visible para los repartidores cercanos.`);
 }
 
 function cancelarPedidoActivo() {
