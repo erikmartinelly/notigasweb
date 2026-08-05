@@ -36,6 +36,23 @@ const truckSvgMarkerHtml = `
   </div>
 `;
 
+const userLocationSvgHtml = `
+  <div style="position: relative; width: 40px; height: 48px; display: flex; align-items: center; justify-content: center; cursor: grab;">
+    <div style="position: absolute; width: 40px; height: 40px; border-radius: 50%; background: rgba(0, 176, 255, 0.25); animation: radarPing 2s infinite ease-out;"></div>
+    <div style="position: relative; background: linear-gradient(135deg, #00B0FF, #0288D1); width: 36px; height: 36px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); display: flex; align-items: center; justify-content: center; border: 2.5px solid #FFFFFF; box-shadow: 0 4px 16px rgba(0,176,255,0.7);">
+      <i class="fa-solid fa-house-user" style="color: #FFFFFF; font-size: 16px; transform: rotate(45deg);"></i>
+    </div>
+  </div>
+`;
+
+const userLocationIcon = L.divIcon({
+  className: 'user-location-marker',
+  html: userLocationSvgHtml,
+  iconSize: [40, 48],
+  iconAnchor: [20, 48],
+  popupAnchor: [0, -48]
+});
+
 const garrafaIcon = L.divIcon({
   className: 'garrafa-map-marker',
   html: garrafaSvgMarkerHtml,
@@ -108,7 +125,7 @@ function moverMarcadorUbicacionManual(lat, lng) {
       <div style="font-family:'Roboto',sans-serif; text-align:center;">
         <strong style="color:#FF6D00; font-size:13px;">📍 Ubicación de Entrega Ajustada</strong><br>
         <span style="font-size:11px; color:#00E676; font-weight:700;">Punto fijado manualmente</span><br>
-        <span style="font-size:9.5px; color:#94A3B8;">(Arrastra la garrafa a la puerta exacta de tu casa)</span>
+        <span style="font-size:9.5px; color:#94A3B8;">(Arrastra el marcador a la puerta exacta de tu casa)</span>
       </div>
     `);
     userMarker.openPopup();
@@ -133,7 +150,7 @@ function applyGpsPosition(lat, lng, label, forceReset = false) {
 
   if (!userMarker && map) {
     userMarker = L.marker([activeLat, activeLng], { 
-      icon: garrafaIcon, 
+      icon: userLocationIcon, 
       draggable: true,
       autoPan: true 
     }).addTo(map);
@@ -145,7 +162,7 @@ function applyGpsPosition(lat, lng, label, forceReset = false) {
     userMarker.bindPopup(`
       <div style="font-family:'Roboto',sans-serif; text-align:center;">
         <strong style="color:#FF6D00; font-size:13px;">📍 Ubicación de Entrega</strong><br>
-        <span style="font-size:11px; color:#64748B;">Arrastra la garrafa a la puerta exacta de tu casa</span>
+        <span style="font-size:11px; color:#64748B;">Arrastra el marcador a la puerta exacta de tu casa</span>
       </div>
     `);
 
@@ -800,81 +817,92 @@ function identificarMunicipioQuery(queryText) {
   return null;
 }
 
+function procesarResultadoBusqueda(item, queryOriginal) {
+  const lat = parseFloat(item.lat);
+  const lon = parseFloat(item.lon);
+  
+  const houseNum = item.address?.house_number ? ` #${item.address.house_number}` : '';
+  const callePrincipal = (item.address?.road || item.address?.pedestrian || queryOriginal) + houseNum;
+  const calleReferencia = item.address?.suburb || item.address?.neighbourhood || item.address?.quarter || item.address?.subdistrict || item.address?.city || item.address?.town || "Zona cercana";
+
+  const inputPrin = document.getElementById('inputCallePrincipal');
+  const inputRef = document.getElementById('inputCalleReferencia');
+  if (inputPrin) inputPrin.value = callePrincipal;
+  if (inputRef) inputRef.value = calleReferencia;
+
+  currentGpsLat = lat;
+  currentGpsLng = lon;
+
+  if (map) {
+    map.flyTo([lat, lon], 17, { duration: 1.0 });
+  }
+
+  applyGpsPosition(lat, lon, '', false);
+}
+
 function buscarCalle() {
   const input = document.getElementById('inputSearchStreet');
   const selectCity = document.getElementById('selectCiudadCapital') || document.getElementById('selectMunicipioSearch');
   const query = (input?.value || '').trim();
   const selectedKey = selectCity?.value || 'cochabamba';
   
-  let munObj = GEOBOLIVIA_MUNICIPIOS.find(m => m.key === selectedKey) || GEOBOLIVIA_MUNICIPIOS[0];
-
-  const munTyped = identificarMunicipioQuery(query);
-  if (munTyped) {
-    munObj = munTyped;
-    if (selectCity) selectCity.value = munTyped.key;
-  }
+  const munObj = GEOBOLIVIA_MUNICIPIOS.find(m => m.key === selectedKey) || GEOBOLIVIA_MUNICIPIOS[0];
 
   if (!query) {
     cambiarCiudadCapital(selectedKey);
     return;
   }
 
+  // Radio máximo estricto en metros desde el centro del municipio seleccionado (25 km máximo)
+  const MAX_MUNICIPIO_DIST_METROS = 25000;
+
+  // Viewbox geográfico (+/- 0.12 grados ~15km alrededor del centro)
+  const left = (munObj.lon - 0.12).toFixed(4);
+  const top = (munObj.lat + 0.12).toFixed(4);
+  const right = (munObj.lon + 0.12).toFixed(4);
+  const bottom = (munObj.lat - 0.12).toFixed(4);
+
   let calleQuery = query;
   munObj.keywords.forEach(kw => {
-    calleQuery = calleQuery.replace(new RegExp(kw, 'gi'), '');
+    if (calleQuery.toLowerCase() !== kw.toLowerCase()) {
+      calleQuery = calleQuery.replace(new RegExp(`\\b${kw}\\b`, 'gi'), '');
+    }
   });
   calleQuery = calleQuery.trim() || query;
 
-  const searchUrl = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(calleQuery + ', ' + munObj.querySuffix)}&countrycodes=bo`;
+  // 1ª Búsqueda: Restringida al viewbox del municipio
+  const searchUrl = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(calleQuery + ', ' + munObj.querySuffix)}&viewbox=${left},${top},${right},${bottom}&bounded=1&countrycodes=bo`;
 
   fetch(searchUrl)
     .then(res => res.json())
     .then(data => {
-      if (data && data.length > 0) {
-        const item = data[0];
-        const lat = parseFloat(item.lat);
-        const lon = parseFloat(item.lon);
-        
-        const callePrincipal = item.address?.road || item.address?.pedestrian || calleQuery;
-        const calleReferencia = item.address?.suburb || item.address?.neighbourhood || item.address?.quarter || "Zona cercana";
+      // Filtrar estrictamente: solo aceptar resultados dentro del municipio seleccionado (distancia <= 25km)
+      let validItems = (data || []).filter(item => {
+        const itemLat = parseFloat(item.lat);
+        const itemLon = parseFloat(item.lon);
+        const dist = calcularDistanciaMetros(munObj.lat, munObj.lon, itemLat, itemLon);
+        return dist !== null && dist <= MAX_MUNICIPIO_DIST_METROS;
+      });
 
-        const inputPrin = document.getElementById('inputCallePrincipal');
-        const inputRef = document.getElementById('inputCalleReferencia');
-        if (inputPrin) inputPrin.value = callePrincipal;
-        if (inputRef) inputRef.value = calleReferencia;
-
-        currentGpsLat = lat;
-        currentGpsLng = lon;
-
-        if (map) {
-          map.flyTo([lat, lon], 17, { duration: 1.0 });
-        }
-
-        applyGpsPosition(lat, lon, '', false);
+      if (validItems.length > 0) {
+        procesarResultadoBusqueda(validItems[0], calleQuery);
       } else {
-        fetch(`https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(query + ', Bolivia')}&countrycodes=bo`)
+        // 2ª Búsqueda (Fallback sin bounded, pero aplicando el mismo filtro estricto de distancia del municipio)
+        const fallbackUrl = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(calleQuery + ', ' + munObj.querySuffix)}&countrycodes=bo`;
+        fetch(fallbackUrl)
           .then(r => r.json())
           .then(fallbackData => {
-            if (fallbackData && fallbackData.length > 0) {
-              const fbItem = fallbackData[0];
-              const fbLat = parseFloat(fbItem.lat);
-              const fbLon = parseFloat(fbItem.lon);
-              const fbCallePrin = fbItem.address?.road || query;
-              const fbCalleRef = fbItem.address?.suburb || "Zona cercana";
+            let fbValidItems = (fallbackData || []).filter(item => {
+              const itemLat = parseFloat(item.lat);
+              const itemLon = parseFloat(item.lon);
+              const dist = calcularDistanciaMetros(munObj.lat, munObj.lon, itemLat, itemLon);
+              return dist !== null && dist <= MAX_MUNICIPIO_DIST_METROS;
+            });
 
-              const inputPrin = document.getElementById('inputCallePrincipal');
-              const inputRef = document.getElementById('inputCalleReferencia');
-              if (inputPrin) inputPrin.value = fbCallePrin;
-              if (inputRef) inputRef.value = fbCalleRef;
-
-              currentGpsLat = fbLat;
-              currentGpsLng = fbLon;
-
-              if (map) {
-                map.flyTo([fbLat, fbLon], 17, { duration: 1.0 });
-              }
-
-              applyGpsPosition(fbLat, fbLon, '', false);
+            if (fbValidItems.length > 0) {
+              procesarResultadoBusqueda(fbValidItems[0], calleQuery);
+            } else {
+              alert(`📍 No se encontró la calle "${calleQuery}" en el municipio de ${munObj.nombre}.\n\nPor favor verifica que la calle pertenezca a ${munObj.nombre}.`);
             }
           })
           .catch(() => {});

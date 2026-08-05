@@ -766,6 +766,40 @@
   </div>
 
 
+  <!-- MODAL CHAT PRIVADO INTERNO (ACTIVADO DESDE FICHA DE REPARTIDORES) -->
+  <div class="modal" id="modalChat">
+    <div class="modal-content" style="max-width: 480px; height: 520px; display: flex; flex-direction: column;">
+      <div class="modal-title">
+        <span><i class="fa-solid fa-comments" style="color:#FF6D00;"></i> <span id="chatPopupTitle">Chat Privado Interno</span></span>
+        <button class="btn-close" onclick="cerrarFloatingChat()">✕</button>
+      </div>
+      
+      <div class="chat-vendor-selector" style="padding:6px 10px; background:#0F172A; border-radius:8px; margin-bottom:8px; border:1px solid rgba(255,255,255,0.08);">
+        <label style="font-size:10px; font-weight:700; color:#FF6D00;">Conversando con:</label>
+        <select id="selectVendorChat" onchange="cambiarVendedorChat()" style="font-size:11.5px; padding:6px; background:#1E293B; color:white; border:1px solid rgba(255,255,255,0.15); border-radius:6px; width:100%; margin-top:4px;">
+          <option value="Soporte OTB">🎧 Administrador NOTIGAS (Soporte)</option>
+          <option value="Gas GLP">🔥 Repartidor Gas GLP</option>
+          <option value="Agua 20L">💧 Repartidor Agua 20L</option>
+          <option value="Chatarra">♻️ Compra de Chatarra</option>
+          <option value="Papel">📄 Recolector Papel & Cartón</option>
+          <option value="Frutas">🍎 Frutas & Verduras</option>
+          <option value="Detergentes">🧼 Detergentes & Limpieza</option>
+          <option value="Carbón">🪵 Carbón & Leña</option>
+          <option value="Otros">📦 Otros Pedidos</option>
+        </select>
+      </div>
+
+      <div class="chat-messages-box" id="chatMessagesBox" style="flex:1; overflow-y:auto; padding:10px; font-size:11px; background:#0F172A; border-radius:8px; border:1px solid rgba(255,255,255,0.08); margin-bottom:8px; display:flex; flex-direction:column; gap:8px;">
+        <!-- Mensajes renderizados dinámicamente -->
+      </div>
+
+      <div style="display:flex; gap:6px;">
+        <input type="text" id="inputDirectMessage" placeholder="Escribe tu mensaje privado..." onkeypress="if(event.key==='Enter') enviarMensajeDirecto()" style="flex:1; padding:10px; font-size:12px; background:#0F172A; border:1px solid rgba(255,255,255,0.15); border-radius:8px; color:white; outline:none;">
+        <button onclick="enviarMensajeDirecto()" style="background:#FF6D00; color:white; border:none; padding:10px 16px; border-radius:8px; font-weight:800; font-size:12px; cursor:pointer;"><i class="fa-solid fa-paper-plane"></i></button>
+      </div>
+    </div>
+  </div>
+
   <!-- INCLUSIÓN DE MÓDULOS JAVASCRIPT ARQUITECTURALES DESACOPLADOS -->
 
   <script src="js/auth.js"></script>

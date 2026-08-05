@@ -97,32 +97,27 @@ function poblarSelectorVendedoresChat() {
 }
 
 function abrirFloatingChat() {
-  const widget = document.getElementById('floatingChatWidget');
-  const body = document.getElementById('chatPopupBody');
-  if (widget) {
+  const modal = document.getElementById('modalChat') || document.getElementById('floatingChatWidget');
+  if (modal) {
     poblarSelectorVendedoresChat();
-    widget.style.display = 'flex';
-    if (body) body.style.display = 'flex';
+    modal.style.display = 'flex';
     cambiarVendedorChat();
   }
 }
 
 function cerrarFloatingChat() {
-  const widget = document.getElementById('floatingChatWidget');
-  if (widget) widget.style.display = 'none';
+  const modal = document.getElementById('modalChat') || document.getElementById('floatingChatWidget');
+  if (modal) modal.style.display = 'none';
 }
 
 function minimizarFloatingChat() {
-  const body = document.getElementById('chatPopupBody');
-  if (body) {
-    body.style.display = (body.style.display === 'none') ? 'flex' : 'none';
-  }
+  cerrarFloatingChat();
 }
 
 function toggleFloatingChat() {
-  const widget = document.getElementById('floatingChatWidget');
-  if (widget) {
-    if (widget.style.display === 'none' || !widget.style.display) {
+  const modal = document.getElementById('modalChat') || document.getElementById('floatingChatWidget');
+  if (modal) {
+    if (modal.style.display === 'none' || !modal.style.display) {
       abrirFloatingChat();
     } else {
       cerrarFloatingChat();
