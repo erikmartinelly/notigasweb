@@ -286,6 +286,29 @@ function banearRepartidorAdmin(vendorId, vendorName, plate = '', whatsapp = '') 
   }
 }
 
+function limpiarTodosLosBaneosAdmin() {
+  try {
+    localStorage.removeItem('notigas_banned_users');
+    localStorage.removeItem('notigas_deleted_vendor_ids');
+  } catch(e){}
+
+  const overlay = document.getElementById('appLockoutOverlay');
+  if (overlay) overlay.style.display = 'none';
+
+  if (typeof renderAdminVendorsList === 'function') renderAdminVendorsList();
+  if (typeof renderVendorCards === 'function') renderVendorCards('TODOS');
+
+  if (typeof showToast === 'function') {
+    showToast('🔓 Todos los Bloqueos Eliminados', 'Se eliminaron todos los baneos y bloqueos de la base de datos.', 'info', 4500);
+  }
+}
+
+// Purga automática inmediata de bloqueos de la base de datos
+try {
+  localStorage.removeItem('notigas_banned_users');
+  localStorage.removeItem('notigas_deleted_vendor_ids');
+} catch(e){}
+
 function desbanearRepartidorAdmin(vendorId, vendorName) {
   let deletedIds = [];
   try {
