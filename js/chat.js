@@ -367,7 +367,7 @@ function enviarMensajeDirecto() {
   cambiarVendedorChat();
 }
 
-/* VERIFICACIÓN Y APERTURA AUTOMÁTICA DEL CHAT PARA CORREOS DE ADMINISTRADOR */
+/* VERIFICACIÓN DE SESIÓN DE ADMINISTRADOR (SIN APERTURA AUTOMÁTICA DE CHAT) */
 function verificarYActivarChatAdminAuto() {
   let userEmail = '';
   try {
@@ -381,18 +381,6 @@ function verificarYActivarChatAdminAuto() {
   const adminEmails = ['erikmartinelly@gmail.com', 'leonmartinelly13@gmail.com'];
   if (userEmail && adminEmails.includes(userEmail)) {
     sessionStorage.setItem('notigas_admin_session', userEmail);
-    setTimeout(() => {
-      const selectVendor = document.getElementById('selectVendorChat');
-      if (selectVendor) {
-        for (let i = 0; i < selectVendor.options.length; i++) {
-          if (selectVendor.options[i].value === 'Soporte OTB') {
-            selectVendor.selectedIndex = i;
-            break;
-          }
-        }
-      }
-      abrirFloatingChat();
-    }, 600);
   }
 }
 
