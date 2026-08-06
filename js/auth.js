@@ -512,20 +512,62 @@ function ejecutarEliminacionTotalCuenta() {
 }
 
 function ingresarComoRepartidorDirecto() {
+  // 1. Verificar si existe un perfil de repartidor previo o guardado
+  let driverProfile = null;
   try {
     const saved = localStorage.getItem('notigas_user_data');
     if (saved) {
       const u = JSON.parse(saved);
-      if (u.role === 'repartidor') {
-        if (typeof setAppMode === 'function') setAppMode('driver');
-        const modalAuth = document.getElementById('modalWelcomeAuth');
-        if (modalAuth) modalAuth.style.display = 'none';
-        if (typeof showToast === 'function') showToast('🟢 Modo Repartidor', `Sesión activa: ${u.nombre}`, 'success', 1000);
-        return;
+      if (u.role === 'repartidor' && u.nombre) {
+        driverProfile = u;
       }
     }
   } catch(e){}
 
+  if (!driverProfile) {
+    try {
+      const rawDrivers = localStorage.getItem('notigas_registered_drivers_list');
+      if (rawDrivers) {
+        const list = JSON.parse(rawDrivers);
+        if (list && list.length > 0) {
+          driverProfile = list[0];
+        }
+      }
+    } catch(e){}
+  }
+
+  // 2. Si ya hay un perfil de repartidor, activar el modo repartidor inmediatamente
+  if (driverProfile) {
+    const repartidorData = {
+      role: 'repartidor',
+      nombre: driverProfile.nombre || driverProfile.name || 'Repartidor Gas GLP',
+      whatsapp: driverProfile.whatsapp || '74xxxx28',
+      placa: driverProfile.placa || driverProfile.plate || '3842-XYZ',
+      categoria: driverProfile.categoria || driverProfile.category || 'Gas GLP',
+      productos: driverProfile.productos || driverProfile.products || 'Garrafas GLP 10kg',
+      zonas: driverProfile.zonas || driverProfile.zones || 'OTB Central y calles vecinas',
+      schedule: driverProfile.schedule || 'Lunes a Sábado: 07:00 a 18:00'
+    };
+
+    localStorage.setItem('notigas_user_data', JSON.stringify(repartidorData));
+    if (typeof guardarRepartidorEnBaseDeDatos === 'function') {
+      guardarRepartidorEnBaseDeDatos(repartidorData);
+    }
+
+    if (typeof setAppMode === 'function') {
+      setAppMode('driver');
+    }
+
+    const modalAuth = document.getElementById('modalWelcomeAuth');
+    if (modalAuth) modalAuth.style.display = 'none';
+
+    if (typeof showToast === 'function') {
+      showToast('🟢 Modo Repartidor', `Sesión activa: ${repartidorData.nombre}`, 'success', 1000);
+    }
+    return;
+  }
+
+  // 3. Si no existe un perfil previo, desplegar la ventana de registro de Repartidor de inmediato
   const modalAuth = document.getElementById('modalWelcomeAuth');
   if (modalAuth) {
     modalAuth.style.display = 'flex';

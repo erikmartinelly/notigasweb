@@ -199,6 +199,8 @@ function abrirFichaRepartidorEdicion() {
   if (modal) modal.style.display = 'flex';
 }
 
+const abrirEdicionFichaRepartidor = abrirFichaRepartidorEdicion;
+
 function setAppMode(mode) {
   currentAppMode = mode;
   const buyerActions = document.getElementById('buyerFloatingActions');
