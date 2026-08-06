@@ -1,71 +1,26 @@
 /* ==========================================================================
-   NOTIGAS - MÓDULO DE CHAT PRIVADO 1-A-1
+   NOTIGAS - MÓDULO DE CHAT PRIVADO 1-A-1 (Supabase Realtime)
    Cada usuario tiene su propio canal privado con el admin y con repartidores.
    Solo el dueño del chat y el Administrador logueado pueden ver los mensajes.
    ========================================================================== */
 
-const CHAT_EXPIRATION_MS = 48 * 60 * 60 * 1000; // 48 Horas en milisegundos
+let currentChatSubscription = null;
 
-/* Devuelve la clave de localStorage para este chat.
-   - Canal admin (Soporte OTB): clave PRIVADA por usuario, no global.
-   - Admin logueado: puede iterar todos los canales para responder.
-*/
-function getChatHistoryKey(vendorName) {
-  const currentAdmin = sessionStorage.getItem('notigas_admin_session');
-  const isAdmin = currentAdmin && (currentAdmin.includes('erikmartinelly') || currentAdmin.includes('leonmartinelly'));
-
-  // Obtener identificador único del usuario actual
-  let userGmail = 'anonimo';
+function getCurrentUserEmail() {
+  let userEmail = 'anonimo@notigas.com';
   try {
     const saved = localStorage.getItem('notigas_user_data');
     if (saved) {
       const u = JSON.parse(saved);
-      if (u.gmail) userGmail = u.gmail.replace(/[^a-zA-Z0-9]/g, '_');
-      else if (u.nombre) userGmail = u.nombre.replace(/[^a-zA-Z0-9]/g, '_');
+      if (u.gmail) userEmail = u.gmail;
+      else if (u.nombre) userEmail = u.nombre.replace(/[^a-zA-Z0-9]/g, '_') + "@notigas.com";
     }
   } catch(e){}
-
-  // Todos los canales (incluyendo Soporte OTB) son privados por usuario
-  const prefix = `notigas_private_chat_${vendorName}_`;
-
-  if (isAdmin) {
-    // El admin ve el canal del usuario actualmente seleccionado en la lista
-    const selectedUserKey = sessionStorage.getItem('notigas_admin_viewing_user');
-    if (selectedUserKey) return selectedUserKey;
-    // Si no hay usuario seleccionado, buscar el primer canal activo de este vendedor
-    try {
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith(prefix)) return key;
-      }
-    } catch(e){}
-    return `${prefix}sin_mensajes`;
-  }
-
-  return `${prefix}${userGmail}`;
+  return userEmail;
 }
 
-/* Devuelve todos los canales activos de un vendedor (solo para admin) */
-function obtenerCanalesActivosAdmin(vendorName) {
-  const prefix = `notigas_private_chat_${vendorName}_`;
-  const canales = [];
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith(prefix)) {
-        const raw = localStorage.getItem(key);
-        if (raw) {
-          const msgs = JSON.parse(raw);
-          if (msgs.length > 0) {
-            const lastMsg = msgs[msgs.length - 1];
-            const userName = key.replace(prefix, '').replace(/_/g, ' ');
-            canales.push({ key, userName, lastMsg });
-          }
-        }
-      }
-    }
-  } catch(e){}
-  return canales;
+function getChatRoomId(vendorName) {
+  return getCurrentUserEmail(); // Usamos el email del comprador como ID de sala (barrio_otb)
 }
 
 function poblarSelectorVendedoresChat() {
@@ -108,6 +63,10 @@ function abrirFloatingChat() {
 function cerrarFloatingChat() {
   const modal = document.getElementById('modalChat') || document.getElementById('floatingChatWidget');
   if (modal) modal.style.display = 'none';
+  if (currentChatSubscription && window.supabaseClient) {
+    window.supabaseClient.removeChannel(currentChatSubscription);
+    currentChatSubscription = null;
+  }
 }
 
 function minimizarFloatingChat() {
@@ -156,46 +115,62 @@ function abrirChatDirectoVendedor(catNombre) {
   cambiarVendedorChat();
 }
 
-function depurarMensajesExpirados(chatHistory) {
-  const now = Date.now();
-  return chatHistory.filter(msg => (now - msg.timestamp) < CHAT_EXPIRATION_MS);
+function escapeHtmlStr(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
-function cambiarVendedorChat() {
+async function cambiarVendedorChat() {
   const selectVendor = document.getElementById('selectVendorChat');
   const box = document.getElementById('chatMessagesBox');
-  if (!selectVendor || !box) return;
+  if (!selectVendor || !box || !window.supabaseClient) return;
 
   const vendorName = selectVendor.value;
-
   const currentAdmin = sessionStorage.getItem('notigas_admin_session');
   const isAdmin = currentAdmin && (currentAdmin.includes('erikmartinelly') || currentAdmin.includes('leonmartinelly'));
 
-  // --- PANEL DEL ADMIN: mostrar lista de conversaciones activas ---
-  if (isAdmin) {
-    renderAdminChatPanel(vendorName, box);
-    return;
+  // TODO: Panel de Admin completo requiere listar todos los chats de Supabase, lo simplificaremos por ahora a ver el chat seleccionado
+  const roomUserEmail = isAdmin && sessionStorage.getItem('notigas_admin_viewing_user') 
+                        ? sessionStorage.getItem('notigas_admin_viewing_user') 
+                        : getChatRoomId(vendorName);
+
+  box.innerHTML = `<div style="text-align:center; padding:20px; color:#94A3B8;">Cargando mensajes...</div>`;
+
+  // Limpiar suscripción anterior
+  if (currentChatSubscription) {
+    window.supabaseClient.removeChannel(currentChatSubscription);
   }
 
-  // --- USUARIO NORMAL: solo ve su propio chat privado ---
-  const historyKey = getChatHistoryKey(vendorName);
-  let history = [];
-  try {
-    const raw = localStorage.getItem(historyKey);
-    if (raw) history = JSON.parse(raw);
-  } catch(e){}
-  history = depurarMensajesExpirados(history);
-  localStorage.setItem(historyKey, JSON.stringify(history));
+  // Cargar historial
+  const { data, error } = await window.supabaseClient.from('mensajes_chat_privados')
+    .select('*')
+    .eq('categoria_servicio', vendorName)
+    .eq('barrio_otb', roomUserEmail)
+    .order('timestamp', { ascending: true });
+    
+  renderizarMensajes(data || [], box, vendorName);
 
-  let userAlias = 'Cliente (Tú)';
-  try {
-    const saved = localStorage.getItem('notigas_user_data');
-    if (saved) {
-      const u = JSON.parse(saved);
-      if (u.nombre) userAlias = `${u.nombre}${u.apellido ? ' ' + u.apellido[0] + '.' : ''}`;
-    }
-  } catch(e){}
+  // Suscribirse a nuevos mensajes
+  currentChatSubscription = window.supabaseClient.channel('chat_room')
+    .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'mensajes_chat_privados',
+        filter: `categoria_servicio=eq.${vendorName}` 
+    }, payload => {
+        if (payload.new.barrio_otb === roomUserEmail) {
+            appendMensaje(payload.new, box);
+        }
+    })
+    .subscribe();
+}
 
+function renderizarMensajes(history, box, vendorName) {
   const headerNotice = vendorName === 'Soporte OTB'
     ? `<div style="font-size:10px; color:#38BDF8; text-align:center; margin-bottom:8px; background:rgba(56,189,248,0.15); padding:8px 10px; border-radius:10px; border:1px solid rgba(56,189,248,0.4); font-weight:700;">
         🎧 CANAL DE ATENCIÓN DIRECTA CON EL ADMINISTRADOR NOTIGAS<br>
@@ -203,7 +178,7 @@ function cambiarVendedorChat() {
        </div>`
     : `<div style="font-size:10px; color:#FF8F00; text-align:center; margin-bottom:8px; background:rgba(255,109,0,0.14); padding:8px 10px; border-radius:10px; border:1px solid rgba(255,109,0,0.35); font-weight:800;">
         🛡️ CHAT MONITOREADO POR LA ADMINISTRACIÓN<br>
-        <span style="font-size:9.5px; color:#CBD5E1; font-weight:400;">Canal directo con <strong>${escapeHtmlStr(vendorName)}</strong>. Monitoreado por la administración para seguridad de la OTB. Expiración automática a las 48h.</span>
+        <span style="font-size:9.5px; color:#CBD5E1; font-weight:400;">Canal directo con <strong>${escapeHtmlStr(vendorName)}</strong>. Expiración automática a los 7 días.</span>
        </div>`;
 
   let htmlContent = headerNotice;
@@ -212,140 +187,63 @@ function cambiarVendedorChat() {
     htmlContent += `<div style="text-align:center; color:#94A3B8; padding:20px 10px; font-size:11px; background:rgba(30,41,59,0.5); border-radius:10px; margin-top:10px;">
       💬 Aún no hay mensajes. Escribe abajo para iniciar la conversación privada.
     </div>`;
-  }
-
-  history.forEach(m => {
-    const safeName = escapeHtmlStr(m.name || 'Usuario');
-    const safeText = escapeHtmlStr(m.text || '');
-    const safeTime = escapeHtmlStr(m.timeStr || '');
-
-    if (m.sender === 'admin') {
-      htmlContent += `
-        <div class="chat-msg vendor" style="background:linear-gradient(135deg,rgba(180,83,9,0.3),rgba(217,119,6,0.3));border:1px solid #FBBF24;">
-          <b style="color:#FBBF24;">👑 ${safeName}:</b><br>${safeText}
-          <div class="chat-msg-footer"><span class="chat-msg-time">${safeTime}</span></div>
-        </div>`;
-    } else if (m.sender === 'vendor') {
-      htmlContent += `
-        <div class="chat-msg vendor">
-          <b>🚛 ${safeName}:</b><br>${safeText}
-          <div class="chat-msg-footer"><span class="chat-msg-time">${safeTime}</span>
-            <button class="btn-report" onclick="abrirModalDenuncia('Chat Repartidor','Mensaje de ${safeName}')"><i class="fa-solid fa-flag"></i> Denunciar</button>
-          </div>
-        </div>`;
-    } else {
-      htmlContent += `
-        <div class="chat-msg buyer">
-          <b>🏠 ${safeName}:</b><br>${safeText}
-          <div class="chat-msg-footer"><span class="chat-msg-time">${safeTime}</span></div>
-        </div>`;
-    }
-  });
-
-  box.innerHTML = htmlContent;
-  box.scrollTop = box.scrollHeight;
-}
-
-/* Renderiza el panel del administrador: lista de conversaciones activas */
-function renderAdminChatPanel(vendorName, box) {
-  const canales = obtenerCanalesActivosAdmin(vendorName);
-  const selectedKey = sessionStorage.getItem('notigas_admin_viewing_user');
-
-  // Si hay un canal seleccionado por el admin, mostrar esa conversación
-  if (selectedKey) {
-    let history = [];
-    try {
-      const raw = localStorage.getItem(selectedKey);
-      if (raw) history = JSON.parse(raw);
-    } catch(e){}
-    history = depurarMensajesExpirados(history);
-
-    const userName = selectedKey.split(`notigas_private_chat_${vendorName}_`)[1]?.replace(/_/g, ' ') || 'Usuario';
-
-    let html = `
-      <div style="background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.4); border-radius:8px; padding:6px 10px; margin-bottom:8px; font-size:10px; color:#F59E0B; font-weight:700; display:flex; justify-content:space-between; align-items:center;">
-        <span>👑 ADMIN — Conversación con: <strong style="color:#FFF;">${escapeHtmlStr(userName)}</strong></span>
-        <button onclick="sessionStorage.removeItem('notigas_admin_viewing_user'); cambiarVendedorChat();" style="background:rgba(255,255,255,0.1); border:none; color:#CBD5E1; padding:2px 8px; border-radius:4px; cursor:pointer; font-size:10px;">← Volver</button>
-      </div>`;
-
-    if (history.length === 0) {
-      html += `<div style="text-align:center; color:#94A3B8; padding:20px 10px; font-size:11px;">Sin mensajes aún.</div>`;
-    }
-
-    history.forEach(m => {
-      const safeName = escapeHtmlStr(m.name || 'Usuario');
-      const safeText = escapeHtmlStr(m.text || '');
-      const safeTime = escapeHtmlStr(m.timeStr || '');
-      if (m.sender === 'admin') {
-        html += `<div class="chat-msg vendor" style="background:linear-gradient(135deg,rgba(180,83,9,0.3),rgba(217,119,6,0.3));border:1px solid #FBBF24;">
-          <b style="color:#FBBF24;">👑 ${safeName}:</b><br>${safeText}
-          <div class="chat-msg-footer"><span class="chat-msg-time">${safeTime}</span></div>
-        </div>`;
-      } else {
-        html += `<div class="chat-msg buyer">
-          <b>🏠 ${safeName}:</b><br>${safeText}
-          <div class="chat-msg-footer"><span class="chat-msg-time">${safeTime}</span>
-            <button onclick="banearUsuarioAdmin('${safeName}')" style="background:#D32F2F;color:white;border:none;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;cursor:pointer;margin-left:6px;">🚫 Banear</button>
-          </div>
-        </div>`;
-      }
-    });
-
-    box.innerHTML = html;
-    box.scrollTop = box.scrollHeight;
+    box.innerHTML = htmlContent;
     return;
   }
 
-  // Panel inicial del admin: lista de todas las conversaciones activas
-  let html = `
-    <div style="background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.4); border-radius:8px; padding:8px 12px; margin-bottom:10px; font-size:10px; color:#F59E0B; font-weight:700; text-align:center;">
-      👑 PANEL ADMINISTRADOR NOTIGAS<br>
-      <span style="font-size:9px; color:#CBD5E1; font-weight:400;">Conversaciones privadas activas con usuarios</span>
-    </div>`;
-
-  if (canales.length === 0) {
-    html += `<div style="text-align:center; color:#94A3B8; padding:20px 10px; font-size:11px; background:rgba(30,41,59,0.5); border-radius:10px;">
-      📭 No hay conversaciones activas con <strong>${escapeHtmlStr(vendorName)}</strong> aún.
-    </div>`;
-  } else {
-    canales.forEach(c => {
-      const lastText = escapeHtmlStr((c.lastMsg?.text || '').substring(0, 60));
-      const lastSender = c.lastMsg?.sender === 'admin' ? '👑 Admin' : '🏠 ' + escapeHtmlStr(c.lastMsg?.name || 'Usuario');
-      html += `
-        <div onclick="sessionStorage.setItem('notigas_admin_viewing_user','${c.key}'); cambiarVendedorChat();"
-             style="background:rgba(30,41,59,0.8); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:10px 12px; margin-bottom:8px; cursor:pointer; transition:background 0.2s;"
-             onmouseover="this.style.background='rgba(245,158,11,0.12)'" onmouseout="this.style.background='rgba(30,41,59,0.8)'">
-          <div style="font-size:11px; font-weight:700; color:#E2E8F0; margin-bottom:4px;">👤 ${escapeHtmlStr(c.userName)}</div>
-          <div style="font-size:10px; color:#94A3B8;"><span style="color:#CBD5E1; font-weight:600;">${lastSender}:</span> ${lastText}${(c.lastMsg?.text || '').length > 60 ? '...' : ''}</div>
-          <div style="font-size:9px; color:#64748B; margin-top:3px;">⏱ ${c.lastMsg?.timeStr || ''}</div>
-        </div>`;
-    });
-  }
-
-  box.innerHTML = html;
+  box.innerHTML = htmlContent;
+  history.forEach(m => appendMensaje(m, box, false));
+  box.scrollTop = box.scrollHeight;
 }
 
-function enviarMensajeDirecto() {
+function appendMensaje(m, box, scroll = true) {
+  const safeName = escapeHtmlStr(m.alias_protegido || 'Usuario');
+  const safeText = escapeHtmlStr(m.texto || '');
+  const date = new Date(m.timestamp);
+  const safeTime = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  let html = '';
+  if (m.autor_role === 'admin') {
+    html = `
+      <div class="chat-msg vendor" style="background:linear-gradient(135deg,rgba(180,83,9,0.3),rgba(217,119,6,0.3));border:1px solid #FBBF24;">
+        <b style="color:#FBBF24;">👑 ${safeName}:</b><br>${safeText}
+        <div class="chat-msg-footer"><span class="chat-msg-time">${safeTime}</span></div>
+      </div>`;
+  } else if (m.autor_role === 'repartidor') {
+    html = `
+      <div class="chat-msg vendor">
+        <b>🚛 ${safeName}:</b><br>${safeText}
+        <div class="chat-msg-footer"><span class="chat-msg-time">${safeTime}</span></div>
+      </div>`;
+  } else {
+    html = `
+      <div class="chat-msg buyer">
+        <b>🏠 ${safeName}:</b><br>${safeText}
+        <div class="chat-msg-footer"><span class="chat-msg-time">${safeTime}</span></div>
+      </div>`;
+  }
+  
+  box.insertAdjacentHTML('beforeend', html);
+  if (scroll) box.scrollTop = box.scrollHeight;
+}
+
+async function enviarMensajeDirecto() {
   const selectVendor = document.getElementById('selectVendorChat');
   const input = document.getElementById('inputDirectMessage');
-  const box = document.getElementById('chatMessagesBox');
-  if (!selectVendor || !input || !box) return;
+  if (!selectVendor || !input || !window.supabaseClient) return;
 
   const vendorName = selectVendor.value;
   const text = input.value.trim();
   if (!text) return;
 
-  const nowMs = Date.now();
-  const timeStr = new Date(nowMs).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
   const currentAdmin = sessionStorage.getItem('notigas_admin_session');
   const isAdmin = currentAdmin && (currentAdmin.includes('erikmartinelly') || currentAdmin.includes('leonmartinelly'));
 
   let userAlias = 'Cliente (Tú)';
-  let senderType = 'buyer';
+  let senderRole = 'comprador';
 
   if (isAdmin) {
-    senderType = 'admin';
+    senderRole = 'admin';
     userAlias = '👑 Administrador NOTIGAS';
   } else {
     try {
@@ -353,43 +251,37 @@ function enviarMensajeDirecto() {
       if (saved) {
         const u = JSON.parse(saved);
         if (u.nombre) userAlias = `${u.nombre}${u.apellido ? ' ' + u.apellido[0] + '.' : ''}`;
-        if (u.role === 'repartidor') senderType = 'vendor';
+        if (u.role === 'repartidor') senderRole = 'repartidor';
       }
     } catch(e){}
     if (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver') {
-      senderType = 'vendor';
+      senderRole = 'repartidor';
     }
   }
 
-  const historyKey = getChatHistoryKey(vendorName);
-  let history = [];
-  try {
-    const raw = localStorage.getItem(historyKey);
-    if (raw) history = JSON.parse(raw);
-  } catch(e){}
-
-  history.push({ sender: senderType, name: userAlias, text, timeStr, timestamp: nowMs });
-  history = depurarMensajesExpirados(history);
-  localStorage.setItem(historyKey, JSON.stringify(history));
+  const roomUserEmail = isAdmin && sessionStorage.getItem('notigas_admin_viewing_user') 
+                        ? sessionStorage.getItem('notigas_admin_viewing_user') 
+                        : getChatRoomId(vendorName);
 
   input.value = '';
-  cambiarVendedorChat();
+
+  const { error } = await window.supabaseClient.from('mensajes_chat_privados').insert([{
+    categoria_servicio: vendorName,
+    barrio_otb: roomUserEmail,
+    autor_email: getCurrentUserEmail(),
+    autor_role: senderRole,
+    alias_protegido: userAlias,
+    texto: text
+  }]);
+
+  if (error) console.error("Error enviando mensaje:", error);
 }
 
-/* VERIFICACIÓN DE SESIÓN DE ADMINISTRADOR (SIN APERTURA AUTOMÁTICA DE CHAT) */
 function verificarYActivarChatAdminAuto() {
-  let userEmail = '';
-  try {
-    const saved = localStorage.getItem('notigas_user_data');
-    if (saved) {
-      const u = JSON.parse(saved);
-      if (u.gmail) userEmail = u.gmail.toLowerCase().trim();
-    }
-  } catch(e){}
-
+  const email = getCurrentUserEmail();
   const adminEmails = ['erikmartinelly@gmail.com', 'leonmartinelly13@gmail.com'];
-  if (userEmail && adminEmails.includes(userEmail)) {
-    sessionStorage.setItem('notigas_admin_session', userEmail);
+  if (email && adminEmails.includes(email.toLowerCase())) {
+    sessionStorage.setItem('notigas_admin_session', email);
   }
 }
 
@@ -397,21 +289,11 @@ document.addEventListener('DOMContentLoaded', () => {
   verificarYActivarChatAdminAuto();
 });
 
-/* escapeHtmlStr está definida en forum.js (que carga primero) — se elimina aquí para evitar
-   sobreescritura con la versión ligeramente distinta de chat.js. */
-
-/* CHAT PRIVADO DESDE REPARTIDOR HACIA COMPRADOR
-   Abre el widget de chat flotante y selecciona (o crea) el canal del comprador */
 function abrirChatPrivadoConComprador(encodedBuyerName) {
   const buyerName = decodeURIComponent(encodedBuyerName || 'Comprador Vecinal');
-  
-  // Abrir el widget flotante de chat
   abrirFloatingChat();
-
-  // Intentar seleccionar al comprador en el selector de vendedores
   const sel = document.getElementById('selectVendorChat');
   if (sel) {
-    // Buscar si ya existe una opción para este comprador
     let found = false;
     for (let i = 0; i < sel.options.length; i++) {
       if (sel.options[i].value === buyerName || sel.options[i].text.includes(buyerName)) {
@@ -420,8 +302,6 @@ function abrirChatPrivadoConComprador(encodedBuyerName) {
         break;
       }
     }
-
-    // Si no existe, crear la opción del comprador en el selector
     if (!found) {
       const opt = document.createElement('option');
       opt.value = buyerName;
@@ -430,6 +310,5 @@ function abrirChatPrivadoConComprador(encodedBuyerName) {
       sel.value = buyerName;
     }
   }
-
   cambiarVendedorChat();
 }
