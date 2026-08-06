@@ -96,3 +96,9 @@ SELECT cron.schedule('limpiar_chats_viejos', '0 0 * * *', $$
   DELETE FROM public.mensajes_chat_privados 
   WHERE timestamp < NOW() - INTERVAL '7 days';
 $$);
+
+-- Eliminar REPARTIDORES INACTIVOS (Camiones Fantasma) que no actualizaron en las últimas 6 horas (se ejecuta cada hora)
+SELECT cron.schedule('limpiar_camiones_fantasma', '0 * * * *', $$
+  DELETE FROM public.publicaciones 
+  WHERE tipo = 'rutaDistribuidor' AND created_at < NOW() - INTERVAL '6 hours';
+$$);
