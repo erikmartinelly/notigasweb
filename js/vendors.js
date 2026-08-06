@@ -153,31 +153,6 @@ function renderVendorCards(filterCat) {
     }
   }
 
-  // TARJETA OFICIAL DE SERVICIO AL CLIENTE & SOPORTE OTB AL INICIO DEL FEED
-  html += `
-    <div class="vendor-fb-card" style="border: 1px solid rgba(56, 189, 248, 0.4); background: linear-gradient(135deg, rgba(15,23,42,0.9), rgba(2,136,209,0.08));">
-      <div class="vendor-fb-header">
-        <div class="vendor-profile">
-          <div class="vendor-avatar" style="background: rgba(56, 189, 248, 0.2); color: #38BDF8;">🎧</div>
-          <div class="vendor-meta">
-            <span class="vendor-name" style="color: #38BDF8;">Administrador NOTIGAS</span>
-            <span class="vendor-badge-cat" style="background: rgba(56,189,248,0.2); color: #38BDF8;"><i class="fa-solid fa-headset"></i> Soporte Oficial NOTIGAS</span>
-          </div>
-        </div>
-        <span class="ad-badge" style="background: rgba(56,189,248,0.2); color: #38BDF8;">24/7 EN VIVO</span>
-      </div>
-
-      <div class="vendor-fb-body">
-        <div class="vendor-field"><strong>💁 ATENCIÓN AL VECINO:</strong> Consultas sobre el recorrido de camiones, dudas de uso y asistencia técnica en tu OTB.</div>
-        <div class="vendor-field"><strong>🔒 PRIVACIDAD:</strong> Chat privado 1-a-1 encriptado con expiración automática de mensajes a las 48h.</div>
-      </div>
-
-      <div class="vendor-fb-footer">
-        <button class="btn-vendor-chat" style="width: 100%; background: linear-gradient(135deg, #0288D1, #01579B); color: #FFFFFF; font-weight: 900;" onclick="abrirChatSoporteOficial()"><i class="fa-solid fa-comments"></i> 💬 ABRIR CHAT PRIVADO CON SERVICIO AL CLIENTE</button>
-      </div>
-    </div>
-  `;
-
   if (filtered.length === 0) {
     container.innerHTML = html + `
       <div style="text-align:center; color:#94A3B8; padding:40px 14px; font-size:13px; background: #1E293B; border-radius: 14px; border: 1px dashed rgba(255,255,255,0.15); margin-top: 14px;">
@@ -214,7 +189,8 @@ function renderVendorCards(filterCat) {
         </div>
 
         <div class="vendor-fb-footer">
-          <button class="btn-vendor-order" onclick="seleccionarYPedirDirecto(decodeURIComponent('${encodeURIComponent(vendor.category)}'))" style="width:100%;"><i class="fa-solid fa-cart-plus"></i> Pedir Producto</button>
+          <button class="btn-vendor-chat" onclick="abrirChatConRepartidor(decodeURIComponent('${encodeURIComponent(vendor.name)}'), decodeURIComponent('${encodeURIComponent(vendor.category)}'))"><i class="fa-solid fa-comments"></i> 💬 CHAT PRIVADO INTERNO</button>
+          <button class="btn-vendor-order" onclick="seleccionarYPedirDirecto(decodeURIComponent('${encodeURIComponent(vendor.category)}'))"><i class="fa-solid fa-cart-plus"></i> Pedir Producto</button>
         </div>
       </div>
     `;
