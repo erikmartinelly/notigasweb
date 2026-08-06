@@ -49,6 +49,9 @@
     <div class="brand">
       <img src="icons/garrafa_red_clean.svg" class="brand-img" alt="NOTIGAS Logo"> NOTIGAS
     </div>
+    <div id="headerRoleBadge" style="display:flex; align-items:center; gap:6px;">
+      <!-- Renderizado dinámico de badge del rol actual: Comprador vs Repartidor -->
+    </div>
     <div class="header-actions">
       <button class="btn-chat-service" onclick="abrirChatSoporteOficial()" title="Chat de Servicio al Vecino / Soporte" aria-label="Servicio al Vecino">
         <i class="fa-solid fa-headset"></i> Servicio al Vecino
@@ -133,6 +136,7 @@
         </div>
       </div>
 
+      <!-- PANEL DE ACCIONES FLOTANTES EXCLUSIVO PARA COMPRADOR (CLIENTE / VECINO) -->
       <div class="floating-actions-container" id="buyerFloatingActions">
         <button class="btn-cancel-order" id="btnCancelOrder" style="display: none;" onclick="cancelarPedidoActivo()"><i class="fa-solid fa-circle-xmark"></i> ❌ CANCELAR PEDIDO</button>
 
@@ -140,28 +144,31 @@
           <span style="display:inline-flex; align-items:center; gap:8px;">
             <img src="icons/camion_red.svg" style="width:34px; height:34px; object-fit:contain; filter:drop-shadow(0 0 6px rgba(255,23,68,0.9));" alt="Camión NOTIGAS">
           </span>
-          <span>HACER UN PEDIDO</span>
+          <span>🔥 HACER UN PEDIDO</span>
         </button>
         
         <div class="action-row">
           <button class="btn-panic" onclick="lanzarEspecialEsperame()"><i class="fa-solid fa-hand-paper"></i> 🛑 ESPÉRAME</button>
-          <button class="btn-hear-truck" onclick="notificarEscucheCamion()"><i class="fa-solid fa-bell"></i> 🔔 ESCUCHÉ AL CAMIÓN</button>
+          <button class="btn-hear-truck" onclick="notificarEscucheCamion()"><i class="fa-solid fa-bell"></i> 🔔 ESCUCHÉ CAMIÓN</button>
+          <button class="btn-gps-center" onclick="conectarGPSAuto(true)" style="background:#0288D1; color:white; border:none; padding:10px 12px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer;" title="Re-centrar mi ubicación en el mapa"><i class="fa-solid fa-crosshairs"></i> 📍 MI UBICACIÓN</button>
         </div>
       </div>
 
-      <!-- PANEL OPERATIVO FLOTANTE EXCLUSIVO PARA MODO REPARTIDOR (UBER EATS / PEDIDOSYA MODE) -->
+      <!-- PANEL DE ACCIONES FLOTANTES EXCLUSIVO PARA REPARTIDOR (DRIVER / REPARTIDOR MODE) -->
       <div class="floating-actions-container driver-actions-panel" id="driverFloatingActions" style="display: none;">
         <button class="btn-driver-gps-toggle" id="btnDriverGpsToggle" onclick="toggleDriverGpsTransmission()">
           <i class="fa-solid fa-location-arrow"></i> 🟢 INICIAR RECORRIDO EN VIVO (GPS ON)
         </button>
 
-        <button class="btn-driver-heatmap" id="btnDriverHeatmap" onclick="toggleHeatmapOverlay()" style="background: linear-gradient(135deg, #FF6D00 0%, #E65100 100%); color: white; border: 1.5px solid #F59E0B; padding: 12px; border-radius: 12px; font-weight: 900; font-size: 12.5px; cursor: pointer; box-shadow: 0 4px 18px rgba(255,109,0,0.4);">
-          <i class="fa-solid fa-fire"></i> 🔥 MAPA DE CALOR Y ZONAS DE ALTA DEMANDA
+        <!-- BOTÓN PRINCIPAL PROMINENTE: MAPA DE CALOR Y ZONAS DE ALTA DEMANDA -->
+        <button class="btn-driver-heatmap" id="btnDriverHeatmap" onclick="toggleHeatmapOverlay()" style="width: 100%; background: linear-gradient(135deg, #FF6D00 0%, #E65100 100%); color: white; border: 1.5px solid #F59E0B; padding: 14px; border-radius: 14px; font-weight: 900; font-size: 14px; cursor: pointer; box-shadow: 0 4px 22px rgba(255,109,0,0.6), inset 0 1px 0 rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: 0.5px;">
+          <i class="fa-solid fa-fire" style="font-size:16px;"></i> 🔥 MAPA DE CALOR Y ALTA DEMANDA VECINAL
         </button>
 
-        <div class="action-row">
-          <button class="btn-driver-orders-list" onclick="abrirModalDriverOrders()"><i class="fa-solid fa-list-check"></i> 📋 RECIENTES</button>
-          <button class="btn-panorama" onclick="abrirPanoramicaPedidos()" title="Panorámica de pedidos activos"><i class="fa-solid fa-chart-bar"></i> 📊 PEDIDOS</button>
+        <div class="action-row" style="display:flex; gap:6px;">
+          <button class="btn-driver-orders-list" onclick="abrirModalDriverOrders()" style="background:#1E293B; color:white; border:1px solid rgba(255,255,255,0.2); padding:10px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; flex:1;"><i class="fa-solid fa-list-check"></i> 📋 PEDIDOS ZONA</button>
+          <button class="btn-edit-profile" onclick="abrirEdicionFichaRepartidor()" style="background:#0288D1; color:white; border:none; padding:10px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; flex:1;"><i class="fa-solid fa-pen-to-square"></i> ✏️ MI FICHA</button>
+          <button class="btn-switch-buyer" onclick="cerrarSesionRepartidorActivarComprador()" style="background:#D32F2F; color:white; border:none; padding:10px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; flex:1;"><i class="fa-solid fa-cart-shopping"></i> 🛒 COMPRADOR</button>
         </div>
       </div>
     </div>

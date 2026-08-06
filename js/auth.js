@@ -54,6 +54,20 @@ function selectAuthRole(role) {
     btnDriver.classList.toggle('active', role === 'driver');
   }
 
+  // AL SELECCIONAR REPARTIDOR: Activar automáticamente la pestaña de datos por Correo para mostrar los campos de Repartidor de inmediato
+  if (role === 'driver') {
+    selectAuthMethod('email');
+    const submitBtn = document.querySelector('#authPaneEmail .btn-submit');
+    if (submitBtn) {
+      submitBtn.innerHTML = '<i class="fa-solid fa-truck-fast"></i> 🚛 Ingresar / Publicar Ficha de Repartidor';
+    }
+  } else {
+    const submitBtn = document.querySelector('#authPaneEmail .btn-submit');
+    if (submitBtn) {
+      submitBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Ingresar con Correo Electrónico';
+    }
+  }
+
   if (authFieldsBuyer && authFieldsDriver) {
     if (role === 'driver') {
       authFieldsDriver.style.display = 'block';
@@ -271,8 +285,8 @@ function guardarRegistroUnico() {
     const zonas = (document.getElementById('regZonas')?.value || '').trim();
     const schedule = (document.getElementById('regSchedule')?.value || '').trim();
 
-    if (!nombreNegocio || !whatsapp || !placa || !productos || !zonas) {
-      if (typeof showToast === 'function') showToast('⚠️ Ficha Incompleta', 'Completa Nombre, WhatsApp, Placa, Productos y Zonas.', 'warning', 2000);
+    if (!nombreNegocio || !whatsapp) {
+      if (typeof showToast === 'function') showToast('⚠️ Ficha Incompleta', 'Ingresa el Nombre del Repartidor/Negocio y tu WhatsApp.', 'warning', 1000);
       return;
     }
 
@@ -280,10 +294,10 @@ function guardarRegistroUnico() {
       role: 'repartidor',
       nombre: nombreNegocio,
       whatsapp: whatsapp,
-      placa: placa,
-      categoria: categoria,
-      productos: productos,
-      zonas: zonas,
+      placa: placa || 'Placa registrada',
+      categoria: categoria || 'Gas GLP',
+      productos: productos || 'Servicios de reparto a domicilio',
+      zonas: zonas || 'OTB Central y zonas aledañas',
       schedule: schedule || 'Lunes a Sábado: 07:00 a 18:00'
     };
 
@@ -297,7 +311,7 @@ function guardarRegistroUnico() {
       setAppMode('driver');
     }
 
-    if (typeof showToast === 'function') showToast('🟢 Negocio Registrado', `¡Bienvenido Repartidor ${nombreNegocio}!`, 'success', 2000);
+    if (typeof showToast === 'function') showToast('🟢 Bienvenido Repartidor', `¡Sesión activada para ${nombreNegocio}!`, 'success', 1000);
 
     if (typeof renderVendorCards === 'function') {
       renderVendorCards('TODOS');
@@ -495,6 +509,28 @@ function ejecutarEliminacionTotalCuenta() {
   setTimeout(() => {
     window.location.reload();
   }, 400);
+}
+
+function ingresarComoRepartidorDirecto() {
+  try {
+    const saved = localStorage.getItem('notigas_user_data');
+    if (saved) {
+      const u = JSON.parse(saved);
+      if (u.role === 'repartidor') {
+        if (typeof setAppMode === 'function') setAppMode('driver');
+        const modalAuth = document.getElementById('modalWelcomeAuth');
+        if (modalAuth) modalAuth.style.display = 'none';
+        if (typeof showToast === 'function') showToast('🟢 Modo Repartidor', `Sesión activa: ${u.nombre}`, 'success', 1000);
+        return;
+      }
+    }
+  } catch(e){}
+
+  const modalAuth = document.getElementById('modalWelcomeAuth');
+  if (modalAuth) {
+    modalAuth.style.display = 'flex';
+    selectAuthRole('driver');
+  }
 }
 
 const iniciarSesionChofer = iniciarSesionRepartidor;
