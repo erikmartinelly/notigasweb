@@ -1,5 +1,6 @@
 /* ==========================================================================
    NOTIGAS - MÓDULO DE AUTENTICACIÓN & GOOGLE IDENTITY SERVICES (1-TAP SIGN-IN)
+   ========================================================================== */
 function escapeHtmlStr(str) {
   if (typeof str !== 'string') return str || '';
   return str
