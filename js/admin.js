@@ -373,6 +373,18 @@ function ejecutarBorradoRepartidor(vendorId, vendorName) {
     }
   } catch(e){}
 
+  // 3. Añadir a lista negra de borrados para ocultar repartidores por defecto (hardcodeados)
+  try {
+    let deletedIds = [];
+    const rawDeleted = localStorage.getItem('notigas_deleted_vendor_ids');
+    if (rawDeleted) deletedIds = JSON.parse(rawDeleted);
+    
+    if (!deletedIds.includes(vendorId)) {
+      deletedIds.push(vendorId);
+      localStorage.setItem('notigas_deleted_vendor_ids', JSON.stringify(deletedIds));
+    }
+  } catch(e){}
+
   // 3. Limpiar notigas_user_data si coincide con el usuario activo
   try {
     const saved = localStorage.getItem('notigas_user_data');
@@ -466,10 +478,12 @@ function renderAdminVendorsList() {
     }
   });
 
+  const finalVendors = defaultVendors.filter(v => !deletedIds.includes(v.id));
+
   let html = `<div style="font-weight:900; color:#FF6D00; margin-bottom:6px; font-size:11.5px;"><i class="fa-solid fa-truck-fast"></i> 🚛 REPARTIDORES Y NEGOCIOS DEL SISTEMA:</div>`;
 
-  defaultVendors.forEach((v) => {
-    const isBanned = deletedIds.includes(v.id) || esRepartidorBaneado(v.name, v.plate, v.whatsapp);
+  finalVendors.forEach((v) => {
+    const isBanned = esRepartidorBaneado(v.name, v.plate, v.whatsapp);
     html += `
       <div style="background:#1E293B; padding:10px 12px; border-radius:10px; border:1px solid ${isBanned ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.08)'}; display:flex; justify-content:space-between; align-items:center; opacity: ${isBanned ? '0.7' : '1'}; margin-bottom:6px;">
         <div>
@@ -880,6 +894,47 @@ function descargarFichasRepartidoresCSV() {
   document.body.removeChild(link);
 
   alert(`📥 DESCARGA COMPLETADA EN FORMATO .CSV\n\nSe exportaron ${driversList.length} Fichas de Repartidores registradas para el panel de administración.`);
+}
+
+/* DESCARGA COMPLETA DE ESTADÍSTICAS GENERALES (.CSV) */
+function descargarEstadisticasGeneralesCSV() {
+  let currentAdmin = sessionStorage.getItem('notigas_admin_session');
+  
+  if (!currentAdmin || !AUTHORIZED_ADMIN_EMAILS.includes(currentAdmin.toLowerCase())) {
+    alert("⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña.");
+    abrirModalAdminLogin();
+    return;
+  }
+
+  const elUsers = document.getElementById('adminKpiUsers');
+  const elVendors = document.getElementById('adminKpiVendors');
+  const elOrders = document.getElementById('adminKpiOrders');
+  const elReports = document.getElementById('adminKpiReports');
+
+  const usersCount = elUsers ? elUsers.innerText : '0';
+  const vendorsCount = elVendors ? elVendors.innerText : '0';
+  const ordersCount = elOrders ? elOrders.innerText : '0';
+  const reportsCount = elReports ? elReports.innerText : '0';
+  const fechaHoy = new Date().toISOString().split('T')[0];
+
+  let csvRows = ["Metrica,Valor,Fecha"];
+  csvRows.push(`"Usuarios Totales","${usersCount}","${fechaHoy}"`);
+  csvRows.push(`"Repartidores Activos","${vendorsCount}","${fechaHoy}"`);
+  csvRows.push(`"Pedidos del Dia","${ordersCount}","${fechaHoy}"`);
+  csvRows.push(`"Denuncias Emitidas","${reportsCount}","${fechaHoy}"`);
+
+  const csvString = "\uFEFF" + csvRows.join("\n");
+  const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", `estadisticas_generales_notigas_${fechaHoy}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  alert(`📥 DESCARGA COMPLETADA EN FORMATO .CSV\n\nSe exportaron las estadísticas generales del sistema para su visualización en Google Sheets/Excel.`);
 }
 
 /* MODERACIÓN DE DENUNCIAS Y GESTIÓN DE BANEOS DE USUARIOS */

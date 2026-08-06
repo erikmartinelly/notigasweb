@@ -28,8 +28,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <!-- CÓDIGO OFICIAL GOOGLE ADSENSE -->
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2502415561017945" crossorigin="anonymous"></script>
+  <!-- PUBLICIDAD: AdSense se inyectará dinámicamente en su contenedor, sin usar Auto-Ads que rompen la app -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -215,14 +214,20 @@
 
   <!-- BANNER INFERIOR DE PUBLICIDAD DISCRETA -->
   <footer class="ad-banner-container">
-    <div class="ad-banner-content" onclick="abrirAnuncioWhatsApp()">
+    <!-- CONTENEDOR 1: PUBLICIDAD LOCAL -->
+    <div id="localAdContent" class="ad-banner-content" onclick="abrirAnuncioWhatsApp()">
       <span class="ad-badge"><i class="fa-solid fa-rectangle-ad"></i> Sponsor OTB</span>
       <div class="ad-text-box">
-        <div class="ad-title" id="adTitleText">📢 Espacio de Publicidad Local & Google Adsense</div>
+        <div class="ad-title" id="adTitleText">📢 Espacio de Publicidad Local</div>
         <div class="ad-subtext" id="adText">Servicios técnicos & Comercio verificado en la OTB • Haz clic para contactar</div>
       </div>
+      <button class="btn-ad-contact"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver Anuncio</button>
     </div>
-    <button class="btn-ad-contact" onclick="abrirAnuncioWhatsApp()"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver Anuncio</button>
+
+    <!-- CONTENEDOR 2: GOOGLE ADSENSE -->
+    <div id="adsenseContent" style="display: none; width: 100%; height: 60px; overflow: hidden; border-radius: 10px; text-align: center;">
+      <!-- AdSense se inyectará aquí -->
+    </div>
   </footer>
 
   <!-- MODAL MENÚ GENERAL - CONTENIDO DINÁMICO SEGÚN ROL -->
@@ -366,7 +371,7 @@
 
   <!-- MODAL ADMINISTRADOR EXCLUSIVO (ACCESO PROTEGIDO CON USUARIO Y CONTRASEÑA OBLIGATORIOS) -->
   <div class="modal" id="modalAdmin">
-    <div class="modal-content" style="max-width: 520px;">
+    <div class="modal-content" style="max-width: 850px; width: 95%;">
       <div class="modal-title">
         <span><i class="fa-solid fa-user-shield"></i> Área de Administración NOTIGAS</span>
         <button class="btn-close" onclick="closeAdminModal()">✕</button>
@@ -375,7 +380,7 @@
       <!-- PANTALLA 1: FORMULARIO DE ACCESO OBLIGATORIO CON USUARIO Y CONTRASEÑA -->
       <div id="adminLoginScreen">
         <p style="font-size: 11px; color: #94A3B8; margin-bottom: 12px; text-align: center;">
-          🔒 Acceso protegido. Ingresa tus credenciales de Administrador para desbloquear la gestión del sistema:
+          🔐 Acceso protegido. Ingresa tus credenciales de Administrador para desbloquear la gestión del sistema:
         </p>
         <div class="form-group">
           <label>Usuario / Correo Gmail Administrador:</label>
@@ -389,153 +394,165 @@
       </div>
 
       <!-- PANTALLA 2: DASHBOARD DE ADMINISTRACIÓN (SOLO VISIBLE TRAS AUTENTICARSE) -->
-      <div id="adminDashboardScreen" style="display: none;">
-        <div class="modal-tab-nav" style="overflow-x: auto; display: flex; gap: 4px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 6px; margin-bottom: 10px;">
-          <button class="modal-tab-btn active" onclick="switchModalTab(0)"><i class="fa-solid fa-chart-line"></i> Métricas</button>
-          <button class="modal-tab-btn" onclick="switchModalTab(1)"><i class="fa-solid fa-store"></i> Repartidores</button>
-          <button class="modal-tab-btn" onclick="switchModalTab(2)"><i class="fa-solid fa-boxes-packing"></i> Pedidos</button>
-          <button class="modal-tab-btn" onclick="switchModalTab(3)"><i class="fa-solid fa-rectangle-ad"></i> Anuncios</button>
-          <button class="modal-tab-btn" onclick="switchModalTab(4)"><i class="fa-solid fa-shield-halved"></i> Moderación</button>
-          <button class="modal-tab-btn" onclick="switchModalTab(5)"><i class="fa-solid fa-file-csv"></i> Exportar</button>
+      <div id="adminDashboardScreen" style="display: none; flex-direction: row; gap: 15px; align-items: stretch; margin-top: 10px;">
+        
+        <!-- SIDEBAR IZQUIERDO DE NAVEGACIÓN -->
+        <div class="modal-tab-nav" style="flex: 0 0 160px; display: flex; flex-direction: column; gap: 8px; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 12px;">
+          <button class="modal-tab-btn active" style="text-align:left; width:100%; justify-content:flex-start;" onclick="switchModalTab(0)"><i class="fa-solid fa-chart-line" style="width:20px;"></i> Métricas</button>
+          <button class="modal-tab-btn" style="text-align:left; width:100%; justify-content:flex-start;" onclick="switchModalTab(1)"><i class="fa-solid fa-store" style="width:20px;"></i> Repartidores</button>
+          <button class="modal-tab-btn" style="text-align:left; width:100%; justify-content:flex-start;" onclick="switchModalTab(2)"><i class="fa-solid fa-boxes-packing" style="width:20px;"></i> Pedidos</button>
+          <button class="modal-tab-btn" style="text-align:left; width:100%; justify-content:flex-start;" onclick="switchModalTab(3)"><i class="fa-solid fa-rectangle-ad" style="width:20px;"></i> Anuncios</button>
+          <button class="modal-tab-btn" style="text-align:left; width:100%; justify-content:flex-start;" onclick="switchModalTab(4)"><i class="fa-solid fa-shield-halved" style="width:20px;"></i> Moderación</button>
+          <button class="modal-tab-btn" style="text-align:left; width:100%; justify-content:flex-start;" onclick="switchModalTab(5)"><i class="fa-solid fa-file-csv" style="width:20px;"></i> Exportar</button>
         </div>
 
-        <!-- SUBMENÚ 0: MÉTRICAS EN VIVO, AVISO GENERAL & PURGA DE BD -->
-        <div class="modal-tab-pane active" id="modalPane0">
-          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px;">
-            <div style="background: rgba(14,165,233,0.15); border: 1px solid rgba(14,165,233,0.3); border-radius: 10px; padding: 8px 10px; text-align: center;">
-              <div style="font-size: 10px; color: #38BDF8; font-weight: 700;">👥 VECINOS / USUARIOS</div>
-              <div id="adminKpiUsers" style="font-size: 20px; font-weight: 900; color: white;">0</div>
-            </div>
-            <div style="background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); border-radius: 10px; padding: 8px 10px; text-align: center;">
-              <div style="font-size: 10px; color: #FBBF24; font-weight: 700;">🚛 REPARTIDORES</div>
-              <div id="adminKpiVendors" style="font-size: 20px; font-weight: 900; color: white;">0</div>
-            </div>
-            <div style="background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); border-radius: 10px; padding: 8px 10px; text-align: center;">
-              <div style="font-size: 10px; color: #34D399; font-weight: 700;">📦 PEDIDOS ACTIVOS</div>
-              <div id="adminKpiOrders" style="font-size: 20px; font-weight: 900; color: white;">0</div>
-            </div>
-            <div style="background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); border-radius: 10px; padding: 8px 10px; text-align: center;">
-              <div style="font-size: 10px; color: #F87171; font-weight: 700;">🚨 DENUNCIAS OPEN</div>
-              <div id="adminKpiReports" style="font-size: 20px; font-weight: 900; color: white;">0</div>
-            </div>
-          </div>
-
-          <div style="background: #0F172A; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 10px;">
-            <label style="font-size: 11px; font-weight: 700; color: #FF6D00;"><i class="fa-solid fa-bullhorn"></i> Emitir Alerta / Comunicado Oficial OTB:</label>
-            <div style="display: flex; gap: 6px; margin-top: 6px;">
-              <input type="text" id="inputAdminBroadcastMsg" placeholder="Ej: AVISO OTB: Camión Cisterna en la plaza principal..." style="flex: 1; padding: 8px; font-size: 11px; border-radius: 6px; background: #1E293B; border: 1px solid rgba(255,255,255,0.1); color: white;">
-              <button onclick="emitirAlertaOficialAdmin()" style="background: #FF6D00; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: 700; font-size: 11px; cursor: pointer;">Emitir</button>
-            </div>
-          </div>
-
-          <button onclick="ejecutarPurgaBaseDeDatosManual()" style="width: 100%; background: rgba(239,68,68,0.2); color: #F87171; border: 1px solid rgba(239,68,68,0.4); padding: 8px; border-radius: 8px; font-weight: 700; font-size: 11px; cursor: pointer;">
-            <i class="fa-solid fa-broom"></i> Ejecutar Purga Manual de Base de Datos y Caché
-          </button>
-        </div>
-
-        <!-- SUBMENÚ 1: GESTIÓN DE REPARTIDORES -->
-        <div class="modal-tab-pane" id="modalPane1">
-          <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Listado de Repartidores Registrados y Fichas de Negocio:</p>
-          <div id="adminVendorsListContainer" style="max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
-            <!-- Renderizado dinámico de repartidores -->
-          </div>
-        </div>
-
-        <!-- SUBMENÚ 2: MONITOR DE PEDIDOS VECINALES EN VIVO -->
-        <div class="modal-tab-pane" id="modalPane2">
-          <button style="width: 100%; background: linear-gradient(135deg, #FF6D00, #E65100); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 900; font-size: 12px; cursor: pointer; box-shadow: 0 4px 14px rgba(255,109,0,0.5); display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px;" onclick="activarMapaCalorAdminLive()">
-            <i class="fa-solid fa-fire"></i> 🔥 VER PEDIDOS EN VIVO EN EL MAPA (ZONAS DE CALOR)
-          </button>
+        <!-- CONTENIDO DERECHO -->
+        <div style="flex: 1; overflow-y: auto; max-height: 65vh; padding-right: 8px;">
           
-          <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Monitor en Tiempo Real de Solicitudes y Pedidos Vecinales:</p>
-          <div id="adminOrdersMonitorContainer" style="max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
-            <!-- Renderizado dinámico de pedidos -->
+          <!-- SUBMENÚ 0: MÉTRICAS EN VIVO, AVISO GENERAL & PURGA DE BD -->
+          <div class="modal-tab-pane active" id="modalPane0">
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px;">
+              <div style="background: rgba(14,165,233,0.15); border: 1px solid rgba(14,165,233,0.3); border-radius: 10px; padding: 12px; text-align: center;">
+                <div style="font-size: 10px; color: #38BDF8; font-weight: 700; margin-bottom: 4px;">👥 VECINOS / USUARIOS</div>
+                <div id="adminKpiUsers" style="font-size: 24px; font-weight: 900; color: white;">0</div>
+              </div>
+              <div style="background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); border-radius: 10px; padding: 12px; text-align: center;">
+                <div style="font-size: 10px; color: #FBBF24; font-weight: 700; margin-bottom: 4px;">🚚 REPARTIDORES</div>
+                <div id="adminKpiVendors" style="font-size: 24px; font-weight: 900; color: white;">0</div>
+              </div>
+              <div style="background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); border-radius: 10px; padding: 12px; text-align: center;">
+                <div style="font-size: 10px; color: #34D399; font-weight: 700; margin-bottom: 4px;">📦 PEDIDOS ACTIVOS</div>
+                <div id="adminKpiOrders" style="font-size: 24px; font-weight: 900; color: white;">0</div>
+              </div>
+              <div style="background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); border-radius: 10px; padding: 12px; text-align: center;">
+                <div style="font-size: 10px; color: #F87171; font-weight: 700; margin-bottom: 4px;">🚨 DENUNCIAS OPEN</div>
+                <div id="adminKpiReports" style="font-size: 24px; font-weight: 900; color: white;">0</div>
+              </div>
+            </div>
+
+            <div style="background: #0F172A; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 10px;">
+              <label style="font-size: 11px; font-weight: 700; color: #FF6D00;"><i class="fa-solid fa-bullhorn"></i> Emitir Alerta / Comunicado Oficial OTB:</label>
+              <div style="display: flex; gap: 6px; margin-top: 6px;">
+                <input type="text" id="inputAdminBroadcastMsg" placeholder="Ej: AVISO OTB: Camión Cisterna en la plaza principal..." style="flex: 1; padding: 8px; font-size: 11px; border-radius: 6px; background: #1E293B; border: 1px solid rgba(255,255,255,0.1); color: white;">
+                <button onclick="emitirAlertaOficialAdmin()" style="background: #FF6D00; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: 700; font-size: 11px; cursor: pointer;">Emitir</button>
+              </div>
+            </div>
+
+            <button onclick="ejecutarPurgaBaseDeDatosManual()" style="width: 100%; background: rgba(239,68,68,0.2); color: #F87171; border: 1px solid rgba(239,68,68,0.4); padding: 8px; border-radius: 8px; font-weight: 700; font-size: 11px; cursor: pointer; margin-bottom: 8px;">
+              <i class="fa-solid fa-broom"></i> Ejecutar Purga Manual de Base de Datos y Caché
+            </button>
+            <button style="width: 100%; background: #991B1B; color: white; border: none; padding: 8px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer;" onclick="restaurarBaseDatosPorDefecto()">
+              <i class="fa-solid fa-database"></i> Restaurar Base de Datos por Defecto (Quitar Baneos)
+            </button>
+          </div>
+
+          <!-- SUBMENÚ 1: GESTIÓN DE REPARTIDORES -->
+          <div class="modal-tab-pane" id="modalPane1">
+            <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Listado de Repartidores Registrados y Fichas de Negocio:</p>
+            <div id="adminVendorsListContainer" style="max-height: 350px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
+              <!-- Renderizado dinámico de repartidores -->
+            </div>
+          </div>
+
+          <!-- SUBMENÚ 2: MONITOR DE PEDIDOS VECINALES EN VIVO -->
+          <div class="modal-tab-pane" id="modalPane2">
+            <button style="width: 100%; background: linear-gradient(135deg, #FF6D00, #E65100); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 900; font-size: 12px; cursor: pointer; box-shadow: 0 4px 14px rgba(255,109,0,0.5); display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px;" onclick="activarMapaCalorAdminLive()">
+              <i class="fa-solid fa-fire"></i> 🔥 VER PEDIDOS EN VIVO EN EL MAPA (ZONAS DE CALOR)
+            </button>
+            
+            <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Monitor en Tiempo Real de Solicitudes y Pedidos Vecinales:</p>
+            <div id="adminOrdersMonitorContainer" style="max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
+              <!-- Renderizado dinámico de pedidos -->
+            </div>
+          </div>
+
+          <!-- SUBMENÚ 3: CONFIGURACIÓN DE PUBLICIDAD, IMÁGENES & ADSENSE -->
+          <div class="modal-tab-pane" id="modalPane3">
+            <div class="form-group">
+              <label>ID de Cliente Google AdSense (ca-pub-xxxxxxxx):</label>
+              <input type="text" id="inputAdsenseId" value="ca-pub-2502415561017945" placeholder="ca-pub-2502415561017945">
+            </div>
+            <div class="form-group">
+              <label>ID de Slot de Anuncio Google AdSense (data-ad-slot):</label>
+              <input type="text" id="inputAdsenseSlotId" value="1234567890" placeholder="1234567890">
+            </div>
+            <div class="form-group">
+              <label>Modo de Publicidad:</label>
+              <select id="inputAdsenseMode" style="font-size: 12px; padding: 8px; width: 100%;">
+                <option value="custom">🖼️ Anuncio Local Personalizado (Imagen o Texto)</option>
+                <option value="adsense">🌐 Google AdSense Automático (Código Publicitario)</option>
+              </select>
+            </div>
+            <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 12px 0;">
+            <div class="form-group">
+              <label>📸 Subir Imagen Banner para Anuncio Local (PNG/JPG):</label>
+              <input type="file" id="inputAdImageFile" accept="image/*" onchange="previewUploadAdImage(event)" style="font-size:11px; background:#1E293B; padding:6px; border-radius:6px; color:white; width:100%;">
+              <div id="adImagePreviewBox" style="margin-top:8px; display:none; align-items:center; gap:10px;">
+                <img id="adImagePreview" style="max-height:60px; max-width:200px; border-radius:6px; border:1px solid #FF6D00; object-fit:cover;">
+                <button type="button" onclick="eliminarImagenAnuncio()" style="background:#D32F2F; color:white; border:none; padding:4px 8px; border-radius:4px; font-weight:700; font-size:10px; cursor:pointer;">✕ Eliminar Imagen</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Texto del Anuncio Nativo Intercalado en Feed:</label>
+              <input type="text" id="inputAdText" value="Promociona tu negocio o servicio profesional directamente en tu OTB">
+            </div>
+            <div class="form-group">
+              <label>Enlace WhatsApp / Web del Anuncio:</label>
+              <input type="text" id="inputAdUrl" value="https://wa.me/59174xxxx28?text=Hola!%20Deseo%20publicar%20mi%20anuncio%20en%20NOTIGAS">
+            </div>
+            <button class="btn-submit" onclick="guardarSubmenuAnuncios()"><i class="fa-solid fa-floppy-disk"></i> Guardar Configuración de Publicidad</button>
+
+            <div style="background-color: #0F172A; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.08); margin-top: 12px;">
+              <h4 style="font-size: 12px; color: #FF6D00; margin-bottom: 8px;"><i class="fa-solid fa-rectangle-ad"></i> Anuncios y Avisos OTB Publicados (Tab 3):</h4>
+              <div id="adminAdsListContainer" style="max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
+                <!-- Renderizado dinámico de anuncios y avisos -->
+              </div>
+            </div>
+          </div>
+
+          <!-- SUBMENÚ 4: MODERACIÓN, DENUNCIAS Y BANEOS -->
+          <div class="modal-tab-pane" id="modalPane4">
+            <p style="font-size: 11px; color: #94A3B8; margin-bottom: 10px;">Gestión de Denuncias por Spam/Acoso y Lista de Usuarios Baneados:</p>
+            
+            <div style="background-color: #0F172A; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 12px;">
+              <h4 style="font-size: 12px; color: #FF6D00; margin-bottom: 8px;"><i class="fa-solid fa-flag"></i> Denuncias Pendientes de Moderación:</h4>
+              <div id="adminReportsContainer" style="max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
+                <!-- Renderizado dinámico de denuncias -->
+              </div>
+            </div>
+
+            <div style="background-color: #0F172A; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 12px;">
+              <h4 style="font-size: 12px; color: #38BDF8; margin-bottom: 8px;"><i class="fa-solid fa-comments"></i> 🛡️ Inspección de Chats Privados en Vivo:</h4>
+              <div id="adminChatInspectorContainer" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
+                <!-- Renderizado dinámico de inspección de chats -->
+              </div>
+            </div>
+
+            <div style="background-color: #0F172A; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.08);">
+              <h4 style="font-size: 12px; color: #EF4444; margin-bottom: 8px;"><i class="fa-solid fa-user-slash"></i> Banear Usuario / Repartidor Manualmente:</h4>
+              <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+                <input type="text" id="inputBanIdentifier" placeholder="Correo, Nombre o Placa a banear..." style="flex:1; padding: 8px; font-size: 11px; border-radius: 6px; background: #1E293B; border: 1px solid rgba(255,255,255,0.1); color: white;">
+                <button onclick="banearUsuarioAdmin()" style="background-color: #D32F2F; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: 700; font-size: 11px; cursor: pointer;">Banear</button>
+              </div>
+              <div id="adminBannedList" style="max-height: 100px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; font-size: 10px; color: #94A3B8;">
+                <!-- Renderizado dinámico de baneados -->
+              </div>
+            </div>
+          </div>
+
+          <!-- SUBMENÚ 5: EXPORTACIÓN DE CORREOS Y REGISTROS CSV -->
+          <div class="modal-tab-pane" id="modalPane5">
+            <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Exportación de Datos del Sistema en Formato .CSV para Excel / Google Sheets:</p>
+            <button class="btn-csv-download" style="width:100%; text-align:left; background: linear-gradient(135deg, #475569, #334155); margin-bottom: 8px;" onclick="descargarListaCorreosCSV()"><i class="fa-solid fa-download"></i> 📥 Descargar Lista de Correos Gmail (.CSV)</button>
+            <button class="btn-csv-download" style="width:100%; text-align:left; background: linear-gradient(135deg, #059669, #10B981); margin-bottom: 8px;" onclick="descargarFichasRepartidoresCSV()"><i class="fa-solid fa-file-excel"></i> 📥 Descargar Fichas de Repartidores (.CSV)</button>
+            <button class="btn-csv-download" style="width:100%; text-align:left; background: linear-gradient(135deg, #2563EB, #1D4ED8); margin-bottom: 8px;" onclick="descargarEstadisticasGeneralesCSV()"><i class="fa-solid fa-chart-line"></i> 📈 Descargar Estadísticas Generales (.CSV)</button>
           </div>
         </div>
+      </div>
 
-        <!-- SUBMENÚ 3: CONFIGURACIÓN DE PUBLICIDAD, IMÁGENES & ADSENSE -->
-        <div class="modal-tab-pane" id="modalPane3">
-          <div class="form-group">
-            <label>ID de Cliente Google AdSense (ca-pub-xxxxxxxx):</label>
-            <input type="text" id="inputAdsenseId" value="ca-pub-2502415561017945" placeholder="ca-pub-2502415561017945">
-          </div>
-          <div class="form-group">
-            <label>ID de Slot de Anuncio Google AdSense (data-ad-slot):</label>
-            <input type="text" id="inputAdsenseSlotId" value="1234567890" placeholder="1234567890">
-          </div>
-          <div class="form-group">
-            <label>Modo de Publicidad:</label>
-            <select id="inputAdsenseMode">
-              <option value="custom">🖼️ Anuncio Local Personalizado (Imagen o Texto)</option>
-              <option value="adsense">🌐 Google AdSense Automático (Código Publicitario)</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>🖼️ Subir Imagen Banner para Anuncio Local (PNG/JPG):</label>
-            <input type="file" id="inputAdImageFile" accept="image/*" onchange="previewUploadAdImage(event)" style="font-size:11px; background:#1E293B; padding:6px; border-radius:6px; color:white; width:100%;">
-            <div id="adImagePreviewBox" style="margin-top:8px; display:none; align-items:center; gap:10px;">
-              <img id="adImagePreview" style="max-height:60px; max-width:200px; border-radius:6px; border:1px solid #FF6D00; object-fit:cover;">
-              <button type="button" onclick="eliminarImagenAnuncio()" style="background:#D32F2F; color:white; border:none; padding:4px 8px; border-radius:4px; font-weight:700; font-size:10px; cursor:pointer;">✕ Eliminar Imagen</button>
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Texto del Anuncio Nativo Intercalado en Feed:</label>
-            <input type="text" id="inputAdText" value="Promociona tu negocio o servicio profesional directamente en tu OTB">
-          </div>
-          <div class="form-group">
-            <label>Enlace WhatsApp / Web del Anuncio:</label>
-            <input type="text" id="inputAdUrl" value="https://wa.me/59174xxxx28?text=Hola!%20Deseo%20publicar%20mi%20anuncio%20en%20NOTIGAS">
-          </div>
-          <button class="btn-submit" onclick="guardarSubmenuAnuncios()"><i class="fa-solid fa-floppy-disk"></i> Guardar Configuración de Publicidad</button>
-
-          <div style="background-color: #0F172A; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.08); margin-top: 12px;">
-            <h4 style="font-size: 12px; color: #FF6D00; margin-bottom: 8px;"><i class="fa-solid fa-rectangle-ad"></i> Anuncios y Avisos OTB Publicados (Tab 3):</h4>
-            <div id="adminAdsListContainer" style="max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
-              <!-- Renderizado dinámico de anuncios y avisos -->
-            </div>
-          </div>
-        </div>
-
-        <!-- SUBMENÚ 4: MODERACIÓN, DENUNCIAS Y BANEOS -->
-        <div class="modal-tab-pane" id="modalPane4">
-          <p style="font-size: 11px; color: #94A3B8; margin-bottom: 10px;">Gestión de Denuncias por Spam/Acoso y Lista de Usuarios Baneados:</p>
-          
-          <div style="background-color: #0F172A; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 12px;">
-            <h4 style="font-size: 12px; color: #FF6D00; margin-bottom: 8px;"><i class="fa-solid fa-flag"></i> Denuncias Pendientes de Moderación:</h4>
-            <div id="adminReportsContainer" style="max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
-              <!-- Renderizado dinámico de denuncias -->
-            </div>
-          </div>
-
-          <div style="background-color: #0F172A; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 12px;">
-            <h4 style="font-size: 12px; color: #38BDF8; margin-bottom: 8px;"><i class="fa-solid fa-comments"></i> 🛡️ Inspección de Chats Privados en Vivo:</h4>
-            <div id="adminChatInspectorContainer" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
-              <!-- Renderizado dinámico de inspección de chats -->
-            </div>
-          </div>
-
-          <div style="background-color: #0F172A; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.08);">
-            <h4 style="font-size: 12px; color: #EF4444; margin-bottom: 8px;"><i class="fa-solid fa-user-slash"></i> Banear Usuario / Repartidor Manualmente:</h4>
-            <div style="display: flex; gap: 6px; margin-bottom: 8px;">
-              <input type="text" id="inputBanIdentifier" placeholder="Correo, Nombre o Placa a banear..." style="flex:1; padding: 8px; font-size: 11px; border-radius: 6px; background: #1E293B; border: 1px solid rgba(255,255,255,0.1); color: white;">
-              <button onclick="banearUsuarioAdmin()" style="background-color: #D32F2F; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: 700; font-size: 11px; cursor: pointer;">Banear</button>
-            </div>
-            <div id="adminBannedList" style="max-height: 100px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; font-size: 10px; color: #94A3B8;">
-              <!-- Renderizado dinámico de baneados -->
-            </div>
-          </div>
-        </div>
-
-        <!-- SUBMENÚ 5: EXPORTACIÓN DE CORREOS Y REGISTROS CSV -->
-        <div class="modal-tab-pane" id="modalPane5">
-          <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Exportación de Datos del Sistema en Formato .CSV para Excel / Google Sheets:</p>
-          <button class="btn-csv-download" onclick="descargarListaCorreosCSV()"><i class="fa-solid fa-download"></i> 📥 Descargar Lista de Correos Gmail (.CSV)</button>
-          <button class="btn-csv-download" style="background: linear-gradient(135deg, #059669, #10B981); margin-top: 8px;" onclick="descargarFichasRepartidoresCSV()"><i class="fa-solid fa-file-excel"></i> 📥 Descargar Fichas de Repartidores (.CSV)</button>
-        </div>
-
-        <button style="width:100%; background:none; border:1px solid rgba(255,255,255,0.15); color:#94A3B8; padding:8px; border-radius:8px; margin-top:14px; cursor:pointer; font-size:11px;" onclick="cerrarSesionAdminControl()">
-          <i class="fa-solid fa-lock"></i> Cerrar Sesión de Administrador
-        </button>
+      <button style="width:100%; background:none; border:1px solid rgba(255,255,255,0.15); color:#94A3B8; padding:8px; border-radius:8px; margin-top:14px; cursor:pointer; font-size:11px;" onclick="cerrarSesionAdminControl()">
+        <i class="fa-solid fa-lock"></i> Cerrar Sesión Segura de Administrador
+      </button>
       </div>
     </div>
   </div>
@@ -617,18 +634,18 @@
           </div>
           <div class="form-group">
             <label>Tipo de REPARTIDOR:</label>
-            <select id="regCategoriaNegocio">
+            <select id="regCategoriaNegocio" onchange="document.getElementById('groupRegProductos').style.display = (this.value === 'Otros') ? 'block' : 'none';">
               <option value="Gas GLP">🔥 Gas GLP</option>
               <option value="Detergentes">🧼 Detergentes & Limpieza</option>
               <option value="Chatarra">♻️ Chatarra</option>
               <option value="Papel">📄 Papel / Reciclaje</option>
               <option value="Frutas">🍎 Frutas & Verduras</option>
-              <option value="Otros">📦 Otros</option>
+              <option value="Otros">📦 Otros (Especificar)</option>
             </select>
           </div>
-          <div class="form-group">
+          <div class="form-group" id="groupRegProductos" style="display: none;">
             <label>¿Qué Vende / Oferta?:</label>
-            <input type="text" id="regProductos" placeholder="Ej: Garrafas GLP 10kg, mangueras, reguladores">
+            <input type="text" id="regProductos" placeholder="Ej: Carbón, Leña, Masitas, Pan...">
           </div>
           <div class="form-group">
             <label>Zonas de Recorrido:</label>

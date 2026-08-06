@@ -57,17 +57,37 @@ function eliminarImagenAnuncio() {
   if (typeof showToast === 'function') showToast('🗑️ Imagen Eliminada', 'Imagen de anuncio eliminada.', 'info', 1000);
 }
 
-function inyectarGoogleAdsenseScript(pubId) {
+function inyectarGoogleAdsenseScript(pubId, slotId) {
   if (!pubId || !pubId.startsWith('ca-pub-')) return;
-  if (document.getElementById('adsenseScriptTag')) return;
+  
+  // 1. Inyectar el script de AdSense si no existe
+  if (!document.getElementById('adsenseScriptTag')) {
+    const script = document.createElement('script');
+    script.id = 'adsenseScriptTag';
+    script.async = true;
+    script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${pubId}`;
+    script.crossOrigin = "anonymous";
+    document.head.appendChild(script);
+    console.log("🌐 Google AdSense Script inyectado con éxito:", pubId);
+  }
 
-  const script = document.createElement('script');
-  script.id = 'adsenseScriptTag';
-  script.async = true;
-  script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${pubId}`;
-  script.crossOrigin = "anonymous";
-  document.head.appendChild(script);
-  console.log("🌐 Google AdSense Script inyectado con éxito:", pubId);
+  // 2. Renderizar el bloque de anuncio en el espacio asignado
+  const localContent = document.getElementById('localAdContent');
+  const adsenseContent = document.getElementById('adsenseContent');
+  
+  if (localContent && adsenseContent) {
+    localContent.style.display = 'none';
+    adsenseContent.style.display = 'block';
+    adsenseContent.innerHTML = `
+      <ins class="adsbygoogle"
+           style="display:inline-block;width:100%;height:60px;overflow:hidden;border-radius:10px;"
+           data-ad-client="${pubId}"
+           ${slotId ? `data-ad-slot="${slotId}"` : ''}></ins>
+    `;
+    try {
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+    } catch(e) {}
+  }
 }
 
 function cargarAnunciosGuardados() {
@@ -104,13 +124,22 @@ function cargarAnunciosGuardados() {
   }
 
   if (savedMode === 'adsense' && savedAdsense) {
-    inyectarGoogleAdsenseScript(savedAdsense);
+    inyectarGoogleAdsenseScript(savedAdsense, savedSlot);
   }
 }
 
 function actualizarBannerConImagen(base64Data) {
+  const localContent = document.getElementById('localAdContent');
+  const adsenseContent = document.getElementById('adsenseContent');
   const titleText = document.getElementById('adTitleText');
   const adText = document.getElementById('adText');
+  
+  // Si estamos en modo manual/custom, asegurar que el contenedor local se muestre
+  const savedMode = localStorage.getItem('notigas_adsense_mode') || 'custom';
+  if (savedMode !== 'adsense' && localContent && adsenseContent) {
+    localContent.style.display = 'flex';
+    adsenseContent.style.display = 'none';
+  }
 
   if (base64Data) {
     if (titleText) {
@@ -118,7 +147,7 @@ function actualizarBannerConImagen(base64Data) {
     }
   } else {
     if (titleText) {
-      titleText.innerHTML = `📢 Espacio de Publicidad Local & Google Adsense`;
+      titleText.innerHTML = `📢 Espacio de Publicidad Local`;
     }
   }
 }
@@ -157,7 +186,7 @@ function guardarSubmenuAnuncios() {
   }
 
   if (adsenseMode === 'adsense' && adsenseId) {
-    inyectarGoogleAdsenseScript(adsenseId);
+    inyectarGoogleAdsenseScript(adsenseId, adsenseSlot);
   }
 
   if (typeof renderAdminAdsAndPostsList === 'function') {

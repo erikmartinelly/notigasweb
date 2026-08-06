@@ -294,7 +294,15 @@ function guardarRegistroUnico() {
     const whatsapp = (document.getElementById('regWhatsapp')?.value || '').trim() || '74xxxx28';
     const placa = (document.getElementById('regPlaca')?.value || '').trim() || '3842-XYZ';
     const categoria = (document.getElementById('regCategoriaNegocio')?.value || 'Gas GLP').trim();
-    const productos = (document.getElementById('regProductos')?.value || '').trim() || 'Garrafas GLP 10kg';
+    let productos = (document.getElementById('regProductos')?.value || '').trim();
+    if (!productos) {
+      if (categoria === 'Gas GLP') productos = 'Garrafas GLP 10kg';
+      else if (categoria === 'Detergentes') productos = 'Detergentes y Productos de Limpieza';
+      else if (categoria === 'Chatarra') productos = 'Compra de Chatarra y Metales';
+      else if (categoria === 'Papel') productos = 'Papel, Cartón y Reciclaje';
+      else if (categoria === 'Frutas') productos = 'Frutas, Verduras y Hortalizas';
+      else productos = 'Varios';
+    }
     const zonas = (document.getElementById('regZonas')?.value || '').trim() || 'OTB Central y calles vecinas';
     const schedule = (document.getElementById('regSchedule')?.value || '').trim() || 'Lunes a Sábado: 07:00 a 18:00';
 
