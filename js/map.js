@@ -479,7 +479,7 @@ function renderReportedTrucksBuffer() {
 
   const now = Date.now();
   // Depurar camiones reportados que tengan más de 30 minutos
-  const validTrucks = buffer.filter(t => (now - t.timestamp) < (30 * 60 * 1000));
+  let validTrucks = buffer.filter(t => (now - t.timestamp) < (30 * 60 * 1000));
   localStorage.setItem('notigas_reported_trucks_buffer', JSON.stringify(validTrucks));
 
   // Si el usuario actual es REPARTIDOR, filtrar camiones reportados por su categoría específica
@@ -989,7 +989,6 @@ function verificarYMostrarRepartidorGPS() {
           <button style="margin-top:6px; background:#0288D1; color:white; border:none; padding:4px 8px; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer;" onclick="abrirChatDirectoVendedor('${escapeHtmlStr(driverCategoria)}')">💬 Chat Directo</button>
         </div>
       `);
-      iniciarMovimientoRepartidor();
     }
 
     truckTargetLat = lat;

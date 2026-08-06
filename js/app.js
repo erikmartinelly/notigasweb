@@ -363,51 +363,7 @@ function obtenerIconoHtmlPorCategoria(catNombre) {
   return `<img src="icons/garrafa_red_clean.svg" style="width:24px; height:24px; vertical-align:middle; margin-right:6px; filter:drop-shadow(0 0 4px #FF1744);" alt="Gas GLP">`;
 }
 
-function isOrderCategoryMatchingDriver(orderCategory) {
-  try {
-    const saved = localStorage.getItem('notigas_user_data');
-    if (!saved) return true;
-    const u = JSON.parse(saved);
-    if (u.role !== 'repartidor') return true;
-    if (!u.categoria) return true;
-    
-    const driverCat = u.categoria.toLowerCase().trim();
-    const oCat = (orderCategory || '').toLowerCase().trim();
-    
-    // Repartidor de GAS GLP: SOLO ve pedidos de Gas GLP
-    if (driverCat.includes('gas') || driverCat.includes('glp') || driverCat.includes('garrafa')) {
-      return (oCat.includes('gas') || oCat.includes('glp') || oCat.includes('garrafa'));
-    }
-    // Repartidor de AGUA 20L: SOLO ve pedidos de Agua 20L
-    if (driverCat.includes('agua') || driverCat.includes('botellón') || driverCat.includes('botellon')) {
-      return (oCat.includes('agua') || oCat.includes('botellón') || oCat.includes('botellon'));
-    }
-    // Repartidor de DETERGENTES / LIMPIEZA: SOLO ve pedidos de Detergentes o Productos de Limpieza
-    if (driverCat.includes('detergente') || driverCat.includes('limpieza') || driverCat.includes('jabón') || driverCat.includes('jabon')) {
-      return (oCat.includes('detergente') || oCat.includes('limpieza') || oCat.includes('jabón') || oCat.includes('jabon'));
-    }
-    // Repartidor de CHATARRA / METAL: SOLO ve pedidos de Chatarra
-    if (driverCat.includes('chatarra') || driverCat.includes('reciclaje') || driverCat.includes('metal')) {
-      return (oCat.includes('chatarra') || oCat.includes('reciclaje') || oCat.includes('metal'));
-    }
-    // Repartidor de PAPEL / CARTÓN: SOLO ve pedidos de Papel o Cartón
-    if (driverCat.includes('papel') || driverCat.includes('cartón') || driverCat.includes('carton')) {
-      return (oCat.includes('papel') || oCat.includes('cartón') || oCat.includes('carton'));
-    }
-    // Repartidor de FRUTAS / VERDURAS: SOLO ve pedidos de Frutas o Verduras
-    if (driverCat.includes('fruta') || driverCat.includes('verdura')) {
-      return (oCat.includes('fruta') || oCat.includes('verdura'));
-    }
-    // Repartidor de CARBÓN / LEÑA: SOLO ve pedidos de Carbón o Leña
-    if (driverCat.includes('carbón') || driverCat.includes('carbon') || driverCat.includes('leña') || driverCat.includes('lena')) {
-      return (oCat.includes('carbón') || oCat.includes('carbon') || oCat.includes('leña') || oCat.includes('lena'));
-    }
 
-    return driverCat.includes(oCat) || oCat.includes(driverCat);
-  } catch(e) {
-    return true;
-  }
-}
 
 function renderDriverOrdersList() {
   const container = document.getElementById('driverOrdersContainer');
@@ -709,7 +665,7 @@ function confirmarPedido() {
         descripcion: `Dirección: ${direccion}. Teléfono: ${telefono}`,
         ciudad: 'Cochabamba',
         barrio_otb: 'Global',
-        user_email: 'buyer@notigas.com', // mock email
+        user_email: (typeof getCurrentUserEmail === 'function') ? getCurrentUserEmail() : 'anonimo@notigas.com',
         user_role: 'comprador',
         latitude: pos.lat,
         longitude: pos.lng,
