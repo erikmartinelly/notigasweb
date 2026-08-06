@@ -143,11 +143,11 @@ function actualizarBannerConImagen(base64Data) {
 
   if (base64Data) {
     if (titleText) {
-      titleText.innerHTML = `<img src="${base64Data}" style="max-height: 28px; border-radius:4px; vertical-align:middle; margin-right:6px;" alt="Sponsor"> 📢 Publicidad Local NOTIGAS`;
+      titleText.innerHTML = `<img src="${base64Data}" style="max-height: 28px; border-radius:4px; vertical-align:middle; margin-right:6px;" alt="Sponsor"> 📢 NOTIGAS es un servicio gratuito gracias a:`;
     }
   } else {
     if (titleText) {
-      titleText.innerHTML = `📢 Espacio de Publicidad Local`;
+      titleText.innerHTML = `📢 NOTIGAS es un servicio gratuito gracias a:`;
     }
   }
 }
