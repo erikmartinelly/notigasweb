@@ -357,25 +357,13 @@ function borrarRepartidorPermanente(vendorId, vendorName) {
 }
 
 function ejecutarBorradoRepartidor(vendorId, vendorName) {
-  // 1. Eliminar de lista de repartidores registrados
-  try {
-    const raw = localStorage.getItem('notigas_registered_drivers_list');
-    if (raw) {
-      let registered = JSON.parse(raw);
-      registered = registered.filter(d => d.nombre !== vendorName && `driver_${d.id || d.whatsapp}` !== vendorId);
-      localStorage.setItem('notigas_registered_drivers_list', JSON.stringify(registered));
-    }
-  } catch(e){}
-
-  // 2. Eliminar de directorio de vendedores
-  try {
-    const raw = localStorage.getItem('notigas_vendors_directory');
-    if (raw) {
-      let vendors = JSON.parse(raw);
-      vendors = vendors.filter(v => v.id !== vendorId && v.name !== vendorName);
-      localStorage.setItem('notigas_vendors_directory', JSON.stringify(vendors));
-    }
-  } catch(e){}
+  // 1. Eliminar de lista de repartidores en Supabase
+  if (window.supabaseClient) {
+      const realId = vendorId.replace('driver_', '');
+      window.supabaseClient.from('choferes_habilitados').delete().eq('id', realId).then(({ error }) => {
+          if (error) console.error("Error borrando de Supabase:", error);
+      });
+  }
 
   // 3. Añadir a lista negra de borrados para ocultar repartidores por defecto (hardcodeados)
   try {
@@ -454,12 +442,6 @@ function renderAdminVendorsList() {
     if (raw) deletedIds = JSON.parse(raw);
   } catch(e){}
 
-  let registeredDrivers = [];
-  try {
-    const raw = localStorage.getItem('notigas_registered_drivers_list');
-    if (raw) registeredDrivers = JSON.parse(raw);
-  } catch(e){}
-
   const defaultVendors = [
     { id: "vendor_1", name: "Gas GLP N° 42", category: "Gas GLP", plate: "3842-XYZ", verified: true },
     { id: "vendor_2", name: "Agua Cristallina 20L", category: "Agua 20L", plate: "2105-ABC", verified: true },
@@ -470,18 +452,29 @@ function renderAdminVendorsList() {
     { id: "vendor_7", name: "Carbonería El Fuego", category: "Carbón", plate: "2389-ZXP", verified: true }
   ];
 
-  registeredDrivers.forEach(d => {
-    if (!defaultVendors.some(v => v.name === d.nombre)) {
-      defaultVendors.unshift({
-        id: `driver_${d.id || d.whatsapp}`,
-        name: d.nombre,
-        category: d.categoria || 'Gas GLP',
-        plate: d.placa || 'Placa registrada',
-        verified: true
+  if (window.supabaseClient) {
+      window.supabaseClient.from('choferes_habilitados').select('*').then(({ data }) => {
+          if (data && data.length > 0) {
+              data.forEach(d => {
+                  if (!defaultVendors.some(v => v.name === d.nombre_completo)) {
+                      defaultVendors.unshift({
+                          id: `driver_${d.id}`,
+                          name: d.nombre_completo,
+                          category: d.categoria || 'Gas GLP',
+                          plate: d.placa || 'Placa registrada',
+                          verified: d.estado_verificacion === 'aprobado'
+                      });
+                  }
+              });
+          }
+          renderFinalVendors(defaultVendors, deletedIds);
       });
-    }
-  });
+  } else {
+      renderFinalVendors(defaultVendors, deletedIds);
+  }
+}
 
+function renderFinalVendors(defaultVendors, deletedIds) {
   const finalVendors = defaultVendors.filter(v => !deletedIds.includes(v.id));
 
   let html = `<div style="font-weight:900; color:#FF6D00; margin-bottom:6px; font-size:11.5px;"><i class="fa-solid fa-truck-fast"></i> 🚛 REPARTIDORES Y NEGOCIOS DEL SISTEMA:</div>`;
@@ -859,7 +852,7 @@ function descargarListaCorreosCSV() {
 }
 
 /* DESCARGA COMPLETA DE FICHAS DE REPARTIDORES REGISTRADOS (.CSV DE REPARTIDORES) */
-function descargarFichasRepartidoresCSV() {
+async function descargarFichasRepartidoresCSV() {
   let currentAdmin = sessionStorage.getItem('notigas_admin_session');
   
   if (!currentAdmin || !AUTHORIZED_ADMIN_EMAILS.includes(currentAdmin.toLowerCase())) {
@@ -869,21 +862,21 @@ function descargarFichasRepartidoresCSV() {
   }
 
   let driversList = [];
-  try {
-    const raw = localStorage.getItem('notigas_registered_drivers_list');
-    if (raw) driversList = JSON.parse(raw);
-  } catch(e){}
+  if (window.supabaseClient) {
+      const { data } = await window.supabaseClient.from('choferes_habilitados').select('*');
+      if (data) driversList = data;
+  }
 
   if (driversList.length === 0) {
     driversList = [
-      { nombre: "Gas GLP N° 42", whatsapp: "74xxxx28", placa: "3842-XYZ", categoria: "Gas GLP", productos: "Garrafas GLP 10kg, reguladores", zonas: "OTB Central", schedule: "07:00 a 18:00", fechaRegistro: "2026-08-01" },
-      { nombre: "Agua Cristallina 20L", whatsapp: "74xxxx28", placa: "2105-ABC", categoria: "Agua 20L", productos: "Botellones 20L, surtidores", zonas: "Zona Norte", schedule: "08:00 a 17:00", fechaRegistro: "2026-08-01" }
+      { nombre_completo: "Gas GLP N° 42", telefono_whatsapp: "74xxxx28", placa: "3842-XYZ", categoria: "Gas GLP", productos: "Garrafas GLP 10kg, reguladores", zonas: "OTB Central", schedule: "07:00 a 18:00", created_at: "2026-08-01" },
+      { nombre_completo: "Agua Cristallina 20L", telefono_whatsapp: "74xxxx28", placa: "2105-ABC", categoria: "Agua 20L", productos: "Botellones 20L, surtidores", zonas: "Zona Norte", schedule: "08:00 a 17:00", created_at: "2026-08-01" }
     ];
   }
 
   let csvRows = ["Nombre Negocio/Repartidor,WhatsApp,Placa,Categoria,Productos,Zonas Recorrido,Horarios,Fecha Registro"];
   driversList.forEach(d => {
-    csvRows.push(`"${d.nombre || ''}","${d.whatsapp || ''}","${d.placa || ''}","${d.categoria || ''}","${d.productos || ''}","${d.zonas || ''}","${d.schedule || ''}","${d.fechaRegistro || ''}"`);
+    csvRows.push(`"${d.nombre_completo || ''}","${d.telefono_whatsapp || ''}","${d.placa || ''}","${d.categoria || ''}","${d.productos || ''}","${d.zonas || ''}","${d.schedule || ''}","${d.created_at || ''}"`);
   });
 
   const csvString = "\uFEFF" + csvRows.join("\n");

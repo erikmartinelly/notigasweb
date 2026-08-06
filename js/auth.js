@@ -266,26 +266,24 @@ function handleCredentialResponse(response) {
   }
 }
 
-function guardarRepartidorEnBaseDeDatos(repartidorObj) {
-  let driversList = [];
-  try {
-    const raw = localStorage.getItem('notigas_registered_drivers_list');
-    if (raw) driversList = JSON.parse(raw);
-  } catch(e){}
-
-  const cleanList = driversList.filter(d => 
-    d.whatsapp !== repartidorObj.whatsapp && 
-    d.nombre !== repartidorObj.nombre
-  );
-
-  const fullObj = {
-    id: Date.now(),
-    fechaRegistro: new Date().toISOString().split('T')[0],
-    ...repartidorObj
-  };
-
-  cleanList.unshift(fullObj);
-  localStorage.setItem('notigas_registered_drivers_list', JSON.stringify(cleanList));
+async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
+  if (!window.supabaseClient) return;
+  // Insertar en la tabla de Supabase (requiere que el admin haya ejecutado el ALTER TABLE para añadir las columnas extra)
+  const { error } = await window.supabaseClient.from('choferes_habilitados').insert([{
+    nombre_completo: repartidorObj.nombre,
+    ci_carnet: 'CI-' + Date.now(), // Fallback si no hay carnet en el form
+    telefono_whatsapp: repartidorObj.whatsapp,
+    estado_verificacion: 'pendiente',
+    placa: repartidorObj.placa,
+    categoria: repartidorObj.categoria,
+    productos: repartidorObj.productos,
+    zonas: repartidorObj.zonas,
+    schedule: repartidorObj.schedule
+  }]);
+  
+  if (error) {
+    console.error("Error registrando chofer en Supabase:", error);
+  }
 }
 
 function guardarRegistroUnico() {
