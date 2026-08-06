@@ -23,7 +23,7 @@ function previewUploadAdImage(event) {
   if (!file) return;
 
   if (file.size > 2 * 1024 * 1024) {
-    alert("⚠️ La imagen seleccionada supera el límite de 2 MB. Por favor elige una imagen más ligera.");
+    if (typeof showToast === 'function') showToast('⚠️ Imagen Pesada', 'La imagen supera los 2 MB. Elige una más ligera.', 'warning', 1000);
     return;
   }
 
@@ -33,7 +33,7 @@ function previewUploadAdImage(event) {
     localStorage.setItem('notigas_ad_image_base64', base64Data);
     mostrarVistaPreviaImagen(base64Data);
     actualizarBannerConImagen(base64Data);
-    alert("📸 Imagen de anuncio cargada correctamente.");
+    if (typeof showToast === 'function') showToast('📸 Anuncio Cargado', 'Imagen de anuncio cargada correctamente.', 'success', 1000);
   };
   reader.readAsDataURL(file);
 }
@@ -54,7 +54,7 @@ function eliminarImagenAnuncio() {
   if (box) box.style.display = 'none';
   if (fileInput) fileInput.value = '';
   actualizarBannerConImagen(null);
-  alert("🗑️ Imagen de anuncio eliminada.");
+  if (typeof showToast === 'function') showToast('🗑️ Imagen Eliminada', 'Imagen de anuncio eliminada.', 'info', 1000);
 }
 
 function inyectarGoogleAdsenseScript(pubId) {
@@ -71,7 +71,7 @@ function inyectarGoogleAdsenseScript(pubId) {
 }
 
 function cargarAnunciosGuardados() {
-  const savedAdsense = localStorage.getItem('notigas_adsense_id') || 'ca-pub-9949962151180000';
+  const savedAdsense = localStorage.getItem('notigas_adsense_id') || 'ca-pub-2502415561017945';
   const savedSlot = localStorage.getItem('notigas_adsense_slot_id') || '1234567890';
   const savedMode = localStorage.getItem('notigas_adsense_mode') || 'custom';
   const savedText = localStorage.getItem('notigas_ad_text');
