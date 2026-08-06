@@ -1881,10 +1881,53 @@ button:active, .tab-btn:active, .cat-chip:active {
   background: #EF4444 !important;
 }
 
-/* Pausar animaciones CSS infinitas cuando se reduce movimiento */
+/* PAUSAR ANIMACIONES EN MOVIMIENTO REDUCIDO */
 @media (prefers-reduced-motion: reduce) {
   .garrafa-red-flashing-img,
   [style*="animation"] {
     animation: none !important;
   }
+}
+
+/* ESTILOS DE ALTO CONTRASTE Y CONMUTACIÓN CLARA PARA BOTONES DE ROL (COMPRADOR VS REPARTIDOR) */
+.role-selector-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.role-select-btn {
+  flex: 1;
+  padding: 12px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  background: #1E293B;
+  color: #94A3B8;
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.role-select-btn:hover {
+  background: #334155;
+  color: #FFFFFF;
+}
+
+.role-select-btn.active#btnRoleBuyer {
+  background: linear-gradient(135deg, #0288D1, #0277BD) !important;
+  color: #FFFFFF !important;
+  border-color: #38BDF8 !important;
+  box-shadow: 0 4px 16px rgba(2, 136, 209, 0.5) !important;
+}
+
+.role-select-btn.active#btnRoleDriver {
+  background: linear-gradient(135deg, #FF6D00, #E65100) !important;
+  color: #FFFFFF !important;
+  border-color: #F59E0B !important;
+  box-shadow: 0 4px 16px rgba(255, 109, 0, 0.6) !important;
 }

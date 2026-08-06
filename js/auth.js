@@ -54,32 +54,39 @@ function selectAuthRole(role) {
   const authFieldsBuyer = document.getElementById('authFieldsBuyer');
   const authFieldsDriver = document.getElementById('authFieldsDriver');
 
-  if (btnBuyer && btnDriver) {
-    btnBuyer.classList.toggle('active', role === 'buyer');
-    btnDriver.classList.toggle('active', role === 'driver');
+  if (btnBuyer) {
+    if (role === 'buyer') {
+      btnBuyer.classList.add('active');
+    } else {
+      btnBuyer.classList.remove('active');
+    }
   }
 
-  // AL SELECCIONAR REPARTIDOR: Activar automáticamente la pestaña de datos por Correo para mostrar los campos de Repartidor de inmediato
+  if (btnDriver) {
+    if (role === 'driver') {
+      btnDriver.classList.add('active');
+    } else {
+      btnDriver.classList.remove('active');
+    }
+  }
+
+  // AL SELECCIONAR REPARTIDOR: Activar vista de campos y ajustar botón
   if (role === 'driver') {
     selectAuthMethod('email');
+    if (authFieldsDriver) authFieldsDriver.style.display = 'block';
+    if (authFieldsBuyer) authFieldsBuyer.style.display = 'none';
+
     const submitBtn = document.querySelector('#authPaneEmail .btn-submit');
     if (submitBtn) {
-      submitBtn.innerHTML = '<i class="fa-solid fa-truck-fast"></i> 🚛 Ingresar / Publicar Ficha de Repartidor';
+      submitBtn.innerHTML = '<i class="fa-solid fa-truck-fast"></i> 🚛 Ingresar como Repartidor';
     }
   } else {
+    if (authFieldsBuyer) authFieldsBuyer.style.display = 'block';
+    if (authFieldsDriver) authFieldsDriver.style.display = 'none';
+
     const submitBtn = document.querySelector('#authPaneEmail .btn-submit');
     if (submitBtn) {
-      submitBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Ingresar con Correo Electrónico';
-    }
-  }
-
-  if (authFieldsBuyer && authFieldsDriver) {
-    if (role === 'driver') {
-      authFieldsDriver.style.display = 'block';
-      authFieldsBuyer.style.display = 'none';
-    } else {
-      authFieldsBuyer.style.display = 'block';
-      authFieldsDriver.style.display = 'none';
+      submitBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Ingresar como Comprador';
     }
   }
 }
