@@ -102,19 +102,24 @@ function initNotigasMap() {
     btnGps.addEventListener('click', () => conectarGPSAuto(true));
   }
 
+  // REGISTRAR INTERACCIÓN MANUAL DE ZOOM / ARRASTRE PARA EVITAR RE-CENTRADOS AUTOMÁTICOS MOLESTOS
+  map.on('dragstart', () => { isMapInteractedByUser = true; });
+  map.on('zoomstart', () => { isMapInteractedByUser = true; });
+
   // HABILITAR AJUSTE DE UBICACIÓN AL HACER CLIC DIRECTO EN CUALQUIER PUNTO DEL MAPA
   map.on('click', (e) => {
     moverMarcadorUbicacionManual(e.latlng.lat, e.latlng.lng);
   });
 
   // CREAR DE INMEDIATO EL MARCADOR DE ENTREGA PARA PERMITIR ARRASTRE MANUAL AL INSTANTE
-  applyGpsPosition(currentGpsLat, currentGpsLng, "Ubicación Inicial", false);
+  applyGpsPosition(currentGpsLat, currentGpsLng, "Ubicación Inicial", true);
 
-  conectarGPSAuto(true);
+  conectarGPSAuto(false);
   renderReportedTrucksBuffer();
 }
 
 let isUserMarkerDraggedManually = false;
+let isMapInteractedByUser = false;
 
 let currentActiveOrderMarker = null;
 
@@ -164,6 +169,7 @@ function moverMarcadorUbicacionManual(lat, lng) {
 function applyGpsPosition(lat, lng, label, forceReset = false) {
   if (forceReset) {
     isUserMarkerDraggedManually = false;
+    isMapInteractedByUser = false;
   }
 
   currentGpsLat = lat;
@@ -174,7 +180,10 @@ function applyGpsPosition(lat, lng, label, forceReset = false) {
 
   if (map) {
     map.invalidateSize();
-    map.setView([activeLat, activeLng], 16);
+    // Solo re-centrar el mapa si forceReset es explícito (ej: clic en botón GPS) o si el usuario NO ha tocado/hizo zoom en el mapa
+    if (forceReset || !isMapInteractedByUser) {
+      map.setView([activeLat, activeLng], map.getZoom() || 16);
+    }
   }
 
   if (!userMarker && map) {
@@ -337,6 +346,17 @@ function renderReportedTrucksBuffer() {
   const validTrucks = buffer.filter(t => (now - t.timestamp) < (30 * 60 * 1000));
   localStorage.setItem('notigas_reported_trucks_buffer', JSON.stringify(validTrucks));
 
+  // Si el usuario actual es REPARTIDOR, filtrar camiones reportados por su categoría específica
+  let isDriverUser = false;
+  try {
+    const saved = localStorage.getItem('notigas_user_data');
+    if (saved) { const u = JSON.parse(saved); isDriverUser = (u.role === 'repartidor'); }
+  } catch(e){}
+
+  if (isDriverUser && typeof isOrderCategoryMatchingDriver === 'function') {
+    validTrucks = validTrucks.filter(t => isOrderCategoryMatchingDriver(t.cat || 'Gas GLP'));
+  }
+
   validTrucks.forEach(t => {
     const minutesAgo = Math.floor((now - t.timestamp) / 60000);
     const timeText = minutesAgo < 1 ? 'Hace un instante' : `Hace ${minutesAgo} min`;
@@ -373,6 +393,47 @@ function formatearDistanciaTriangulada(distMetros) {
   if (distMetros === null || isNaN(distMetros)) return 'Cerca de ti';
   if (distMetros < 1000) return `${distMetros}m de distancia`;
   return `${(distMetros / 1000).toFixed(1)} km de distancia`;
+}
+
+function isOrderCategoryMatchingDriver(orderCategory) {
+  let driverCategory = '';
+  try {
+    const saved = localStorage.getItem('notigas_user_data');
+    if (saved) {
+      const u = JSON.parse(saved);
+      if (u.role === 'repartidor' && u.categoria) {
+        driverCategory = u.categoria.toLowerCase().trim();
+      }
+    }
+  } catch(e){}
+
+  if (!driverCategory) return true; // Si es comprador (vecino), coincide con todas las categorías
+
+  const cat = (orderCategory || '').toLowerCase().trim();
+  
+  if (driverCategory.includes('gas')) {
+    return cat.includes('gas') || cat.includes('garrafa') || cat.includes('glp');
+  }
+  if (driverCategory.includes('agua')) {
+    return cat.includes('agua') || cat.includes('botellón') || cat.includes('bidón') || cat.includes('20l');
+  }
+  if (driverCategory.includes('carbón') || driverCategory.includes('leña')) {
+    return cat.includes('carbón') || cat.includes('carbon') || cat.includes('leña') || cat.includes('lena');
+  }
+  if (driverCategory.includes('detergente') || driverCategory.includes('limpieza')) {
+    return cat.includes('detergente') || cat.includes('limpieza') || cat.includes('lavandina') || cat.includes('jabón');
+  }
+  if (driverCategory.includes('chatarra')) {
+    return cat.includes('chatarra') || cat.includes('reciclaje');
+  }
+  if (driverCategory.includes('papel') || driverCategory.includes('cartón')) {
+    return cat.includes('papel') || cat.includes('cartón') || cat.includes('carton');
+  }
+  if (driverCategory.includes('fruta') || driverCategory.includes('verdura')) {
+    return cat.includes('fruta') || cat.includes('verdura');
+  }
+  
+  return cat.includes(driverCategory) || driverCategory.includes(cat);
 }
 
 let activeOrderLayerGroup = null;
@@ -488,10 +549,15 @@ function renderActiveOrdersMap() {
   try {
     const order = JSON.parse(raw);
 
-    // FILTRO DE CATEGORÍA: Solo aplicar al modo REPARTIDOR. Los compradores ven TODOS los pedidos (prueba social)
-    const isDriverMode = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver');
-    if (isDriverMode && typeof isOrderCategoryMatchingDriver === 'function' && !isOrderCategoryMatchingDriver(order.categoria)) {
-      return; 
+    // FILTRADO POR CATEGORÍA: Si es Repartidor, ver SOLO pedidos de su rubro. Los Compradores ven TODOS.
+    let isDriverUser = false;
+    try {
+      const saved = localStorage.getItem('notigas_user_data');
+      if (saved) { const u = JSON.parse(saved); isDriverUser = (u.role === 'repartidor'); }
+    } catch(e){}
+
+    if (isDriverUser && typeof isOrderCategoryMatchingDriver === 'function' && !isOrderCategoryMatchingDriver(order.categoria)) {
+      return; // Ocultar si la categoría no corresponde al repartidor
     }
 
     if (order.lat && order.lng) {
@@ -733,24 +799,35 @@ function verificarYMostrarRepartidorGPS() {
   renderActiveOrdersMap();
 
   const driverGpsLive = localStorage.getItem('driverGpsLive');
-  let hasActiveDriver = false;
-  let driverNombre = 'Repartidor';
+  let isDriverActive = (driverGpsLive === 'on');
+  let driverNombre = 'Camión GLP N° 42';
   let driverCategoria = 'Gas GLP';
+  let userRole = 'vecino';
 
   try {
     const saved = localStorage.getItem('notigas_user_data');
     if (saved) {
       const u = JSON.parse(saved);
-      if (u.role === 'repartidor') {
-        hasActiveDriver = true;
-        driverNombre = u.nombre || 'Repartidor';
-        driverCategoria = u.categoria || 'Gas GLP';
+      if (u.role) userRole = u.role;
+      if (u.nombre) driverNombre = u.nombre;
+      if (u.categoria) driverCategoria = u.categoria;
+      if (u.role === 'repartidor' && driverGpsLive !== 'off') {
+        isDriverActive = true;
       }
     }
   } catch(e){}
 
-  // Mostrar marcador de camión en vivo si HAY un repartidor transmitiendo GPS en tiempo real
-  if (hasActiveDriver && driverGpsLive !== 'off') {
+  // Si el usuario actual es REPARTIDOR, solo ver camiones de SU MISMA CATEGORÍA
+  if (userRole === 'repartidor' && typeof isOrderCategoryMatchingDriver === 'function' && !isOrderCategoryMatchingDriver(driverCategoria)) {
+    if (truckMarker) {
+      map.removeLayer(truckMarker);
+      truckMarker = null;
+    }
+    return;
+  }
+
+  // Los COMPRADORES ven TODOS los camiones en vivo. Los REPARTIDORES ven los de su categoría.
+  if (isDriverActive || driverGpsLive === 'on') {
     let lat = currentGpsLat;
     let lng = currentGpsLng;
 
@@ -779,7 +856,6 @@ function verificarYMostrarRepartidorGPS() {
       iniciarMovimientoRepartidor();
     }
 
-    // Actualizar destino para animación suave
     truckTargetLat = lat;
     truckTargetLng = lng;
   } else {
