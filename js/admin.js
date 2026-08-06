@@ -341,13 +341,17 @@ function desbanearRepartidorAdmin(vendorId, vendorName) {
 }
 
 function borrarRepartidorPermanente(vendorId, vendorName) {
-  if (typeof showConfirmModal === 'function') {
-    showConfirmModal('🗑️', `¿Eliminar a ${vendorName}?`, `Esta acción borrará permanentemente la Ficha de Repartidor "${vendorName}" del directorio y la base de datos local.`, 'Sí, eliminar', () => {
+  if (vendorId === 'driver_undefined' || !vendorId) {
+    if (confirm(`⚠️ ¿Eliminar permanentemente a ${vendorName}?`)) {
       ejecutarBorradoRepartidor(vendorId, vendorName);
-    });
+      if (typeof showToast === 'function') showToast('🗑️ Eliminado', `El repartidor ${vendorName} ha sido borrado exitosamente.`, 'success', 2000);
+      renderAdminVendorsList();
+    }
   } else {
-    if (confirm(`🗑️ ¿Eliminar permanentemente a ${vendorName}?`)) {
+    if (confirm(`⚠️ ¿Eliminar permanentemente a ${vendorName}?`)) {
       ejecutarBorradoRepartidor(vendorId, vendorName);
+      if (typeof showToast === 'function') showToast('🗑️ Eliminado', `El repartidor ${vendorName} ha sido borrado exitosamente.`, 'success', 2000);
+      renderAdminVendorsList();
     }
   }
 }

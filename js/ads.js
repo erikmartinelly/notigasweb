@@ -164,6 +164,7 @@ function actualizarAnunciosEnVivo(nuevoTexto, nuevoUrl) {
     if (adForumDesc) adForumDesc.innerText = nuevoTexto;
     if (adVendorDesc) adVendorDesc.innerText = nuevoTexto;
   }
+}
 
 function guardarSubmenuAnuncios() {
   const adsenseId = (document.getElementById('inputAdsenseId')?.value || '').trim();
