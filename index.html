@@ -626,117 +626,12 @@
         </button>
       </div>
 
-      <!-- SELECCIÓN DE MÉTODO DE INGRESO: CUENTA GOOGLE VS CORREO ELECTRÓNICO -->
-      <div class="auth-method-tabs">
-        <button class="auth-method-btn active" id="btnAuthMethodGoogle" onclick="selectAuthMethod('google')">
-          <i class="fa-brands fa-google"></i> Cuenta Google
-        </button>
-        <button class="auth-method-btn" id="btnAuthMethodEmail" onclick="selectAuthMethod('email')">
-          <i class="fa-solid fa-envelope"></i> Correo Electrónico
-        </button>
-      </div>
-
-      <!-- PANE 1: ACCESO RÁPIDO CON CUENTA GOOGLE (1-TAP) -->
+      <!-- SELECCIÓN DE MÉTODO DE INGRESO ÚNICO (CUENTA GOOGLE) -->
       <div id="authPaneGoogle" class="auth-method-pane active">
         <p style="font-size: 11px; color: #CBD5E1; margin: 14px 0; text-align: center;">
           Ingresa con 1 solo clic utilizando tu cuenta verificada de Google Gmail:
         </p>
         <div id="g_id_onload_container" style="display: flex; justify-content: center; margin-bottom: 10px;"></div>
-      </div>
-
-      <!-- PANE 2: FORMULARIO DE REGISTRO POR CORREO ELECTRÓNICO -->
-      <div id="authPaneEmail" class="auth-method-pane" style="display: none;">
-        <!-- CAMPOS COMPRADOR -->
-        <div id="authFieldsBuyer">
-          <div class="form-group">
-            <label>Correo Electrónico (Gmail / E-mail):</label>
-            <input type="email" id="regGmail" placeholder="tu_correo@gmail.com">
-          </div>
-          <div class="form-group">
-            <label>Nombre:</label>
-            <input type="text" id="regNombre" placeholder="Tu nombre">
-          </div>
-          <div class="form-group">
-            <label>Apellido:</label>
-            <input type="text" id="regApellido" placeholder="Tu apellido">
-          </div>
-        </div>
-
-        <!-- CAMPOS REPARTIDOR -->
-        <div id="authFieldsDriver" style="display: none;">
-          <div class="form-group">
-            <label>Nombre del Repartidor o Negocio:</label>
-            <input type="text" id="regNombreNegocio" placeholder="Ej: Gasero Express N° 42">
-          </div>
-          <div class="form-group">
-            <label>Número de WhatsApp (Uso interno):</label>
-            <input type="tel" id="regWhatsapp" placeholder="74xxxx28">
-          </div>
-          <div class="form-group">
-            <label>Número de Placa del Vehículo / Camión:</label>
-            <input type="text" id="regPlaca" placeholder="3842-XYZ">
-          </div>
-          <div class="form-group">
-            <label>Tipo de REPARTIDOR:</label>
-            <select id="regCategoriaNegocio" onchange="document.getElementById('groupRegProductos').style.display = (this.value === 'Otros') ? 'block' : 'none';">
-              <option value="Gas GLP">🔥 Gas GLP</option>
-              <option value="Detergentes">🧼 Detergentes & Limpieza</option>
-              <option value="Chatarra">♻️ Chatarra</option>
-              <option value="Papel">📄 Papel / Reciclaje</option>
-              <option value="Frutas">🍎 Frutas & Verduras</option>
-              <option value="Otros">📦 Otros (Especificar)</option>
-            </select>
-          </div>
-          <div class="form-group" id="groupRegProductos" style="display: none;">
-            <label>¿Qué Vende / Oferta?:</label>
-            <input type="text" id="regProductos" placeholder="Ej: Carbón, Leña, Masitas, Pan...">
-          </div>
-          <div class="form-group">
-            <label>Ciudad de Trabajo:</label>
-            <select id="regCiudad" required>
-              <option value="" disabled selected>📍 Escoge tu ciudad</option>
-              <optgroup label="── 1º SANTA CRUZ DE LA SIERRA ──">
-                <option value="santacruz">📍 Santa Cruz de la Sierra</option>
-                <option value="warnes">📍 Warnes</option>
-                <option value="cotoca">📍 Cotoca</option>
-                <option value="laguardia">📍 La Guardia</option>
-                <option value="montero">📍 Montero</option>
-                <option value="porongo">📍 Porongo / Urubó</option>
-              </optgroup>
-              <optgroup label="── 2º COCHABAMBA ──">
-                <option value="cochabamba">📍 Cochabamba</option>
-                <option value="sacaba">📍 Sacaba</option>
-                <option value="quillacollo">📍 Quillacollo</option>
-                <option value="tiquipaya">📍 Tiquipaya</option>
-                <option value="colcapirhua">📍 Colcapirhua</option>
-                <option value="vinto">📍 Vinto</option>
-                <option value="sipesipe">📍 Sipe Sipe</option>
-              </optgroup>
-              <optgroup label="── 3º LA PAZ ──">
-                <option value="lapaz">📍 La Paz</option>
-                <option value="viacha">📍 Viacha</option>
-                <option value="achocalla">📍 Achocalla</option>
-              </optgroup>
-              <optgroup label="── 4º EL ALTO ──">
-                <option value="elalto">📍 El Alto</option>
-              </optgroup>
-              <optgroup label="── 5º TARIJA Y OTROS DEPARTAMENTOS ──">
-                <option value="tarija">📍 Tarija</option>
-                <option value="sucre">📍 Sucre</option>
-                <option value="oruro">📍 Oruro</option>
-                <option value="potosi">📍 Potosí</option>
-                <option value="trinidad">📍 Trinidad (Beni)</option>
-                <option value="cobija">📍 Cobija (Pando)</option>
-              </optgroup>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Zonas de Recorrido:</label>
-            <input type="text" id="regZonas" placeholder="Ej: OTB Central, Av. Principal y calles vecinas">
-          </div>
-        </div>
-
-        <button class="btn-submit" onclick="guardarRegistroUnico()"><i class="fa-solid fa-right-to-bracket"></i> Ingresar con Correo Electrónico</button>
       </div>
     </div>
   </div>
