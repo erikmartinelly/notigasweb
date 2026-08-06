@@ -29,6 +29,11 @@ document.addEventListener('DOMContentLoaded', () => {
   } else {
     try {
       const u = JSON.parse(savedUser);
+      if (u.role === 'repartidor') {
+        if (typeof setAppMode === 'function') setAppMode('driver');
+      } else {
+        if (typeof setAppMode === 'function') setAppMode('buyer');
+      }
       if (u.gmail) {
         databaseEmails.push({ 
           gmail: u.gmail, 

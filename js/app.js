@@ -213,8 +213,7 @@ function setAppMode(mode) {
 
     if (badgeContainer) {
       badgeContainer.innerHTML = `
-        <span style="font-size:11px; background:rgba(255,109,0,0.2); color:#FF6D00; padding:3px 8px; border-radius:12px; font-weight:900; border:1px solid #FF6D00;">🚛 REPARTIDOR</span>
-        <button onclick="cerrarSesionRepartidorActivarComprador()" style="background:#0288D1; color:white; border:none; padding:3px 7px; border-radius:6px; font-weight:800; font-size:10px; cursor:pointer;" title="Cambiar a modo Comprador">🛒 Ir a Comprador</button>
+        <span style="font-size:11px; background:rgba(255,109,0,0.2); color:#FF6D00; padding:4px 10px; border-radius:12px; font-weight:900; border:1px solid #FF6D00;">🚛 MODO REPARTIDOR</span>
       `;
     }
 
@@ -226,8 +225,7 @@ function setAppMode(mode) {
 
     if (badgeContainer) {
       badgeContainer.innerHTML = `
-        <span style="font-size:11px; background:rgba(2,136,209,0.2); color:#38BDF8; padding:3px 8px; border-radius:12px; font-weight:900; border:1px solid #0288D1;">🛍️ COMPRADOR</span>
-        <button onclick="ingresarComoRepartidorDirecto()" style="background:#FF6D00; color:white; border:none; padding:3px 7px; border-radius:6px; font-weight:800; font-size:10px; cursor:pointer;" title="Ingresar o Registrarse como Repartidor">🚛 Modo Repartidor</button>
+        <span style="font-size:11px; background:rgba(2,136,209,0.2); color:#38BDF8; padding:4px 10px; border-radius:12px; font-weight:900; border:1px solid #0288D1;">🛍️ MODO COMPRADOR</span>
       `;
     }
   }
