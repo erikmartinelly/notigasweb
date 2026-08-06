@@ -1149,6 +1149,11 @@ function cambiarCiudadCapital(cityKey) {
 
   applyGpsPosition(mun.lat, mun.lon, '', false);
   localStorage.setItem('notigas_active_city', mun.nombre);
+
+  // Descargar choferes de la nueva ciudad seleccionada
+  if (typeof descargarChoferesYRenderizar === 'function') {
+    descargarChoferesYRenderizar('TODOS');
+  }
 }
 
 function procesarResultadoBusqueda(item, queryOriginal) {
