@@ -69,9 +69,18 @@
     <div class="tab-content active" id="tab0">
       <div id="map"></div>
 
-      <!-- POPUP FLOTANTE DE ALERTA AL REPARTIDOR (CUANDO UN VECINO PRESIONA ESPÉRAME O ESCUCHÉ AL CAMIÓN) -->
-      <div class="driver-alert-popup" id="driverAlertPopup" style="display: none;">
-        <!-- Renderizado dinámico de alertas de pánico para repartidores -->
+      <!-- BANNER DE ACTIVACIÓN OBLIGATORIA DE GPS EN MÓVILES/ANDROID -->
+      <div id="gpsMandatoryBanner" style="display:none; position:fixed; top:70px; left:50%; transform:translateX(-50%); z-index:9999; width:calc(100% - 24px); max-width:440px; background:linear-gradient(135deg, #1E293B, #0F172A); border:2px solid #FF6D00; border-radius:16px; padding:14px 16px; box-shadow:0 10px 30px rgba(0,0,0,0.85); text-align:center;">
+        <div style="font-size:32px; margin-bottom:4px;">📍</div>
+        <div style="font-size:14px; font-weight:900; color:#FF6D00; font-family:'Roboto',sans-serif; margin-bottom:4px;">
+          ACTIVACIÓN DE GPS REQUERIDA
+        </div>
+        <div style="font-size:12px; color:#CBD5E1; line-height:1.4; margin-bottom:12px; font-family:'Roboto',sans-serif;">
+          NOTIGAS requiere tu ubicación GPS para ubicar tu pedido exactamente en el mapa.
+        </div>
+        <button onclick="solicitarPermisoGPSAndroidNativo()" style="width:100%; background:linear-gradient(135deg, #FF6D00, #E65100); color:white; border:none; padding:12px; border-radius:10px; font-weight:900; font-size:13px; cursor:pointer; box-shadow:0 4px 14px rgba(255,109,0,0.5); display:flex; align-items:center; justify-content:center; gap:8px;">
+          <i class="fa-solid fa-location-crosshairs"></i> 📍 ACTIVAR GPS AHORA EN MI CELULAR
+        </button>
       </div>
 
       <div class="search-controls-wrapper">

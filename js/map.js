@@ -940,6 +940,33 @@ function solicitarGeolocalizacionNativaNavegador(isMobile, forceReset) {
   });
 }
 
+function solicitarPermisoGPSAndroidNativo() {
+  if (!("geolocation" in navigator)) {
+    if (typeof showToast === 'function') showToast('⚠️ Sin GPS', 'Este dispositivo no soporta geolocalización.', 'warning', 1000);
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      applyGpsPosition(pos.coords.latitude, pos.coords.longitude, "Ubicación GPS Android", true);
+      const banner = document.getElementById('gpsMandatoryBanner');
+      if (banner) banner.style.display = 'none';
+      if (typeof showToast === 'function') {
+        showToast('📍 GPS Activado', 'Ubicación obtenida con éxito en el mapa.', 'success', 1000);
+      }
+    },
+    (err) => {
+      console.warn("Error al activar GPS nativo Android:", err);
+      const banner = document.getElementById('gpsMandatoryBanner');
+      if (banner) banner.style.display = 'block';
+      if (typeof showToast === 'function') {
+        showToast('⚠️ Activa la Ubicación GPS', 'Por favor habilita el GPS en la barra de ajustes de tu celular.', 'warning', 1000);
+      }
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  );
+}
+
 function conectarGPSAuto(forceReset = false) {
   const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
@@ -954,9 +981,15 @@ function conectarGPSAuto(forceReset = false) {
   solicitarGeolocalizacionNativaNavegador(isMobile, forceReset)
     .then(() => {
       gpsResolved = true;
+      const banner = document.getElementById('gpsMandatoryBanner');
+      if (banner) banner.style.display = 'none';
     })
     .catch((err) => {
       console.warn("⚠️ Geolocalización nativa no disponible:", err.message);
+      if (isMobile) {
+        const banner = document.getElementById('gpsMandatoryBanner');
+        if (banner) banner.style.display = 'block';
+      }
       if (!gpsResolved) {
         obtenerUbicacionIPFallbackDesktop(true);
       }
