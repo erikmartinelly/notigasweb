@@ -970,37 +970,28 @@ function descargarEstadisticasGeneralesCSV() {
   link.setAttribute("download", `estadisticas_generales_notigas_${fechaHoy}.csv`);
   document.body.appendChild(link);
   link.click();
-  document.body.removeChild(link);
-
-  alert(`📥 DESCARGA COMPLETADA EN FORMATO .CSV\n\nSe exportaron las estadísticas generales del sistema para su visualización en Google Sheets/Excel.`);
-}
-
-/* MODERACIÓN DE DENUNCIAS Y GESTIÓN DE BANEOS DE USUARIOS */
-function renderAdminReports() {
+async function renderAdminReports() {
   const container = document.getElementById('adminReportsContainer');
   const bannedContainer = document.getElementById('adminBannedList');
-  if (!container || !bannedContainer) return;
+  if (!container || !bannedContainer || !window.supabaseClient) return;
 
-  let reports = [];
-  try {
-    const raw = localStorage.getItem('notigas_user_reports');
-    if (raw) reports = JSON.parse(raw);
-  } catch(e){}
-
-  if (reports.length === 0) {
+  // 1. Fetch Denuncias
+  const { data: reports } = await window.supabaseClient.from('denuncias').select('*').order('created_at', { ascending: false });
+  
+  if (!reports || reports.length === 0) {
     container.innerHTML = '<div style="color:#64748B; font-style:italic;">No hay denuncias pendientes de revisión.</div>';
   } else {
     let html = '';
-    reports.forEach((rep, idx) => {
+    reports.forEach((rep) => {
       html += `
         <div style="background:#1E293B; padding:6px 8px; border-radius:6px; border-left:3px solid #EF4444; display:flex; justify-content:space-between; align-items:center;">
           <div>
-            <strong>${rep.target || 'Publicación'}</strong>: ${rep.motivo}
-            <div style="font-size:9px; color:#94A3B8;">${rep.detalle || 'Sin detalle'} • ${rep.fecha || 'Reciente'}</div>
+            <strong>${escapeHtmlStr(rep.target || 'Publicación')}</strong>: ${escapeHtmlStr(rep.motivo)}
+            <div style="font-size:9px; color:#94A3B8;">${escapeHtmlStr(rep.detalle || 'Sin detalle')}</div>
           </div>
           <div style="display:flex; gap:4px;">
-            <button onclick="borrarDenunciaAdmin(${idx})" style="background:#0288D1; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; cursor:pointer;" title="Desestimar">✅ Ok</button>
-            <button onclick="banearUsuarioAdmin('${rep.target}')" style="background:#D32F2F; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; cursor:pointer;" title="Banear Usuario">🚫 Banear</button>
+            <button onclick="borrarDenunciaAdmin('${rep.id}')" style="background:#0288D1; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; cursor:pointer;" title="Desestimar">👍 Ok</button>
+            <button onclick="banearUsuarioAdmin('${escapeHtmlStr(rep.target)}')" style="background:#D32F2F; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; cursor:pointer;" title="Banear Usuario">🚫 Banear</button>
           </div>
         </div>
       `;
@@ -1008,21 +999,26 @@ function renderAdminReports() {
     container.innerHTML = html;
   }
 
-  let banned = [];
-  try {
-    const raw = localStorage.getItem('notigas_banned_users');
-    if (raw) banned = JSON.parse(raw);
-  } catch(e){}
+  // 2. Fetch Baneados
+  const { data: banned } = await window.supabaseClient.from('usuarios_baneados').select('*');
 
-  if (banned.length === 0) {
+  if (!banned || banned.length === 0) {
     bannedContainer.innerHTML = '<div style="color:#64748B; font-style:italic;">No hay usuarios baneados actualmente.</div>';
   } else {
     let html = '';
-    banned.forEach((u, i) => {
+    banned.forEach((u) => {
       html += `
         <div style="display:flex; justify-content:space-between; align-items:center; background:#1E293B; padding:4px 8px; border-radius:4px;">
-          <span>🚫 ${escapeHtmlStr(u)}</span>
-          <button onclick="desbanearUsuarioAdmin(${i})" style="background:#00E676; color:#0F172A; border:none; padding:2px 6px; border-radius:4px; font-weight:700; font-size:9px; cursor:pointer;">Desbanear</button>
+          <span>🚫 ${escapeHtmlStr(u.identificador)}</span>
+          <button onclick="desbanearUsuarioAdmin('${u.id}')" style="background:#00E676; color:#0F172A; border:none; padding:2px 6px; border-radius:4px; font-weight:700; font-size:9px; cursor:pointer;">Desbanear</button>
+        </div>
+      `;
+    });
+    bannedContainer.innerHTML = html;
+  }
+
+  renderAdminChatInspector();
+}2px 6px; border-radius:4px; font-weight:700; font-size:9px; cursor:pointer;">Desbanear</button>
         </div>
       `;
     });
@@ -1117,61 +1113,37 @@ function purgaChatEspecificoAdmin(encodedKey) {
   }
 }
 
-function banearUsuarioAdmin(targetId) {
-  let identifier = targetId;
-  if (!identifier) {
-    const input = document.getElementById('inputBanIdentifier');
-    identifier = input ? input.value.trim() : '';
-  }
+async function banearUsuarioAdmin(identifier) {
+  if (!identifier || !window.supabaseClient) return;
 
-  if (!identifier) {
-    alert('Ingresa el correo o nombre del usuario que deseas banear.');
-    return;
-  }
+  const { error } = await window.supabaseClient.from('usuarios_baneados').insert([{
+    identificador: identifier,
+    motivo: 'Baneado por Administrador'
+  }]);
 
-  let banned = [];
-  try {
-    const raw = localStorage.getItem('notigas_banned_users');
-    if (raw) banned = JSON.parse(raw);
-  } catch(e){}
-
-  if (!banned.includes(identifier)) {
-    banned.push(identifier);
-    localStorage.setItem('notigas_banned_users', JSON.stringify(banned));
+  if (!error) {
     alert(`🚫 USUARIO BANEADO\nEl usuario (${identifier}) ha sido restringido de publicar en NOTIGAS.`);
   }
 
   renderAdminReports();
 }
 
-function desbanearUsuarioAdmin(index) {
-  let banned = [];
-  try {
-    const raw = localStorage.getItem('notigas_banned_users');
-    if (raw) banned = JSON.parse(raw);
-  } catch(e){}
+async function desbanearUsuarioAdmin(id) {
+  if (!id || !window.supabaseClient) return;
 
-  if (index >= 0 && index < banned.length) {
-    const unbanned = banned.splice(index, 1);
-    localStorage.setItem('notigas_banned_users', JSON.stringify(banned));
-    alert(`🔓 USUARIO DESBANEADO\nSe ha retirado el ban a ${unbanned[0]}.`);
+  const { error } = await window.supabaseClient.from('usuarios_baneados').delete().eq('id', id);
+
+  if (!error) {
+    alert(`✅ USUARIO DESBANEADO\nSe ha retirado el ban.`);
   }
 
   renderAdminReports();
 }
 
-function borrarDenunciaAdmin(index) {
-  let reports = [];
-  try {
-    const raw = localStorage.getItem('notigas_user_reports');
-    if (raw) reports = JSON.parse(raw);
-  } catch(e){}
-
-  if (index >= 0 && index < reports.length) {
-    reports.splice(index, 1);
-    localStorage.setItem('notigas_user_reports', JSON.stringify(reports));
-  }
-
+async function borrarDenunciaAdmin(indexId) {
+  if (!window.supabaseClient) return;
+  const { error } = await window.supabaseClient.from('denuncias').delete().eq('id', indexId);
+  if (error) console.error(error);
   renderAdminReports();
 }
 
@@ -1192,31 +1164,24 @@ function closeReportModal() {
   if (modal) modal.style.display = 'none';
 }
 
-function enviarDenuncia() {
+async function enviarDenuncia() {
   const context = document.getElementById('reportContext')?.value || 'General';
   const motivo = document.getElementById('selectReportMotivo')?.value || 'Contenido Ofensivo';
   const detalle = document.getElementById('inputReportDetalle')?.value.trim() || '';
 
-  let reports = [];
-  try {
-    const raw = localStorage.getItem('notigas_user_reports');
-    if (raw) reports = JSON.parse(raw);
-  } catch(e){}
-
-  const newReport = {
-    target: context,
-    motivo: motivo,
-    detalle: detalle,
-    fecha: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  };
-
-  reports.unshift(newReport);
-  localStorage.setItem('notigas_user_reports', JSON.stringify(reports));
+  if (window.supabaseClient) {
+    const { error } = await window.supabaseClient.from('denuncias').insert([{
+      target: context,
+      motivo: motivo,
+      detalle: detalle
+    }]);
+    if (error) console.error("Error enviando denuncia:", error);
+  }
 
   closeReportModal();
   const inputDetalle = document.getElementById('inputReportDetalle');
   if (inputDetalle) inputDetalle.value = '';
 
-  alert('🚨 Denuncia registrada de forma segura. El equipo de moderación revisará el elemento reportado.');
+  alert('🛡️ Denuncia registrada de forma segura. El equipo de moderación revisará el elemento reportado.');
 }
 
