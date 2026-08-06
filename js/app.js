@@ -10,6 +10,37 @@ let isDriverGpsLive = true;
 window.isHeatmapActive = window.isHeatmapActive || false;
 
 /* =====================================================
+   SISTEMA DE LOADING GLOBAL (ANTI-FREEZE)
+   ===================================================== */
+let globalLoadingTimeout;
+
+window.showLoadingOverlay = function(message = "Procesando...") {
+  const overlay = document.getElementById('globalLoadingOverlay');
+  const msgEl = document.getElementById('globalLoadingMessage');
+  const btn = document.getElementById('globalLoadingCancelBtn');
+  
+  if (overlay && msgEl && btn) {
+    msgEl.innerText = message;
+    btn.style.display = 'none';
+    overlay.style.display = 'flex';
+
+    clearTimeout(globalLoadingTimeout);
+    globalLoadingTimeout = setTimeout(() => {
+      msgEl.innerText = "La conexión está tardando más de lo normal...";
+      btn.style.display = 'block';
+    }, 10000); // 10 segundos
+  }
+};
+
+window.hideLoadingOverlay = function() {
+  const overlay = document.getElementById('globalLoadingOverlay');
+  if (overlay) {
+    overlay.style.display = 'none';
+    clearTimeout(globalLoadingTimeout);
+  }
+};
+
+/* =====================================================
    SISTEMA DE TOAST NOTIFICATIONS (Reemplazo de alert())
    ===================================================== */
 function showToast(title, message, type = 'info', durationMs = 1000) {

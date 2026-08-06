@@ -987,9 +987,16 @@
     <div style="font-size:11px; color:#64748B; font-family:'Roboto',sans-serif;">Si consideras que se trata de un error, contacta al soporte oficial de NOTIGAS.</div>
   </div>
 
-  <!-- INCLUSIÓN DE MÓDULOS JAVASCRIPT ARQUITECTURALES DESACOPLADOS -->
+  <!-- GLOBAL LOADING OVERLAY (ANTI-FREEZE) -->
+  <div id="globalLoadingOverlay" style="display:none; position:fixed; z-index:999999; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.9); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px);">
+    <i class="fa-solid fa-circle-notch fa-spin" style="font-size:40px; color:#FF6D00; margin-bottom:15px;"></i>
+    <div id="globalLoadingMessage" style="color:white; font-size:14px; font-weight:700; text-align:center; max-width:80%; margin-bottom: 20px;">Procesando...</div>
+    <button id="globalLoadingCancelBtn" onclick="hideLoadingOverlay()" style="display:none; background:#D32F2F; color:white; border:none; padding:10px 20px; border-radius:10px; font-weight:800; cursor:pointer; font-size:12px; box-shadow:0 4px 12px rgba(211,47,47,0.4);">
+      <i class="fa-solid fa-arrow-left"></i> La conexión es lenta. Regresar
+    </button>
+  </div>
 
-  <script src="js/supabase-config.js"></script>
+  <!-- INCLUSIÓN DE MÓDULOS JAVASCRIPT ARQUITECTURALES DESACOPLADOS -->  <script src="js/supabase-config.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/vendors.js"></script>
   <script src="js/map.js"></script>

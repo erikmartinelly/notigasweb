@@ -1054,17 +1054,18 @@ footer.ad-banner-container {
 }
 
 .ad-title { 
-  font-size: 11px; 
-  font-weight: 700; 
-  color: #F8FAFC; 
+  font-size: 9px; 
+  font-weight: 500; 
+  color: #94A3B8; 
   white-space: nowrap; 
   overflow: hidden; 
   text-overflow: ellipsis; 
 }
 
 .ad-subtext { 
-  font-size: 10px; 
-  color: #94A3B8; 
+  font-size: 12px; 
+  font-weight: 700;
+  color: #F8FAFC; 
   white-space: nowrap; 
   overflow: hidden; 
   text-overflow: ellipsis; 

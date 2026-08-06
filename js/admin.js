@@ -740,6 +740,16 @@ function guardarAdminConfig() {
   const inputPass = document.getElementById('inputPass');
   if (!inputGmail || !inputPass) return;
 
+  // Rate Limiting Check
+  let attempts = parseInt(localStorage.getItem('notigas_admin_login_attempts') || '0');
+  let lockoutUntil = parseInt(localStorage.getItem('notigas_admin_lockout_until') || '0');
+
+  if (Date.now() < lockoutUntil) {
+    const minutesLeft = Math.ceil((lockoutUntil - Date.now()) / 60000);
+    alert(`⛔ BLOQUEO DE SEGURIDAD\nDemasiados intentos fallidos. Intenta de nuevo en ${minutesLeft} minutos.`);
+    return;
+  }
+
   const gmail = inputGmail.value.trim().toLowerCase();
   const pass = inputPass.value.trim();
 
@@ -748,15 +758,22 @@ function guardarAdminConfig() {
     return;
   }
 
-  if (!AUTHORIZED_ADMIN_EMAILS.includes(gmail)) {
-    alert(`⛔ ACCESO DENEGADO\nLa cuenta (${gmail}) no cuenta con permisos de administración.`);
+  if (!AUTHORIZED_ADMIN_EMAILS.includes(gmail) || pass !== REQUIRED_ADMIN_PASSWORD) {
+    attempts++;
+    if (attempts >= 3) {
+      localStorage.setItem('notigas_admin_lockout_until', (Date.now() + 15 * 60000).toString());
+      localStorage.setItem('notigas_admin_login_attempts', '0');
+      alert(`⛔ BLOQUEO DE SEGURIDAD\nHas fallado 3 veces. El acceso ha sido bloqueado por 15 minutos.`);
+    } else {
+      localStorage.setItem('notigas_admin_login_attempts', attempts.toString());
+      alert(`⛔ CREDENCIALES INCORRECTAS\nTe quedan ${3 - attempts} intentos antes de ser bloqueado.`);
+    }
     return;
   }
 
-  if (pass !== REQUIRED_ADMIN_PASSWORD) {
-    alert('⛔ CONTRASEÑA INCORRECTA\nLa contraseña de administración ingresada es incorrecta.');
-    return;
-  }
+  // Reset attempts on success
+  localStorage.setItem('notigas_admin_login_attempts', '0');
+  localStorage.removeItem('notigas_admin_lockout_until');
 
   sessionStorage.setItem('notigas_admin_session', gmail);
   

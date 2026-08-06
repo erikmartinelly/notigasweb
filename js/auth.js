@@ -268,10 +268,15 @@ function handleCredentialResponse(response) {
 
 async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
   if (!window.supabaseClient) return;
-  // Insertar en la tabla de Supabase (requiere que el admin haya ejecutado el ALTER TABLE para añadir las columnas extra)
+
+  if (typeof showLoadingOverlay === 'function') {
+    showLoadingOverlay('Registrando repartidor en la nube...');
+  }
+
+  // Insertar en la tabla de Supabase
   const { error } = await window.supabaseClient.from('choferes_habilitados').insert([{
     nombre_completo: repartidorObj.nombre,
-    ci_carnet: 'CI-' + Date.now(), // Fallback si no hay carnet en el form
+    ci_carnet: 'CI-' + Date.now(), // Fallback
     telefono_whatsapp: repartidorObj.whatsapp,
     estado_verificacion: 'pendiente',
     placa: repartidorObj.placa,
@@ -281,8 +286,13 @@ async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
     schedule: repartidorObj.schedule
   }]);
   
+  if (typeof hideLoadingOverlay === 'function') {
+    hideLoadingOverlay();
+  }
+
   if (error) {
     console.error("Error registrando chofer en Supabase:", error);
+    if (typeof showToast === 'function') showToast('Error', 'No se pudo guardar en la nube. Intenta de nuevo.', 'error');
   }
 }
 
