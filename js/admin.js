@@ -731,6 +731,30 @@ function guardarSubmenuAnuncios() {
     actualizarAnunciosEnVivo(inputAd, inputUrl);
   }
 
+  // Sincronizar con Supabase para que los clientes web y móviles lo vean
+  if (window.supabaseClient) {
+    const base64Img = localStorage.getItem('notigas_ad_image_base64') || '';
+    const payload = {
+        tipo: 'anuncioGlobal',
+        titulo: inputAd,
+        descripcion: 'Anuncio Global Sponsor',
+        comentarios: [{ url: inputUrl, image: base64Img }], // Usamos comentarios como JSON storage
+        categoria: 'Publicidad',
+        user_email: 'admin@notigas.com',
+        user_role: 'admin',
+        ciudad: 'Global',
+        barrio_otb: 'Global'
+    };
+    
+    window.supabaseClient.from('publicaciones').select('id').eq('tipo', 'anuncioGlobal').single().then(({data}) => {
+        if (data) {
+            window.supabaseClient.from('publicaciones').update(payload).eq('id', data.id).then();
+        } else {
+            window.supabaseClient.from('publicaciones').insert([payload]).then();
+        }
+    });
+  }
+
   closeAdminModal();
   alert('📢 CONFIGURACIÓN DE PUBLICIDAD Y ADSENSE GUARDADA CON ÉXITO\n\nLos cambios en anuncios locales e integración con Google AdSense ya están activos.');
 }

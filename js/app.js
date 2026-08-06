@@ -117,6 +117,26 @@ function showConfirmModal(icon, title, text, acceptLabel, acceptCallback) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  // 🛡️ Filtro de Seguridad Geo-Bloqueo (Solo América)
+  try {
+    fetch('https://ipapi.co/json/')
+      .then(r => r.json())
+      .then(data => {
+         // Permite Norteamérica (NA), Sudamérica (SA) y España (ES)
+         if (data && data.continent_code && data.continent_code !== 'SA' && data.continent_code !== 'NA' && data.country_code !== 'ES') {
+             document.body.innerHTML = `
+                 <div style="background:#0F172A; width:100vw; height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:'Inter', sans-serif; text-align:center; padding:20px; box-sizing:border-box;">
+                     <h1 style="color:#FF1744; font-size:48px; margin:0;"><i class="fa-solid fa-earth-americas"></i></h1>
+                     <h2 style="margin-top:10px;">Acceso Restringido</h2>
+                     <p style="color:#94A3B8; font-size:14px; max-width:400px; line-height:1.5;">
+                         NOTIGAS es una plataforma exclusiva para América.<br>Tu conexión proviene de <strong>${data.country_name || 'otra región'}</strong>, por lo que el acceso ha sido bloqueado por motivos de seguridad.
+                     </p>
+                 </div>
+             `;
+         }
+      }).catch(e => console.warn("GeoIP Check failed"));
+  } catch(e){}
+
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then(regs => {
       for (let r of regs) r.update();

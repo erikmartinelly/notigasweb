@@ -24,6 +24,8 @@ let truckTargetLat = null;
 let truckTargetLng = null;
 let truckCurrentLat = null;
 let truckCurrentLng = null;
+let neighborOrderMarkers = {};
+let activeTruckMarkers = {};
 window.isHeatmapActive = window.isHeatmapActive || false;
 
 // ICONO DE GARRAFA GLP ROJA LIMPIA SIN FONDO NI CÍRCULO CON DESTELLO ROJO EN LA GARRAFA
@@ -116,7 +118,141 @@ function initNotigasMap() {
 
   conectarGPSAuto(false);
   renderReportedTrucksBuffer();
+  cargarPedidosVecinalesEnVivo();
 }
+
+async function cargarPedidosVecinalesEnVivo() {
+  if (!window.supabaseClient || !map) return;
+  const thirtyMinsAgo = new Date(Date.now() - 30 * 60000).toISOString();
+  try {
+    const { data, error } = await window.supabaseClient
+      .from('publicaciones')
+      .select('*')
+      .eq('tipo', 'pedido')
+      .gte('created_at', thirtyMinsAgo);
+    
+    if (data && !error) {
+      data.forEach(order => agregarPedidoVecinoEnMapa(order));
+    }
+    
+    // FETCH LIVE TRUCKS (Last 10 minutes to avoid stale trucks)
+    const tenMinsAgo = new Date(Date.now() - 10 * 60000).toISOString();
+    const res = await window.supabaseClient
+      .from('publicaciones')
+      .select('*')
+      .eq('tipo', 'rutaDistribuidor')
+      .gte('created_at', tenMinsAgo);
+      
+    if (res.data && !res.error) {
+       res.data.forEach(truck => actualizarRepartidorEnMapa(truck));
+    }
+  } catch(e) {
+    console.error("Error cargando live data:", e);
+  }
+}
+
+function actualizarRepartidorEnMapa(data) {
+  if (!map) return;
+  // Filtrar si es otro repartidor de otra categoria (si el usuario actual es repartidor)
+  let userRole = 'vecino';
+  let driverCategoria = 'Gas GLP';
+  try {
+    const saved = localStorage.getItem('notigas_user_data');
+    if (saved) {
+      const u = JSON.parse(saved);
+      if (u.role) userRole = u.role;
+      if (u.categoria) driverCategoria = u.categoria;
+    }
+  } catch(e){}
+
+  if (userRole === 'repartidor' && typeof isOrderCategoryMatchingDriver === 'function' && !isOrderCategoryMatchingDriver(data.categoria)) {
+     return; // Repartidores solo ven camiones de su rubro
+  }
+
+  const truckId = data.id || data.distribuidor_nombre;
+  if (!truckId) return;
+
+  if (activeTruckMarkers[truckId]) {
+    activeTruckMarkers[truckId].setLatLng([data.latitude, data.longitude]);
+  } else {
+    const marker = L.marker([data.latitude, data.longitude], { icon: truckIcon, zIndexOffset: 9000 }).addTo(map);
+    marker.bindPopup(`
+      <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
+        <strong style="color:#00E676; font-size:13px;">🚛 Camión en Vivo</strong><br>
+        <span style="font-size:12px; color:#FFFFFF; font-weight:800;">${escapeHtmlStr(data.distribuidor_nombre || 'Repartidor')}</span><br>
+        <span style="font-size:11px; color:#64748B;">${escapeHtmlStr(data.categoria || 'Servicio de Entrega')}</span>
+      </div>
+    `);
+    activeTruckMarkers[truckId] = marker;
+  }
+  
+  // Clean up stale trucks
+  setTimeout(() => {
+    if (activeTruckMarkers[truckId]) {
+      map.removeLayer(activeTruckMarkers[truckId]);
+      delete activeTruckMarkers[truckId];
+    }
+  }, 10 * 60000);
+}
+
+function agregarPedidoVecinoEnMapa(order) {
+  if (!map) return;
+  let currentUserEmail = 'buyer@notigas.com';
+  try {
+    const saved = localStorage.getItem('notigas_user_data');
+    if (saved) {
+      currentUserEmail = JSON.parse(saved).email;
+    }
+  } catch(e){}
+
+  if (order.user_email === currentUserEmail) return; // Skip own orders
+
+  const orderId = order.id;
+  if (neighborOrderMarkers[orderId]) {
+    map.removeLayer(neighborOrderMarkers[orderId]);
+  }
+
+  // Si el usuario actual es REPARTIDOR, solo ver pedidos de SU MISMA CATEGORÍA
+  let userRole = 'vecino';
+  let driverCategoria = 'Gas GLP';
+  try {
+    const saved = localStorage.getItem('notigas_user_data');
+    if (saved) {
+      const u = JSON.parse(saved);
+      if (u.role) userRole = u.role;
+      if (u.categoria) driverCategoria = u.categoria;
+    }
+  } catch(e){}
+
+  if (userRole === 'repartidor' && typeof isOrderCategoryMatchingDriver === 'function' && !isOrderCategoryMatchingDriver(order.categoria)) {
+     return; // Ignore orders outside of their category
+  }
+
+  const marker = L.marker([order.latitude, order.longitude], { icon: garrafaIcon, zIndexOffset: 8000 }).addTo(map);
+  marker.bindPopup(`
+    <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
+      <strong style="color:#FF6D00; font-size:13px;">🛒 Pedido de un Vecino</strong><br>
+      <span style="font-size:11px; color:#64748B;">${escapeHtmlStr(order.categoria)}</span>
+    </div>
+  `);
+  neighborOrderMarkers[orderId] = marker;
+
+  // Auto remove after 30 mins just in case
+  setTimeout(() => {
+    if (neighborOrderMarkers[orderId]) {
+      map.removeLayer(neighborOrderMarkers[orderId]);
+      delete neighborOrderMarkers[orderId];
+    }
+  }, 30 * 60 * 1000);
+}
+
+function removerPublicacionDeMapa(id) {
+  if (neighborOrderMarkers[id]) {
+    if (map) map.removeLayer(neighborOrderMarkers[id]);
+    delete neighborOrderMarkers[id];
+  }
+}
+
 
 let isUserMarkerDraggedManually = false;
 let isMapInteractedByUser = false;
@@ -1052,12 +1188,8 @@ function conectarGPSAuto(forceReset = false) {
 
   let gpsResolved = false;
 
-  // En PC (escritorio/laptop Windows), ejecutar resolución exclusiva por Red IP
-  // La geolocalización nativa de navegadores PC suele fallar o ser muy inexacta sin hardware GPS
-  if (!isMobile) {
-    obtenerUbicacionIPFallbackDesktop(true);
-    return; // Termina aquí para PC, evitando carrera de condiciones.
-  }
+  // Eliminado el bloqueo estricto de PC. 
+  // Ahora TODOS los dispositivos intentan geolocalización nativa del navegador primero (WiFi Triangulation en PC es muy preciso).
 
   // 1. Intentar geolocalización nativa del navegador para móviles
   solicitarGeolocalizacionNativaNavegador(isMobile, forceReset)
@@ -1077,12 +1209,12 @@ function conectarGPSAuto(forceReset = false) {
       }
     });
 
-  // 2. Disparar resolución multicanal por IP si la nativa tarda demasiado (móviles)
+  // 2. Disparar resolución multicanal por IP si la nativa tarda demasiado (PC y móviles)
   setTimeout(() => {
-    if (!gpsResolved && isMobile) {
+    if (!gpsResolved) {
       obtenerUbicacionIPFallbackDesktop(true);
     }
-  }, 2500);
+  }, 3500);
 
   // 3. En dispositivos móviles Android, activar watchPosition continuo
   if (isMobile && "geolocation" in navigator) {

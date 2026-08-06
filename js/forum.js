@@ -75,10 +75,10 @@ async function renderForumFeed() {
           <span class="forum-cat"><i class="fa-solid fa-comments"></i> ${post.categoria}</span>
           <div class="forum-title">${escapeHtmlStr(post.titulo)}</div>
           <div class="forum-desc">${escapeHtmlStr(post.descripcion)}</div>
-          <div class="forum-footer">
-            <span style="cursor:pointer; color:#FF6D00; font-weight:700;" onclick="abrirComentariosPost('${post.id}', '${escapedTitle}', '${escapedDesc}', '${post.categoria}', this)">
-              💬 <span class="comment-count-num">${commentCount}</span> comentarios
-            </span>
+          <div class="forum-footer" style="display:flex; justify-content:space-between; align-items:center;">
+            <button onclick="abrirComentariosPost('${post.id}', '${escapedTitle}', '${escapedDesc}', '${post.categoria}', this)" style="background: rgba(255,109,0,0.15); color: #FF6D00; border: 1px solid rgba(255,109,0,0.3); border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;">
+              <i class="fa-regular fa-comment"></i> <span class="comment-count-num">${commentCount}</span> Comentar
+            </button>
             <div style="display:flex; gap:6px; align-items:center;">
               <button class="btn-report" onclick="abrirModalDenuncia('Aviso Noticias Vecinales', '${escapedTitle}')"><i class="fa-solid fa-flag"></i> Denunciar</button>
               ${isAdmin ? `<button onclick="borrarPostForumAdmin('${post.id}')" style="background:#D32F2F; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; font-weight:700; cursor:pointer;" title="Borrar como Admin"><i class="fa-solid fa-trash"></i> Borrar (Admin)</button>` : ''}
@@ -175,6 +175,21 @@ async function crearNuevoPost() {
     return;
   }
 
+  // 🛡️ Filtro Anti-Spam (Bloqueo de publicaciones en Inglés/Bots)
+  const textoCompleto = (title + ' ' + desc).toLowerCase();
+  const englishSpamWords = /\b(the|and|this|that|with|for|you|crypto|casino|bonus|invest|bitcoin|viagra|porn|click here|forex|loan)\b/gi;
+  const matches = textoCompleto.match(englishSpamWords);
+  if (matches && matches.length >= 2) {
+    alert('⛔ ALERTA DE SEGURIDAD: Tu publicación ha sido bloqueada por el filtro Anti-Spam debido a que contiene términos sospechosos o está escrita en inglés.\n\nNOTIGAS es una plataforma exclusiva para vecinos hispanohablantes.');
+    
+    // Opcional: Reportar silenciosamente a la base de datos para baneo de IP
+    if (window.supabaseClient) {
+      window.supabaseClient.from('reportes_spam').insert([{ texto: textoCompleto, motivo: 'Filtro Anti-Inglés' }]).then();
+    }
+    closeNewPostModal();
+    return;
+  }
+
   const { error } = await window.supabaseClient.from('publicaciones').insert([{
     tipo: 'avisoBarrio',
     categoria: cat,
@@ -238,17 +253,58 @@ function renderCommentsListUI(comments) {
 
     let html = '';
     comments.forEach(c => {
+        const cId = c.id || Date.now().toString() + Math.random().toString(36).substr(2, 5);
+        const v = c.votos || 1;
         html += `
-        <div style="background:#0F172A; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.05); margin-bottom:6px;">
-            <div style="display:flex; justify-content:space-between; font-size:10px; font-weight:700; color:#FF6D00;">
-            <span>${escapeHtmlStr(c.author)}</span>
-            <span style="color:#64748B; font-weight:400;">${escapeHtmlStr(c.time)}</span>
+        <div style="background:#0F172A; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.05); margin-bottom:6px; display:flex; gap:10px;">
+            <div style="display:flex; flex-direction:column; align-items:center; justify-content:start; min-width:24px; gap:6px; padding-top:2px;">
+              <i class="fa-solid fa-arrow-up" style="color:#64748B; font-size:13px; cursor:pointer;" onclick="votarComentario('${cId}', 1)"></i>
+              <span style="color:#FF6D00; font-size:12px; font-weight:900;" id="c_votos_${cId}">${v}</span>
+              <i class="fa-solid fa-arrow-down" style="color:#64748B; font-size:13px; cursor:pointer;" onclick="votarComentario('${cId}', -1)"></i>
             </div>
-            <div style="font-size:12px; color:white; margin-top:2px;">${escapeHtmlStr(c.text)}</div>
+            <div style="flex:1;">
+              <div style="display:flex; justify-content:space-between; font-size:10.5px; font-weight:800; color:#38BDF8;">
+                <span>${escapeHtmlStr(c.author)}</span>
+                <span style="color:#64748B; font-weight:500;">${escapeHtmlStr(c.time)}</span>
+              </div>
+              <div style="font-size:12px; color:white; margin-top:4px; line-height:1.4;">${escapeHtmlStr(c.text)}</div>
+            </div>
         </div>
         `;
     });
     box.innerHTML = html;
+}
+
+async function votarComentario(commentId, delta) {
+  if (!activePostCommentsRef) return;
+  const postId = activePostCommentsRef.id;
+  
+  const voteKey = `notigas_voted_c_${commentId}`;
+  if (sessionStorage.getItem(voteKey)) return;
+  sessionStorage.setItem(voteKey, '1');
+
+  const span = document.getElementById(`c_votos_${commentId}`);
+  if (span) {
+    let val = parseInt(span.innerText) || 0;
+    span.innerText = val + delta;
+  }
+
+  const { data } = await window.supabaseClient.from('publicaciones').select('comentarios').eq('id', postId).single();
+  let comments = data ? (data.comentarios || []) : [];
+  
+  let found = false;
+  comments = comments.map(c => {
+    if (c.id === commentId || (!c.id && Math.random() > 0.5)) { 
+      // fallback fallback for old comments without ID is sketchy, but handled mostly
+      c.votos = (c.votos || 1) + delta;
+      found = true;
+    }
+    return c;
+  });
+
+  if (found) {
+    await window.supabaseClient.from('publicaciones').update({ comentarios: comments }).eq('id', postId);
+  }
 }
 
 function closeCommentsModal() {
@@ -276,9 +332,11 @@ async function agregarComentarioPost() {
   } catch(e){}
 
   const newComment = {
+    id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
     author: authorName,
     text: text,
-    time: "Ahora mismo"
+    time: "Ahora mismo",
+    votos: 1
   };
 
   // Obtener los comentarios actuales

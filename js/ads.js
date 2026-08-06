@@ -90,10 +90,49 @@ function inyectarGoogleAdsenseScript(pubId, slotId) {
   }
 }
 
-function cargarAnunciosGuardados() {
+async function cargarAnunciosGuardados() {
   const savedAdsense = localStorage.getItem('notigas_adsense_id') || 'ca-pub-2502415561017945';
   const savedSlot = localStorage.getItem('notigas_adsense_slot_id') || '1234567890';
   const savedMode = localStorage.getItem('notigas_adsense_mode') || 'custom';
+  
+  if (savedMode === 'adsense' && savedAdsense) {
+    inyectarGoogleAdsenseScript(savedAdsense, savedSlot);
+    return;
+  }
+
+  if (window.supabaseClient) {
+    try {
+      const { data, error } = await window.supabaseClient.from('publicaciones').select('*').eq('tipo', 'anuncioGlobal').single();
+      if (data && !error) {
+        const text = data.titulo || '';
+        const url = (data.comentarios && data.comentarios[0] && data.comentarios[0].url) ? data.comentarios[0].url : '';
+        const image = (data.comentarios && data.comentarios[0] && data.comentarios[0].image) ? data.comentarios[0].image : '';
+        
+        localStorage.setItem('notigas_ad_text', text);
+        localStorage.setItem('notigas_ad_url', url);
+        if (image) localStorage.setItem('notigas_ad_image_base64', image);
+
+        if (text) {
+          const el = document.getElementById('inputAdText');
+          if (el) el.value = text;
+          actualizarAnunciosEnVivo(text, url);
+        }
+        if (url) {
+          const el = document.getElementById('inputAdUrl');
+          if (el) el.value = url;
+        }
+        if (image) {
+          mostrarVistaPreviaImagen(image);
+          actualizarBannerConImagen(image);
+        }
+        return;
+      }
+    } catch(e) {
+      console.error("Error cargando anuncio global:", e);
+    }
+  }
+
+  // Fallback a LocalStorage si no hay conexión
   const savedText = localStorage.getItem('notigas_ad_text');
   const savedUrl = localStorage.getItem('notigas_ad_url');
   const savedImage = localStorage.getItem('notigas_ad_image_base64');
@@ -121,10 +160,6 @@ function cargarAnunciosGuardados() {
   if (savedImage) {
     mostrarVistaPreviaImagen(savedImage);
     actualizarBannerConImagen(savedImage);
-  }
-
-  if (savedMode === 'adsense' && savedAdsense) {
-    inyectarGoogleAdsenseScript(savedAdsense, savedSlot);
   }
 }
 
