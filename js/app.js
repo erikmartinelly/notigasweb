@@ -596,7 +596,15 @@ function closePedidoModal() {
 
 function confirmarPedido() {
   const pos = getActiveUserLocation();
-  const cat = document.getElementById('selectCategoria')?.value || 'Garrafa de Gas GLP';
+  let cat = document.getElementById('selectCategoria')?.value || 'Garrafa de Gas GLP';
+  
+  if (cat.includes('Otros')) {
+    const detail = (document.getElementById('inputOrderOtrosDetalle')?.value || '').trim();
+    if (detail) {
+      cat = `${cat} - ${detail}`;
+    }
+  }
+
   const inputAddr = (document.getElementById('inputCallePrincipal')?.value || '').trim();
   const inputTel = (document.getElementById('inputTelefonoComprador')?.value || '').trim();
 

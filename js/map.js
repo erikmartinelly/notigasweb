@@ -962,21 +962,25 @@ function renderHeatmapOverlay() {
 }
 
 function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
-  console.log("📡 Resolviendo ubicación por red (el más rápido gana)...");
+  console.log("📍 Resolviendo ubicación por red (el más rápido gana)...");
 
   const apis = [
+    fetch('https://ipinfo.io/json').then(r => r.json()).then(d => (d && d.loc) ? { lat: parseFloat(d.loc.split(',')[0]), lng: parseFloat(d.loc.split(',')[1]) } : Promise.reject()),
     fetch('https://freeipapi.com/api/json').then(r => r.json()).then(d => (d && d.latitude && d.longitude) ? { lat: d.latitude, lng: d.longitude } : Promise.reject()),
     fetch('https://ipwho.is/').then(r => r.json()).then(d => (d && d.success && d.latitude && d.longitude) ? { lat: d.latitude, lng: d.longitude } : Promise.reject()),
     fetch('https://ipapi.co/json/').then(r => r.json()).then(d => (d && d.latitude && d.longitude) ? { lat: d.latitude, lng: d.longitude } : Promise.reject())
   ];
 
-  Promise.any(apis)
+  return Promise.any(apis)
     .then(coords => {
       applyGpsPosition(coords.lat, coords.lng, "Ubicación Georeferenciada por Red", forceReset);
       console.log("📍 Ubicación resuelta por Red/IP:", coords.lat, coords.lng);
+      return coords;
     })
     .catch(() => {
+      console.warn("⚠️ Todas las APIs IP bloqueadas. Usando default.");
       applyGpsPosition(-17.3895, -66.1568, "Ubicación Predeterminada OTB", forceReset);
+      return { lat: -17.3895, lng: -66.1568 };
     });
 }
 
@@ -1048,12 +1052,14 @@ function conectarGPSAuto(forceReset = false) {
 
   let gpsResolved = false;
 
-  // En PC (escritorio/laptop Windows), ejecutar resolución inmediata por Red IP (<200ms)
+  // En PC (escritorio/laptop Windows), ejecutar resolución exclusiva por Red IP
+  // La geolocalización nativa de navegadores PC suele fallar o ser muy inexacta sin hardware GPS
   if (!isMobile) {
     obtenerUbicacionIPFallbackDesktop(true);
+    return; // Termina aquí para PC, evitando carrera de condiciones.
   }
 
-  // 1. Intentar geolocalización nativa del navegador
+  // 1. Intentar geolocalización nativa del navegador para móviles
   solicitarGeolocalizacionNativaNavegador(isMobile, forceReset)
     .then(() => {
       gpsResolved = true;
@@ -1071,12 +1077,12 @@ function conectarGPSAuto(forceReset = false) {
       }
     });
 
-  // 2. Disparar resolución multicanal por IP a los 800ms por si la nativa tarda en responder
+  // 2. Disparar resolución multicanal por IP si la nativa tarda demasiado (móviles)
   setTimeout(() => {
     if (!gpsResolved && isMobile) {
       obtenerUbicacionIPFallbackDesktop(true);
     }
-  }, 800);
+  }, 2500);
 
   // 3. En dispositivos móviles Android, activar watchPosition continuo
   if (isMobile && "geolocation" in navigator) {
