@@ -4,8 +4,51 @@
 
 const defaultVendorsList = []; // LIMPIO SIN EJEMPLOS DUMMY PREDETERMINADOS
 
+async function descargarChoferesYRenderizar(cat = 'TODOS') {
+  if (!window.supabaseClient) {
+    renderVendorCards(cat);
+    return;
+  }
+  
+  const citySelect = document.getElementById('selectCiudadCapital');
+  const city = citySelect ? citySelect.value : 'santacruz';
+
+  try {
+    // Solo traemos choferes de la ciudad actual que estén pendientes o aprobados.
+    // (Por ahora traemos todos y el admin ya los banea o aprueba).
+    const { data, error } = await window.supabaseClient
+      .from('choferes_habilitados')
+      .select('*')
+      .eq('ciudad', city);
+
+    if (data && data.length > 0) {
+      let list = [];
+      data.forEach(d => {
+        list.push({
+          id: `driver_${d.id}`,
+          name: d.nombre_completo,
+          category: d.categoria || 'Gas GLP',
+          icon: typeof getIconForCategory === 'function' ? getIconForCategory(d.categoria) : '🚛',
+          plate: d.placa || 'Placa registrada',
+          products: d.productos || 'Servicios de reparto a domicilio',
+          zones: d.zonas || 'OTB local',
+          schedule: d.schedule || 'Lunes a Sábado',
+          active: d.estado_verificacion === 'aprobado'
+        });
+      });
+      localStorage.setItem('notigas_vendors_directory', JSON.stringify(list));
+    } else {
+      localStorage.setItem('notigas_vendors_directory', JSON.stringify([]));
+    }
+  } catch (e) {
+    console.error("Error fetching local drivers:", e);
+  }
+  
+  renderVendorCards(cat);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-  renderVendorCards('TODOS');
+  descargarChoferesYRenderizar('TODOS');
 });
 
 function filterVendorCategory(cat, chipElem) {
@@ -171,8 +214,7 @@ function renderVendorCards(filterCat) {
         </div>
 
         <div class="vendor-fb-footer">
-          <button class="btn-vendor-chat" onclick="abrirChatConRepartidor(decodeURIComponent('${encodeURIComponent(vendor.name)}'), decodeURIComponent('${encodeURIComponent(vendor.category)}'))"><i class="fa-solid fa-comments"></i> 💬 CHAT PRIVADO INTERNO</button>
-          <button class="btn-vendor-order" onclick="seleccionarYPedirDirecto(decodeURIComponent('${encodeURIComponent(vendor.category)}'))"><i class="fa-solid fa-cart-plus"></i> Pedir Producto</button>
+          <button class="btn-vendor-order" onclick="seleccionarYPedirDirecto(decodeURIComponent('${encodeURIComponent(vendor.category)}'))" style="width:100%;"><i class="fa-solid fa-cart-plus"></i> Pedir Producto</button>
         </div>
       </div>
     `;

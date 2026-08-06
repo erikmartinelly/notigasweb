@@ -283,7 +283,8 @@ async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
     categoria: repartidorObj.categoria,
     productos: repartidorObj.productos,
     zonas: repartidorObj.zonas,
-    schedule: repartidorObj.schedule
+    schedule: repartidorObj.schedule,
+    ciudad: repartidorObj.ciudad || 'santacruz'
   }]);
   
   if (typeof hideLoadingOverlay === 'function') {
@@ -314,6 +315,8 @@ function guardarRegistroUnico() {
     const zonas = (document.getElementById('regZonas')?.value || '').trim() || 'OTB Central y calles vecinas';
     const schedule = (document.getElementById('regSchedule')?.value || '').trim() || 'Lunes a Sábado: 07:00 a 18:00';
 
+    const ciudad = (document.getElementById('regCiudad')?.value || '').trim() || 'santacruz';
+
     const repartidorData = {
       role: 'repartidor',
       nombre: nombreNegocio,
@@ -322,7 +325,8 @@ function guardarRegistroUnico() {
       categoria: categoria,
       productos: productos,
       zonas: zonas,
-      schedule: schedule
+      schedule: schedule,
+      ciudad: ciudad
     };
 
     localStorage.setItem('notigas_user_data', JSON.stringify(repartidorData));
@@ -407,6 +411,8 @@ function iniciarSesionRepartidor() {
     return;
   }
 
+  const ciudad = (document.getElementById('inputDriverCiudad')?.value || '').trim() || 'santacruz';
+
   const repartidorData = { 
     role: 'repartidor', 
     nombre: nombreNegocio,
@@ -415,7 +421,8 @@ function iniciarSesionRepartidor() {
     categoria: categoria, 
     productos: productos,
     zonas: zonas,
-    schedule: schedule
+    schedule: schedule,
+    ciudad: ciudad
   };
   if (existingGmail) repartidorData.gmail = existingGmail;
 
