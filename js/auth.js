@@ -450,26 +450,54 @@ function guardarPrefUsuario() {
 }
 
 function cerrarSesionUsuario() {
-  if (confirm("🚪 ¿Estás seguro de que deseas cerrar sesión en NOTIGAS?\n\nAl cerrar sesión podrás elegir ingresar como Comprador o Repartidor.")) {
+  if (typeof showConfirmModal === 'function') {
+    showConfirmModal('🚪', '¿Cerrar Sesión?', 'Al cerrar sesión podrás elegir ingresar como Comprador o Repartidor.', 'Sí, cerrar sesión', () => {
+      localStorage.removeItem('notigas_user_data');
+      localStorage.removeItem('driverGpsLive');
+      localStorage.removeItem('notigas_active_order');
+
+      closeUserSettingsModal();
+      if (typeof closeDriverModal === 'function') closeDriverModal();
+
+      if (typeof setAppMode === 'function') {
+        setAppMode('buyer');
+      }
+
+      const modalAuth = document.getElementById('modalWelcomeAuth');
+      if (modalAuth) {
+        modalAuth.style.display = 'flex';
+        selectAuthRole('buyer');
+      }
+
+      if (typeof checkActiveOrderStatus === 'function') {
+        checkActiveOrderStatus();
+      }
+
+      if (typeof showToast === 'function') showToast('🚪 Sesión Cerrada', 'Selecciona Comprador o Repartidor para ingresar.', 'info', 1000);
+    });
+  } else if (confirm("🚪 ¿Estás seguro de que deseas cerrar sesión en NOTIGAS?\n\nAl cerrar sesión podrás elegir ingresar como Comprador o Repartidor.")) {
     localStorage.removeItem('notigas_user_data');
     localStorage.removeItem('driverGpsLive');
     localStorage.removeItem('notigas_active_order');
 
     closeUserSettingsModal();
-    closeDriverModal();
+    if (typeof closeDriverModal === 'function') closeDriverModal();
 
     if (typeof setAppMode === 'function') {
       setAppMode('buyer');
     }
 
     const modalAuth = document.getElementById('modalWelcomeAuth');
-    if (modalAuth) modalAuth.style.display = 'flex';
+    if (modalAuth) {
+      modalAuth.style.display = 'flex';
+      selectAuthRole('buyer');
+    }
 
     if (typeof checkActiveOrderStatus === 'function') {
       checkActiveOrderStatus();
     }
 
-    if (typeof showToast === 'function') showToast('🚪 Sesión Cerrada', 'Selecciona tu rol para ingresar nuevamente.', 'info', 2000);
+    if (typeof showToast === 'function') showToast('🚪 Sesión Cerrada', 'Selecciona tu rol para ingresar nuevamente.', 'info', 1000);
   }
 }
 
