@@ -988,7 +988,7 @@ function solicitarGeolocalizacionNativaNavegador(isMobile, forceReset) {
 
     const options = isMobile
       ? { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
-      : { enableHighAccuracy: false, timeout: 4000, maximumAge: 60000 };
+      : { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 };
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {

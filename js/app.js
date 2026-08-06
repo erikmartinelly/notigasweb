@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // REQUERIR GPS OBLIGATORIO Y PURGA AUTOMÁTICA DE BASE DE DATOS AL CARGAR
-  verificarGPSObligatorio();
+  // verificarGPSObligatorio() eliminada para no causar doble petición y bloquear PC
   ejecutarPurgaBaseDeDatosAuto();
   checkActiveOrderStatus();
 
@@ -532,21 +532,7 @@ function actualizarFaviconSegunPedido(categoria) {
   }
 }
 
-function verificarGPSObligatorio() {
-  if ("geolocation" in navigator) {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const banner = document.getElementById('gpsMandatoryBanner');
-        if (banner) banner.style.display = 'none';
-      },
-      (err) => {
-        const banner = document.getElementById('gpsMandatoryBanner');
-        if (banner) banner.style.display = 'block';
-      },
-      { timeout: 8000 }
-    );
-  }
-}
+// Función verificarGPSObligatorio eliminada para evitar redundancia y conflictos con conectarGPSAuto en map.js
 
 function switchTab(index) {
   document.querySelectorAll('.tab-btn').forEach((btn, i) => btn.classList.toggle('active', i === index));
