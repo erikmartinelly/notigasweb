@@ -282,28 +282,23 @@ function guardarRepartidorEnBaseDeDatos(repartidorObj) {
 
 function guardarRegistroUnico() {
   if (currentSelectedRole === 'driver') {
-    const nombreNegocio = (document.getElementById('regNombreNegocio')?.value || '').trim();
-    const whatsapp = (document.getElementById('regWhatsapp')?.value || '').trim();
-    const placa = (document.getElementById('regPlaca')?.value || '').trim();
+    const nombreNegocio = (document.getElementById('regNombreNegocio')?.value || '').trim() || 'Repartidor Gas GLP';
+    const whatsapp = (document.getElementById('regWhatsapp')?.value || '').trim() || '74xxxx28';
+    const placa = (document.getElementById('regPlaca')?.value || '').trim() || '3842-XYZ';
     const categoria = (document.getElementById('regCategoriaNegocio')?.value || 'Gas GLP').trim();
-    const productos = (document.getElementById('regProductos')?.value || '').trim();
-    const zonas = (document.getElementById('regZonas')?.value || '').trim();
-    const schedule = (document.getElementById('regSchedule')?.value || '').trim();
-
-    if (!nombreNegocio || !whatsapp) {
-      if (typeof showToast === 'function') showToast('⚠️ Ficha Incompleta', 'Ingresa el Nombre del Repartidor/Negocio y tu WhatsApp.', 'warning', 1000);
-      return;
-    }
+    const productos = (document.getElementById('regProductos')?.value || '').trim() || 'Garrafas GLP 10kg';
+    const zonas = (document.getElementById('regZonas')?.value || '').trim() || 'OTB Central y calles vecinas';
+    const schedule = (document.getElementById('regSchedule')?.value || '').trim() || 'Lunes a Sábado: 07:00 a 18:00';
 
     const repartidorData = {
       role: 'repartidor',
       nombre: nombreNegocio,
       whatsapp: whatsapp,
-      placa: placa || 'Placa registrada',
-      categoria: categoria || 'Gas GLP',
-      productos: productos || 'Servicios de reparto a domicilio',
-      zonas: zonas || 'OTB Central y zonas aledañas',
-      schedule: schedule || 'Lunes a Sábado: 07:00 a 18:00'
+      placa: placa,
+      categoria: categoria,
+      productos: productos,
+      zonas: zonas,
+      schedule: schedule
     };
 
     localStorage.setItem('notigas_user_data', JSON.stringify(repartidorData));
@@ -322,31 +317,32 @@ function guardarRegistroUnico() {
       renderVendorCards('TODOS');
     }
     if (typeof switchTab === 'function') {
-      switchTab(1);
+      switchTab(0);
     }
   } else {
     const gmailInput = document.getElementById('regGmail');
-    const gmail = (gmailInput?.value || '').trim();
-    const nombre = (document.getElementById('regNombre')?.value || '').trim();
-    const apellido = (document.getElementById('regApellido')?.value || '').trim();
-
-    if (!gmail || !nombre || !apellido) {
-      if (typeof showToast === 'function') showToast('⚠️ Datos Incompletos', 'Ingresa Correo Electrónico, Nombre y Apellido.', 'warning', 2000);
-      return;
-    }
+    const gmail = (gmailInput?.value || '').trim().toLowerCase() || 'vecino@gmail.com';
+    const nombre = (document.getElementById('regNombre')?.value || '').trim() || 'Usuario';
+    const apellido = (document.getElementById('regApellido')?.value || '').trim() || 'Vecino';
 
     const clienteData = { role: 'vecino', gmail, nombre, apellido };
     localStorage.setItem('notigas_user_data', JSON.stringify(clienteData));
-    databaseEmails.push({ gmail: gmail, role: 'Cliente', fecha: new Date().toISOString().split('T')[0] });
+    if (typeof databaseEmails !== 'undefined' && Array.isArray(databaseEmails)) {
+      databaseEmails.push({ gmail: gmail, role: 'Cliente', fecha: new Date().toISOString().split('T')[0] });
+    }
 
     const modalAuth = document.getElementById('modalWelcomeAuth');
     if (modalAuth) modalAuth.style.display = 'none';
+
+    if (typeof setAppMode === 'function') {
+      setAppMode('buyer');
+    }
 
     if (typeof verificarYActivarChatAdminAuto === 'function') {
       verificarYActivarChatAdminAuto();
     }
 
-    if (typeof showToast === 'function') showToast('✅ Registro Exitoso', `Bienvenido a NOTIGAS ${nombre}`, 'success', 2000);
+    if (typeof showToast === 'function') showToast('✅ Registro Exitoso', `Bienvenido a NOTIGAS (${gmail})`, 'success', 1000);
   }
 }
 
