@@ -143,7 +143,7 @@ function actualizarBannerConImagen(base64Data) {
 
   if (base64Data) {
     if (titleText) {
-      titleText.innerHTML = `<img src="${base64Data}" style="max-height: 28px; border-radius:4px; vertical-align:middle; margin-right:6px;" alt="Sponsor"> 📢 Publicidad Local OTB`;
+      titleText.innerHTML = `<img src="${base64Data}" style="max-height: 28px; border-radius:4px; vertical-align:middle; margin-right:6px;" alt="Sponsor"> 📢 Publicidad Local NOTIGAS`;
     }
   } else {
     if (titleText) {
