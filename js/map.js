@@ -1102,56 +1102,6 @@ function conectarGPSAuto(forceReset = false) {
   }
 }
 
-/* iniciarMovimientoRepartidor: Animación suave con requestAnimationFrame (ahorro de batería) */
-function iniciarMovimientoRepartidor() {
-  if (animationTimer) {
-    cancelAnimationFrame(animationTimer);
-    animationTimer = null;
-  }
-
-  let lastFrameTime = 0;
-  const FRAME_INTERVAL = 80; // ~12 FPS
-
-  function animateTruck(timestamp) {
-    // Pausar cuando la pestaña está oculta (ahorro de batería)
-    if (document.hidden || !truckMarker) {
-      animationTimer = requestAnimationFrame(animateTruck);
-      return;
-    }
-
-    if (timestamp - lastFrameTime < FRAME_INTERVAL) {
-      animationTimer = requestAnimationFrame(animateTruck);
-      return;
-    }
-    lastFrameTime = timestamp;
-
-    if (truckTargetLat === null || truckTargetLng === null) {
-      animationTimer = requestAnimationFrame(animateTruck);
-      return;
-    }
-    if (truckCurrentLat === null) truckCurrentLat = truckTargetLat;
-    if (truckCurrentLng === null) truckCurrentLng = truckTargetLng;
-
-    // Interpolación lineal suave (LERP) del 12% por tick → movimiento fluido sin saltos
-    const lerpFactor = 0.12;
-    const diffLat = truckTargetLat - truckCurrentLat;
-    const diffLng = truckTargetLng - truckCurrentLng;
-
-    if (Math.abs(diffLat) < 0.000001 && Math.abs(diffLng) < 0.000001) {
-      truckCurrentLat = truckTargetLat;
-      truckCurrentLng = truckTargetLng;
-    } else {
-      truckCurrentLat += diffLat * lerpFactor;
-      truckCurrentLng += diffLng * lerpFactor;
-    }
-
-    truckMarker.setLatLng([truckCurrentLat, truckCurrentLng]);
-    animationTimer = requestAnimationFrame(animateTruck);
-  }
-
-  animationTimer = requestAnimationFrame(animateTruck);
-}
-
 /* COORDENADAS OFICIALES GEOBOLIVIA Y MUNICIPIOS POR ÁREA METROPOLITANA */
 const GEOBOLIVIA_MUNICIPIOS = [
   // 1º SANTA CRUZ DE LA SIERRA Y ÁREA METROPOLITANA

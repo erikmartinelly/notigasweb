@@ -74,3 +74,25 @@ CREATE POLICY "Permitir insercion publica de chats" ON public.mensajes_chat_priv
 
 CREATE POLICY "Permitir lectura publica de choferes" ON public.choferes_habilitados FOR SELECT USING (true);
 CREATE POLICY "Permitir insercion de choferes" ON public.choferes_habilitados FOR INSERT WITH CHECK (true);
+
+-- 7. Tareas Automáticas (pg_cron) para Limpieza de Base de Datos y Ahorro de Espacio
+-- Habilitar la extensión de tareas programadas (CRON)
+CREATE EXTENSION IF NOT EXISTS pg_cron;
+
+-- Eliminar PEDIDOS que tengan más de 72 horas de antigüedad (se ejecuta cada hora)
+SELECT cron.schedule('limpiar_pedidos_viejos', '0 * * * *', $$
+  DELETE FROM public.publicaciones 
+  WHERE tipo = 'pedido' AND created_at < NOW() - INTERVAL '72 hours';
+$$);
+
+-- Eliminar AVISOS VECINALES que tengan más de 7 días de antigüedad (se ejecuta a la medianoche)
+SELECT cron.schedule('limpiar_avisos_viejos', '0 0 * * *', $$
+  DELETE FROM public.publicaciones 
+  WHERE tipo = 'avisoBarrio' AND created_at < NOW() - INTERVAL '7 days';
+$$);
+
+-- Eliminar CHATS que tengan más de 7 días de antigüedad (se ejecuta a la medianoche)
+SELECT cron.schedule('limpiar_chats_viejos', '0 0 * * *', $$
+  DELETE FROM public.mensajes_chat_privados 
+  WHERE timestamp < NOW() - INTERVAL '7 days';
+$$);

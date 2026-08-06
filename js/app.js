@@ -236,12 +236,28 @@ function toggleDriverGpsTransmission() {
   const btn = document.getElementById('btnDriverGpsToggle');
   if (isDriverGpsLive) {
     localStorage.setItem('driverGpsLive', 'on');
-    if (btn) btn.innerHTML = '<i class="fa-solid fa-circle-stop"></i> 🔴 PAUSAR RECORRIDO EN VIVO (GPS ON)';
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-circle-stop"></i> 🔴 PAUSAR RECORRIDO EN VIVO';
     showToast('GPS Activado', 'Tu ubicación exacta ahora es visible para los vecinos de tu OTB.', 'success', 1000);
+    
+    // Broadcast a Supabase
+    let driverName = 'Repartidor';
+    let driverCat = 'gas';
+    try {
+      const u = JSON.parse(localStorage.getItem('notigas_user_data'));
+      if (u && u.nombre) driverName = u.nombre;
+    } catch(e){}
+    if (typeof window.startDriverLocationBroadcast === 'function') {
+      window.startDriverLocationBroadcast(driverName, driverCat);
+    }
   } else {
     localStorage.setItem('driverGpsLive', 'off');
-    if (btn) btn.innerHTML = '<i class="fa-solid fa-location-arrow"></i> 🟢 INICIAR RECORRIDO EN VIVO (GPS OFF)';
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-location-arrow"></i> 🟢 INICIAR RECORRIDO EN VIVO';
     showToast('GPS Pausado', 'Tu camión ha sido ocultado del mapa vecinal.', 'warning', 1000);
+    
+    // Detener Broadcast en Supabase
+    if (typeof window.stopDriverLocationBroadcast === 'function') {
+      window.stopDriverLocationBroadcast();
+    }
   }
   if (typeof verificarYMostrarRepartidorGPS === 'function') verificarYMostrarRepartidorGPS();
 }
@@ -633,6 +649,27 @@ function confirmarPedido() {
   };
 
   localStorage.setItem('notigas_active_order', JSON.stringify(activeOrderData));
+  // Transmitir a Supabase (Realtime para el Mapa)
+  if (window.supabaseClient) {
+    window.supabaseClient.from('publicaciones').insert([{
+        tipo: 'pedido',
+        categoria: cat,
+        titulo: `Pedido Vecinal: ${cat}`,
+        descripcion: `Dirección: ${direccion}. Teléfono: ${telefono}`,
+        ciudad: 'Cochabamba',
+        barrio_otb: 'Global',
+        user_email: 'buyer@notigas.com', // mock email
+        user_role: 'comprador',
+        latitude: pos.lat,
+        longitude: pos.lng,
+        distribuidor_nombre: buyerName
+    }]).then(({ error }) => {
+        if(error) console.error("Error enviando pedido a Supabase:", error);
+        else console.log("✅ Pedido guardado en Supabase.");
+    });
+  }
+
+  showToast('✅ ¡Pedido en Camino!', 'Tu orden ha sido confirmada y transmitida a los repartidores de tu zona. Permanece atento a tu teléfono y a la puerta.', 'success', 3000);
   closePedidoModal();
   checkActiveOrderStatus();
 
