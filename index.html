@@ -825,33 +825,6 @@
   </div>
 
 
-  <!-- MODAL CHAT PRIVADO INTERNO EN PANTALLA COMPLETA -->
-  <div class="modal" id="modalChat">
-    <div class="modal-content chat-fullscreen-content">
-      <div class="modal-title" style="padding:10px 14px; background:#1E293B; border-radius:12px; margin-bottom:10px; border:1px solid rgba(255,109,0,0.4); display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-size:16px; font-weight:900;"><i class="fa-solid fa-comments" style="color:#FF6D00;"></i> <span id="chatPopupTitle">Chat Privado</span></span>
-        <button class="btn-close-chat-large" onclick="cerrarFloatingChat()" aria-label="Cerrar Chat">❌ CERRAR CHAT</button>
-      </div>
-      
-      <div class="chat-vendor-selector" style="padding:8px 12px; background:#0F172A; border-radius:10px; margin-bottom:10px; border:1px solid rgba(255,255,255,0.12);">
-        <label style="font-size:12px; font-weight:800; color:#FF6D00;">Conversando con:</label>
-        <select id="selectVendorChat" onchange="cambiarVendedorChat()" style="font-size:13.5px; padding:8px 10px; background:#1E293B; color:white; border:1px solid rgba(255,255,255,0.2); border-radius:8px; width:100%; margin-top:4px;">
-          <option value="Soporte OTB">🎧 Administrador NOTIGAS (Soporte)</option>
-          <option value="Gas GLP">🔥 Repartidor Gas GLP</option>
-          <option value="Agua 20L">💧 Repartidor Agua 20L</option>
-          <option value="Chatarra">♻️ Compra de Chatarra</option>
-          <option value="Papel">📄 Recolector Papel & Cartón</option>
-          <option value="Frutas">🍎 Frutas & Verduras</option>
-          <option value="Detergentes">🧼 Detergentes & Limpieza</option>
-          <option value="Carbón">🪵 Carbón & Leña</option>
-          <option value="Otros">📦 Otros Pedidos</option>
-        </select>
-      </div>
-
-      <div class="chat-messages-box" id="chatMessagesBox" style="flex:1; overflow-y:auto; padding:12px; font-size:13.5px; background:#0F172A; border-radius:10px; border:1px solid rgba(255,255,255,0.12); margin-bottom:10px; display:flex; flex-direction:column; gap:10px;">
-        <!-- Mensajes renderizados dinámicamente -->
-      </div>
-
       <div style="display:flex; gap:8px;">
         <input type="text" id="inputDirectMessage" placeholder="Escribe tu mensaje privado..." onkeypress="if(event.key==='Enter') enviarMensajeDirecto()" style="flex:1; padding:12px 14px; font-size:14px; background:#0F172A; border:1.5px solid rgba(255,109,0,0.5); border-radius:10px; color:white; outline:none;">
         <button onclick="enviarMensajeDirecto()" style="background:#FF6D00; color:white; border:none; padding:12px 20px; border-radius:10px; font-weight:900; font-size:14px; cursor:pointer; box-shadow:0 4px 14px rgba(255,109,0,0.5);"><i class="fa-solid fa-paper-plane"></i></button>
@@ -899,7 +872,7 @@
   <script src="js/vendors.js" defer></script>
   <script src="js/map.js" defer></script>
   <script src="js/forum.js" defer></script>
-  <script src="js/chat.js" defer></script>
+  
   <script src="js/ads.js" defer></script>
   <script src="js/admin.js" defer></script>
   <script src="js/app.js" defer></script>
