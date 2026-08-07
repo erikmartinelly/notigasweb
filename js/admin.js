@@ -774,60 +774,12 @@ function guardarSubmenuAnuncios() {
 }
 
 function guardarAdminConfig() {
-  const inputGmail = document.getElementById('inputGmail');
-  const inputPass = document.getElementById('inputPass');
-  if (!inputGmail || !inputPass) return;
-
-  // Rate Limiting Check
-  let attempts = parseInt(localStorage.getItem('notigas_admin_login_attempts') || '0');
-  let lockoutUntil = parseInt(localStorage.getItem('notigas_admin_lockout_until') || '0');
-
-  if (Date.now() < lockoutUntil) {
-    const minutesLeft = Math.ceil((lockoutUntil - Date.now()) / 60000);
-    alert(`⛔ BLOQUEO DE SEGURIDAD\nDemasiados intentos fallidos. Intenta de nuevo en ${minutesLeft} minutos.`);
-    return;
-  }
-
-  const gmail = inputGmail.value.trim().toLowerCase();
-  const pass = inputPass.value.trim();
-
-  if (!gmail) {
-    alert('Por favor ingresa tu correo Gmail de Administrador.');
-    return;
-  }
-
-  if (!AUTHORIZED_ADMIN_EMAILS.includes(gmail) || pass !== REQUIRED_ADMIN_PASSWORD) {
-    attempts++;
-    if (attempts >= 3) {
-      localStorage.setItem('notigas_admin_lockout_until', (Date.now() + 15 * 60000).toString());
-      localStorage.setItem('notigas_admin_login_attempts', '0');
-      alert(`⛔ BLOQUEO DE SEGURIDAD\nHas fallado 3 veces. El acceso ha sido bloqueado por 15 minutos.`);
-    } else {
-      localStorage.setItem('notigas_admin_login_attempts', attempts.toString());
-      alert(`⛔ CREDENCIALES INCORRECTAS\nTe quedan ${3 - attempts} intentos antes de ser bloqueado.`);
-    }
-    return;
-  }
-
-  // Reset attempts on success
-  localStorage.setItem('notigas_admin_login_attempts', '0');
-  localStorage.removeItem('notigas_admin_lockout_until');
-
-  sessionStorage.setItem('notigas_admin_session', gmail);
-  
-  const loginScreen = document.getElementById('adminLoginScreen');
-  const dashboardScreen = document.getElementById('adminDashboardScreen');
-  if (loginScreen) loginScreen.style.display = 'none';
-  if (dashboardScreen) dashboardScreen.style.display = 'block';
-
-  switchModalTab(0);
-  renderAdminReports();
-  renderAdminDashboardKPIs();
-  alert(`🔐 ACCESO DE ADMINISTRADOR DESBLOQUEADO\n\nBienvenido Administrador (${gmail}). Menús de administración activados.`);
+  // Manual admin login removed - using Google JWT exclusively
 }
 
 function cerrarSesionAdminControl() {
-  sessionStorage.removeItem('notigas_admin_session');
+  sessionStorage.removeItem('notigas_admin_token');
+  sessionStorage.removeItem('notigas_admin_session'); // Limpieza de sesión antigua si existiera
   const loginScreen = document.getElementById('adminLoginScreen');
   const dashboardScreen = document.getElementById('adminDashboardScreen');
   if (loginScreen) loginScreen.style.display = 'block';

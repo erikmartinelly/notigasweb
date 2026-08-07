@@ -92,12 +92,12 @@ function initNotigasMap() {
 
   L.control.zoom({ position: 'topright' }).addTo(map);
 
-  mapTileLayers['googleStatic'] = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-    maxZoom: 20,
-    attribution: '&copy; NOTIGAS Mapa Georeferenciado'
+  mapTileLayers['osm'] = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
   });
 
-  mapTileLayers['googleStatic'].addTo(map);
+  mapTileLayers['osm'].addTo(map);
 
   const btnGps = document.getElementById('btnGps');
   if (btnGps) {
@@ -1226,7 +1226,12 @@ function conectarGPSAuto(forceReset = false) {
           gpsResolved = true;
           applyGpsPosition(pos.coords.latitude, pos.coords.longitude, "Ubicación GPS en Vivo", false);
         },
-        (watchErr) => {},
+        (watchErr) => {
+          console.warn("Señal GPS perdida o intermitente:", watchErr.message);
+          if (typeof showToast === 'function' && watchErr.code === watchErr.POSITION_UNAVAILABLE) {
+             showToast('Señal GPS Débil', 'Por favor, muévete a un lugar despejado.', 'warning', 4000);
+          }
+        },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
       );
     } catch(e){}

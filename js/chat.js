@@ -400,9 +400,9 @@ function procesarMensajeEntrante(msg) {
 function verificarYActivarChatAdminAuto() {
   const email = getCurrentUserEmail();
   const adminEmails = ['erikmartinelly@gmail.com', 'leonmartinelly13@gmail.com'];
-  if (email && adminEmails.includes(email.toLowerCase())) {
-    sessionStorage.setItem('notigas_admin_session', email);
-  }
+    if (email && adminEmails.includes(email.toLowerCase())) {
+      // Legacy session variable removed; rely on Google JWT token logic in admin.js
+    }
 }
 
 function abrirChatPrivadoConComprador(encodedBuyerName) {
