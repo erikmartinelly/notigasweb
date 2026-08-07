@@ -104,7 +104,10 @@ function switchModalTab(idx) {
   if (idx === 1) renderAdminVendorsList();
   if (idx === 2) renderAdminOrdersList();
   if (idx === 3) renderAdminAdsAndPostsList();
-  if (idx === 4async function renderAdminAdsAndPostsList() {
+  if (idx === 4) renderAdminReports();
+}
+
+async function renderAdminAdsAndPostsList() {
   const container = document.getElementById('adminAdsListContainer');
   if (!container || !window.supabaseClient) return;
   
@@ -166,8 +169,6 @@ async function borrarAnuncioLocalAdmin(id) {
   localStorage.removeItem('notigas_ad_image_base64');
 
   if (typeof cargarAnunciosGuardados === 'function') cargarAnunciosGuardados();
-  renderAdminAdsAndPostsList();
-}cargarAnunciosGuardados();
   renderAdminAdsAndPostsList();
 
   if (typeof showToast === 'function') {
@@ -987,102 +988,8 @@ async function renderAdminReports() {
     });
     bannedContainer.innerHTML = html;
   }
-
-  renderAdminChatInspector();
-}2px 6px; border-radius:4px; font-weight:700; font-size:9px; cursor:pointer;">Desbanear</button>
-        </div>
-      `;
-    });
-    bannedContainer.innerHTML = html;
-  }
-
-  // Renderizar también la sección de Inspección de Chats Privados
-  renderAdminChatInspector();
 }
 
-function renderAdminChatInspector() {
-  const container = document.getElementById('adminChatInspectorContainer');
-  if (!container) return;
-
-  const activeChats = [];
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('notigas_private_chat_')) {
-        const raw = localStorage.getItem(key);
-        if (raw) {
-          const msgs = JSON.parse(raw);
-          if (msgs.length > 0) {
-            const parts = key.split('notigas_private_chat_')[1]?.split('_') || [];
-            const vendorName = parts[0] || 'Repartidor';
-            const userName = parts.slice(1).join(' ') || 'Cliente';
-            const lastMsg = msgs[msgs.length - 1];
-            activeChats.push({ key, vendorName, userName, lastMsg, count: msgs.length });
-          }
-        }
-      }
-    }
-  } catch(e){}
-
-  if (activeChats.length === 0) {
-    container.innerHTML = '<div style="color:#64748B; font-style:italic; font-size:10.5px;">No hay conversaciones privadas activas registradas.</div>';
-    return;
-  }
-
-  let html = '';
-  activeChats.forEach(c => {
-    const snippet = escapeHtmlStr((c.lastMsg?.text || '').substring(0, 50));
-    html += `
-      <div style="background:#1E293B; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.08); margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
-        <div>
-          <strong style="color:#38BDF8; font-size:11px;">💬 Chat: ${escapeHtmlStr(c.userName)} ↔ ${escapeHtmlStr(c.vendorName)}</strong>
-          <div style="font-size:10px; color:#94A3B8; margin-top:2px;">"${snippet}${(c.lastMsg?.text || '').length > 50 ? '...' : ''}" • <span style="color:#CBD5E1;">${c.count} msgs</span></div>
-        </div>
-        <div style="display:flex; gap:4px;">
-          <button onclick="abrirInspectorChatAdmin('${encodeURIComponent(c.vendorName)}', '${encodeURIComponent(c.key)}')" style="background:#FF6D00; color:white; border:none; padding:4px 8px; border-radius:4px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-eye"></i> Inspeccionar</button>
-          <button onclick="purgaChatEspecificoAdmin('${encodeURIComponent(c.key)}')" style="background:#D32F2F; color:white; border:none; padding:4px 8px; border-radius:4px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Purgar</button>
-        </div>
-      </div>
-    `;
-  });
-
-  container.innerHTML = html;
-}
-
-function abrirInspectorChatAdmin(encodedVendor, encodedKey) {
-  const vendorName = decodeURIComponent(encodedVendor || '');
-  const key = decodeURIComponent(encodedKey || '');
-
-  closeAdminModal();
-  if (typeof abrirFloatingChat === 'function') abrirFloatingChat();
-
-  const sel = document.getElementById('selectVendorChat');
-  if (sel && vendorName) {
-    for (let i = 0; i < sel.options.length; i++) {
-      if (sel.options[i].value.toLowerCase().includes(vendorName.toLowerCase())) {
-        sel.selectedIndex = i;
-        break;
-      }
-    }
-  }
-
-  if (key) {
-    sessionStorage.setItem('notigas_admin_viewing_user', key);
-  }
-
-  if (typeof cambiarVendedorChat === 'function') cambiarVendedorChat();
-}
-
-function purgaChatEspecificoAdmin(encodedKey) {
-  const key = decodeURIComponent(encodedKey || '');
-  if (key) {
-    localStorage.removeItem(key);
-    renderAdminChatInspector();
-    if (typeof showToast === 'function') {
-      showToast('🗑️ Chat Purgado', 'La conversación privada seleccionada fue eliminada permanentemente.', 'info', 4000);
-    }
-  }
-}
 
 async function banearUsuarioAdmin(identifier) {
   if (!identifier || !window.supabaseClient) return;

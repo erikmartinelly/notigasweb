@@ -422,7 +422,6 @@ function renderDriverOrdersList() {
         </div>
         <div class="driver-order-actions" style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
           <button class="btn-driver-accept" style="flex:1;" onclick="aceptarPedidoRepartidor('${escapeHtmlStr(ord.categoria)}')"><i class="fa-solid fa-circle-check"></i> ✅ Aceptar</button>
-          <button class="btn-driver-chat-vecino" style="flex:1;" onclick="abrirChatPrivadoConComprador('${encodeURIComponent(chatTarget)}')"><i class="fa-solid fa-comments"></i> 💬 Chat</button>
           ${telNum ? `<a href="tel:${telNum}" style="background:#0288D1; color:white; padding:6px 10px; border-radius:8px; font-size:11px; font-weight:800; text-decoration:none; display:flex; align-items:center; gap:4px;"><i class="fa-solid fa-phone"></i> Llamar</a>` : ''}
         </div>
       </div>
@@ -460,24 +459,6 @@ function ejecutarPurgaBaseDeDatosAuto() {
     }
   } catch(e){}
 
-  try {
-    const keysToRemove = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('notigas_private_chat_')) {
-        const rawChat = localStorage.getItem(key);
-        if (rawChat) {
-          let chat = JSON.parse(rawChat);
-          const cleanChat = chat.filter(m => (now - m.timestamp) < (48 * 60 * 60 * 1000));
-          if (cleanChat.length === 0) {
-            keysToRemove.push(key);
-          } else {
-            localStorage.setItem(key, JSON.stringify(cleanChat));
-          }
-        }
-      }
-    }
-    keysToRemove.forEach(k => localStorage.removeItem(k));
   } catch(e){}
 }
 
@@ -487,7 +468,6 @@ function checkActiveOrderStatus() {
 
   const btnCancel = document.getElementById('btnCancelOrder');
   const btnMain = document.getElementById('btnMainOrder');
-  const chatBanner = document.getElementById('chatActivoBanner');
   const rawOrder = localStorage.getItem('notigas_active_order');
   
   if (rawOrder) {
@@ -495,7 +475,6 @@ function checkActiveOrderStatus() {
       const order = JSON.parse(rawOrder);
       if (btnCancel) btnCancel.style.display = 'flex';
       if (btnMain) btnMain.style.display = 'none'; // Ocultar Hacer Pedido para dar espacio limpio a Cancelar Pedido
-      if (chatBanner) chatBanner.style.display = 'flex';
       actualizarFaviconSegunPedido(order.categoria);
       if (typeof renderActiveOrdersMap === 'function') {
         renderActiveOrdersMap();
@@ -506,7 +485,6 @@ function checkActiveOrderStatus() {
   
   if (btnCancel) btnCancel.style.display = 'none';
   if (btnMain) btnMain.style.display = 'flex'; // Restaurar Hacer Pedido
-  if (chatBanner) chatBanner.style.display = 'none';
   actualizarFaviconSegunPedido(null);
   if (typeof renderActiveOrdersMap === 'function') {
     renderActiveOrdersMap();

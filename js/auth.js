@@ -273,10 +273,6 @@ function handleCredentialResponse(response) {
     const modalAuth = document.getElementById('modalWelcomeAuth');
     if (modalAuth) modalAuth.style.display = 'none';
 
-    if (typeof verificarYActivarChatAdminAuto === 'function') {
-      verificarYActivarChatAdminAuto();
-    }
-
     if (typeof showToast === 'function') {
       showToast('✅ Google Verificado', `¡Bienvenido ${nombre} (${gmail})!`, 'success', 4500);
     } else {

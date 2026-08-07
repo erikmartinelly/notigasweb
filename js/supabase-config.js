@@ -8,11 +8,9 @@ script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
 script.onload = () => {
     window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     console.log('✅ Supabase conectado correctamente.');
-    
-    // Si la función de inicialización en tiempo real existe, lanzarla
-    if (typeof iniciarSuscripcionesRealtime === 'function') {
-        iniciarSuscripcionesRealtime();
-    }
+
+    // Iniciar suscripciones en tiempo real para TODAS las tablas relevantes
+    iniciarSuscripcionesRealtime();
 };
 document.head.appendChild(script);
 

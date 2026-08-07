@@ -12,6 +12,7 @@ const ASSETS_TO_CACHE = [
   './js/auth.js',
   './js/ads.js',
   './js/admin.js',
+  './js/supabase-config.js',
   './favicon.png',
   './favicon.svg',
   './icons/garrafa_red_clean.svg',
