@@ -7,6 +7,18 @@ const AUTHORIZED_ADMIN_EMAILS = [
   "leonmartinelly13@gmail.com"
 ];
 
+function getVerifiedAdminEmail() {
+  const token = sessionStorage.getItem('notigas_admin_token');
+  if (!token) return null;
+  try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (payload && payload.email && AUTHORIZED_ADMIN_EMAILS.includes(payload.email.toLowerCase())) {
+          return payload.email.toLowerCase();
+      }
+  } catch(e) {}
+  return null;
+}
+
 const REQUIRED_ADMIN_PASSWORD = "Tiquipaya428";
 
 /* closeUserSettingsModal, guardarPrefUsuario y cerrarSesionUsuario residen en auth.js (que carga primero).
@@ -34,7 +46,7 @@ function abrirModalAdminLogin() {
 
   if (!modalAdmin) return;
 
-  const currentAdmin = sessionStorage.getItem('notigas_admin_session');
+  const currentAdmin = getVerifiedAdminEmail();
   if (currentAdmin && AUTHORIZED_ADMIN_EMAILS.includes(currentAdmin.toLowerCase())) {
     if (loginScreen) loginScreen.style.display = 'none';
     if (dashboardScreen) dashboardScreen.style.display = 'block';
@@ -706,7 +718,7 @@ function ejecutarLimpiezaTotalPedidos() {
 }
 
 function guardarSubmenuAnuncios() {
-  const currentAdmin = sessionStorage.getItem('notigas_admin_session');
+  const currentAdmin = getVerifiedAdminEmail();
   if (!currentAdmin || !AUTHORIZED_ADMIN_EMAILS.includes(currentAdmin.toLowerCase())) {
     alert("⛔ ACCESO RESTRINGIDO\nDebes ingresar tus credenciales de Administrador para modificar anuncios.");
     abrirModalAdminLogin();
@@ -825,7 +837,7 @@ function cerrarSesionAdminControl() {
 
 /* DESCARGA COMPLETA DE CORREOS ELECTRONICOS REGISTRADOS (.CSV DE USUARIOS) */
 function descargarListaCorreosCSV() {
-  let currentAdmin = sessionStorage.getItem('notigas_admin_session');
+  let currentAdmin = getVerifiedAdminEmail();
   
   if (!currentAdmin || !AUTHORIZED_ADMIN_EMAILS.includes(currentAdmin.toLowerCase())) {
     alert("⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña.");
@@ -896,7 +908,7 @@ function descargarListaCorreosCSV() {
 
 /* DESCARGA COMPLETA DE FICHAS DE REPARTIDORES REGISTRADOS (.CSV DE REPARTIDORES) */
 async function descargarFichasRepartidoresCSV() {
-  let currentAdmin = sessionStorage.getItem('notigas_admin_session');
+  let currentAdmin = getVerifiedAdminEmail();
   
   if (!currentAdmin || !AUTHORIZED_ADMIN_EMAILS.includes(currentAdmin.toLowerCase())) {
     alert("⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña.");
@@ -938,7 +950,7 @@ async function descargarFichasRepartidoresCSV() {
 
 /* DESCARGA COMPLETA DE ESTADÍSTICAS GENERALES (.CSV) */
 function descargarEstadisticasGeneralesCSV() {
-  let currentAdmin = sessionStorage.getItem('notigas_admin_session');
+  let currentAdmin = getVerifiedAdminEmail();
   
   if (!currentAdmin || !AUTHORIZED_ADMIN_EMAILS.includes(currentAdmin.toLowerCase())) {
     alert("⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña.");

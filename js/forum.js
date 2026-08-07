@@ -31,7 +31,7 @@ async function renderForumFeed() {
   const feed = document.getElementById('forumFeed');
   if (!feed || !window.supabaseClient) return;
 
-  const currentAdmin = sessionStorage.getItem('notigas_admin_session');
+  const currentAdmin = getVerifiedAdminEmail();
   const isAdmin = currentAdmin && (currentAdmin.includes('erikmartinelly') || currentAdmin.includes('leonmartinelly'));
 
   const { data: localPosts, error } = await window.supabaseClient.from('publicaciones')

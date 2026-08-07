@@ -213,6 +213,16 @@ function handleCredentialResponse(response) {
     }
 
     const gmail = googleUser.email.toLowerCase().trim();
+    
+    // Verificación de Administrador
+    const adminEmails = ["erikmartinelly@gmail.com", "leonmartinelly13@gmail.com"];
+    if (adminEmails.includes(gmail)) {
+      sessionStorage.setItem('notigas_admin_token', response.credential);
+      if (typeof reproducirSonidoNotificacion === 'function') {
+        reproducirSonidoNotificacion();
+      }
+    }
+
     const nombre = googleUser.given_name || googleUser.name || gmail.split('@')[0];
     const apellido = googleUser.family_name || '';
 

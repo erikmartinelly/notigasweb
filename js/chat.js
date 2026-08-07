@@ -152,7 +152,7 @@ async function cambiarVendedorChat() {
   if (!selectVendor || !box || !window.supabaseClient) return;
 
   const vendorName = selectVendor.value;
-  const currentAdmin = sessionStorage.getItem('notigas_admin_session');
+  const currentAdmin = getVerifiedAdminEmail();
   const isAdmin = currentAdmin && (currentAdmin.includes('erikmartinelly') || currentAdmin.includes('leonmartinelly'));
   const profile = getUserProfile();
   const isDriver = profile.role === 'repartidor';
@@ -190,7 +190,7 @@ async function cambiarVendedorChat() {
 }
 
 function renderizarMensajes(history, box, vendorName) {
-  const currentAdmin = sessionStorage.getItem('notigas_admin_session');
+  const currentAdmin = getVerifiedAdminEmail();
   const isAdmin = currentAdmin && (currentAdmin.includes('erikmartinelly') || currentAdmin.includes('leonmartinelly'));
 
   const headerNotice = vendorName === 'Soporte OTB'
@@ -223,7 +223,7 @@ function appendMensaje(m, box, scroll = true) {
   const safeText = escapeHtmlStr(m.texto || '');
   const date = new Date(m.timestamp);
   const safeTime = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  const isAdmin = sessionStorage.getItem('notigas_admin_session') != null;
+  const isAdmin = getVerifiedAdminEmail() != null;
 
   let html = '';
   // En modo admin mostramos el correo original para trazabilidad
@@ -262,7 +262,7 @@ async function enviarMensajeDirecto() {
   const text = input.value.trim();
   if (!text) return;
 
-  const currentAdmin = sessionStorage.getItem('notigas_admin_session');
+  const currentAdmin = getVerifiedAdminEmail();
   const isAdmin = currentAdmin && (currentAdmin.includes('erikmartinelly') || currentAdmin.includes('leonmartinelly'));
   const profile = getUserProfile();
 
@@ -327,7 +327,7 @@ function iniciarEscuchaGlobalChat() {
 
 function procesarMensajeEntrante(msg) {
   const myEmail = getCurrentUserEmail();
-  const currentAdmin = sessionStorage.getItem('notigas_admin_session');
+  const currentAdmin = getVerifiedAdminEmail();
   const isAdmin = currentAdmin != null;
   const profile = getUserProfile();
   const isDriver = profile.role === 'repartidor';

@@ -101,7 +101,7 @@ function renderVendorCards(filterCat) {
   const container = document.getElementById('vendorGridContainer');
   if (!container) return;
 
-  const currentAdmin = sessionStorage.getItem('notigas_admin_session');
+  const currentAdmin = getVerifiedAdminEmail();
   const isAdmin = currentAdmin && (currentAdmin.includes('erikmartinelly') || currentAdmin.includes('leonmartinelly'));
 
   const allVendors = getStoredVendors();
