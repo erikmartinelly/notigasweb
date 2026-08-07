@@ -203,36 +203,5 @@ function actualizarAnunciosEnVivo(nuevoTexto, nuevoUrl) {
   }
 }
 
-function guardarSubmenuAnuncios() {
-  const adsenseId = (document.getElementById('inputAdsenseId')?.value || '').trim();
-  const adsenseSlot = (document.getElementById('inputAdsenseSlotId')?.value || '').trim();
-  const adsenseMode = (document.getElementById('inputAdsenseMode')?.value || 'custom').trim();
-  const adText = (document.getElementById('inputAdText')?.value || '').trim();
-  const adUrl = (document.getElementById('inputAdUrl')?.value || '').trim();
 
-  if (adsenseId) localStorage.setItem('notigas_adsense_id', adsenseId);
-  if (adsenseSlot) localStorage.setItem('notigas_adsense_slot_id', adsenseSlot);
-  localStorage.setItem('notigas_adsense_mode', adsenseMode);
-
-  if (adText) {
-    localStorage.setItem('notigas_ad_text', adText);
-    actualizarAnunciosEnVivo(adText, adUrl);
-  }
-
-  if (adUrl) {
-    localStorage.setItem('notigas_ad_url', adUrl);
-  }
-
-  if (adsenseMode === 'adsense' && adsenseId) {
-    inyectarGoogleAdsenseScript(adsenseId, adsenseSlot);
-  }
-
-  if (typeof renderAdminAdsAndPostsList === 'function') {
-    renderAdminAdsAndPostsList();
-  }
-
-  if (typeof showToast === 'function') {
-    showToast('💾 Configuración Guardada', 'La publicidad y datos de AdSense fueron guardados.', 'success', 1000);
-  }
-}
 

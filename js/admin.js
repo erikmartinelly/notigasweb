@@ -87,53 +87,49 @@ function switchModalTab(idx) {
   if (idx === 1) renderAdminVendorsList();
   if (idx === 2) renderAdminOrdersList();
   if (idx === 3) renderAdminAdsAndPostsList();
-  if (idx === 4) renderAdminReports();
-}
-
-function renderAdminAdsAndPostsList() {
+  if (idx === 4async function renderAdminAdsAndPostsList() {
   const container = document.getElementById('adminAdsListContainer');
-  if (!container) return;
+  if (!container || !window.supabaseClient) return;
+  
+  container.innerHTML = '<div style="color:#94A3B8; text-align:center;">Cargando...</div>';
 
   let html = '';
   let count = 0;
 
-  // 1. Anuncio Local Personalizado si existe
-  const savedAdText = localStorage.getItem('notigas_ad_text');
-  const savedAdImage = localStorage.getItem('notigas_ad_image_base64');
-  if (savedAdText || savedAdImage) {
+  // 1. Anuncio Local Personalizado
+  const { data: adData } = await window.supabaseClient.from('publicaciones').select('*').eq('tipo', 'anuncioGlobal').single();
+  if (adData) {
     count++;
     html += `
       <div style="background:#1E293B; padding:10px; border-radius:8px; border:1px solid #F59E0B; margin-bottom:8px;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <strong style="color:#F59E0B; font-size:11.5px;"><i class="fa-solid fa-rectangle-ad"></i> Anuncio Local Banner OTB</strong>
-          <button onclick="borrarAnuncioLocalAdmin()" style="background:#D32F2F; color:white; border:none; padding:3px 8px; border-radius:4px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Borrar Anuncio</button>
+          <button onclick="borrarAnuncioLocalAdmin('${adData.id}')" style="background:#D32F2F; color:white; border:none; padding:3px 8px; border-radius:4px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Borrar Anuncio</button>
         </div>
         <div style="font-size:11px; color:white; margin-top:4px;">
-          ${savedAdText ? `<strong>Texto:</strong> "${escapeHtmlStr(savedAdText)}"` : 'Banner con Imagen activa'}
+          ${adData.titulo ? `<strong>Texto:</strong> "${escapeHtmlStr(adData.titulo)}"` : 'Banner con Imagen activa'}
         </div>
       </div>
     `;
   }
 
-  // 2. Avisos y Noticias de la OTB (Tab 3)
-  let localPosts = [];
-  try {
-    const raw = localStorage.getItem('notigas_forum_posts');
-    if (raw) localPosts = JSON.parse(raw);
-  } catch(e){}
-
-  localPosts.forEach(p => {
-    count++;
-    html += `
-      <div style="background:#1E293B; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.08); margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
-        <div>
-          <span style="font-size:9px; background:rgba(255,109,0,0.2); color:#FF8F00; padding:1px 5px; border-radius:4px; font-weight:700;">${escapeHtmlStr(p.cat)}</span>
-          <strong style="color:white; font-size:11px; margin-left:4px;">${escapeHtmlStr(p.title)}</strong>
+  // 2. Avisos y Noticias de la OTB
+  const { data: localPosts } = await window.supabaseClient.from('publicaciones').select('*').neq('tipo', 'anuncioGlobal');
+  
+  if (localPosts && localPosts.length > 0) {
+    localPosts.forEach(p => {
+      count++;
+      html += `
+        <div style="background:#1E293B; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.08); margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <span style="font-size:9px; background:rgba(255,109,0,0.2); color:#FF8F00; padding:1px 5px; border-radius:4px; font-weight:700;">${escapeHtmlStr(p.categoria || 'Aviso')}</span>
+            <strong style="color:white; font-size:11px; margin-left:4px;">${escapeHtmlStr(p.titulo || 'Sin Título')}</strong>
+          </div>
+          <button onclick="borrarPostForumAdmin('${p.id}')" style="background:#D32F2F; color:white; border:none; padding:3px 8px; border-radius:4px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Borrar</button>
         </div>
-        <button onclick="borrarPostForumAdmin(${p.id})" style="background:#D32F2F; color:white; border:none; padding:3px 8px; border-radius:4px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Borrar</button>
-      </div>
-    `;
-  });
+      `;
+    });
+  }
 
   if (count === 0) {
     container.innerHTML = '<div style="color:#64748B; font-style:italic; font-size:11px; text-align:center; padding:12px;">No hay anuncios ni publicaciones activas en Tab 3.</div>';
@@ -143,12 +139,18 @@ function renderAdminAdsAndPostsList() {
   container.innerHTML = html;
 }
 
-function borrarAnuncioLocalAdmin() {
+async function borrarAnuncioLocalAdmin(id) {
+  if (!window.supabaseClient) return;
+  const { error } = await window.supabaseClient.from('publicaciones').delete().eq('id', id);
+  if (error) console.error(error);
+
   localStorage.removeItem('notigas_ad_text');
   localStorage.removeItem('notigas_ad_url');
   localStorage.removeItem('notigas_ad_image_base64');
 
   if (typeof cargarAnunciosGuardados === 'function') cargarAnunciosGuardados();
+  renderAdminAdsAndPostsList();
+}cargarAnunciosGuardados();
   renderAdminAdsAndPostsList();
 
   if (typeof showToast === 'function') {
