@@ -1266,12 +1266,12 @@ const GEOBOLIVIA_MUNICIPIOS = [
   { key: "elalto", nombre: "El Alto", keywords: ["el alto", "elalto"], lat: -16.5000, lon: -68.1500, querySuffix: "El Alto, Bolivia" },
 
   // 5º TARIJA Y OTROS DEPARTAMENTOS
-  { key: "tarija", nombre: "Tarija", keywords: ["tarija", "cercado tarija"], lat: -21.5333, lon: -64.7333, querySuffix: "Tarija, Bolivia" },
-  { key: "sucre", nombre: "Sucre", keywords: ["sucre"], lat: -19.0333, lon: -65.2628, querySuffix: "Sucre, Bolivia" },
-  { key: "oruro", nombre: "Oruro", keywords: ["oruro"], lat: -17.9667, lon: -67.1167, querySuffix: "Oruro, Bolivia" },
-  { key: "potosi", nombre: "Potosí", keywords: ["potosi", "potosí"], lat: -19.5833, lon: -65.7500, querySuffix: "Potosí, Bolivia" },
-  { key: "trinidad", nombre: "Trinidad", keywords: ["trinidad", "beni"], lat: -14.8333, lon: -64.9000, querySuffix: "Trinidad, Beni, Bolivia" },
-  { key: "cobija", nombre: "Cobija", keywords: ["cobija", "pando"], lat: -11.0333, lon: -68.7667, querySuffix: "Cobija, Pando, Bolivia" }
+  { key: "tarija", nombre: "Tarija", keywords: ["tarija", "chapaco"], lat: -21.5355, lon: -64.7296, querySuffix: "Tarija, Bolivia" },
+  { key: "sucre", nombre: "Sucre", keywords: ["sucre", "chuquisaca"], lat: -19.0333, lon: -65.2627, querySuffix: "Sucre, Bolivia" },
+  { key: "oruro", nombre: "Oruro", keywords: ["oruro"], lat: -17.9833, lon: -67.1500, querySuffix: "Oruro, Bolivia" },
+  { key: "potosi", nombre: "Potosí", keywords: ["potosi", "potosí"], lat: -19.5836, lon: -65.7531, querySuffix: "Potosí, Bolivia" },
+  { key: "trinidad", nombre: "Trinidad", keywords: ["trinidad", "beni"], lat: -14.8333, lon: -64.9000, querySuffix: "Trinidad, Bolivia" },
+  { key: "cobija", nombre: "Cobija", keywords: ["cobija", "pando"], lat: -11.0333, lon: -68.7667, querySuffix: "Cobija, Bolivia" }
 ];
 
 function cambiarCiudadCapital(cityKey) {
@@ -1415,3 +1415,4 @@ function buscarCalle() {
     })
     .catch(() => {});
 }
+ 

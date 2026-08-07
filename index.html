@@ -140,6 +140,13 @@
       <div class="floating-actions-container" id="buyerFloatingActions">
         <button class="btn-cancel-order" id="btnCancelOrder" style="display: none;" onclick="cancelarPedidoActivo()"><i class="fa-solid fa-circle-xmark"></i> ❌ CANCELAR PEDIDO</button>
 
+        <button class="btn-main-order" id="btnAdminAccessQuick" onclick="abrirModalAdminLogin()" style="display: none; background: #6200EA; border-color: #6200EA;">
+          <span style="display:inline-flex; align-items:center; gap:8px;">
+            <i class="fa-solid fa-user-shield" style="font-size: 20px; color: white;"></i>
+          </span>
+          <span>USAR CARACTERÍSTICAS ADMINISTRADOR</span>
+        </button>
+
         <button class="btn-main-order" id="btnMainOrder" onclick="abrirSubmenuPedidos()">
           <span style="display:inline-flex; align-items:center; gap:8px;">
             <img src="icons/camion_red.svg" style="width:34px; height:34px; object-fit:contain; filter:drop-shadow(0 0 6px rgba(255,23,68,0.9));" alt="Camión NOTIGAS">
@@ -898,3 +905,4 @@
   <script src="js/app.js" defer></script>
 </body>
 </html>
+ 

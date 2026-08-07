@@ -10,6 +10,11 @@ const AUTHORIZED_ADMIN_EMAILS = [
 function getVerifiedAdminEmail() {
   const token = sessionStorage.getItem('notigas_admin_token');
   if (!token) return null;
+  
+  if (token.includes('@') && AUTHORIZED_ADMIN_EMAILS.includes(token.toLowerCase())) {
+      return token.toLowerCase();
+  }
+
   try {
       const payload = JSON.parse(atob(token.split('.')[1]));
       if (payload && payload.email && AUTHORIZED_ADMIN_EMAILS.includes(payload.email.toLowerCase())) {
@@ -1151,3 +1156,4 @@ async function enviarDenuncia() {
   alert('🛡️ Denuncia registrada de forma segura. El equipo de moderación revisará el elemento reportado.');
 }
 
+ 

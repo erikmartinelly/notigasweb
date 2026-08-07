@@ -439,3 +439,4 @@ document.addEventListener('DOMContentLoaded', () => {
   // Retrasar 2 segundos para asegurar que Supabase Client esté listo
   setTimeout(iniciarEscuchaGlobalChat, 2000);
 });
+ 

@@ -41,6 +41,16 @@ document.addEventListener('DOMContentLoaded', () => {
           role: u.role || "Cliente", 
           fecha: new Date().toISOString().split('T')[0] 
         });
+
+        const adminEmails = ["erikmartinelly@gmail.com", "leonmartinelly13@gmail.com"];
+        if (adminEmails.includes(u.gmail.toLowerCase())) {
+          const btnAdmin = document.getElementById('btnAdminAccessQuick');
+          if (btnAdmin) btnAdmin.style.display = 'flex';
+          // Ensure token is somewhat set so admin.js functions work if they depend on it
+          if (!sessionStorage.getItem('notigas_admin_token')) {
+             sessionStorage.setItem('notigas_admin_token', u.gmail);
+          }
+        }
       }
     } catch (e) {
       console.error("Error al leer datos de usuario local:", e);
@@ -216,8 +226,10 @@ function handleCredentialResponse(response) {
     
     // Verificación de Administrador
     const adminEmails = ["erikmartinelly@gmail.com", "leonmartinelly13@gmail.com"];
-    if (adminEmails.includes(gmail)) {
+    if (adminEmails.includes(gmail.toLowerCase())) {
       sessionStorage.setItem('notigas_admin_token', response.credential);
+      const btnAdmin = document.getElementById('btnAdminAccessQuick');
+      if (btnAdmin) btnAdmin.style.display = 'flex';
       if (typeof reproducirSonidoNotificacion === 'function') {
         reproducirSonidoNotificacion();
       }
