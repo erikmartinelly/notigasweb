@@ -23,18 +23,20 @@
   <link rel="shortcut icon" href="icons/garrafa_red_clean.svg"/>
   <link rel="apple-touch-icon" href="icons/garrafa_red_clean.svg">
 
-  <!-- LIBRERÍAS EXTERNAS (FONT AWESOME, LEAFLET & ROBOTO) -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <!-- PUBLICIDAD: AdSense se inyectará dinámicamente en su contenedor, sin usar Auto-Ads que rompen la app -->
+  <!-- PRELOAD DE RECURSOS CRÍTICOS -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="dns-prefetch" href="https://unpkg.com">
+  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 
-  <!-- HOJA DE ESTILOS MODULAR NOTIGAS -->
+  <!-- ESTILOS (NON-BLOCKING PARA FUENTES SECUNDARIAS) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" media="print" onload="this.media='all'" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" media="print" onload="this.media='all'" />
+  
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles/main.css">
+  
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
@@ -884,14 +886,14 @@
     </button>
   </div>
 
-  <!-- INCLUSIÓN DE MÓDULOS JAVASCRIPT ARQUITECTURALES DESACOPLADOS -->  <script src="js/supabase-config.js"></script>
-  <script src="js/auth.js"></script>
-  <script src="js/vendors.js"></script>
-  <script src="js/map.js"></script>
-  <script src="js/forum.js"></script>
-  <script src="js/chat.js"></script>
-  <script src="js/ads.js"></script>
-  <script src="js/admin.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/supabase-config.js" defer></script>
+  <script src="js/auth.js" defer></script>
+  <script src="js/vendors.js" defer></script>
+  <script src="js/map.js" defer></script>
+  <script src="js/forum.js" defer></script>
+  <script src="js/chat.js" defer></script>
+  <script src="js/ads.js" defer></script>
+  <script src="js/admin.js" defer></script>
+  <script src="js/app.js" defer></script>
 </body>
 </html>
