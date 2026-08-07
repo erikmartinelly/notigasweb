@@ -418,10 +418,15 @@
         <button class="btn-close" onclick="closeAdminModal()">✕</button>
       </div>
 
-        </div>
-        <button class="btn-submit" onclick="guardarAdminConfig()"><i class="fa-solid fa-key"></i> Desbloquear Menús de Administración</button>
+      <!-- PANTALLA 1: FORMULARIO DE ACCESO (AHORA CON GOOGLE) -->
+      <div id="adminLoginScreen">
+        <p style="font-size: 13px; color: #94A3B8; margin-bottom: 20px; text-align: center;">
+          🔒 Acceso protegido. La autenticación manual ha sido desactivada por motivos de seguridad. 
+          <br><br>
+          <strong>Debes iniciar sesión con Google en la pantalla principal usando un correo de administrador autorizado.</strong>
+        </p>
+        <button class="btn-submit" onclick="closeAdminModal()" style="background:#0288D1;"><i class="fa-solid fa-arrow-left"></i> Volver al Inicio</button>
       </div>
-
       <!-- PANTALLA 2: DASHBOARD DE ADMINISTRACIÓN (SOLO VISIBLE TRAS AUTENTICARSE) -->
       <div id="adminDashboardScreen" style="display: none; flex-direction: row; gap: 15px; align-items: stretch; margin-top: 10px;">
         
@@ -597,11 +602,11 @@
       </p>
 
       <div id="roleSelectionButtons" style="text-align:center; margin-bottom: 20px; margin-top: 15px; display:flex; flex-direction:column; gap:12px; align-items:center;">
-        <a href="#" onclick="document.getElementById('roleSelectionButtons').style.display='none'; document.getElementById('authPaneGoogle').style.display='block'; selectAuthRole('buyer');" style="display:inline-block; width: 80%; color: white; font-size: 15px; font-weight: 900; text-decoration: none; border-radius: 8px; padding: 14px 24px; background: #0288D1; box-shadow: 0 4px 12px rgba(2,136,209,0.4); transition: all 0.3s ease;">
-          <i class="fa-solid fa-cart-shopping" style="margin-right: 6px;"></i> INGRESO COMPRADORES
+        <a href="#" onclick="document.getElementById('roleSelectionButtons').style.display='none'; document.getElementById('authPaneGoogle').style.display='block'; selectAuthRole('buyer');" class="btn-premium-buyer">
+          <i class="fa-solid fa-cart-shopping" style="margin-right: 8px;"></i> Ingreso Compradores
         </a>
-        <a href="#" onclick="document.getElementById('roleSelectionButtons').style.display='none'; document.getElementById('authPaneGoogle').style.display='block'; selectAuthRole('driver');" style="display:inline-block; width: 70%; color: #FF6D00; font-size: 13px; font-weight: 800; text-decoration: none; border: 2px solid #FF6D00; border-radius: 8px; padding: 10px 24px; background: rgba(255,109,0,0.1); opacity: 0.85; transition: all 0.3s ease;">
-          <i class="fa-solid fa-truck-fast" style="margin-right: 6px;"></i> INGRESO REPARTIDORES
+        <a href="#" onclick="document.getElementById('roleSelectionButtons').style.display='none'; document.getElementById('authPaneGoogle').style.display='block'; selectAuthRole('driver');" class="btn-premium-driver">
+          <i class="fa-solid fa-truck-fast" style="margin-right: 8px;"></i> Ingreso Repartidores
         </a>
       </div>
 

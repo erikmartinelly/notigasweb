@@ -1932,3 +1932,51 @@ button:active, .tab-btn:active, .cat-chip:active {
   border-color: #F59E0B !important;
   box-shadow: 0 4px 16px rgba(255, 109, 0, 0.6) !important;
 }
+.btn-premium-buyer {
+  display: inline-block;
+  width: 85%;
+  color: white;
+  font-size: 16px;
+  font-weight: 900;
+  text-decoration: none;
+  border-radius: 12px;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, #0288D1 0%, #01579B 100%);
+  box-shadow: 0 8px 24px rgba(2,136,209,0.5), inset 0 2px 0 rgba(255,255,255,0.2);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.btn-premium-buyer:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(2,136,209,0.6), inset 0 2px 0 rgba(255,255,255,0.3);
+  background: linear-gradient(135deg, #039BE5 0%, #0277BD 100%);
+}
+.btn-premium-buyer:active {
+  transform: translateY(1px);
+  box-shadow: 0 4px 12px rgba(2,136,209,0.4);
+}
+.btn-premium-driver {
+  display: inline-block;
+  width: 85%;
+  color: white;
+  font-size: 16px;
+  font-weight: 900;
+  text-decoration: none;
+  border-radius: 12px;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, #FF8F00 0%, #E65100 100%);
+  box-shadow: 0 8px 24px rgba(255,143,0,0.4), inset 0 2px 0 rgba(255,255,255,0.2);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.btn-premium-driver:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(255,143,0,0.5), inset 0 2px 0 rgba(255,255,255,0.3);
+  background: linear-gradient(135deg, #FFA000 0%, #F57C00 100%);
+}
+.btn-premium-driver:active {
+  transform: translateY(1px);
+  box-shadow: 0 4px 12px rgba(255,143,0,0.3);
+}
