@@ -64,7 +64,7 @@
   <!-- PESTAÑAS DE NAVEGACIÓN PRINCIPALES (3 PESTAÑAS INDEPENDIENTES) -->
   <nav>
     <button class="tab-btn active" onclick="switchTab(0)"><i class="fa-solid fa-map-location-dot"></i> 1ª MAPA EN VIVO</button>
-    <button class="tab-btn" onclick="switchTab(1)"><i class="fa-solid fa-store"></i> 2ª REPARTIDORES & SERVICIOS</button>
+    <button class="tab-btn" onclick="switchTab(1)"><i class="fa-solid fa-store"></i> LISTA DE REPARTIDORES</button>
     <button class="tab-btn" onclick="switchTab(2)"><i class="fa-solid fa-comments"></i> 3ª NOTICIAS VECINALES</button>
   </nav>
 
@@ -74,7 +74,7 @@
       <div id="map"></div>
 
       <!-- BANNER DE ACTIVACIÓN OBLIGATORIA DE GPS EN MÓVILES/ANDROID -->
-      <div id="gpsMandatoryBanner" style="display:none; position:fixed; top:70px; left:50%; transform:translateX(-50%); z-index:9999; width:calc(100% - 24px); max-width:440px; background:linear-gradient(135deg, #1E293B, #0F172A); border:2px solid #FF6D00; border-radius:16px; padding:14px 16px; box-shadow:0 10px 30px rgba(0,0,0,0.85); text-align:center;">
+      <div id="gpsFloatingBanner" style="display:none; position:fixed; top:70px; left:50%; transform:translateX(-50%); z-index:9999; width:calc(100% - 24px); max-width:440px; background:linear-gradient(135deg, #1E293B, #0F172A); border:2px solid #FF6D00; border-radius:16px; padding:14px 16px; box-shadow:0 10px 30px rgba(0,0,0,0.85); text-align:center;">
         <div style="font-size:32px; margin-bottom:4px;">📍</div>
         <div style="font-size:14px; font-weight:900; color:#FF6D00; font-family:'Roboto',sans-serif; margin-bottom:4px;">
           ACTIVACIÓN DE GPS REQUERIDA
@@ -305,10 +305,6 @@
 
       <!-- ACCIONES COMUNES -->
       <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 14px 0;">
-
-      <button style="width:100%; background: linear-gradient(135deg, #2563EB, #1D4ED8); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-bottom: 8px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(37,99,235,0.4);" onclick="closeUserSettingsModal(); abrirChatSoporteOficial();">
-        <i class="fa-solid fa-headset"></i> Chat de Servicio al Vecino / Soporte
-      </button>
 
       <button style="width:100%; background: linear-gradient(135deg, #D32F2F, #B71C1C); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 4px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(211,47,47,0.4);" onclick="cerrarSesionUsuario()">
         <i class="fa-solid fa-right-from-bracket"></i> 🚪 Cerrar Sesión Completa
@@ -562,13 +558,6 @@
               <h4 style="font-size: 12px; color: #FF6D00; margin-bottom: 8px;"><i class="fa-solid fa-flag"></i> Denuncias Pendientes de Moderación:</h4>
               <div id="adminReportsContainer" style="max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
                 <!-- Renderizado dinámico de denuncias -->
-              </div>
-            </div>
-
-            <div style="background-color: #0F172A; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 12px;">
-              <h4 style="font-size: 12px; color: #38BDF8; margin-bottom: 8px;"><i class="fa-solid fa-comments"></i> 🛡️ Inspección de Chats Privados en Vivo:</h4>
-              <div id="adminChatInspectorContainer" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
-                <!-- Renderizado dinámico de inspección de chats -->
               </div>
             </div>
 
@@ -872,7 +861,7 @@
   <script src="js/vendors.js" defer></script>
   <script src="js/map.js" defer></script>
   <script src="js/forum.js" defer></script>
-  
+
   <script src="js/ads.js" defer></script>
   <script src="js/admin.js" defer></script>
   <script src="js/app.js" defer></script>

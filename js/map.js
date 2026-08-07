@@ -119,6 +119,7 @@ function initNotigasMap() {
   conectarGPSAuto(false);
   renderReportedTrucksBuffer();
   cargarPedidosVecinalesEnVivo();
+  iniciarSuscripcionMapaRealtime();
 }
 
 async function cargarPedidosVecinalesEnVivo() {
@@ -1414,5 +1415,46 @@ function buscarCalle() {
       }
     })
     .catch(() => {});
+}
+
+// =============================================
+// SUSCRIPCIÓN EN TIEMPO REAL PARA MAPA (PEDIDOS Y CAMIONES)
+// =============================================
+function iniciarSuscripcionMapaRealtime() {
+    if (!window.supabaseClient) {
+        console.warn("⚠️ Supabase no disponible para suscripción del mapa");
+        return;
+    }
+
+    const channel = window.supabaseClient.channel('mapa_realtime')
+        .on('postgres_changes', 
+            { event: '*', schema: 'public', table: 'publicaciones' },
+            (payload) => {
+                console.log("🔄 Evento Realtime en mapa:", payload);
+                const data = payload.new;
+                const oldData = payload.old;
+
+                if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+                    if (data.tipo === 'pedido') {
+                        // Agregar o actualizar pedido vecino
+                        agregarPedidoVecinoEnMapa(data);
+                    } else if (data.tipo === 'rutaDistribuidor') {
+                        // Agregar o actualizar camión en ruta
+                        actualizarRepartidorEnMapa(data);
+                    }
+                } else if (payload.eventType === 'DELETE') {
+                    // Eliminar marcador del mapa
+                    const id = oldData.id;
+                    removerPublicacionDeMapa(id);
+                }
+            }
+        )
+        .subscribe((status, err) => {
+            if (status === 'SUBSCRIBED') {
+                console.log("📡 Mapa suscrito a Realtime correctamente.");
+            } else if (err) {
+                console.error("❌ Error en suscripción del mapa:", err);
+            }
+        });
 }
  
