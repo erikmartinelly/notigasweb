@@ -306,6 +306,10 @@
       <!-- ACCIONES COMUNES -->
       <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 14px 0;">
 
+      <button style="width:100%; background: rgba(30, 41, 59, 0.95); border: 1px solid rgba(255,255,255,0.25); color: #CBD5E1; padding: 10px; border-radius: 10px; cursor: pointer; font-size: 11.5px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px;" onclick="closeUserSettingsModal(); abrirModalAdminLogin();">
+        <i class="fa-solid fa-user-shield" style="color: #FF6D00;"></i> 🛡️ Acceso Exclusivo Administrador
+      </button>
+
       <button style="width:100%; background: linear-gradient(135deg, #D32F2F, #B71C1C); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 4px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(211,47,47,0.4);" onclick="cerrarSesionUsuario()">
         <i class="fa-solid fa-right-from-bracket"></i> 🚪 Cerrar Sesión Completa
       </button>
@@ -320,10 +324,6 @@
         <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 10px;">
           <button style="width:100%; background: linear-gradient(135deg, #B71C1C, #880E0E); color: #FF8A80; border: 1px solid #D32F2F; padding: 10px; border-radius: 10px; font-weight: 800; cursor: pointer; font-size: 11.5px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(183,28,28,0.5);" onclick="eliminarMiCuentaCompleta()">
             <i class="fa-solid fa-trash-can"></i> 🗑️ Eliminar Mi Cuenta y Todos Mis Datos
-          </button>
-
-          <button style="width:100%; background: rgba(30, 41, 59, 0.95); border: 1px solid rgba(255,255,255,0.25); color: #CBD5E1; padding: 10px; border-radius: 10px; cursor: pointer; font-size: 11.5px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="closeUserSettingsModal(); abrirModalAdminLogin();">
-            <i class="fa-solid fa-user-shield" style="color: #FF6D00;"></i> 🛡️ Acceso Exclusivo Administrador
           </button>
         </div>
       </details>
@@ -427,10 +427,11 @@
       <!-- PANTALLA 1: FORMULARIO DE ACCESO (AHORA CON GOOGLE) -->
       <div id="adminLoginScreen">
         <p style="font-size: 13px; color: #94A3B8; margin-bottom: 20px; text-align: center;">
-          🔒 Acceso protegido. La autenticación manual ha sido desactivada por motivos de seguridad. 
+          🔒 Acceso protegido. Requiere doble autenticación para verificar identidad.
           <br><br>
-          <strong>Debes iniciar sesión con Google en la pantalla principal usando un correo de administrador autorizado.</strong>
+          <strong>Haz clic abajo para re-autenticarte con tu cuenta de administrador:</strong>
         </p>
+        <div id="admin_g_id_onload_container" style="display: flex; justify-content: center; margin-bottom: 20px;"></div>
         <button class="btn-submit" onclick="closeAdminModal()" style="background:#0288D1;"><i class="fa-solid fa-arrow-left"></i> Volver al Inicio</button>
       </div>
       <!-- PANTALLA 2: DASHBOARD DE ADMINISTRACIÓN (SOLO VISIBLE TRAS AUTENTICARSE) -->

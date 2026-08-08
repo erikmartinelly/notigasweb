@@ -43,23 +43,60 @@ function cerrarSesionRepartidorActivarComprador() {
   }
 }
 
+function handleAdminCredentialResponse(response) {
+  try {
+    const payload = JSON.parse(atob(response.credential.split('.')[1]));
+    if (payload && payload.email && AUTHORIZED_ADMIN_EMAILS.includes(payload.email.toLowerCase())) {
+      sessionStorage.setItem('notigas_admin_token', response.credential);
+      const loginScreen = document.getElementById('adminLoginScreen');
+      const dashboardScreen = document.getElementById('adminDashboardScreen');
+      if (loginScreen) loginScreen.style.display = 'none';
+      if (dashboardScreen) dashboardScreen.style.display = 'flex';
+      renderAdminReports();
+      if (typeof cargarAnunciosGuardados === 'function') cargarAnunciosGuardados();
+      if (typeof showToast === 'function') {
+        showToast('✅ Administrador Verificado', 'Doble autenticación completada con éxito.', 'success', 3000);
+      }
+    } else {
+      alert("❌ Acceso Denegado\nEsta cuenta de Google no tiene privilegios de administrador.");
+    }
+  } catch(e) {
+    console.error("Error validando token admin", e);
+  }
+}
+
 function abrirModalAdminLogin() {
-  closeUserSettingsModal();
+  if (typeof closeUserSettingsModal === 'function') closeUserSettingsModal();
   const modalAdmin = document.getElementById('modalAdmin');
   const loginScreen = document.getElementById('adminLoginScreen');
   const dashboardScreen = document.getElementById('adminDashboardScreen');
 
   if (!modalAdmin) return;
 
-  const currentAdmin = getVerifiedAdminEmail();
-  if (currentAdmin && AUTHORIZED_ADMIN_EMAILS.includes(currentAdmin.toLowerCase())) {
-    if (loginScreen) loginScreen.style.display = 'none';
-    if (dashboardScreen) dashboardScreen.style.display = 'block';
-    renderAdminReports();
-    if (typeof cargarAnunciosGuardados === 'function') cargarAnunciosGuardados();
-  } else {
-    if (loginScreen) loginScreen.style.display = 'block';
-    if (dashboardScreen) dashboardScreen.style.display = 'none';
+  // Siempre requerir doble autenticación
+  if (loginScreen) loginScreen.style.display = 'block';
+  if (dashboardScreen) dashboardScreen.style.display = 'none';
+  
+  if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+    const btnContainer = document.getElementById('admin_g_id_onload_container');
+    if (btnContainer) {
+      btnContainer.innerHTML = '';
+      google.accounts.id.initialize({
+        client_id: typeof GOOGLE_CLIENT_ID !== 'undefined' ? GOOGLE_CLIENT_ID : "994996215118-a3gvm7gtorr1nof9vaksr05ndc1raso3.apps.googleusercontent.com",
+        callback: handleAdminCredentialResponse,
+        auto_select: false,
+        cancel_on_tap_outside: false
+      });
+      google.accounts.id.renderButton(btnContainer, {
+        type: 'standard',
+        theme: 'filled_black',
+        size: 'large',
+        text: 'continue_with',
+        shape: 'rectangular',
+        logo_alignment: 'left',
+        width: 280
+      });
+    }
   }
 
   modalAdmin.style.display = 'flex';
@@ -78,6 +115,11 @@ function abrirModalAdminLogin() {
 function closeAdminModal() { 
   const modalAdmin = document.getElementById('modalAdmin');
   if (modalAdmin) modalAdmin.style.display = 'none'; 
+  
+  // Restaurar el manejador de Google general
+  if (typeof initGoogleOneTap === 'function') {
+    initGoogleOneTap();
+  }
 }
 
 function activarMapaCalorAdminLive() {
