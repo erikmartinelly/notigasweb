@@ -678,8 +678,11 @@ function confirmarPedido() {
 }
 
 function cancelarPedidoActivo() {
-  showConfirmModal('❌', '¿Cancelar tu pedido?', 'Tu pedido activo será eliminado del mapa y los repartidores dejarán de verlo.', 'Sí, cancelar', () => {
+  showConfirmModal('❌', '¿Cancelar tu pedido?', 'Tu pedido activo será eliminado del mapa y los repartidores dejarán de verlo.', 'Sí, cancelar', async () => {
     localStorage.removeItem('notigas_active_order');
+    if (window.supabaseClient && typeof getCurrentUserId === 'function') {
+      await window.supabaseClient.from('publicaciones').delete().eq('user_email', getCurrentUserId()).eq('tipo', 'pedido');
+    }
     checkActiveOrderStatus();
     if (typeof renderActiveOrdersMap === 'function') {
       renderActiveOrdersMap();

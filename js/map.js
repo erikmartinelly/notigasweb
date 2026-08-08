@@ -722,7 +722,7 @@ function renderActiveOrdersMap() {
       });
 
       const btnAccion = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver')
-        ? `<button style="margin-top:6px; background:#00E676; color:#0F172A; border:none; padding:5px 12px; border-radius:6px; font-size:11px; font-weight:900; cursor:pointer;" onclick="aceptarPedidoRepartidor('${escapeHtmlStr(order.categoria)}')">✅ Atender Pedido</button>`
+        ? `<button style="margin-top:6px; background:#00E676; color:#0F172A; border:none; padding:5px 12px; border-radius:6px; font-size:11px; font-weight:900; cursor:pointer;" onclick="aceptarPedidoRepartidor('${order.id}')">✅ Atender Pedido</button>`
         : `<button style="margin-top:6px; background:#D32F2F; color:white; border:none; padding:5px 12px; border-radius:6px; font-size:11px; font-weight:900; cursor:pointer;" onclick="cancelarPedidoActivo()">❌ Cancelar Pedido</button>`;
 
       const telInfo = order.telefono ? `<br><span style="font-size:10.5px; color:#00E676; font-weight:800;">📞 Tel: ${escapeHtmlStr(order.telefono)}</span>` : '';
