@@ -10,6 +10,33 @@ let isDriverGpsLive = true;
 window.isHeatmapActive = window.isHeatmapActive || false;
 
 /* =====================================================
+   MANEJO CENTRALIZADO DE ERRORES GLOBALES
+   Captura errores no controlados y los presenta al usuario
+   de forma amigable en vez de fallar silenciosamente.
+   ===================================================== */
+window.addEventListener('error', (event) => {
+  console.error('[Error Global]', event.message, event.filename, event.lineno);
+  // Solo mostrar toast si el error viene de archivos de la app
+  if (event.filename && (event.filename.includes('notigas') || event.filename.includes('localhost'))) {
+    if (typeof showToast === 'function') {
+      showToast('⚠️ Error inesperado', 'Algo salió mal. Recarga la página si hay problemas.', 'warning', 5000);
+    }
+  }
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  console.error('[Promesa sin manejar]', event.reason);
+  // Suprimir errores de red (comunes con GPS y APIs externas)
+  const msg = event.reason?.message || '';
+  if (!msg.includes('fetch') && !msg.includes('NetworkError') && !msg.includes('AbortError')) {
+    if (typeof showToast === 'function') {
+      showToast('⚠️ Error de operación', 'Una acción no pudo completarse. Intenta de nuevo.', 'warning', 4000);
+    }
+  }
+});
+
+
+/* =====================================================
    SISTEMA DE LOADING GLOBAL (ANTI-FREEZE)
    ===================================================== */
 let globalLoadingTimeout;

@@ -74,41 +74,70 @@ window.stopDriverLocationBroadcast = async function() {
     }
 };
 
-// --- SUSCRIPCIONES EN TIEMPO REAL PARA COMPRADORES ---
+// --- SUSCRIPCIONES EN TIEMPO REAL CON RECONEXIÓN AUTOMÁTICA ---
+let _realtimeChannel = null;
+let _realtimeRetryCount = 0;
+let _realtimeRetryTimeout = null;
+const MAX_REALTIME_RETRIES = 8;
+
 window.iniciarSuscripcionesRealtime = function() {
     if (!window.supabaseClient) return;
-    
-    console.log("📡 Iniciando suscripciones Realtime a Supabase...");
-    
-    // Cargar pedidos y datos actuales AHORA que ya tenemos cliente activo
-    if (typeof cargarPedidosVecinalesEnVivo === 'function') {
+
+    // Evitar canales duplicados
+    if (_realtimeChannel) {
+        try { window.supabaseClient.removeChannel(_realtimeChannel); } catch(e) {}
+        _realtimeChannel = null;
+    }
+
+    console.log(`📡 Suscripción Realtime iniciando... (intento ${_realtimeRetryCount + 1})`);
+
+    // Cargar datos iniciales al conectar
+    if (_realtimeRetryCount === 0 && typeof cargarPedidosVecinalesEnVivo === 'function') {
         cargarPedidosVecinalesEnVivo();
     }
-    
-    // Escuchar tabla publicaciones (Repartidores en ruta y pedidos)
-    window.supabaseClient.channel('publicaciones_changes')
+
+    _realtimeChannel = window.supabaseClient.channel('publicaciones_changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'publicaciones' }, payload => {
-            console.log("🔄 Evento Realtime recibido:", payload);
-            
             if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
                 const data = payload.new;
-                if (data.tipo === 'rutaDistribuidor') {
-                    // Actualizar camioncito en el mapa
-                    if (typeof actualizarRepartidorEnMapa === 'function') {
-                        actualizarRepartidorEnMapa(data);
-                    }
-                } else if (data.tipo === 'pedido') {
-                    // Actualizar pedidos de vecinos
-                    if (typeof agregarPedidoVecinoEnMapa === 'function') {
-                        agregarPedidoVecinoEnMapa(data);
-                    }
+                if (data.tipo === 'rutaDistribuidor' && typeof actualizarRepartidorEnMapa === 'function') {
+                    actualizarRepartidorEnMapa(data);
+                } else if (data.tipo === 'pedido' && typeof agregarPedidoVecinoEnMapa === 'function') {
+                    agregarPedidoVecinoEnMapa(data);
                 }
-            } else if (payload.eventType === 'DELETE') {
-                const data = payload.old;
-                if (typeof removerPublicacionDeMapa === 'function') {
-                    removerPublicacionDeMapa(data.id);
-                }
+            } else if (payload.eventType === 'DELETE' && typeof removerPublicacionDeMapa === 'function') {
+                removerPublicacionDeMapa(payload.old.id);
             }
         })
-        .subscribe();
+        .subscribe((status, err) => {
+            if (status === 'SUBSCRIBED') {
+                console.log('✅ Realtime conectado correctamente.');
+                _realtimeRetryCount = 0; // Resetear contador en conexión exitosa
+                if (window.AppState) window.AppState.set('realtimeConnected', true);
+            } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+                console.warn(`⚠️ Realtime desconectado (${status}). Intentando reconectar...`);
+                if (window.AppState) window.AppState.set('realtimeConnected', false);
+                _programarReconexionRealtime();
+            }
+        });
 };
+
+function _programarReconexionRealtime() {
+    if (_realtimeRetryTimeout) clearTimeout(_realtimeRetryTimeout);
+    if (_realtimeRetryCount >= MAX_REALTIME_RETRIES) {
+        console.error('❌ Realtime: se agotaron los reintentos de reconexión.');
+        if (typeof showToast === 'function') {
+            showToast('⚠️ Sin conexión en vivo', 'No se pudo reconectar al servidor. Usa el botón 🔄 para recargar datos.', 'warning', 6000);
+        }
+        return;
+    }
+
+    // Backoff exponencial: 2s, 4s, 8s, 16s, 32s, 64s...
+    const delay = Math.min(2000 * Math.pow(2, _realtimeRetryCount), 64000);
+    _realtimeRetryCount++;
+    console.log(`🔁 Reconexión Realtime en ${delay / 1000}s (intento ${_realtimeRetryCount}/${MAX_REALTIME_RETRIES})...`);
+
+    _realtimeRetryTimeout = setTimeout(() => {
+        if (window.supabaseClient) window.iniciarSuscripcionesRealtime();
+    }, delay);
+}

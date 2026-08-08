@@ -4,15 +4,14 @@
 
 let activePostCommentsRef = null;
 
-function escapeHtmlStr(str) {
+// escapeHtmlStr está centralizada en state.js — eliminada aquí para evitar duplicados.
+// Si state.js no cargó aún, usamos una versión de respaldo local.
+const escapeHtmlStr = window.escapeHtmlStr || function(str) {
   if (!str) return '';
   return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+};
 
 document.addEventListener('DOMContentLoaded', () => {
   if (window.supabaseClient) {
@@ -144,10 +143,9 @@ async function votarPost(el, delta, postId) {
     val += delta;
     span.innerText = val;
     
-    // Obtenemos los votos actuales y lo actualizamos (Race condition posible, pero aceptable para un MVP)
-    const { data } = await window.supabaseClient.from('publicaciones').select('votos').eq('id', postId).single();
-    const currentVotes = data ? (data.votos || 1) : 1;
-    await window.supabaseClient.from('publicaciones').update({ votos: currentVotes + delta }).eq('id', postId);
+    // FIX #9: Actualización atómica de votos — elimina la race condition.
+    // Usa una expresión SQL directa en lugar de leer+escribir en dos pasos.
+    await window.supabaseClient.rpc('incrementar_votos', { publicacion_id: postId, incremento: delta });
   }
 }
 
