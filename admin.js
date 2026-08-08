@@ -168,7 +168,14 @@ window.registrarAdminsIniciales = async function() {
   }
 };
 
+let adminLoginAttempts = 0;
+
 window.verificarAutenticacionAdmin = async function() {
+  if (adminLoginAttempts >= 5) {
+    alert("⛔ PANEL BLOQUEADO\nHas superado el límite de 5 intentos fallidos. Por seguridad, refresca la página o vuelve más tarde.");
+    return;
+  }
+
   const email = document.getElementById('loginAdminEmail').value.trim().toLowerCase();
   const pass = document.getElementById('loginAdminPassword').value;
 
@@ -186,12 +193,14 @@ window.verificarAutenticacionAdmin = async function() {
     .single();
 
   if (error || !data) {
-    alert("❌ ACCESO DENEGADO\nCredenciales incorrectas o administrador no encontrado.");
+    adminLoginAttempts++;
+    alert(`❌ ACCESO DENEGADO\nCredenciales incorrectas o administrador no encontrado.\nTe quedan ${5 - adminLoginAttempts} intentos.`);
     return;
   }
 
   if (data.password_hash === hash) {
     // Éxito
+    adminLoginAttempts = 0; // Reiniciar contador
     sessionStorage.setItem('notigas_admin_token', hash);
     
     const loginScreen = document.getElementById('adminLoginScreen');
@@ -206,7 +215,8 @@ window.verificarAutenticacionAdmin = async function() {
       showToast('✅ Acceso Autorizado', 'Bienvenido al panel de administración.', 'success', 3000);
     }
   } else {
-    alert("❌ ACCESO DENEGADO\nContraseña incorrecta.");
+    adminLoginAttempts++;
+    alert(`❌ ACCESO DENEGADO\nContraseña incorrecta.\nTe quedan ${5 - adminLoginAttempts} intentos.`);
   }
 };
 
