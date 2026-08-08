@@ -968,14 +968,7 @@ function descargarListaCorreosCSV() {
     emailsList = [...databaseEmails];
   }
 
-  AUTHORIZED_ADMIN_EMAILS.forEach(email => {
-    emailsList.push({
-      gmail: email,
-      role: 'Administrador',
-      fecha: new Date().toISOString().split('T')[0]
-    });
-  });
-
+  // Correos de la base de datos se exportan directamente
   try {
     const saved = localStorage.getItem('notigas_user_data');
     if (saved) {
