@@ -3,7 +3,7 @@ const CACHE_NAME = 'notigas-pwa-cache-v50';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './styles/main.css',
+  './panel270977.html',
   './app.js',
   './map.js',
   './vendors.js',

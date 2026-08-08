@@ -24,7 +24,7 @@ function getVerifiedAdminEmail() {
   return null;
 }
 
-const REQUIRED_ADMIN_PASSWORD = "Tiquipaya428";
+
 
 /* closeUserSettingsModal, guardarPrefUsuario y cerrarSesionUsuario residen en auth.js (que carga primero).
    Se eliminan aquí para evitar que admin.js sobreescriba las versiones correctas con soporte de rol Repartidor. */
