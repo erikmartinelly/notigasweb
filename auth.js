@@ -230,41 +230,48 @@ function iniciarConGoogleDirecto() {
   }
 }
 
-function handleCredentialResponse(response) {
+async function handleCredentialResponse(response) {
   try {
     if (!response || !response.credential || typeof response.credential !== 'string') {
       selectAuthMethod('email');
       return;
     }
 
-    const googleUser = parseGoogleJwt(response.credential);
-    if (!googleUser || !googleUser.email) {
-      selectAuthMethod('email');
+    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Autenticando...');
+
+    // 1. Iniciar sesión en Supabase con Google One-Tap
+    const { data: authData, error } = await window.supabaseClient.auth.signInWithIdToken({
+      provider: 'google',
+      token: response.credential
+    });
+
+    if (error) {
+      if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+      alert("Error de seguridad: No se pudo verificar la sesión con Supabase. " + error.message);
       return;
     }
 
-    const gmail = googleUser.email.toLowerCase().trim();
-    
+    const session = authData.session;
+    const user = session.user;
+    const gmail = user.email.toLowerCase().trim();
+    const nombre = user.user_metadata?.full_name || gmail;
+
     // Verificación de Administrador
     const adminEmails = ["erikmartinelly@gmail.com", "leonmartinelly13@gmail.com"];
-    if (adminEmails.includes(gmail.toLowerCase())) {
-      sessionStorage.setItem('notigas_admin_token', response.credential);
-      const btnAdmin = document.getElementById('btnAdminAccessQuick');
-      if (btnAdmin) btnAdmin.style.display = 'flex';
-      if (typeof reproducirSonidoNotificacion === 'function') {
-        reproducirSonidoNotificacion();
-      }
+    if (adminEmails.includes(gmail)) {
+      if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+      alert("⚠️ Eres administrador. Por favor ingresa por el Panel de Administración protegido.");
+      return;
     }
 
-    const nombre = googleUser.given_name || googleUser.name || gmail.split('@')[0];
-    const apellido = googleUser.family_name || '';
-
+    // Si es repartidor, abrimos el modal de registro y guardamos temporalmente el email
     if (currentSelectedRole === 'driver') {
+      if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
       const modalAuth = document.getElementById('modalWelcomeAuth');
       if (modalAuth) modalAuth.style.display = 'none';
 
       const inputDriverNombre = document.getElementById('inputDriverNombre');
-      if (inputDriverNombre) inputDriverNombre.value = `${nombre} ${apellido}`.trim();
+      if (inputDriverNombre) inputDriverNombre.value = nombre;
       
       const modalDriver = document.getElementById('modalDriver');
       if (modalDriver) modalDriver.style.display = 'flex';
@@ -278,30 +285,31 @@ function handleCredentialResponse(response) {
       return;
     }
 
-    const userData = {
-      role: 'vecino',
-      gmail: gmail,
-      nombre: nombre,
-      apellido: apellido,
-      user_id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'u_' + Date.now() + Math.random().toString(36).substr(2, 9)
+    // Guardar el registro seguro con el ID de sesión de Supabase
+    const clienteData = { 
+      role: 'vecino', 
+      gmail: gmail, 
+      nombre: nombre, 
+      user_id: user.id 
     };
 
-    localStorage.setItem('notigas_user_data', JSON.stringify(userData));
+    localStorage.setItem('notigas_user_data', JSON.stringify(clienteData));
 
-    if (typeof databaseEmails !== 'undefined' && Array.isArray(databaseEmails)) {
-      databaseEmails.push({ gmail: gmail, role: userData.role, fecha: new Date().toISOString().split('T')[0] });
-    }
-
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+    
     const modalAuth = document.getElementById('modalWelcomeAuth');
     if (modalAuth) modalAuth.style.display = 'none';
 
-    if (typeof showToast === 'function') {
-      showToast('✅ Google Verificado', `¡Bienvenido ${nombre} (${gmail})!`, 'success', 4500);
-    } else {
-      alert(`✅ AUTENTICACIÓN GOOGLE EXITOSA\n\n¡Bienvenido ${nombre} (${gmail})!`);
+    if (typeof setAppMode === 'function') setAppMode('buyer');
+    if (typeof verificarYActivarChatAdminAuto === 'function') verificarYActivarChatAdminAuto();
+    if (typeof showToast === 'function') showToast('✅ Sesión Segura', `Iniciaste sesión como ${nombre}`, 'success', 1000);
+    
+    if (typeof reproducirSonidoNotificacion === 'function') {
+      reproducirSonidoNotificacion();
     }
-  } catch(e) {
-    console.error("Error al procesar credencial de Google:", e);
+  } catch (err) {
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+    console.error("Error en Google Auth: ", err);
     selectAuthMethod('email');
   }
 }
@@ -340,7 +348,21 @@ async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
   }
 }
 
-function guardarRegistroUnico() {
+async function guardarRegistroUnico() {
+  if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Asegurando conexión...');
+  
+  // 1. Iniciar sesión anónima en Supabase (requiere habilitar Anonymous Auth en Supabase)
+  const { data: authData, error: authError } = await window.supabaseClient.auth.signInAnonymously();
+  if (authError) {
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+    alert("❌ Error de seguridad: No se pudo generar una sesión anónima en Supabase. Asegúrate de haber habilitado 'Anonymous Sign-ins' en el panel de Supabase Auth.");
+    console.error(authError);
+    return;
+  }
+  
+  const userId = authData.session.user.id;
+  if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+
   if (currentSelectedRole === 'driver') {
     const nombreNegocio = (document.getElementById('regNombreNegocio')?.value || '').trim() || 'Repartidor Gas GLP';
     const whatsapp = (document.getElementById('regWhatsapp')?.value || '').trim() || '74xxxx28';
@@ -357,7 +379,6 @@ function guardarRegistroUnico() {
     }
     const zonas = (document.getElementById('regZonas')?.value || '').trim() || 'OTB Central y calles vecinas';
     const schedule = (document.getElementById('regSchedule')?.value || '').trim() || 'Lunes a Sábado: 07:00 a 18:00';
-
     const ciudad = (document.getElementById('regCiudad')?.value || '').trim() || 'santacruz';
 
     const repartidorData = {
@@ -370,7 +391,7 @@ function guardarRegistroUnico() {
       zonas: zonas,
       schedule: schedule,
       ciudad: ciudad,
-      user_id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'd_' + Date.now() + Math.random().toString(36).substr(2, 9)
+      user_id: userId // Usamos el ID seguro generado por Supabase
     };
 
     localStorage.setItem('notigas_user_data', JSON.stringify(repartidorData));
@@ -402,25 +423,16 @@ function guardarRegistroUnico() {
       gmail, 
       nombre, 
       apellido, 
-      user_id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'u_' + Date.now() + Math.random().toString(36).substr(2, 9) 
+      user_id: userId // Usamos el ID seguro de Supabase Auth
     };
     localStorage.setItem('notigas_user_data', JSON.stringify(clienteData));
-    if (typeof databaseEmails !== 'undefined' && Array.isArray(databaseEmails)) {
-      databaseEmails.push({ gmail: gmail, role: 'Cliente', fecha: new Date().toISOString().split('T')[0] });
-    }
 
     const modalAuth = document.getElementById('modalWelcomeAuth');
     if (modalAuth) modalAuth.style.display = 'none';
 
-    if (typeof setAppMode === 'function') {
-      setAppMode('buyer');
-    }
-
-    if (typeof verificarYActivarChatAdminAuto === 'function') {
-      verificarYActivarChatAdminAuto();
-    }
-
-    if (typeof showToast === 'function') showToast('✅ Registro Exitoso', `Bienvenido a NOTIGAS (${gmail})`, 'success', 1000);
+    if (typeof setAppMode === 'function') setAppMode('buyer');
+    if (typeof verificarYActivarChatAdminAuto === 'function') verificarYActivarChatAdminAuto();
+    if (typeof showToast === 'function') showToast('✅ Sesión Segura', `Bienvenido a NOTIGAS (${gmail})`, 'success', 1000);
   }
 }
 
@@ -429,7 +441,7 @@ function closeDriverModal() {
   if (modalDriver) modalDriver.style.display = 'none'; 
 }
 
-function iniciarSesionRepartidor() {
+async function iniciarSesionRepartidor() {
   const nombreNegocio = (document.getElementById('inputDriverNombre')?.value || '').trim();
   const whatsapp = (document.getElementById('inputDriverTelRef')?.value || '').trim();
   const plate = (document.getElementById('inputDriverPlate')?.value || '').trim();
@@ -451,8 +463,6 @@ function iniciarSesionRepartidor() {
      if (saved) {
        const u = JSON.parse(saved);
        if (u.gmail) existingGmail = u.gmail;
-       // CORRECCIÓN: reutilizar el user_id ya existente al editar la ficha,
-       // en vez de generar uno nuevo cada vez (eso era lo que duplicaba al chofer).
        if (u.user_id) existingUserId = u.user_id;
      }
   } catch(e){}
@@ -463,6 +473,19 @@ function iniciarSesionRepartidor() {
       showToast('⛔ Acceso Suspendido', 'Tu cuenta de repartidor ha sido suspendida/baneada por la administración de NOTIGAS.', 'error', 2000);
     }
     return;
+  }
+
+  if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Autenticando...');
+
+  // Asegurar que tenemos una sesión de Supabase Auth para RLS
+  if (!existingUserId) {
+    const { data: authData, error: authError } = await window.supabaseClient.auth.signInAnonymously();
+    if (authError) {
+      if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+      alert("Error: No se pudo generar una sesión en Supabase.");
+      return;
+    }
+    existingUserId = authData.session.user.id;
   }
 
   const ciudad = (document.getElementById('inputDriverCiudad')?.value || '').trim() || 'santacruz';
@@ -477,14 +500,16 @@ function iniciarSesionRepartidor() {
     zonas: zonas,
     schedule: schedule,
     ciudad: ciudad,
-    user_id: existingUserId || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'd_' + Date.now() + Math.random().toString(36).substr(2, 9))
+    user_id: existingUserId
   };
+  
   if (existingGmail) repartidorData.gmail = existingGmail;
 
   localStorage.setItem('notigas_user_data', JSON.stringify(repartidorData));
-  guardarRepartidorEnBaseDeDatos(repartidorData);
+  await guardarRepartidorEnBaseDeDatos(repartidorData);
   sessionStorage.removeItem('notigas_temp_gmail');
 
+  if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
   closeDriverModal();
 
   if (typeof setAppMode === 'function') {
@@ -626,8 +651,12 @@ function ejecutarEliminacionTotalCuenta() {
   }, 400);
 }
 
-function ingresarComoRepartidorDirecto() {
-  // 1. Verificar si existe un perfil de repartidor previo o guardado
+async function migrarDatosAntiguosARepartidor() {
+  if (typeof closeUserSettingsModal === 'function') {
+    closeUserSettingsModal();
+  }
+
+  // 1. Buscar si ya existe un perfil de repartidor en notigas_user_data
   let driverProfile = null;
   try {
     const saved = localStorage.getItem('notigas_user_data');
@@ -639,20 +668,18 @@ function ingresarComoRepartidorDirecto() {
     }
   } catch(e){}
 
-  if (!driverProfile) {
-    try {
-      const rawDrivers = localStorage.getItem('notigas_registered_drivers_list');
-      if (rawDrivers) {
-        const list = JSON.parse(rawDrivers);
-        if (list && list.length > 0) {
-          driverProfile = list[0];
-        }
-      }
-    } catch(e){}
-  }
-
   // 2. Si ya hay un perfil de repartidor, activar el modo repartidor inmediatamente
   if (driverProfile) {
+    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Reactivando sesión...');
+    
+    let existingUserId = driverProfile.user_id;
+    if (!existingUserId) {
+      const { data: authData, error: authError } = await window.supabaseClient.auth.signInAnonymously();
+      if (!authError) {
+        existingUserId = authData.session.user.id;
+      }
+    }
+
     const repartidorData = {
       role: 'repartidor',
       nombre: driverProfile.nombre || driverProfile.name || 'Repartidor Gas GLP',
@@ -662,14 +689,12 @@ function ingresarComoRepartidorDirecto() {
       productos: driverProfile.productos || driverProfile.products || 'Garrafas GLP 10kg',
       zonas: driverProfile.zonas || driverProfile.zones || 'OTB Central y calles vecinas',
       schedule: driverProfile.schedule || 'Lunes a Sábado: 07:00 a 18:00',
-      // CORRECCIÓN: preservar el user_id del perfil guardado. Sin esto, cada
-      // reactivación de modo repartidor mandaba user_id vacío y duplicaba la ficha.
-      user_id: driverProfile.user_id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'd_' + Date.now() + Math.random().toString(36).substr(2, 9))
+      user_id: existingUserId
     };
 
     localStorage.setItem('notigas_user_data', JSON.stringify(repartidorData));
     if (typeof guardarRepartidorEnBaseDeDatos === 'function') {
-      guardarRepartidorEnBaseDeDatos(repartidorData);
+      await guardarRepartidorEnBaseDeDatos(repartidorData);
     }
 
     if (typeof setAppMode === 'function') {
@@ -678,6 +703,8 @@ function ingresarComoRepartidorDirecto() {
 
     const modalAuth = document.getElementById('modalWelcomeAuth');
     if (modalAuth) modalAuth.style.display = 'none';
+
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
 
     if (typeof showToast === 'function') {
       showToast('🟢 Modo Repartidor', `Sesión activa: ${repartidorData.nombre}`, 'success', 1000);
