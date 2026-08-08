@@ -76,8 +76,18 @@ const truckIcon = L.divIcon({
   popupAnchor: [0, -58]
 });
 
+function waitForSupabaseAndInit() {
+  if (window.supabaseClient) {
+    console.log("🟢 Supabase detectado, iniciando mapa...");
+    initNotigasMap();
+  } else {
+    console.log("⏳ Esperando a Supabase para cargar el mapa...");
+    setTimeout(waitForSupabaseAndInit, 200);
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-  initNotigasMap();
+  waitForSupabaseAndInit();
 });
 
 function initNotigasMap() {
@@ -123,8 +133,13 @@ function initNotigasMap() {
 }
 
 async function cargarPedidosVecinalesEnVivo() {
-  if (!window.supabaseClient || !map) return;
+  if (!window.supabaseClient || !map) {
+    console.warn("⚠️ cargarPedidosVecinalesEnVivo cancelado: Supabase o el Mapa no están listos.");
+    return;
+  }
   const activeWindow = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+  console.log("🔍 Consultando pedidos en Supabase desde:", activeWindow);
+  
   try {
     const { data, error } = await window.supabaseClient
       .from('publicaciones')
@@ -132,7 +147,10 @@ async function cargarPedidosVecinalesEnVivo() {
       .eq('tipo', 'pedido')
       .gte('created_at', activeWindow);
     
-    if (data && !error) {
+    if (error) {
+      console.error("❌ Error de Supabase al cargar pedidos:", error.message, error.details);
+    } else if (data) {
+      console.log(`✅ Supabase devolvió ${data.length} pedidos.`);
       data.forEach(order => agregarPedidoVecinoEnMapa(order));
     }
     
@@ -145,10 +163,13 @@ async function cargarPedidosVecinalesEnVivo() {
       .gte('created_at', tenMinsAgo);
       
     if (res.data && !res.error) {
+       console.log(`✅ Supabase devolvió ${res.data.length} camiones activos.`);
        res.data.forEach(truck => actualizarRepartidorEnMapa(truck));
+    } else if (res.error) {
+       console.error("❌ Error de Supabase al cargar camiones:", res.error.message);
     }
   } catch(e) {
-    console.error("Error cargando live data:", e);
+    console.error("❌ Error general cargando live data:", e);
   }
 }
 
@@ -1185,11 +1206,7 @@ function solicitarPermisoGPSAndroidNativo() {
 
 function conectarGPSAuto(forceReset = false) {
   const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
   let gpsResolved = false;
-
-  // Eliminado el bloqueo estricto de PC. 
-  // Ahora TODOS los dispositivos intentan geolocalización nativa del navegador primero (WiFi Triangulation en PC es muy preciso).
 
   // 1. Intentar geolocalización nativa del navegador para móviles
   solicitarGeolocalizacionNativaNavegador(isMobile, forceReset)
@@ -1209,6 +1226,7 @@ function conectarGPSAuto(forceReset = false) {
         if (card) card.style.display = 'block';
       }
       if (!gpsResolved) {
+        gpsResolved = true;
         obtenerUbicacionIPFallbackDesktop(true);
       }
     });
@@ -1216,6 +1234,7 @@ function conectarGPSAuto(forceReset = false) {
   // 2. Disparar resolución multicanal por IP si la nativa tarda demasiado (PC y móviles)
   setTimeout(() => {
     if (!gpsResolved) {
+      gpsResolved = true;
       obtenerUbicacionIPFallbackDesktop(true);
     }
   }, 3500);
@@ -1228,7 +1247,6 @@ function conectarGPSAuto(forceReset = false) {
       }
       activeGpsWatchId = navigator.geolocation.watchPosition(
         (pos) => {
-          gpsResolved = true;
           applyGpsPosition(pos.coords.latitude, pos.coords.longitude, "Ubicación GPS en Vivo", false);
         },
         (watchErr) => {
@@ -1461,4 +1479,11 @@ function iniciarSuscripcionMapaRealtime() {
             }
         });
 }
- 
+
+// BOTON DE DEBUGGING TEMPORAL
+window.forzarRecargaMapa = function() {
+  console.log("Forzando recarga manual del mapa...");
+  if (activeOrderLayerGroup) activeOrderLayerGroup.clearLayers();
+  if (driverLayerGroup) driverLayerGroup.clearLayers();
+  cargarPedidosVecinalesEnVivo();
+}; 

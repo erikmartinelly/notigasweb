@@ -471,7 +471,6 @@ function ejecutarPurgaBaseDeDatosAuto() {
     }
   } catch(e){}
 
-  } catch(e){}
 }
 
 
