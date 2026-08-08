@@ -2,22 +2,17 @@
    NOTIGAS - MÓDULO DE ADMINISTRACIÓN, ADSENSE, MODERACIÓN & BANEOS
    ========================================================================== */
 
-const AUTHORIZED_ADMIN_EMAILS = [
-  "erikmartinelly@gmail.com",
-  "leonmartinelly13@gmail.com"
-];
-
 function getVerifiedAdminEmail() {
   const token = sessionStorage.getItem('notigas_admin_token');
   if (!token) return null;
   
-  if (token.includes('@') && AUTHORIZED_ADMIN_EMAILS.includes(token.toLowerCase())) {
+  if (token.includes('@')) {
       return token.toLowerCase();
   }
 
   try {
       const payload = JSON.parse(atob(token.split('.')[1]));
-      if (payload && payload.email && AUTHORIZED_ADMIN_EMAILS.includes(payload.email.toLowerCase())) {
+      if (payload && payload.email) {
           return payload.email.toLowerCase();
       }
   } catch(e) {}
@@ -46,8 +41,8 @@ function cerrarSesionRepartidorActivarComprador() {
 function handleAdminCredentialResponse(response) {
   try {
     const payload = JSON.parse(atob(response.credential.split('.')[1]));
-    if (payload && payload.email && AUTHORIZED_ADMIN_EMAILS.includes(payload.email.toLowerCase())) {
-      sessionStorage.setItem('notigas_admin_token', response.credential);
+    if (payload && payload.email) {
+      sessionStorage.setItem('notigas_admin_token', payload.email.toLowerCase());
       const loginScreen = document.getElementById('adminLoginScreen');
       const dashboardScreen = document.getElementById('adminDashboardScreen');
       if (loginScreen) loginScreen.style.display = 'none';
@@ -201,7 +196,7 @@ window.verificarAutenticacionAdmin = async function() {
   if (data.password_hash === hash) {
     // Éxito
     adminLoginAttempts = 0; // Reiniciar contador
-    sessionStorage.setItem('notigas_admin_token', hash);
+    sessionStorage.setItem('notigas_admin_token', email);
     
     const loginScreen = document.getElementById('adminLoginScreen');
     const dashboardScreen = document.getElementById('adminDashboardScreen');
@@ -889,7 +884,7 @@ function ejecutarLimpiezaTotalPedidos() {
 
 function guardarSubmenuAnuncios() {
   const currentAdmin = getVerifiedAdminEmail();
-  if (!currentAdmin || !AUTHORIZED_ADMIN_EMAILS.includes(currentAdmin.toLowerCase())) {
+  if (!currentAdmin) {
     alert("⛔ ACCESO RESTRINGIDO\nDebes ingresar tus credenciales de Administrador para modificar anuncios.");
     abrirModalAdminLogin();
     return;
@@ -961,7 +956,7 @@ function cerrarSesionAdminControl() {
 function descargarListaCorreosCSV() {
   let currentAdmin = getVerifiedAdminEmail();
   
-  if (!currentAdmin || !AUTHORIZED_ADMIN_EMAILS.includes(currentAdmin.toLowerCase())) {
+  if (!currentAdmin) {
     alert("⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña.");
     abrirModalAdminLogin();
     return;
@@ -1032,7 +1027,7 @@ function descargarListaCorreosCSV() {
 async function descargarFichasRepartidoresCSV() {
   let currentAdmin = getVerifiedAdminEmail();
   
-  if (!currentAdmin || !AUTHORIZED_ADMIN_EMAILS.includes(currentAdmin.toLowerCase())) {
+  if (!currentAdmin) {
     alert("⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña.");
     abrirModalAdminLogin();
     return;
@@ -1074,7 +1069,7 @@ async function descargarFichasRepartidoresCSV() {
 function descargarEstadisticasGeneralesCSV() {
   let currentAdmin = getVerifiedAdminEmail();
   
-  if (!currentAdmin || !AUTHORIZED_ADMIN_EMAILS.includes(currentAdmin.toLowerCase())) {
+  if (!currentAdmin) {
     alert("⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña.");
     abrirModalAdminLogin();
     return;
