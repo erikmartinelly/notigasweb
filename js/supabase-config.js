@@ -2,17 +2,13 @@
 const SUPABASE_URL = 'https://yxzzfqyehllogzzhdtmc.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_wWVQ59Rejod5Oc1X4s_eeQ_ONbXzyi2';
 
-// Inyectar el script de Supabase CDN de forma dinámica
-const script = document.createElement('script');
-script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
-script.onload = () => {
+if (typeof supabase !== 'undefined') {
     window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     console.log('✅ Supabase conectado correctamente.');
-
-    // Iniciar suscripciones en tiempo real para TODAS las tablas relevantes
     iniciarSuscripcionesRealtime();
-};
-document.head.appendChild(script);
+} else {
+    console.error('❌ Error: El SDK de Supabase no se cargó.');
+}
 
 // Variable global para ID del recorrido activo del repartidor actual
 window.currentDriverPublicationId = null;
