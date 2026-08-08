@@ -65,7 +65,7 @@
   <nav>
     <button class="tab-btn active" onclick="switchTab(0)"><i class="fa-solid fa-map-location-dot"></i> 1ª MAPA EN VIVO</button>
     <button class="tab-btn" onclick="switchTab(1)"><i class="fa-solid fa-store"></i> LISTA DE REPARTIDORES</button>
-    <button class="tab-btn" onclick="switchTab(2)"><i class="fa-solid fa-comments"></i> 3ª NOTICIAS VECINALES</button>
+    <button class="tab-btn" onclick="switchTab(2)"><i class="fa-solid fa-bullhorn"></i> AVISOS GRATIS</button>
   </nav>
 
   <main>
@@ -195,12 +195,12 @@
       </div>
     </div>
 
-    <!-- PESTAÑA 3: NOTICIAS VECINALES (AVISOS, ALERTAS & OFERTAS CON EXPIRACIÓN A 72 HORAS) -->
+    <!-- PESTAÑA 3: AVISOS GRATIS (AVISOS, ALERTAS & OFERTAS CON EXPIRACIÓN A 72 HORAS) -->
     <div class="tab-content" id="tab2">
-      <!-- AVISO DESTACADO SUPERIOR DE NOTICIAS VECINALES -->
+      <!-- AVISO DESTACADO SUPERIOR DE AVISOS GRATIS -->
       <div style="background: linear-gradient(135deg, rgba(255,109,0,0.15), rgba(230,81,0,0.15)); border: 1px solid rgba(255,109,0,0.3); border-radius: 12px; padding: 10px 14px; margin-bottom: 12px;">
         <div style="font-weight: 900; font-size: 13px; color: #FF6D00; display: flex; align-items: center; justify-content: space-between;">
-          <span><i class="fa-solid fa-comments"></i> 💬 TABLÓN DE NOTICIAS VECINALES</span>
+          <span><i class="fa-solid fa-bullhorn"></i> 📢 AVISOS GRATIS DE TU BARRIO</span>
           <button class="btn-new-post" style="padding: 4px 10px; font-size: 11px;" onclick="abrirModalNuevoPost()"><i class="fa-solid fa-plus"></i> Publicar Aviso</button>
         </div>
         <div style="font-size: 11px; color: #CBD5E1; margin-top: 4px;">
@@ -842,9 +842,11 @@
     </button>
   </div>
 
-  <button onclick="forzarRecargaMapa()" style="position:fixed; bottom:20px; right:20px; z-index:9999; background:#6200EA; color:white; border:none; padding:10px; border-radius:50%; box-shadow:0 4px 10px rgba(0,0,0,0.5);">
+
+  <button onclick="forzarRecargaMapa()" style="position:fixed; bottom:80px; right:16px; z-index:9999; background:#6200EA; color:white; border:none; padding:10px; border-radius:50%; box-shadow:0 4px 10px rgba(0,0,0,0.5);" title="Recargar mapa">
     🔄
   </button>
+
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="state.js"></script>
