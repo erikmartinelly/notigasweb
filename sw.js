@@ -1,18 +1,17 @@
-/* NOTIGAS SERVICE WORKER V49.0 - CACHÉ PROGRESIVO Y MODO OFFLINE */
-const CACHE_NAME = 'notigas-pwa-cache-v49';
+/* NOTIGAS SERVICE WORKER V50.0 - CACHÉ PROGRESIVO Y MODO OFFLINE (rutas corregidas) */
+const CACHE_NAME = 'notigas-pwa-cache-v50';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './styles/main.css',
-  './js/app.js',
-  './js/map.js',
-  './js/vendors.js',
-  './js/forum.js',
-  './js/chat.js',
-  './js/auth.js',
-  './js/ads.js',
-  './js/admin.js',
-  './js/supabase-config.js',
+  './app.js',
+  './map.js',
+  './vendors.js',
+  './forum.js',
+  './auth.js',
+  './ads.js',
+  './admin.js',
+  './supabase-config.js',
   './favicon.png',
   './favicon.svg',
   './icons/garrafa_red_clean.svg',

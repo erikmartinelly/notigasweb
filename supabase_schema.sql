@@ -96,16 +96,39 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.mensajes_chat_privados;
 ALTER TABLE public.publicaciones ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mensajes_chat_privados ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.choferes_habilitados ENABLE ROW LEVEL SECURITY;
+-- CORRECCIÓN: estas 3 tablas se creaban SIN RLS habilitado, quedando completamente
+-- abiertas (lectura/escritura/borrado) para cualquiera que tenga la anon key.
+ALTER TABLE public.denuncias ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.usuarios_baneados ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reportes_spam ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Permitir lectura publica de publicaciones" ON public.publicaciones FOR SELECT USING (true);
 CREATE POLICY "Permitir insercion publica de publicaciones" ON public.publicaciones FOR INSERT WITH CHECK (true);
 CREATE POLICY "Permitir actualizacion publica de publicaciones" ON public.publicaciones FOR UPDATE USING (true);
+-- CORRECCIÓN: faltaba la política de DELETE. Sin ella, stopDriverLocationBroadcast(),
+-- borrarPedidoFantasmaAdmin() y funciones similares fallaban en silencio (la fila
+-- nunca se borraba realmente de la base de datos).
+CREATE POLICY "Permitir borrado publico de publicaciones" ON public.publicaciones FOR DELETE USING (true);
 
 CREATE POLICY "Permitir lectura publica de chats" ON public.mensajes_chat_privados FOR SELECT USING (true);
 CREATE POLICY "Permitir insercion publica de chats" ON public.mensajes_chat_privados FOR INSERT WITH CHECK (true);
 
 CREATE POLICY "Permitir lectura publica de choferes" ON public.choferes_habilitados FOR SELECT USING (true);
 CREATE POLICY "Permitir insercion de choferes" ON public.choferes_habilitados FOR INSERT WITH CHECK (true);
+-- CORRECCIÓN: faltaba DELETE aquí también (usado por borrarRepartidorPermanente()).
+CREATE POLICY "Permitir borrado de choferes" ON public.choferes_habilitados FOR DELETE USING (true);
+
+-- CORRECCIÓN: políticas explícitas para las 3 tablas que antes no tenían RLS.
+CREATE POLICY "Permitir lectura publica de denuncias" ON public.denuncias FOR SELECT USING (true);
+CREATE POLICY "Permitir insercion publica de denuncias" ON public.denuncias FOR INSERT WITH CHECK (true);
+CREATE POLICY "Permitir borrado publico de denuncias" ON public.denuncias FOR DELETE USING (true);
+
+CREATE POLICY "Permitir lectura publica de baneados" ON public.usuarios_baneados FOR SELECT USING (true);
+CREATE POLICY "Permitir insercion publica de baneados" ON public.usuarios_baneados FOR INSERT WITH CHECK (true);
+CREATE POLICY "Permitir borrado publico de baneados" ON public.usuarios_baneados FOR DELETE USING (true);
+
+CREATE POLICY "Permitir lectura publica de reportes spam" ON public.reportes_spam FOR SELECT USING (true);
+CREATE POLICY "Permitir insercion publica de reportes spam" ON public.reportes_spam FOR INSERT WITH CHECK (true);
 
 -- 7. Tareas Automáticas (pg_cron) para Limpieza de Base de Datos y Ahorro de Espacio
 -- Habilitar la extensión de tareas programadas (CRON)
