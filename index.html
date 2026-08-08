@@ -140,12 +140,6 @@
       <div class="floating-actions-container" id="buyerFloatingActions">
         <button class="btn-cancel-order" id="btnCancelOrder" style="display: none;" onclick="cancelarPedidoActivo()"><i class="fa-solid fa-circle-xmark"></i> ❌ CANCELAR PEDIDO</button>
 
-        <button class="btn-main-order" id="btnAdminAccessQuick" onclick="abrirModalAdminLogin()" style="display: none; background: #6200EA; border-color: #6200EA;">
-          <span style="display:inline-flex; align-items:center; gap:8px;">
-            <i class="fa-solid fa-user-shield" style="font-size: 20px; color: white;"></i>
-          </span>
-          <span>USAR CARACTERÍSTICAS ADMINISTRADOR</span>
-        </button>
 
         <button class="btn-main-order" id="btnMainOrder" onclick="abrirSubmenuPedidos()">
           <span style="display:inline-flex; align-items:center; gap:8px;">
@@ -812,13 +806,6 @@
     </div>
   </div>
 
-
-      <div style="display:flex; gap:8px;">
-        <input type="text" id="inputDirectMessage" placeholder="Escribe tu mensaje privado..." onkeypress="if(event.key==='Enter') enviarMensajeDirecto()" style="flex:1; padding:12px 14px; font-size:14px; background:#0F172A; border:1.5px solid rgba(255,109,0,0.5); border-radius:10px; color:white; outline:none;">
-        <button onclick="enviarMensajeDirecto()" style="background:#FF6D00; color:white; border:none; padding:12px 20px; border-radius:10px; font-weight:900; font-size:14px; cursor:pointer; box-shadow:0 4px 14px rgba(255,109,0,0.5);"><i class="fa-solid fa-paper-plane"></i></button>
-      </div>
-    </div>
-  </div>
 
   <!-- SISTEMA DE NOTIFICACIONES TOAST (ESTILO RAPPI / UBER EATS) -->
   <div id="toastContainer" aria-live="polite" aria-atomic="true"></div>
