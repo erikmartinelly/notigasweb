@@ -424,15 +424,64 @@
         <button class="btn-close" onclick="closeAdminModal()">✕</button>
       </div>
 
-      <!-- PANTALLA 1: FORMULARIO DE ACCESO (AHORA CON GOOGLE) -->
-      <div id="adminLoginScreen">
+      <!-- PANTALLA 0: CONFIGURACIÓN INICIAL (FIRST RUN) -->
+      <div id="adminSetupScreen" style="display: none; padding: 20px;">
         <p style="font-size: 13px; color: #94A3B8; margin-bottom: 20px; text-align: center;">
-          🔒 Acceso protegido. Requiere doble autenticación para verificar identidad.
-          <br><br>
-          <strong>Haz clic abajo para re-autenticarte con tu cuenta de administrador:</strong>
+          ⚠️ <strong>CONFIGURACIÓN INICIAL DEL PANEL</strong> ⚠️<br>
+          Crea las credenciales maestras para los dos administradores. Estas se guardarán encriptadas de forma segura.
         </p>
-        <div id="admin_g_id_onload_container" style="display: flex; justify-content: center; margin-bottom: 20px;"></div>
-        <button class="btn-submit" onclick="closeAdminModal()" style="background:#0288D1;"><i class="fa-solid fa-arrow-left"></i> Volver al Inicio</button>
+        <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+          <!-- SETUP ADMIN 1 -->
+          <div style="flex: 1; min-width: 200px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; border: 1px dashed #4FC3F7;">
+            <h4 style="margin-top:0; color:#4FC3F7; font-size:14px; text-align:center;"><i class="fa-solid fa-user-plus"></i> Registrar Admin 1</h4>
+            <div class="form-group">
+              <label>Correo Electrónico:</label>
+              <input type="email" id="setupAdmin1Email" placeholder="admin1@notigas.com">
+            </div>
+            <div class="form-group">
+              <label>Contraseña (Mín. 8 caracteres):</label>
+              <input type="password" id="setupAdmin1Password" placeholder="••••••••">
+            </div>
+          </div>
+          <!-- SETUP ADMIN 2 -->
+          <div style="flex: 1; min-width: 200px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; border: 1px dashed #FFCA28;">
+            <h4 style="margin-top:0; color:#FFCA28; font-size:14px; text-align:center;"><i class="fa-solid fa-user-plus"></i> Registrar Admin 2</h4>
+            <div class="form-group">
+              <label>Correo Electrónico:</label>
+              <input type="email" id="setupAdmin2Email" placeholder="admin2@notigas.com">
+            </div>
+            <div class="form-group">
+              <label>Contraseña (Mín. 8 caracteres):</label>
+              <input type="password" id="setupAdmin2Password" placeholder="••••••••">
+            </div>
+          </div>
+        </div>
+        <button class="btn-submit" onclick="registrarAdminsIniciales()" style="background:#00C853; font-size: 14px; margin-bottom: 10px;"><i class="fa-solid fa-floppy-disk"></i> Guardar Credenciales Maestras</button>
+        <button class="btn-submit" onclick="closeAdminModal()" style="background:#334155; font-size: 12px;"><i class="fa-solid fa-arrow-left"></i> Cancelar</button>
+      </div>
+
+      <!-- PANTALLA 1: FORMULARIO DE ACCESO -->
+      <div id="adminLoginScreen" style="display: none; padding: 20px;">
+        <p style="font-size: 13px; color: #94A3B8; margin-bottom: 20px; text-align: center;">
+          🔒 Acceso de Administrador.<br>
+          Ingresa tu correo y contraseña para desbloquear el panel.
+        </p>
+        
+        <div style="display: flex; justify-content: center; margin-bottom: 20px;">
+          <div style="width: 100%; max-width: 300px; background: rgba(0,0,0,0.2); padding: 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+            <div class="form-group">
+              <label>Correo Electrónico:</label>
+              <input type="email" id="loginAdminEmail" placeholder="admin@notigas.com">
+            </div>
+            <div class="form-group">
+              <label>Contraseña:</label>
+              <input type="password" id="loginAdminPassword" placeholder="••••••••">
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-submit" onclick="verificarAutenticacionAdmin()" style="background:#D81B60; font-size: 14px; margin-bottom: 10px;"><i class="fa-solid fa-shield-halved"></i> Ingresar al Panel</button>
+        <button class="btn-submit" onclick="closeAdminModal()" style="background:#334155; font-size: 12px;"><i class="fa-solid fa-arrow-left"></i> Cancelar</button>
       </div>
       <!-- PANTALLA 2: DASHBOARD DE ADMINISTRACIÓN (SOLO VISIBLE TRAS AUTENTICARSE) -->
       <div id="adminDashboardScreen" style="display: none; flex-direction: row; gap: 15px; align-items: stretch; margin-top: 10px;">

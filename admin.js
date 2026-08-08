@@ -65,42 +65,150 @@ function handleAdminCredentialResponse(response) {
   }
 }
 
-function abrirModalAdminLogin() {
-  if (typeof closeUserSettingsModal === 'function') closeUserSettingsModal();
-  const modalAdmin = document.getElementById('modalAdmin');
+async function encriptarSHA256(mensaje) {
+  const msgBuffer = new TextEncoder().encode(mensaje);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function verificarEstadoAdmin() {
   const loginScreen = document.getElementById('adminLoginScreen');
+  const setupScreen = document.getElementById('adminSetupScreen');
   const dashboardScreen = document.getElementById('adminDashboardScreen');
 
-  if (!modalAdmin) return;
-
-  // Siempre requerir doble autenticación
-  if (loginScreen) loginScreen.style.display = 'block';
+  if (loginScreen) loginScreen.style.display = 'none';
+  if (setupScreen) setupScreen.style.display = 'none';
   if (dashboardScreen) dashboardScreen.style.display = 'none';
-  
-  if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
-    const btnContainer = document.getElementById('admin_g_id_onload_container');
-    if (btnContainer) {
-      btnContainer.innerHTML = '';
-      google.accounts.id.initialize({
-        client_id: typeof GOOGLE_CLIENT_ID !== 'undefined' ? GOOGLE_CLIENT_ID : "994996215118-a3gvm7gtorr1nof9vaksr05ndc1raso3.apps.googleusercontent.com",
-        callback: handleAdminCredentialResponse,
-        auto_select: false,
-        cancel_on_tap_outside: false
-      });
-      google.accounts.id.renderButton(btnContainer, {
-        type: 'standard',
-        theme: 'filled_black',
-        size: 'large',
-        text: 'continue_with',
-        shape: 'rectangular',
-        logo_alignment: 'left',
-        width: 280
-      });
-    }
+
+  if (!window.supabaseClient) {
+    alert("❌ Error: No hay conexión con la base de datos.");
+    return;
   }
 
+  try {
+    const { data, error, count } = await window.supabaseClient
+      .from('admin_credentials')
+      .select('email', { count: 'exact', head: true });
+
+    if (error && error.code !== 'PGRST116') {
+      console.error("Error consultando estado admin:", error);
+      alert("❌ Error al conectar con Supabase. Verifica la consola.");
+      return;
+    }
+
+    if (count === 0) {
+      if (setupScreen) setupScreen.style.display = 'block';
+    } else {
+      if (loginScreen) loginScreen.style.display = 'block';
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+async function abrirModalAdminLogin() {
+  if (typeof closeUserSettingsModal === 'function') closeUserSettingsModal();
+  const modalAdmin = document.getElementById('modalAdmin');
+  
+  if (!modalAdmin) return;
+
+  // Limpiar campos por seguridad
+  const f1 = document.getElementById('admin1Email');
+  const f2 = document.getElementById('admin1Password');
+  const f3 = document.getElementById('admin2Email');
+  const f4 = document.getElementById('admin2Password');
+  const s1 = document.getElementById('setupAdmin1Email');
+  const s2 = document.getElementById('setupAdmin1Password');
+  const s3 = document.getElementById('setupAdmin2Email');
+  const s4 = document.getElementById('setupAdmin2Password');
+  if(f1) f1.value = ''; if(f2) f2.value = ''; if(f3) f3.value = ''; if(f4) f4.value = '';
+  if(s1) s1.value = ''; if(s2) s2.value = ''; if(s3) s3.value = ''; if(s4) s4.value = '';
+
+  await verificarEstadoAdmin();
+  
   modalAdmin.style.display = 'flex';
 }
+
+window.registrarAdminsIniciales = async function() {
+  const email1 = document.getElementById('setupAdmin1Email').value.trim().toLowerCase();
+  const pass1 = document.getElementById('setupAdmin1Password').value;
+  const email2 = document.getElementById('setupAdmin2Email').value.trim().toLowerCase();
+  const pass2 = document.getElementById('setupAdmin2Password').value;
+
+  if (!email1 || !pass1 || !email2 || !pass2) {
+    alert("❌ Por favor completa todos los campos de ambos administradores.");
+    return;
+  }
+  if (pass1.length < 8 || pass2.length < 8) {
+    alert("❌ Las contraseñas deben tener al menos 8 caracteres.");
+    return;
+  }
+  if (email1 === email2) {
+    alert("❌ Los correos deben ser diferentes para la Regla de los Dos Hombres.");
+    return;
+  }
+
+  const hash1 = await encriptarSHA256(email1 + ':' + pass1);
+  const hash2 = await encriptarSHA256(email2 + ':' + pass2);
+
+  const { error } = await window.supabaseClient
+    .from('admin_credentials')
+    .insert([
+      { email: email1, password_hash: hash1 },
+      { email: email2, password_hash: hash2 }
+    ]);
+
+  if (error) {
+    console.error("Error guardando credenciales", error);
+    alert("❌ Error al guardar en Supabase: " + error.message);
+  } else {
+    alert("✅ ¡Credenciales maestras creadas con éxito!\nAhora debes ingresar con ellas para desbloquear el panel.");
+    verificarEstadoAdmin();
+  }
+};
+
+window.verificarAutenticacionAdmin = async function() {
+  const email = document.getElementById('loginAdminEmail').value.trim().toLowerCase();
+  const pass = document.getElementById('loginAdminPassword').value;
+
+  if (!email || !pass) {
+    alert("❌ Ingresa el correo y contraseña del administrador.");
+    return;
+  }
+
+  const hash = await encriptarSHA256(email + ':' + pass);
+
+  const { data, error } = await window.supabaseClient
+    .from('admin_credentials')
+    .select('*')
+    .eq('email', email)
+    .single();
+
+  if (error || !data) {
+    alert("❌ ACCESO DENEGADO\nCredenciales incorrectas o administrador no encontrado.");
+    return;
+  }
+
+  if (data.password_hash === hash) {
+    // Éxito
+    sessionStorage.setItem('notigas_admin_token', hash);
+    
+    const loginScreen = document.getElementById('adminLoginScreen');
+    const dashboardScreen = document.getElementById('adminDashboardScreen');
+    if (loginScreen) loginScreen.style.display = 'none';
+    if (dashboardScreen) dashboardScreen.style.display = 'flex';
+    
+    if(typeof renderAdminReports === 'function') renderAdminReports();
+    if(typeof cargarAnunciosGuardados === 'function') cargarAnunciosGuardados();
+    
+    if (typeof showToast === 'function') {
+      showToast('✅ Acceso Autorizado', 'Bienvenido al panel de administración.', 'success', 3000);
+    }
+  } else {
+    alert("❌ ACCESO DENEGADO\nContraseña incorrecta.");
+  }
+};
 
 /* guardarPrefUsuario reside en auth.js — eliminada de admin.js para que la versión con
    detección de rol Repartidor (GPS) no sea sobreescrita. */
