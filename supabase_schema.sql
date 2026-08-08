@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS public.publicaciones (
     horario_recorrido TEXT,
     puntos_trazo_ruta JSONB, -- Array de coordenadas LatLng para la ruta GPS
     garrafas_agotadas BOOLEAN DEFAULT FALSE,
+    votos INT DEFAULT 0,
+    comentarios JSONB DEFAULT '[]',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -53,6 +55,36 @@ CREATE TABLE IF NOT EXISTS public.choferes_habilitados (
     ci_carnet TEXT UNIQUE NOT NULL,
     telefono_whatsapp TEXT,
     estado_verificacion VARCHAR(30) DEFAULT 'aprobado', -- 'pendiente', 'aprobado', 'rechazado'
+    placa TEXT,
+    categoria TEXT,
+    productos TEXT,
+    zonas TEXT,
+    schedule TEXT,
+    ciudad TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 4.1 Tabla de Denuncias
+CREATE TABLE IF NOT EXISTS public.denuncias (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tipo VARCHAR(50) NOT NULL,
+    detalles TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 4.2 Tabla de Usuarios Baneados
+CREATE TABLE IF NOT EXISTS public.usuarios_baneados (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    identificador TEXT NOT NULL,
+    motivo TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 4.3 Tabla de Reportes de Spam
+CREATE TABLE IF NOT EXISTS public.reportes_spam (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    texto TEXT,
+    motivo TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

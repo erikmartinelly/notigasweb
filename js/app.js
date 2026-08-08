@@ -365,63 +365,59 @@ function obtenerIconoHtmlPorCategoria(catNombre) {
 
 
 
-function renderDriverOrdersList() {
+async function renderDriverOrdersList() {
   const container = document.getElementById('driverOrdersContainer');
   if (!container) return;
 
-  const activeOrderRaw = localStorage.getItem('notigas_active_order');
-  let orders = [];
+  container.innerHTML = '<div style="color:white;text-align:center;padding:20px;">Cargando pedidos...</div>';
 
-  if (activeOrderRaw) {
-    try { 
-      const parsedOrder = JSON.parse(activeOrderRaw);
-      if (isOrderCategoryMatchingDriver(parsedOrder.categoria)) {
-        orders.push(parsedOrder); 
-      }
-    } catch(e){}
+  let orders = [];
+  if (window.supabaseClient) {
+    const activeWindow = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+    const { data } = await window.supabaseClient
+      .from('publicaciones')
+      .select('*')
+      .eq('tipo', 'pedido')
+      .gte('created_at', activeWindow);
+      
+    if (data) {
+      orders = data.filter(o => typeof isOrderCategoryMatchingDriver === 'function' && isOrderCategoryMatchingDriver(o.categoria));
+    }
   }
 
-  // Lista simulada de demostración para el repartidor según su categoría exclusiva
   if (orders.length === 0) {
-    const mockOrders = [
-      { categoria: "🔥 Garrafa de Gas GLP", cantidad: "2 unidades", dist: "150m (Calle 4 #21)", timestamp: Date.now() - 300000 },
-      { categoria: "💧 Botellón Agua 20L", cantidad: "1 unidad", dist: "320m (Av. Principal esquina Plaza)", timestamp: Date.now() - 600000 },
-      { categoria: "🧹 Detergentes / Limpieza", cantidad: "2 galones lavandina", dist: "280m (Calle Bolivar #42)", timestamp: Date.now() - 450000 },
-      { categoria: "🪵 Carbón / Leña", cantidad: "1 bolsa 10kg", dist: "450m (Calle 8 #45)", timestamp: Date.now() - 900000 }
-    ];
-    orders = mockOrders.filter(o => isOrderCategoryMatchingDriver(o.categoria));
-    
-    if (orders.length === 0) {
-      let driverCategoryName = "tu categoría";
-      try {
-        const u = JSON.parse(localStorage.getItem('notigas_user_data') || '{}');
-        if (u.categoria) driverCategoryName = u.categoria;
-      } catch(e){}
+    let driverCategoryName = "tu categoría";
+    try {
+      const u = JSON.parse(localStorage.getItem('notigas_user_data') || '{}');
+      if (u.categoria) driverCategoryName = u.categoria;
+    } catch(e){}
 
-      container.innerHTML = `<div style="padding:24px; text-align:center; color:#94A3B8; font-size:13px;"><i class="fa-solid fa-filter-circle-xmark" style="font-size:28px; color:#F59E0B; margin-bottom:10px;"></i><br><strong style="color:white;">No hay pedidos activos de ${driverCategoryName}</strong><br><span style="font-size:11px; color:#64748B;">Solo recibes pedidos de tu rubro exclusivo en este momento.</span></div>`;
-      return;
-    }
+    container.innerHTML = `<div style="padding:24px; text-align:center; color:#94A3B8; font-size:13px;"><i class="fa-solid fa-filter-circle-xmark" style="font-size:28px; color:#F59E0B; margin-bottom:10px;"></i><br><strong style="color:white;">No hay pedidos activos de ${driverCategoryName}</strong><br><span style="font-size:11px; color:#64748B;">Solo recibes pedidos de tu rubro exclusivo en este momento.</span></div>`;
+    return;
   }
 
   let html = '';
   orders.forEach(ord => {
-    const iconHtml = obtenerIconoHtmlPorCategoria(ord.categoria);
-    const chatTarget = ord.buyerName || 'Comprador Vecinal';
-    const telNum = ord.telefono ? ord.telefono.replace(/[^0-9+]/g, '') : '';
+    const iconHtml = typeof obtenerIconoHtmlPorCategoria === 'function' ? obtenerIconoHtmlPorCategoria(ord.categoria) : '';
+    const chatTarget = ord.distribuidor_nombre || ord.titulo || 'Comprador Vecinal';
+    const descParts = ord.descripcion ? ord.descripcion.split('. Teléfono: ') : [];
+    const direccion = descParts[0] ? descParts[0].replace('Dirección: ', '') : '';
+    const telefono = descParts[1] || '';
+    const telNum = telefono ? telefono.replace(/[^0-9+]/g, '') : '';
     html += `
-      <div class="driver-order-card">
+      <div class="driver-order-card" id="driver-order-${ord.id}">
         <div class="driver-order-header">
           <span class="driver-order-title" style="display:flex; align-items:center;">${iconHtml} ${escapeHtmlStr(ord.categoria)}</span>
-          <span class="driver-order-dist">📍 ${ord.dist || 'Cerca de ti'}</span>
+          <span class="driver-order-dist">📍 Cerca de ti</span>
         </div>
         <div style="font-size: 11.5px; color: white; line-height:1.5;">
           <strong>Cliente:</strong> ${escapeHtmlStr(chatTarget)}<br>
-          ${ord.callePrincipal ? `<span style="color:#FFB300; font-weight:700;">🏠 Dirección: ${escapeHtmlStr(ord.callePrincipal)}</span><br>` : ''}
-          ${ord.telefono ? `<span style="color:#00E676; font-weight:700;">📞 Teléfono: ${escapeHtmlStr(ord.telefono)}</span><br>` : ''}
-          <span style="font-size: 9.5px; color: #64748B;">Solicitado hace momentos • Coordenada Georeferenciada</span>
+          ${direccion ? `<span style="color:#FFB300; font-weight:700;">🏠 Dirección: ${escapeHtmlStr(direccion)}</span><br>` : ''}
+          ${telefono ? `<span style="color:#00E676; font-weight:700;">📞 Teléfono: ${escapeHtmlStr(telefono)}</span><br>` : ''}
+          <span style="font-size: 9.5px; color: #64748B;">Coordenada Georeferenciada</span>
         </div>
         <div class="driver-order-actions" style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
-          <button class="btn-driver-accept" style="flex:1;" onclick="aceptarPedidoRepartidor('${escapeHtmlStr(ord.categoria)}')"><i class="fa-solid fa-circle-check"></i> ✅ Aceptar</button>
+          <button class="btn-driver-accept" style="flex:1;" onclick="aceptarPedidoRepartidor('${ord.id}')"><i class="fa-solid fa-circle-check"></i> ✅ Aceptar</button>
           ${telNum ? `<a href="tel:${telNum}" style="background:#0288D1; color:white; padding:6px 10px; border-radius:8px; font-size:11px; font-weight:800; text-decoration:none; display:flex; align-items:center; gap:4px;"><i class="fa-solid fa-phone"></i> Llamar</a>` : ''}
         </div>
       </div>
@@ -431,9 +427,25 @@ function renderDriverOrdersList() {
   container.innerHTML = html;
 }
 
-function aceptarPedidoRepartidor(cat) {
-  closeDriverOrdersModal();
-  showToast('Pedido Aceptado', `Has aceptado la solicitud de ${cat}. El vecino ha sido notificado.`, 'success', 5000);
+async function aceptarPedidoRepartidor(id) {
+  if (!window.supabaseClient) {
+    showToast('Error', 'No hay conexión a la base de datos.', 'error');
+    return;
+  }
+  showLoadingOverlay('Aceptando pedido...');
+  const { error } = await window.supabaseClient.from('publicaciones').delete().eq('id', id);
+  hideLoadingOverlay();
+  
+  if (error) {
+    console.error("Error al aceptar pedido:", error);
+    showToast('Error', 'No se pudo aceptar el pedido.', 'error');
+  } else {
+    closeDriverOrdersModal();
+    showToast('Pedido Aceptado', 'Has aceptado la solicitud. El pedido ha sido retirado del mapa.', 'success', 5000);
+    // Removerlo de la UI
+    const card = document.getElementById(`driver-order-${id}`);
+    if (card) card.remove();
+  }
 }
 
 /* PURGA AUTOMÁTICA DE BASE DE DATOS LOCAL Y MEMORIA PARA EVITAR COLAPSO */
@@ -643,7 +655,7 @@ function confirmarPedido() {
         descripcion: `Dirección: ${direccion}. Teléfono: ${telefono}`,
         ciudad: 'Cochabamba',
         barrio_otb: 'Global',
-        user_email: (typeof getCurrentUserEmail === 'function') ? getCurrentUserEmail() : 'anonimo@notigas.com',
+        user_email: (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo@notigas.com',
         user_role: 'comprador',
         latitude: pos.lat,
         longitude: pos.lng,

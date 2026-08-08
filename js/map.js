@@ -124,13 +124,13 @@ function initNotigasMap() {
 
 async function cargarPedidosVecinalesEnVivo() {
   if (!window.supabaseClient || !map) return;
-  const thirtyMinsAgo = new Date(Date.now() - 30 * 60000).toISOString();
+  const activeWindow = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
   try {
     const { data, error } = await window.supabaseClient
       .from('publicaciones')
       .select('*')
       .eq('tipo', 'pedido')
-      .gte('created_at', thirtyMinsAgo);
+      .gte('created_at', activeWindow);
     
     if (data && !error) {
       data.forEach(order => agregarPedidoVecinoEnMapa(order));
@@ -198,15 +198,9 @@ function actualizarRepartidorEnMapa(data) {
 
 function agregarPedidoVecinoEnMapa(order) {
   if (!map) return;
-  let currentUserEmail = 'buyer@notigas.com';
-  try {
-    const saved = localStorage.getItem('notigas_user_data');
-    if (saved) {
-      currentUserEmail = JSON.parse(saved).email;
-    }
-  } catch(e){}
+  const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
 
-  if (order.user_email === currentUserEmail) return; // Skip own orders
+  if (order.user_email === localUserId) return; // Skip own orders
 
   const orderId = order.id;
   if (neighborOrderMarkers[orderId]) {
@@ -238,13 +232,13 @@ function agregarPedidoVecinoEnMapa(order) {
   `);
   neighborOrderMarkers[orderId] = marker;
 
-  // Auto remove after 30 mins just in case
+  // Auto remove after 48 horas just in case
   setTimeout(() => {
     if (neighborOrderMarkers[orderId]) {
       map.removeLayer(neighborOrderMarkers[orderId]);
       delete neighborOrderMarkers[orderId];
     }
-  }, 30 * 60 * 1000);
+  }, 48 * 60 * 60 * 1000);
 }
 
 function removerPublicacionDeMapa(id) {
@@ -369,6 +363,8 @@ function applyGpsPosition(lat, lng, label, forceReset = false) {
 
   const banner = document.getElementById('gpsMandatoryBanner');
   if (banner) banner.style.display = 'none';
+  const card = document.getElementById('gpsFloatingBanner');
+  if (card) card.style.display = 'none';
 
   if (map) {
     map.invalidateSize();
@@ -1167,6 +1163,8 @@ function solicitarPermisoGPSAndroidNativo() {
       applyGpsPosition(pos.coords.latitude, pos.coords.longitude, "Ubicación GPS Android", true);
       const banner = document.getElementById('gpsMandatoryBanner');
       if (banner) banner.style.display = 'none';
+      const card = document.getElementById('gpsFloatingBanner');
+      if (card) card.style.display = 'none';
       if (typeof showToast === 'function') {
         showToast('📍 GPS Activado', 'Ubicación obtenida con éxito en el mapa.', 'success', 1000);
       }
@@ -1175,6 +1173,8 @@ function solicitarPermisoGPSAndroidNativo() {
       console.warn("Error al activar GPS nativo Android:", err);
       const banner = document.getElementById('gpsMandatoryBanner');
       if (banner) banner.style.display = 'block';
+      const card = document.getElementById('gpsFloatingBanner');
+      if (card) card.style.display = 'block';
       if (typeof showToast === 'function') {
         showToast('⚠️ Activa la Ubicación GPS', 'Por favor habilita el GPS en la barra de ajustes de tu celular.', 'warning', 1000);
       }
@@ -1197,12 +1197,16 @@ function conectarGPSAuto(forceReset = false) {
       gpsResolved = true;
       const banner = document.getElementById('gpsMandatoryBanner');
       if (banner) banner.style.display = 'none';
+      const card = document.getElementById('gpsFloatingBanner');
+      if (card) card.style.display = 'none';
     })
     .catch((err) => {
       console.warn("⚠️ Geolocalización nativa no disponible:", err.message);
       if (isMobile) {
         const banner = document.getElementById('gpsMandatoryBanner');
         if (banner) banner.style.display = 'block';
+        const card = document.getElementById('gpsFloatingBanner');
+        if (card) card.style.display = 'block';
       }
       if (!gpsResolved) {
         obtenerUbicacionIPFallbackDesktop(true);

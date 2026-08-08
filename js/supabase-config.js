@@ -84,6 +84,11 @@ window.iniciarSuscripcionesRealtime = function() {
     
     console.log("📡 Iniciando suscripciones Realtime a Supabase...");
     
+    // Cargar pedidos y datos actuales AHORA que ya tenemos cliente activo
+    if (typeof cargarPedidosVecinalesEnVivo === 'function') {
+        cargarPedidosVecinalesEnVivo();
+    }
+    
     // Escuchar tabla publicaciones (Repartidores en ruta y pedidos)
     window.supabaseClient.channel('publicaciones_changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'publicaciones' }, payload => {

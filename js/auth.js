@@ -58,6 +58,34 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+function getCurrentUserId() {
+  let userId = 'anonimo_id';
+  try {
+    const saved = localStorage.getItem('notigas_user_data');
+    if (saved) {
+      const u = JSON.parse(saved);
+      if (u.user_id) {
+        userId = u.user_id;
+      } else {
+        // Generar y guardar si no tenía
+        u.user_id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'u_' + Date.now() + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('notigas_user_data', JSON.stringify(u));
+        userId = u.user_id;
+      }
+    } else {
+      // Create an anonymous session
+      const u = {
+        role: 'vecino',
+        gmail: 'anonimo@notigas.com',
+        user_id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'u_' + Date.now() + Math.random().toString(36).substr(2, 9)
+      };
+      localStorage.setItem('notigas_user_data', JSON.stringify(u));
+      userId = u.user_id;
+    }
+  } catch(e){}
+  return userId;
+}
+
 function selectAuthRole(role) {
   currentSelectedRole = role;
   const btnBuyer = document.getElementById('btnRoleBuyer');
@@ -261,7 +289,8 @@ function handleCredentialResponse(response) {
       role: 'vecino',
       gmail: gmail,
       nombre: nombre,
-      apellido: apellido
+      apellido: apellido,
+      user_id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'u_' + Date.now() + Math.random().toString(36).substr(2, 9)
     };
 
     localStorage.setItem('notigas_user_data', JSON.stringify(userData));
@@ -344,7 +373,8 @@ function guardarRegistroUnico() {
       productos: productos,
       zonas: zonas,
       schedule: schedule,
-      ciudad: ciudad
+      ciudad: ciudad,
+      user_id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'd_' + Date.now() + Math.random().toString(36).substr(2, 9)
     };
 
     localStorage.setItem('notigas_user_data', JSON.stringify(repartidorData));
@@ -371,7 +401,13 @@ function guardarRegistroUnico() {
     const nombre = (document.getElementById('regNombre')?.value || '').trim() || 'Usuario';
     const apellido = (document.getElementById('regApellido')?.value || '').trim() || 'Vecino';
 
-    const clienteData = { role: 'vecino', gmail, nombre, apellido };
+    const clienteData = { 
+      role: 'vecino', 
+      gmail, 
+      nombre, 
+      apellido, 
+      user_id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'u_' + Date.now() + Math.random().toString(36).substr(2, 9) 
+    };
     localStorage.setItem('notigas_user_data', JSON.stringify(clienteData));
     if (typeof databaseEmails !== 'undefined' && Array.isArray(databaseEmails)) {
       databaseEmails.push({ gmail: gmail, role: 'Cliente', fecha: new Date().toISOString().split('T')[0] });
@@ -440,7 +476,8 @@ function iniciarSesionRepartidor() {
     productos: productos,
     zonas: zonas,
     schedule: schedule,
-    ciudad: ciudad
+    ciudad: ciudad,
+    user_id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'd_' + Date.now() + Math.random().toString(36).substr(2, 9)
   };
   if (existingGmail) repartidorData.gmail = existingGmail;
 
