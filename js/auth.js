@@ -4,7 +4,7 @@
 // FIX #16: escapeHtmlStr centralizada en state.js — eliminada aquí para evitar conflictos.
 
 
-const GOOGLE_CLIENT_ID = "994996215118-a3gvm7gtorr1nof9vaksr05ndc1raso3.apps.googleusercontent.com";
+const GOOGLE_CLIENT_ID = "994996215118-9gonc7erqlpns5n5c0jaisnvcu49ck1b.apps.googleusercontent.com";
 
 let currentSelectedRole = 'buyer'; // 'buyer' o 'driver'
 let currentSelectedMethod = 'google'; // 'google' o 'email'
