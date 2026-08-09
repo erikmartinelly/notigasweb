@@ -289,8 +289,26 @@ async function handleCredentialResponse(response) {
       return;
     }
 
-    // Si es repartidor, abrimos el modal de registro y guardamos temporalmente el email
+    // Si es repartidor, verificamos si ya existe o abrimos modal de registro
     if (currentSelectedRole === 'driver') {
+      try {
+        const { data: existingDriver } = await window.supabaseClient
+          .from('repartidores')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+          
+        if (existingDriver) {
+          // Ya existe en la base de datos, ingresarlo directamente
+          if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+          procesarSesionExitosa(user);
+          return;
+        }
+      } catch(e) {
+        console.warn("Error verificando repartidor existente:", e);
+      }
+
+      // NO EXISTE: abrimos el modal de registro y guardamos temporalmente el email
       if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
       const modalAuth = document.getElementById('modalWelcomeAuth');
       if (modalAuth) modalAuth.style.display = 'none';
