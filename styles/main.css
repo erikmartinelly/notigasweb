@@ -2218,3 +2218,8 @@ button:active, .tab-btn:active, .cat-chip:active {
 #geminiBtnEnviar:hover { transform: scale(1.08); box-shadow: 0 6px 18px rgba(79,70,229,0.6); }
 #geminiBtnEnviar:active { transform: scale(0.94); }
 #geminiBtnEnviar:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* MAP DARK MODE (UBER STYLE) */
+.leaflet-layer, .leaflet-control-zoom-in, .leaflet-control-zoom-out, .leaflet-control-attribution {
+  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
