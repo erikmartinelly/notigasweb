@@ -683,7 +683,10 @@ function confirmarPedido() {
         longitude: pos.lng
     }]).then(({ error }) => {
         if(error) console.error("Error enviando pedido a Supabase:", error);
-        else console.log("✅ Pedido guardado en Supabase.");
+        else {
+          console.log("✅ Pedido guardado en Supabase.");
+          if (typeof notigasTrack === 'function') notigasTrack('pedido_creado', { categoria: cat });
+        }
     });
   }
 

@@ -34,10 +34,23 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles/main.css">
   
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <!-- Google Analytics 4 (gratuito) — Reemplaza G-XXXXXXXXXX con tu Measurement ID -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX');
+    // Eventos personalizados para el concurso
+    window.notigasTrack = function(event, params) {
+      try { gtag('event', event, params || {}); } catch(e) {}
+    };
+  </script>
 </head>
 <body>
 
@@ -888,6 +901,7 @@
   <script src="ads.js"></script>
   <script src="admin.js"></script>
   <script src="app.js"></script>
+  <script src="gemini.js"></script>
 </body>
 </html>
  
