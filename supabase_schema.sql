@@ -1,4 +1,4 @@
-﻿-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 -- NOTIGAS - Script de Base de Datos Supabase (PostgreSQL) Seguro
 -- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -209,10 +209,10 @@ CREATE TABLE IF NOT EXISTS public.denuncias (
 
 
 -- 10. REALTIME
-ALTER PUBLICATION supabase_realtime ADD TABLE public.pedidos;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.avisos;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.rutas_repartidores;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.mensajes_chat_privados;
+DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.pedidos; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.avisos; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.rutas_repartidores; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.mensajes_chat_privados; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 
 -- 11. RLS (Row Level Security) ESTRICTO
@@ -372,7 +372,7 @@ ALTER TABLE public.repartidores ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Lectura publica repartidores" ON public.repartidores;
 CREATE POLICY "Lectura publica repartidores" ON public.repartidores FOR SELECT USING (true);
 
-ALTER PUBLICATION supabase_realtime ADD TABLE public.publicaciones;
+DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.publicaciones; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 
 
