@@ -314,6 +314,7 @@ CREATE TABLE IF NOT EXISTS public.publicaciones (
     descripcion TEXT,
     ciudad VARCHAR(100),
     barrio_otb VARCHAR(100),
+    user_id UUID REFERENCES auth.users(id),
     user_email TEXT,
     user_role VARCHAR(50),
     latitude DOUBLE PRECISION,
@@ -324,15 +325,19 @@ CREATE TABLE IF NOT EXISTS public.publicaciones (
     enlace_url TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+ALTER TABLE public.publicaciones ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id);
 ALTER TABLE public.publicaciones ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Lectura publica publicaciones" ON public.publicaciones;
 CREATE POLICY "Lectura publica publicaciones" ON public.publicaciones FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Insertar publicaciones anon" ON public.publicaciones;
-CREATE POLICY "Insertar publicaciones autenticado" ON public.publicaciones FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+DROP POLICY IF EXISTS "Insertar publicaciones autenticado" ON public.publicaciones;
+CREATE POLICY "Insertar publicaciones autenticado" ON public.publicaciones FOR INSERT WITH CHECK (auth.uid() = user_id);
 DROP POLICY IF EXISTS "Actualizar publicaciones anon" ON public.publicaciones;
-CREATE POLICY "Actualizar publicaciones autenticado" ON public.publicaciones FOR UPDATE USING (auth.uid() IS NOT NULL);
+DROP POLICY IF EXISTS "Actualizar publicaciones autenticado" ON public.publicaciones;
+CREATE POLICY "Actualizar publicaciones autenticado" ON public.publicaciones FOR UPDATE USING (auth.uid() = user_id);
 DROP POLICY IF EXISTS "Borrar publicaciones anon" ON public.publicaciones;
-CREATE POLICY "Borrar publicaciones autenticado" ON public.publicaciones FOR DELETE USING (auth.uid() IS NOT NULL);
+DROP POLICY IF EXISTS "Borrar publicaciones autenticado" ON public.publicaciones;
+CREATE POLICY "Borrar publicaciones autenticado" ON public.publicaciones FOR DELETE USING (auth.uid() = user_id);
 
 -- ADMIN_CREDENTIALS
 CREATE TABLE IF NOT EXISTS public.admin_credentials (
@@ -344,6 +349,7 @@ CREATE TABLE IF NOT EXISTS public.admin_credentials (
 );
 ALTER TABLE public.admin_credentials ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Lectura publica admin_credentials" ON public.admin_credentials;
+DROP POLICY IF EXISTS "Lectura admin credentials" ON public.admin_credentials;
 CREATE POLICY "Lectura admin credentials" ON public.admin_credentials FOR SELECT USING (false);
 
 -- REPORTES_SPAM

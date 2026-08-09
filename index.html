@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>NOTIGAS: Gas y otros pedidos</title>
-  <meta name="description" content="NOTIGAS - Plataforma barrial en vivo con mapa GPS, mini pÃ¡ginas de negocio estilo Facebook para repartidores y noticias vecinales.">
+  <meta name="description" content="NOTIGAS - Plataforma barrial en vivo con mapa GPS, mini páginas de negocio estilo Facebook para repartidores y noticias vecinales.">
   <meta name="theme-color" content="#0288D1">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -12,7 +12,7 @@
   <!-- OPENGRAPH METADATA PARA REDES SOCIALES -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="NOTIGAS: Gas y otros pedidos">
-  <meta property="og:description" content="Sigue en tiempo real el camiÃ³n de gas GLP, agua purificada y servicios de tu barrio.">
+  <meta property="og:description" content="Sigue en tiempo real el camión de gas GLP, agua purificada y servicios de tu barrio.">
   <meta property="og:image" content="favicon.png">
   <meta property="twitter:card" content="summary_large_image">
 
@@ -23,7 +23,7 @@
   <link rel="shortcut icon" href="icons/garrafa_red_clean.svg"/>
   <link rel="apple-touch-icon" href="icons/garrafa_red_clean.svg">
 
-  <!-- PRELOAD DE RECURSOS CRÃTICOS -->
+  <!-- PRELOAD DE RECURSOS CRÍTICOS -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="dns-prefetch" href="https://unpkg.com">
@@ -56,7 +56,7 @@
 
   <!-- BANNER DE AVISO GPS OBLIGATORIO -->
   <div id="gpsMandatoryBanner" style="display:none; background: linear-gradient(135deg, #D32F2F, #B71C1C); color: white; padding: 8px 12px; font-size: 11px; font-weight: 700; text-align: center; z-index: 2000; box-shadow: 0 2px 10px rgba(0,0,0,0.5);">
-    <i class="fa-solid fa-triangle-exclamation"></i> ðŸ“ GPS Obligatorio: Activa tu ubicaciÃ³n para ubicar el camiÃ³n garrafero y hacer pedidos a tu domicilio. 
+    <i class="fa-solid fa-triangle-exclamation"></i> ðŸ“ GPS Obligatorio: Activa tu ubicación para ubicar el camión garrafero y hacer pedidos a tu domicilio. 
     <button onclick="conectarGPSAuto()" style="background: white; color: #D32F2F; border: none; padding: 2px 8px; border-radius: 4px; font-weight: 900; margin-left: 6px; cursor: pointer;" aria-label="Activar GPS en vivo">Activar GPS</button>
   </div>
 
@@ -65,16 +65,16 @@
       <img src="icons/garrafa_red_clean.svg" class="brand-img" alt="NOTIGAS Logo"> NOTIGAS
     </div>
     <div id="headerRoleBadge" style="display:flex; align-items:center; gap:6px;">
-      <!-- Renderizado dinÃ¡mico de badge del rol actual: Comprador vs Repartidor -->
+      <!-- Renderizado dinámico de badge del rol actual: Comprador vs Repartidor -->
     </div>
     <div class="header-actions">
-      <button class="btn-config-rect" id="btnOpenUserSettings" title="MENÃš" aria-label="Abrir MENÃš">
-        <i class="fa-solid fa-bars"></i> MENÃš
+      <button class="btn-config-rect" id="btnOpenUserSettings" title="MENÚ" aria-label="Abrir MENÚ">
+        <i class="fa-solid fa-bars"></i> MENÚ
       </button>
     </div>
   </header>
 
-  <!-- PESTAÃ‘AS DE NAVEGACIÃ“N PRINCIPALES (3 PESTAÃ‘AS INDEPENDIENTES) -->
+  <!-- PESTAÑAS DE NAVEGACIÓN PRINCIPALES (3 PESTAÑAS INDEPENDIENTES) -->
   <nav>
     <button class="tab-btn active" onclick="switchTab(0)"><i class="fa-solid fa-map-location-dot"></i> 1Âª MAPA EN VIVO</button>
     <button class="tab-btn" onclick="switchTab(1)"><i class="fa-solid fa-store"></i> LISTA DE REPARTIDORES</button>
@@ -82,18 +82,18 @@
   </nav>
 
   <main>
-    <!-- PESTAÃ‘A 1: MAPA EN VIVO CON CONEXIÃ“N GPS AUTOMÃTICA -->
+    <!-- PESTAÑA 1: MAPA EN VIVO CON CONEXIÓN GPS AUTOMÃTICA -->
     <div class="tab-content active" id="tab0">
       <div id="map"></div>
 
-      <!-- BANNER DE ACTIVACIÃ“N OBLIGATORIA DE GPS EN MÃ“VILES/ANDROID -->
+      <!-- BANNER DE ACTIVACIÓN OBLIGATORIA DE GPS EN MÓVILES/ANDROID -->
       <div id="gpsFloatingBanner" style="display:none; position:fixed; top:70px; left:50%; transform:translateX(-50%); z-index:9999; width:calc(100% - 24px); max-width:440px; background:linear-gradient(135deg, #1E293B, #0F172A); border:2px solid #FF6D00; border-radius:16px; padding:14px 16px; box-shadow:0 10px 30px rgba(0,0,0,0.85); text-align:center;">
         <div style="font-size:32px; margin-bottom:4px;">ðŸ“</div>
         <div style="font-size:14px; font-weight:900; color:#FF6D00; font-family:'Roboto',sans-serif; margin-bottom:4px;">
-          ACTIVACIÃ“N DE GPS REQUERIDA
+          ACTIVACIÓN DE GPS REQUERIDA
         </div>
         <div style="font-size:12px; color:#CBD5E1; line-height:1.4; margin-bottom:12px; font-family:'Roboto',sans-serif;">
-          NOTIGAS requiere tu ubicaciÃ³n GPS para ubicar tu pedido exactamente en el mapa.
+          NOTIGAS requiere tu ubicación GPS para ubicar tu pedido exactamente en el mapa.
         </div>
         <button onclick="solicitarPermisoGPSAndroidNativo()" style="width:100%; background:linear-gradient(135deg, #FF6D00, #E65100); color:white; border:none; padding:12px; border-radius:10px; font-weight:900; font-size:13px; cursor:pointer; box-shadow:0 4px 14px rgba(255,109,0,0.5); display:flex; align-items:center; justify-content:center; gap:8px;">
           <i class="fa-solid fa-location-crosshairs"></i> ðŸ“ ACTIVAR GPS AHORA EN MI CELULAR
@@ -101,7 +101,7 @@
       </div>
 
       <div class="search-controls-wrapper">
-        <!-- AVISO DE SELECCIÃ“N EN MAPA -->
+        <!-- AVISO DE SELECCIÓN EN MAPA -->
         <div style="background: rgba(15, 23, 42, 0.92); border: 1px solid rgba(56, 189, 248, 0.4); color: #38BDF8; padding: 3px 6px; border-radius: 6px; font-size: 9.5px; font-weight: 800; text-align: center; backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; gap: 4px;">
           <i class="fa-solid fa-hand-pointer" style="color: #00E676; font-size: 10px;"></i>
           <span>ðŸ“ Escoger en el mapa</span>
@@ -112,15 +112,15 @@
           <i class="fa-solid fa-map-location-dot" style="color:#FF6D00; font-size:11px;"></i>
           <select id="selectCiudadCapital" onchange="cambiarCiudadCapital(this.value)">
             <option value="" disabled selected>ðŸ“ Escoge tu ciudad</option>
-            <optgroup label="â”€â”€ 1Âº SANTA CRUZ DE LA SIERRA â”€â”€">
+            <optgroup label="── 1Âº SANTA CRUZ DE LA SIERRA ──">
               <option value="santacruz">ðŸ“ Santa Cruz de la Sierra</option>
               <option value="warnes">ðŸ“ Warnes</option>
               <option value="cotoca">ðŸ“ Cotoca</option>
               <option value="laguardia">ðŸ“ La Guardia</option>
               <option value="montero">ðŸ“ Montero</option>
-              <option value="porongo">ðŸ“ Porongo / UrubÃ³</option>
+              <option value="porongo">ðŸ“ Porongo / Urubó</option>
             </optgroup>
-            <optgroup label="â”€â”€ 2Âº COCHABAMBA â”€â”€">
+            <optgroup label="── 2Âº COCHABAMBA ──">
               <option value="cochabamba">ðŸ“ Cochabamba</option>
               <option value="sacaba">ðŸ“ Sacaba</option>
               <option value="quillacollo">ðŸ“ Quillacollo</option>
@@ -129,19 +129,19 @@
               <option value="vinto">ðŸ“ Vinto</option>
               <option value="sipesipe">ðŸ“ Sipe Sipe</option>
             </optgroup>
-            <optgroup label="â”€â”€ 3Âº LA PAZ â”€â”€">
+            <optgroup label="── 3Âº LA PAZ ──">
               <option value="lapaz">ðŸ“ La Paz</option>
               <option value="viacha">ðŸ“ Viacha</option>
               <option value="achocalla">ðŸ“ Achocalla</option>
             </optgroup>
-            <optgroup label="â”€â”€ 4Âº EL ALTO â”€â”€">
+            <optgroup label="── 4Âº EL ALTO ──">
               <option value="elalto">ðŸ“ El Alto</option>
             </optgroup>
-            <optgroup label="â”€â”€ 5Âº TARIJA Y OTROS DEPARTAMENTOS â”€â”€">
+            <optgroup label="── 5Âº TARIJA Y OTROS DEPARTAMENTOS ──">
               <option value="tarija">ðŸ“ Tarija</option>
               <option value="sucre">ðŸ“ Sucre</option>
               <option value="oruro">ðŸ“ Oruro</option>
-              <option value="potosi">ðŸ“ PotosÃ­</option>
+              <option value="potosi">ðŸ“ Potosí</option>
               <option value="trinidad">ðŸ“ Trinidad (Beni)</option>
               <option value="cobija">ðŸ“ Cobija (Pando)</option>
             </optgroup>
@@ -156,15 +156,15 @@
 
         <button class="btn-main-order" id="btnMainOrder" onclick="abrirSubmenuPedidos()">
           <span style="display:inline-flex; align-items:center; gap:8px;">
-            <img src="icons/camion_red.svg" style="width:34px; height:34px; object-fit:contain; filter:drop-shadow(0 0 6px rgba(255,23,68,0.9));" alt="CamiÃ³n NOTIGAS">
+            <img src="icons/camion_red.svg" style="width:34px; height:34px; object-fit:contain; filter:drop-shadow(0 0 6px rgba(255,23,68,0.9));" alt="Camión NOTIGAS">
           </span>
           <span>ðŸ”¥ HACER UN PEDIDO</span>
         </button>
         
         <div class="action-row">
-          <button class="btn-panic" onclick="lanzarEspecialEsperame()"><i class="fa-solid fa-hand-paper"></i> ðŸ›‘ ESPÃ‰RAME</button>
-          <button class="btn-hear-truck" onclick="notificarEscucheCamion()"><i class="fa-solid fa-bell"></i> ðŸ”” ESCUCHÃ‰ CAMIÃ“N</button>
-          <button class="btn-gps-center" onclick="conectarGPSAuto(true)" style="background:#0288D1; color:white; border:none; padding:10px 12px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer;" title="Re-centrar mi ubicaciÃ³n en el mapa"><i class="fa-solid fa-crosshairs"></i> ðŸ“ MI UBICACIÃ“N</button>
+          <button class="btn-panic" onclick="lanzarEspecialEsperame()"><i class="fa-solid fa-hand-paper"></i> ðŸ›‘ ESPÉRAME</button>
+          <button class="btn-hear-truck" onclick="notificarEscucheCamion()"><i class="fa-solid fa-bell"></i> ðŸ”” ESCUCHÉ CAMIÓN</button>
+          <button class="btn-gps-center" onclick="conectarGPSAuto(true)" style="background:#0288D1; color:white; border:none; padding:10px 12px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer;" title="Re-centrar mi ubicación en el mapa"><i class="fa-solid fa-crosshairs"></i> ðŸ“ MI UBICACIÓN</button>
         </div>
       </div>
 
@@ -174,7 +174,7 @@
           <i class="fa-solid fa-location-arrow"></i> ðŸŸ¢ INICIAR RECORRIDO EN VIVO
         </button>
 
-        <!-- BOTÃ“N PRINCIPAL PROMINENTE: MAPA DE CALOR Y ZONAS DE ALTA DEMANDA -->
+        <!-- BOTÓN PRINCIPAL PROMINENTE: MAPA DE CALOR Y ZONAS DE ALTA DEMANDA -->
         <button class="btn-driver-heatmap" id="btnDriverHeatmap" onclick="toggleHeatmapOverlay()" style="width: 100%; background: linear-gradient(135deg, #FF6D00 0%, #E65100 100%); color: white; border: 1.5px solid #F59E0B; padding: 14px; border-radius: 14px; font-weight: 900; font-size: 14px; cursor: pointer; box-shadow: 0 4px 22px rgba(255,109,0,0.6), inset 0 1px 0 rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: 0.5px;">
           <i class="fa-solid fa-fire" style="font-size:16px;"></i> ðŸ”¥ MAPA DE CALOR Y ALTA DEMANDA VECINAL
         </button>
@@ -186,29 +186,29 @@
       </div>
     </div>
 
-    <!-- PESTAÃ‘A 2: MINI PÃGINAS DE NEGOCIO ESTILO FACEBOOK POR CATEGORÃA & SERVICIO AL CLIENTE -->
+    <!-- PESTAÑA 2: MINI PÃGINAS DE NEGOCIO ESTILO FACEBOOK POR CATEGORÍA & SERVICIO AL CLIENTE -->
     <div class="tab-content" id="tab1">
 
-      <!-- BARRA FILTRADORA DE CATEGORÃAS -->
+      <!-- BARRA FILTRADORA DE CATEGORÍAS -->
       <div class="category-filter-bar">
         <button class="cat-chip active" onclick="filterVendorCategory('TODOS', this)">ðŸŒ Todos</button>
         <button class="cat-chip" onclick="filterVendorCategory('Gas GLP', this)">ðŸ”¥ Gas GLP</button>
         <button class="cat-chip" onclick="filterVendorCategory('Agua 20L', this)">ðŸ’§ Agua 20L</button>
-        <button class="cat-chip" onclick="filterVendorCategory('Chatarra', this)">â™»ï¸ Chatarra</button>
+        <button class="cat-chip" onclick="filterVendorCategory('Chatarra', this)">♻️ Chatarra</button>
         <button class="cat-chip" onclick="filterVendorCategory('Papel', this)">ðŸ“„ Papel / Reciclaje</button>
         <button class="cat-chip" onclick="filterVendorCategory('Frutas', this)">ðŸŽ Frutas & Verduras</button>
         <button class="cat-chip" onclick="filterVendorCategory('Detergentes', this)">ðŸ§¼ Detergentes & Limpieza</button>
-        <button class="cat-chip" onclick="filterVendorCategory('CarbÃ³n', this)">ðŸªµ CarbÃ³n / LeÃ±a</button>
+        <button class="cat-chip" onclick="filterVendorCategory('Carbón', this)">ðŸªµ Carbón / Leña</button>
         <button class="cat-chip" onclick="filterVendorCategory('Otros', this)">ðŸ“¦ Otros Pedidos</button>
       </div>
 
       <!-- FEED DE MINI PÃGINAS DE NEGOCIO Y ANUNCIOS -->
       <div class="vendor-grid-container" id="vendorGridContainer">
-        <!-- Renderizado dinÃ¡mico desde js/vendors.js -->
+        <!-- Renderizado dinámico desde js/vendors.js -->
       </div>
     </div>
 
-    <!-- PESTAÃ‘A 3: AVISOS GRATIS (AVISOS, ALERTAS & OFERTAS CON EXPIRACIÃ“N A 72 HORAS) -->
+    <!-- PESTAÑA 3: AVISOS GRATIS (AVISOS, ALERTAS & OFERTAS CON EXPIRACIÓN A 72 HORAS) -->
     <div class="tab-content" id="tab2">
       <!-- AVISO DESTACADO SUPERIOR DE AVISOS GRATIS -->
       <div style="background: linear-gradient(135deg, rgba(255,109,0,0.15), rgba(230,81,0,0.15)); border: 1px solid rgba(255,109,0,0.3); border-radius: 12px; padding: 10px 14px; margin-bottom: 12px;">
@@ -217,12 +217,12 @@
           <button class="btn-new-post" style="padding: 4px 10px; font-size: 11px;" onclick="abrirModalNuevoPost()"><i class="fa-solid fa-plus"></i> Publicar Aviso</button>
         </div>
         <div style="font-size: 11px; color: #CBD5E1; margin-top: 4px;">
-          âš ï¸ <strong>Aviso Comunitario:</strong> Todas las publicaciones se borran automÃ¡ticamente en <strong>72 horas</strong> para mantener la velocidad de la aplicaciÃ³n.
+          ⚠️ <strong>Aviso Comunitario:</strong> Todas las publicaciones se borran automáticamente en <strong>72 horas</strong> para mantener la velocidad de la aplicación.
         </div>
       </div>
 
       <div class="forum-container" id="forumFeed" style="flex: 1; overflow-y: auto;">
-        <!-- Renderizado dinÃ¡mico desde js/forum.js con expiraciÃ³n a las 72h -->
+        <!-- Renderizado dinámico desde js/forum.js con expiración a las 72h -->
       </div>
     </div>
   </main>
@@ -234,26 +234,26 @@
       <span class="ad-badge"><i class="fa-solid fa-rectangle-ad"></i> Sponsor NOTIGAS</span>
       <div class="ad-text-box">
         <div class="ad-title" id="adTitleText" style="display:none;"></div>
-        <div class="ad-subtext" id="adText">Servicios tÃ©cnicos & Comercio verificado en NOTIGAS â€¢ Haz clic para contactar</div>
+        <div class="ad-subtext" id="adText">Servicios técnicos & Comercio verificado en NOTIGAS â€¢ Haz clic para contactar</div>
       </div>
       <button class="btn-ad-contact"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver Anuncio</button>
     </div>
 
     <!-- CONTENEDOR 2: GOOGLE ADSENSE -->
     <div id="adsenseContent" style="display: none; width: 100%; height: 60px; overflow: hidden; border-radius: 10px; text-align: center;">
-      <!-- AdSense se inyectarÃ¡ aquÃ­ -->
+      <!-- AdSense se inyectará aquí -->
     </div>
   </footer>
 
-  <!-- MODAL MENÃš GENERAL - CONTENIDO DINÃMICO SEGÃšN ROL -->
+  <!-- MODAL MENÚ GENERAL - CONTENIDO DINÃMICO SEGÚN ROL -->
   <div class="modal" id="modalUserSettings">
     <div class="modal-content" style="max-width: 580px;">
       <div class="modal-title">
-        <span id="settingsModalTitle">âš™ï¸ MENÃš</span>
-        <button class="btn-close" onclick="closeUserSettingsModal()">âœ•</button>
+        <span id="settingsModalTitle">⚙️ MENÚ</span>
+        <button class="btn-close" onclick="closeUserSettingsModal()">✕</button>
       </div>
 
-      <!-- SECCIÃ“N VECINO/COMPRADOR -->
+      <!-- SECCIÓN VECINO/COMPRADOR -->
       <div id="settingsBuyerSection">
         <div style="background: rgba(0,230,118,0.08); border: 1px solid rgba(0,230,118,0.2); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; font-size: 11.5px; color: #00E676; font-weight: 700;">
           <i class="fa-solid fa-user"></i> Perfil: Vecino / Comprador
@@ -270,21 +270,21 @@
         <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 14px 0;">
         <button class="btn-submit" onclick="guardarPrefUsuario()"><i class="fa-solid fa-floppy-disk"></i> Guardar Preferencias</button>
 
-        <!-- BotÃ³n de activar repartidor se inyecta por JS segÃºn si ya tiene ficha -->
+        <!-- Botón de activar repartidor se inyecta por JS según si ya tiene ficha -->
         <div id="buyerToDriverBtnContainer" style="margin-top:10px;"></div>
       </div>
 
-      <!-- SECCIÃ“N REPARTIDOR -->
+      <!-- SECCIÓN REPARTIDOR -->
       <div id="settingsDriverSection" style="display:none;">
         <div style="background: rgba(255,109,0,0.12); border: 1px solid rgba(255,109,0,0.3); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; font-size: 11.5px; color: #FF6D00; font-weight: 700;">
           <i class="fa-solid fa-truck-fast"></i> Repartidor en Ruta â€¢ <span id="settingsDriverNameLabel" style="color:#FFFFFF;">Repartidor</span>
         </div>
 
         <div class="form-group">
-          <label>TransmisiÃ³n GPS en Vivo:</label>
+          <label>Transmisión GPS en Vivo:</label>
           <select id="driverGpsLive">
-            <option value="on">ðŸŸ¢ Transmitir ubicaciÃ³n en tiempo real</option>
-            <option value="off">ðŸ”´ Pausar transmisiÃ³n GPS</option>
+            <option value="on">ðŸŸ¢ Transmitir ubicación en tiempo real</option>
+            <option value="off">ðŸ”´ Pausar transmisión GPS</option>
           </select>
         </div>
 
@@ -304,9 +304,9 @@
           <i class="fa-solid fa-id-card"></i> Ver / Editar Mi Ficha de Repartidor
         </button>
 
-        <!-- CERRAR SESIÃ“N COMO REPARTIDOR â†’ PASAR A COMPRADOR -->
+        <!-- CERRAR SESIÓN COMO REPARTIDOR â†’ PASAR A COMPRADOR -->
         <button style="width:100%; background: linear-gradient(135deg, #37474F, #263238); color: #CFD8DC; border: 1px solid rgba(255,255,255,0.15); padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 10px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="cerrarSesionUsuario()">
-          <i class="fa-solid fa-arrow-right-arrow-left"></i> Cerrar sesiÃ³n como Repartidor â†’ Activar Comprador
+          <i class="fa-solid fa-arrow-right-arrow-left"></i> Cerrar sesión como Repartidor â†’ Activar Comprador
         </button>
       </div>
 
@@ -316,13 +316,13 @@
 
 
       <button style="width:100%; background: linear-gradient(135deg, #D32F2F, #B71C1C); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 4px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(211,47,47,0.4);" onclick="cerrarSesionUsuario()">
-        <i class="fa-solid fa-right-from-bracket"></i> ðŸšª Cerrar SesiÃ³n Completa
+        <i class="fa-solid fa-right-from-bracket"></i> ðŸšª Cerrar Sesión Completa
       </button>
 
-      <!-- MENÃš DE CONFIGURACIÃ“N -->
+      <!-- MENÚ DE CONFIGURACIÓN -->
       <details style="margin-top: 14px; background: rgba(15, 23, 42, 0.8); border: 1.5px solid rgba(255, 109, 0, 0.4); border-radius: 12px; padding: 10px 14px; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,0.4);">
         <summary style="font-size: 13px; font-weight: 900; color: #FF6D00; display: flex; align-items: center; justify-content: space-between; outline: none; user-select: none;">
-          <span><i class="fa-solid fa-gear"></i> CONFIGURACIÃ“N</span>
+          <span><i class="fa-solid fa-gear"></i> CONFIGURACIÓN</span>
           <span style="font-size: 10px; color: #94A3B8; font-weight: 700;">(Desplegar opciones)</span>
         </summary>
         
@@ -335,14 +335,14 @@
     </div>
   </div>
 
-  <!-- MODAL REGISTRO/EDICIÃ“N DE FICHA DE REPARTIDOR (1Âª VEZ AL REGISTRARSE, LUEGO DESDE CONFIG) -->
+  <!-- MODAL REGISTRO/EDICIÓN DE FICHA DE REPARTIDOR (1Âª VEZ AL REGISTRARSE, LUEGO DESDE CONFIG) -->
   <div class="modal" id="modalDriver">
     <div class="modal-content">
       <div class="modal-title">
         <span><i class="fa-solid fa-id-card"></i> <span id="driverModalTitleText">Registro de Repartidor</span></span>
-        <button class="btn-close" onclick="closeDriverModal()">âœ•</button>
+        <button class="btn-close" onclick="closeDriverModal()">✕</button>
       </div>
-      <p style="font-size:11px; color:#94A3B8; margin-bottom:12px;" id="driverModalSubtitle">Completa tu ficha de negocio. AparecerÃ¡ en la lista de repartidores de la OTB.</p>
+      <p style="font-size:11px; color:#94A3B8; margin-bottom:12px;" id="driverModalSubtitle">Completa tu ficha de negocio. Aparecerá en la lista de repartidores de la OTB.</p>
 
 
 
@@ -351,11 +351,11 @@
         <input type="text" id="inputDriverNombre" placeholder="Ej: Repartidor Agua Cristallina">
       </div>
       <div class="form-group">
-        <label>NÃºmero de WhatsApp (Uso interno):</label>
+        <label>Número de WhatsApp (Uso interno):</label>
         <input type="tel" id="inputDriverTelRef" placeholder="74xxxx28">
       </div>
       <div class="form-group">
-        <label>NÃºmero de Placa del VehÃ­culo / Medio de Transporte:</label>
+        <label>Número de Placa del Vehículo / Medio de Transporte:</label>
         <input type="text" id="inputDriverPlate" placeholder="Ej: 3842-XYZ">
       </div>
       <div class="form-group">
@@ -363,29 +363,29 @@
         <select id="inputDriverCat">
           <option value="Gas GLP">ðŸ”¥ Gas GLP</option>
           <option value="Detergentes">ðŸ§¼ Detergentes & Limpieza</option>
-          <option value="Chatarra">â™»ï¸ Chatarra</option>
+          <option value="Chatarra">♻️ Chatarra</option>
           <option value="Papel">ðŸ“„ Papel / Reciclaje</option>
           <option value="Frutas">ðŸŽ Frutas & Verduras</option>
           <option value="Otros">ðŸ“¦ Otros</option>
         </select>
       </div>
       <div class="form-group">
-        <label>Â¿QuÃ© Vende / Oferta?:</label>
+        <label>¿Qué Vende / Oferta?:</label>
         <input type="text" id="inputDriverProductos" placeholder="Ej: Garrafas GLP 10kg, reguladores, mangueras">
       </div>
       <div class="form-group">
         <label>Ciudad de Trabajo:</label>
         <select id="inputDriverCiudad" required>
           <option value="" disabled selected>ðŸ“ Escoge tu ciudad</option>
-          <optgroup label="â”€â”€ 1Âº SANTA CRUZ DE LA SIERRA â”€â”€">
+          <optgroup label="── 1Âº SANTA CRUZ DE LA SIERRA ──">
             <option value="santacruz">ðŸ“ Santa Cruz de la Sierra</option>
             <option value="warnes">ðŸ“ Warnes</option>
             <option value="cotoca">ðŸ“ Cotoca</option>
             <option value="laguardia">ðŸ“ La Guardia</option>
             <option value="montero">ðŸ“ Montero</option>
-            <option value="porongo">ðŸ“ Porongo / UrubÃ³</option>
+            <option value="porongo">ðŸ“ Porongo / Urubó</option>
           </optgroup>
-          <optgroup label="â”€â”€ 2Âº COCHABAMBA â”€â”€">
+          <optgroup label="── 2Âº COCHABAMBA ──">
             <option value="cochabamba">ðŸ“ Cochabamba</option>
             <option value="sacaba">ðŸ“ Sacaba</option>
             <option value="quillacollo">ðŸ“ Quillacollo</option>
@@ -394,19 +394,19 @@
             <option value="vinto">ðŸ“ Vinto</option>
             <option value="sipesipe">ðŸ“ Sipe Sipe</option>
           </optgroup>
-          <optgroup label="â”€â”€ 3Âº LA PAZ â”€â”€">
+          <optgroup label="── 3Âº LA PAZ ──">
             <option value="lapaz">ðŸ“ La Paz</option>
             <option value="viacha">ðŸ“ Viacha</option>
             <option value="achocalla">ðŸ“ Achocalla</option>
           </optgroup>
-          <optgroup label="â”€â”€ 4Âº EL ALTO â”€â”€">
+          <optgroup label="── 4Âº EL ALTO ──">
             <option value="elalto">ðŸ“ El Alto</option>
           </optgroup>
-          <optgroup label="â”€â”€ 5Âº TARIJA Y OTROS DEPARTAMENTOS â”€â”€">
+          <optgroup label="── 5Âº TARIJA Y OTROS DEPARTAMENTOS ──">
             <option value="tarija">ðŸ“ Tarija</option>
             <option value="sucre">ðŸ“ Sucre</option>
             <option value="oruro">ðŸ“ Oruro</option>
-            <option value="potosi">ðŸ“ PotosÃ­</option>
+            <option value="potosi">ðŸ“ Potosí</option>
             <option value="trinidad">ðŸ“ Trinidad (Beni)</option>
             <option value="cobija">ðŸ“ Cobija (Pando)</option>
           </optgroup>
@@ -417,45 +417,45 @@
         <input type="text" id="inputDriverZonas" placeholder="Ej: OTB Central, Av. Principal y calles vecinas">
       </div>
 
-      <button class="btn-submit-google" onclick="iniciarSesionRepartidor()"><i class="fa-solid fa-store"></i> Activar y Publicar Mini PÃ¡gina de Negocio</button>
+      <button class="btn-submit-google" onclick="iniciarSesionRepartidor()"><i class="fa-solid fa-store"></i> Activar y Publicar Mini Página de Negocio</button>
     </div>
   </div>
 
-  <!-- MODAL ADMINISTRADOR EXCLUSIVO (ACCESO PROTEGIDO CON USUARIO Y CONTRASEÃ‘A OBLIGATORIOS) -->
+  <!-- MODAL ADMINISTRADOR EXCLUSIVO (ACCESO PROTEGIDO CON USUARIO Y CONTRASEÑA OBLIGATORIOS) -->
   <div class="modal" id="modalAdmin">
     <div class="modal-content" style="max-width: 850px; width: 95%;">
       <div class="modal-title">
-        <span><i class="fa-solid fa-user-shield"></i> Ãrea de AdministraciÃ³n NOTIGAS</span>
-        <button class="btn-close" onclick="closeAdminModal()">âœ•</button>
+        <span><i class="fa-solid fa-user-shield"></i> Ãrea de Administración NOTIGAS</span>
+        <button class="btn-close" onclick="closeAdminModal()">✕</button>
       </div>
 
       <!-- PANTALLA 1: FORMULARIO DE ACCESO (AHORA CON GOOGLE) -->
       <div id="adminLoginScreen">
         <p style="font-size: 13px; color: #94A3B8; margin-bottom: 20px; text-align: center;">
-          ðŸ”’ Acceso protegido. Requiere doble autenticaciÃ³n para verificar identidad.
+          ðŸ”’ Acceso protegido. Requiere doble autenticación para verificar identidad.
           <br><br>
           <strong>Haz clic abajo para re-autenticarte con tu cuenta de administrador:</strong>
         </p>
         <div id="admin_g_id_onload_container" style="display: flex; justify-content: center; margin-bottom: 20px;"></div>
         <button class="btn-submit" onclick="closeAdminModal()" style="background:#0288D1;"><i class="fa-solid fa-arrow-left"></i> Volver al Inicio</button>
       </div>
-      <!-- PANTALLA 2: DASHBOARD DE ADMINISTRACIÃ“N (SOLO VISIBLE TRAS AUTENTICARSE) -->
+      <!-- PANTALLA 2: DASHBOARD DE ADMINISTRACIÓN (SOLO VISIBLE TRAS AUTENTICARSE) -->
       <div id="adminDashboardScreen" style="display: none; flex-direction: row; gap: 15px; align-items: stretch; margin-top: 10px;">
         
-        <!-- SIDEBAR IZQUIERDO DE NAVEGACIÃ“N -->
+        <!-- SIDEBAR IZQUIERDO DE NAVEGACIÓN -->
         <div class="modal-tab-nav" style="flex: 0 0 160px; display: flex; flex-direction: column; gap: 8px; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 12px;">
-          <button class="modal-tab-btn active" style="text-align:left; width:100%; justify-content:flex-start;" onclick="switchModalTab(0)"><i class="fa-solid fa-chart-line" style="width:20px;"></i> MÃ©tricas</button>
+          <button class="modal-tab-btn active" style="text-align:left; width:100%; justify-content:flex-start;" onclick="switchModalTab(0)"><i class="fa-solid fa-chart-line" style="width:20px;"></i> Métricas</button>
           <button class="modal-tab-btn" style="text-align:left; width:100%; justify-content:flex-start;" onclick="switchModalTab(1)"><i class="fa-solid fa-store" style="width:20px;"></i> Repartidores</button>
           <button class="modal-tab-btn" style="text-align:left; width:100%; justify-content:flex-start;" onclick="switchModalTab(2)"><i class="fa-solid fa-boxes-packing" style="width:20px;"></i> Pedidos</button>
           <button class="modal-tab-btn" style="text-align:left; width:100%; justify-content:flex-start;" onclick="switchModalTab(3)"><i class="fa-solid fa-rectangle-ad" style="width:20px;"></i> Anuncios</button>
-          <button class="modal-tab-btn" style="text-align:left; width:100%; justify-content:flex-start;" onclick="switchModalTab(4)"><i class="fa-solid fa-shield-halved" style="width:20px;"></i> ModeraciÃ³n</button>
+          <button class="modal-tab-btn" style="text-align:left; width:100%; justify-content:flex-start;" onclick="switchModalTab(4)"><i class="fa-solid fa-shield-halved" style="width:20px;"></i> Moderación</button>
           <button class="modal-tab-btn" style="text-align:left; width:100%; justify-content:flex-start;" onclick="switchModalTab(5)"><i class="fa-solid fa-file-csv" style="width:20px;"></i> Exportar</button>
         </div>
 
         <!-- CONTENIDO DERECHO -->
         <div style="flex: 1; overflow-y: auto; max-height: 65vh; padding-right: 8px;">
           
-          <!-- SUBMENÃš 0: MÃ‰TRICAS EN VIVO, AVISO GENERAL & PURGA DE BD -->
+          <!-- SUBMENÚ 0: MÉTRICAS EN VIVO, AVISO GENERAL & PURGA DE BD -->
           <div class="modal-tab-pane active" id="modalPane0">
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px;">
               <div style="background: rgba(14,165,233,0.15); border: 1px solid rgba(14,165,233,0.3); border-radius: 10px; padding: 12px; text-align: center;">
@@ -479,28 +479,28 @@
             <div style="background: #0F172A; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 10px;">
               <label style="font-size: 11px; font-weight: 700; color: #FF6D00;"><i class="fa-solid fa-bullhorn"></i> Emitir Alerta / Comunicado Oficial OTB:</label>
               <div style="display: flex; gap: 6px; margin-top: 6px;">
-                <input type="text" id="inputAdminBroadcastMsg" placeholder="Ej: AVISO OTB: CamiÃ³n Cisterna en la plaza principal..." style="flex: 1; padding: 8px; font-size: 11px; border-radius: 6px; background: #1E293B; border: 1px solid rgba(255,255,255,0.1); color: white;">
+                <input type="text" id="inputAdminBroadcastMsg" placeholder="Ej: AVISO OTB: Camión Cisterna en la plaza principal..." style="flex: 1; padding: 8px; font-size: 11px; border-radius: 6px; background: #1E293B; border: 1px solid rgba(255,255,255,0.1); color: white;">
                 <button onclick="emitirAlertaOficialAdmin()" style="background: #FF6D00; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: 700; font-size: 11px; cursor: pointer;">Emitir</button>
               </div>
             </div>
 
             <button onclick="ejecutarPurgaBaseDeDatosManual()" style="width: 100%; background: rgba(239,68,68,0.2); color: #F87171; border: 1px solid rgba(239,68,68,0.4); padding: 8px; border-radius: 8px; font-weight: 700; font-size: 11px; cursor: pointer; margin-bottom: 8px;">
-              <i class="fa-solid fa-broom"></i> Ejecutar Purga Manual de Base de Datos y CachÃ©
+              <i class="fa-solid fa-broom"></i> Ejecutar Purga Manual de Base de Datos y Caché
             </button>
             <button style="width: 100%; background: #991B1B; color: white; border: none; padding: 8px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer;" onclick="restaurarBaseDatosPorDefecto()">
               <i class="fa-solid fa-database"></i> Restaurar Base de Datos por Defecto (Quitar Baneos)
             </button>
           </div>
 
-          <!-- SUBMENÃš 1: GESTIÃ“N DE REPARTIDORES -->
+          <!-- SUBMENÚ 1: GESTIÓN DE REPARTIDORES -->
           <div class="modal-tab-pane" id="modalPane1">
             <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Listado de Repartidores Registrados y Fichas de Negocio:</p>
             <div id="adminVendorsListContainer" style="max-height: 350px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
-              <!-- Renderizado dinÃ¡mico de repartidores -->
+              <!-- Renderizado dinámico de repartidores -->
             </div>
           </div>
 
-          <!-- SUBMENÃš 2: MONITOR DE PEDIDOS VECINALES EN VIVO -->
+          <!-- SUBMENÚ 2: MONITOR DE PEDIDOS VECINALES EN VIVO -->
           <div class="modal-tab-pane" id="modalPane2">
             <button style="width: 100%; background: linear-gradient(135deg, #FF6D00, #E65100); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 900; font-size: 12px; cursor: pointer; box-shadow: 0 4px 14px rgba(255,109,0,0.5); display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px;" onclick="activarMapaCalorAdminLive()">
               <i class="fa-solid fa-fire"></i> ðŸ”¥ VER PEDIDOS EN VIVO EN EL MAPA (ZONAS DE CALOR)
@@ -508,11 +508,11 @@
             
             <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Monitor en Tiempo Real de Solicitudes y Pedidos Vecinales:</p>
             <div id="adminOrdersMonitorContainer" style="max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
-              <!-- Renderizado dinÃ¡mico de pedidos -->
+              <!-- Renderizado dinámico de pedidos -->
             </div>
           </div>
 
-          <!-- SUBMENÃš 3: CONFIGURACIÃ“N DE PUBLICIDAD, IMÃGENES & ADSENSE -->
+          <!-- SUBMENÚ 3: CONFIGURACIÓN DE PUBLICIDAD, IMÃGENES & ADSENSE -->
           <div class="modal-tab-pane" id="modalPane3">
             <div class="form-group">
               <label>ID de Cliente Google AdSense (ca-pub-xxxxxxxx):</label>
@@ -526,7 +526,7 @@
               <label>Modo de Publicidad:</label>
               <select id="inputAdsenseMode" style="font-size: 12px; padding: 8px; width: 100%;">
                 <option value="custom">ðŸ–¼ï¸ Anuncio Local Personalizado (Imagen o Texto)</option>
-                <option value="adsense">ðŸŒ Google AdSense AutomÃ¡tico (CÃ³digo Publicitario)</option>
+                <option value="adsense">ðŸŒ Google AdSense Automático (Código Publicitario)</option>
               </select>
             </div>
             <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 12px 0;">
@@ -535,7 +535,7 @@
               <input type="file" id="inputAdImageFile" accept="image/*" onchange="previewUploadAdImage(event)" style="font-size:11px; background:#1E293B; padding:6px; border-radius:6px; color:white; width:100%;">
               <div id="adImagePreviewBox" style="margin-top:8px; display:none; align-items:center; gap:10px;">
                 <img id="adImagePreview" style="max-height:60px; max-width:200px; border-radius:6px; border:1px solid #FF6D00; object-fit:cover;">
-                <button type="button" onclick="eliminarImagenAnuncio()" style="background:#D32F2F; color:white; border:none; padding:4px 8px; border-radius:4px; font-weight:700; font-size:10px; cursor:pointer;">âœ• Eliminar Imagen</button>
+                <button type="button" onclick="eliminarImagenAnuncio()" style="background:#D32F2F; color:white; border:none; padding:4px 8px; border-radius:4px; font-weight:700; font-size:10px; cursor:pointer;">✕ Eliminar Imagen</button>
               </div>
             </div>
             <div class="form-group">
@@ -546,24 +546,24 @@
               <label>Enlace WhatsApp / Web del Anuncio:</label>
               <input type="text" id="inputAdUrl" value="https://wa.me/59174xxxx28?text=Hola!%20Deseo%20publicar%20mi%20anuncio%20en%20NOTIGAS">
             </div>
-            <button class="btn-submit" onclick="guardarSubmenuAnuncios()"><i class="fa-solid fa-floppy-disk"></i> Guardar ConfiguraciÃ³n de Publicidad</button>
+            <button class="btn-submit" onclick="guardarSubmenuAnuncios()"><i class="fa-solid fa-floppy-disk"></i> Guardar Configuración de Publicidad</button>
 
             <div style="background-color: #0F172A; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.08); margin-top: 12px;">
               <h4 style="font-size: 12px; color: #FF6D00; margin-bottom: 8px;"><i class="fa-solid fa-rectangle-ad"></i> Anuncios y Avisos OTB Publicados (Tab 3):</h4>
               <div id="adminAdsListContainer" style="max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
-                <!-- Renderizado dinÃ¡mico de anuncios y avisos -->
+                <!-- Renderizado dinámico de anuncios y avisos -->
               </div>
             </div>
           </div>
 
-          <!-- SUBMENÃš 4: MODERACIÃ“N, DENUNCIAS Y BANEOS -->
+          <!-- SUBMENÚ 4: MODERACIÓN, DENUNCIAS Y BANEOS -->
           <div class="modal-tab-pane" id="modalPane4">
-            <p style="font-size: 11px; color: #94A3B8; margin-bottom: 10px;">GestiÃ³n de Denuncias por Spam/Acoso y Lista de Usuarios Baneados:</p>
+            <p style="font-size: 11px; color: #94A3B8; margin-bottom: 10px;">Gestión de Denuncias por Spam/Acoso y Lista de Usuarios Baneados:</p>
             
             <div style="background-color: #0F172A; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 12px;">
-              <h4 style="font-size: 12px; color: #FF6D00; margin-bottom: 8px;"><i class="fa-solid fa-flag"></i> Denuncias Pendientes de ModeraciÃ³n:</h4>
+              <h4 style="font-size: 12px; color: #FF6D00; margin-bottom: 8px;"><i class="fa-solid fa-flag"></i> Denuncias Pendientes de Moderación:</h4>
               <div id="adminReportsContainer" style="max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
-                <!-- Renderizado dinÃ¡mico de denuncias -->
+                <!-- Renderizado dinámico de denuncias -->
               </div>
             </div>
 
@@ -574,29 +574,29 @@
                 <button onclick="banearUsuarioAdmin()" style="background-color: #D32F2F; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: 700; font-size: 11px; cursor: pointer;">Banear</button>
               </div>
               <div id="adminBannedList" style="max-height: 100px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; font-size: 10px; color: #94A3B8;">
-                <!-- Renderizado dinÃ¡mico de baneados -->
+                <!-- Renderizado dinámico de baneados -->
               </div>
             </div>
           </div>
 
-          <!-- SUBMENÃš 5: EXPORTACIÃ“N DE CORREOS Y REGISTROS CSV -->
+          <!-- SUBMENÚ 5: EXPORTACIÓN DE CORREOS Y REGISTROS CSV -->
           <div class="modal-tab-pane" id="modalPane5">
-            <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">ExportaciÃ³n de Datos del Sistema en Formato .CSV para Excel / Google Sheets:</p>
+            <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Exportación de Datos del Sistema en Formato .CSV para Excel / Google Sheets:</p>
             <button class="btn-csv-download" style="width:100%; text-align:left; background: linear-gradient(135deg, #475569, #334155); margin-bottom: 8px;" onclick="descargarListaCorreosCSV()"><i class="fa-solid fa-download"></i> ðŸ“¥ Descargar Lista de Correos Gmail (.CSV)</button>
             <button class="btn-csv-download" style="width:100%; text-align:left; background: linear-gradient(135deg, #059669, #10B981); margin-bottom: 8px;" onclick="descargarFichasRepartidoresCSV()"><i class="fa-solid fa-file-excel"></i> ðŸ“¥ Descargar Fichas de Repartidores (.CSV)</button>
-            <button class="btn-csv-download" style="width:100%; text-align:left; background: linear-gradient(135deg, #2563EB, #1D4ED8); margin-bottom: 8px;" onclick="descargarEstadisticasGeneralesCSV()"><i class="fa-solid fa-chart-line"></i> ðŸ“ˆ Descargar EstadÃ­sticas Generales (.CSV)</button>
+            <button class="btn-csv-download" style="width:100%; text-align:left; background: linear-gradient(135deg, #2563EB, #1D4ED8); margin-bottom: 8px;" onclick="descargarEstadisticasGeneralesCSV()"><i class="fa-solid fa-chart-line"></i> ðŸ“ˆ Descargar Estadísticas Generales (.CSV)</button>
           </div>
         </div>
       </div>
 
       <button style="width:100%; background:none; border:1px solid rgba(255,255,255,0.15); color:#94A3B8; padding:8px; border-radius:8px; margin-top:14px; cursor:pointer; font-size:11px;" onclick="cerrarSesionAdminControl()">
-        <i class="fa-solid fa-lock"></i> Cerrar SesiÃ³n Segura de Administrador
+        <i class="fa-solid fa-lock"></i> Cerrar Sesión Segura de Administrador
       </button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL DE INGRESO / AUTENTICACIÃ“N MEJORADO CON SELECCIÃ“N DE ROL Y MÃ‰TODOS DE INGRESO -->
+  <!-- MODAL DE INGRESO / AUTENTICACIÓN MEJORADO CON SELECCIÓN DE ROL Y MÉTODOS DE INGRESO -->
   <div class="modal" id="modalWelcomeAuth">
     <div class="modal-content" style="max-width: 460px; min-height: 250px;">
       <div class="modal-title" style="justify-content: center; text-align: center; font-size: 18px; margin-bottom: 4px;">
@@ -674,8 +674,8 @@
   <div class="modal" id="modalReport">
     <div class="modal-content">
       <div class="modal-title">
-        <span>ðŸš¨ Denunciar PublicaciÃ³n o Acoso</span>
-        <button class="btn-close" onclick="closeReportModal()">âœ•</button>
+        <span>ðŸš¨ Denunciar Publicación o Acoso</span>
+        <button class="btn-close" onclick="closeReportModal()">✕</button>
       </div>
       <p style="font-size: 11px; color: #94A3B8; margin-bottom: 10px;" id="reportTargetLabel">Reportar elemento seleccionado:</p>
       <input type="hidden" id="reportContext" value="">
@@ -684,25 +684,25 @@
         <label>Motivo de la Denuncia:</label>
         <select id="selectReportMotivo">
           <option value="Acoso o Bullying">ðŸ›‘ Acoso o Bullying a un vecino</option>
-          <option value="Contenido Ofensivo / Inapropiado">âš ï¸ Contenido Ofensivo o Lenguaje Inapropiado</option>
-          <option value="InformaciÃ³n Falsa / Spam">âŒ InformaciÃ³n Falsa o Spam</option>
+          <option value="Contenido Ofensivo / Inapropiado">⚠️ Contenido Ofensivo o Lenguaje Inapropiado</option>
+          <option value="Información Falsa / Spam">âŒ Información Falsa o Spam</option>
           <option value="Conducta Indebida del Repartidor / Cliente">ðŸš¨ Conducta Indebida</option>
         </select>
       </div>
       <div class="form-group">
         <label>Detalle Adicional (Opcional):</label>
-        <textarea id="inputReportDetalle" rows="3" placeholder="Explica brevemente lo sucedido para el equipo de moderaciÃ³n..."></textarea>
+        <textarea id="inputReportDetalle" rows="3" placeholder="Explica brevemente lo sucedido para el equipo de moderación..."></textarea>
       </div>
       <button class="btn-submit" style="background-color: #D32F2F;" onclick="enviarDenuncia()"><i class="fa-solid fa-flag"></i> Enviar Reporte de Denuncia</button>
     </div>
   </div>
 
-  <!-- MODAL SUBMENÃš PEDIDOS MEJORADO -->
+  <!-- MODAL SUBMENÚ PEDIDOS MEJORADO -->
   <div class="modal" id="modalSubmenu">
     <div class="modal-content" style="max-width: 480px;">
       <div class="modal-title">
-        <span>ðŸ“¦ Â¿QuÃ© deseas pedir a domicilio?</span>
-        <button class="btn-close" onclick="closeSubmenuModal()">âœ•</button>
+        <span>ðŸ“¦ ¿Qué deseas pedir a domicilio?</span>
+        <button class="btn-close" onclick="closeSubmenuModal()">✕</button>
       </div>
       <p style="font-size: 11px; color: #94A3B8; margin-bottom: 12px;">Selecciona el producto o servicio que necesitas en tu OTB:</p>
       
@@ -711,17 +711,17 @@
           <img src="icons/garrafa_red_clean.svg" style="width: 38px; height: 42px; object-fit: contain; filter: drop-shadow(0 0 6px #FF1744); margin-bottom: 4px;" alt="Garrafa GLP 10Kg Roja">
           <span class="submenu-title">ðŸ”¥ Garrafa GLP</span>
         </div>
-        <div class="submenu-card" onclick="seleccionarYPedirDirecto('ðŸ’§ BotellÃ³n Agua Purificada 20L')">
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('ðŸ’§ Botellón Agua Purificada 20L')">
           <i class="fa-solid fa-bottle-water" style="color: #0288D1;"></i>
           <span class="submenu-title">ðŸ’§ Agua 20L</span>
         </div>
-        <div class="submenu-card" onclick="seleccionarYPedirDirecto('â™»ï¸ Chatarra')">
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('♻️ Chatarra')">
           <i class="fa-solid fa-recycle" style="color: #00E676;"></i>
-          <span class="submenu-title">â™»ï¸ Chatarra</span>
+          <span class="submenu-title">♻️ Chatarra</span>
         </div>
         <div class="submenu-card" onclick="seleccionarYPedirDirecto('ðŸ“„ Papel')">
           <i class="fa-solid fa-newspaper" style="color: #4FC3F7;"></i>
-          <span class="submenu-title">ðŸ“„ Papel / CartÃ³n</span>
+          <span class="submenu-title">ðŸ“„ Papel / Cartón</span>
         </div>
         <div class="submenu-card" onclick="seleccionarYPedirDirecto('ðŸŽ Frutas & Verduras')">
           <i class="fa-solid fa-apple-whole" style="color: #FF5252;"></i>
@@ -731,9 +731,9 @@
           <i class="fa-solid fa-pump-soap" style="color: #E040FB;"></i>
           <span class="submenu-title">ðŸ§¼ Detergentes</span>
         </div>
-        <div class="submenu-card" onclick="seleccionarYPedirDirecto('ðŸªµ CarbÃ³n / LeÃ±a')">
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('ðŸªµ Carbón / Leña')">
           <i class="fa-solid fa-fire-flame-curved" style="color: #FF9100;"></i>
-          <span class="submenu-title">ðŸªµ CarbÃ³n / LeÃ±a</span>
+          <span class="submenu-title">ðŸªµ Carbón / Leña</span>
         </div>
         <div class="submenu-card" onclick="seleccionarYPedirDirecto('ðŸ“¦ Otros')">
           <i class="fa-solid fa-box-open" style="color: #FFC107;"></i>
@@ -748,38 +748,38 @@
     <div class="modal-content">
       <div class="modal-title">
         <span>ðŸ“¦ Ficha de Pedido</span>
-        <button class="btn-close" onclick="closePedidoModal()">âœ•</button>
+        <button class="btn-close" onclick="closePedidoModal()">✕</button>
       </div>
       <div class="form-group">
         <label>Producto / Servicio Seleccionado:</label>
         <select id="selectCategoria" onchange="document.getElementById('groupOrderOtros').style.display = (this.value === 'ðŸ“¦ Encargos & Otros Pedidos') ? 'block' : 'none';">
           <option value="ðŸ”¥ Garrafa de Gas GLP">ðŸ”¥ Garrafa de Gas GLP</option>
-          <option value="ðŸ’§ BotellÃ³n Agua Purificada 20L">ðŸ’§ BotellÃ³n Agua Purificada 20L</option>
-          <option value="â™»ï¸ Chatarra">â™»ï¸ Chatarra</option>
+          <option value="ðŸ’§ Botellón Agua Purificada 20L">ðŸ’§ Botellón Agua Purificada 20L</option>
+          <option value="♻️ Chatarra">♻️ Chatarra</option>
           <option value="ðŸ“„ Papel / Reciclaje">ðŸ“„ Papel / Reciclaje</option>
           <option value="ðŸŽ Frutas & Verduras">ðŸŽ Frutas & Verduras</option>
           <option value="ðŸ§¼ Detergentes & Limpieza">ðŸ§¼ Detergentes & Limpieza</option>
-          <option value="ðŸªµ CarbÃ³n / LeÃ±a">ðŸªµ CarbÃ³n / LeÃ±a</option>
+          <option value="ðŸªµ Carbón / Leña">ðŸªµ Carbón / Leña</option>
           <option value="ðŸ“¦ Encargos & Otros Pedidos">ðŸ“¦ Encargos & Otros Pedidos</option>
         </select>
       </div>
 
       <div class="form-group" id="groupOrderOtros" style="display: none;">
-        <label>Â¿QuÃ© tipo de vendedor necesitas?:</label>
+        <label>¿Qué tipo de vendedor necesitas?:</label>
         <input type="text" id="inputOrderOtrosDetalle" placeholder="Ej: sal, helado, afilador de cuchillos...">
       </div>
 
       <div class="form-group">
-        <label>ðŸ  DirecciÃ³n de Entrega (Opcional - GPS Ubicado en Mapa):</label>
+        <label>ðŸ  Dirección de Entrega (Opcional - GPS Ubicado en Mapa):</label>
         <input type="text" id="inputCallePrincipal" placeholder="Ej: Av. Blanco Galindo #123 (Opcional)">
       </div>
 
       <div class="form-group">
-        <label>ðŸ“ž TelÃ©fono / WhatsApp de Contacto (Opcional):</label>
+        <label>ðŸ“ž Teléfono / WhatsApp de Contacto (Opcional):</label>
         <input type="tel" id="inputTelefonoComprador" placeholder="Ej: 74xxxx28 (Opcional)">
       </div>
 
-      <p style="font-size:11px; color:#38BDF8; margin: 8px 0;">âœ” CoordinaciÃ³n directa con repartidor por Chat Privado 1-a-1 e indicaciÃ³n GPS.</p>
+      <p style="font-size:11px; color:#38BDF8; margin: 8px 0;">âœ” Coordinación directa con repartidor por Chat Privado 1-a-1 e indicación GPS.</p>
       <button class="btn-submit" onclick="confirmarPedido()"><i class="fa-solid fa-truck-fast" style="color:#F59E0B;"></i> <img src="icons/garrafa_red_clean.svg" style="width:22px; height:22px; vertical-align:middle; filter:drop-shadow(0 0 4px #FF1744);" alt="Gas"> Confirmar y Solicitar en Mapa Vivo</button>
     </div>
   </div>
@@ -789,14 +789,14 @@
     <div class="modal-content" style="max-width: 500px;">
       <div class="modal-title">
         <span><i class="fa-solid fa-list-check"></i> Pedidos Recientes en Tu Zona (Repartidor)</span>
-        <button class="btn-close" onclick="closeDriverOrdersModal()">âœ•</button>
+        <button class="btn-close" onclick="closeDriverOrdersModal()">✕</button>
       </div>
       <p style="font-size: 11px; color: #94A3B8; margin-bottom: 10px;">
-        Lista en tiempo real de vecinos que solicitaron Garrafas GLP, Agua u otros productos cerca de tu ubicaciÃ³n:
+        Lista en tiempo real de vecinos que solicitaron Garrafas GLP, Agua u otros productos cerca de tu ubicación:
       </p>
       
       <div id="driverOrdersContainer" style="max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
-        <!-- Renderizado dinÃ¡mico de pedidos vecinos -->
+        <!-- Renderizado dinámico de pedidos vecinos -->
       </div>
     </div>
   </div>
@@ -806,7 +806,7 @@
     <div class="modal-content" style="max-height: 85vh; display: flex; flex-direction: column;">
       <div class="modal-title">
         <span><i class="fa-solid fa-comments"></i> Comentarios de Vecinos</span>
-        <button class="btn-close" onclick="closeCommentsModal()">âœ•</button>
+        <button class="btn-close" onclick="closeCommentsModal()">✕</button>
       </div>
       <div style="background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 12px;">
         <span id="commentsPostCat" class="forum-cat">AVISO</span>
@@ -829,23 +829,23 @@
     <div class="modal-content">
       <div class="modal-title">
         <span>ðŸ’¬ Publicar Anuncio Gratis en la OTB</span>
-        <button class="btn-close" onclick="closeNuevoPostModal()">âœ•</button>
+        <button class="btn-close" onclick="closeNuevoPostModal()">✕</button>
       </div>
       <div class="form-group">
-        <label>Tipo de PublicaciÃ³n:</label>
+        <label>Tipo de Publicación:</label>
         <select id="selectPostTipo">
-          <option value="COMENTARIO">âš ï¸ COMENTARIO</option>
+          <option value="COMENTARIO">⚠️ COMENTARIO</option>
           <option value="PIDO AYUDA">ðŸ¤ PIDO AYUDA</option>
           <option value="SUGERENCIA">ðŸš› SUGERENCIA</option>
           <option value="INTERCAMBIO">ðŸ”„ INTERCAMBIO / COMPRA VECINAL</option>
         </select>
       </div>
       <div class="form-group">
-        <label>TÃ­tulo del Anuncio:</label>
-        <input type="text" id="inputPostTitulo" placeholder="Ej: CamiÃ³n de lavandina y detergente pasando por la plaza">
+        <label>Título del Anuncio:</label>
+        <input type="text" id="inputPostTitulo" placeholder="Ej: Camión de lavandina y detergente pasando por la plaza">
       </div>
       <div class="form-group">
-        <label>DescripciÃ³n / Detalle:</label>
+        <label>Descripción / Detalle:</label>
         <textarea id="inputPostDesc" rows="3" placeholder="Escribe tu mensaje para los vecinos (dura 72 horas)..."></textarea>
       </div>
       <button class="btn-submit" onclick="crearNuevoPost()"><i class="fa-solid fa-paper-plane"></i> Publicar Anuncio Gratis (72 horas)</button>
@@ -856,12 +856,12 @@
   <!-- SISTEMA DE NOTIFICACIONES TOAST (ESTILO RAPPI / UBER EATS) -->
   <div id="toastContainer" aria-live="polite" aria-atomic="true"></div>
 
-  <!-- MODAL DE CONFIRMACIÃ“N ELEGANTE (REEMPLAZO DE confirm() NATIVO) -->
+  <!-- MODAL DE CONFIRMACIÓN ELEGANTE (REEMPLAZO DE confirm() NATIVO) -->
   <div class="confirm-modal-overlay" id="confirmModalOverlay" style="display:none;">
     <div class="confirm-modal-box">
-      <div class="confirm-modal-icon" id="confirmModalIcon">âš ï¸</div>
-      <div class="confirm-modal-title" id="confirmModalTitle">Â¿EstÃ¡s seguro?</div>
-      <div class="confirm-modal-text" id="confirmModalText">Esta acciÃ³n no se puede deshacer.</div>
+      <div class="confirm-modal-icon" id="confirmModalIcon">⚠️</div>
+      <div class="confirm-modal-title" id="confirmModalTitle">¿Estás seguro?</div>
+      <div class="confirm-modal-text" id="confirmModalText">Esta acción no se puede deshacer.</div>
       <div class="confirm-modal-actions">
         <button class="confirm-modal-btn confirm-cancel" id="confirmModalCancel">Cancelar</button>
         <button class="confirm-modal-btn confirm-accept" id="confirmModalAccept">Confirmar</button>
@@ -869,12 +869,12 @@
     </div>
   </div>
 
-  <!-- PANTALLA DE BLOQUEO COMPLETO DE LA APLICACIÃ“N (BANEO ADMIN) -->
+  <!-- PANTALLA DE BLOQUEO COMPLETO DE LA APLICACIÓN (BANEO ADMIN) -->
   <div id="appLockoutOverlay" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:#0F172A; z-index:999999; flex-direction:column; align-items:center; justify-content:center; padding:28px; text-align:center;">
-    <div style="font-size:56px; margin-bottom:16px;">â›”</div>
-    <h2 style="color:#EF4444; font-size:22px; font-weight:900; margin-bottom:10px; font-family:'Roboto',sans-serif;">ACCESO BLOQUEADO POR LA ADMINISTRACIÃ“N</h2>
+    <div style="font-size:56px; margin-bottom:16px;">⛔</div>
+    <h2 style="color:#EF4444; font-size:22px; font-weight:900; margin-bottom:10px; font-family:'Roboto',sans-serif;">ACCESO BLOQUEADO POR LA ADMINISTRACIÓN</h2>
     <p style="color:#CBD5E1; font-size:13px; max-width:380px; line-height:1.6; margin-bottom:24px; font-family:'Roboto',sans-serif;">
-      Tu cuenta y dispositivo han sido suspendidos/bloqueados por la administraciÃ³n debido a violaciones de las normas de NOTIGAS.
+      Tu cuenta y dispositivo han sido suspendidos/bloqueados por la administración debido a violaciones de las normas de NOTIGAS.
     </p>
     <div style="font-size:11px; color:#64748B; font-family:'Roboto',sans-serif;">Si consideras que se trata de un error, contacta al soporte oficial de NOTIGAS.</div>
   </div>
@@ -884,7 +884,7 @@
     <i class="fa-solid fa-circle-notch fa-spin" style="font-size:40px; color:#FF6D00; margin-bottom:15px;"></i>
     <div id="globalLoadingMessage" style="color:white; font-size:14px; font-weight:700; text-align:center; max-width:80%; margin-bottom: 20px;">Procesando...</div>
     <button id="globalLoadingCancelBtn" onclick="hideLoadingOverlay()" style="display:none; background:#D32F2F; color:white; border:none; padding:10px 20px; border-radius:10px; font-weight:800; cursor:pointer; font-size:12px; box-shadow:0 4px 12px rgba(211,47,47,0.4);">
-      <i class="fa-solid fa-arrow-left"></i> La conexiÃ³n es lenta. Regresar
+      <i class="fa-solid fa-arrow-left"></i> La conexión es lenta. Regresar
     </button>
   </div>
 
@@ -893,16 +893,16 @@
 
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/js/state.js"></script>
-  <script src="js/js/supabase-config.js"></script>
-  <script src="js/js/auth.js"></script>
-  <script src="js/js/vendors.js"></script>
-  <script src="js/js/map.js"></script>
-  <script src="js/js/forum.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/vendors.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/forum.js"></script>
 
-  <script src="js/js/ads.js"></script>
-  <script src="js/js/admin.js"></script>
-  <script src="js/js/app.js"></script>
+  <script src="js/ads.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/app.js"></script>
 
 </body>
 </html>

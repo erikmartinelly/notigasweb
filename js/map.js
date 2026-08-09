@@ -1433,6 +1433,7 @@ function buscarCalle() {
                 if (fbValidItems.length > 0) {
                   procesarResultadoBusqueda(fbValidItems[0], calleQuery);
                 } else {
+                  // Suscripciones Realtime movidas a supabase-config.js
                   alert(`📍 No se encontró la calle "${calleQuery}" en el Área Metropolitana de ${munObj.nombre}.\n\nVerifica que el nombre o número de la calle esté bien escrito.`);
                 }
               })
@@ -1442,51 +1443,3 @@ function buscarCalle() {
       }
     })
     .catch(() => {});
-}
-
-// =============================================
-// SUSCRIPCIÓN EN TIEMPO REAL PARA MAPA (PEDIDOS Y CAMIONES)
-// =============================================
-function iniciarSuscripcionMapaRealtime() {
-    if (!window.supabaseClient) {
-        console.warn("⚠️ Supabase no disponible para suscripción del mapa");
-        return;
-    }
-
-    window.supabaseClient.channel('mapa_realtime_pedidos')
-        .on('postgres_changes', 
-            { event: '*', schema: 'public', table: 'pedidos' },
-            (payload) => {
-                const data = payload.new;
-                if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-                    agregarPedidoVecinoEnMapa(data);
-                } else if (payload.eventType === 'DELETE') {
-                    const oldData = payload.old;
-                    if (oldData && oldData.id) removerPublicacionDeMapa(oldData.id);
-                }
-            }
-        ).subscribe();
-
-    window.supabaseClient.channel('mapa_realtime_rutas')
-        .on('postgres_changes', 
-            { event: '*', schema: 'public', table: 'rutas_repartidores' },
-            (payload) => {
-                const data = payload.new;
-                if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-                    actualizarRepartidorEnMapa(data);
-                } else if (payload.eventType === 'DELETE') {
-                    const oldData = payload.old;
-                    if (oldData && oldData.id) removerPublicacionDeMapa(oldData.id);
-                }
-            }
-        ).subscribe((status, err) => {
-            if (status === 'SUBSCRIBED') {
-                console.log("📡 Mapa suscrito a Realtime correctamente.");
-            } else if (err) {
-                console.error("❌ Error en suscripción del mapa:", err);
-            }
-        });
-}
-
-
-

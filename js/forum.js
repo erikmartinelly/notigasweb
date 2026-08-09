@@ -16,13 +16,6 @@ const escapeHtmlStr = window.escapeHtmlStr || function(str) {
 document.addEventListener('DOMContentLoaded', () => {
   if (window.supabaseClient) {
       renderForumFeed();
-      
-      // Suscripción Realtime a Avisos de Barrio
-      window.supabaseClient.channel('forum_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'avisos' }, payload => {
-            renderForumFeed(); // Recargar el foro completo cuando haya cambios (podría optimizarse)
-        })
-        .subscribe();
   }
 });
 

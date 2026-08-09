@@ -883,3 +883,95 @@ function mostrarPopupAlertaRepartidor(mensajeHtml) {
   }, 7000);
 }
 
+
+/* ==========================================================================
+   NOTIGAS - MÓDULO PRINCIPAL DE LA APLICACIÓN
+   ========================================================================== */
+
+// 1. Registro del Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(() => console.log('✅ Service Worker registrado'))
+      .catch((err) => console.error('❌ Error Service Worker:', err));
+  });
+}
+
+// 2. Inicialización principal de la aplicación
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('🚀 NOTIGAS iniciando...');
+    
+    // Inicializar estado de la aplicación
+    if (window.AppState) {
+        window.AppState.hydrate();
+    }
+    
+    // Inicializar Supabase
+    if (typeof inicializarSupabase === 'function') {
+        inicializarSupabase();
+    }
+    
+    // Inicializar suscripciones Realtime
+    if (typeof iniciarSuscripcionesRealtime === 'function') {
+        // Esperar un poco para asegurar que Supabase esté listo
+        setTimeout(() => {
+            iniciarSuscripcionesRealtime();
+        }, 1000);
+    }
+    
+    // Cargar datos iniciales
+    if (typeof cargarPedidosVecinalesEnVivo === 'function') {
+        setTimeout(() => {
+            cargarPedidosVecinalesEnVivo();
+        }, 1500);
+    }
+});
+
+// 3. Manejo de eventos globales
+window.addEventListener('beforeunload', () => {
+    // Guardar estado antes de cerrar
+    if (window.AppState) {
+        const state = window.AppState.snapshot();
+        localStorage.setItem('notigas_app_state', JSON.stringify(state));
+    }
+});
+
+// 4. Manejo de errores no capturados
+window.addEventListener('error', (event) => {
+    console.error('❌ Error no capturado:', event.error);
+    if (typeof showToast === 'function') {
+        showToast('Error', 'Ocurrió un error inesperado. Recarga la página.', 'error');
+    }
+});
+
+// 5. Función de navegación entre vistas
+window.navegarA = function(vista) {
+    const vistas = ['mapa', 'foro', 'vendedores', 'pedidos'];
+    
+    if (!vistas.includes(vista)) {
+        console.error('Vista no válida:', vista);
+        return;
+    }
+    
+    // Ocultar todas las vistas
+    vistas.forEach(v => {
+        const elemento = document.getElementById(`vista-${v}`);
+        if (elemento) elemento.style.display = 'none';
+    });
+    
+    // Mostrar la vista solicitada
+    const vistaActual = document.getElementById(`vista-${vista}`);
+    if (vistaActual) {
+        vistaActual.style.display = 'block';
+        window.AppState.set('vistaActual', vista);
+    }
+};
+
+// 6. Sistema de notificaciones global
+window.mostrarNotificacion = function(tipo, mensaje, duracion = 3000) {
+    if (typeof showToast === 'function') {
+        showToast(tipo, mensaje, tipo, duracion);
+    } else {
+        console.log(`[${tipo.toUpperCase()}] ${mensaje}`);
+    }
+};

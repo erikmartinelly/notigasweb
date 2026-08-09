@@ -93,18 +93,25 @@ window.iniciarSuscripcionesRealtime = function() {
         cargarPedidosVecinalesEnVivo();
     }
 
-    _realtimeChannel = window.supabaseClient.channel('publicaciones_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'publicaciones' }, payload => {
+    _realtimeChannel = window.supabaseClient.channel('global_changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, payload => {
+            const data = payload.new;
             if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-                const data = payload.new;
-                if (data.tipo === 'rutaDistribuidor' && typeof actualizarRepartidorEnMapa === 'function') {
-                    actualizarRepartidorEnMapa(data);
-                } else if (data.tipo === 'pedido' && typeof agregarPedidoVecinoEnMapa === 'function') {
-                    agregarPedidoVecinoEnMapa(data);
-                }
-            } else if (payload.eventType === 'DELETE' && typeof removerPublicacionDeMapa === 'function') {
-                removerPublicacionDeMapa(payload.old.id);
+                if (typeof agregarPedidoVecinoEnMapa === 'function') agregarPedidoVecinoEnMapa(data);
+            } else if (payload.eventType === 'DELETE') {
+                if (typeof removerPublicacionDeMapa === 'function') removerPublicacionDeMapa(payload.old.id);
             }
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'rutas_repartidores' }, payload => {
+            const data = payload.new;
+            if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+                if (typeof actualizarRepartidorEnMapa === 'function') actualizarRepartidorEnMapa(data);
+            } else if (payload.eventType === 'DELETE') {
+                if (typeof removerPublicacionDeMapa === 'function') removerPublicacionDeMapa(payload.old.id);
+            }
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'avisos' }, payload => {
+            if (typeof renderForumFeed === 'function') renderForumFeed();
         })
         .subscribe((status, err) => {
             if (status === 'SUBSCRIBED') {
