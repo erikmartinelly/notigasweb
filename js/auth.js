@@ -850,10 +850,6 @@ window.setAuthAction = function(action) {
   currentAuthAction = action;
 };
 
-window.selectAuthRole = function(role) {
-  currentSelectedRole = role;
-};
-
 window.procesarAccionEmail = async function() {
   if (currentAuthAction === 'login') {
     await iniciarSesionEmail();
