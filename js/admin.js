@@ -1,4 +1,4 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    NOTIGAS - MÓDULO DE ADMINISTRACIÓN, ADSENSE, MODERACIÓN & BANEOS
    ========================================================================== */
 
@@ -486,11 +486,7 @@ function limpiarTodosLosBaneosAdmin() {
    llama a restaurarBaseDatosPorDefecto(), que no existía. Reutiliza limpiarTodosLosBaneosAdmin(). */
 const restaurarBaseDatosPorDefecto = limpiarTodosLosBaneosAdmin;
 
-// Purga automática inmediata de bloqueos de la base de datos
-try {
-  localStorage.removeItem('notigas_banned_users');
-  localStorage.removeItem('notigas_deleted_vendor_ids');
-} catch(e){}
+
 
 function desbanearRepartidorAdmin(vendorId, vendorName) {
   let deletedIds = [];
@@ -1223,3 +1219,4 @@ async function enviarDenuncia() {
 }
 
  
+

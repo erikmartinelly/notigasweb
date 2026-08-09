@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    NOTIGAS - MÓDULO DE AUTENTICACIÓN & GOOGLE IDENTITY SERVICES (1-TAP SIGN-IN)
    ========================================================================== */
 // FIX #16: escapeHtmlStr centralizada en state.js — eliminada aquí para evitar conflictos.
@@ -786,7 +786,8 @@ async function registrarEmail() {
 function procesarSesionExitosa(user) {
   const gmail = user.email.toLowerCase().trim();
   const nombre = user.user_metadata?.full_name || gmail.split('@')[0];
-    role: currentSelectedRole === 'driver' ? 'repartidor' : 'vecino', 
+  const clienteData = { 
+    role: currentSelectedRole === 'driver' ? 'repartidor' : 'vecino',
     gmail, 
     nombre, 
     user_id: user.id 

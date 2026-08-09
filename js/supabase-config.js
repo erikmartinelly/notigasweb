@@ -8,64 +8,68 @@ window.currentDriverPublicationId = null;
 window.driverLocationInterval = null;
 
 // --- FUNCIONES PARA REPARTIDORES ---
-window.startDriverLocationBroadcast = async function(driverName, driverCategory) {
-    if (!window.supabaseClient) return;
-    
-    const lat = typeof currentGpsLat !== 'undefined' ? currentGpsLat : -17.3895;
-    const lng = typeof currentGpsLng !== 'undefined' ? currentGpsLng : -66.1568;
-
-    const { data, error } = await window.supabaseClient.from('publicaciones').insert([{
-        tipo: 'rutaDistribuidor',
-        categoria: driverCategory || 'gas',
-        titulo: `Repartidor en Ruta: ${driverName}`,
-        ciudad: 'Cochabamba',
-        barrio_otb: 'Global',
-        user_email: 'driver@notigas.com', // Placeholder por ahora
-        user_role: 'driver',
-        latitude: lat,
-        longitude: lng,
-        distribuidor_nombre: driverName,
-        garrafas_agotadas: false
-    }]).select('id').single();
-
-    if (error) {
-        console.error("Error al iniciar broadcast en Supabase:", error);
-    } else if (data) {
-        window.currentDriverPublicationId = data.id;
-        console.log("🚚 Ruta de repartidor creada en Supabase, ID:", window.currentDriverPublicationId);
-        
-        // Iniciar loop de actualización cada 5 segundos
-        if (window.driverLocationInterval) clearInterval(window.driverLocationInterval);
-        window.driverLocationInterval = setInterval(window.updateDriverLocation, 5000);
-    }
-};
-
-window.updateDriverLocation = async function() {
-    if (!window.supabaseClient || !window.currentDriverPublicationId) return;
-    const lat = typeof currentGpsLat !== 'undefined' ? currentGpsLat : -17.3895;
-    const lng = typeof currentGpsLng !== 'undefined' ? currentGpsLng : -66.1568;
-
-    const { error } = await window.supabaseClient.from('publicaciones')
-        .update({ latitude: lat, longitude: lng })
-        .eq('id', window.currentDriverPublicationId);
-
-    if (error) console.error("Error al actualizar ubicación en Supabase:", error);
-};
-
-window.stopDriverLocationBroadcast = async function() {
-    if (window.driverLocationInterval) {
-        clearInterval(window.driverLocationInterval);
-        window.driverLocationInterval = null;
-    }
-    if (window.supabaseClient && window.currentDriverPublicationId) {
-        // Marcar como "garrafas_agotadas" para ocultarlo o eliminarlo
-        await window.supabaseClient.from('publicaciones')
-            .delete()
-            .eq('id', window.currentDriverPublicationId);
-        window.currentDriverPublicationId = null;
-        console.log("🔴 Ruta de repartidor eliminada de Supabase.");
-    }
-};
+  window.startDriverLocationBroadcast = async function(driverName, driverCategory) {
+      if (!window.supabaseClient) return;
+      
+      const lat = typeof currentGpsLat !== 'undefined' ? currentGpsLat : -17.3895;
+      const lng = typeof currentGpsLng !== 'undefined' ? currentGpsLng : -66.1568;
+      
+      const userStr = localStorage.getItem('notigas_user_data') || '{}';
+      let userId = null;
+      try { userId = JSON.parse(userStr).user_id; } catch(e){}
+      
+      if (!userId) {
+          console.error("No hay user_id para registrar la ruta.");
+          return;
+      }
+  
+      const { data, error } = await window.supabaseClient.from('rutas_repartidores').upsert([{
+          user_id: userId,
+          categoria: driverCategory || 'gas',
+          titulo: `Repartidor en Ruta: ${driverName}`,
+          ciudad: 'Cochabamba',
+          latitude: lat,
+          longitude: lng,
+          distribuidor_nombre: driverName,
+          garrafas_agotadas: false
+      }], { onConflict: 'user_id' }).select('id').single();
+  
+      if (error) {
+          console.error("Error al iniciar broadcast en Supabase:", error);
+      } else if (data) {
+          window.currentDriverPublicationId = data.id;
+          console.log("Ruta de repartidor creada/actualizada en Supabase, ID:", window.currentDriverPublicationId);
+          
+          if (window.driverLocationInterval) clearInterval(window.driverLocationInterval);
+          window.driverLocationInterval = setInterval(window.updateDriverLocation, 5000);
+      }
+  };
+  
+  window.updateDriverLocation = async function() {
+      if (!window.supabaseClient || !window.currentDriverPublicationId) return;
+      const lat = typeof currentGpsLat !== 'undefined' ? currentGpsLat : -17.3895;
+      const lng = typeof currentGpsLng !== 'undefined' ? currentGpsLng : -66.1568;
+  
+      const { error } = await window.supabaseClient.from('rutas_repartidores')
+          .update({ latitude: lat, longitude: lng })
+          .eq('id', window.currentDriverPublicationId);
+  
+      if (error) console.error("Error al actualizar ubicación en Supabase:", error);
+  };
+  
+  window.stopDriverLocationBroadcast = async function() {
+      if (window.driverLocationInterval) {
+          clearInterval(window.driverLocationInterval);
+          window.driverLocationInterval = null;
+      }
+      if (window.supabaseClient && window.currentDriverPublicationId) {
+          await window.supabaseClient.from('rutas_repartidores')
+              .delete()
+              .eq('id', window.currentDriverPublicationId);
+          window.currentDriverPublicationId = null;
+          console.log("Ruta de repartidor eliminada de Supabase.");
+      }
+  };
 
 // --- SUSCRIPCIONES EN TIEMPO REAL CON RECONEXIÓN AUTOMÁTICA ---
 let _realtimeChannel = null;
@@ -134,3 +138,4 @@ function _programarReconexionRealtime() {
         if (window.supabaseClient) window.iniciarSuscripcionesRealtime();
     }, delay);
 }
+

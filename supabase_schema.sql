@@ -323,11 +323,11 @@ ALTER TABLE public.publicaciones ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Lectura publica publicaciones" ON public.publicaciones;
 CREATE POLICY "Lectura publica publicaciones" ON public.publicaciones FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Insertar publicaciones anon" ON public.publicaciones;
-CREATE POLICY "Insertar publicaciones anon" ON public.publicaciones FOR INSERT WITH CHECK (true);
+CREATE POLICY "Insertar publicaciones autenticado" ON public.publicaciones FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
 DROP POLICY IF EXISTS "Actualizar publicaciones anon" ON public.publicaciones;
-CREATE POLICY "Actualizar publicaciones anon" ON public.publicaciones FOR UPDATE USING (true);
+CREATE POLICY "Actualizar publicaciones autenticado" ON public.publicaciones FOR UPDATE USING (auth.uid() IS NOT NULL);
 DROP POLICY IF EXISTS "Borrar publicaciones anon" ON public.publicaciones;
-CREATE POLICY "Borrar publicaciones anon" ON public.publicaciones FOR DELETE USING (true);
+CREATE POLICY "Borrar publicaciones autenticado" ON public.publicaciones FOR DELETE USING (auth.uid() IS NOT NULL);
 
 -- ADMIN_CREDENTIALS
 CREATE TABLE IF NOT EXISTS public.admin_credentials (
@@ -339,7 +339,7 @@ CREATE TABLE IF NOT EXISTS public.admin_credentials (
 );
 ALTER TABLE public.admin_credentials ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Lectura publica admin_credentials" ON public.admin_credentials;
-CREATE POLICY "Lectura publica admin_credentials" ON public.admin_credentials FOR SELECT USING (true);
+CREATE POLICY "Lectura admin credentials" ON public.admin_credentials FOR SELECT USING (false);
 
 -- REPORTES_SPAM
 CREATE TABLE IF NOT EXISTS public.reportes_spam (
@@ -368,6 +368,8 @@ DROP POLICY IF EXISTS "Lectura publica repartidores" ON public.repartidores;
 CREATE POLICY "Lectura publica repartidores" ON public.repartidores FOR SELECT USING (true);
 
 ALTER PUBLICATION supabase_realtime ADD TABLE public.publicaciones;
+
+
 
 
 

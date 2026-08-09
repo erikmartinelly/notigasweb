@@ -9,10 +9,12 @@
    - Reducción de carga en servidor DB: 96.6% de ahorro en IOPS y escrituras.
    ========================================================================== */
 
-const DRIVER_GPS_BROADCAST_INTERVAL_MS = 30000; // 30 Segundos (Recomendación Técnica Anti-Saturación)
-const TRUCK_ANIM_INTERVAL_MS = 80; // 80ms = ~12 FPS para movimiento suave del camión
+const DRIVER_GPS_BROADCAST_INTERVAL_MS = 30000;
+const TRUCK_ANIM_INTERVAL_MS = 80;
 
 let map, userMarker, truckMarker;
+window.activeTruckTimers = {};
+window.neighborOrderTimers = {};
 let mapTileLayers = {};
 let animationTimer = null;
 let lastGpsBroadcastTime = 0;
@@ -209,13 +211,14 @@ function actualizarRepartidorEnMapa(data) {
     activeTruckMarkers[truckId] = marker;
   }
   
-  // Clean up stale trucks
-  setTimeout(() => {
-    if (activeTruckMarkers[truckId]) {
-      map.removeLayer(activeTruckMarkers[truckId]);
-      delete activeTruckMarkers[truckId];
-    }
-  }, 10 * 60000);
+    // Clean up stale trucks
+    if (window.activeTruckTimers[truckId]) clearTimeout(window.activeTruckTimers[truckId]);
+    window.activeTruckTimers[truckId] = setTimeout(() => {
+      if (activeTruckMarkers[truckId]) {
+        map.removeLayer(activeTruckMarkers[truckId]);
+        delete activeTruckMarkers[truckId];
+      }
+    }, 10 * 60000);
 }
 
 function agregarPedidoVecinoEnMapa(order) {
@@ -254,13 +257,14 @@ function agregarPedidoVecinoEnMapa(order) {
   `);
   neighborOrderMarkers[orderId] = marker;
 
-  // Auto remove after 48 horas just in case
-  setTimeout(() => {
-    if (neighborOrderMarkers[orderId]) {
-      map.removeLayer(neighborOrderMarkers[orderId]);
-      delete neighborOrderMarkers[orderId];
-    }
-  }, 48 * 60 * 60 * 1000);
+    // Auto remove after 48 horas just in case
+    if (window.neighborOrderTimers[orderId]) clearTimeout(window.neighborOrderTimers[orderId]);
+    window.neighborOrderTimers[orderId] = setTimeout(() => {
+      if (neighborOrderMarkers[orderId]) {
+        map.removeLayer(neighborOrderMarkers[orderId]);
+        delete neighborOrderMarkers[orderId];
+      }
+    }, 48 * 60 * 60 * 1000);
 }
 
 function removerPublicacionDeMapa(id) {
@@ -1483,5 +1487,6 @@ function iniciarSuscripcionMapaRealtime() {
             }
         });
 }
+
 
 
