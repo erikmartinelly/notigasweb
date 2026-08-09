@@ -30,6 +30,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 DROP TRIGGER IF EXISTS on_auth_user_created_role ON auth.users;
+DROP TRIGGER IF EXISTS on_auth_user_created_role ON auth.users;
 CREATE TRIGGER on_auth_user_created_role
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user_role();
@@ -57,6 +58,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS on_auth_user_created_profile ON auth.users;
 DROP TRIGGER IF EXISTS on_auth_user_created_profile ON auth.users;
 CREATE TRIGGER on_auth_user_created_profile
   AFTER INSERT ON auth.users
@@ -107,6 +109,7 @@ CREATE TABLE IF NOT EXISTS public.pedidos (
 CREATE INDEX IF NOT EXISTS idx_pedidos_ciudad_otb ON public.pedidos (ciudad, barrio_otb);
 CREATE INDEX IF NOT EXISTS idx_pedidos_created_at ON public.pedidos (created_at);
 
+DROP TRIGGER IF EXISTS sanitize_pedidos ON public.pedidos;
 CREATE TRIGGER sanitize_pedidos
   BEFORE INSERT OR UPDATE ON public.pedidos
   FOR EACH ROW EXECUTE PROCEDURE public.sanitize_html();
@@ -128,6 +131,7 @@ CREATE TABLE IF NOT EXISTS public.avisos (
 
 CREATE INDEX IF NOT EXISTS idx_avisos_ciudad_otb ON public.avisos (ciudad, barrio_otb);
 
+DROP TRIGGER IF EXISTS sanitize_avisos ON public.avisos;
 CREATE TRIGGER sanitize_avisos
   BEFORE INSERT OR UPDATE ON public.avisos
   FOR EACH ROW EXECUTE PROCEDURE public.sanitize_html();
@@ -164,6 +168,7 @@ CREATE TABLE IF NOT EXISTS public.mensajes_chat_privados (
 
 CREATE INDEX IF NOT EXISTS idx_chat_categoria_otb ON public.mensajes_chat_privados (categoria_servicio, barrio_otb);
 
+DROP TRIGGER IF EXISTS sanitize_chat ON public.mensajes_chat_privados;
 CREATE TRIGGER sanitize_chat
   BEFORE INSERT OR UPDATE ON public.mensajes_chat_privados
   FOR EACH ROW EXECUTE PROCEDURE public.sanitize_html_chat();
@@ -368,6 +373,7 @@ DROP POLICY IF EXISTS "Lectura publica repartidores" ON public.repartidores;
 CREATE POLICY "Lectura publica repartidores" ON public.repartidores FOR SELECT USING (true);
 
 ALTER PUBLICATION supabase_realtime ADD TABLE public.publicaciones;
+
 
 
 
