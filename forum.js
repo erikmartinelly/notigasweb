@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // Suscripción Realtime a Avisos de Barrio
       window.supabaseClient.channel('forum_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'publicaciones', filter: 'tipo=eq.avisoBarrio' }, payload => {
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'avisos' }, payload => {
             renderForumFeed(); // Recargar el foro completo cuando haya cambios (podría optimizarse)
         })
         .subscribe();
@@ -33,9 +33,8 @@ async function renderForumFeed() {
   const currentAdmin = getVerifiedAdminEmail();
   const isAdmin = currentAdmin && (currentAdmin.includes('erikmartinelly') || currentAdmin.includes('leonmartinelly'));
 
-  const { data: localPosts, error } = await window.supabaseClient.from('publicaciones')
+  const { data: localPosts, error } = await window.supabaseClient.from('avisos')
     .select('*')
-    .eq('tipo', 'avisoBarrio')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -121,7 +120,7 @@ async function renderForumFeed() {
 
 async function borrarPostForumAdmin(postId) {
   if (confirm("🗑️ ¿Deseas eliminar permanentemente esta publicación del Tablón Vecinal?")) {
-      const { error } = await window.supabaseClient.from('publicaciones').delete().eq('id', postId);
+      const { error } = await window.supabaseClient.from('avisos').delete().eq('id', postId);
       if (error) {
           alert('Error borrando el post');
           return;
@@ -145,7 +144,7 @@ async function votarPost(el, delta, postId) {
     
     // FIX #9: Actualización atómica de votos — elimina la race condition.
     // Usa una expresión SQL directa en lugar de leer+escribir en dos pasos.
-    await window.supabaseClient.rpc('incrementar_votos', { publicacion_id: postId, incremento: delta });
+    await window.supabaseClient.rpc('incrementar_votos_aviso', { aviso_id: postId, incremento: delta });
   }
 }
 
@@ -188,18 +187,13 @@ async function crearNuevoPost() {
     return;
   }
 
-  const { error } = await window.supabaseClient.from('publicaciones').insert([{
-    tipo: 'avisoBarrio',
+  const { error } = await window.supabaseClient.from('avisos').insert([{
     categoria: cat,
     titulo: title,
     descripcion: desc,
     ciudad: 'Cochabamba',
     barrio_otb: 'Global',
-    user_email: 'vecino@notigas.com', // mock email for now
-    user_role: 'comprador',
-    latitude: typeof currentGpsLat !== 'undefined' ? currentGpsLat : -17.3895,
-    longitude: typeof currentGpsLng !== 'undefined' ? currentGpsLng : -66.1568,
-    comentarios: [],
+    user_id: window.supabaseClient.auth.user?.()?.id || null, // Requiere auth
     votos: 1
   }]);
 
@@ -235,7 +229,7 @@ async function abrirComentariosPost(postId, title, desc, cat, el) {
   
   modal.style.display = 'flex';
   
-  const { data } = await window.supabaseClient.from('publicaciones').select('comentarios').eq('id', postId).single();
+  const { data } = await window.supabaseClient.from('avisos').select('comentarios').eq('id', postId).single();
   const comments = data ? (data.comentarios || []) : [];
   renderCommentsListUI(comments);
 }
@@ -287,7 +281,7 @@ async function votarComentario(commentId, delta) {
     span.innerText = val + delta;
   }
 
-  const { data } = await window.supabaseClient.from('publicaciones').select('comentarios').eq('id', postId).single();
+  const { data } = await window.supabaseClient.from('avisos').select('comentarios').eq('id', postId).single();
   let comments = data ? (data.comentarios || []) : [];
   
   let found = false;
@@ -301,7 +295,7 @@ async function votarComentario(commentId, delta) {
   });
 
   if (found) {
-    await window.supabaseClient.from('publicaciones').update({ comentarios: comments }).eq('id', postId);
+    await window.supabaseClient.from('avisos').update({ comentarios: comments }).eq('id', postId);
   }
 }
 
@@ -338,12 +332,12 @@ async function agregarComentarioPost() {
   };
 
   // Obtener los comentarios actuales
-  const { data } = await window.supabaseClient.from('publicaciones').select('comentarios').eq('id', postId).single();
+  const { data } = await window.supabaseClient.from('avisos').select('comentarios').eq('id', postId).single();
   const comments = data ? (data.comentarios || []) : [];
   comments.push(newComment);
 
   // Actualizar en Supabase
-  const { error } = await window.supabaseClient.from('publicaciones').update({ comentarios: comments }).eq('id', postId);
+  const { error } = await window.supabaseClient.from('avisos').update({ comentarios: comments }).eq('id', postId);
   
   if (!error) {
       input.value = '';

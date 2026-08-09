@@ -402,9 +402,8 @@ async function renderDriverOrdersList() {
   if (window.supabaseClient) {
     const activeWindow = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
     const { data } = await window.supabaseClient
-      .from('publicaciones')
+      .from('pedidos')
       .select('*')
-      .eq('tipo', 'pedido')
       .gte('created_at', activeWindow);
       
     if (data) {
@@ -460,7 +459,7 @@ async function aceptarPedidoRepartidor(id) {
     return;
   }
   showLoadingOverlay('Aceptando pedido...');
-  const { error } = await window.supabaseClient.from('publicaciones').delete().eq('id', id);
+  const { error } = await window.supabaseClient.from('pedidos').delete().eq('id', id);
   hideLoadingOverlay();
   
   if (error) {
@@ -673,19 +672,15 @@ function confirmarPedido() {
 
   localStorage.setItem('notigas_active_order', JSON.stringify(activeOrderData));
   // Transmitir a Supabase (Realtime para el Mapa)
-  if (window.supabaseClient) {
-    window.supabaseClient.from('publicaciones').insert([{
-        tipo: 'pedido',
+    window.supabaseClient.from('pedidos').insert([{
         categoria: cat,
-        titulo: `Pedido Vecinal: ${cat}`,
-        descripcion: `Dirección: ${direccion}. Teléfono: ${telefono}`,
-        ciudad: 'Cochabamba',
-        barrio_otb: 'Global',
-        user_email: (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo@notigas.com',
-        user_role: 'comprador',
+        cantidad: '1 unidad',
+        direccion: direccion,
+        telefono: telefono,
+        buyer_name: buyerName,
+        user_id: window.supabaseClient.auth.user?.()?.id || null, // requiere auth
         latitude: pos.lat,
-        longitude: pos.lng,
-        distribuidor_nombre: buyerName
+        longitude: pos.lng
     }]).then(({ error }) => {
         if(error) console.error("Error enviando pedido a Supabase:", error);
         else console.log("✅ Pedido guardado en Supabase.");
@@ -707,7 +702,7 @@ function cancelarPedidoActivo() {
   showConfirmModal('❌', '¿Cancelar tu pedido?', 'Tu pedido activo será eliminado del mapa y los repartidores dejarán de verlo.', 'Sí, cancelar', async () => {
     localStorage.removeItem('notigas_active_order');
     if (window.supabaseClient && typeof getCurrentUserId === 'function') {
-      await window.supabaseClient.from('publicaciones').delete().eq('user_email', getCurrentUserId()).eq('tipo', 'pedido');
+      await window.supabaseClient.from('pedidos').delete().eq('user_id', window.supabaseClient.auth.user?.()?.id);
     }
     checkActiveOrderStatus();
     if (typeof renderActiveOrdersMap === 'function') {

@@ -614,12 +614,41 @@
         </button>
       </div>
 
+      <!-- SELECCIONADOR DE MÉTODO DE INGRESO -->
+      <div id="authMethodSelector" style="text-align:center; margin-bottom: 20px; display:flex; justify-content:center; gap:10px;">
+        <button class="role-select-btn active" id="btnAuthMethodEmail" onclick="selectAuthMethod('email')">
+          <i class="fa-solid fa-envelope"></i> Correo
+        </button>
+        <button class="role-select-btn" id="btnAuthMethodGoogle" onclick="selectAuthMethod('google')">
+          <i class="fa-brands fa-google"></i> Google
+        </button>
+      </div>
+
       <!-- SELECCIÓN DE MÉTODO DE INGRESO ÚNICO (CUENTA GOOGLE) -->
       <div id="authPaneGoogle" class="auth-method-pane" style="display: none;">
         <p style="font-size: 11px; color: #CBD5E1; margin: 14px 0; text-align: center;">
           Ingresa con 1 solo clic utilizando tu cuenta verificada de Google Gmail:
         </p>
         <div id="g_id_onload_container" style="display: flex; justify-content: center; margin-bottom: 10px;"></div>
+      </div>
+
+      <!-- MÉTODO EMAIL / PASSWORD -->
+      <div id="authPaneEmail" class="auth-method-pane" style="display: block;">
+        <p style="font-size: 11px; color: #CBD5E1; margin: 14px 0; text-align: center;">
+          Ingresa tus credenciales para acceder:
+        </p>
+        <div class="form-group">
+          <label>Correo Electrónico:</label>
+          <input type="email" id="authEmail" placeholder="ejemplo@correo.com">
+        </div>
+        <div class="form-group">
+          <label>Contraseña:</label>
+          <input type="password" id="authPassword" placeholder="Tu contraseña segura">
+        </div>
+        <div style="display:flex; gap:10px;">
+            <button class="btn-submit" onclick="iniciarSesionEmail()" style="flex:1;">Ingresar</button>
+            <button class="btn-submit" onclick="registrarEmail()" style="flex:1; background-color: #334155;">Registrarse</button>
+        </div>
       </div>
     </div>
   </div>

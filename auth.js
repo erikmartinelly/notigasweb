@@ -352,15 +352,15 @@ async function guardarRegistroUnico() {
   if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Asegurando conexión...');
   
   // 1. Iniciar sesión anónima en Supabase (requiere habilitar Anonymous Auth en Supabase)
-  const { data: authData, error: authError } = await window.supabaseClient.auth.signInAnonymously();
-  if (authError) {
+  const { data: { session }, error: authError } = await window.supabaseClient.auth.getSession();
+  if (!session || authError) {
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-    alert("❌ Error de seguridad: No se pudo generar una sesión anónima en Supabase. Asegúrate de haber habilitado 'Anonymous Sign-ins' en el panel de Supabase Auth.");
+    alert("❌ Error de seguridad: Debes iniciar sesión con Google o Email antes de continuar.");
     console.error(authError);
     return;
   }
   
-  const userId = authData.session.user.id;
+  const userId = session.user.id;
   if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
 
   if (currentSelectedRole === 'driver') {
@@ -479,13 +479,13 @@ async function iniciarSesionRepartidor() {
 
   // Asegurar que tenemos una sesión de Supabase Auth para RLS
   if (!existingUserId) {
-    const { data: authData, error: authError } = await window.supabaseClient.auth.signInAnonymously();
-    if (authError) {
+    const { data: { session }, error: authError } = await window.supabaseClient.auth.getSession();
+    if (!session || authError) {
       if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-      alert("Error: No se pudo generar una sesión en Supabase.");
+      alert("Error: Debes iniciar sesión primero.");
       return;
     }
-    existingUserId = authData.session.user.id;
+    existingUserId = session.user.id;
   }
 
   const ciudad = (document.getElementById('inputDriverCiudad')?.value || '').trim() || 'santacruz';
@@ -674,9 +674,9 @@ async function migrarDatosAntiguosARepartidor() {
     
     let existingUserId = driverProfile.user_id;
     if (!existingUserId) {
-      const { data: authData, error: authError } = await window.supabaseClient.auth.signInAnonymously();
-      if (!authError) {
-        existingUserId = authData.session.user.id;
+      const { data: { session }, error: authError } = await window.supabaseClient.auth.getSession();
+      if (session) {
+        existingUserId = session.user.id;
       }
     }
 
@@ -721,3 +721,85 @@ async function migrarDatosAntiguosARepartidor() {
 }
 
 const iniciarSesionChofer = iniciarSesionRepartidor;
+
+async function iniciarSesionEmail() {
+  const email = document.getElementById('authEmail').value;
+  const password = document.getElementById('authPassword').value;
+  
+  if (!email || !password) {
+    if (typeof showToast === 'function') showToast('Error', 'Ingresa correo y contraseña', 'error');
+    return;
+  }
+  
+  if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Autenticando...');
+  
+  const { data, error } = await window.supabaseClient.auth.signInWithPassword({
+    email,
+    password
+  });
+  
+  if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+  
+  if (error) {
+    if (typeof showToast === 'function') showToast('Error', error.message, 'error');
+    return;
+  }
+  
+  procesarSesionExitosa(data.user);
+}
+
+async function registrarEmail() {
+  const email = document.getElementById('authEmail').value;
+  const password = document.getElementById('authPassword').value;
+  
+  if (!email || !password) {
+    if (typeof showToast === 'function') showToast('Error', 'Ingresa correo y contraseña', 'error');
+    return;
+  }
+  
+  if (password.length < 6) {
+    if (typeof showToast === 'function') showToast('Error', 'La contraseña debe tener al menos 6 caracteres', 'error');
+    return;
+  }
+  
+  if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Registrando...');
+  
+  const { data, error } = await window.supabaseClient.auth.signUp({
+    email,
+    password
+  });
+  
+  if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+  
+  if (error) {
+    if (typeof showToast === 'function') showToast('Error', error.message, 'error');
+    return;
+  }
+  
+  if (typeof showToast === 'function') showToast('Éxito', 'Registro completado. Ahora inicia sesión.', 'success');
+}
+
+function procesarSesionExitosa(user) {
+  const gmail = user.email.toLowerCase().trim();
+  const nombre = user.user_metadata?.full_name || gmail.split('@')[0];
+  
+  const clienteData = { 
+    role: currentSelectedRole === 'driver' ? 'repartidor' : 'vecino', 
+    gmail, 
+    nombre, 
+    user_id: user.id 
+  };
+  
+  localStorage.setItem('notigas_user_data', JSON.stringify(clienteData));
+  
+  const modalAuth = document.getElementById('modalWelcomeAuth');
+  if (modalAuth) modalAuth.style.display = 'none';
+  
+  if (currentSelectedRole === 'driver') {
+    if (typeof setAppMode === 'function') setAppMode('driver');
+    if (typeof showToast === 'function') showToast('✅ Sesión Segura', `Ingresaste como Repartidor (${gmail})`, 'success', 2000);
+  } else {
+    if (typeof setAppMode === 'function') setAppMode('buyer');
+    if (typeof showToast === 'function') showToast('✅ Sesión Segura', `Bienvenido a NOTIGAS (${gmail})`, 'success', 2000);
+  }
+}

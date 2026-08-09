@@ -145,9 +145,8 @@ async function cargarPedidosVecinalesEnVivo() {
   
   try {
     const { data, error } = await window.supabaseClient
-      .from('publicaciones')
+      .from('pedidos')
       .select('*')
-      .eq('tipo', 'pedido')
       .gte('created_at', activeWindow);
     
     if (error) {
@@ -160,9 +159,8 @@ async function cargarPedidosVecinalesEnVivo() {
     // FETCH LIVE TRUCKS (Last 10 minutes to avoid stale trucks)
     const tenMinsAgo = new Date(Date.now() - 10 * 60000).toISOString();
     const res = await window.supabaseClient
-      .from('publicaciones')
+      .from('rutas_repartidores')
       .select('*')
-      .eq('tipo', 'rutaDistribuidor')
       .gte('created_at', tenMinsAgo);
       
     if (res.data && !res.error) {
@@ -1451,30 +1449,33 @@ function iniciarSuscripcionMapaRealtime() {
         return;
     }
 
-    const channel = window.supabaseClient.channel('mapa_realtime')
+    window.supabaseClient.channel('mapa_realtime_pedidos')
         .on('postgres_changes', 
-            { event: '*', schema: 'public', table: 'publicaciones' },
+            { event: '*', schema: 'public', table: 'pedidos' },
             (payload) => {
-                console.log("🔄 Evento Realtime en mapa:", payload);
                 const data = payload.new;
-                const oldData = payload.old;
-
                 if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-                    if (data.tipo === 'pedido') {
-                        // Agregar o actualizar pedido vecino
-                        agregarPedidoVecinoEnMapa(data);
-                    } else if (data.tipo === 'rutaDistribuidor') {
-                        // Agregar o actualizar camión en ruta
-                        actualizarRepartidorEnMapa(data);
-                    }
+                    agregarPedidoVecinoEnMapa(data);
                 } else if (payload.eventType === 'DELETE') {
-                    // Eliminar marcador del mapa
-                    const id = oldData.id;
-                    removerPublicacionDeMapa(id);
+                    const oldData = payload.old;
+                    if (oldData && oldData.id) removerPublicacionDeMapa(oldData.id);
                 }
             }
-        )
-        .subscribe((status, err) => {
+        ).subscribe();
+
+    window.supabaseClient.channel('mapa_realtime_rutas')
+        .on('postgres_changes', 
+            { event: '*', schema: 'public', table: 'rutas_repartidores' },
+            (payload) => {
+                const data = payload.new;
+                if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+                    actualizarRepartidorEnMapa(data);
+                } else if (payload.eventType === 'DELETE') {
+                    const oldData = payload.old;
+                    if (oldData && oldData.id) removerPublicacionDeMapa(oldData.id);
+                }
+            }
+        ).subscribe((status, err) => {
             if (status === 'SUBSCRIBED') {
                 console.log("📡 Mapa suscrito a Realtime correctamente.");
             } else if (err) {
