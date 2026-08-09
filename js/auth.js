@@ -15,19 +15,18 @@ let databaseEmails = [
 ];
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Siempre mostrar el modal de seleccion de rol primero
+  const modalAuth = document.getElementById('modalWelcomeAuth');
+  if (modalAuth) modalAuth.style.display = 'flex';
+  
+  // Iniciar One Tap en segundo plano
+  initGoogleOneTap();
+
   const savedUser = localStorage.getItem('notigas_user_data');
-  if (!savedUser) {
-    const modalAuth = document.getElementById('modalWelcomeAuth');
-    if (modalAuth) modalAuth.style.display = 'flex';
-    initGoogleOneTap();
-  } else {
+  if (savedUser) {
     try {
       const u = JSON.parse(savedUser);
-      if (u.role === 'repartidor') {
-        if (typeof setAppMode === 'function') setAppMode('driver');
-      } else {
-        if (typeof setAppMode === 'function') setAppMode('buyer');
-      }
+      // Solo configurar adminEmails y databaseEmails, SIN entrar a la app automaticamente
       if (u.gmail) {
         databaseEmails.push({ 
           gmail: u.gmail, 
@@ -39,7 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (adminEmails.includes(u.gmail.toLowerCase())) {
           const btnAdmin = document.getElementById('btnAdminAccessQuick');
           if (btnAdmin) btnAdmin.style.display = 'flex';
-          // Ensure token is somewhat set so admin.js functions work if they depend on it
           if (!sessionStorage.getItem('notigas_admin_token')) {
              sessionStorage.setItem('notigas_admin_token', u.gmail);
           }
@@ -100,6 +98,33 @@ function selectAuthRole(role) {
     } else {
       btnDriver.classList.remove('active');
     }
+  }
+
+  // Validar sesión activa ANTES de pedir logueo
+  const savedUserStr = localStorage.getItem('notigas_user_data');
+  if (savedUserStr) {
+    try {
+      const u = JSON.parse(savedUserStr);
+      if (u && u.user_id) {
+        // Actualizar el rol según lo que escogió hoy
+        u.role = role === 'driver' ? 'repartidor' : 'vecino';
+        localStorage.setItem('notigas_user_data', JSON.stringify(u));
+        
+        // Cerrar modal y arrancar app directamente
+        const modalAuth = document.getElementById('modalWelcomeAuth');
+        if (modalAuth) modalAuth.style.display = 'none';
+        
+        if (typeof setAppMode === 'function') {
+           setAppMode(role);
+        }
+        return; // Detener flujo (ya entró directo)
+      }
+    } catch(e) {}
+  }
+
+  // SI NO ESTÁ LOGUEADO -> Mostrar Paso 2 (Registro/Login)
+  if (typeof showAuthStep === 'function') {
+    showAuthStep(2);
   }
 
   // AL SELECCIONAR REPARTIDOR: Activar vista de campos y ajustar botón
