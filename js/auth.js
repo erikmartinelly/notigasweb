@@ -776,14 +776,16 @@ async function registrarEmail() {
     return;
   }
   
-  if (typeof showToast === 'function') showToast('Éxito', 'Registro completado. Ahora inicia sesión.', 'success');
+  if (typeof showToast === 'function') showToast('Éxito', 'Registro completado. Ingresando...', 'success');
+  
+  if (data && data.user) {
+    procesarSesionExitosa(data.user);
+  }
 }
 
 function procesarSesionExitosa(user) {
   const gmail = user.email.toLowerCase().trim();
   const nombre = user.user_metadata?.full_name || gmail.split('@')[0];
-  
-  const clienteData = { 
     role: currentSelectedRole === 'driver' ? 'repartidor' : 'vecino', 
     gmail, 
     nombre, 
