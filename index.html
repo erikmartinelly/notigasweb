@@ -598,74 +598,78 @@
 
   <!-- MODAL DE INGRESO / AUTENTICACIÃ“N MEJORADO CON SELECCIÃ“N DE ROL Y MÃ‰TODOS DE INGRESO -->
   <div class="modal" id="modalWelcomeAuth">
-    <div class="modal-content" style="max-width: 460px;">
+    <div class="modal-content" style="max-width: 460px; min-height: 250px;">
       <div class="modal-title" style="justify-content: center; text-align: center; font-size: 18px; margin-bottom: 4px;">
-        <span>ðŸ‘‹ Bienvenido a NOTIGAS</span>
+        <span>👋 Bienvenido a NOTIGAS</span>
       </div>
-      <p style="font-size: 11px; color: #94A3B8; text-align: center; margin-bottom: 14px;">
-        Selecciona tu rol e ingresa con tu Cuenta Google o Correo ElectrÃ³nico.
-      </p>
-
-      <div id="roleSelectionButtons" style="text-align:center; margin-bottom: 20px; margin-top: 15px; display:flex; flex-direction:column; gap:12px; align-items:center;">
-        <a href="#" onclick="document.getElementById('roleSelectionButtons').style.display='none'; document.getElementById('authPaneGoogle').style.display='block'; selectAuthRole('buyer');" class="btn-premium-buyer">
-          <i class="fa-solid fa-cart-shopping" style="margin-right: 8px;"></i> Ingreso Compradores
-        </a>
-        <a href="#" onclick="document.getElementById('roleSelectionButtons').style.display='none'; document.getElementById('authPaneGoogle').style.display='block'; selectAuthRole('driver');" class="btn-premium-driver">
-          <i class="fa-solid fa-truck-fast" style="margin-right: 8px;"></i> Ingreso Repartidores
-        </a>
-      </div>
-
-      <!-- SELECCIONADOR VISUAL DE ROL: COMPRADOR VS REPARTIDOR (OCULTO POR DEFECTO PARA NO CONFUNDIR AL COMPRADOR) -->
-      <div class="role-selector-container" id="authRoleSelectorContainer" style="display: none;">
-        <button class="role-select-btn active" id="btnRoleBuyer" onclick="selectAuthRole('buyer')">
-          <i class="fa-solid fa-cart-shopping"></i>
-          <span>ðŸ›ï¸ COMPRADOR</span>
-        </button>
-        <button class="role-select-btn" id="btnRoleDriver" onclick="selectAuthRole('driver')">
-          <i class="fa-solid fa-truck-fast"></i>
-          <span>ðŸš› REPARTIDOR</span>
-        </button>
-      </div>
-
-      <!-- SELECCIONADOR DE MÃ‰TODO DE INGRESO -->
-      <div id="authMethodSelector" style="text-align:center; margin-bottom: 20px; display:flex; justify-content:center; gap:10px;">
-        <button class="role-select-btn active" id="btnAuthMethodEmail" onclick="selectAuthMethod('email')">
-          <i class="fa-solid fa-envelope"></i> Correo
-        </button>
-        <button class="role-select-btn" id="btnAuthMethodGoogle" onclick="selectAuthMethod('google')">
-          <i class="fa-brands fa-google"></i> Google
-        </button>
-      </div>
-
-      <!-- SELECCIÃ“N DE MÃ‰TODO DE INGRESO ÃšNICO (CUENTA GOOGLE) -->
-      <div id="authPaneGoogle" class="auth-method-pane" style="display: none;">
-        <p style="font-size: 11px; color: #CBD5E1; margin: 14px 0; text-align: center;">
-          Ingresa con 1 solo clic utilizando tu cuenta verificada de Google Gmail:
+      
+      <!-- PASO 1: SELECCIÓN DE ROL -->
+      <div id="authStep1_Role">
+        <p style="font-size: 11px; color: #94A3B8; text-align: center; margin-bottom: 14px;">
+          Selecciona cómo deseas ingresar a la plataforma:
         </p>
-        <div id="g_id_onload_container" style="display: flex; justify-content: center; margin-bottom: 10px;"></div>
+        <div style="display:flex; flex-direction:column; gap:12px; align-items:center;">
+          <a href="#" onclick="selectAuthRole('buyer'); showAuthStep(2);" class="btn-premium-buyer" style="width:100%;">
+            <i class="fa-solid fa-cart-shopping" style="margin-right: 8px;"></i> Ingreso Compradores
+          </a>
+          <a href="#" onclick="selectAuthRole('driver'); showAuthStep(2);" class="btn-premium-driver" style="width:100%;">
+            <i class="fa-solid fa-truck-fast" style="margin-right: 8px;"></i> Ingreso Repartidores
+          </a>
+        </div>
       </div>
 
-      <!-- MÃ‰TODO EMAIL / PASSWORD -->
-      <div id="authPaneEmail" class="auth-method-pane" style="display: block;">
-        <p style="font-size: 11px; color: #CBD5E1; margin: 14px 0; text-align: center;">
-          Ingresa tus credenciales para acceder:
+      <!-- PASO 2: ACCIÓN (REGISTRO O LOGIN) -->
+      <div id="authStep2_Action" style="display: none;">
+        <p style="font-size: 11px; color: #94A3B8; text-align: center; margin-bottom: 14px;">
+          ¿Qué deseas hacer?
         </p>
-        <div class="form-group">
-          <label>Correo ElectrÃ³nico:</label>
-          <input type="email" id="authEmail" placeholder="ejemplo@correo.com">
+        <div style="display:flex; flex-direction:column; gap:12px; align-items:center;">
+          <a href="#" onclick="setAuthAction('login'); showAuthStep(3);" style="width:100%; background: linear-gradient(135deg, #0288D1, #0277BD); padding: 12px; border-radius: 10px; color: white; text-align: center; font-weight: 800; text-decoration: none;">
+            <i class="fa-solid fa-right-to-bracket" style="margin-right: 8px;"></i> INICIAR SESIÓN
+          </a>
+          <a href="#" onclick="setAuthAction('register'); showAuthStep(3);" style="width:100%; background: linear-gradient(135deg, #10B981, #059669); padding: 12px; border-radius: 10px; color: white; text-align: center; font-weight: 800; text-decoration: none;">
+            <i class="fa-solid fa-user-plus" style="margin-right: 8px;"></i> REGISTRARSE
+          </a>
         </div>
-        <div class="form-group">
-          <label>ContraseÃ±a:</label>
-          <input type="password" id="authPassword" placeholder="Tu contraseÃ±a segura">
+        <button onclick="showAuthStep(1)" style="margin-top: 15px; background: none; border: none; color: #94A3B8; cursor: pointer; width: 100%; text-align: center; font-size: 12px;">← Volver</button>
+      </div>
+
+      <!-- PASO 3: MÉTODO (GOOGLE O EMAIL) -->
+      <div id="authStep3_Method" style="display: none;">
+        <p id="authStep3Title" style="font-size: 11px; color: #94A3B8; text-align: center; margin-bottom: 14px;">
+          Selecciona el método:
+        </p>
+        <div id="authMethodSelector" style="text-align:center; margin-bottom: 20px; display:flex; justify-content:center; gap:10px;">
+          <button class="role-select-btn active" id="btnAuthMethodEmail" onclick="selectAuthMethod('email')">
+            <i class="fa-solid fa-envelope"></i> Correo
+          </button>
+          <button class="role-select-btn" id="btnAuthMethodGoogle" onclick="selectAuthMethod('google')">
+            <i class="fa-brands fa-google"></i> Google
+          </button>
         </div>
-        <div style="display:flex; gap:10px;">
-            <button class="btn-submit" onclick="iniciarSesionEmail()" style="flex:1;">Ingresar</button>
-            <button class="btn-submit" onclick="registrarEmail()" style="flex:1; background-color: #334155;">Registrarse</button>
+
+        <div id="authPaneGoogle" class="auth-method-pane" style="display: none;">
+          <p style="font-size: 11px; color: #CBD5E1; margin: 14px 0; text-align: center;">
+            Continuar de forma segura con tu cuenta verificada de Gmail:
+          </p>
+          <div id="g_id_onload_container" style="display: flex; justify-content: center; margin-bottom: 10px;"></div>
         </div>
+
+        <div id="authPaneEmail" class="auth-method-pane" style="display: block;">
+          <div class="form-group">
+            <label>Correo Electrónico:</label>
+            <input type="email" id="authEmail" placeholder="ejemplo@correo.com">
+          </div>
+          <div class="form-group">
+            <label>Contraseña:</label>
+            <input type="password" id="authPassword" placeholder="Tu contraseña segura">
+          </div>
+          <button class="btn-submit" id="btnEmailAction" onclick="procesarAccionEmail()" style="width:100%;">Continuar</button>
+        </div>
+        <button onclick="showAuthStep(2)" style="margin-top: 15px; background: none; border: none; color: #94A3B8; cursor: pointer; width: 100%; text-align: center; font-size: 12px;">← Volver</button>
       </div>
     </div>
   </div>
-
   <!-- MODAL DE DENUNCIA PARA REPORTAR ACOSO O CONTENIDO INAPROPIADO -->
   <div class="modal" id="modalReport">
     <div class="modal-content">

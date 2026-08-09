@@ -1,4 +1,4 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    NOTIGAS - MÓDULO DE AUTENTICACIÓN & GOOGLE IDENTITY SERVICES (1-TAP SIGN-IN)
    ========================================================================== */
 // FIX #16: escapeHtmlStr centralizada en state.js — eliminada aquí para evitar conflictos.
@@ -803,3 +803,33 @@ function procesarSesionExitosa(user) {
     if (typeof showToast === 'function') showToast('✅ Sesión Segura', `Bienvenido a NOTIGAS (${gmail})`, 'success', 2000);
   }
 }
+
+
+let currentAuthAction = 'login'; // 'login' or 'register'
+
+window.showAuthStep = function(step) {
+  document.getElementById('authStep1_Role').style.display = (step === 1) ? 'block' : 'none';
+  document.getElementById('authStep2_Action').style.display = (step === 2) ? 'block' : 'none';
+  document.getElementById('authStep3_Method').style.display = (step === 3) ? 'block' : 'none';
+  
+  if (step === 3) {
+    document.getElementById('btnEmailAction').innerText = (currentAuthAction === 'login') ? 'Ingresar' : 'Registrarse';
+    document.getElementById('authStep3Title').innerText = (currentAuthAction === 'login') ? 'Selecciona método de ingreso:' : 'Selecciona método de registro:';
+  }
+};
+
+window.setAuthAction = function(action) {
+  currentAuthAction = action;
+};
+
+window.selectAuthRole = function(role) {
+  currentSelectedRole = role;
+};
+
+window.procesarAccionEmail = async function() {
+  if (currentAuthAction === 'login') {
+    await iniciarSesionEmail();
+  } else {
+    await registrarEmail();
+  }
+};
