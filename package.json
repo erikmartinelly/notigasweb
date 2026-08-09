@@ -4,11 +4,11 @@
   "description": "NOTIGAS Node.js Web App for Hostinger",
   "main": "server.js",
   "scripts": {
-    "start": "npx serve .",
+    "start": "node server.js",
     "build": "echo OK"
   },
   "dependencies": {
-    "serve": "^14.2.0"
+    "express": "^4.19.2"
   },
   "engines": {
     "node": ">=18.0.0"
