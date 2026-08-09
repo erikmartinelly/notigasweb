@@ -102,11 +102,11 @@ function initNotigasMap() {
 
   L.control.zoom({ position: 'topright' }).addTo(map);
 
-  // CartoDB Voyager: apariencia moderna estilo Google Maps, Costo 0, sin API key
-  mapTileLayers['osm'] = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+  // Google Maps Tiles Directos: Apariencia 100% Google Maps (Costo 0)
+  mapTileLayers['osm'] = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
     maxZoom: 20,
-    subdomains: 'abcd',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+    attribution: '&copy; <a href="https://www.google.com/maps">Google Maps</a>'
   });
 
   mapTileLayers['osm'].addTo(map);
