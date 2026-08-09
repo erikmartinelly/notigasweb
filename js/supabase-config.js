@@ -2,6 +2,46 @@
 const SUPABASE_URL = 'https://yxzzfqyehllogzzhdtmc.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_wWVQ59Rejod5Oc1X4s_eeQ_ONbXzyi2';
 
+// =====================================================================
+// INICIALIZACIÓN DEL CLIENTE SUPABASE (CRÍTICO - FIX AUTENTICACIÓN)
+// =====================================================================
+(function initSupabaseClient() {
+  try {
+    if (typeof supabase !== 'undefined' && supabase.createClient) {
+      window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: {
+          autoRefreshToken: true,
+          persistSession: true,
+          detectSessionInUrl: true
+        }
+      });
+      console.log('✅ Supabase Client inicializado correctamente.');
+    } else {
+      // SDK aún no cargado — reintentar hasta que esté disponible
+      let retries = 0;
+      const waitForSdk = setInterval(() => {
+        retries++;
+        if (typeof supabase !== 'undefined' && supabase.createClient) {
+          window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: {
+              autoRefreshToken: true,
+              persistSession: true,
+              detectSessionInUrl: true
+            }
+          });
+          console.log('✅ Supabase Client inicializado (reintento ' + retries + ').');
+          clearInterval(waitForSdk);
+        } else if (retries >= 20) {
+          console.error('❌ Supabase SDK no pudo cargarse después de ' + retries + ' intentos.');
+          clearInterval(waitForSdk);
+        }
+      }, 250);
+    }
+  } catch (e) {
+    console.error('❌ Error al inicializar Supabase Client:', e);
+  }
+})();
+
 
 // Variable global para ID del recorrido activo del repartidor actual
 window.currentDriverPublicationId = null;
