@@ -2,13 +2,6 @@
 const SUPABASE_URL = 'https://yxzzfqyehllogzzhdtmc.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_wWVQ59Rejod5Oc1X4s_eeQ_ONbXzyi2';
 
-if (typeof supabase !== 'undefined') {
-    window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    console.log('✅ Supabase conectado correctamente.');
-    iniciarSuscripcionesRealtime();
-} else {
-    console.error('❌ Error: El SDK de Supabase no se cargó.');
-}
 
 // Variable global para ID del recorrido activo del repartidor actual
 window.currentDriverPublicationId = null;

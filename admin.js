@@ -654,6 +654,8 @@ function renderAdminVendorsList() {
 }
 
 function renderFinalVendors(defaultVendors, deletedIds) {
+  const container = document.getElementById('adminVendorsListContainer');
+  if (!container) return;
   const finalVendors = defaultVendors.filter(v => !deletedIds.includes(v.id));
 
   let html = `<div style="font-weight:900; color:#FF6D00; margin-bottom:6px; font-size:11.5px;"><i class="fa-solid fa-truck-fast"></i> 🚛 REPARTIDORES Y NEGOCIOS DEL SISTEMA:</div>`;

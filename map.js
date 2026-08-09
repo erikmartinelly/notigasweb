@@ -1484,10 +1484,4 @@ function iniciarSuscripcionMapaRealtime() {
         });
 }
 
-// BOTON DE DEBUGGING TEMPORAL
-window.forzarRecargaMapa = function() {
-  console.log("Forzando recarga manual del mapa...");
-  if (activeOrderLayerGroup) activeOrderLayerGroup.clearLayers();
-  if (driverLayerGroup) driverLayerGroup.clearLayers();
-  cargarPedidosVecinalesEnVivo();
-}; 
+

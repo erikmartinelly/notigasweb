@@ -671,13 +671,12 @@ function confirmarPedido() {
   };
 
   localStorage.setItem('notigas_active_order', JSON.stringify(activeOrderData));
-  // Transmitir a Supabase (Realtime para el Mapa)
     window.supabaseClient.from('pedidos').insert([{
         categoria: cat,
-        cantidad: '1 unidad',
-        direccion: direccion,
-        telefono: telefono,
-        buyer_name: buyerName,
+        titulo: `Pedido de ${cat}`,
+        descripcion: `Cantidad: 1 unidad. Dirección: ${direccion}. Teléfono: ${telefono}. Cliente: ${buyerName}`,
+        ciudad: 'Cochabamba', // Default o requerido
+        barrio_otb: 'Por GPS', // Default o requerido
         user_id: window.supabaseClient.auth.user?.()?.id || null, // requiere auth
         latitude: pos.lat,
         longitude: pos.lng
@@ -688,7 +687,6 @@ function confirmarPedido() {
           if (typeof notigasTrack === 'function') notigasTrack('pedido_creado', { categoria: cat });
         }
     });
-  }
 
   showToast('✅ ¡Pedido en Camino!', 'Tu orden ha sido confirmada y transmitida a los repartidores de tu zona. Permanece atento a tu teléfono y a la puerta.', 'success', 3000);
   closePedidoModal();
