@@ -26,7 +26,7 @@ async function renderForumFeed() {
   const currentAdmin = getVerifiedAdminEmail();
   const isAdmin = currentAdmin && (currentAdmin.includes('erikmartinelly') || currentAdmin.includes('leonmartinelly'));
 
-  const { data: localPosts, error } = await window.supabaseClient.from('avisos')
+  const { data: localPosts, error } = await window.supabaseClient.from('publicaciones')
     .select('*')
     .order('created_at', { ascending: false });
 
@@ -113,7 +113,7 @@ async function renderForumFeed() {
 
 async function borrarPostForumAdmin(postId) {
   if (confirm("🗑️ ¿Deseas eliminar permanentemente esta publicación del Tablón Vecinal?")) {
-      const { error } = await window.supabaseClient.from('avisos').delete().eq('id', postId);
+      const { error } = await window.supabaseClient.from('publicaciones').delete().eq('id', postId);
       if (error) {
           alert('Error borrando el post');
           return;
@@ -187,7 +187,8 @@ async function crearNuevoPost() {
     userId = sessionData?.session?.user?.id || null;
   } catch(e) {}
 
-  const { error } = await window.supabaseClient.from('avisos').insert([{
+  const { error } = await window.supabaseClient.from('publicaciones').insert([
+    { tipo: 'aviso',
     categoria: cat,
     titulo: title,
     descripcion: desc,
@@ -229,7 +230,7 @@ async function abrirComentariosPost(postId, title, desc, cat, el) {
   
   modal.style.display = 'flex';
   
-  const { data } = await window.supabaseClient.from('avisos').select('comentarios').eq('id', postId).single();
+  const { data } = await window.supabaseClient.from('publicaciones').select('comentarios').eq('id', postId).single();
   const comments = data ? (data.comentarios || []) : [];
   renderCommentsListUI(comments);
 }
@@ -281,7 +282,7 @@ async function votarComentario(commentId, delta) {
     span.innerText = val + delta;
   }
 
-  const { data } = await window.supabaseClient.from('avisos').select('comentarios').eq('id', postId).single();
+  const { data } = await window.supabaseClient.from('publicaciones').select('comentarios').eq('id', postId).single();
   let comments = data ? (data.comentarios || []) : [];
   
   let found = false;
@@ -295,7 +296,7 @@ async function votarComentario(commentId, delta) {
   });
 
   if (found) {
-    await window.supabaseClient.from('avisos').update({ comentarios: comments }).eq('id', postId);
+    await window.supabaseClient.from('publicaciones').update({ comentarios: comments }).eq('id', postId);
   }
 }
 
@@ -337,7 +338,7 @@ async function agregarComentarioPost() {
   }
 
   // Obtener los comentarios actuales
-  const { data, error: fetchError } = await window.supabaseClient.from('avisos').select('comentarios').eq('id', postId).single();
+  const { data, error: fetchError } = await window.supabaseClient.from('publicaciones').select('comentarios').eq('id', postId).single();
   if (fetchError) {
     alert('Error al cargar comentarios. Intenta de nuevo.');
     return;
@@ -346,7 +347,7 @@ async function agregarComentarioPost() {
   comments.push(newComment);
 
   // Actualizar en Supabase
-  const { error } = await window.supabaseClient.from('avisos').update({ comentarios: comments }).eq('id', postId);
+  const { error } = await window.supabaseClient.from('publicaciones').update({ comentarios: comments }).eq('id', postId);
   
   if (!error) {
       input.value = '';
@@ -362,3 +363,5 @@ async function agregarComentarioPost() {
       alert("Error publicando comentario");
   }
 }
+
+

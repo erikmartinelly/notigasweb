@@ -397,7 +397,7 @@ async function renderDriverOrdersList() {
   if (window.supabaseClient) {
     const activeWindow = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
     const { data } = await window.supabaseClient
-      .from('pedidos')
+      .from('publicaciones')
       .select('*')
       .gte('created_at', activeWindow);
       
@@ -454,7 +454,7 @@ async function aceptarPedidoRepartidor(id) {
     return;
   }
   showLoadingOverlay('Aceptando pedido...');
-  const { error } = await window.supabaseClient.from('pedidos').delete().eq('id', id);
+  const { error } = await window.supabaseClient.from('publicaciones').delete().eq('id', id);
   hideLoadingOverlay();
   
   if (error) {
@@ -671,7 +671,8 @@ function confirmarPedido() {
     // Obtener user_id de la sesión activa (Supabase v2)
     window.supabaseClient.auth.getSession().then(({ data: sessionData }) => {
       const userId = sessionData?.session?.user?.id || null;
-      window.supabaseClient.from('pedidos').insert([{
+      window.supabaseClient.from('publicaciones').insert([
+          { tipo: 'pedido',
           categoria: cat,
           titulo: `Pedido de ${cat}`,
           descripcion: `Cantidad: 1 unidad. Dirección: ${direccion}. Teléfono: ${telefono}. Cliente: ${buyerName}`,
@@ -709,7 +710,7 @@ function cancelarPedidoActivo() {
       const { data: sessionData } = await window.supabaseClient.auth.getSession();
       const userId = sessionData?.session?.user?.id;
       if (userId) {
-        await window.supabaseClient.from('pedidos').delete().eq('user_id', userId);
+        await window.supabaseClient.from('publicaciones').delete().eq('user_id', userId);
       }
     }
     checkActiveOrderStatus();
@@ -976,3 +977,5 @@ window.mostrarNotificacion = function(tipo, mensaje, duracion = 3000) {
         console.log(`[${tipo.toUpperCase()}] ${mensaje}`);
     }
 };
+
+
