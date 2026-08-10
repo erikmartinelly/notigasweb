@@ -115,13 +115,14 @@ function initNotigasMap() {
 
   L.control.zoom({ position: 'topright' }).addTo(map);
 
-  mapTileLayers['osm'] = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  // Google Maps Tiles Directos: Apariencia 100% Google Maps
+  mapTileLayers['google'] = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
     maxZoom: 20,
-    subdomains: ['a', 'b', 'c'],
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+    attribution: '&copy; Google Maps'
   });
 
-  mapTileLayers['osm'].addTo(map);
+  mapTileLayers['google'].addTo(map);
 
   setTimeout(() => { if (map) map.invalidateSize(); }, 500);
 
