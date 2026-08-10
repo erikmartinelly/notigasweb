@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function abrirAnuncioWhatsApp() {
   const savedUrl = localStorage.getItem('notigas_ad_url');
   const inputUrl = document.getElementById('inputAdUrl');
-  const defaultUrl = 'https://wa.me/59174xxxx28?text=Hola!%20Deseo%20publicar%20mi%20anuncio%20en%20NOTIGAS';
+  const defaultUrl = 'https://wa.me/59170000000?text=Hola';
   
   const targetUrl = (savedUrl && savedUrl.trim() !== '') 
     ? savedUrl.trim() 
@@ -179,7 +179,7 @@ function inyectarGoogleAdsenseScript(pubId, slotId) {
 }
 
 async function cargarAnunciosGuardados() {
-  const savedAdsense = localStorage.getItem('notigas_adsense_id') || 'ca-pub-2502415561017945';
+  const savedAdsense = localStorage.getItem('notigas_adsense_id') || '';
   const savedSlot = localStorage.getItem('notigas_adsense_slot_id') || '1234567890';
   const savedMode = localStorage.getItem('notigas_adsense_mode') || 'custom';
   

@@ -464,9 +464,9 @@ async function renderDriverOrdersList() {
             <span style="font-weight:900; font-size:13px; color:#1E293B;">🛒 Pedido #${ord.id || '?'}</span>
             <span style="font-size:10px; color:#64748B;">⏱ ${mins} min</span>
           </div>
-          <div style="font-size:12px; margin-bottom:4px; color:#475569;">📍 <strong>Dir:</strong> ${ord.direccion}</div>
-          <div style="font-size:12px; margin-bottom:4px; color:#475569;">📦 <strong>Prod:</strong> ${ord.categoria} (${ord.cantidad} un)</div>
-          ${ord.telefono ? `<div style="font-size:12px; margin-bottom:8px; color:#475569;">📞 <strong>Tel:</strong> ${ord.telefono}</div>` : ''}
+          <div style="font-size:12px; margin-bottom:4px; color:#475569;">📍 <strong>Dir:</strong> ${window.escapeHtmlStr(ord.direccion || '')}</div>
+          <div style="font-size:12px; margin-bottom:4px; color:#475569;">📦 <strong>Prod:</strong> ${window.escapeHtmlStr(ord.categoria || '')} (${window.escapeHtmlStr(ord.cantidad || '')} un)</div>
+          ${ord.telefono ? `<div style="font-size:12px; margin-bottom:8px; color:#475569;">📞 <strong>Tel:</strong> ${window.escapeHtmlStr(ord.telefono)}</div>` : ''}
           
           ${(ord.estado === 'visto') 
              ? `<div style="text-align:center; padding:6px; background:#FFF9C4; color:#F57F17; border-radius:6px; font-weight:bold; font-size:11px; margin-bottom:8px;"><i class="fa-solid fa-eye"></i> Visto por ti u otro repartidor</div>`
