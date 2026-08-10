@@ -156,7 +156,8 @@ async function cargarPedidosVecinalesEnVivo() {
   
   try {
     const { data, error } = await window.supabaseClient
-      .from('publicaciones').select('*').eq('tipo', 'pedido')
+      .from('pedidos')
+      .select('*')
       .gte('created_at', activeWindow);
     
     if (error) {
@@ -169,7 +170,8 @@ async function cargarPedidosVecinalesEnVivo() {
     // FETCH LIVE TRUCKS (Last 10 minutes to avoid stale trucks)
     const tenMinsAgo = new Date(Date.now() - 10 * 60000).toISOString();
     const res = await window.supabaseClient
-      .from('publicaciones').select('*').eq('tipo', 'ruta')
+      .from('rutas_repartidores')
+      .select('*')
       .gte('created_at', tenMinsAgo);
       
     if (res.data && !res.error) {
@@ -1450,7 +1452,6 @@ function buscarCalle() {
       }
     })
     .catch(() => {});
-
 
 
 

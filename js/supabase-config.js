@@ -66,8 +66,7 @@ window.driverLocationInterval = null;
       }
   
       try {
-        const { data, error } = await window.supabaseClient.from('publicaciones').insert([{
-            tipo: 'ruta',
+        const { data, error } = await window.supabaseClient.from('rutas_repartidores').upsert([{
             user_id: userId,
             categoria: driverCategory || 'gas',
             titulo: `Repartidor en Ruta: ${driverName}`,
@@ -76,7 +75,7 @@ window.driverLocationInterval = null;
             longitude: lng,
             distribuidor_nombre: driverName,
             garrafas_agotadas: false
-        }]).select('id').single();
+        }], { onConflict: 'user_id' }).select('id').single();
     
         if (error) {
             console.error("Error al iniciar broadcast en Supabase:", error);
@@ -98,7 +97,7 @@ window.driverLocationInterval = null;
       const lng = typeof currentGpsLng !== 'undefined' ? currentGpsLng : -66.1568;
   
       try {
-        const { error } = await window.supabaseClient.from('publicaciones')
+        const { error } = await window.supabaseClient.from('rutas_repartidores')
             .update({ latitude: lat, longitude: lng })
             .eq('id', window.currentDriverPublicationId);
         if (error) console.error("Error al actualizar ubicación en Supabase:", error);
@@ -113,7 +112,7 @@ window.driverLocationInterval = null;
           window.driverLocationInterval = null;
       }
       if (window.supabaseClient && window.currentDriverPublicationId) {
-          await window.supabaseClient.from('publicaciones')
+          await window.supabaseClient.from('rutas_repartidores')
               .delete()
               .eq('id', window.currentDriverPublicationId);
           window.currentDriverPublicationId = null;
@@ -144,18 +143,24 @@ window.iniciarSuscripcionesRealtime = function() {
     }
 
     _realtimeChannel = window.supabaseClient.channel('global_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'publicaciones' }, payload => {
-            const data = payload.new || payload.old;
-            if (!data) return;
-            
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, payload => {
+            const data = payload.new;
             if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-                if (data.tipo === 'pedido' && typeof agregarPedidoVecinoEnMapa === 'function') agregarPedidoVecinoEnMapa(data);
-                if (data.tipo === 'ruta' && typeof actualizarRepartidorEnMapa === 'function') actualizarRepartidorEnMapa(data);
-                if (data.tipo === 'aviso' && typeof renderForumFeed === 'function') renderForumFeed();
+                if (typeof agregarPedidoVecinoEnMapa === 'function') agregarPedidoVecinoEnMapa(data);
             } else if (payload.eventType === 'DELETE') {
-                if ((data.tipo === 'pedido' || data.tipo === 'ruta') && typeof removerPublicacionDeMapa === 'function') removerPublicacionDeMapa(data.id);
-                if (data.tipo === 'aviso' && typeof renderForumFeed === 'function') renderForumFeed();
+                if (typeof removerPublicacionDeMapa === 'function') removerPublicacionDeMapa(payload.old.id);
             }
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'rutas_repartidores' }, payload => {
+            const data = payload.new;
+            if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+                if (typeof actualizarRepartidorEnMapa === 'function') actualizarRepartidorEnMapa(data);
+            } else if (payload.eventType === 'DELETE') {
+                if (typeof removerPublicacionDeMapa === 'function') removerPublicacionDeMapa(payload.old.id);
+            }
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'avisos' }, payload => {
+            if (typeof renderForumFeed === 'function') renderForumFeed();
         })
         .subscribe((status, err) => {
             if (status === 'SUBSCRIBED') {
@@ -189,5 +194,4 @@ function _programarReconexionRealtime() {
         if (window.supabaseClient) window.iniciarSuscripcionesRealtime();
     }, delay);
 }
-
 
