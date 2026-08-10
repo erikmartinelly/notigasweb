@@ -851,7 +851,8 @@ async function abrirPanoramicaPedidos() {
   let otrosPedidosHtml = '';
   if (window.supabaseClient) {
     try {
-      const activeWindow = new Date(now - window.NOTIGAS.ORDER_EXPIRATION_MS).toISOString();
+      const expirationMs = (window.NOTIGAS && window.NOTIGAS.ORDER_EXPIRATION_MS) ? window.NOTIGAS.ORDER_EXPIRATION_MS : 48 * 60 * 60 * 1000;
+      const activeWindow = new Date(now - expirationMs).toISOString();
       const { data: pedidosReales } = await window.supabaseClient
         .from('pedidos')
         .select('id, categoria, descripcion, created_at')
