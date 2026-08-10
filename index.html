@@ -155,7 +155,7 @@
 
       <!-- PANEL DE ACCIONES FLOTANTES EXCLUSIVO PARA COMPRADOR (CLIENTE / VECINO) -->
       <div class="floating-actions-container" id="buyerFloatingActions">
-        <button class="btn-cancel-order" id="btnCancelOrder" style="display: none;" onclick="cancelarPedidoActivo()"><i class="fa-solid fa-circle-xmark"></i> ❌ CANCELAR PEDIDO</button>
+        <button class="btn-cancel-order" id="btnCancelOrder" style="display: none;" onclick="cancelarPedidoActivo()"><i class="fa-solid fa-circle-xmark"></i> CANCELAR PEDIDO</button>
 
 
         <button class="btn-main-order" id="btnMainOrder" onclick="abrirSubmenuPedidos()">
@@ -166,16 +166,16 @@
         </button>
         
         <div class="action-row">
-          <button class="btn-panic" onclick="lanzarEspecialEsperame()"><i class="fa-solid fa-hand-paper"></i> 🛑 ESPÉRAME</button>
-          <button class="btn-hear-truck" onclick="notificarEscucheCamion()"><i class="fa-solid fa-bell"></i> 🔔 ESCUCHÉ CAMIÓN</button>
-          <button class="btn-gps-center" onclick="conectarGPSAuto(true)" style="background:#0288D1; color:white; border:none; padding:10px 12px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer;" title="Re-centrar mi ubicación en el mapa"><i class="fa-solid fa-crosshairs"></i> 📍 MI UBICACIÓN</button>
+          <button class="btn-panic" onclick="lanzarEspecialEsperame()"><i class="fa-solid fa-hand-paper"></i> ESPÉRAME</button>
+          <button class="btn-hear-truck" onclick="notificarEscucheCamion()"><i class="fa-solid fa-bell"></i> ESCUCHÉ CAMIÓN</button>
+          <button class="btn-gps-center" onclick="conectarGPSAuto(true)" style="background:#0288D1; color:white; border:none; padding:10px 12px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer;" title="Re-centrar mi ubicación en el mapa"><i class="fa-solid fa-crosshairs"></i> MI UBICACIÓN</button>
         </div>
       </div>
 
       <!-- PANEL DE ACCIONES FLOTANTES EXCLUSIVO PARA REPARTIDOR (DRIVER / REPARTIDOR MODE) -->
       <div class="floating-actions-container driver-actions-panel" id="driverFloatingActions" style="display: none;">
         <button class="btn-driver-gps-toggle" id="btnDriverGpsToggle" onclick="toggleDriverGpsTransmission()">
-          <i class="fa-solid fa-location-arrow"></i> 🟢 INICIAR RECORRIDO EN VIVO
+          <i class="fa-solid fa-location-arrow"></i> INICIAR RECORRIDO EN VIVO
         </button>
 
         <!-- BOTÓN PRINCIPAL PROMINENTE: MAPA DE CALOR Y ZONAS DE ALTA DEMANDA -->
@@ -184,8 +184,8 @@
         </button>
 
         <div class="action-row" style="display:flex; gap:8px;">
-          <button class="btn-driver-orders-list" onclick="abrirModalDriverOrders()" style="background:#1E293B; color:white; border:1px solid rgba(255,255,255,0.2); padding:10px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; flex:1;"><i class="fa-solid fa-list-check"></i> 📋 PEDIDOS ZONA</button>
-          <button class="btn-edit-profile" onclick="abrirEdicionFichaRepartidor()" style="background:#0288D1; color:white; border:none; padding:10px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; flex:1;"><i class="fa-solid fa-pen-to-square"></i> ✏️ MI FICHA DE REPARTIDOR</button>
+          <button class="btn-driver-orders-list" onclick="abrirModalDriverOrders()" style="background:#1E293B; color:white; border:1px solid rgba(255,255,255,0.2); padding:10px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; flex:1;"><i class="fa-solid fa-list-check"></i> PEDIDOS ZONA</button>
+          <button class="btn-edit-profile" onclick="abrirEdicionFichaRepartidor()" style="background:#0288D1; color:white; border:none; padding:10px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; flex:1;"><i class="fa-solid fa-pen-to-square"></i> MI FICHA DE REPARTIDOR</button>
         </div>
       </div>
     </div>
@@ -266,8 +266,8 @@
         <div class="form-group">
           <label>Notificaciones y Alertas Auditivas:</label>
           <select id="userPrefSound">
-            <option value="enabled">🔔 Notificaciones con Sonido</option>
-            <option value="disabled">🔕 Modo Silencioso</option>
+            <option value="enabled">Notificaciones con Sonido</option>
+            <option value="disabled">Modo Silencioso</option>
           </select>
         </div>
 
@@ -287,16 +287,16 @@
         <div class="form-group">
           <label>Transmisión GPS en Vivo:</label>
           <select id="driverGpsLive">
-            <option value="on">🟢 Transmitir ubicación en tiempo real</option>
-            <option value="off">🔴 Pausar transmisión GPS</option>
+            <option value="on">Transmitir ubicación en tiempo real</option>
+            <option value="off">Pausar transmisión GPS</option>
           </select>
         </div>
 
         <div class="form-group">
           <label>Notificaciones y Alertas Auditivas:</label>
           <select id="userPrefSoundDriver">
-            <option value="enabled">🔔 Notificaciones con Sonido</option>
-            <option value="disabled">🔕 Modo Silencioso</option>
+            <option value="enabled">Notificaciones con Sonido</option>
+            <option value="disabled">Modo Silencioso</option>
           </select>
         </div>
 
@@ -320,7 +320,7 @@
 
 
       <button style="width:100%; background: linear-gradient(135deg, #D32F2F, #B71C1C); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 4px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(211,47,47,0.4);" onclick="cerrarSesionUsuario()">
-        <i class="fa-solid fa-right-from-bracket"></i> ⛔ Cerrar Sesión Completa
+        <i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión Completa
       </button>
 
       <!-- MENÚ DE CONFIGURACIÓN -->
@@ -332,7 +332,7 @@
         
         <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 10px;">
           <button style="width:100%; background: linear-gradient(135deg, #B71C1C, #880E0E); color: #FF8A80; border: 1px solid #D32F2F; padding: 10px; border-radius: 10px; font-weight: 800; cursor: pointer; font-size: 11.5px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(183,28,28,0.5);" onclick="eliminarMiCuentaCompleta()">
-            <i class="fa-solid fa-trash-can"></i> 🗑️ Eliminar Mi Cuenta y Todos Mis Datos
+            <i class="fa-solid fa-trash-can"></i> Eliminar Mi Cuenta y Todos Mis Datos
           </button>
         </div>
       </details>
@@ -365,12 +365,12 @@
       <div class="form-group">
         <label>Tipo de REPARTIDOR:</label>
         <select id="inputDriverCat">
-          <option value="Gas GLP">🔥 Gas GLP</option>
-          <option value="Detergentes">🧼 Detergentes & Limpieza</option>
-          <option value="Chatarra">♻️  Chatarra</option>
-          <option value="Papel">📄 Papel / Reciclaje</option>
-          <option value="Frutas">🍎 Frutas & Verduras</option>
-          <option value="Otros">📦 Otros</option>
+          <option value="Gas GLP">Gas GLP</option>
+          <option value="Detergentes">Detergentes & Limpieza</option>
+          <option value="Chatarra">Chatarra</option>
+          <option value="Papel">Papel / Reciclaje</option>
+          <option value="Frutas">Frutas & Verduras</option>
+          <option value="Otros">Otros</option>
         </select>
       </div>
       <div class="form-group">
@@ -380,39 +380,39 @@
       <div class="form-group">
         <label>Ciudad de Trabajo:</label>
         <select id="inputDriverCiudad" required>
-          <option value="" disabled selected>📍 Escoge tu ciudad</option>
+          <option value="" disabled selected>Escoge tu ciudad</option>
           <optgroup label="── 1ª SANTA CRUZ DE LA SIERRA ──">
-            <option value="santacruz">📍 Santa Cruz de la Sierra</option>
-            <option value="warnes">📍 Warnes</option>
-            <option value="cotoca">📍 Cotoca</option>
-            <option value="laguardia">📍 La Guardia</option>
-            <option value="montero">📍 Montero</option>
-            <option value="porongo">📍 Porongo / Urubó</option>
+            <option value="santacruz">Santa Cruz de la Sierra</option>
+            <option value="warnes">Warnes</option>
+            <option value="cotoca">Cotoca</option>
+            <option value="laguardia">La Guardia</option>
+            <option value="montero">Montero</option>
+            <option value="porongo">Porongo / Urubó</option>
           </optgroup>
           <optgroup label="── 2ª COCHABAMBA ──">
-            <option value="cochabamba">📍 Cochabamba</option>
-            <option value="sacaba">📍 Sacaba</option>
-            <option value="quillacollo">📍 Quillacollo</option>
-            <option value="tiquipaya">📍 Tiquipaya</option>
-            <option value="colcapirhua">📍 Colcapirhua</option>
-            <option value="vinto">📍 Vinto</option>
-            <option value="sipesipe">📍 Sipe Sipe</option>
+            <option value="cochabamba">Cochabamba</option>
+            <option value="sacaba">Sacaba</option>
+            <option value="quillacollo">Quillacollo</option>
+            <option value="tiquipaya">Tiquipaya</option>
+            <option value="colcapirhua">Colcapirhua</option>
+            <option value="vinto">Vinto</option>
+            <option value="sipesipe">Sipe Sipe</option>
           </optgroup>
           <optgroup label="── 3ª LA PAZ ──">
-            <option value="lapaz">📍 La Paz</option>
-            <option value="viacha">📍 Viacha</option>
-            <option value="achocalla">📍 Achocalla</option>
+            <option value="lapaz">La Paz</option>
+            <option value="viacha">Viacha</option>
+            <option value="achocalla">Achocalla</option>
           </optgroup>
           <optgroup label="── 4ª EL ALTO ──">
-            <option value="elalto">📍 El Alto</option>
+            <option value="elalto">El Alto</option>
           </optgroup>
           <optgroup label="── 5ª TARIJA Y OTROS DEPARTAMENTOS ──">
-            <option value="tarija">📍 Tarija</option>
-            <option value="sucre">📍 Sucre</option>
-            <option value="oruro">📍 Oruro</option>
-            <option value="potosi">📍 Potosí</option>
-            <option value="trinidad">📍 Trinidad (Beni)</option>
-            <option value="cobija">📍 Cobija (Pando)</option>
+            <option value="tarija">Tarija</option>
+            <option value="sucre">Sucre</option>
+            <option value="oruro">Oruro</option>
+            <option value="potosi">Potosí</option>
+            <option value="trinidad">Trinidad (Beni)</option>
+            <option value="cobija">Cobija (Pando)</option>
           </optgroup>
         </select>
       </div>
@@ -436,7 +436,7 @@
       <!-- PANTALLA 1: FORMULARIO DE ACCESO (AHORA CON GOOGLE) -->
       <div id="adminLoginScreen">
         <p style="font-size: 13px; color: #94A3B8; margin-bottom: 20px; text-align: center;">
-          🔒 Acceso protegido. Requiere doble autenticación para verificar identidad.
+          Acceso protegido. Requiere doble autenticación para verificar identidad.
           <br><br>
           <strong>Haz clic abajo para re-autenticarte con tu cuenta de administrador:</strong>
         </p>
@@ -463,19 +463,19 @@
           <div class="modal-tab-pane active" id="modalPane0">
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px;">
               <div style="background: rgba(14,165,233,0.15); border: 1px solid rgba(14,165,233,0.3); border-radius: 10px; padding: 12px; text-align: center;">
-                <div style="font-size: 10px; color: #38BDF8; font-weight: 700; margin-bottom: 4px;">👥 VECINOS / USUARIOS</div>
+                <div style="font-size: 10px; color: #38BDF8; font-weight: 700; margin-bottom: 4px;">VECINOS / USUARIOS</div>
                 <div id="adminKpiUsers" style="font-size: 24px; font-weight: 900; color: white;">0</div>
               </div>
               <div style="background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); border-radius: 10px; padding: 12px; text-align: center;">
-                <div style="font-size: 10px; color: #FBBF24; font-weight: 700; margin-bottom: 4px;">🚚 REPARTIDORES</div>
+                <div style="font-size: 10px; color: #FBBF24; font-weight: 700; margin-bottom: 4px;">REPARTIDORES</div>
                 <div id="adminKpiVendors" style="font-size: 24px; font-weight: 900; color: white;">0</div>
               </div>
               <div style="background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); border-radius: 10px; padding: 12px; text-align: center;">
-                <div style="font-size: 10px; color: #34D399; font-weight: 700; margin-bottom: 4px;">📦 PEDIDOS ACTIVOS</div>
+                <div style="font-size: 10px; color: #34D399; font-weight: 700; margin-bottom: 4px;">PEDIDOS ACTIVOS</div>
                 <div id="adminKpiOrders" style="font-size: 24px; font-weight: 900; color: white;">0</div>
               </div>
               <div style="background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); border-radius: 10px; padding: 12px; text-align: center;">
-                <div style="font-size: 10px; color: #F87171; font-weight: 700; margin-bottom: 4px;">🚨 DENUNCIAS OPEN</div>
+                <div style="font-size: 10px; color: #F87171; font-weight: 700; margin-bottom: 4px;">DENUNCIAS OPEN</div>
                 <div id="adminKpiReports" style="font-size: 24px; font-weight: 900; color: white;">0</div>
               </div>
             </div>
@@ -507,7 +507,7 @@
           <!-- SUBMENÚ 2: MONITOR DE PEDIDOS VECINALES EN VIVO -->
           <div class="modal-tab-pane" id="modalPane2">
             <button style="width: 100%; background: linear-gradient(135deg, #FF6D00, #E65100); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 900; font-size: 12px; cursor: pointer; box-shadow: 0 4px 14px rgba(255,109,0,0.5); display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px;" onclick="activarMapaCalorAdminLive()">
-              <i class="fa-solid fa-fire"></i> 🔥 VER PEDIDOS EN VIVO EN EL MAPA (ZONAS DE CALOR)
+              <i class="fa-solid fa-fire"></i> VER ZONAS CON MÁS PEDIDOS (MAPA DE CALOR)
             </button>
             
             <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Monitor en Tiempo Real de Solicitudes y Pedidos Vecinales:</p>
@@ -535,7 +535,7 @@
             </div>
             <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 12px 0;">
             <div class="form-group">
-              <label>ðŸ“¸ Subir Imagen Banner para Anuncio Local (PNG/JPG):</label>
+              <label>📸 Subir Imagen Banner para Anuncio Local (PNG/JPG):</label>
               <input type="file" id="inputAdImageFile" accept="image/*" onchange="previewUploadAdImage(event)" style="font-size:11px; background:#1E293B; padding:6px; border-radius:6px; color:white; width:100%;">
               <div id="adImagePreviewBox" style="margin-top:8px; display:none; align-items:center; gap:10px;">
                 <img id="adImagePreview" style="max-height:60px; max-width:200px; border-radius:6px; border:1px solid #FF6D00; object-fit:cover;">
@@ -586,9 +586,9 @@
           <!-- SUBMENÚ 5: EXPORTACIÓN DE CORREOS Y REGISTROS CSV -->
           <div class="modal-tab-pane" id="modalPane5">
             <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Exportación de Datos del Sistema en Formato .CSV para Excel / Google Sheets:</p>
-            <button class="btn-csv-download" style="width:100%; text-align:left; background: linear-gradient(135deg, #475569, #334155); margin-bottom: 8px;" onclick="descargarListaCorreosCSV()"><i class="fa-solid fa-download"></i> ðŸ“¥ Descargar Lista de Correos Gmail (.CSV)</button>
-            <button class="btn-csv-download" style="width:100%; text-align:left; background: linear-gradient(135deg, #059669, #10B981); margin-bottom: 8px;" onclick="descargarFichasRepartidoresCSV()"><i class="fa-solid fa-file-excel"></i> ðŸ“¥ Descargar Fichas de Repartidores (.CSV)</button>
-            <button class="btn-csv-download" style="width:100%; text-align:left; background: linear-gradient(135deg, #2563EB, #1D4ED8); margin-bottom: 8px;" onclick="descargarEstadisticasGeneralesCSV()"><i class="fa-solid fa-chart-line"></i> ðŸ“ˆ Descargar Estadísticas Generales (.CSV)</button>
+            <button class="btn-csv-download" style="width:100%; text-align:left; background: linear-gradient(135deg, #475569, #334155); margin-bottom: 8px;" onclick="descargarListaCorreosCSV()"><i class="fa-solid fa-download"></i> 📥 Descargar Lista de Correos Gmail (.CSV)</button>
+            <button class="btn-csv-download" style="width:100%; text-align:left; background: linear-gradient(135deg, #059669, #10B981); margin-bottom: 8px;" onclick="descargarFichasRepartidoresCSV()"><i class="fa-solid fa-file-excel"></i> 📥 Descargar Fichas de Repartidores (.CSV)</button>
+            <button class="btn-csv-download" style="width:100%; text-align:left; background: linear-gradient(135deg, #2563EB, #1D4ED8); margin-bottom: 8px;" onclick="descargarEstadisticasGeneralesCSV()"><i class="fa-solid fa-chart-line"></i> 📈 Descargar Estadísticas Generales (.CSV)</button>
           </div>
         </div>
       </div>
@@ -678,7 +678,7 @@
   <div class="modal" id="modalReport">
     <div class="modal-content">
       <div class="modal-title">
-        <span>ðŸš¨ Denunciar Publicación o Acoso</span>
+        <span>🚨 Denunciar Publicación o Acoso</span>
         <button class="btn-close" onclick="closeReportModal()">✕</button>
       </div>
       <p style="font-size: 11px; color: #94A3B8; margin-bottom: 10px;" id="reportTargetLabel">Reportar elemento seleccionado:</p>
@@ -687,10 +687,10 @@
       <div class="form-group">
         <label>Motivo de la Denuncia:</label>
         <select id="selectReportMotivo">
-          <option value="Acoso o Bullying">ðŸ›‘ Acoso o Bullying a un vecino</option>
+          <option value="Acoso o Bullying">🛑 Acoso o Bullying a un vecino</option>
           <option value="Contenido Ofensivo / Inapropiado">⚠️ Contenido Ofensivo o Lenguaje Inapropiado</option>
           <option value="Información Falsa / Spam">âŒ Información Falsa o Spam</option>
-          <option value="Conducta Indebida del Repartidor / Cliente">ðŸš¨ Conducta Indebida</option>
+          <option value="Conducta Indebida del Repartidor / Cliente">🚨 Conducta Indebida</option>
         </select>
       </div>
       <div class="form-group">
@@ -705,7 +705,7 @@
   <div class="modal" id="modalSubmenu">
     <div class="modal-content" style="max-width: 480px;">
       <div class="modal-title">
-        <span>ðŸ“¦ ¿Qué deseas pedir a domicilio?</span>
+        <span>📦 ¿Qué deseas pedir a domicilio?</span>
         <button class="btn-close" onclick="closeSubmenuModal()">✕</button>
       </div>
       <p style="font-size: 11px; color: #94A3B8; margin-bottom: 12px;">Selecciona el producto o servicio que necesitas en tu OTB:</p>
@@ -723,25 +723,25 @@
           <i class="fa-solid fa-recycle" style="color: #00E676;"></i>
           <span class="submenu-title">♻️ Chatarra</span>
         </div>
-        <div class="submenu-card" onclick="seleccionarYPedirDirecto('ðŸ“„ Papel')">
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('📄 Papel')">
           <i class="fa-solid fa-newspaper" style="color: #4FC3F7;"></i>
-          <span class="submenu-title">ðŸ“„ Papel / Cartón</span>
+          <span class="submenu-title">📄 Papel / Cartón</span>
         </div>
         <div class="submenu-card" onclick="seleccionarYPedirDirecto('ðŸŽ Frutas & Verduras')">
           <i class="fa-solid fa-apple-whole" style="color: #FF5252;"></i>
           <span class="submenu-title">ðŸŽ Frutas / Verduras</span>
         </div>
-        <div class="submenu-card" onclick="seleccionarYPedirDirecto('ðŸ§¼ Detergentes & Limpieza')">
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('🧼 Detergentes & Limpieza')">
           <i class="fa-solid fa-pump-soap" style="color: #E040FB;"></i>
-          <span class="submenu-title">ðŸ§¼ Detergentes</span>
+          <span class="submenu-title">🧼 Detergentes</span>
         </div>
-        <div class="submenu-card" onclick="seleccionarYPedirDirecto('ðŸªµ Carbón / Leña')">
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('🪵 Carbón / Leña')">
           <i class="fa-solid fa-fire-flame-curved" style="color: #FF9100;"></i>
-          <span class="submenu-title">ðŸªµ Carbón / Leña</span>
+          <span class="submenu-title">🪵 Carbón / Leña</span>
         </div>
-        <div class="submenu-card" onclick="seleccionarYPedirDirecto('ðŸ“¦ Otros')">
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('📦 Otros')">
           <i class="fa-solid fa-box-open" style="color: #FFC107;"></i>
-          <span class="submenu-title">ðŸ“¦ Otros Encargos</span>
+          <span class="submenu-title">📦 Otros Encargos</span>
         </div>
       </div>
     </div>
@@ -751,20 +751,20 @@
   <div class="modal" id="modalPedido">
     <div class="modal-content">
       <div class="modal-title">
-        <span>ðŸ“¦ Ficha de Pedido</span>
+        <span>📦 Ficha de Pedido</span>
         <button class="btn-close" onclick="closePedidoModal()">✕</button>
       </div>
       <div class="form-group">
         <label>Producto / Servicio Seleccionado:</label>
-        <select id="selectCategoria" onchange="document.getElementById('groupOrderOtros').style.display = (this.value === 'ðŸ“¦ Encargos & Otros Pedidos') ? 'block' : 'none';">
+        <select id="selectCategoria" onchange="document.getElementById('groupOrderOtros').style.display = (this.value === '📦 Encargos & Otros Pedidos') ? 'block' : 'none';">
           <option value="🔥 Garrafa de Gas GLP">🔥 Garrafa de Gas GLP</option>
           <option value="💧 Botellón Agua Purificada 20L">💧 Botellón Agua Purificada 20L</option>
           <option value="♻️ Chatarra">♻️ Chatarra</option>
-          <option value="ðŸ“„ Papel / Reciclaje">ðŸ“„ Papel / Reciclaje</option>
+          <option value="📄 Papel / Reciclaje">📄 Papel / Reciclaje</option>
           <option value="ðŸŽ Frutas & Verduras">ðŸŽ Frutas & Verduras</option>
-          <option value="ðŸ§¼ Detergentes & Limpieza">ðŸ§¼ Detergentes & Limpieza</option>
-          <option value="ðŸªµ Carbón / Leña">ðŸªµ Carbón / Leña</option>
-          <option value="ðŸ“¦ Encargos & Otros Pedidos">ðŸ“¦ Encargos & Otros Pedidos</option>
+          <option value="🧼 Detergentes & Limpieza">🧼 Detergentes & Limpieza</option>
+          <option value="🪵 Carbón / Leña">🪵 Carbón / Leña</option>
+          <option value="📦 Encargos & Otros Pedidos">📦 Encargos & Otros Pedidos</option>
         </select>
       </div>
 
@@ -779,11 +779,11 @@
       </div>
 
       <div class="form-group">
-        <label>ðŸ“ž Teléfono / WhatsApp de Contacto (Opcional):</label>
+        <label>📞 Teléfono / WhatsApp de Contacto (Opcional):</label>
         <input type="tel" id="inputTelefonoComprador" placeholder="Ej: 74xxxx28 (Opcional)">
       </div>
 
-      <p style="font-size:11px; color:#38BDF8; margin: 8px 0;">âœ” Coordinación directa con repartidor por Chat Privado 1-a-1 e indicación GPS.</p>
+      <p style="font-size:11px; color:#38BDF8; margin: 8px 0;">✔ Coordinación directa con repartidor por Chat Privado 1-a-1 e indicación GPS.</p>
       <button class="btn-submit" onclick="confirmarPedido()"><i class="fa-solid fa-truck-fast" style="color:#F59E0B;"></i> <img src="icons/garrafa_red_clean.svg" style="width:22px; height:22px; vertical-align:middle; filter:drop-shadow(0 0 4px #FF1744);" alt="Gas"> Confirmar y Solicitar en Mapa Vivo</button>
     </div>
   </div>
@@ -840,8 +840,8 @@
         <select id="selectPostTipo">
           <option value="COMENTARIO">⚠️ COMENTARIO</option>
           <option value="PIDO AYUDA">ðŸ¤ PIDO AYUDA</option>
-          <option value="SUGERENCIA">ðŸš› SUGERENCIA</option>
-          <option value="INTERCAMBIO">ðŸ”„ INTERCAMBIO / COMPRA VECINAL</option>
+          <option value="SUGERENCIA">🚛 SUGERENCIA</option>
+          <option value="INTERCAMBIO">🔄 INTERCAMBIO / COMPRA VECINAL</option>
         </select>
       </div>
       <div class="form-group">
