@@ -1,5 +1,5 @@
 -- fix_rls_policies.sql
--- Borrar las políticas permisivas actuales
+-- 1. Borrar las políticas permisivas (antiguas)
 drop policy if exists "Public INSERT" on pedidos;
 drop policy if exists "Public INSERT" on rutas_repartidores;
 drop policy if exists "Public INSERT" on avisos;
@@ -15,7 +15,23 @@ drop policy if exists "Public DELETE" on rutas_repartidores;
 drop policy if exists "Public DELETE" on avisos;
 drop policy if exists "Public DELETE" on comentarios_avisos;
 
--- Restablecer políticas estrictas pero correctas para las 4 tablas principales
+-- 2. Borrar preventivamente las políticas nuevas (para evitar error 42710 si se corre 2 veces)
+drop policy if exists "Insertar propio" on pedidos;
+drop policy if exists "Insertar propio" on rutas_repartidores;
+drop policy if exists "Insertar propio" on avisos;
+drop policy if exists "Insertar propio" on comentarios_avisos;
+
+drop policy if exists "Actualizar propio" on pedidos;
+drop policy if exists "Actualizar propio" on rutas_repartidores;
+drop policy if exists "Actualizar propio" on avisos;
+drop policy if exists "Actualizar propio" on comentarios_avisos;
+
+drop policy if exists "Borrar cualquier autenticado" on pedidos;
+drop policy if exists "Borrar propio" on rutas_repartidores;
+drop policy if exists "Borrar propio" on avisos;
+drop policy if exists "Borrar propio" on comentarios_avisos;
+
+-- 3. Restablecer políticas estrictas pero correctas para las 4 tablas principales
 create policy "Insertar propio" on pedidos for insert with check (auth.uid()::text = user_id);
 create policy "Insertar propio" on rutas_repartidores for insert with check (auth.uid()::text = user_id);
 create policy "Insertar propio" on avisos for insert with check (auth.uid()::text = user_id);
