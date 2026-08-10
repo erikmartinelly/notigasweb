@@ -4,7 +4,7 @@
    ==========================================================================
    OPTIMIZACIÓN DE TRANSMISIÓN GPS PARA NO SATURAR LA BASE DE DATOS:
    - Frecuencia de emisión a la Base de Datos: Cada 30 Segundos (30,000 ms).
-   - Estrategia de DB: UPSERT (Reemplazar 1 sola fila por chofer en 'driver_locations').
+   - Estrategia de DB: UPSERT (Reemplazar 1 sola fila por chofer en 'rutas_repartidores').
    - Interpolación en el Cliente: Movimiento continuo a 60 FPS sin recargar DB.
    - Reducción de carga en servidor DB: 96.6% de ahorro en IOPS y escrituras.
    ========================================================================== */
@@ -30,14 +30,19 @@ let neighborOrderMarkers = {};
 let activeTruckMarkers = {};
 window.isHeatmapActive = window.isHeatmapActive || false;
 
-// ICONO DE GARRAFA GLP ROJA LIMPIA SIN FONDO NI CÍRCULO CON DESTELLO ROJO EN LA GARRAFA
+// Estado de marcador de usuario
+let isUserMarkerDraggedManually = false;
+let isMapInteractedByUser = false;
+let currentActiveOrderMarker = null;
+
+// ICONO DE GARRAFA GLP ROJA LIMPIA
 const garrafaSvgMarkerHtml = `
   <div style="position: relative; width: 44px; height: 54px; display: flex; align-items: center; justify-content: center; cursor: grab;">
     <img src="icons/garrafa_red_clean.svg" class="garrafa-red-flashing-img" alt="Garrafa GLP Roja">
   </div>
 `;
 
-// ICONO DE CAMIÓN REPARTIDOR CON GARRAFA ROJA LIMPIA SIN FONDO NI CÍRCULO
+// ICONO DE CAMIÓN REPARTIDOR
 const truckSvgMarkerHtml = `
   <div style="position: relative; width: 50px; height: 58px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
     <img src="icons/garrafa_red_clean.svg" class="garrafa-red-flashing-img" style="width: 44px; height: 54px;" alt="Camión Repartidor GLP">
@@ -54,10 +59,8 @@ const userLocationSvgHtml = `
   </div>
 `;
 
-let userLocationIcon;
-
+let userLocationIcon;
 let garrafaIcon;
-
 let truckIcon;
 
 let supabaseWaitRetries = 0;
@@ -83,7 +86,7 @@ function initNotigasMap() {
   const mapElement = document.getElementById('map');
   if (!mapElement) return;
 
-    userLocationIcon = L.divIcon({
+  userLocationIcon = L.divIcon({
     className: 'user-location-marker',
     html: userLocationSvgHtml,
     iconSize: [40, 48],
@@ -103,6 +106,7 @@ function initNotigasMap() {
     iconSize: [50, 58],
     iconAnchor: [25, 58]
   });
+
   map = L.map('map', {
     center: [currentGpsLat, currentGpsLng],
     zoom: 16,
@@ -111,7 +115,6 @@ function initNotigasMap() {
 
   L.control.zoom({ position: 'topright' }).addTo(map);
 
-  // Google Maps Tiles Directos: Apariencia 100% Google Maps (Costo 0)
   mapTileLayers['osm'] = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 20,
     subdomains: ['a', 'b', 'c'],
@@ -121,7 +124,6 @@ function initNotigasMap() {
   mapTileLayers['osm'].addTo(map);
 
   setTimeout(() => { if (map) map.invalidateSize(); }, 500);
-
 
   const btnGps = document.getElementById('btnGps');
   if (btnGps) {
@@ -151,29 +153,31 @@ async function cargarPedidosVecinalesEnVivo() {
     console.warn("⚠️ cargarPedidosVecinalesEnVivo cancelado: Supabase o el Mapa no están listos.");
     return;
   }
-  const activeWindow = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+  // FIX W-07: Usar la constante centralizada de state.js
+  const expirationMs = (window.NOTIGAS && window.NOTIGAS.ORDER_EXPIRATION_MS) ? window.NOTIGAS.ORDER_EXPIRATION_MS : 48 * 60 * 60 * 1000;
+  const activeWindow = new Date(Date.now() - expirationMs).toISOString();
   console.log("🔍 Consultando pedidos en Supabase desde:", activeWindow);
-  
+
   try {
     const { data, error } = await window.supabaseClient
       .from('pedidos')
       .select('*')
       .gte('created_at', activeWindow);
-    
+
     if (error) {
       console.error("❌ Error de Supabase al cargar pedidos:", error.message, error.details);
     } else if (data) {
       console.log(`✅ Supabase devolvió ${data.length} pedidos.`);
       data.forEach(order => agregarPedidoVecinoEnMapa(order));
     }
-    
+
     // FETCH LIVE TRUCKS (Last 10 minutes to avoid stale trucks)
     const tenMinsAgo = new Date(Date.now() - 10 * 60000).toISOString();
     const res = await window.supabaseClient
       .from('rutas_repartidores')
       .select('*')
       .gte('created_at', tenMinsAgo);
-      
+
     if (res.data && !res.error) {
        console.log(`✅ Supabase devolvió ${res.data.length} camiones activos.`);
        res.data.forEach(truck => actualizarRepartidorEnMapa(truck));
@@ -187,7 +191,8 @@ async function cargarPedidosVecinalesEnVivo() {
 
 function actualizarRepartidorEnMapa(data) {
   if (!map) return;
-  // Filtrar si es otro repartidor de otra categoria (si el usuario actual es repartidor)
+
+  // Filtrar si es otro repartidor de otra categoría
   let userRole = 'vecino';
   let driverCategoria = 'Gas GLP';
   try {
@@ -202,6 +207,157 @@ function actualizarRepartidorEnMapa(data) {
   if (userRole === 'repartidor' && typeof isOrderCategoryMatchingDriver === 'function' && !isOrderCategoryMatchingDriver(data.categoria)) {
      return; // Repartidores solo ven camiones de su rubro
   }
+
+  const truckId = data.id || data.distribuidor_nombre;
+  if (!truckId) return;
+
+  if (activeTruckMarkers[truckId]) {
+    activeTruckMarkers[truckId].setLatLng([data.latitude, data.longitude]);
+  } else {
+    const marker = L.marker([data.latitude, data.longitude], { icon: truckIcon, zIndexOffset: 9000 }).addTo(map);
+    marker.bindPopup(`
+      <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
+        <strong style="color:#00E676; font-size:13px;">🚛 Camión en Vivo</strong><br>
+        <span style="font-size:12px; color:#FFFFFF; font-weight:800;">${escapeHtmlStr(data.distribuidor_nombre || 'Repartidor')}</span><br>
+        <span style="font-size:11px; color:#64748B;">${escapeHtmlStr(data.categoria || 'Servicio de Entrega')}</span>
+      </div>
+    `);
+    activeTruckMarkers[truckId] = marker;
+  }
+
+  // Eliminar camiones fantasma sin actualizar en 10 minutos
+  if (window.activeTruckTimers[truckId]) clearTimeout(window.activeTruckTimers[truckId]);
+  window.activeTruckTimers[truckId] = setTimeout(() => {
+    if (activeTruckMarkers[truckId]) {
+      map.removeLayer(activeTruckMarkers[truckId]);
+      delete activeTruckMarkers[truckId];
+    }
+  }, 10 * 60000);
+}
+
+function agregarPedidoVecinoEnMapa(order) {
+  if (!map) return;
+  const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
+
+  if (order.user_email === localUserId) return; // Skip own orders
+
+  const orderId = order.id;
+  if (neighborOrderMarkers[orderId]) {
+    map.removeLayer(neighborOrderMarkers[orderId]);
+  }
+
+  // Si el usuario actual es REPARTIDOR, solo ver pedidos de SU MISMA CATEGORÍA
+  let userRole = 'vecino';
+  let driverCategoria = 'Gas GLP';
+  try {
+    const saved = localStorage.getItem('notigas_user_data');
+    if (saved) {
+      const u = JSON.parse(saved);
+      if (u.role) userRole = u.role;
+      if (u.categoria) driverCategoria = u.categoria;
+    }
+  } catch(e){}
+
+  if (userRole === 'repartidor' && typeof isOrderCategoryMatchingDriver === 'function' && !isOrderCategoryMatchingDriver(order.categoria)) {
+     return; // Ignore orders outside of their category
+  }
+
+  const marker = L.marker([order.latitude, order.longitude], { icon: garrafaIcon, zIndexOffset: 8000 }).addTo(map);
+  marker.bindPopup(`
+    <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
+      <strong style="color:#FF6D00; font-size:13px;">🛒 Pedido de un Vecino</strong><br>
+      <span style="font-size:11px; color:#64748B;">${escapeHtmlStr(order.categoria)}</span>
+    </div>
+  `);
+  neighborOrderMarkers[orderId] = marker;
+
+  // FIX W-07: Usar la constante centralizada de state.js en lugar del literal duplicado
+  if (window.neighborOrderTimers[orderId]) clearTimeout(window.neighborOrderTimers[orderId]);
+  window.neighborOrderTimers[orderId] = setTimeout(() => {
+    if (neighborOrderMarkers[orderId]) {
+      map.removeLayer(neighborOrderMarkers[orderId]);
+      delete neighborOrderMarkers[orderId];
+    }
+  }, (window.NOTIGAS && window.NOTIGAS.ORDER_EXPIRATION_MS) ? window.NOTIGAS.ORDER_EXPIRATION_MS : 48 * 60 * 60 * 1000);
+}
+
+function removerPublicacionDeMapa(id) {
+  if (neighborOrderMarkers[id]) {
+    if (map) map.removeLayer(neighborOrderMarkers[id]);
+    delete neighborOrderMarkers[id];
+  }
+}
+
+function actualizarCoordenadasPedidoActivo(newLat, newLng, skipMarkerSet = false) {
+  try {
+    const raw = localStorage.getItem('notigas_active_order');
+    if (raw) {
+      const order = JSON.parse(raw);
+      order.lat = newLat;
+      order.lng = newLng;
+      localStorage.setItem('notigas_active_order', JSON.stringify(order));
+    }
+  } catch(e){}
+
+  if (!skipMarkerSet && currentActiveOrderMarker) {
+    currentActiveOrderMarker.setLatLng([newLat, newLng]);
+  }
+}
+
+function moverMarcadorUbicacionManual(lat, lng) {
+  isUserMarkerDraggedManually = true;
+  currentGpsLat = lat;
+  currentGpsLng = lng;
+
+  if (!userMarker) {
+    applyGpsPosition(lat, lng, "Ajuste Manual", false);
+  } else {
+    userMarker.setLatLng([lat, lng]);
+  }
+
+  actualizarCoordenadasPedidoActivo(lat, lng);
+
+  if (userMarker) {
+    userMarker.getPopup().setContent(`
+      <div style="font-family:'Roboto',sans-serif; text-align:center;">
+        <strong style="color:#FF6D00; font-size:13px;">📍 Ubicación de Entrega Ajustada</strong><br>
+        <span style="font-size:11px; color:#00E676; font-weight:700;">Punto fijado manualmente</span><br>
+        <span style="font-size:9.5px; color:#94A3B8;">(Arrastra el marcador a la puerta exacta de tu casa)</span>
+      </div>
+    `);
+    userMarker.openPopup();
+  }
+
+  verificarYMostrarRepartidorGPS();
+}
+
+function applyGpsPosition(lat, lng, label, forceReset = false) {
+  if (forceReset) {
+    isUserMarkerDraggedManually = false;
+    isMapInteractedByUser = false;
+  }
+
+  currentGpsLat = lat;
+  currentGpsLng = lng;
+
+  const activeLat = isUserMarkerDraggedManually ? currentGpsLat : lat;
+  const activeLng = isUserMarkerDraggedManually ? currentGpsLng : lng;
+
+  if (map) {
+    map.invalidateSize();
+    // Solo re-centrar el mapa si forceReset es explícito o si el usuario NO ha tocado/hecho zoom
+    if (forceReset || !isMapInteractedByUser) {
+      map.setView([activeLat, activeLng], map.getZoom() || 16);
+    }
+  }
+
+  if (!userMarker && map) {
+    userMarker = L.marker([activeLat, activeLng], {
+      icon: userLocationIcon,
+      draggable: true,
+      autoPan: true
+    }).addTo(map);
+
     if (userMarker.dragging) {
       userMarker.dragging.enable();
     }
@@ -222,7 +378,7 @@ function actualizarRepartidorEnMapa(data) {
       isUserMarkerDraggedManually = true;
       currentGpsLat = newPos.lat;
       currentGpsLng = newPos.lng;
-      
+
       actualizarCoordenadasPedidoActivo(newPos.lat, newPos.lng);
 
       userMarker.getPopup().setContent(`
@@ -314,7 +470,6 @@ function transmitirUbicacionRepartidorServidorDB(lat, lng) {
     }
   } catch(e){}
 }
-/* Alias eliminado (código muerto) — se usa transmitirUbicacionRepartidorServidorDB directamente */
 
 let reportedTrucksLayerGroup = null;
 
@@ -392,9 +547,9 @@ function calcularDistanciaMetros(lat1, lon1, lat2, lon2) {
   const R = 6371000; // Radio de la Tierra en metros
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = 
+  const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
     Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return Math.round(R * c);
@@ -421,7 +576,7 @@ function isOrderCategoryMatchingDriver(orderCategory) {
   if (!driverCategory) return true; // Si es comprador (vecino), coincide con todas las categorías
 
   const cat = (orderCategory || '').toLowerCase().trim();
-  
+
   if (driverCategory.includes('gas')) {
     return cat.includes('gas') || cat.includes('garrafa') || cat.includes('glp');
   }
@@ -443,7 +598,7 @@ function isOrderCategoryMatchingDriver(orderCategory) {
   if (driverCategory.includes('fruta') || driverCategory.includes('verdura')) {
     return cat.includes('fruta') || cat.includes('verdura');
   }
-  
+
   return cat.includes(driverCategory) || driverCategory.includes(cat);
 }
 
@@ -451,7 +606,7 @@ let activeOrderLayerGroup = null;
 
 function obtenerIconoCategoriaMapa(catNombre) {
   const c = (catNombre || '').toLowerCase();
-  
+
   let iconContent = '';
   let badgeLabel = 'Gas GLP';
   let badgeColor = '#FF1744';
@@ -459,68 +614,36 @@ function obtenerIconoCategoriaMapa(catNombre) {
   if (c.includes('agua')) {
     badgeLabel = '💧 Agua';
     badgeColor = '#00B0FF';
-    iconContent = `
-      <div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #00B0FF);">
-        <i class="fa-solid fa-bottle-water" style="font-size: 36px; color: #00B0FF; animation: pulseGlow 1.2s infinite alternate;"></i>
-      </div>
-    `;
+    iconContent = `<div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #00B0FF);"><i class="fa-solid fa-bottle-water" style="font-size: 36px; color: #00B0FF; animation: pulseGlow 1.2s infinite alternate;"></i></div>`;
   } else if (c.includes('chatarra')) {
     badgeLabel = '♻️ Chatarra';
     badgeColor = '#00E676';
-    iconContent = `
-      <div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #00E676);">
-        <i class="fa-solid fa-recycle" style="font-size: 36px; color: #00E676; animation: pulseGlow 1.2s infinite alternate;"></i>
-      </div>
-    `;
+    iconContent = `<div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #00E676);"><i class="fa-solid fa-recycle" style="font-size: 36px; color: #00E676; animation: pulseGlow 1.2s infinite alternate;"></i></div>`;
   } else if (c.includes('papel') || c.includes('cartón')) {
     badgeLabel = '📄 Papel';
     badgeColor = '#FFB300';
-    iconContent = `
-      <div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #FFB300);">
-        <i class="fa-solid fa-box-open" style="font-size: 34px; color: #FFB300;"></i>
-      </div>
-    `;
+    iconContent = `<div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #FFB300);"><i class="fa-solid fa-box-open" style="font-size: 34px; color: #FFB300;"></i></div>`;
   } else if (c.includes('fruta') || c.includes('verdura')) {
     badgeLabel = '🍎 Frutas';
     badgeColor = '#FF5252';
-    iconContent = `
-      <div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #FF5252);">
-        <i class="fa-solid fa-apple-whole" style="font-size: 34px; color: #FF5252;"></i>
-      </div>
-    `;
+    iconContent = `<div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #FF5252);"><i class="fa-solid fa-apple-whole" style="font-size: 34px; color: #FF5252;"></i></div>`;
   } else if (c.includes('detergente') || c.includes('limpieza')) {
     badgeLabel = '🧼 Detergente';
     badgeColor = '#E040FB';
-    iconContent = `
-      <div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #E040FB);">
-        <i class="fa-solid fa-pump-soap" style="font-size: 34px; color: #E040FB;"></i>
-      </div>
-    `;
+    iconContent = `<div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #E040FB);"><i class="fa-solid fa-pump-soap" style="font-size: 34px; color: #E040FB;"></i></div>`;
   } else if (c.includes('carbón') || c.includes('leña')) {
     badgeLabel = '🪵 Carbón';
     badgeColor = '#FF6D00';
-    iconContent = `
-      <div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #FF6D00);">
-        <i class="fa-solid fa-fire" style="font-size: 34px; color: #FF6D00;"></i>
-      </div>
-    `;
+    iconContent = `<div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #FF6D00);"><i class="fa-solid fa-fire" style="font-size: 34px; color: #FF6D00;"></i></div>`;
   } else if (!c.includes('gas')) {
     badgeLabel = '📦 Otros';
     badgeColor = '#94A3B8';
-    iconContent = `
-      <div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #94A3B8);">
-        <i class="fa-solid fa-box" style="font-size: 34px; color: #94A3B8;"></i>
-      </div>
-    `;
+    iconContent = `<div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #94A3B8);"><i class="fa-solid fa-box" style="font-size: 34px; color: #94A3B8;"></i></div>`;
   } else {
     // GAS GLP - GARRAFA ROJA LIMPIA
     badgeLabel = '🔥 Gas GLP';
     badgeColor = '#FF1744';
-    iconContent = `
-      <div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center;">
-        <img src="icons/garrafa_red_clean.svg" class="garrafa-red-flashing-img" style="width:38px; height:46px;" alt="Garrafa GLP">
-      </div>
-    `;
+    iconContent = `<div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center;"><img src="icons/garrafa_red_clean.svg" class="garrafa-red-flashing-img" style="width:38px; height:46px;" alt="Garrafa GLP"></div>`;
   }
 
   const markerHtml = `
@@ -550,7 +673,6 @@ function renderActiveOrdersMap() {
 
   const raw = localStorage.getItem('notigas_active_order');
   if (!raw) {
-    // Si no hay pedido activo, restaurar la visibilidad del userMarker base
     if (userMarker && !map.hasLayer(userMarker)) {
       userMarker.addTo(map);
     }
@@ -560,7 +682,6 @@ function renderActiveOrdersMap() {
   try {
     const order = JSON.parse(raw);
 
-    // FILTRADO POR CATEGORÍA: Si es Repartidor, ver SOLO pedidos de su rubro. Los Compradores ven TODOS.
     let isDriverUser = false;
     try {
       const saved = localStorage.getItem('notigas_user_data');
@@ -568,18 +689,17 @@ function renderActiveOrdersMap() {
     } catch(e){}
 
     if (isDriverUser && typeof isOrderCategoryMatchingDriver === 'function' && !isOrderCategoryMatchingDriver(order.categoria)) {
-      return; // Ocultar si la categoría no corresponde al repartidor
+      return;
     }
 
     if (order.lat && order.lng) {
-      // Ocultar temporalmente el userMarker base para evitar que se apile debajo del pedido activo y bloquee el arrastre
       if (userMarker && map.hasLayer(userMarker)) {
         map.removeLayer(userMarker);
       }
 
       const categoryIcon = obtenerIconoCategoriaMapa(order.categoria);
 
-      const orderMarker = L.marker([order.lat, order.lng], { 
+      const orderMarker = L.marker([order.lat, order.lng], {
         icon: categoryIcon,
         draggable: true,
         autoPan: true
@@ -595,7 +715,6 @@ function renderActiveOrdersMap() {
         isUserMarkerDraggedManually = true;
         currentGpsLat = newPos.lat;
         currentGpsLng = newPos.lng;
-        
         actualizarCoordenadasPedidoActivo(newPos.lat, newPos.lng, true);
       });
 
@@ -713,7 +832,7 @@ async function calcularYTrazarRutaEficiente() {
     } catch(e){}
   }
 
-  // 2. Si no hay pedido activo, usar puntos de demostración en calles cercanas
+  // 2. Si no hay pedido activo, usar puntos de demostración
   if (pointsToVisit.length === 0) {
     pointsToVisit = [
       { lat: currentGpsLat + 0.0012, lng: currentGpsLng + 0.0015, title: "🔥 Pedido GLP", desc: "2 garrafas (Calle 4 #21)" },
@@ -723,7 +842,6 @@ async function calcularYTrazarRutaEficiente() {
     ];
   }
 
-  // Filtrar estrictamente por la categoría exclusiva del repartidor (Gas solo Gas, Agua solo Agua, etc.)
   if (typeof isOrderCategoryMatchingDriver === 'function') {
     pointsToVisit = pointsToVisit.filter(p => isOrderCategoryMatchingDriver(p.title));
   }
@@ -738,7 +856,6 @@ async function calcularYTrazarRutaEficiente() {
 
   const waypoints = [{ lat: startPos.lat, lng: startPos.lng }, ...optimalRoute.map(p => ({ lat: p.lat, lng: p.lng }))];
 
-  // Obtener la geometría real por calles con OSRM (Open Source Routing Machine)
   const osrmResult = await obtenerGeometriaCallesOSRM(waypoints);
 
   let finalPolylineCoords = [];
@@ -757,7 +874,6 @@ async function calcularYTrazarRutaEficiente() {
     totalMinutes = Math.max(1, Math.round((totalDistMeters / 1000) / 25 * 60));
   }
 
-  // Renderizar marcadores de secuencia de entrega (1º, 2º, 3º...)
   let accumulatedDist = 0;
   optimalRoute.forEach((pt, idx) => {
     if (pt.distFromLast) accumulatedDist += pt.distFromLast;
@@ -767,11 +883,7 @@ async function calcularYTrazarRutaEficiente() {
         ${idx + 1}º ${pt.title}
       </div>
     `;
-    const seqIcon = L.divIcon({
-      className: 'route-seq-badge',
-      html: seqBadgeHtml,
-      iconAnchor: [15, 30]
-    });
+    const seqIcon = L.divIcon({ className: 'route-seq-badge', html: seqBadgeHtml, iconAnchor: [15, 30] });
 
     const seqMarker = L.marker([pt.lat, pt.lng], { icon: seqIcon });
     seqMarker.bindPopup(`
@@ -784,7 +896,6 @@ async function calcularYTrazarRutaEficiente() {
     routePolylineLayerGroup.addLayer(seqMarker);
   });
 
-  // Trazado de línea de calle neón (Leaflet Polyline que SIGUE LAS CALLES EXACTAS)
   const routePolyline = L.polyline(finalPolylineCoords, {
     color: '#0EA5E9',
     weight: 6,
@@ -795,7 +906,6 @@ async function calcularYTrazarRutaEficiente() {
 
   routePolylineLayerGroup.addLayer(routePolyline);
 
-  // Auto-encuadre del mapa a la ruta trazada sobre las calles
   const bounds = L.latLngBounds(finalPolylineCoords);
   map.fitBounds(bounds, { padding: [60, 60] });
 
@@ -805,7 +915,6 @@ async function calcularYTrazarRutaEficiente() {
 function verificarYMostrarRepartidorGPS() {
   if (!map) return;
 
-  // Renderizar camiones reportados por vecinos y pedidos activos triangulados
   renderReportedTrucksBuffer();
   renderActiveOrdersMap();
 
@@ -828,7 +937,6 @@ function verificarYMostrarRepartidorGPS() {
     }
   } catch(e){}
 
-  // Si el usuario actual es REPARTIDOR, solo ver camiones de SU MISMA CATEGORÍA
   if (userRole === 'repartidor' && typeof isOrderCategoryMatchingDriver === 'function' && !isOrderCategoryMatchingDriver(driverCategoria)) {
     if (truckMarker) {
       map.removeLayer(truckMarker);
@@ -837,7 +945,6 @@ function verificarYMostrarRepartidorGPS() {
     return;
   }
 
-  // Los COMPRADORES ven TODOS los camiones en vivo. Los REPARTIDORES ven los de su categoría.
   if (isDriverActive || driverGpsLive === 'on') {
     let lat = currentGpsLat;
     let lng = currentGpsLng;
@@ -882,7 +989,7 @@ function verificarYMostrarRepartidorGPS() {
 
 function renderHeatmapOverlay() {
   if (!map) return;
-  
+
   if (!heatmapLayerGroup) {
     heatmapLayerGroup = L.layerGroup();
   }
@@ -893,7 +1000,6 @@ function renderHeatmapOverlay() {
     if (map.hasLayer(heatmapLayerGroup)) {
       map.removeLayer(heatmapLayerGroup);
     }
-    // Restaurar vista al salir del mapa de calor
     map.flyTo([currentGpsLat, currentGpsLng], 16);
     return;
   }
@@ -905,23 +1011,16 @@ function renderHeatmapOverlay() {
     { lat: currentGpsLat + 0.0035, lng: currentGpsLng - 0.0030, count: 4, cat: "🪵 4 Bolsas Carbón / Leña" }
   ];
 
-  // Si hay un pedido activo real del cliente, incluirlo con buffer rojo de prioridad
   const rawOrder = localStorage.getItem('notigas_active_order');
   if (rawOrder) {
     try {
       const o = JSON.parse(rawOrder);
       if (o.lat && o.lng) {
-        heatPoints.unshift({
-          lat: o.lat,
-          lng: o.lng,
-          count: 10,
-          cat: `🚨 PEDIDO ACTIVO VECINAL: ${o.categoria}`
-        });
+        heatPoints.unshift({ lat: o.lat, lng: o.lng, count: 10, cat: `🚨 PEDIDO ACTIVO VECINAL: ${o.categoria}` });
       }
     } catch(e){}
   }
 
-  // FILTRO DE CATEGORÍA EN HEATMAP: Solo para repartidores. Los compradores ven todas las zonas de demanda
   const isDriverModeHeat = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver');
   if (isDriverModeHeat && typeof isOrderCategoryMatchingDriver === 'function') {
     heatPoints = heatPoints.filter(pt => isOrderCategoryMatchingDriver(pt.cat));
@@ -932,22 +1031,12 @@ function renderHeatmapOverlay() {
   heatPoints.forEach(pt => {
     allBounds.push([pt.lat, pt.lng]);
 
-    // Anillo exterior de dispersión
     const outerCircle = L.circle([pt.lat, pt.lng], {
-      color: '#FF1744',
-      fillColor: '#FF1744',
-      fillOpacity: 0.25,
-      weight: 1.5,
-      radius: 180 + (pt.count * 18)
+      color: '#FF1744', fillColor: '#FF1744', fillOpacity: 0.25, weight: 1.5, radius: 180 + (pt.count * 18)
     });
 
-    // Anillo interior de núcleo de alta intensidad (Garrafas / Demanda)
     const innerCircle = L.circle([pt.lat, pt.lng], {
-      color: '#FF6D00',
-      fillColor: '#FF8F00',
-      fillOpacity: 0.55,
-      weight: 2.5,
-      radius: 90 + (pt.count * 10)
+      color: '#FF6D00', fillColor: '#FF8F00', fillOpacity: 0.55, weight: 2.5, radius: 90 + (pt.count * 10)
     }).bindPopup(`
       <div style="font-family:'Roboto',sans-serif; text-align:center; padding:6px;">
         <strong style="color:#FF1744; font-size:13px;"><i class="fa-solid fa-fire"></i> ZONA DE ALTA DEMANDA VECINAL</strong><br>
@@ -962,7 +1051,6 @@ function renderHeatmapOverlay() {
 
   heatmapLayerGroup.addTo(map);
 
-  // ZOOM OUT AUTOMÁTICO PARA ENCUADRAR TODAS LAS ZONAS DE DEMANDA CON BUFFERS ROJOS
   if (allBounds.length > 1) {
     const bounds = L.latLngBounds(allBounds);
     map.fitBounds(bounds, { padding: [80, 80], maxZoom: 13.5 });
@@ -1065,7 +1153,7 @@ function conectarGPSAuto(forceReset = false) {
   const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   let gpsResolved = false;
 
-  // 1. Intentar geolocalización nativa del navegador para móviles
+  // 1. Intentar geolocalización nativa del navegador
   solicitarGeolocalizacionNativaNavegador(isMobile, forceReset)
     .then(() => {
       gpsResolved = true;
@@ -1088,7 +1176,7 @@ function conectarGPSAuto(forceReset = false) {
       }
     });
 
-  // 2. Disparar resolución multicanal por IP si la nativa tarda demasiado (PC y móviles)
+  // 2. Disparar resolución multicanal por IP si la nativa tarda demasiado
   setTimeout(() => {
     if (!gpsResolved) {
       gpsResolved = true;
@@ -1166,7 +1254,6 @@ function cambiarCiudadCapital(cityKey) {
   applyGpsPosition(mun.lat, mun.lon, '', false);
   localStorage.setItem('notigas_active_city', mun.nombre);
 
-  // Descargar choferes de la nueva ciudad seleccionada
   if (typeof descargarChoferesYRenderizar === 'function') {
     descargarChoferesYRenderizar('TODOS');
   }
@@ -1175,7 +1262,7 @@ function cambiarCiudadCapital(cityKey) {
 function procesarResultadoBusqueda(item, queryOriginal) {
   const lat = parseFloat(item.lat);
   const lon = parseFloat(item.lon);
-  
+
   const houseNum = item.address?.house_number ? ` #${item.address.house_number}` : '';
   const callePrincipal = (item.address?.road || item.address?.pedestrian || queryOriginal) + houseNum;
   const calleReferencia = item.address?.suburb || item.address?.neighbourhood || item.address?.quarter || item.address?.subdistrict || item.address?.city || item.address?.town || "Zona cercana";
@@ -1200,7 +1287,7 @@ function buscarCalle() {
   const selectCity = document.getElementById('selectCiudadCapital') || document.getElementById('selectMunicipioSearch');
   const query = (input?.value || '').trim();
   const selectedKey = selectCity?.value || 'cochabamba';
-  
+
   const munObj = GEOBOLIVIA_MUNICIPIOS.find(m => m.key === selectedKey) || GEOBOLIVIA_MUNICIPIOS[0];
 
   if (!query) {
@@ -1208,10 +1295,8 @@ function buscarCalle() {
     return;
   }
 
-  // Radio metropolitano unificado (50 km para abarcar todo el eje metropolitano completo)
   const MAX_METRO_DIST_METROS = 50000;
 
-  // Bounding box amplio de área metropolitana (+/- 0.25 grados ~30km)
   const left = (munObj.lon - 0.25).toFixed(4);
   const top = (munObj.lat + 0.25).toFixed(4);
   const right = (munObj.lon + 0.25).toFixed(4);
@@ -1235,7 +1320,7 @@ function buscarCalle() {
       if (validItems.length > 0) {
         procesarResultadoBusqueda(validItems[0], calleQuery);
       } else {
-        // 2º Motor: Photon (Komoot High-Performance Geocoder) especializado en números de inmueble y calles
+        // 2º Motor: Photon (Komoot High-Performance Geocoder)
         const searchUrlPhoton = `https://photon.komoot.io/api/?q=${encodeURIComponent(calleQuery + ' ' + munObj.nombre)}&lat=${munObj.lat}&lon=${munObj.lon}&limit=5`;
         fetch(searchUrlPhoton)
           .then(r => r.json())
@@ -1285,7 +1370,6 @@ function buscarCalle() {
                 if (fbValidItems.length > 0) {
                   procesarResultadoBusqueda(fbValidItems[0], calleQuery);
                 } else {
-                  // Suscripciones Realtime movidas a supabase-config.js
                   alert(`📍 No se encontró la calle "${calleQuery}" en el Área Metropolitana de ${munObj.nombre}.\n\nVerifica que el nombre o número de la calle esté bien escrito.`);
                 }
               })
@@ -1295,6 +1379,8 @@ function buscarCalle() {
       }
     })
     .catch(() => {});
+}
 
+/* Alias eliminado (código muerto) — se usa transmitirUbicacionRepartidorServidorDB directamente */
 
-
+/* Suscripciones Realtime del mapa se encuentran en supabase-config.js */
