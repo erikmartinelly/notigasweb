@@ -489,20 +489,42 @@ async function aceptarPedidoRepartidor(id) {
     showToast('Error', 'No hay conexión a la base de datos.', 'error');
     return;
   }
-  showLoadingOverlay('Aceptando pedido...');
-  const { error } = await window.supabaseClient.from('pedidos').delete().eq('id', id);
-  hideLoadingOverlay();
+  showLoadingOverlay('Obteniendo datos del cliente...');
   
-  if (error) {
-    console.error("Error al aceptar pedido:", error);
-    showToast('Error', 'No se pudo aceptar el pedido.', 'error');
-  } else {
-    closeDriverOrdersModal();
-    showToast('Pedido Aceptado', 'Has aceptado la solicitud. El pedido ha sido retirado del mapa.', 'success', 5000);
-    // Removerlo de la UI
-    const card = document.getElementById(`driver-order-${id}`);
-    if (card) card.remove();
+  // 1. Obtener detalles del pedido antes de borrarlo
+  const { data: orderData, error: fetchErr } = await window.supabaseClient.from('pedidos').select('*').eq('id', id).single();
+  hideLoadingOverlay();
+
+  if (fetchErr || !orderData) {
+    showToast('Error', 'El pedido ya no está disponible o fue cancelado.', 'warning');
+    return;
   }
+
+  // 2. Extraer datos (ya que están en la descripción)
+  const descParts = orderData.descripcion ? orderData.descripcion.split('. Teléfono: ') : [];
+  const direccion = descParts[0] ? descParts[0].replace('Dirección: ', '').replace('Cantidad: 1 unidad. ', '') : 'Por GPS (Ver Mapa)';
+  const telefono = descParts[1] ? descParts[1].split('. Cliente:')[0] : 'No proporcionado';
+  const cliente = orderData.titulo || 'Comprador Vecinal';
+
+  // 3. Mostrar la información al repartidor usando el modal de confirmación, Y LUEGO borrar
+  const modalText = `Cliente: ${cliente}\nDirección: ${direccion}\nTeléfono: ${telefono}\n\n⚠️ Toma captura o anota el número antes de presionar Entendido, ya que el pedido desaparecerá del mapa.`;
+  
+  showConfirmModal('📦', 'Detalles del Pedido', modalText, 'Entendido, lo entregaré', async () => {
+    showLoadingOverlay('Aceptando pedido...');
+    const { error } = await window.supabaseClient.from('pedidos').delete().eq('id', id);
+    hideLoadingOverlay();
+    
+    if (error) {
+      console.error("Error al aceptar pedido:", error);
+      showToast('Error', 'No se pudo aceptar el pedido.', 'error');
+    } else {
+      closeDriverOrdersModal();
+      showToast('Pedido Aceptado', 'Has aceptado la solicitud. El pedido ha sido retirado del mapa.', 'success', 5000);
+      // Removerlo de la UI
+      const card = document.getElementById(`driver-order-${id}`);
+      if (card) card.remove();
+    }
+  });
 }
 
 /* PURGA AUTOMÁTICA DE BASE DE DATOS LOCAL Y MEMORIA PARA EVITAR COLAPSO */
@@ -719,24 +741,37 @@ function confirmarPedido() {
           latitude: pos.lat,
           longitude: pos.lng
       }]).then(({ error }) => {
-          if(error) console.error("Error enviando pedido a Supabase:", error);
-          else {
+          if(error) {
+            console.error("Error enviando pedido a Supabase:", error);
+            showToast('Error', 'No se pudo enviar el pedido al servidor.', 'error', 3000);
+          } else {
             console.log("✅ Pedido guardado en Supabase.");
             if (typeof notigasTrack === 'function') notigasTrack('pedido_creado', { categoria: cat });
+            
+            showToast('✅ ¡Pedido en Camino!', 'Tu orden ha sido confirmada y transmitida a los repartidores de tu zona. Permanece atento a tu teléfono.', 'success', 4000);
+            closePedidoModal();
+            checkActiveOrderStatus();
+
+            if (typeof renderActiveOrdersMap === 'function') {
+              renderActiveOrdersMap();
+            }
+
+            showToast('Pedido Publicado en Mapa', `🚀 ${cat}\n📍 ${direccion}${telefono ? '\n📞 Tel: ' + telefono : ''}`, 'order', 3000);
           }
       });
-    }).catch(e => console.warn('Error obteniendo sesión para pedido:', e));
+    }).catch(e => {
+       console.warn('Error obteniendo sesión para pedido:', e);
+       // Fallback local si falla la sesión
+       showToast('✅ ¡Pedido Local!', 'Guardado localmente.', 'success', 3000);
+       closePedidoModal();
+       checkActiveOrderStatus();
+    });
+  } else {
+    showToast('✅ ¡Pedido Local!', 'Modo sin conexión a Supabase.', 'success', 3000);
+    closePedidoModal();
+    checkActiveOrderStatus();
+    if (typeof renderActiveOrdersMap === 'function') renderActiveOrdersMap();
   }
-
-  showToast('✅ ¡Pedido en Camino!', 'Tu orden ha sido confirmada y transmitida a los repartidores de tu zona. Permanece atento a tu teléfono y a la puerta.', 'success', 3000);
-  closePedidoModal();
-  checkActiveOrderStatus();
-
-  if (typeof renderActiveOrdersMap === 'function') {
-    renderActiveOrdersMap();
-  }
-
-  showToast('Pedido Publicado en Mapa', `🚀 ${cat}\n📍 ${direccion}${telefono ? '\n📞 Tel: ' + telefono : ''}`, 'order', 1000);
 }
 
 function cancelarPedidoActivo() {

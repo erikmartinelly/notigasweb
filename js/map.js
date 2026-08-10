@@ -240,7 +240,7 @@ function agregarPedidoVecinoEnMapa(order) {
   if (!map) return;
   const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
 
-  if (order.user_email === localUserId) return; // Skip own orders
+  if (order.user_id === localUserId) return; // Skip own orders
 
   const orderId = order.id;
   if (neighborOrderMarkers[orderId]) {
