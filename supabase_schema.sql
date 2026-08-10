@@ -152,38 +152,16 @@ alter table denuncias enable row level security;
 alter table reportes_spam enable row level security;
 alter table mensajes_chat_privados enable row level security;
 alter table publicaciones enable row level security;
--- Políticas para Pedidos (Cualquiera puede leer, solo autenticados pueden crear, solo dueños pueden borrar)
-create policy "Select pedidos for all" on pedidos for select using (true);
-create policy "Insert pedidos for authenticated" on pedidos for insert with check (auth.role() = 'authenticated');
-create policy "Update pedidos for owner" on pedidos for update using (auth.uid()::text = user_id);
-create policy "Delete pedidos for owner" on pedidos for delete using (auth.uid()::text = user_id);
-
--- Políticas para Rutas de Repartidores
-create policy "Select rutas for all" on rutas_repartidores for select using (true);
-create policy "All operations for owner of ruta" on rutas_repartidores using (auth.uid()::text = user_id);
-
--- Políticas para Avisos y Comentarios
-create policy "Select avisos for all" on avisos for select using (true);
-create policy "Insert avisos for authenticated" on avisos for insert with check (auth.role() = 'authenticated');
-create policy "Delete avisos for owner" on avisos for delete using (auth.uid()::text = user_id);
-
-create policy "Select comentarios for all" on comentarios_avisos for select using (true);
-create policy "Insert comentarios for authenticated" on comentarios_avisos for insert with check (auth.role() = 'authenticated');
-
--- Políticas para Choferes (Todos leen, dueños editan)
-create policy "Select choferes for all" on choferes_habilitados for select using (true);
-create policy "All operations for owner of chofer" on choferes_habilitados using (auth.uid()::text = user_id);
-
--- Políticas Generales (Otras tablas)
-create policy "Insert denuncias" on denuncias for insert with check (auth.role() = 'authenticated');
-create policy "Select denuncias admin only" on denuncias for select using (false); -- Idealmente solo admin
-
-create policy "Insert reportes" on reportes_spam for insert with check (auth.role() = 'authenticated');
-create policy "Select reportes admin only" on reportes_spam for select using (false);
-
-create policy "All operations chat for participants" on mensajes_chat_privados using (auth.uid()::text = remitente_id or auth.uid()::text = destinatario_id);
-
-create policy "Select publicaciones for all" on publicaciones for select using (true);
+create policy "Allow all operations for denuncias" on denuncias for all using (true) with check (true);
+create policy "Allow all operations for reportes_spam" on reportes_spam for all using (true) with check (true);
+create policy "Allow all operations for mensajes_chat_privados" on mensajes_chat_privados for all using (true) with check (true);
+create policy "Allow all operations for publicaciones" on publicaciones for all using (true) with check (true);
+create policy "Allow all operations for pedidos" on pedidos for all using (true) with check (true);
+create policy "Allow all operations for rutas_repartidores" on rutas_repartidores for all using (true) with check (true);
+create policy "Allow all operations for avisos" on avisos for all using (true) with check (true);
+create policy "Allow all operations for comentarios_avisos" on comentarios_avisos for all using (true) with check (true);
+create policy "Allow all operations for choferes_habilitados" on choferes_habilitados for all using (true) with check (true);
+create policy "Allow all operations for usuarios_baneados" on usuarios_baneados for all using (true) with check (true);
 
 -- 5. HABILITAR REALTIME (Websockets para que el mapa se mueva en vivo)
 create publication supabase_realtime for table 
