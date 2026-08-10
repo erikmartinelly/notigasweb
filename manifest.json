@@ -1,7 +1,8 @@
 {
   "name": "NOTIGAS - Plataforma Barrial y Mapa en Vivo",
   "short_name": "NOTIGAS",
-  "start_url": "./index.html",
+  "start_url": "https://notigas.com/index.html",
+  "scope": "https://notigas.com/",
   "display": "standalone",
   "background_color": "#0F172A",
   "theme_color": "#FF6D00",
@@ -23,4 +24,5 @@
     }
   ]
 }
+
 
