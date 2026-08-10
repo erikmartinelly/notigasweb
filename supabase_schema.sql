@@ -152,16 +152,44 @@ alter table denuncias enable row level security;
 alter table reportes_spam enable row level security;
 alter table mensajes_chat_privados enable row level security;
 alter table publicaciones enable row level security;
-create policy "Allow all operations for denuncias" on denuncias for all using (true) with check (true);
-create policy "Allow all operations for reportes_spam" on reportes_spam for all using (true) with check (true);
-create policy "Allow all operations for mensajes_chat_privados" on mensajes_chat_privados for all using (true) with check (true);
-create policy "Allow all operations for publicaciones" on publicaciones for all using (true) with check (true);
-create policy "Allow all operations for pedidos" on pedidos for all using (true) with check (true);
-create policy "Allow all operations for rutas_repartidores" on rutas_repartidores for all using (true) with check (true);
-create policy "Allow all operations for avisos" on avisos for all using (true) with check (true);
-create policy "Allow all operations for comentarios_avisos" on comentarios_avisos for all using (true) with check (true);
-create policy "Allow all operations for choferes_habilitados" on choferes_habilitados for all using (true) with check (true);
-create policy "Allow all operations for usuarios_baneados" on usuarios_baneados for all using (true) with check (true);
+-- Políticas de Lectura (SELECT): Todos pueden ver los datos
+create policy "Allow SELECT for denuncias" on denuncias for select using (true);
+create policy "Allow SELECT for reportes_spam" on reportes_spam for select using (true);
+create policy "Allow SELECT for mensajes_chat_privados" on mensajes_chat_privados for select using (true);
+create policy "Allow SELECT for publicaciones" on publicaciones for select using (true);
+create policy "Allow SELECT for pedidos" on pedidos for select using (true);
+create policy "Allow SELECT for rutas_repartidores" on rutas_repartidores for select using (true);
+create policy "Allow SELECT for avisos" on avisos for select using (true);
+create policy "Allow SELECT for comentarios_avisos" on comentarios_avisos for select using (true);
+create policy "Allow SELECT for choferes_habilitados" on choferes_habilitados for select using (true);
+create policy "Allow SELECT for usuarios_baneados" on usuarios_baneados for select using (true);
+
+-- Políticas de Creación (INSERT): Todos pueden crear datos (web participativa)
+create policy "Allow INSERT for denuncias" on denuncias for insert with check (true);
+create policy "Allow INSERT for reportes_spam" on reportes_spam for insert with check (true);
+create policy "Allow INSERT for mensajes_chat_privados" on mensajes_chat_privados for insert with check (true);
+create policy "Allow INSERT for publicaciones" on publicaciones for insert with check (true);
+create policy "Allow INSERT for pedidos" on pedidos for insert with check (true);
+create policy "Allow INSERT for rutas_repartidores" on rutas_repartidores for insert with check (true);
+create policy "Allow INSERT for avisos" on avisos for insert with check (true);
+create policy "Allow INSERT for comentarios_avisos" on comentarios_avisos for insert with check (true);
+create policy "Allow INSERT for choferes_habilitados" on choferes_habilitados for insert with check (true);
+create policy "Allow INSERT for usuarios_baneados" on usuarios_baneados for insert with check (true);
+
+-- Políticas de Modificación (UPDATE): Necesario para GPS y cancelar pedidos
+create policy "Allow UPDATE for denuncias" on denuncias for update using (true);
+create policy "Allow UPDATE for reportes_spam" on reportes_spam for update using (true);
+create policy "Allow UPDATE for mensajes_chat_privados" on mensajes_chat_privados for update using (true);
+create policy "Allow UPDATE for publicaciones" on publicaciones for update using (true);
+create policy "Allow UPDATE for pedidos" on pedidos for update using (true);
+create policy "Allow UPDATE for rutas_repartidores" on rutas_repartidores for update using (true);
+create policy "Allow UPDATE for avisos" on avisos for update using (true);
+create policy "Allow UPDATE for comentarios_avisos" on comentarios_avisos for update using (true);
+create policy "Allow UPDATE for choferes_habilitados" on choferes_habilitados for update using (true);
+create policy "Allow UPDATE for usuarios_baneados" on usuarios_baneados for update using (true);
+
+-- ⚠️ IMPORTANTE: No hay política para DELETE. 
+-- Esto bloquea a los hackers de borrar tablas enteras, pero permite que la app funcione sin fricción.
 
 -- 5. HABILITAR REALTIME (Websockets para que el mapa se mueva en vivo)
 create publication supabase_realtime for table 
