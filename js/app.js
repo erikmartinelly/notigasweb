@@ -184,12 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
   ejecutarPurgaBaseDeDatosAuto();
   checkActiveOrderStatus();
 
-  // REGISTRO OFICIAL DE SERVICE WORKER PWA PARA SOPORTE OFFLINE Y VELOCIDAD
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js').catch(() => {});
-    });
-  }
+  // Service Worker registrado al final del archivo para evitar duplicado
 
   // AUTODETECTAR Y ACTIVAR MODO SEGÚN ROL REGISTRADO (COMPRADOR VS REPARTIDOR)
   try {
@@ -671,22 +666,29 @@ function confirmarPedido() {
   };
 
   localStorage.setItem('notigas_active_order', JSON.stringify(activeOrderData));
-    window.supabaseClient.from('pedidos').insert([{
-        categoria: cat,
-        titulo: `Pedido de ${cat}`,
-        descripcion: `Cantidad: 1 unidad. Dirección: ${direccion}. Teléfono: ${telefono}. Cliente: ${buyerName}`,
-        ciudad: 'Cochabamba', // Default o requerido
-        barrio_otb: 'Por GPS', // Default o requerido
-        user_id: window.supabaseClient.auth.user?.()?.id || null, // requiere auth
-        latitude: pos.lat,
-        longitude: pos.lng
-    }]).then(({ error }) => {
-        if(error) console.error("Error enviando pedido a Supabase:", error);
-        else {
-          console.log("✅ Pedido guardado en Supabase.");
-          if (typeof notigasTrack === 'function') notigasTrack('pedido_creado', { categoria: cat });
-        }
-    });
+
+  if (window.supabaseClient) {
+    // Obtener user_id de la sesión activa (Supabase v2)
+    window.supabaseClient.auth.getSession().then(({ data: sessionData }) => {
+      const userId = sessionData?.session?.user?.id || null;
+      window.supabaseClient.from('pedidos').insert([{
+          categoria: cat,
+          titulo: `Pedido de ${cat}`,
+          descripcion: `Cantidad: 1 unidad. Dirección: ${direccion}. Teléfono: ${telefono}. Cliente: ${buyerName}`,
+          ciudad: 'Cochabamba',
+          barrio_otb: 'Por GPS',
+          user_id: userId,
+          latitude: pos.lat,
+          longitude: pos.lng
+      }]).then(({ error }) => {
+          if(error) console.error("Error enviando pedido a Supabase:", error);
+          else {
+            console.log("✅ Pedido guardado en Supabase.");
+            if (typeof notigasTrack === 'function') notigasTrack('pedido_creado', { categoria: cat });
+          }
+      });
+    }).catch(e => console.warn('Error obteniendo sesión para pedido:', e));
+  }
 
   showToast('✅ ¡Pedido en Camino!', 'Tu orden ha sido confirmada y transmitida a los repartidores de tu zona. Permanece atento a tu teléfono y a la puerta.', 'success', 3000);
   closePedidoModal();
@@ -702,8 +704,13 @@ function confirmarPedido() {
 function cancelarPedidoActivo() {
   showConfirmModal('❌', '¿Cancelar tu pedido?', 'Tu pedido activo será eliminado del mapa y los repartidores dejarán de verlo.', 'Sí, cancelar', async () => {
     localStorage.removeItem('notigas_active_order');
-    if (window.supabaseClient && typeof getCurrentUserId === 'function') {
-      await window.supabaseClient.from('pedidos').delete().eq('user_id', window.supabaseClient.auth.user?.()?.id);
+    if (window.supabaseClient) {
+      // Obtener user_id de la sesión activa (Supabase v2)
+      const { data: sessionData } = await window.supabaseClient.auth.getSession();
+      const userId = sessionData?.session?.user?.id;
+      if (userId) {
+        await window.supabaseClient.from('pedidos').delete().eq('user_id', userId);
+      }
     }
     checkActiveOrderStatus();
     if (typeof renderActiveOrdersMap === 'function') {
@@ -936,13 +943,7 @@ window.addEventListener('beforeunload', () => {
     }
 });
 
-// 4. Manejo de errores no capturados
-window.addEventListener('error', (event) => {
-    console.error('❌ Error no capturado:', event.error);
-    if (typeof showToast === 'function') {
-        showToast('Error', 'Ocurrió un error inesperado. Recarga la página.', 'error');
-    }
-});
+// (El handler de error global ya está registrado al inicio del archivo)
 
 // 5. Función de navegación entre vistas
 window.navegarA = function(vista) {

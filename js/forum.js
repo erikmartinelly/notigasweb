@@ -180,13 +180,20 @@ async function crearNuevoPost() {
     return;
   }
 
+  // Obtener user_id de la sesión activa (Supabase v2)
+  let userId = null;
+  try {
+    const { data: sessionData } = await window.supabaseClient.auth.getSession();
+    userId = sessionData?.session?.user?.id || null;
+  } catch(e) {}
+
   const { error } = await window.supabaseClient.from('avisos').insert([{
     categoria: cat,
     titulo: title,
     descripcion: desc,
     ciudad: 'Cochabamba',
     barrio_otb: 'Global',
-    user_id: window.supabaseClient.auth.user?.()?.id || null, // Requiere auth
+    user_id: userId,
     votos: 1
   }]);
 
@@ -324,8 +331,17 @@ async function agregarComentarioPost() {
     votos: 1
   };
 
+  if (!window.supabaseClient) {
+    alert('Error: El servidor no está disponible. Intenta de nuevo en un momento.');
+    return;
+  }
+
   // Obtener los comentarios actuales
-  const { data } = await window.supabaseClient.from('avisos').select('comentarios').eq('id', postId).single();
+  const { data, error: fetchError } = await window.supabaseClient.from('avisos').select('comentarios').eq('id', postId).single();
+  if (fetchError) {
+    alert('Error al cargar comentarios. Intenta de nuevo.');
+    return;
+  }
   const comments = data ? (data.comentarios || []) : [];
   comments.push(newComment);
 

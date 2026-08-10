@@ -2,6 +2,17 @@
    NOTIGAS - MÓDULO DE MINI PÁGINAS DE NEGOCIO ESTILO FACEBOOK POR CATEGORÍA
    ========================================================================== */
 
+// Fallback de seguridad: si state.js no cargó a tiempo
+const escapeHtmlStr = window.escapeHtmlStr || function(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+};
+
 const defaultVendorsList = []; // LIMPIO SIN EJEMPLOS DUMMY PREDETERMINADOS
 
 async function descargarChoferesYRenderizar(cat = 'TODOS') {
@@ -21,7 +32,10 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
       .select('*')
       .eq('ciudad', city);
 
-    if (data && data.length > 0) {
+    if (error) {
+      console.error("Error descargando choferes de Supabase:", error);
+      // Continuar con los datos locales en caché
+    } else if (data && data.length > 0) {
       let list = [];
       data.forEach(d => {
         list.push({

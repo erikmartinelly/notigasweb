@@ -13,7 +13,7 @@
   <meta property="og:type" content="website">
   <meta property="og:title" content="NOTIGAS: Gas y otros pedidos">
   <meta property="og:description" content="Sigue en tiempo real el camión de gas GLP, agua purificada y servicios de tu barrio.">
-  <meta property="og:image" content="favicon.png">
+  <meta property="og:image" content="icons/Icon-512.png">
   <meta property="twitter:card" content="summary_large_image">
 
   <!-- MANIFEST PWA Y FAVICON E ICONOS -->
@@ -32,23 +32,27 @@
   <!-- ESTILOS (FONT AWESOME, LEAFLET & ROBOTO) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles/main.css">
   
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
-  <!-- Google Analytics 4 (gratuito) â€” Reemplaza G-XXXXXXXXXX con tu Measurement ID -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
-  <script>
+  <!-- Google Analytics 4: Reemplaza G-XXXXXXXXXX con tu Measurement ID real -->
+  <!-- <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script> -->
+  <!-- <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
     gtag('config', 'G-XXXXXXXXXX');
-    // Eventos personalizados para el concurso
     window.notigasTrack = function(event, params) {
       try { gtag('event', event, params || {}); } catch(e) {}
+    };
+  </script> -->
+  <script>
+    // notigasTrack stub hasta configurar GA real
+    window.notigasTrack = window.notigasTrack || function(event, params) {
+      console.log('[Analytics stub]', event, params || {});
     };
   </script>
 </head>
@@ -892,6 +896,8 @@
 
 
 
+  <!-- Leaflet movido aquí para no bloquear el render del HTML -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/state.js"></script>
   <script src="js/supabase-config.js"></script>
@@ -906,6 +912,7 @@
 
 </body>
 </html>
+
  
 
 

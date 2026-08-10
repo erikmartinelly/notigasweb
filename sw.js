@@ -3,18 +3,16 @@ const CACHE_NAME = 'notigas-pwa-cache-v50';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './panel270977.html',
-  './js/app.js',
-  './js/map.js',
-  './js/vendors.js',
-  './js/forum.js',
+  './styles/main.css',
+  './js/state.js',
+  './js/supabase-config.js',
   './js/auth.js',
+  './js/vendors.js',
+  './js/map.js',
+  './js/forum.js',
   './js/ads.js',
   './js/admin.js',
-  './js/supabase-config.js',
-  './js/state.js',
-
-  './favicon.svg',
+  './js/app.js',
   './icons/garrafa_red_clean.svg',
   './icons/camion_red.svg',
   './manifest.json'
@@ -46,7 +44,20 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   
   const url = event.request.url;
-  if (url.includes('google.com') || url.includes('openstreetmap.org') || url.includes('cloudflare.com') || url.includes('ipapi') || url.includes('ipwho') || url.includes('freeipapi') || url.includes('osrm.org')) {
+  // Bypass: peticiones externas y Supabase (autenticación/realtime nunca deben cachearse)
+  if (
+    url.includes('google.com') ||
+    url.includes('openstreetmap.org') ||
+    url.includes('cloudflare.com') ||
+    url.includes('supabase.co') ||
+    url.includes('ipapi') ||
+    url.includes('ipwho') ||
+    url.includes('freeipapi') ||
+    url.includes('osrm.org') ||
+    url.includes('jsdelivr.net') ||
+    url.includes('unpkg.com') ||
+    url.includes('accounts.google.com')
+  ) {
     return;
   }
 

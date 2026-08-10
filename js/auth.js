@@ -292,11 +292,18 @@ async function handleCredentialResponse(response) {
     // Si es repartidor, verificamos si ya existe o abrimos modal de registro
     if (currentSelectedRole === 'driver') {
       try {
-        const { data: existingDriver } = await window.supabaseClient
-          .from('repartidores')
+        const { data: existingDriver, error: driverCheckError } = await window.supabaseClient
+          .from('choferes_habilitados')
           .select('id')
           .eq('user_id', user.id)
           .maybeSingle();
+
+        if (driverCheckError) {
+          // Error real de red/BD — no asumir que no existe, informar al usuario
+          if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+          if (typeof showToast === 'function') showToast('Error de conexión', 'No se pudo verificar tu cuenta. Intenta de nuevo.', 'error', 4000);
+          return;
+        }
           
         if (existingDriver) {
           // Ya existe en la base de datos, ingresarlo directamente
@@ -305,7 +312,10 @@ async function handleCredentialResponse(response) {
           return;
         }
       } catch(e) {
-        console.warn("Error verificando repartidor existente:", e);
+        console.error("Error verificando repartidor existente:", e);
+        if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+        if (typeof showToast === 'function') showToast('Error', 'No se pudo verificar la sesión. Intenta de nuevo.', 'error', 4000);
+        return;
       }
 
       // NO EXISTE: abrimos el modal de registro y guardamos temporalmente el email
@@ -392,10 +402,15 @@ async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
 }
 
 async function guardarRegistroUnico() {
+  if (!window.supabaseClient) {
+    alert('Error: El servidor no está disponible. Recarga la página.');
+    return;
+  }
   if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Asegurando conexión...');
   
-  // 1. Iniciar sesión anónima en Supabase (requiere habilitar Anonymous Auth en Supabase)
-  const { data: { session }, error: authError } = await window.supabaseClient.auth.getSession();
+  // 1. Obtener sesión activa de Supabase
+  const { data: sessionData, error: authError } = await window.supabaseClient.auth.getSession();
+  const session = sessionData?.session;
   if (!session || authError) {
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
     alert("❌ Error de seguridad: Debes iniciar sesión con Google o Email antes de continuar.");
@@ -438,7 +453,7 @@ async function guardarRegistroUnico() {
     };
 
     localStorage.setItem('notigas_user_data', JSON.stringify(repartidorData));
-    guardarRepartidorEnBaseDeDatos(repartidorData);
+    await guardarRepartidorEnBaseDeDatos(repartidorData);
 
     const modalAuth = document.getElementById('modalWelcomeAuth');
     if (modalAuth) modalAuth.style.display = 'none';
@@ -522,7 +537,13 @@ async function iniciarSesionRepartidor() {
 
   // Asegurar que tenemos una sesión de Supabase Auth para RLS
   if (!existingUserId) {
-    const { data: { session }, error: authError } = await window.supabaseClient.auth.getSession();
+    if (!window.supabaseClient) {
+      if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+      alert("Error: El servidor no está disponible. Recarga la página.");
+      return;
+    }
+    const { data: sessionData, error: authError } = await window.supabaseClient.auth.getSession();
+    const session = sessionData?.session;
     if (!session || authError) {
       if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
       alert("Error: Debes iniciar sesión primero.");
@@ -717,9 +738,12 @@ async function migrarDatosAntiguosARepartidor() {
     
     let existingUserId = driverProfile.user_id;
     if (!existingUserId) {
-      const { data: { session }, error: authError } = await window.supabaseClient.auth.getSession();
-      if (session) {
-        existingUserId = session.user.id;
+      if (window.supabaseClient) {
+        const { data: sessionData } = await window.supabaseClient.auth.getSession();
+        const session = sessionData?.session;
+        if (session) {
+          existingUserId = session.user.id;
+        }
       }
     }
 
@@ -766,8 +790,14 @@ async function migrarDatosAntiguosARepartidor() {
 const iniciarSesionChofer = iniciarSesionRepartidor;
 
 async function iniciarSesionEmail() {
-  const email = document.getElementById('authEmail').value;
-  const password = document.getElementById('authPassword').value;
+  if (!window.supabaseClient) {
+    if (typeof showToast === 'function') showToast('Error', 'El servidor no está disponible. Recarga la página.', 'error');
+    return;
+  }
+  const emailEl = document.getElementById('authEmail');
+  const passwordEl = document.getElementById('authPassword');
+  const email = emailEl ? emailEl.value.trim() : '';
+  const password = passwordEl ? passwordEl.value : '';
   
   if (!email || !password) {
     if (typeof showToast === 'function') showToast('Error', 'Ingresa correo y contraseña', 'error');
@@ -784,16 +814,22 @@ async function iniciarSesionEmail() {
   if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
   
   if (error) {
-    if (typeof showToast === 'function') showToast('Error', error.message, 'error');
+    if (typeof showToast === 'function') showToast('Error de acceso', error.message, 'error');
     return;
   }
   
-  procesarSesionExitosa(data.user);
+  if (data && data.user) procesarSesionExitosa(data.user);
 }
 
 async function registrarEmail() {
-  const email = document.getElementById('authEmail').value;
-  const password = document.getElementById('authPassword').value;
+  if (!window.supabaseClient) {
+    if (typeof showToast === 'function') showToast('Error', 'El servidor no está disponible. Recarga la página.', 'error');
+    return;
+  }
+  const emailEl = document.getElementById('authEmail');
+  const passwordEl = document.getElementById('authPassword');
+  const email = emailEl ? emailEl.value.trim() : '';
+  const password = passwordEl ? passwordEl.value : '';
   
   if (!email || !password) {
     if (typeof showToast === 'function') showToast('Error', 'Ingresa correo y contraseña', 'error');
@@ -815,7 +851,7 @@ async function registrarEmail() {
   if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
   
   if (error) {
-    if (typeof showToast === 'function') showToast('Error', error.message, 'error');
+    if (typeof showToast === 'function') showToast('Error de registro', error.message, 'error');
     return;
   }
   
@@ -854,13 +890,18 @@ function procesarSesionExitosa(user) {
 let currentAuthAction = 'login'; // 'login' or 'register'
 
 window.showAuthStep = function(step) {
-  document.getElementById('authStep1_Role').style.display = (step === 1) ? 'block' : 'none';
-  document.getElementById('authStep2_Action').style.display = (step === 2) ? 'block' : 'none';
-  document.getElementById('authStep3_Method').style.display = (step === 3) ? 'block' : 'none';
+  const step1 = document.getElementById('authStep1_Role');
+  const step2 = document.getElementById('authStep2_Action');
+  const step3 = document.getElementById('authStep3_Method');
+  if (step1) step1.style.display = (step === 1) ? 'block' : 'none';
+  if (step2) step2.style.display = (step === 2) ? 'block' : 'none';
+  if (step3) step3.style.display = (step === 3) ? 'block' : 'none';
   
   if (step === 3) {
-    document.getElementById('btnEmailAction').innerText = (currentAuthAction === 'login') ? 'Ingresar' : 'Registrarse';
-    document.getElementById('authStep3Title').innerText = (currentAuthAction === 'login') ? 'Selecciona método de ingreso:' : 'Selecciona método de registro:';
+    const btnEmailAction = document.getElementById('btnEmailAction');
+    const step3Title = document.getElementById('authStep3Title');
+    if (btnEmailAction) btnEmailAction.innerText = (currentAuthAction === 'login') ? 'Ingresar' : 'Registrarse';
+    if (step3Title) step3Title.innerText = (currentAuthAction === 'login') ? 'Selecciona método de ingreso:' : 'Selecciona método de registro:';
   }
 };
 
