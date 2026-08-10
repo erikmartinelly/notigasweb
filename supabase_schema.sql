@@ -156,6 +156,12 @@ create policy "Allow all operations for denuncias" on denuncias for all using (t
 create policy "Allow all operations for reportes_spam" on reportes_spam for all using (true) with check (true);
 create policy "Allow all operations for mensajes_chat_privados" on mensajes_chat_privados for all using (true) with check (true);
 create policy "Allow all operations for publicaciones" on publicaciones for all using (true) with check (true);
+create policy "Allow all operations for pedidos" on pedidos for all using (true) with check (true);
+create policy "Allow all operations for rutas_repartidores" on rutas_repartidores for all using (true) with check (true);
+create policy "Allow all operations for avisos" on avisos for all using (true) with check (true);
+create policy "Allow all operations for comentarios_avisos" on comentarios_avisos for all using (true) with check (true);
+create policy "Allow all operations for choferes_habilitados" on choferes_habilitados for all using (true) with check (true);
+create policy "Allow all operations for usuarios_baneados" on usuarios_baneados for all using (true) with check (true);
 
 -- 5. HABILITAR REALTIME (Websockets para que el mapa se mueva en vivo)
 create publication supabase_realtime for table 
