@@ -1,6 +1,5 @@
 -- ESQUEMA DE BASE DE DATOS PROFESIONAL PARA NOTIGAS
--- FIX C-01+C-02+W-01: RLS granular por tabla + tabla comentarios_avisos + bucket Storage
--- Creado para ser copiado y pegado en el SQL Editor de Supabase.
+-- ARQUITECTURA A PRUEBA DE FALLOS: UUIDs, RPCs, constraints, deletes y sincronización con frontend.
 
 -- 1. DROPS INICIALES (Limpieza para evitar conflictos)
 drop publication if exists supabase_realtime;
@@ -15,17 +14,24 @@ drop table if exists reportes_spam cascade;
 drop table if exists mensajes_chat_privados cascade;
 drop table if exists publicaciones cascade;
 drop table if exists admin_credentials cascade;
-drop table if exists user_roles cascade;
 
--- 2. CREACIÓN DE TABLAS
+-- 2. EXTENSIONES
+create extension if not exists "uuid-ossp";
+
+-- 3. CREACIÓN DE TABLAS (Con UUIDs)
 
 -- Tabla: pedidos (Solicitudes de gas de los vecinos)
 create table pedidos (
-    id bigint primary key generated always as identity,
+    id uuid primary key default uuid_generate_v4(),
     user_id text,
-    categoria text,
+    categoria text not null,
     titulo text,
     descripcion text,
+    cantidad text default '1 unidad',
+    direccion text,
+    telefono text,
+    estado text default 'pendiente' check (estado in ('pendiente', 'visto', 'entregado', 'cancelado')),
+    driver_id text,
     ciudad text default 'Cochabamba',
     barrio_otb text,
     latitude double precision,
@@ -35,7 +41,7 @@ create table pedidos (
 
 -- Tabla: rutas_repartidores (Ubicación GPS de los camiones en vivo)
 create table rutas_repartidores (
-    id bigint primary key generated always as identity,
+    id uuid primary key default uuid_generate_v4(),
     user_id text unique,
     distribuidor_nombre text,
     categoria text default 'gas',
@@ -44,26 +50,27 @@ create table rutas_repartidores (
     latitude double precision,
     longitude double precision,
     garrafas_agotadas boolean default false,
+    last_active timestamp with time zone default timezone('utc'::text, now()),
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- Tabla: avisos (Foro vecinal) — SIN columna comentarios JSONB (migrado a tabla propia)
+-- Tabla: avisos (Foro vecinal)
 create table avisos (
-    id bigint primary key generated always as identity,
+    id uuid primary key default uuid_generate_v4(),
     user_id text,
     categoria text,
-    titulo text,
-    descripcion text,
+    titulo text not null,
+    descripcion text not null,
     ciudad text default 'Cochabamba',
     barrio_otb text default 'Global',
     votos integer default 1,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- FIX W-01: Tabla comentarios_avisos — Reemplaza el array JSONB embebido en avisos.
+-- Tabla: comentarios_avisos
 create table comentarios_avisos (
-    id bigint primary key generated always as identity,
-    aviso_id bigint not null references avisos(id) on delete cascade,
+    id uuid primary key default uuid_generate_v4(),
+    aviso_id uuid not null references avisos(id) on delete cascade,
     user_id text,
     autor text not null default 'Vecino de la OTB',
     texto text not null,
@@ -73,7 +80,7 @@ create table comentarios_avisos (
 
 -- Tabla: reportes_spam (Filtro Anti-Inglés y denuncias de contenido)
 create table reportes_spam (
-    id bigint primary key generated always as identity,
+    id uuid primary key default uuid_generate_v4(),
     texto text,
     motivo text,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
@@ -81,7 +88,7 @@ create table reportes_spam (
 
 -- Tabla: choferes_habilitados (Repartidores registrados)
 create table choferes_habilitados (
-    id bigint primary key generated always as identity,
+    id uuid primary key default uuid_generate_v4(),
     user_id text unique,
     nombre_completo text,
     telefono_whatsapp text,
@@ -97,7 +104,7 @@ create table choferes_habilitados (
 
 -- Tabla: usuarios_baneados
 create table usuarios_baneados (
-    id bigint primary key generated always as identity,
+    id uuid primary key default uuid_generate_v4(),
     user_id text,
     motivo text,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
@@ -105,7 +112,7 @@ create table usuarios_baneados (
 
 -- Tabla: denuncias
 create table denuncias (
-    id bigint primary key generated always as identity,
+    id uuid primary key default uuid_generate_v4(),
     denunciante_id text,
     denunciado_id text,
     motivo text,
@@ -115,7 +122,7 @@ create table denuncias (
 
 -- Tabla: mensajes_chat_privados
 create table mensajes_chat_privados (
-    id bigint primary key generated always as identity,
+    id uuid primary key default uuid_generate_v4(),
     remitente_id text,
     destinatario_id text,
     mensaje text,
@@ -125,7 +132,7 @@ create table mensajes_chat_privados (
 
 -- Tabla: publicaciones (Uso exclusivo para Anuncios Globales del Administrador)
 create table publicaciones (
-    id bigint primary key generated always as identity,
+    id uuid primary key default uuid_generate_v4(),
     tipo text default 'anuncioGlobal',
     titulo text,
     descripcion text,
@@ -133,15 +140,30 @@ create table publicaciones (
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- Tabla: credenciales de administrador (autenticación SHA-256 de doble firma)
+-- Tabla: credenciales de administrador
 create table if not exists admin_credentials (
-    id bigint primary key generated always as identity,
+    id uuid primary key default uuid_generate_v4(),
     email text unique not null,
     password_hash text not null,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 3. HABILITAR SEGURIDAD (RLS)
+-- 4. FUNCIONES RPC (Stored Procedures para Votos Seguros)
+create or replace function incrementar_votos_aviso(aviso_id uuid, incremento integer)
+returns void language plpgsql security definer as $$
+begin
+  update avisos set votos = votos + incremento where id = aviso_id;
+end;
+$$;
+
+create or replace function incrementar_votos_comentario(comentario_id uuid, incremento integer)
+returns void language plpgsql security definer as $$
+begin
+  update comentarios_avisos set votos = votos + incremento where id = comentario_id;
+end;
+$$;
+
+-- 5. HABILITAR SEGURIDAD (RLS)
 alter table pedidos enable row level security;
 alter table rutas_repartidores enable row level security;
 alter table avisos enable row level security;
@@ -152,47 +174,56 @@ alter table denuncias enable row level security;
 alter table reportes_spam enable row level security;
 alter table mensajes_chat_privados enable row level security;
 alter table publicaciones enable row level security;
--- Políticas de Lectura (SELECT): Todos pueden ver los datos
-create policy "Allow SELECT for denuncias" on denuncias for select using (true);
-create policy "Allow SELECT for reportes_spam" on reportes_spam for select using (true);
-create policy "Allow SELECT for mensajes_chat_privados" on mensajes_chat_privados for select using (true);
-create policy "Allow SELECT for publicaciones" on publicaciones for select using (true);
-create policy "Allow SELECT for pedidos" on pedidos for select using (true);
-create policy "Allow SELECT for rutas_repartidores" on rutas_repartidores for select using (true);
-create policy "Allow SELECT for avisos" on avisos for select using (true);
-create policy "Allow SELECT for comentarios_avisos" on comentarios_avisos for select using (true);
-create policy "Allow SELECT for choferes_habilitados" on choferes_habilitados for select using (true);
-create policy "Allow SELECT for usuarios_baneados" on usuarios_baneados for select using (true);
 
--- Políticas de Creación (INSERT): Todos pueden crear datos (web participativa)
-create policy "Allow INSERT for denuncias" on denuncias for insert with check (true);
-create policy "Allow INSERT for reportes_spam" on reportes_spam for insert with check (true);
-create policy "Allow INSERT for mensajes_chat_privados" on mensajes_chat_privados for insert with check (true);
-create policy "Allow INSERT for publicaciones" on publicaciones for insert with check (true);
-create policy "Allow INSERT for pedidos" on pedidos for insert with check (true);
-create policy "Allow INSERT for rutas_repartidores" on rutas_repartidores for insert with check (true);
-create policy "Allow INSERT for avisos" on avisos for insert with check (true);
-create policy "Allow INSERT for comentarios_avisos" on comentarios_avisos for insert with check (true);
-create policy "Allow INSERT for choferes_habilitados" on choferes_habilitados for insert with check (true);
-create policy "Allow INSERT for usuarios_baneados" on usuarios_baneados for insert with check (true);
+-- Políticas Universales (MVP Público): Permitir lectura, inserción y borrado, basándose en la confianza del cliente.
+create policy "Public SELECT" on pedidos for select using (true);
+create policy "Public SELECT" on rutas_repartidores for select using (true);
+create policy "Public SELECT" on avisos for select using (true);
+create policy "Public SELECT" on comentarios_avisos for select using (true);
+create policy "Public SELECT" on choferes_habilitados for select using (true);
+create policy "Public SELECT" on usuarios_baneados for select using (true);
+create policy "Public SELECT" on denuncias for select using (true);
+create policy "Public SELECT" on reportes_spam for select using (true);
+create policy "Public SELECT" on mensajes_chat_privados for select using (true);
+create policy "Public SELECT" on publicaciones for select using (true);
 
--- Políticas de Modificación (UPDATE): Necesario para GPS y cancelar pedidos
-create policy "Allow UPDATE for denuncias" on denuncias for update using (true);
-create policy "Allow UPDATE for reportes_spam" on reportes_spam for update using (true);
-create policy "Allow UPDATE for mensajes_chat_privados" on mensajes_chat_privados for update using (true);
-create policy "Allow UPDATE for publicaciones" on publicaciones for update using (true);
-create policy "Allow UPDATE for pedidos" on pedidos for update using (true);
-create policy "Allow UPDATE for rutas_repartidores" on rutas_repartidores for update using (true);
-create policy "Allow UPDATE for avisos" on avisos for update using (true);
-create policy "Allow UPDATE for comentarios_avisos" on comentarios_avisos for update using (true);
-create policy "Allow UPDATE for choferes_habilitados" on choferes_habilitados for update using (true);
-create policy "Allow UPDATE for usuarios_baneados" on usuarios_baneados for update using (true);
+create policy "Public INSERT" on pedidos for insert with check (true);
+create policy "Public INSERT" on rutas_repartidores for insert with check (true);
+create policy "Public INSERT" on avisos for insert with check (true);
+create policy "Public INSERT" on comentarios_avisos for insert with check (true);
+create policy "Public INSERT" on choferes_habilitados for insert with check (true);
+create policy "Public INSERT" on usuarios_baneados for insert with check (true);
+create policy "Public INSERT" on denuncias for insert with check (true);
+create policy "Public INSERT" on reportes_spam for insert with check (true);
+create policy "Public INSERT" on mensajes_chat_privados for insert with check (true);
+create policy "Public INSERT" on publicaciones for insert with check (true);
 
--- ⚠️ IMPORTANTE: No hay política para DELETE. 
--- Esto bloquea a los hackers de borrar tablas enteras, pero permite que la app funcione sin fricción.
+create policy "Public UPDATE" on pedidos for update using (true);
+create policy "Public UPDATE" on rutas_repartidores for update using (true);
+create policy "Public UPDATE" on avisos for update using (true);
+create policy "Public UPDATE" on comentarios_avisos for update using (true);
+create policy "Public UPDATE" on choferes_habilitados for update using (true);
+create policy "Public UPDATE" on usuarios_baneados for update using (true);
+create policy "Public UPDATE" on denuncias for update using (true);
+create policy "Public UPDATE" on reportes_spam for update using (true);
+create policy "Public UPDATE" on mensajes_chat_privados for update using (true);
+create policy "Public UPDATE" on publicaciones for update using (true);
 
--- 5. HABILITAR REALTIME (Websockets para que el mapa se mueva en vivo)
+create policy "Public DELETE" on pedidos for delete using (true);
+create policy "Public DELETE" on rutas_repartidores for delete using (true);
+create policy "Public DELETE" on avisos for delete using (true);
+create policy "Public DELETE" on comentarios_avisos for delete using (true);
+create policy "Public DELETE" on choferes_habilitados for delete using (true);
+create policy "Public DELETE" on usuarios_baneados for delete using (true);
+create policy "Public DELETE" on denuncias for delete using (true);
+create policy "Public DELETE" on reportes_spam for delete using (true);
+create policy "Public DELETE" on mensajes_chat_privados for delete using (true);
+create policy "Public DELETE" on publicaciones for delete using (true);
+
+
+-- 6. HABILITAR REALTIME (Websockets para que el mapa se mueva en vivo)
 create publication supabase_realtime for table 
     pedidos, 
     rutas_repartidores, 
-    avisos;
+    avisos,
+    comentarios_avisos;

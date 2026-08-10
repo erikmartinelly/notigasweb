@@ -6,11 +6,17 @@
 function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
   console.log("📍 Resolviendo ubicación por red (el más rápido gana)...");
 
+  const fetchIP = (url, parser) => fetch(url)
+    .then(r => r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status)))
+    .then(parser)
+    .catch(e => Promise.reject(e));
+
   const apis = [
-    fetch('https://ipinfo.io/json').then(r => r.json()).then(d => (d && d.loc) ? { lat: parseFloat(d.loc.split(',')[0]), lng: parseFloat(d.loc.split(',')[1]) } : Promise.reject()).catch(() => Promise.reject()),
-    fetch('https://freeipapi.com/api/json').then(r => r.json()).then(d => (d && d.latitude && d.longitude) ? { lat: d.latitude, lng: d.longitude } : Promise.reject()).catch(() => Promise.reject()),
-    fetch('https://ipwho.is/').then(r => r.json()).then(d => (d && d.success && d.latitude && d.longitude) ? { lat: d.latitude, lng: d.longitude } : Promise.reject()).catch(() => Promise.reject()),
-    fetch('https://ipapi.co/json/').then(r => r.json()).then(d => (d && d.latitude && d.longitude) ? { lat: d.latitude, lng: d.longitude } : Promise.reject()).catch(() => Promise.reject())
+    fetchIP('https://ipinfo.io/json', d => (d && d.loc) ? { lat: parseFloat(d.loc.split(',')[0]), lng: parseFloat(d.loc.split(',')[1]) } : Promise.reject(new Error("No loc"))),
+    fetchIP('https://freeipapi.com/api/json', d => (d && d.latitude && d.longitude) ? { lat: d.latitude, lng: d.longitude } : Promise.reject(new Error("No coords"))),
+    fetchIP('https://ipwho.is/', d => (d && d.success && d.latitude && d.longitude) ? { lat: d.latitude, lng: d.longitude } : Promise.reject(new Error("No success"))),
+    fetchIP('https://ipapi.co/json/', d => (d && d.latitude && d.longitude) ? { lat: d.latitude, lng: d.longitude } : Promise.reject(new Error("No coords"))),
+    fetchIP('https://get.geojs.io/v1/ip/geo.json', d => (d && d.latitude && d.longitude) ? { lat: parseFloat(d.latitude), lng: parseFloat(d.longitude) } : Promise.reject(new Error("No coords")))
   ];
 
   return Promise.any(apis)
@@ -19,8 +25,8 @@ function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
       console.log("📍 Ubicación resuelta por Red/IP:", coords.lat, coords.lng);
       return coords;
     })
-    .catch(() => {
-      console.warn("⚠️ Todas las APIs IP bloqueadas. Usando default.");
+    .catch((e) => {
+      console.warn("⚠️ Todas las APIs IP bloqueadas o fallaron.", e);
       if (typeof showToast === 'function') {
          showToast('📍 Modo Manual Activo', 'Tu PC o red bloqueó el GPS automático. Por favor, mueve el mapa manualmente.', 'warning', 6000);
       }
@@ -125,7 +131,7 @@ function conectarGPSAuto(forceReset = false) {
       gpsResolved = true;
       obtenerUbicacionIPFallbackDesktop(true);
     }
-  }, 3500);
+  }, 5000);
 
   // 3. En dispositivos móviles Android, activar watchPosition continuo
   if (isMobile && "geolocation" in navigator) {

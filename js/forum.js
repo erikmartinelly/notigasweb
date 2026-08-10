@@ -156,9 +156,13 @@ function closeNuevoPostModal() {
 }
 
 async function crearNuevoPost() {
-  const title = (document.getElementById('inputPostTitulo')?.value || '').trim();
-  const desc = (document.getElementById('inputPostDesc')?.value || '').trim();
-  const cat = document.getElementById('selectPostTipo')?.value || 'AVISO VECINAL';
+  const titleEl = document.getElementById('inputPostTitulo');
+  const descEl = document.getElementById('inputPostDesc');
+  const catEl = document.getElementById('selectPostTipo');
+  
+  const title = (titleEl ? titleEl.value : '').trim();
+  const desc = (descEl ? descEl.value : '').trim();
+  const cat = (catEl ? catEl.value : 'AVISO VECINAL');
 
   if (!title || !desc) {
     alert('Por favor ingresa un título y una descripción para tu publicación vecinal.');
@@ -190,9 +194,13 @@ async function crearNuevoPost() {
   // Obtener user_id de la sesión activa (Supabase v2)
   let userId = null;
   try {
-    const { data: sessionData } = await window.supabaseClient.auth.getSession();
-    userId = sessionData?.session?.user?.id || null;
-  } catch(e) {}
+    const sessionData = await window.supabaseClient.auth.getSession();
+    if (sessionData && sessionData.data && sessionData.data.session && sessionData.data.session.user) {
+        userId = sessionData.data.session.user.id;
+    }
+  } catch(e) {
+    console.warn("No se pudo obtener la sesión de usuario para el aviso:", e);
+  }
 
   const { error } = await window.supabaseClient.from('avisos').insert([{
     categoria: cat,
