@@ -221,7 +221,7 @@ function renderVendorCards(filterCat) {
                 <div class="ad-fb-sub"><i class="fa-solid fa-earth-americas"></i> PUBLICIDAD PATROCINADA EN EL FEED REPARTIDORES</div>
               </div>
             </div>
-            <span class="ad-badge">SPONSOR</span>
+            <span class="ad-badge">AD</span>
           </div>
           <div class="ad-fb-body" id="adVendorDesc">
             ¿Tienes un negocio en el barrio o deseas ofrecer tu servicio profesional? Anúnciate aquí y llega a toda tu OTB.

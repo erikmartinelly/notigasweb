@@ -91,7 +91,7 @@ async function renderForumFeed() {
                 <div class="ad-fb-sub"><i class="fa-solid fa-earth-americas"></i> PUBLICIDAD PATROCINADA EN EL FEED DE NOTICIAS VECINALES</div>
               </div>
             </div>
-            <span class="ad-badge">SPONSOR</span>
+            <span class="ad-badge">AD</span>
           </div>
           <div class="ad-fb-body" id="adForumDesc">
             ¿Tienes un negocio en el barrio o deseas anunciar tu servicio profesional? Publica gratis tu anuncio o contrata espacio destacado.

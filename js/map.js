@@ -1137,18 +1137,14 @@ function solicitarGeolocalizacionNativaNavegador(isMobile, forceReset) {
       },
       (err) => {
         console.warn("⚠️ Geolocalización nativa inicial falló:", err.message);
-        if (isMobile) {
-          navigator.geolocation.getCurrentPosition(
-            (pos2) => {
-              applyGpsPosition(pos2.coords.latitude, pos2.coords.longitude, "Ubicación GPS Móvil (Red)", forceReset);
-              resolve(pos2);
-            },
-            (err2) => reject(err2),
-            { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
-          );
-        } else {
-          reject(err);
-        }
+        navigator.geolocation.getCurrentPosition(
+          (pos2) => {
+            applyGpsPosition(pos2.coords.latitude, pos2.coords.longitude, "Ubicación GPS (Respaldo)", forceReset);
+            resolve(pos2);
+          },
+          (err2) => reject(err2),
+          { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
+        );
       },
       options
     );
