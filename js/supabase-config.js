@@ -98,7 +98,7 @@ window.driverLocationInterval = null;
       const lng = typeof currentGpsLng !== 'undefined' ? currentGpsLng : -66.1568;
   
       try {
-        const { error } = await window.supabaseClient.from('rutas_repartidores')
+        const { error } = await window.supabaseClient.from('publicaciones')
             .update({ latitude: lat, longitude: lng })
             .eq('id', window.currentDriverPublicationId);
         if (error) console.error("Error al actualizar ubicación en Supabase:", error);
@@ -113,7 +113,7 @@ window.driverLocationInterval = null;
           window.driverLocationInterval = null;
       }
       if (window.supabaseClient && window.currentDriverPublicationId) {
-          await window.supabaseClient.from('rutas_repartidores')
+          await window.supabaseClient.from('publicaciones')
               .delete()
               .eq('id', window.currentDriverPublicationId);
           window.currentDriverPublicationId = null;
@@ -189,4 +189,5 @@ function _programarReconexionRealtime() {
         if (window.supabaseClient) window.iniciarSuscripcionesRealtime();
     }, delay);
 }
+
 
