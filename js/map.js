@@ -54,29 +54,11 @@ const userLocationSvgHtml = `
   </div>
 `;
 
-const userLocationIcon = L.divIcon({
-  className: 'user-location-marker',
-  html: userLocationSvgHtml,
-  iconSize: [40, 48],
-  iconAnchor: [20, 48],
-  popupAnchor: [0, -48]
-});
+let userLocationIcon;
 
-const garrafaIcon = L.divIcon({
-  className: 'garrafa-map-marker',
-  html: garrafaSvgMarkerHtml,
-  iconSize: [44, 54],
-  iconAnchor: [22, 54],
-  popupAnchor: [0, -54]
-});
+let garrafaIcon;
 
-const truckIcon = L.divIcon({
-  className: 'truck-map-marker',
-  html: truckSvgMarkerHtml,
-  iconSize: [50, 58],
-  iconAnchor: [25, 58],
-  popupAnchor: [0, -58]
-});
+let truckIcon;
 
 function waitForSupabaseAndInit() {
   if (window.supabaseClient) {
@@ -96,6 +78,26 @@ function initNotigasMap() {
   const mapElement = document.getElementById('map');
   if (!mapElement) return;
 
+    userLocationIcon = L.divIcon({
+    className: 'user-location-marker',
+    html: userLocationSvgHtml,
+    iconSize: [40, 48],
+    iconAnchor: [20, 48]
+  });
+
+  garrafaIcon = L.divIcon({
+    className: 'garrafa-flashing-marker',
+    html: garrafaSvgMarkerHtml,
+    iconSize: [44, 54],
+    iconAnchor: [22, 54]
+  });
+
+  truckIcon = L.divIcon({
+    className: 'truck-flashing-marker',
+    html: truckSvgMarkerHtml,
+    iconSize: [50, 58],
+    iconAnchor: [25, 58]
+  });
   map = L.map('map', {
     center: [currentGpsLat, currentGpsLng],
     zoom: 16,
@@ -105,13 +107,15 @@ function initNotigasMap() {
   L.control.zoom({ position: 'topright' }).addTo(map);
 
   // Google Maps Tiles Directos: Apariencia 100% Google Maps (Costo 0)
-  mapTileLayers['osm'] = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+  mapTileLayers['osm'] = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 20,
-    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-    attribution: '&copy; <a href="https://www.google.com/maps">Google Maps</a>'
+    subdomains: ['a', 'b', 'c'],
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
   });
 
   mapTileLayers['osm'].addTo(map);
+
+  setTimeout(() => { if (map) map.invalidateSize(); }, 500);
 
 
   const btnGps = document.getElementById('btnGps');
@@ -1443,3 +1447,6 @@ function buscarCalle() {
       }
     })
     .catch(() => {});
+
+
+
