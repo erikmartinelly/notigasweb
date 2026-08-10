@@ -202,37 +202,6 @@ function actualizarRepartidorEnMapa(data) {
   if (userRole === 'repartidor' && typeof isOrderCategoryMatchingDriver === 'function' && !isOrderCategoryMatchingDriver(data.categoria)) {
      return; // Repartidores solo ven camiones de su rubro
   }
-
-  const truckId = data.id || data.distribuidor_nombre;
-  if (!truckId) return;
-
-  if (activeTruckMarkers[truckId]) {
-    activeTruckMarkers[truckId].setLatLng([data.latitude, data.longitude]);
-  } else {
-    const marker = L.marker([data.latitude, data.longitude], { icon: truckIcon, zIndexOffset: 9000 }).addTo(map);
-    marker.bindPopup(`
-      <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
-  currentGpsLat = lat;
-  currentGpsLng = lng;
-
-  const activeLat = isUserMarkerDraggedManually ? currentGpsLat : lat;
-  const activeLng = isUserMarkerDraggedManually ? currentGpsLng : lng;
-
-  if (map) {
-    map.invalidateSize();
-    // Solo re-centrar el mapa si forceReset es explícito (ej: clic en botón GPS) o si el usuario NO ha tocado/hizo zoom en el mapa
-    if (forceReset || !isMapInteractedByUser) {
-      map.setView([activeLat, activeLng], map.getZoom() || 16);
-    }
-  }
-
-  if (!userMarker && map) {
-    userMarker = L.marker([activeLat, activeLng], { 
-      icon: userLocationIcon, 
-      draggable: true,
-      autoPan: true 
-    }).addTo(map);
-
     if (userMarker.dragging) {
       userMarker.dragging.enable();
     }
