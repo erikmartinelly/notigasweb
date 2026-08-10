@@ -3,7 +3,8 @@
    FAVICON DINÁMICO POR CATEGORÍA Y MODO REPARTIDOR EN RUTA
    ========================================================================== */
 
-const ORDER_EXPIRATION_MS = 48 * 60 * 60 * 1000; // 48 Horas para Pedidos Activos
+// FIX W-07: ORDER_EXPIRATION_MS centralizada en state.js (window.NOTIGAS.ORDER_EXPIRATION_MS)
+// Se elimina la copia local para evitar inconsistencias futuras.
 
 let currentAppMode = 'buyer';
 let isDriverGpsLive = true;
@@ -144,25 +145,60 @@ function showConfirmModal(icon, title, text, acceptLabel, acceptCallback) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 🛡️ Filtro de Seguridad Geo-Bloqueo (Solo América)
+  // FIX W-04: Geobloqueo mejorado — ya no destruye el DOM (compatibilidad con SW + SPA).
+  // Muestra un overlay encima del contenido con doble verificación GeoIP.
   try {
-    fetch('https://ipapi.co/json/')
-      .then(r => r.json())
+    const _verificarGeolocalizacion = async (url) => {
+      const r = await fetch(url);
+      const data = await r.json();
+      return data;
+    };
+
+    const _mostrarOverlayGeobloqueo = (paisNombre) => {
+      // Verificar si ya existe el overlay (evitar duplicados)
+      if (document.getElementById('geoblock-overlay')) return;
+      const overlay = document.createElement('div');
+      overlay.id = 'geoblock-overlay';
+      overlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:#0F172A;z-index:999999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;font-family:\'Inter\',sans-serif;text-align:center;padding:20px;box-sizing:border-box;';
+      overlay.innerHTML = `
+        <h1 style="color:#FF1744;font-size:48px;margin:0;"><i class="fa-solid fa-earth-americas"></i></h1>
+        <h2 style="margin-top:10px;">Acceso Restringido</h2>
+        <p style="color:#94A3B8;font-size:14px;max-width:400px;line-height:1.5;">
+          NOTIGAS es una plataforma exclusiva para América.<br>
+          Tu conexión proviene de <strong>${paisNombre || 'otra región'}</strong>,
+          por lo que el acceso ha sido bloqueado por motivos de seguridad.
+        </p>
+      `;
+      document.body.appendChild(overlay);
+    };
+
+    // Intento 1: ipapi.co
+    _verificarGeolocalizacion('https://ipapi.co/json/')
       .then(data => {
-         // Permite Norteamérica (NA), Sudamérica (SA) y España (ES)
-         if (data && data.continent_code && data.continent_code !== 'SA' && data.continent_code !== 'NA' && data.country_code !== 'ES') {
-             document.body.innerHTML = `
-                 <div style="background:#0F172A; width:100vw; height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:'Inter', sans-serif; text-align:center; padding:20px; box-sizing:border-box;">
-                     <h1 style="color:#FF1744; font-size:48px; margin:0;"><i class="fa-solid fa-earth-americas"></i></h1>
-                     <h2 style="margin-top:10px;">Acceso Restringido</h2>
-                     <p style="color:#94A3B8; font-size:14px; max-width:400px; line-height:1.5;">
-                         NOTIGAS es una plataforma exclusiva para América.<br>Tu conexión proviene de <strong>${data.country_name || 'otra región'}</strong>, por lo que el acceso ha sido bloqueado por motivos de seguridad.
-                     </p>
-                 </div>
-             `;
-         }
-      }).catch(e => console.warn("GeoIP Check failed"));
-  } catch(e){}
+        if (data && data.continent_code &&
+            data.continent_code !== 'SA' &&
+            data.continent_code !== 'NA' &&
+            data.country_code !== 'ES') {
+          _mostrarOverlayGeobloqueo(data.country_name);
+        }
+      })
+      .catch(() => {
+        // Intento 2 (fallback): freeipapi.com si ipapi.co falla
+        fetch('https://freeipapi.com/api/json')
+          .then(r => r.json())
+          .then(data => {
+            if (data && data.continentCode &&
+                data.continentCode !== 'SA' &&
+                data.continentCode !== 'NA' &&
+                data.countryCode !== 'ES') {
+              _mostrarOverlayGeobloqueo(data.countryName);
+            }
+          })
+          .catch(() => console.warn('GeoIP checks fallaron — acceso permitido por defecto'));
+      });
+  } catch(e) {}
+
+
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then(regs => {
@@ -472,12 +508,14 @@ async function aceptarPedidoRepartidor(id) {
 /* PURGA AUTOMÁTICA DE BASE DE DATOS LOCAL Y MEMORIA PARA EVITAR COLAPSO */
 function ejecutarPurgaBaseDeDatosAuto() {
   const now = Date.now();
+  // FIX W-07: Usar la constante centralizada de state.js
+  const expirationMs = (window.NOTIGAS && window.NOTIGAS.ORDER_EXPIRATION_MS) ? window.NOTIGAS.ORDER_EXPIRATION_MS : 48 * 60 * 60 * 1000;
 
   try {
     const rawOrder = localStorage.getItem('notigas_active_order');
     if (rawOrder) {
       const order = JSON.parse(rawOrder);
-      if (order.timestamp && (now - order.timestamp) > ORDER_EXPIRATION_MS) {
+      if (order.timestamp && (now - order.timestamp) > expirationMs) {
         localStorage.removeItem('notigas_active_order');
       }
     }
@@ -721,11 +759,12 @@ function cancelarPedidoActivo() {
 }
 
 /* PANORÁMICA DE PEDIDOS ACTIVOS */
-function abrirPanoramicaPedidos() {
+// FIX W-02: Reemplaza los mockOrders hardcodeados con datos reales de Supabase.
+async function abrirPanoramicaPedidos() {
   let contenido = '';
   const now = Date.now();
 
-  // Pedido propio activo
+  // Pedido propio activo (desde localStorage)
   const rawPropio = localStorage.getItem('notigas_active_order');
   if (rawPropio) {
     try {
@@ -744,27 +783,41 @@ function abrirPanoramicaPedidos() {
     } catch(e){}
   }
 
-  // Pedidos de otros vecinos en el mapa de calor
-  const mockOrders = [
-    { categoria: '🔥 Garrafa de Gas GLP', cantidad: '2 unidades', dist: '150m', callePrincipal: 'Calle 4 #21', timestamp: now - 300000 },
-    { categoria: '💧 Botóllón Agua 20L', cantidad: '1 unidad', dist: '320m', callePrincipal: 'Av. Principal', timestamp: now - 600000 },
-    { categoria: '🪵 Carbón / Leña', cantidad: '1 bolsa 10kg', dist: '450m', callePrincipal: 'Calle 8 #45', timestamp: now - 900000 },
-  ];
+  // FIX W-02: Cargar pedidos reales de otros vecinos desde Supabase (en lugar de mockOrders)
+  let otrosPedidosHtml = '';
+  if (window.supabaseClient) {
+    try {
+      const activeWindow = new Date(now - window.NOTIGAS.ORDER_EXPIRATION_MS).toISOString();
+      const { data: pedidosReales } = await window.supabaseClient
+        .from('pedidos')
+        .select('id, categoria, descripcion, created_at')
+        .gte('created_at', activeWindow)
+        .order('created_at', { ascending: false })
+        .limit(10);
 
-  const colors = ['#00B0FF', '#00E676', '#FFB300'];
-  mockOrders.forEach((o, i) => {
-    const min = Math.floor((now - o.timestamp) / 60000);
-    contenido += `
-      <div style="background: rgba(30,41,59,0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 10px; margin-bottom: 8px; display:flex; align-items:center; gap:10px;">
-        <div style="width:36px; height:36px; background: rgba(${i===0?'0,176,255':i===1?'0,230,118':'255,179,0'},0.15); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">${o.categoria.split(' ')[0]}</div>
-        <div style="flex:1;">
-          <div style="font-size:12px; font-weight:700; color:white;">${escapeHtmlStr(o.categoria)}</div>
-          <div style="font-size:11px; color:#94A3B8;">📦 ${escapeHtmlStr(o.cantidad)} • 📍 ${escapeHtmlStr(o.dist)} • ⏱️ hace ${min} min</div>
-        </div>
-        <span style="font-size:10px; background:rgba(0,230,118,0.15); color:#00E676; padding:3px 7px; border-radius:20px; font-weight:700;">ACTIVO</span>
-      </div>
-    `;
-  });
+      if (pedidosReales && pedidosReales.length > 0) {
+        pedidosReales.forEach(o => {
+          const min = Math.floor((now - new Date(o.created_at).getTime()) / 60000);
+          const iconHtml = typeof obtenerIconoHtmlPorCategoria === 'function' ? obtenerIconoHtmlPorCategoria(o.categoria) : '📦';
+          otrosPedidosHtml += `
+            <div style="background: rgba(30,41,59,0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 10px; margin-bottom: 8px; display:flex; align-items:center; gap:10px;">
+              <div style="width:36px; height:36px; background: rgba(255,109,0,0.1); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">${iconHtml}</div>
+              <div style="flex:1;">
+                <div style="font-size:12px; font-weight:700; color:white;">${escapeHtmlStr(o.categoria)}</div>
+                <div style="font-size:11px; color:#94A3B8;">📍 Vecino cercano • ⏱️ hace ${min} min</div>
+              </div>
+              <span style="font-size:10px; background:rgba(0,230,118,0.15); color:#00E676; padding:3px 7px; border-radius:20px; font-weight:700;">ACTIVO</span>
+            </div>
+          `;
+        });
+        contenido += otrosPedidosHtml;
+      } else if (!rawPropio) {
+        contenido = `<div style="text-align:center; color:#64748B; padding:20px 0;"><i class="fa-solid fa-inbox" style="font-size:32px; margin-bottom:10px; display:block;"></i>No hay pedidos activos en tu zona en este momento.</div>`;
+      }
+    } catch (e) {
+      console.warn('Error cargando pedidos reales en panorámica:', e);
+    }
+  }
 
   if (!contenido) {
     contenido = `<div style="text-align:center; color:#64748B; padding:20px 0;"><i class="fa-solid fa-inbox" style="font-size:32px; margin-bottom:10px; display:block;"></i>No hay pedidos activos en tu zona en este momento.</div>`;

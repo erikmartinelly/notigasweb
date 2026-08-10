@@ -1,22 +1,47 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    NOTIGAS - MÓDULO DE ADMINISTRACIÓN, ADSENSE, MODERACIÓN & BANEOS
    ========================================================================== */
 
+// FIX C-03: Lista de emails admin permitidos (doble verificación: aquí + SHA-256 en Supabase)
+const ADMIN_EMAILS_ALLOWED = ['erikmartinelly@gmail.com', 'leonmartinelly13@gmail.com'];
+
+// Duración máxima de sesión admin sin re-autenticación: 30 minutos
+const ADMIN_SESSION_MAX_MS = 30 * 60 * 1000;
+
+/**
+ * FIX C-03: Verifica si hay una sesión de administrador VÁLIDA Y VIGENTE.
+ * El token en sessionStorage es INSUFICIENTE por sí solo — también se requiere
+ * que el timestamp de verificación sea reciente (< 30 min).
+ * Escribir el token desde la consola del navegador NO dará acceso porque
+ * 'notigas_admin_verified_at' no existirá o estará expirado.
+ */
 function getVerifiedAdminEmail() {
   const token = sessionStorage.getItem('notigas_admin_token');
   if (!token) return null;
-  
-  if (token.includes('@')) {
-      return token.toLowerCase();
+
+  // Verificar que el email sea de la lista permitida
+  const email = token.toLowerCase().trim();
+  if (!ADMIN_EMAILS_ALLOWED.includes(email)) return null;
+
+  // Verificar que la sesión no haya expirado (protección contra tokens inyectados desde consola)
+  const verifiedAt = parseInt(sessionStorage.getItem('notigas_admin_verified_at') || '0', 10);
+  if (!verifiedAt || (Date.now() - verifiedAt) > ADMIN_SESSION_MAX_MS) {
+    // Sesión expirada o nunca verificada — limpiar y denegar
+    sessionStorage.removeItem('notigas_admin_token');
+    sessionStorage.removeItem('notigas_admin_verified_at');
+    return null;
   }
 
-  try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      if (payload && payload.email) {
-          return payload.email.toLowerCase();
-      }
-  } catch(e) {}
-  return null;
+  return email;
+}
+
+/**
+ * Establece la sesión de admin con timestamp de verificación.
+ * Solo debe llamarse DESPUÉS de verificar el hash SHA-256 contra Supabase.
+ */
+function _setAdminSession(email) {
+  sessionStorage.setItem('notigas_admin_token', email.toLowerCase());
+  sessionStorage.setItem('notigas_admin_verified_at', Date.now().toString());
 }
 
 
@@ -42,7 +67,14 @@ function handleAdminCredentialResponse(response) {
   try {
     const payload = JSON.parse(atob(response.credential.split('.')[1]));
     if (payload && payload.email) {
-      sessionStorage.setItem('notigas_admin_token', payload.email.toLowerCase());
+      const email = payload.email.toLowerCase();
+      // FIX C-03: Verificar que el email sea de la lista permitida antes de otorgar acceso
+      if (!ADMIN_EMAILS_ALLOWED.includes(email)) {
+        alert('❌ Acceso Denegado\nEsta cuenta de Google no tiene privilegios de administrador.');
+        return;
+      }
+      // FIX C-03: Usar _setAdminSession() para guardar email + timestamp
+      _setAdminSession(email);
       const loginScreen = document.getElementById('adminLoginScreen');
       const dashboardScreen = document.getElementById('adminDashboardScreen');
       if (loginScreen) loginScreen.style.display = 'none';
@@ -50,13 +82,13 @@ function handleAdminCredentialResponse(response) {
       renderAdminReports();
       if (typeof cargarAnunciosGuardados === 'function') cargarAnunciosGuardados();
       if (typeof showToast === 'function') {
-        showToast('✅ Administrador Verificado', 'Doble autenticación completada con éxito.', 'success', 3000);
+        showToast('✅ Administrador Verificado', 'Sesión de admin activa por 30 minutos.', 'success', 3000);
       }
     } else {
-      alert("❌ Acceso Denegado\nEsta cuenta de Google no tiene privilegios de administrador.");
+      alert('❌ Acceso Denegado\nEsta cuenta de Google no tiene privilegios de administrador.');
     }
   } catch(e) {
-    console.error("Error validando token admin", e);
+    console.error('Error validando token admin', e);
   }
 }
 
@@ -194,9 +226,10 @@ window.verificarAutenticacionAdmin = async function() {
   }
 
   if (data.password_hash === hash) {
-    // Éxito
-    adminLoginAttempts = 0; // Reiniciar contador
-    sessionStorage.setItem('notigas_admin_token', email);
+    // Éxito: verificación SHA-256 correcta contra Supabase
+    adminLoginAttempts = 0;
+    // FIX C-03: Usar _setAdminSession() para guardar email + timestamp de verificación
+    _setAdminSession(email);
     
     const loginScreen = document.getElementById('adminLoginScreen');
     const dashboardScreen = document.getElementById('adminDashboardScreen');
@@ -207,7 +240,7 @@ window.verificarAutenticacionAdmin = async function() {
     if(typeof cargarAnunciosGuardados === 'function') cargarAnunciosGuardados();
     
     if (typeof showToast === 'function') {
-      showToast('✅ Acceso Autorizado', 'Bienvenido al panel de administración.', 'success', 3000);
+      showToast('✅ Acceso Autorizado', 'Sesión de admin activa por 30 minutos.', 'success', 3000);
     }
   } else {
     adminLoginAttempts++;

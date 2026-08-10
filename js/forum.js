@@ -165,16 +165,23 @@ async function crearNuevoPost() {
     return;
   }
 
-  // 🛡️ Filtro Anti-Spam (Bloqueo de publicaciones en Inglés/Bots)
+  // FIX W-03: Filtro Anti-Spam mejorado — menos falsos positivos.
+  // Se eliminan palabras genéricas (the, and, for, with) que pueden aparecer en nombres/siglas.
+  // Ahora requiere 3+ palabras spam Y el texto no debe contener caracteres típicamente españoles.
   const textoCompleto = (title + ' ' + desc).toLowerCase();
-  const englishSpamWords = /\b(the|and|this|that|with|for|you|crypto|casino|bonus|invest|bitcoin|viagra|porn|click here|forex|loan)\b/gi;
-  const matches = textoCompleto.match(englishSpamWords);
-  if (matches && matches.length >= 2) {
-    alert('⛔ ALERTA DE SEGURIDAD: Tu publicación ha sido bloqueada por el filtro Anti-Spam debido a que contiene términos sospechosos o está escrita en inglés.\n\nNOTIGAS es una plataforma exclusiva para vecinos hispanohablantes.');
-    
-    // Opcional: Reportar silenciosamente a la base de datos para baneo de IP
+
+  // Solo bloquea si el texto contiene términos claramente spam/phishing
+  const spamWords = /\b(crypto|casino|bonus|invest|bitcoin|viagra|porn|click here|forex|loan|make money|free money|winner|prize|gambling|adult content|xxx)\b/gi;
+  const spamMatches = textoCompleto.match(spamWords);
+
+  // Detectar si hay contenido en español (tildes, ñ, signos de interrogación/exclamación)
+  const hasSpanishChars = /[à-ÿñÑ¡¿]/i.test(textoCompleto);
+
+  // Bloquear solo si hay 2+ palabras spam Y NO hay caracteres en español (probable bot/spam en inglés)
+  if (spamMatches && spamMatches.length >= 2 && !hasSpanishChars) {
+    alert('⛔ ALERTA DE SEGURIDAD: Tu publicación ha sido bloqueada por el filtro Anti-Spam.\n\nNOTIGAS es una plataforma exclusiva para vecinos hispanohablantes.');
     if (window.supabaseClient) {
-      window.supabaseClient.from('reportes_spam').insert([{ texto: textoCompleto, motivo: 'Filtro Anti-Inglés' }]).then();
+      window.supabaseClient.from('reportes_spam').insert([{ texto: textoCompleto, motivo: 'Filtro Anti-Spam mejorado' }]).then();
     }
     closeNewPostModal();
     return;
@@ -211,6 +218,10 @@ async function crearNuevoPost() {
   alert('📌 ¡Aviso publicado exitosamente! Todos los vecinos podrán verlo en tiempo real.');
 }
 
+/**
+ * FIX W-01: Carga comentarios de la tabla 'comentarios_avisos' (ya no del JSONB en avisos).
+ * Elimina la race condition de leer + modificar array + escribir todo el campo.
+ */
 async function abrirComentariosPost(postId, title, desc, cat, el) {
   activePostCommentsRef = { id: postId, element: el };
   const modal = document.getElementById('modalComments') || document.getElementById('modalPostComments');
@@ -226,12 +237,23 @@ async function abrirComentariosPost(postId, title, desc, cat, el) {
 
   const box = document.getElementById('commentsList') || document.getElementById('commentsContainer');
   if (box) box.innerHTML = '<div style="color:#94A3B8; font-size:11px; text-align:center;">Cargando comentarios...</div>';
-  
+
   modal.style.display = 'flex';
-  
-  const { data } = await window.supabaseClient.from('avisos').select('comentarios').eq('id', postId).single();
-  const comments = data ? (data.comentarios || []) : [];
-  renderCommentsListUI(comments);
+
+  // FIX W-01: Consultar tabla propia 'comentarios_avisos' en lugar del JSONB embebido
+  const { data, error } = await window.supabaseClient
+    .from('comentarios_avisos')
+    .select('*')
+    .eq('aviso_id', postId)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error('Error cargando comentarios:', error);
+    if (box) box.innerHTML = '<div style="color:#EF4444; font-size:11px; text-align:center;">Error al cargar comentarios.</div>';
+    return;
+  }
+
+  renderCommentsListUI(data || []);
 }
 
 function renderCommentsListUI(comments) {
@@ -245,8 +267,12 @@ function renderCommentsListUI(comments) {
 
     let html = '';
     comments.forEach(c => {
-        const cId = c.id || Date.now().toString() + Math.random().toString(36).substr(2, 5);
+        // FIX W-01: Los comentarios de la nueva tabla tienen campo 'id' de BD (bigint), siempre único.
+        const cId = c.id;
         const v = c.votos || 1;
+        const autor = c.autor || c.author || 'Vecino de la OTB';
+        const texto = c.texto || c.text || '';
+        const tiempo = c.created_at ? new Date(c.created_at).toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' }) : 'Ahora mismo';
         html += `
         <div style="background:#0F172A; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.05); margin-bottom:6px; display:flex; gap:10px;">
             <div style="display:flex; flex-direction:column; align-items:center; justify-content:start; min-width:24px; gap:6px; padding-top:2px;">
@@ -256,10 +282,10 @@ function renderCommentsListUI(comments) {
             </div>
             <div style="flex:1;">
               <div style="display:flex; justify-content:space-between; font-size:10.5px; font-weight:800; color:#38BDF8;">
-                <span>${escapeHtmlStr(c.author)}</span>
-                <span style="color:#64748B; font-weight:500;">${escapeHtmlStr(c.time)}</span>
+                <span>${escapeHtmlStr(autor)}</span>
+                <span style="color:#64748B; font-weight:500;">${escapeHtmlStr(tiempo)}</span>
               </div>
-              <div style="font-size:12px; color:white; margin-top:4px; line-height:1.4;">${escapeHtmlStr(c.text)}</div>
+              <div style="font-size:12px; color:white; margin-top:4px; line-height:1.4;">${escapeHtmlStr(texto)}</div>
             </div>
         </div>
         `;
@@ -267,35 +293,31 @@ function renderCommentsListUI(comments) {
     box.innerHTML = html;
 }
 
-async function votarComentario(commentId, delta) {
-  if (!activePostCommentsRef) return;
-  const postId = activePostCommentsRef.id;
-  
-  const voteKey = `notigas_voted_c_${commentId}`;
+/**
+ * FIX W-01+W-05: Voto atómico sobre la tabla 'comentarios_avisos'.
+ * Usa la RPC 'incrementar_votos_comentario' (UPDATE directo por id).
+ * Elimina completamente la race condition anterior que uó Math.random().
+ */
+async function votarComentario(comentarioId, delta) {
+  const voteKey = `notigas_voted_c_${comentarioId}`;
   if (sessionStorage.getItem(voteKey)) return;
   sessionStorage.setItem(voteKey, '1');
 
-  const span = document.getElementById(`c_votos_${commentId}`);
+  // Actualizar UI optimistamente
+  const span = document.getElementById(`c_votos_${comentarioId}`);
   if (span) {
     let val = parseInt(span.innerText) || 0;
     span.innerText = val + delta;
   }
 
-  const { data } = await window.supabaseClient.from('avisos').select('comentarios').eq('id', postId).single();
-  let comments = data ? (data.comentarios || []) : [];
-  
-  let found = false;
-  comments = comments.map(c => {
-    if (c.id === commentId || (!c.id && Math.random() > 0.5)) { 
-      // fallback fallback for old comments without ID is sketchy, but handled mostly
-      c.votos = (c.votos || 1) + delta;
-      found = true;
-    }
-    return c;
-  });
-
-  if (found) {
-    await window.supabaseClient.from('avisos').update({ comentarios: comments }).eq('id', postId);
+  // FIX W-05: UPDATE directo por id en tabla propia — sin leer+modificar+escribir el JSON array
+  try {
+    await window.supabaseClient.rpc('incrementar_votos_comentario', {
+      comentario_id: parseInt(comentarioId, 10),
+      incremento: delta
+    });
+  } catch (e) {
+    console.error('Error votando comentario:', e);
   }
 }
 
@@ -305,6 +327,10 @@ function closeCommentsModal() {
   activePostCommentsRef = null;
 }
 
+/**
+ * FIX W-01: Agrega comentario insertando una fila nueva en 'comentarios_avisos'.
+ * Elimina la secuencia de leer+modificar array+escribir que causaba race conditions.
+ */
 async function agregarComentarioPost() {
   if (!activePostCommentsRef) return;
   const input = document.getElementById('inputNewComment') || document.getElementById('inputNuevoComentario');
@@ -314,51 +340,57 @@ async function agregarComentarioPost() {
 
   const postId = activePostCommentsRef.id;
 
-  let authorName = "Vecino de la OTB";
+  let authorName = 'Vecino de la OTB';
+  let userId = null;
   try {
     const saved = localStorage.getItem('notigas_user_data');
     if (saved) {
       const u = JSON.parse(saved);
       if (u.nombre) authorName = u.nombre;
     }
-  } catch(e){}
-
-  const newComment = {
-    id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
-    author: authorName,
-    text: text,
-    time: "Ahora mismo",
-    votos: 1
-  };
+    const { data: sessionData } = await window.supabaseClient.auth.getSession();
+    userId = sessionData?.session?.user?.id || null;
+  } catch(e) {}
 
   if (!window.supabaseClient) {
     alert('Error: El servidor no está disponible. Intenta de nuevo en un momento.');
     return;
   }
 
-  // Obtener los comentarios actuales
-  const { data, error: fetchError } = await window.supabaseClient.from('avisos').select('comentarios').eq('id', postId).single();
-  if (fetchError) {
-    alert('Error al cargar comentarios. Intenta de nuevo.');
-    return;
-  }
-  const comments = data ? (data.comentarios || []) : [];
-  comments.push(newComment);
+  // FIX W-01: INSERT directo en tabla propia — sin race condition de leer+escribir
+  const { data: newComment, error } = await window.supabaseClient
+    .from('comentarios_avisos')
+    .insert([{
+      aviso_id: postId,
+      user_id: userId,
+      autor: authorName,
+      texto: text,
+      votos: 1
+    }])
+    .select()
+    .single();
 
-  // Actualizar en Supabase
-  const { error } = await window.supabaseClient.from('avisos').update({ comentarios: comments }).eq('id', postId);
-  
-  if (!error) {
-      input.value = '';
-      renderCommentsListUI(comments);
+  if (!error && newComment) {
+    input.value = '';
 
-      if (activePostCommentsRef.element) {
-        const numSpan = activePostCommentsRef.element.querySelector('.comment-count-num');
-        if (numSpan) {
-          numSpan.innerText = comments.length;
-        }
+    // Recargar lista de comentarios desde BD para mostrar el estado actualizado
+    const { data: updatedComments } = await window.supabaseClient
+      .from('comentarios_avisos')
+      .select('*')
+      .eq('aviso_id', postId)
+      .order('created_at', { ascending: true });
+
+    renderCommentsListUI(updatedComments || []);
+
+    // Actualizar el contador de comentarios en la tarjeta del foro
+    if (activePostCommentsRef.element) {
+      const numSpan = activePostCommentsRef.element.querySelector('.comment-count-num');
+      if (numSpan && updatedComments) {
+        numSpan.innerText = updatedComments.length;
       }
-  } else {
-      alert("Error publicando comentario");
+    }
+  } else if (error) {
+    console.error('Error publicando comentario:', error);
+    alert('Error publicando comentario. Verifica que estés logueado.');
   }
 }

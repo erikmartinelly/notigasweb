@@ -47,10 +47,20 @@ const SUPABASE_ANON_KEY = 'sb_publishable_wWVQ59Rejod5Oc1X4s_eeQ_ONbXzyi2';
 window.currentDriverPublicationId = null;
 window.driverLocationInterval = null;
 
+// FIX W-06: Flag para evitar llamadas concurrentes mientras el await está pendiente
+let _broadcastInProgress = false;
+
 // --- FUNCIONES PARA REPARTIDORES ---
   window.startDriverLocationBroadcast = async function(driverName, driverCategory) {
+      // FIX W-06: Evitar múltiples calls concurrentes que crearían intervals duplicados
+      if (_broadcastInProgress) {
+        console.warn('[GPS] startDriverLocationBroadcast ignorado: ya hay un broadcast en progreso.');
+        return;
+      }
       if (!window.supabaseClient) return;
-      
+
+      _broadcastInProgress = true;
+
       const lat = typeof currentGpsLat !== 'undefined' ? currentGpsLat : -17.3895;
       const lng = typeof currentGpsLng !== 'undefined' ? currentGpsLng : -66.1568;
       
@@ -62,6 +72,7 @@ window.driverLocationInterval = null;
       
       if (!userId) {
           console.error("No hay user_id para registrar la ruta.");
+          _broadcastInProgress = false;
           return;
       }
   
@@ -83,11 +94,15 @@ window.driverLocationInterval = null;
             window.currentDriverPublicationId = data.id;
             console.log("Ruta de repartidor creada/actualizada en Supabase, ID:", window.currentDriverPublicationId);
             
+            // Limpiar interval anterior antes de crear uno nuevo
             if (window.driverLocationInterval) clearInterval(window.driverLocationInterval);
             window.driverLocationInterval = setInterval(window.updateDriverLocation, 5000);
         }
       } catch(e) {
         console.error("Excepción en startDriverLocationBroadcast:", e);
+      } finally {
+        // FIX W-06: Liberar el flag siempre, incluso si hubo error
+        _broadcastInProgress = false;
       }
   };
   

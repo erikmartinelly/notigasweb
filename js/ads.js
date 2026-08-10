@@ -22,21 +22,109 @@ function previewUploadAdImage(event) {
   const file = event.target.files && event.target.files[0];
   if (!file) return;
 
-  if (file.size > 2 * 1024 * 1024) {
-    if (typeof showToast === 'function') showToast('⚠️ Imagen Pesada', 'La imagen supera los 2 MB. Elige una más ligera.', 'warning', 1000);
+  // Validación de tamaño (máx 2 MB)
+  if (file.size > window.NOTIGAS.MAX_IMAGE_SIZE_BYTES) {
+    if (typeof showToast === 'function') showToast('⚠️ Imagen Pesada', 'La imagen supera los 2 MB. Elige una más ligera.', 'warning', 3000);
     return;
   }
 
+  // FIX C-04: Subir a Supabase Storage en lugar de guardar base64 en localStorage
+  if (window.supabaseClient) {
+    _subirImagenAnuncioAStorage(file);
+  } else {
+    // Fallback: leer como Data URL solo si Supabase no está disponible
+    _leerImagenComoDataUrl(file);
+  }
+}
+
+/**
+ * FIX C-04: Sube la imagen de anuncio a Supabase Storage bucket 'anuncios-media'.
+ * Guarda únicamente la URL pública en localStorage (no el base64).
+ * Elimina el riesgo de QuotaExceededError por almacenar ~2.7 MB en localStorage.
+ */
+async function _subirImagenAnuncioAStorage(file) {
+  try {
+    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Subiendo imagen...');
+
+    const fileName = `banner_${Date.now()}.${file.name.split('.').pop()}`;
+    const { data, error } = await window.supabaseClient.storage
+      .from('anuncios-media')
+      .upload(fileName, file, { upsert: true, contentType: file.type });
+
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+
+    if (error) {
+      console.error('Error al subir imagen a Storage:', error);
+      // Fallback: leer como Data URL si Storage falla
+      _leerImagenComoDataUrl(file);
+      return;
+    }
+
+    // Obtener URL pública del archivo subido
+    const { data: urlData } = window.supabaseClient.storage
+      .from('anuncios-media')
+      .getPublicUrl(data.path);
+
+    const publicUrl = urlData.publicUrl;
+
+    // Guardar solo la URL (no el base64 completo) — FIX C-04
+    _guardarUrlAnuncioConSeguridad('notigas_ad_image_url', publicUrl);
+    // Limpiar cualquier base64 residual antiguo
+    localStorage.removeItem('notigas_ad_image_base64');
+
+    mostrarVistaPreviaImagen(publicUrl);
+    actualizarBannerConImagen(publicUrl);
+    if (typeof showToast === 'function') showToast('📸 Anuncio Cargado', 'Imagen subida a la nube correctamente.', 'success', 2000);
+
+  } catch (e) {
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+    console.error('Excepción al subir imagen a Storage:', e);
+    _leerImagenComoDataUrl(file);
+  }
+}
+
+/**
+ * Fallback: lee la imagen como Data URL cuando Supabase Storage no está disponible.
+ * Incluye manejo de QuotaExceededError para proteger localStorage. (FIX C-04)
+ */
+function _leerImagenComoDataUrl(file) {
   const reader = new FileReader();
   reader.onload = function(e) {
     const base64Data = e.target.result;
-    localStorage.setItem('notigas_ad_image_base64', base64Data);
+    // FIX C-04: Guardar con manejo de QuotaExceededError
+    _guardarUrlAnuncioConSeguridad('notigas_ad_image_base64', base64Data);
     mostrarVistaPreviaImagen(base64Data);
     actualizarBannerConImagen(base64Data);
-    if (typeof showToast === 'function') showToast('📸 Anuncio Cargado', 'Imagen de anuncio cargada correctamente.', 'success', 1000);
+    if (typeof showToast === 'function') showToast('📸 Anuncio Cargado', 'Imagen de anuncio cargada correctamente.', 'success', 2000);
   };
   reader.readAsDataURL(file);
 }
+
+/**
+ * FIX C-04: Guarda un valor en localStorage con manejo de QuotaExceededError.
+ * Si localStorage está lleno, limpia la imagen base64 antigua y reintenta.
+ */
+function _guardarUrlAnuncioConSeguridad(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch (e) {
+    if (e.name === 'QuotaExceededError' || e.code === 22) {
+      console.warn('[ads.js] QuotaExceededError — limpiando datos de imagen antiguos...');
+      // Limpiar datos de imagen grandes para liberar espacio
+      localStorage.removeItem('notigas_ad_image_base64');
+      localStorage.removeItem('notigas_ad_image_url');
+      try {
+        localStorage.setItem(key, value);
+      } catch (e2) {
+        console.error('[ads.js] localStorage sigue lleno después de limpiar:', e2);
+        if (typeof showToast === 'function') {
+          showToast('⚠️ Almacenamiento Lleno', 'No hay espacio suficiente. Borra datos del navegador e intenta de nuevo.', 'warning', 5000);
+        }
+      }
+    }
+  }
+}
+
 
 function mostrarVistaPreviaImagen(base64Data) {
   const box = document.getElementById('adImagePreviewBox');
