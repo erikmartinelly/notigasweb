@@ -364,7 +364,7 @@ async function borrarAnuncioLocalAdmin(id) {
   }
 }
 
-function renderAdminDashboardKPIs() {
+async function renderAdminDashboardKPIs() {
   const elUsers = document.getElementById('adminKpiUsers');
   const elVendors = document.getElementById('adminKpiVendors');
   const elOrders = document.getElementById('adminKpiOrders');
@@ -390,6 +390,24 @@ function renderAdminDashboardKPIs() {
   let ordersCount = 0;
   const activeOrder = localStorage.getItem('notigas_active_order');
   if (activeOrder) ordersCount = 1;
+  
+  if (window.supabaseClient) {
+     const { data } = await window.supabaseClient.from('pedidos').select('estado');
+     if (data) {
+        // Pedidos activos (pendiente + visto)
+        const activos = data.filter(p => p.estado === 'pendiente' || p.estado === 'visto').length;
+        ordersCount = activos > 0 ? activos : ordersCount;
+        
+        // Pedidos Entregados (NUEVO KPI)
+        const entregados = data.filter(p => p.estado === 'entregado').length;
+        // Si quieres mostrar entregados, podríamos añadirlo al título:
+        const elOrdersTitle = document.getElementById('adminKpiOrders').parentElement.querySelector('.kpi-title');
+        if (elOrdersTitle) {
+           elOrdersTitle.innerHTML = `Pedidos Activos <span style="display:block; font-size:10px; color:#56BC37;">+${entregados} Entregados (Histórico)</span>`;
+        }
+     }
+  }
+  
   if (elOrders) elOrders.innerText = ordersCount;
 
   let reportsCount = 0;
@@ -795,24 +813,38 @@ async function renderAdminOrdersList() {
   if (window.supabaseClient) {
     const { data: pedidos, error } = await window.supabaseClient
       .from('pedidos')
-      .select('*')
-      .eq('estado', 'pendiente');
+      .select('*');
 
     if (pedidos && pedidos.length > 0) {
-      pedidos.forEach(order => {
+      // Filtrar para no mostrar los entregados aquí, o mostrarlos con otro color si se desea.
+      // Por ahora, mostraremos todos, pero indicando su estado.
+      const pedidosActivos = pedidos.filter(p => p.estado !== 'entregado');
+      
+      pedidosActivos.forEach(order => {
         totalCount++;
         const orderDate = order.created_at ? new Date(order.created_at).getTime() : Date.now();
         const mins = Math.floor((Date.now() - orderDate) / 60000);
+        
+        let estadoBadge = '';
+        let borderColor = '#56BC37';
+        if (order.estado === 'visto') {
+           estadoBadge = `<span style="font-size:10px; background:#F57F17; color:white; padding:3px 6px; border-radius:4px; font-weight:800;">👀 Visto (Driver: ${order.driver_id ? order.driver_id.substring(0,6) : 'N/A'})</span>`;
+           borderColor = '#F57F17';
+        } else {
+           estadoBadge = `<span style="font-size:10px; background:rgba(86,188,55,0.2); color:#56BC37; padding:2px 6px; border-radius:4px; font-weight:700;">⏱ Hace ${mins} min</span>`;
+        }
+        
         html += `
-          <div style="background:#FFFFFF; padding:12px; border-radius:10px; border:1.5px solid #56BC37; margin-bottom:8px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+          <div style="background:#FFFFFF; padding:12px; border-radius:10px; border:1.5px solid ${borderColor}; margin-bottom:8px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-size:12.5px; font-weight:900; color:#56BC37;"><i class="fa-solid fa-box"></i> Pedido Activo (Supabase)</span>
-              <span style="font-size:10px; background:rgba(86,188,55,0.2); color:#56BC37; padding:2px 6px; border-radius:4px; font-weight:700;">⏱ Hace ${mins} min</span>
+              <span style="font-size:12.5px; font-weight:900; color:${borderColor};"><i class="fa-solid fa-box"></i> Pedido Supabase</span>
+              ${estadoBadge}
             </div>
             <div style="font-size:11.5px; color:#2F3C45; margin-top:6px;">
+              <strong>Estado DB:</strong> ${order.estado}<br>
               <strong>Producto:</strong> ${escapeHtmlStr(order.categoria || 'Gas')} (${escapeHtmlStr(order.cantidad || '1 un')})<br>
               <strong>Dirección:</strong> ${escapeHtmlStr(order.direccion || 'Georeferenciada')}<br>
-              <strong>Teléfono:</strong> <span style="color:#56BC37; font-weight:800;">${escapeHtmlStr(order.telefono || 'No especificado')}</span><br>
+              <strong>Teléfono:</strong> <span style="color:${borderColor}; font-weight:800;">${escapeHtmlStr(order.telefono || 'No especificado')}</span><br>
               <span style="font-size:10px; color:#64748B;">Coordenadas: Lat ${order.lat ? order.lat.toFixed(5) : '-'}, Lng ${order.lng ? order.lng.toFixed(5) : '-'}</span>
             </div>
             <button onclick="borrarPedidoFantasmaAdmin('supabase', '${order.id}')" style="margin-top:8px; width:100%; background:linear-gradient(135deg, #D32F2F, #B71C1C); color:white; border:none; padding:6px 12px; border-radius:8px; font-weight:800; font-size:11px; cursor:pointer;">
@@ -942,7 +974,7 @@ async function ejecutarLimpiezaTotalPedidos() {
   localStorage.removeItem('notigas_reported_trucks_buffer');
 
   if (window.supabaseClient) {
-    const { error } = await window.supabaseClient.from('pedidos').delete().eq('estado', 'pendiente');
+    const { error } = await window.supabaseClient.from('pedidos').delete().neq('id', 0);
     if (error) console.error("Error limpiando pedidos Supabase:", error);
   }
 

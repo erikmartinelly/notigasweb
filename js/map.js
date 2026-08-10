@@ -42,6 +42,20 @@ const garrafaSvgMarkerHtml = `
   </div>
 `;
 
+// ICONO DE GARRAFA GLP AMARILLA (VISTO)
+const garrafaYellowSvgMarkerHtml = `
+  <div style="position: relative; width: 44px; height: 54px; display: flex; align-items: center; justify-content: center; cursor: grab;">
+    <img src="icons/garrafa_red_clean.svg" class="garrafa-red-flashing-img" style="filter: hue-rotate(60deg) brightness(1.2);" alt="Garrafa GLP Amarilla">
+  </div>
+`;
+
+// ICONO DE GARRAFA GLP VERDE (ENTREGADO)
+const garrafaGreenSvgMarkerHtml = `
+  <div style="position: relative; width: 44px; height: 54px; display: flex; align-items: center; justify-content: center; cursor: grab;">
+    <img src="icons/garrafa_red_clean.svg" class="garrafa-red-flashing-img" style="filter: hue-rotate(120deg) brightness(1.2);" alt="Garrafa GLP Verde">
+  </div>
+`;
+
 // ICONO DE CAMIÓN REPARTIDOR
 const truckSvgMarkerHtml = `
   <div style="position: relative; width: 50px; height: 58px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
@@ -60,7 +74,7 @@ const userLocationSvgHtml = `
 `;
 
 let userLocationIcon;
-let garrafaIcon;
+let garrafaIcon, garrafaYellowIcon, garrafaGreenIcon;
 let truckIcon;
 
 let supabaseWaitRetries = 0;
@@ -96,6 +110,20 @@ function initNotigasMap() {
   garrafaIcon = L.divIcon({
     className: 'garrafa-flashing-marker',
     html: garrafaSvgMarkerHtml,
+    iconSize: [44, 54],
+    iconAnchor: [22, 54]
+  });
+
+  garrafaYellowIcon = L.divIcon({
+    className: 'garrafa-flashing-marker-yellow',
+    html: garrafaYellowSvgMarkerHtml,
+    iconSize: [44, 54],
+    iconAnchor: [22, 54]
+  });
+
+  garrafaGreenIcon = L.divIcon({
+    className: 'garrafa-flashing-marker-green',
+    html: garrafaGreenSvgMarkerHtml,
     iconSize: [44, 54],
     iconAnchor: [22, 54]
   });
@@ -247,6 +275,14 @@ function agregarPedidoVecinoEnMapa(order) {
     map.removeLayer(neighborOrderMarkers[orderId]);
   }
 
+  // Asignar el icono dependiendo del estado
+  let currentIcon = garrafaIcon;
+  if (order.estado === 'visto') {
+     currentIcon = garrafaYellowIcon;
+  } else if (order.estado === 'entregado') {
+     currentIcon = garrafaGreenIcon;
+  }
+
   // Si el usuario actual es REPARTIDOR, solo ver pedidos de SU MISMA CATEGORÍA
   let userRole = 'vecino';
   let driverCategoria = 'Gas GLP';
@@ -263,7 +299,7 @@ function agregarPedidoVecinoEnMapa(order) {
      return; // Ignore orders outside of their category
   }
 
-  const marker = L.marker([order.latitude, order.longitude], { icon: garrafaIcon, zIndexOffset: 8000 }).addTo(map);
+  const marker = L.marker([order.latitude, order.longitude], { icon: currentIcon, zIndexOffset: 8000 }).addTo(map);
   marker.bindPopup(`
     <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
       <strong style="color:#FF6D00; font-size:13px;">🛒 Pedido de un Vecino</strong><br>

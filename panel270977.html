@@ -224,7 +224,7 @@
   <footer class="ad-banner-container">
     <!-- CONTENEDOR 1: PUBLICIDAD LOCAL -->
     <div id="localAdContent" class="ad-banner-content" onclick="abrirAnuncioWhatsApp()">
-      <span class="ad-badge"><i class="fa-solid fa-rectangle-ad"></i> Sponsor NOTIGAS</span>
+      <span class="ad-badge"><i class="fa-solid fa-rectangle-ad"></i> AD</span>
       <div class="ad-text-box">
         <div class="ad-title" id="adTitleText" style="display:none;"></div>
         <div class="ad-subtext" id="adText">Servicios técnicos & Comercio verificado en NOTIGAS • Haz clic para contactar</div>
@@ -910,6 +910,19 @@
   <script src="js/ads.js"></script>
   <script src="js/admin.js"></script>
   <script src="js/app.js"></script>
+  <script>
+    // Forzar modo administrador en este panel especial
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const modalAuth = document.getElementById('modalWelcomeAuth');
+        if (modalAuth) modalAuth.style.display = 'none';
+        
+        if (typeof abrirModalAdminLogin === 'function') {
+          abrirModalAdminLogin();
+        }
+      }, 300);
+    });
+  </script>
 </body>
 </html>
  

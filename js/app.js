@@ -439,6 +439,8 @@ async function renderDriverOrdersList() {
       
     if (data) {
       orders = data.filter(o => typeof isOrderCategoryMatchingDriver === 'function' && isOrderCategoryMatchingDriver(o.categoria));
+      // En la app del repartidor, ver pedidos pendientes y vistos
+      orders = orders.filter(o => o.estado === 'pendiente' || o.estado === 'visto');
     }
   }
 
@@ -455,30 +457,23 @@ async function renderDriverOrdersList() {
 
   let html = '';
   orders.forEach(ord => {
-    const iconHtml = typeof obtenerIconoHtmlPorCategoria === 'function' ? obtenerIconoHtmlPorCategoria(ord.categoria) : '';
-    const chatTarget = ord.distribuidor_nombre || ord.titulo || 'Comprador Vecinal';
-    const descParts = ord.descripcion ? ord.descripcion.split('. Teléfono: ') : [];
-    const direccion = descParts[0] ? descParts[0].replace('Dirección: ', '') : '';
-    const telefono = descParts[1] || '';
-    const telNum = telefono ? telefono.replace(/[^0-9+]/g, '') : '';
+    const mins = Math.floor((Date.now() - new Date(ord.created_at).getTime()) / 60000);
     html += `
-      <div class="driver-order-card" id="driver-order-${ord.id}">
-        <div class="driver-order-header">
-          <span class="driver-order-title" style="display:flex; align-items:center;">${iconHtml} ${escapeHtmlStr(ord.categoria)}</span>
-          <span class="driver-order-dist">📍 Cerca de ti</span>
+        <div style="background:#FFF; padding:12px; margin-bottom:10px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.05); border:1px solid #E2E8F0;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+            <span style="font-weight:900; font-size:13px; color:#1E293B;">🛒 Pedido #${ord.id || '?'}</span>
+            <span style="font-size:10px; color:#64748B;">⏱ ${mins} min</span>
+          </div>
+          <div style="font-size:12px; margin-bottom:4px; color:#475569;">📍 <strong>Dir:</strong> ${ord.direccion}</div>
+          <div style="font-size:12px; margin-bottom:4px; color:#475569;">📦 <strong>Prod:</strong> ${ord.categoria} (${ord.cantidad} un)</div>
+          ${ord.telefono ? `<div style="font-size:12px; margin-bottom:8px; color:#475569;">📞 <strong>Tel:</strong> ${ord.telefono}</div>` : ''}
+          
+          ${(ord.estado === 'visto') 
+             ? `<div style="text-align:center; padding:6px; background:#FFF9C4; color:#F57F17; border-radius:6px; font-weight:bold; font-size:11px; margin-bottom:8px;"><i class="fa-solid fa-eye"></i> Visto por ti u otro repartidor</div>`
+             : `<button onclick="aceptarPedidoRepartidor('${ord.id}')" style="width:100%; padding:8px; background:linear-gradient(135deg, #0288D1, #0277BD); color:#FFF; border:none; border-radius:8px; font-weight:900; font-size:12px; cursor:pointer;"><i class="fa-solid fa-eye"></i> Marcar como Visto (Voy a la zona)</button>`
+          }
         </div>
-        <div style="font-size: 11.5px; color: white; line-height:1.5;">
-          <strong>Cliente:</strong> ${escapeHtmlStr(chatTarget)}<br>
-          ${direccion ? `<span style="color:#FFB300; font-weight:700;">🏠 Dirección: ${escapeHtmlStr(direccion)}</span><br>` : ''}
-          ${telefono ? `<span style="color:#00E676; font-weight:700;">📞 Teléfono: ${escapeHtmlStr(telefono)}</span><br>` : ''}
-          <span style="font-size: 9.5px; color: #64748B;">Coordenada Georeferenciada</span>
-        </div>
-        <div class="driver-order-actions" style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
-          <button class="btn-driver-accept" style="flex:1;" onclick="aceptarPedidoRepartidor('${ord.id}')"><i class="fa-solid fa-circle-check"></i> ✅ Aceptar</button>
-          ${telNum ? `<a href="tel:${telNum}" style="background:#0288D1; color:white; padding:6px 10px; border-radius:8px; font-size:11px; font-weight:800; text-decoration:none; display:flex; align-items:center; gap:4px;"><i class="fa-solid fa-phone"></i> Llamar</a>` : ''}
-        </div>
-      </div>
-    `;
+      `;
   });
 
   container.innerHTML = html;
@@ -489,40 +484,36 @@ async function aceptarPedidoRepartidor(id) {
     showToast('Error', 'No hay conexión a la base de datos.', 'error');
     return;
   }
-  showLoadingOverlay('Obteniendo datos del cliente...');
   
-  // 1. Obtener detalles del pedido antes de borrarlo
-  const { data: orderData, error: fetchErr } = await window.supabaseClient.from('pedidos').select('*').eq('id', id).single();
-  hideLoadingOverlay();
+  showConfirmModal('👀', '¿Marcar como Visto?', 'Avisarás al vecino que estás rondando su zona. Otros repartidores también podrán ver el pedido.', 'Sí, notificar', async () => {
+    if (window.supabaseClient) {
+        showLoadingOverlay('Marcando pedido...');
+        const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
+        const { error } = await window.supabaseClient.from('pedidos').update({ estado: 'visto', driver_id: localUserId }).eq('id', id);
+        hideLoadingOverlay();
+        if(error) {
+            showToast('Error', 'No se pudo marcar.', 'error', 3000);
+        } else {
+            showToast('Notificado', 'Se le ha avisado al vecino que estás cerca.', 'success', 3000);
+            renderDriverOrdersList(); // refresh
+        }
+    }
+  });
+}
 
-  if (fetchErr || !orderData) {
-    showToast('Error', 'El pedido ya no está disponible o fue cancelado.', 'warning');
-    return;
-  }
-
-  // 2. Extraer datos (ya que están en la descripción)
-  const descParts = orderData.descripcion ? orderData.descripcion.split('. Teléfono: ') : [];
-  const direccion = descParts[0] ? descParts[0].replace('Dirección: ', '').replace('Cantidad: 1 unidad. ', '') : 'Por GPS (Ver Mapa)';
-  const telefono = descParts[1] ? descParts[1].split('. Cliente:')[0] : 'No proporcionado';
-  const cliente = orderData.titulo || 'Comprador Vecinal';
-
-  // 3. Mostrar la información al repartidor usando el modal de confirmación, Y LUEGO borrar
-  const modalText = `Cliente: ${cliente}\nDirección: ${direccion}\nTeléfono: ${telefono}\n\n⚠️ Toma captura o anota el número antes de presionar Entendido, ya que el pedido desaparecerá del mapa.`;
-  
-  showConfirmModal('📦', 'Detalles del Pedido', modalText, 'Entendido, lo entregaré', async () => {
-    showLoadingOverlay('Aceptando pedido...');
-    const { error } = await window.supabaseClient.from('pedidos').delete().eq('id', id);
+async function confirmarEntregaPedido(id) {
+  if (!window.supabaseClient) return;
+  showConfirmModal('🏁', 'Confirmar Entrega', '¿El vecino ya recibió su pedido y se realizó el pago?', 'Sí, ya entregué el pedido', async () => {
+    showLoadingOverlay('Confirmando entrega...');
+    const { error } = await window.supabaseClient.from('pedidos').update({ estado: 'entregado' }).eq('id', id);
     hideLoadingOverlay();
     
     if (error) {
-      console.error("Error al aceptar pedido:", error);
-      showToast('Error', 'No se pudo aceptar el pedido.', 'error');
+      console.error("Error confirmando entrega:", error);
+      showToast('Error', 'No se pudo confirmar la entrega.', 'error');
     } else {
       closeDriverOrdersModal();
-      showToast('Pedido Aceptado', 'Has aceptado la solicitud. El pedido ha sido retirado del mapa.', 'success', 5000);
-      // Removerlo de la UI
-      const card = document.getElementById(`driver-order-${id}`);
-      if (card) card.remove();
+      showToast('¡Buen trabajo!', 'Pedido entregado. El pedido fue archivado en tus estadísticas.', 'success', 5000);
     }
   });
 }
@@ -554,7 +545,6 @@ function ejecutarPurgaBaseDeDatosAuto() {
 
 }
 
-
 function checkActiveOrderStatus() {
   ejecutarPurgaBaseDeDatosAuto();
 
@@ -568,6 +558,30 @@ function checkActiveOrderStatus() {
       if (btnCancel) btnCancel.style.display = 'flex';
       if (btnMain) btnMain.style.display = 'none'; // Ocultar Hacer Pedido para dar espacio limpio a Cancelar Pedido
       actualizarFaviconSegunPedido(order.categoria);
+      
+      // NUEVA LÓGICA: Revisar si está "visto"
+      if (window.supabaseClient) {
+         const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
+         window.supabaseClient.from('pedidos').select('estado').eq('user_id', localUserId).in('estado', ['pendiente', 'visto']).order('created_at', {ascending: false}).limit(1).single()
+         .then(({data, error}) => {
+            if (data && data.estado === 'visto') {
+               const btnCancel = document.getElementById('btnActiveOrderCancel');
+               if (btnCancel) {
+                  btnCancel.innerHTML = `<i class="fa-solid fa-check-circle"></i> Ya recibí mi pedido`;
+                  btnCancel.style.background = 'linear-gradient(135deg, #00E676, #00C853)';
+                  btnCancel.style.color = '#0F172A';
+                  btnCancel.onclick = function() { confirmarRecepcionComprador(); };
+               }
+               
+               // Mostrar toast indicando que lo vieron
+               if (!sessionStorage.getItem('notigas_notified_visto')) {
+                  showToast('👀 ¡Repartidor cerca!', 'Un repartidor ha visto los pedidos en tu zona y se dirige hacia allá.', 'success', 6000);
+                  sessionStorage.setItem('notigas_notified_visto', 'true');
+               }
+            }
+         });
+      }
+
       if (typeof renderActiveOrdersMap === 'function') {
         renderActiveOrdersMap();
       }
@@ -729,15 +743,17 @@ function confirmarPedido() {
 
   if (window.supabaseClient) {
     // Obtener user_id de la sesión activa (Supabase v2)
+    const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
     window.supabaseClient.auth.getSession().then(({ data: sessionData }) => {
-      const userId = sessionData?.session?.user?.id || null;
       window.supabaseClient.from('pedidos').insert([{
           categoria: cat,
-          titulo: `Pedido de ${cat}`,
+          cantidad: 1,
+          direccion: direccion,
+          telefono: telefono,
           descripcion: `Cantidad: 1 unidad. Dirección: ${direccion}. Teléfono: ${telefono}. Cliente: ${buyerName}`,
           ciudad: 'Cochabamba',
           barrio_otb: 'Por GPS',
-          user_id: userId,
+          user_id: localUserId, // Usar el ID local generado
           latitude: pos.lat,
           longitude: pos.lng
       }]).then(({ error }) => {
@@ -778,18 +794,31 @@ function cancelarPedidoActivo() {
   showConfirmModal('❌', '¿Cancelar tu pedido?', 'Tu pedido activo será eliminado del mapa y los repartidores dejarán de verlo.', 'Sí, cancelar', async () => {
     localStorage.removeItem('notigas_active_order');
     if (window.supabaseClient) {
-      // Obtener user_id de la sesión activa (Supabase v2)
-      const { data: sessionData } = await window.supabaseClient.auth.getSession();
-      const userId = sessionData?.session?.user?.id;
-      if (userId) {
-        await window.supabaseClient.from('pedidos').delete().eq('user_id', userId);
-      }
+      const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
+      const { error } = await window.supabaseClient.from('pedidos').delete().eq('user_id', localUserId).in('estado', ['pendiente', 'visto']);
+      if (error) console.error("Error cancelando pedido en Supabase:", error);
     }
+    showToast('Pedido Cancelado', 'Se ha restaurado el estado normal de la aplicación.', 'error', 4000);
     checkActiveOrderStatus();
     if (typeof renderActiveOrdersMap === 'function') {
       renderActiveOrdersMap();
     }
-    showToast('Pedido Cancelado', 'Se ha restaurado el estado normal de la aplicación.', 'error', 4000);
+  });
+}
+
+async function confirmarRecepcionComprador() {
+  showConfirmModal('🏁', 'Confirmar Recepción', '¿Confirmas que el repartidor llegó y recibiste tu pedido de forma exitosa?', 'Sí, lo recibí', async () => {
+     localStorage.removeItem('notigas_active_order');
+     if (window.supabaseClient) {
+         showLoadingOverlay('Confirmando entrega...');
+         const userId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
+         const { error } = await window.supabaseClient.from('pedidos').update({ estado: 'entregado' }).eq('user_id', userId).in('estado', ['pendiente', 'visto']);
+         hideLoadingOverlay();
+         if(error) console.error(error);
+     }
+     showToast('¡Gracias!', 'Gracias por confirmar. El pedido ha sido finalizado exitosamente.', 'success', 5000);
+     checkActiveOrderStatus();
+     if (typeof renderActiveOrdersMap === 'function') renderActiveOrdersMap();
   });
 }
 
