@@ -20,8 +20,9 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function renderForumFeed() {
-  const feed = document.getElementById('forumFeed');
-  if (!feed || !window.supabaseClient) return;
+  try {
+    const feed = document.getElementById('forumFeed');
+    if (!feed || !window.supabaseClient) return;
 
   const currentAdmin = getVerifiedAdminEmail();
   const isAdmin = currentAdmin && (currentAdmin.includes('erikmartinelly') || currentAdmin.includes('leonmartinelly'));
@@ -109,6 +110,9 @@ async function renderForumFeed() {
   });
 
   feed.innerHTML = html;
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 async function borrarPostForumAdmin(postId) {
@@ -156,9 +160,10 @@ function closeNuevoPostModal() {
 }
 
 async function crearNuevoPost() {
-  const titleEl = document.getElementById('inputPostTitulo');
-  const descEl = document.getElementById('inputPostDesc');
-  const catEl = document.getElementById('selectPostTipo');
+  try {
+    const titleEl = document.getElementById('inputPostTitulo');
+    const descEl = document.getElementById('inputPostDesc');
+    const catEl = document.getElementById('selectPostTipo');
   
   const title = (titleEl ? titleEl.value : '').trim();
   const desc = (descEl ? descEl.value : '').trim();
@@ -185,7 +190,7 @@ async function crearNuevoPost() {
   if (spamMatches && spamMatches.length >= 2 && !hasSpanishChars) {
     alert('⛔ ALERTA DE SEGURIDAD: Tu publicación ha sido bloqueada por el filtro Anti-Spam.\n\nNOTIGAS es una plataforma exclusiva para vecinos hispanohablantes.');
     if (window.supabaseClient) {
-      window.supabaseClient.from('reportes_spam').insert([{ texto: textoCompleto, motivo: 'Filtro Anti-Spam mejorado' }]).then();
+      window.supabaseClient.from('reportes_spam').insert([{ texto: textoCompleto, motivo: 'Filtro Anti-Spam mejorado' }]);
     }
     closeNewPostModal();
     return;
@@ -224,6 +229,9 @@ async function crearNuevoPost() {
   if (document.getElementById('inputPostDesc')) document.getElementById('inputPostDesc').value = '';
 
   alert('📌 ¡Aviso publicado exitosamente! Todos los vecinos podrán verlo en tiempo real.');
+  } catch (err) {
+    alert("Error interno al publicar: " + err.message);
+  }
 }
 
 /**
