@@ -15,6 +15,14 @@ Built entirely with **Vanilla JavaScript** and powered by **Supabase**, NOTIGAS 
 *   **Offline-Ready (PWA):** Includes a Service Worker (`sw.js`) with progressive caching, allowing the app to load quickly and gracefully handle poor network conditions.
 *   **Secret Admin Dashboard:** A hidden administration panel (`panel270977.html`) protected by a strict dual-authentication system with SHA-256 local hashing and Supabase storage, preventing unauthorized access to business metrics and user moderation.
 
+## 🌍 Social Impact & Purpose (The "Why")
+
+NOTIGAS is not just a technological tool; it is a project driven by a deep social purpose aimed at the most vulnerable sectors in Bolivia. 
+
+In Bolivia, it is predominantly the poorest families who rely on propane gas cylinders (*garrafas*) for their daily survival (cooking and heating). When a family runs out of gas, the traditional alternative is to take a taxi to a distant distribution plant, which costs money they simply cannot afford to spend. Buying directly from the neighborhood delivery trucks is significantly cheaper, but finding a passing truck is currently a matter of luck, leading to anxiety, wasted time, and sometimes being unable to cook.
+
+NOTIGAS bridges this gap by democratizing access to Artificial Intelligence and real-time logistics. By providing grassroots vendors with AI-driven Predictive Heatmaps and algorithmic route optimization, we ensure that delivery trucks reach the neighborhoods that need them most, faster and more efficiently. Our mission goes beyond making money; we are using advanced tech to lower the cost of living for those at the bottom of the economic pyramid, proving that AI can be a powerful catalyst for social equity.
+
 ## 🛠️ Technology Stack
 
 *   **Frontend:** HTML5, CSS3, Vanilla JavaScript (No React/Vue/Angular).
