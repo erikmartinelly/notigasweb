@@ -1202,6 +1202,10 @@ function conectarGPSAuto(forceReset = false) {
         if (banner) banner.style.display = 'block';
         const card = document.getElementById('gpsFloatingBanner');
         if (card) card.style.display = 'block';
+      } else {
+        if (typeof showToast === 'function') {
+           showToast('Aviso de GPS', 'Tu navegador bloqueó el GPS o estás en PC. Usaremos una ubicación aproximada.', 'info', 4000);
+        }
       }
       if (!gpsResolved) {
         gpsResolved = true;
