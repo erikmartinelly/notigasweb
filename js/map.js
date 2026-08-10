@@ -54,17 +54,22 @@ const userLocationSvgHtml = `
   </div>
 `;
 
-let userLocationIcon;
+let userLocationIcon;
 
 let garrafaIcon;
 
 let truckIcon;
 
+let supabaseWaitRetries = 0;
 function waitForSupabaseAndInit() {
   if (window.supabaseClient) {
     console.log("🟢 Supabase detectado, iniciando mapa...");
     initNotigasMap();
+  } else if (supabaseWaitRetries > 10) {
+    console.log("⚠️ Supabase tardó demasiado. Iniciando mapa en modo local...");
+    initNotigasMap();
   } else {
+    supabaseWaitRetries++;
     console.log("⏳ Esperando a Supabase para cargar el mapa...");
     setTimeout(waitForSupabaseAndInit, 200);
   }
