@@ -12,8 +12,8 @@
 }
 
 body { 
-  background-color: #F4F5F6; 
-  color: #2F3C45; 
+  background-color: #0F172A; 
+  color: #FFFFFF; 
   height: 100vh; 
   height: 100dvh;
   display: flex; 
@@ -21,7 +21,7 @@ body {
   overflow: hidden; 
   transform: translateZ(0);
   scrollbar-width: thin;
-  scrollbar-color: #56BC37 #FFFFFF;
+  scrollbar-color: #FF6D00 #1E293B;
 }
 
 /* COMPATIBILIDAD SCROLLBAR FIREFOX Y CHROMIUM/EDGE/BRAVE */
@@ -30,10 +30,10 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #FFFFFF;
+  background: #1E293B;
 }
 ::-webkit-scrollbar-thumb {
-  background: #56BC37;
+  background: #FF6D00;
   border-radius: 4px;
 }
 
@@ -108,15 +108,15 @@ body {
 
 /* HEADER & BRANDING GLASSMORPHISM SYSTEM */
 header { 
-  background: rgba(255, 255, 255, 0.92); 
+  background: rgba(30, 41, 59, 0.92); 
   padding: 8px 6px; 
   display: flex; 
   align-items: center; 
   justify-content: space-between; 
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05); 
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
   z-index: 1000; 
   backdrop-filter: blur(16px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); 
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); 
 }
 
 .brand { 
@@ -125,9 +125,9 @@ header {
   gap: 4px; 
   font-size: 19px; 
   font-weight: 900; 
-  color: #56BC37; 
+  color: #FF6D00; 
   letter-spacing: 0.5px; 
-  text-shadow: 0 2px 10px rgba(86, 188, 55, 0.3);
+  text-shadow: 0 2px 10px rgba(255, 109, 0, 0.3);
 }
 
 .brand-img { 
@@ -149,7 +149,7 @@ header {
 }
 
 .btn-badge, .btn-driver { 
-  background: linear-gradient(135deg, #56BC37 0%, #FF3D00 100%); 
+  background: linear-gradient(135deg, #FF6D00 0%, #FF3D00 100%); 
   color: white; 
   border: none; 
   padding: 8px 14px; 
@@ -174,7 +174,7 @@ header {
 }
 
 .btn-config-rect { 
-  background: linear-gradient(135deg, #56BC37 0%, #E65100 100%); 
+  background: linear-gradient(135deg, #FF6D00 0%, #E65100 100%); 
   color: white; 
   border: none; 
   padding: 11px 18px; 
@@ -187,7 +187,7 @@ header {
   font-size: 13px; 
   font-weight: 900;
   letter-spacing: 0.3px;
-  box-shadow: 0 4px 16px rgba(86, 188, 55, 0.45); 
+  box-shadow: 0 4px 16px rgba(255, 109, 0, 0.45); 
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
 }
 
@@ -196,9 +196,9 @@ header {
 }
 
 .btn-config-rect:hover { 
-  background: linear-gradient(135deg, #FF8F00 0%, #56BC37 100%); 
+  background: linear-gradient(135deg, #FF8F00 0%, #FF6D00 100%); 
   transform: translateY(-2px); 
-  box-shadow: 0 8px 24px rgba(86, 188, 55, 0.7);
+  box-shadow: 0 8px 24px rgba(255, 109, 0, 0.7);
 }
 
 .btn-config-rect:active {
@@ -227,7 +227,7 @@ header {
 
 /* NAVEGACIÓN 3 PESTAÑAS */
 nav { 
-  background: rgba(244, 245, 246, 0.95); 
+  background: rgba(15, 23, 42, 0.95); 
   display: flex; 
   border-bottom: 1px solid rgba(255, 255, 255, 0.08); 
   z-index: 999; 
@@ -239,7 +239,7 @@ nav {
   padding: 13px 6px; 
   background: none; 
   border: none; 
-  color: #64748B; 
+  color: #94A3B8; 
   font-size: 13.5px; 
   font-weight: 800; 
   cursor: pointer; 
@@ -253,10 +253,10 @@ nav {
 }
 
 .tab-btn.active { 
-  color: #56BC37; 
-  border-bottom-color: #56BC37; 
-  background: linear-gradient(180deg, rgba(86, 188, 55, 0.12) 0%, rgba(86, 188, 55, 0) 100%); 
-  text-shadow: 0 0 10px rgba(86, 188, 55, 0.4);
+  color: #FF6D00; 
+  border-bottom-color: #FF6D00; 
+  background: linear-gradient(180deg, rgba(255, 109, 0, 0.12) 0%, rgba(255, 109, 0, 0) 100%); 
+  text-shadow: 0 0 10px rgba(255, 109, 0, 0.4);
 }
 
 main {
@@ -289,7 +289,7 @@ main {
   width: 100%; 
   height: 100%; 
   z-index: 1; 
-  background-color: #F4F5F6; 
+  background-color: #0F172A; 
 }
 
 /* BOTONES DE ZOOM (+ / -) MAPA LEAFLET EN ESQUINA SUPERIOR DERECHA */
@@ -300,7 +300,7 @@ main {
 }
 
 .leaflet-control-zoom {
-  border: 1.5px solid #56BC37 !important;
+  border: 1.5px solid #FF6D00 !important;
   border-radius: 12px !important;
   overflow: hidden;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.6) !important;
@@ -308,9 +308,9 @@ main {
 }
 
 .leaflet-control-zoom a {
-  background-color: rgba(244, 245, 246, 0.95) !important;
-  color: #56BC37 !important;
-  border-bottom: 1px solid rgba(86, 188, 55, 0.3) !important;
+  background-color: rgba(15, 23, 42, 0.95) !important;
+  color: #FF6D00 !important;
+  border-bottom: 1px solid rgba(255, 109, 0, 0.3) !important;
   font-weight: 900 !important;
   font-size: 18px !important;
   width: 38px !important;
@@ -323,7 +323,7 @@ main {
 }
 
 .leaflet-control-zoom a:hover {
-  background-color: #56BC37 !important;
+  background-color: #FF6D00 !important;
   color: #FFFFFF !important;
 }
 
@@ -343,8 +343,8 @@ main {
   display: flex;
   align-items: center;
   gap: 4px;
-  background-color: rgba(244, 245, 246, 0.95);
-  border: 1px solid #56BC37;
+  background-color: rgba(15, 23, 42, 0.95);
+  border: 1px solid #FF6D00;
   border-radius: 8px;
   padding: 3px 6px;
   backdrop-filter: blur(8px);
@@ -352,7 +352,7 @@ main {
 }
 
 .city-selector-bar select {
-  background: #FFFFFF;
+  background: #1E293B;
   color: white;
   border: none;
   padding: 2px 4px;
@@ -368,7 +368,7 @@ main {
   display: flex; 
   align-items: center; 
   gap: 8px;
-  background-color: rgba(255, 255, 255, 0.95); 
+  background-color: rgba(30, 41, 59, 0.95); 
   border: 1.5px solid rgba(255, 255, 255, 0.15); 
   border-radius: 12px; 
   padding: 6px 12px; 
@@ -387,11 +387,11 @@ main {
 }
 
 .search-box input::placeholder { 
-  color: #64748B; 
+  color: #94A3B8; 
 }
 
 .btn-search-trigger {
-  background: #56BC37;
+  background: #FF6D00;
   color: white;
   border: none;
   padding: 4px 10px;
@@ -437,7 +437,7 @@ main {
 
 .btn-main-order { 
   width: 100%; 
-  background: linear-gradient(135deg, #56BC37 0%, #FF8F00 100%); 
+  background: linear-gradient(135deg, #FF6D00 0%, #FF8F00 100%); 
   color: #FFFFFF; 
   border: 1.5px solid #F59E0B; 
   padding: 14px; 
@@ -456,7 +456,7 @@ main {
 
 .btn-main-order:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(86, 188, 55, 0.7);
+  box-shadow: 0 8px 28px rgba(255, 109, 0, 0.7);
   background: linear-gradient(135deg, #E65100 0%, #D97706 100%);
 }
 
@@ -498,7 +498,7 @@ main {
 
 .btn-hear-truck { 
   flex: 1; 
-  background: rgba(255, 255, 255, 0.95); 
+  background: rgba(30, 41, 59, 0.95); 
   color: #F59E0B; 
   border: 1.5px solid rgba(245, 158, 11, 0.5); 
   padding: 10px 6px; 
@@ -521,7 +521,7 @@ main {
 
 .btn-panorama {
   flex: 1;
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(30, 41, 59, 0.95);
   color: #FF8F00;
   border: 1.5px solid rgba(255, 143, 0, 0.5);
   padding: 10px 6px;
@@ -572,14 +572,14 @@ main {
   overflow-x: auto;
   gap: 8px;
   padding: 10px 14px;
-  background-color: #FFFFFF;
+  background-color: #1E293B;
   border-bottom: 1px solid rgba(255,255,255,0.08);
   scrollbar-width: thin;
 }
 
 .cat-chip {
-  background-color: #F4F5F6;
-  color: #64748B;
+  background-color: #0F172A;
+  color: #94A3B8;
   border: 1px solid rgba(255,255,255,0.12);
   padding: 6px 12px;
   border-radius: 20px;
@@ -594,9 +594,9 @@ main {
 }
 
 .cat-chip.active, .cat-chip:hover {
-  background-color: #56BC37;
+  background-color: #FF6D00;
   color: white;
-  border-color: #56BC37;
+  border-color: #FF6D00;
 }
 
 .vendor-grid-container {
@@ -610,7 +610,7 @@ main {
 
 /* FICHA / MINI PÁGINA DE NEGOCIO ESTILO FACEBOOK */
 .vendor-fb-card {
-  background-color: #FFFFFF;
+  background-color: #1E293B;
   border-radius: 14px;
   border: 1px solid rgba(255,255,255,0.08);
   padding: 14px;
@@ -622,7 +622,7 @@ main {
 }
 
 .vendor-fb-card:hover {
-  border-color: #56BC37;
+  border-color: #FF6D00;
 }
 
 .vendor-fb-header {
@@ -642,7 +642,7 @@ main {
   height: 44px;
   border-radius: 12px;
   background: rgba(255,109,0,0.15);
-  color: #56BC37;
+  color: #FF6D00;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -671,7 +671,7 @@ main {
 }
 
 .vendor-fb-body {
-  background-color: #F4F5F6;
+  background-color: #0F172A;
   border-radius: 10px;
   padding: 10px 12px;
   border: 1px solid rgba(255,255,255,0.05);
@@ -682,14 +682,14 @@ main {
 
 .vendor-field {
   font-size: 13px;
-  color: #475569;
+  color: #CBD5E1;
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
 .vendor-field strong {
-  color: #56BC37;
+  color: #FF6D00;
 }
 
 .vendor-fb-footer {
@@ -722,7 +722,7 @@ main {
 
 .btn-vendor-order {
   flex: 1;
-  background-color: #56BC37;
+  background-color: #FF6D00;
   color: white;
   border: none;
   padding: 10px;
@@ -739,7 +739,7 @@ main {
 /* PESTAÑA 3: MINI REDDIT VECINAL & CHAT PRIVADO */
 .subnav-3rd-tab { 
   display: flex; 
-  background-color: #F4F5F6; 
+  background-color: #0F172A; 
   border-bottom: 1px solid rgba(255,255,255,0.1); 
 }
 
@@ -748,7 +748,7 @@ main {
   padding: 10px; 
   background: none; 
   border: none; 
-  color: #64748B; 
+  color: #94A3B8; 
   font-size: 12px; 
   font-weight: 700; 
   cursor: pointer; 
@@ -758,8 +758,8 @@ main {
 }
 
 .subtab-btn.active { 
-  color: #56BC37; 
-  border-bottom-color: #56BC37; 
+  color: #FF6D00; 
+  border-bottom-color: #FF6D00; 
   background-color: rgba(255,109,0,0.1); 
 }
 
@@ -769,12 +769,12 @@ main {
   justify-content: space-between; 
   align-items: center; 
   padding: 12px 14px; 
-  background-color: #FFFFFF; 
+  background-color: #1E293B; 
   border-bottom: 1px solid rgba(255,255,255,0.08); 
 }
 
 .btn-new-post { 
-  background-color: #56BC37; 
+  background-color: #FF6D00; 
   color: white; 
   border: none; 
   padding: 8px 14px; 
@@ -797,7 +797,7 @@ main {
 }
 
 .forum-card { 
-  background-color: #FFFFFF; 
+  background-color: #1E293B; 
   border-radius: 14px; 
   padding: 14px; 
   border: 1px solid rgba(255,255,255,0.08); 
@@ -811,7 +811,7 @@ main {
   flex-direction: column; 
   align-items: center; 
   justify-content: center; 
-  color: #64748B; 
+  color: #94A3B8; 
   font-weight: 900; 
   font-size: 14px; 
   width: 32px; 
@@ -823,13 +823,13 @@ main {
   transition: color 0.2s; 
 }
 
-.forum-votes i:hover { color: #56BC37; }
+.forum-votes i:hover { color: #FF6D00; }
 .forum-body { flex: 1; }
 
 .forum-cat { 
   display: inline-block; 
   background-color: rgba(255,109,0,0.15); 
-  color: #56BC37; 
+  color: #FF6D00; 
   font-size: 11px; 
   font-weight: 700; 
   padding: 2px 8px; 
@@ -838,7 +838,7 @@ main {
 }
 
 .forum-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; color: white; }
-.forum-desc { font-size: 13px; color: #475569; line-height: 1.4; }
+.forum-desc { font-size: 13px; color: #CBD5E1; line-height: 1.4; }
 .forum-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 12px; color: #64748B; font-weight: 500; }
 
 .btn-report {
@@ -863,11 +863,11 @@ main {
 }
 
 /* CHAT DIRECTO COMPRADOR ↔ REPARTIDOR */
-.direct-chat-container { flex: 1; display: flex; flex-direction: column; background-color: #F4F5F6; }
+.direct-chat-container { flex: 1; display: flex; flex-direction: column; background-color: #0F172A; }
 
 .chat-vendor-selector { 
   padding: 10px 14px; 
-  background-color: #FFFFFF; 
+  background-color: #1E293B; 
   border-bottom: 1px solid rgba(255,255,255,0.1); 
   display: flex; 
   gap: 8px; 
@@ -878,7 +878,7 @@ main {
   flex: 1; 
   padding: 8px; 
   border-radius: 8px; 
-  background-color: #F4F5F6; 
+  background-color: #0F172A; 
   color: white; 
   border: 1px solid rgba(255,255,255,0.15); 
   font-size: 12px; 
@@ -902,13 +902,13 @@ main {
   position: relative;
 }
 
-.chat-msg.buyer { align-self: flex-end; background-color: #56BC37; color: white; border-bottom-right-radius: 2px; }
-.chat-msg.vendor { align-self: flex-start; background-color: #FFFFFF; color: white; border: 1px solid rgba(255,255,255,0.1); border-bottom-left-radius: 2px; }
+.chat-msg.buyer { align-self: flex-end; background-color: #FF6D00; color: white; border-bottom-right-radius: 2px; }
+.chat-msg.vendor { align-self: flex-start; background-color: #1E293B; color: white; border: 1px solid rgba(255,255,255,0.1); border-bottom-left-radius: 2px; }
 .chat-msg-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; font-size: 9px; opacity: 0.85; }
 
 .chat-input-bar { 
   padding: 10px 14px; 
-  background-color: #FFFFFF; 
+  background-color: #1E293B; 
   border-top: 1px solid rgba(255,255,255,0.1); 
   display: flex; 
   gap: 8px; 
@@ -918,7 +918,7 @@ main {
   flex: 1; 
   padding: 10px; 
   border-radius: 10px; 
-  background-color: #F4F5F6; 
+  background-color: #0F172A; 
   border: 1px solid rgba(255,255,255,0.15); 
   color: white; 
   font-size: 12px; 
@@ -926,7 +926,7 @@ main {
 }
 
 .chat-input-bar button { 
-  background-color: #56BC37; 
+  background-color: #FF6D00; 
   color: white; 
   border: none; 
   padding: 10px 16px; 
@@ -938,7 +938,7 @@ main {
 
 /* PUBLICIDAD INTEGRADAS AL MEDIO (FACEBOOK FEED STYLE) */
 .ad-facebook-feed-card {
-  background-color: #FFFFFF;
+  background-color: #1E293B;
   border-radius: 14px;
   border: 1px solid rgba(255,109,0,0.3);
   padding: 14px;
@@ -961,7 +961,7 @@ main {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #56BC37, #E65100);
+  background: linear-gradient(135deg, #FF6D00, #E65100);
   color: white;
   display: flex;
   align-items: center;
@@ -979,7 +979,7 @@ main {
 }
 .ad-fb-sub {
   font-size: 10px;
-  color: #56BC37;
+  color: #FF6D00;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -987,11 +987,11 @@ main {
 }
 .ad-fb-body {
   font-size: 12px;
-  color: #475569;
+  color: #CBD5E1;
   line-height: 1.4;
 }
 .ad-fb-media {
-  background: #F4F5F6;
+  background: #0F172A;
   border-radius: 10px;
   padding: 12px;
   border: 1px solid rgba(255,255,255,0.08);
@@ -1007,12 +1007,12 @@ main {
 }
 .ad-fb-media-desc {
   font-size: 10px;
-  color: #64748B;
+  color: #94A3B8;
 }
 
 /* PUBLICIDAD FOOTER */
 footer.ad-banner-container { 
-  background-color: #F4F5F6; 
+  background-color: #0F172A; 
   border-top: 1px solid rgba(255,109,0,0.25); 
   padding: 8px 14px; 
   display: flex; 
@@ -1037,7 +1037,7 @@ footer.ad-banner-container {
 
 .ad-badge { 
   background: linear-gradient(135deg, rgba(255,109,0,0.25), rgba(230,81,0,0.15)); 
-  color: #56BC37; 
+  color: #FF6D00; 
   border: 1px solid rgba(255,109,0,0.5); 
   font-size: 9px; 
   font-weight: 800; 
@@ -1058,7 +1058,7 @@ footer.ad-banner-container {
 .ad-title { 
   font-size: 9px; 
   font-weight: 500; 
-  color: #64748B; 
+  color: #94A3B8; 
   white-space: nowrap; 
   overflow: hidden; 
   text-overflow: ellipsis; 
@@ -1075,7 +1075,7 @@ footer.ad-banner-container {
 
 .btn-ad-contact { 
   background-color: rgba(255,109,0,0.15); 
-  color: #56BC37; 
+  color: #FF6D00; 
   border: 1px solid rgba(255,109,0,0.4); 
   padding: 6px 12px; 
   border-radius: 8px; 
@@ -1087,7 +1087,7 @@ footer.ad-banner-container {
 }
 
 .btn-ad-contact:hover { 
-  background-color: #56BC37; 
+  background-color: #FF6D00; 
   color: white; 
 }
 
@@ -1108,7 +1108,7 @@ footer.ad-banner-container {
 }
 
 .modal-content { 
-  background-color: #FFFFFF; 
+  background-color: #1E293B; 
   border-radius: 16px; 
   padding: 20px; 
   width: 90%; 
@@ -1121,7 +1121,7 @@ footer.ad-banner-container {
 .modal-title { 
   font-size: 16px; 
   font-weight: 900; 
-  color: #56BC37; 
+  color: #FF6D00; 
   margin-bottom: 12px; 
   display: flex; 
   justify-content: space-between; 
@@ -1141,7 +1141,7 @@ footer.ad-banner-container {
 .form-group label { 
   display: block; 
   font-size: 11px; 
-  color: #64748B; 
+  color: #94A3B8; 
   margin-bottom: 4px; 
   font-weight: 700; 
 }
@@ -1151,14 +1151,14 @@ footer.ad-banner-container {
   padding: 10px; 
   border-radius: 8px; 
   border: 1px solid rgba(255,255,255,0.15); 
-  background-color: #F4F5F6; 
+  background-color: #0F172A; 
   color: white; 
   font-size: 12px; 
 }
 
 .btn-submit { 
   width: 100%; 
-  background-color: #56BC37; 
+  background-color: #FF6D00; 
   color: white; 
   border: none; 
   padding: 12px; 
@@ -1214,7 +1214,7 @@ footer.ad-banner-container {
   flex: 1; 
   background: none; 
   border: none; 
-  color: #64748B; 
+  color: #94A3B8; 
   padding: 8px; 
   font-size: 11px; 
   font-weight: 700; 
@@ -1222,7 +1222,7 @@ footer.ad-banner-container {
   border-bottom: 2px solid transparent; 
 }
 
-.modal-tab-btn.active { color: #56BC37; border-bottom-color: #56BC37; }
+.modal-tab-btn.active { color: #FF6D00; border-bottom-color: #FF6D00; }
 .modal-tab-pane { display: none; }
 .modal-tab-pane.active { display: block; }
 
@@ -1235,7 +1235,7 @@ footer.ad-banner-container {
 }
 
 .submenu-card {
-  background: linear-gradient(145deg, #FFFFFF, #F4F5F6);
+  background: linear-gradient(145deg, #1E293B, #0F172A);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 16px;
   padding: 16px 12px;
@@ -1252,8 +1252,8 @@ footer.ad-banner-container {
 
 .submenu-card:hover {
   transform: translateY(-4px);
-  border-color: #56BC37;
-  box-shadow: 0 8px 22px rgba(86, 188, 55, 0.4);
+  border-color: #FF6D00;
+  box-shadow: 0 8px 22px rgba(255, 109, 0, 0.4);
   background: linear-gradient(145deg, #253347, #152033);
 }
 
@@ -1265,8 +1265,8 @@ footer.ad-banner-container {
 .submenu-card .garrafa-icon-svg {
   width: 34px;
   height: 34px;
-  fill: #56BC37;
-  filter: drop-shadow(0 2px 8px rgba(86, 188, 55, 0.6));
+  fill: #FF6D00;
+  filter: drop-shadow(0 2px 8px rgba(255, 109, 0, 0.6));
 }
 
 .submenu-title {
@@ -1285,9 +1285,9 @@ footer.ad-banner-container {
 
 .role-select-btn {
   flex: 1;
-  background-color: #F4F5F6;
+  background-color: #0F172A;
   border: 2px solid rgba(255,255,255,0.12);
-  color: #64748B;
+  color: #94A3B8;
   padding: 12px 8px;
   border-radius: 12px;
   font-size: 12px;
@@ -1302,8 +1302,8 @@ footer.ad-banner-container {
 
 .role-select-btn.active, .role-select-btn:hover {
   background-color: rgba(255,109,0,0.12);
-  border-color: #56BC37;
-  color: #56BC37;
+  border-color: #FF6D00;
+  color: #FF6D00;
   box-shadow: 0 4px 14px rgba(255,109,0,0.3);
 }
 
@@ -1314,7 +1314,7 @@ footer.ad-banner-container {
 /* TABS MÉTODO DE INGRESO */
 .auth-method-tabs {
   display: flex;
-  background-color: #F4F5F6;
+  background-color: #0F172A;
   border-radius: 10px;
   padding: 4px;
   gap: 4px;
@@ -1325,7 +1325,7 @@ footer.ad-banner-container {
   flex: 1;
   background: none;
   border: none;
-  color: #64748B;
+  color: #94A3B8;
   padding: 8px;
   border-radius: 8px;
   font-size: 11px;
@@ -1339,7 +1339,7 @@ footer.ad-banner-container {
 }
 
 .auth-method-btn.active {
-  background-color: #56BC37;
+  background-color: #FF6D00;
   color: white;
 }
 
@@ -1352,31 +1352,31 @@ footer.ad-banner-container {
   max-width: calc(100vw - 32px);
   height: 480px;
   max-height: calc(100vh - 100px);
-  background: #FFFFFF;
+  background: #1E293B;
   border-radius: 14px 14px 0 0;
   box-shadow: 0 10px 32px rgba(0, 0, 0, 0.8);
   z-index: 3000;
   display: none;
   flex-direction: column;
   overflow: hidden;
-  border: 1.5px solid rgba(86, 188, 55, 0.5);
+  border: 1.5px solid rgba(255, 109, 0, 0.5);
   transition: all 0.25s ease;
 }
 
 .chat-popup-header {
-  background: linear-gradient(135deg, #F4F5F6, #FFFFFF);
+  background: linear-gradient(135deg, #0F172A, #1E293B);
   padding: 10px 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   user-select: none;
 }
 
 .chat-popup-btn {
   background: none;
   border: none;
-  color: #64748B;
+  color: #94A3B8;
   font-size: 14px;
   font-weight: bold;
   cursor: pointer;
@@ -1436,7 +1436,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 /* DISEÑO ESTÉTICO DE ALTO RENDIMIENTO (0KB EXTRA) PARA MODO REPARTIDOR */
 /* DISEÑO ESTÉTICO DE ALTO RENDIMIENTO (DELIVERY PALETTE ORANGE & AMBER) */
 .driver-mode-header-banner {
-  background: linear-gradient(90deg, rgba(86, 188, 55, 0.3) 0%, rgba(245, 158, 11, 0.3) 50%, rgba(217, 119, 6, 0.3) 100%);
+  background: linear-gradient(90deg, rgba(255, 109, 0, 0.3) 0%, rgba(245, 158, 11, 0.3) 50%, rgba(217, 119, 6, 0.3) 100%);
   border-bottom: 1.5px solid #F59E0B;
   color: #FFFBEB;
   padding: 10px 16px;
@@ -1446,24 +1446,24 @@ button:active, .tab-btn:active, .cat-chip:active {
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   letter-spacing: 0.6px;
-  box-shadow: 0 4px 20px rgba(86, 188, 55, 0.35);
+  box-shadow: 0 4px 20px rgba(255, 109, 0, 0.35);
   text-shadow: 0 1px 4px rgba(0,0,0,0.6);
 }
 
 .driver-actions-panel {
-  background: rgba(244, 245, 246, 0.95) !important;
+  background: rgba(15, 23, 42, 0.95) !important;
   border: 1.5px solid rgba(245, 158, 11, 0.5) !important;
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
   border-radius: 18px !important;
   padding: 14px !important;
-  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.7), 0 0 20px rgba(86, 188, 55, 0.25) !important;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.7), 0 0 20px rgba(255, 109, 0, 0.25) !important;
   gap: 10px !important;
 }
 
 .btn-driver-gps-toggle {
   width: 100%;
-  background: linear-gradient(135deg, #56BC37 0%, #D97706 100%);
+  background: linear-gradient(135deg, #FF6D00 0%, #D97706 100%);
   color: #FFFFFF;
   border: 1.5px solid #FBBF24;
   padding: 13px 16px;
@@ -1471,7 +1471,7 @@ button:active, .tab-btn:active, .cat-chip:active {
   font-size: 12px;
   font-weight: 900;
   cursor: pointer;
-  box-shadow: 0 4px 22px rgba(86, 188, 55, 0.5), inset 0 1px 0 rgba(255,255,255,0.3);
+  box-shadow: 0 4px 22px rgba(255, 109, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1483,13 +1483,13 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 .btn-driver-gps-toggle:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(86, 188, 55, 0.8), inset 0 1px 0 rgba(255,255,255,0.4);
+  box-shadow: 0 8px 30px rgba(255, 109, 0, 0.8), inset 0 1px 0 rgba(255,255,255,0.4);
   background: linear-gradient(135deg, #E65100 0%, #B45309 100%);
 }
 
 .btn-driver-heatmap {
   flex: 1;
-  background: linear-gradient(135deg, #56BC37 0%, #EA580C 100%);
+  background: linear-gradient(135deg, #FF6D00 0%, #EA580C 100%);
   color: #FFFFFF;
   border: 1.5px solid rgba(254, 215, 170, 0.4);
   padding: 11px 10px;
@@ -1497,7 +1497,7 @@ button:active, .tab-btn:active, .cat-chip:active {
   font-size: 11px;
   font-weight: 900;
   cursor: pointer;
-  box-shadow: 0 4px 18px rgba(86, 188, 55, 0.45), inset 0 1px 0 rgba(255,255,255,0.25);
+  box-shadow: 0 4px 18px rgba(255, 109, 0, 0.45), inset 0 1px 0 rgba(255,255,255,0.25);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1515,7 +1515,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 .btn-driver-orders-list {
   flex: 1;
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(30, 41, 59, 0.95);
   color: #F59E0B;
   border: 1.5px solid rgba(245, 158, 11, 0.5);
   padding: 11px 10px;
@@ -1568,7 +1568,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 /* ESTILOS PARA TARJETAS DE PEDIDOS EN VIVO DEL REPARTIDOR Y COMPONENTES ADICIONALES */
 .driver-order-card {
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(30, 41, 59, 0.85);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
@@ -1589,7 +1589,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 .driver-order-title {
   font-weight: 800;
   font-size: 12.5px;
-  color: #56BC37;
+  color: #FF6D00;
 }
 
 .driver-order-dist {
@@ -1609,7 +1609,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 .btn-driver-accept {
   flex: 1;
-  background: linear-gradient(135deg, #56BC37, #E65100);
+  background: linear-gradient(135deg, #FF6D00, #E65100);
   color: white;
   border: none;
   padding: 8px 10px;
@@ -1617,20 +1617,20 @@ button:active, .tab-btn:active, .cat-chip:active {
   font-size: 11px;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 2px 10px rgba(86, 188, 55, 0.4);
+  box-shadow: 0 2px 10px rgba(255, 109, 0, 0.4);
   transition: all 0.2s ease;
 }
 
 .btn-driver-accept:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 15px rgba(86, 188, 55, 0.6);
+  box-shadow: 0 4px 15px rgba(255, 109, 0, 0.6);
 }
 
 .btn-driver-chat-vecino {
   flex: 1;
-  background: rgba(86, 188, 55, 0.2);
-  color: #56BC37;
-  border: 1px solid rgba(86, 188, 55, 0.4);
+  background: rgba(255, 109, 0, 0.2);
+  color: #FF6D00;
+  border: 1px solid rgba(255, 109, 0, 0.4);
   padding: 8px 10px;
   border-radius: 8px;
   font-size: 11px;
@@ -1640,7 +1640,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 }
 
 .btn-driver-chat-vecino:hover {
-  background: rgba(86, 188, 55, 0.35);
+  background: rgba(255, 109, 0, 0.35);
   color: #FFFFFF;
 }
 
@@ -1741,7 +1741,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 .notigas-toast.toast-error   { background: linear-gradient(135deg, #D32F2F, #B71C1C); border-color: rgba(239,68,68,0.3); }
 .notigas-toast.toast-warning { background: linear-gradient(135deg, #E65100, #BF360C); border-color: rgba(255,109,0,0.3); }
 .notigas-toast.toast-info    { background: linear-gradient(135deg, #0277BD, #01579B); border-color: rgba(2,136,209,0.3); }
-.notigas-toast.toast-order   { background: linear-gradient(135deg, #56BC37, #E65100); border-color: rgba(245,158,11,0.3); }
+.notigas-toast.toast-order   { background: linear-gradient(135deg, #FF6D00, #E65100); border-color: rgba(245,158,11,0.3); }
 
 /* Barra de progreso de auto-cierre */
 .notigas-toast .toast-progress {
@@ -1786,20 +1786,20 @@ button:active, .tab-btn:active, .cat-chip:active {
 }
 
 .confirm-modal-box {
-  background: linear-gradient(145deg, #FFFFFF, #F4F5F6);
+  background: linear-gradient(145deg, #1E293B, #0F172A);
   border: 1.5px solid rgba(255,255,255,0.12);
   border-radius: 20px;
   padding: 28px 24px 22px;
   width: calc(100% - 48px);
   max-width: 360px;
   text-align: center;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
   animation: scaleIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .confirm-modal-icon { font-size: 40px; margin-bottom: 12px; }
 .confirm-modal-title { font-size: 16px; font-weight: 900; color: #FFFFFF; margin-bottom: 8px; font-family: 'Roboto', sans-serif; }
-.confirm-modal-text { font-size: 12.5px; color: #64748B; line-height: 1.5; margin-bottom: 20px; font-family: 'Roboto', sans-serif; }
+.confirm-modal-text { font-size: 12.5px; color: #94A3B8; line-height: 1.5; margin-bottom: 20px; font-family: 'Roboto', sans-serif; }
 
 .confirm-modal-actions {
   display: flex;
@@ -1820,7 +1820,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 .confirm-cancel {
   background: rgba(255,255,255,0.08);
-  color: #475569;
+  color: #CBD5E1;
   border: 1px solid rgba(255,255,255,0.12);
 }
 .confirm-cancel:hover { background: rgba(255,255,255,0.15); color: white; }
@@ -1860,7 +1860,7 @@ button:active, .tab-btn:active, .cat-chip:active {
   display: flex !important;
   flex-direction: column !important;
   padding: 14px !important;
-  background: #F4F5F6 !important;
+  background: #0F172A !important;
 }
 
 .btn-close-chat-large {
@@ -1906,8 +1906,8 @@ button:active, .tab-btn:active, .cat-chip:active {
   font-size: 13px;
   font-weight: 800;
   cursor: pointer;
-  background: #FFFFFF;
-  color: #64748B;
+  background: #1E293B;
+  color: #94A3B8;
   border: 1.5px solid rgba(255, 255, 255, 0.15);
   display: flex;
   align-items: center;
@@ -1929,10 +1929,10 @@ button:active, .tab-btn:active, .cat-chip:active {
 }
 
 .role-select-btn.active#btnRoleDriver {
-  background: linear-gradient(135deg, #56BC37, #E65100) !important;
+  background: linear-gradient(135deg, #FF6D00, #E65100) !important;
   color: #FFFFFF !important;
   border-color: #F59E0B !important;
-  box-shadow: 0 4px 16px rgba(86, 188, 55, 0.6) !important;
+  box-shadow: 0 4px 16px rgba(255, 109, 0, 0.6) !important;
 }
 .btn-premium-buyer {
   display: inline-block;
@@ -2037,7 +2037,7 @@ button:active, .tab-btn:active, .cat-chip:active {
   width: 100%;
   max-width: 480px;
   max-height: 85vh;
-  background: linear-gradient(180deg, #1E1B4B 0%, #F4F5F6 100%);
+  background: linear-gradient(180deg, #1E1B4B 0%, #0F172A 100%);
   border-radius: 24px 24px 0 0;
   border-top: 2px solid rgba(99, 102, 241, 0.5);
   display: flex;
@@ -2076,7 +2076,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 }
 .gchat-subtitle { font-size: 10px; color: #6366F1; font-weight: 600; margin-top: 1px; }
 .gchat-close {
-  background: rgba(255,255,255,0.08); border: none; color: #64748B;
+  background: rgba(255,255,255,0.08); border: none; color: #94A3B8;
   width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
   font-size: 14px; display: flex; align-items: center; justify-content: center;
   transition: all 0.2s;
@@ -2220,6 +2220,3 @@ button:active, .tab-btn:active, .cat-chip:active {
 #geminiBtnEnviar:hover { transform: scale(1.08); box-shadow: 0 6px 18px rgba(79,70,229,0.6); }
 #geminiBtnEnviar:active { transform: scale(0.94); }
 #geminiBtnEnviar:disabled { opacity: 0.5; cursor: not-allowed; }
-
-
-

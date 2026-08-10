@@ -266,7 +266,7 @@ function agregarPedidoVecinoEnMapa(order) {
   const marker = L.marker([order.latitude, order.longitude], { icon: garrafaIcon, zIndexOffset: 8000 }).addTo(map);
   marker.bindPopup(`
     <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
-      <strong style="color:#56BC37; font-size:13px;">🛒 Pedido de un Vecino</strong><br>
+      <strong style="color:#FF6D00; font-size:13px;">🛒 Pedido de un Vecino</strong><br>
       <span style="font-size:11px; color:#64748B;">${escapeHtmlStr(order.categoria)}</span>
     </div>
   `);
@@ -321,7 +321,7 @@ function moverMarcadorUbicacionManual(lat, lng) {
   if (userMarker) {
     userMarker.getPopup().setContent(`
       <div style="font-family:'Roboto',sans-serif; text-align:center;">
-        <strong style="color:#56BC37; font-size:13px;">📍 Ubicación de Entrega Ajustada</strong><br>
+        <strong style="color:#FF6D00; font-size:13px;">📍 Ubicación de Entrega Ajustada</strong><br>
         <span style="font-size:11px; color:#00E676; font-weight:700;">Punto fijado manualmente</span><br>
         <span style="font-size:9.5px; color:#94A3B8;">(Arrastra el marcador a la puerta exacta de tu casa)</span>
       </div>
@@ -365,7 +365,7 @@ function applyGpsPosition(lat, lng, label, forceReset = false) {
 
     userMarker.bindPopup(`
       <div style="font-family:'Roboto',sans-serif; text-align:center;">
-        <strong style="color:#56BC37; font-size:13px;">📍 Ubicación de Entrega</strong><br>
+        <strong style="color:#FF6D00; font-size:13px;">📍 Ubicación de Entrega</strong><br>
         <span style="font-size:11px; color:#64748B;">Arrastra el marcador a la puerta exacta de tu casa</span>
       </div>
     `);
@@ -384,7 +384,7 @@ function applyGpsPosition(lat, lng, label, forceReset = false) {
 
       userMarker.getPopup().setContent(`
         <div style="font-family:'Roboto',sans-serif; text-align:center;">
-          <strong style="color:#56BC37; font-size:13px;">📍 Ubicación de Entrega Ajustada</strong><br>
+          <strong style="color:#FF6D00; font-size:13px;">📍 Ubicación de Entrega Ajustada</strong><br>
           <span style="font-size:11px; color:#38BDF8; font-weight:700;">Ajustada manualmente en mapa</span><br>
           <span style="font-size:9.5px; color:#94A3B8;">(Arrastra el marcador a la puerta exacta de tu casa)</span>
         </div>
@@ -477,8 +477,8 @@ let reportedTrucksLayerGroup = null;
 // SVG E ICONO DE ALTA DEFINICIÓN PARA CAMIONES REPORTADOS EN VIVO POR VECINOS
 const reportedTruckSvgMarkerHtml = `
   <div style="position: relative; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
-    <div style="position: absolute; width: 48px; height: 48px; border-radius: 50%; background: rgba(86,188,55,0.35); animation: radarPing 1.8s infinite ease-out;"></div>
-    <div style="position: relative; background: linear-gradient(135deg, #56BC37, #D32F2F); width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2.5px solid #FFFFFF; box-shadow: 0 4px 18px rgba(86,188,55,0.8); cursor: pointer;">
+    <div style="position: absolute; width: 48px; height: 48px; border-radius: 50%; background: rgba(255,109,0,0.35); animation: radarPing 1.8s infinite ease-out;"></div>
+    <div style="position: relative; background: linear-gradient(135deg, #FF6D00, #D32F2F); width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2.5px solid #FFFFFF; box-shadow: 0 4px 18px rgba(255,109,0,0.8); cursor: pointer;">
       <i class="fa-solid fa-bell" style="color: #FFFFFF; font-size: 18px;"></i>
       <span style="position: absolute; top: -3px; right: -3px; background: #FFD600; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #1E293B;" title="Camión Reportado por Vecino"></span>
     </div>
@@ -531,10 +531,10 @@ function renderReportedTrucksBuffer() {
     const marker = L.marker([t.lat, t.lng], { icon: reportedTruckIcon });
     marker.bindPopup(`
       <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
-        <strong style="color:#56BC37; font-size:13px;"><i class="fa-solid fa-truck-fast"></i> Camión Oído / Visto en la Zona</strong><br>
+        <strong style="color:#FF6D00; font-size:13px;"><i class="fa-solid fa-truck-fast"></i> Camión Oído / Visto en la Zona</strong><br>
         <span style="font-size:11px; color:#CBD5E1;">📢 Reportado por: <strong>${t.reporter || 'Un vecino'}</strong></span><br>
         <span style="font-size:10px; color:#00E676; font-weight:700;">⏱️ ${timeText}</span><br>
-        <button style="margin-top:6px; background:linear-gradient(135deg, #56BC37, #E65100); color:white; border:none; padding:5px 10px; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer;" onclick="abrirSubmenuPedidos()">📦 Pedir Garrafa / Servicio Aquí</button>
+        <button style="margin-top:6px; background:linear-gradient(135deg, #FF6D00, #E65100); color:white; border:none; padding:5px 10px; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer;" onclick="abrirSubmenuPedidos()">📦 Pedir Garrafa / Servicio Aquí</button>
       </div>
     `);
 
@@ -634,8 +634,8 @@ function obtenerIconoCategoriaMapa(catNombre) {
     iconContent = `<div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #E040FB);"><i class="fa-solid fa-pump-soap" style="font-size: 34px; color: #E040FB;"></i></div>`;
   } else if (c.includes('carbón') || c.includes('leña')) {
     badgeLabel = '🪵 Carbón';
-    badgeColor = '#56BC37';
-    iconContent = `<div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #56BC37);"><i class="fa-solid fa-fire" style="font-size: 34px; color: #56BC37;"></i></div>`;
+    badgeColor = '#FF6D00';
+    iconContent = `<div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #FF6D00);"><i class="fa-solid fa-fire" style="font-size: 34px; color: #FF6D00;"></i></div>`;
   } else if (!c.includes('gas')) {
     badgeLabel = '📦 Otros';
     badgeColor = '#94A3B8';
@@ -728,7 +728,7 @@ function renderActiveOrdersMap() {
 
       orderMarker.bindPopup(`
         <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
-          <strong style="color:#56BC37; font-size:13px;">📦 Pedido Activo en Vivo</strong><br>
+          <strong style="color:#FF6D00; font-size:13px;">📦 Pedido Activo en Vivo</strong><br>
           <span style="font-size:11px; color:#CBD5E1; font-weight:700;">${escapeHtmlStr(order.categoria)} (${escapeHtmlStr(order.cantidad || '1 un')})</span>
           ${addrInfo}
           ${telInfo}<br>
@@ -891,7 +891,7 @@ async function calcularYTrazarRutaEficiente() {
       <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
         <strong style="color:#0EA5E9; font-size:13px;">Parada N° ${idx + 1} en Ruta Optimizada</strong><br>
         <span style="font-size:11px; color:#FFFFFF;">${pt.title} - ${pt.desc}</span><br>
-        <span style="font-size:10px; color:#56BC37; font-weight:700;">📍 Distancia acumulada: ${formatearDistanciaTriangulada(accumulatedDist || totalDistMeters)}</span>
+        <span style="font-size:10px; color:#FF6D00; font-weight:700;">📍 Distancia acumulada: ${formatearDistanciaTriangulada(accumulatedDist || totalDistMeters)}</span>
       </div>
     `);
     routePolylineLayerGroup.addLayer(seqMarker);
@@ -967,7 +967,7 @@ function verificarYMostrarRepartidorGPS() {
       truckMarker = L.marker([lat, lng], { icon: truckIcon, zIndexOffset: 9000 }).addTo(map);
       truckMarker.bindPopup(`
         <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
-          <strong style="color:#56BC37; font-size:13px;"><i class="fa-solid fa-truck-fast"></i> ${escapeHtmlStr(driverNombre)} — En Ruta</strong><br>
+          <strong style="color:#FF6D00; font-size:13px;"><i class="fa-solid fa-truck-fast"></i> ${escapeHtmlStr(driverNombre)} — En Ruta</strong><br>
           <span style="font-size:11px; color:#00E676;">🟢 GPS en Tiempo Real · ${escapeHtmlStr(driverCategoria)}</span><br>
           <button style="margin-top:6px; background:#0288D1; color:white; border:none; padding:4px 8px; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer;" onclick="abrirChatDirectoVendedor('${escapeHtmlStr(driverCategoria)}')">💬 Chat Directo</button>
         </div>
@@ -1037,7 +1037,7 @@ function renderHeatmapOverlay() {
     });
 
     const innerCircle = L.circle([pt.lat, pt.lng], {
-      color: '#56BC37', fillColor: '#FF8F00', fillOpacity: 0.55, weight: 2.5, radius: 90 + (pt.count * 10)
+      color: '#FF6D00', fillColor: '#FF8F00', fillOpacity: 0.55, weight: 2.5, radius: 90 + (pt.count * 10)
     }).bindPopup(`
       <div style="font-family:'Roboto',sans-serif; text-align:center; padding:6px;">
         <strong style="color:#FF1744; font-size:13px;"><i class="fa-solid fa-fire"></i> ZONA DE ALTA DEMANDA VECINAL</strong><br>
