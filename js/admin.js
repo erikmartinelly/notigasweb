@@ -779,7 +779,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* INSPECCIÓN Y ELIMINACIÓN DE PEDIDOS FANTASMA PARA EL ADMINISTRADOR */
-function renderAdminOrdersList() {
+async function renderAdminOrdersList() {
   const container = document.getElementById('adminOrdersMonitorContainer');
   if (!container) return;
 
@@ -791,7 +791,40 @@ function renderAdminOrdersList() {
     </div>
   `;
 
-  // 1. Pedido Activo de Comprador
+  // 1. Pedidos en Vivo desde Supabase
+  if (window.supabaseClient) {
+    const { data: pedidos, error } = await window.supabaseClient
+      .from('pedidos')
+      .select('*')
+      .eq('estado', 'pendiente');
+
+    if (pedidos && pedidos.length > 0) {
+      pedidos.forEach(order => {
+        totalCount++;
+        const orderDate = order.created_at ? new Date(order.created_at).getTime() : Date.now();
+        const mins = Math.floor((Date.now() - orderDate) / 60000);
+        html += `
+          <div style="background:#FFFFFF; padding:12px; border-radius:10px; border:1.5px solid #56BC37; margin-bottom:8px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:12.5px; font-weight:900; color:#56BC37;"><i class="fa-solid fa-box"></i> Pedido Activo (Supabase)</span>
+              <span style="font-size:10px; background:rgba(86,188,55,0.2); color:#56BC37; padding:2px 6px; border-radius:4px; font-weight:700;">⏱ Hace ${mins} min</span>
+            </div>
+            <div style="font-size:11.5px; color:#2F3C45; margin-top:6px;">
+              <strong>Producto:</strong> ${escapeHtmlStr(order.categoria || 'Gas')} (${escapeHtmlStr(order.cantidad || '1 un')})<br>
+              <strong>Dirección:</strong> ${escapeHtmlStr(order.direccion || 'Georeferenciada')}<br>
+              <strong>Teléfono:</strong> <span style="color:#56BC37; font-weight:800;">${escapeHtmlStr(order.telefono || 'No especificado')}</span><br>
+              <span style="font-size:10px; color:#64748B;">Coordenadas: Lat ${order.lat ? order.lat.toFixed(5) : '-'}, Lng ${order.lng ? order.lng.toFixed(5) : '-'}</span>
+            </div>
+            <button onclick="borrarPedidoFantasmaAdmin('supabase', '${order.id}')" style="margin-top:8px; width:100%; background:linear-gradient(135deg, #D32F2F, #B71C1C); color:white; border:none; padding:6px 12px; border-radius:8px; font-weight:800; font-size:11px; cursor:pointer;">
+              <i class="fa-solid fa-trash-can"></i> 🗑️ Borrar Pedido (Supabase)
+            </button>
+          </div>
+        `;
+      });
+    }
+  }
+
+  // 2. Pedido Activo de Comprador Local (Respaldo)
   const rawOrder = localStorage.getItem('notigas_active_order');
   if (rawOrder) {
     try {
@@ -799,26 +832,26 @@ function renderAdminOrdersList() {
       totalCount++;
       const mins = Math.floor((Date.now() - (order.timestamp || Date.now())) / 60000);
       html += `
-        <div style="background:#1E293B; padding:12px; border-radius:10px; border:1.5px solid #FF6D00; margin-bottom:8px;">
+        <div style="background:#FFFFFF; padding:12px; border-radius:10px; border:1.5px solid #56BC37; margin-bottom:8px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
           <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:12.5px; font-weight:900; color:#FF6D00;"><i class="fa-solid fa-box"></i> Pedido Vecinal Activo en Mapa</span>
-            <span style="font-size:10px; background:rgba(255,109,0,0.2); color:#FF8F00; padding:2px 6px; border-radius:4px; font-weight:700;">⏱ Hace ${mins} min</span>
+            <span style="font-size:12.5px; font-weight:900; color:#56BC37;"><i class="fa-solid fa-box"></i> Pedido Local (Caché)</span>
+            <span style="font-size:10px; background:rgba(86,188,55,0.2); color:#56BC37; padding:2px 6px; border-radius:4px; font-weight:700;">⏱ Hace ${mins} min</span>
           </div>
-          <div style="font-size:11.5px; color:white; margin-top:6px;">
+          <div style="font-size:11.5px; color:#2F3C45; margin-top:6px;">
             <strong>Producto:</strong> ${escapeHtmlStr(order.categoria)} (${escapeHtmlStr(order.cantidad || '1 un')})<br>
             <strong>Dirección:</strong> ${escapeHtmlStr(order.callePrincipal || 'Georeferenciada')}<br>
-            <strong>Teléfono:</strong> <span style="color:#00E676; font-weight:800;">${escapeHtmlStr(order.telefono || 'No especificado')}</span><br>
-            <span style="font-size:10px; color:#94A3B8;">Coordenadas: Lat ${order.lat ? order.lat.toFixed(5) : '-'}, Lng ${order.lng ? order.lng.toFixed(5) : '-'}</span>
+            <strong>Teléfono:</strong> <span style="color:#56BC37; font-weight:800;">${escapeHtmlStr(order.telefono || 'No especificado')}</span><br>
+            <span style="font-size:10px; color:#64748B;">Coordenadas: Lat ${order.lat ? order.lat.toFixed(5) : '-'}, Lng ${order.lng ? order.lng.toFixed(5) : '-'}</span>
           </div>
           <button onclick="borrarPedidoFantasmaAdmin('active_order')" style="margin-top:8px; width:100%; background:linear-gradient(135deg, #D32F2F, #B71C1C); color:white; border:none; padding:6px 12px; border-radius:8px; font-weight:800; font-size:11px; cursor:pointer;">
-            <i class="fa-solid fa-trash-can"></i> 🗑️ Borrar Pedido Fantasma
+            <i class="fa-solid fa-trash-can"></i> 🗑️ Borrar Pedido (Local)
           </button>
         </div>
       `;
     } catch(e){}
   }
 
-  // 2. Alertas de Camión / Pánico reportadas por vecinos
+  // 3. Alertas de Camión / Pánico reportadas por vecinos
   let truckBuffer = [];
   try {
     const raw = localStorage.getItem('notigas_reported_trucks_buffer');
@@ -829,14 +862,14 @@ function renderAdminOrdersList() {
     totalCount++;
     const mins = Math.floor((Date.now() - (t.timestamp || Date.now())) / 60000);
     html += `
-      <div style="background:#1E293B; padding:12px; border-radius:10px; border:1px solid rgba(0,230,118,0.4); margin-bottom:8px;">
+      <div style="background:#FFFFFF; padding:12px; border-radius:10px; border:1px solid rgba(86,188,55,0.4); margin-bottom:8px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-size:12px; font-weight:800; color:#00E676;"><i class="fa-solid fa-bell"></i> Alerta Camión Oído / Visto (Reporte Vecinal)</span>
-          <span style="font-size:10px; background:rgba(0,230,118,0.15); color:#00E676; padding:2px 6px; border-radius:4px; font-weight:700;">Hace ${mins} min</span>
+          <span style="font-size:12px; font-weight:800; color:#56BC37;"><i class="fa-solid fa-bell"></i> Alerta Camión Oído / Visto</span>
+          <span style="font-size:10px; background:rgba(86,188,55,0.15); color:#56BC37; padding:2px 6px; border-radius:4px; font-weight:700;">Hace ${mins} min</span>
         </div>
-        <div style="font-size:11px; color:white; margin-top:4px;">
+        <div style="font-size:11px; color:#2F3C45; margin-top:4px;">
           <strong>Reportado por:</strong> ${escapeHtmlStr(t.reporter || 'Vecino')}<br>
-          <span style="font-size:10px; color:#94A3B8;">Coordenadas: Lat ${t.lat ? t.lat.toFixed(5) : '-'}, Lng ${t.lng ? t.lng.toFixed(5) : '-'}</span>
+          <span style="font-size:10px; color:#64748B;">Coordenadas: Lat ${t.lat ? t.lat.toFixed(5) : '-'}, Lng ${t.lng ? t.lng.toFixed(5) : '-'}</span>
         </div>
         <button onclick="borrarPedidoFantasmaAdmin('truck_report', ${idx})" style="margin-top:8px; width:100%; background:rgba(211,47,47,0.8); color:white; border:none; padding:6px 12px; border-radius:8px; font-weight:800; font-size:10px; cursor:pointer;">
           <i class="fa-solid fa-trash-can"></i> 🗑️ Borrar Alerta Fantasma
@@ -847,10 +880,10 @@ function renderAdminOrdersList() {
 
   if (totalCount === 0) {
     container.innerHTML = `
-      <div style="text-align:center; padding:24px 12px; color:#94A3B8; font-size:12px; background:#1E293B; border-radius:10px; border:1px dashed rgba(255,255,255,0.15);">
-        <i class="fa-solid fa-box-open" style="font-size:28px; color:#00E676; margin-bottom:8px;"></i><br>
-        <strong style="color:white;">No hay pedidos activos ni alertas en el mapa.</strong><br>
-        <span style="font-size:10px; color:#64748B;">El mapa está limpio. Todos los pedidos solicitados se mostrarán aquí para su inspección.</span>
+      <div style="text-align:center; padding:24px 12px; color:#64748B; font-size:12px; background:#FFFFFF; border-radius:10px; border:1px dashed rgba(0,0,0,0.15);">
+        <i class="fa-solid fa-box-open" style="font-size:28px; color:#56BC37; margin-bottom:8px;"></i><br>
+        <strong style="color:#2F3C45;">No hay pedidos activos ni alertas en el mapa.</strong><br>
+        <span style="font-size:10px;">El mapa está limpio. Todos los pedidos de Supabase se mostrarán aquí.</span>
       </div>
     `;
     return;
@@ -859,15 +892,22 @@ function renderAdminOrdersList() {
   container.innerHTML = html;
 }
 
-function borrarPedidoFantasmaAdmin(tipo, index = null) {
-  if (tipo === 'active_order') {
+async function borrarPedidoFantasmaAdmin(tipo, param = null) {
+  if (tipo === 'supabase' && window.supabaseClient && param) {
+    const { error } = await window.supabaseClient.from('pedidos').delete().eq('id', param);
+    if (error) {
+      console.error("Error borrando pedido supabase:", error);
+      if (typeof showToast === 'function') showToast('❌ Error', 'No se pudo borrar de Supabase.', 'error', 3000);
+      return;
+    }
+  } else if (tipo === 'active_order') {
     localStorage.removeItem('notigas_active_order');
-  } else if (tipo === 'truck_report' && index !== null) {
+  } else if (tipo === 'truck_report' && param !== null) {
     try {
       const raw = localStorage.getItem('notigas_reported_trucks_buffer');
       if (raw) {
         let buffer = JSON.parse(raw);
-        buffer.splice(index, 1);
+        buffer.splice(param, 1);
         localStorage.setItem('notigas_reported_trucks_buffer', JSON.stringify(buffer));
       }
     } catch(e){}
@@ -881,7 +921,7 @@ function borrarPedidoFantasmaAdmin(tipo, index = null) {
   renderAdminDashboardKPIs();
 
   if (typeof showToast === 'function') {
-    showToast('🗑️ Pedido Fantasma Removido', 'El pedido fue purgado y eliminado del mapa en tiempo real.', 'info', 4000);
+    showToast('🗑️ Pedido/Alerta Removido', 'Eliminado correctamente del sistema.', 'info', 4000);
   }
 }
 
@@ -897,9 +937,14 @@ function limpiarTodosLosPedidosFantasmaAdmin() {
   }
 }
 
-function ejecutarLimpiezaTotalPedidos() {
+async function ejecutarLimpiezaTotalPedidos() {
   localStorage.removeItem('notigas_active_order');
   localStorage.removeItem('notigas_reported_trucks_buffer');
+
+  if (window.supabaseClient) {
+    const { error } = await window.supabaseClient.from('pedidos').delete().eq('estado', 'pendiente');
+    if (error) console.error("Error limpiando pedidos Supabase:", error);
+  }
 
   if (typeof checkActiveOrderStatus === 'function') checkActiveOrderStatus();
   if (typeof renderActiveOrdersMap === 'function') renderActiveOrdersMap();
@@ -909,7 +954,7 @@ function ejecutarLimpiezaTotalPedidos() {
   renderAdminDashboardKPIs();
 
   if (typeof showToast === 'function') {
-    showToast('🧹 Limpieza Total Ejecutada', 'Todos los pedidos e indicadores del mapa fueron eliminados.', 'success', 4000);
+    showToast('✨ Limpieza Total', 'Todos los pedidos y alertas han sido eliminados.', 'success', 3000);
   }
 }
 

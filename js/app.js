@@ -322,7 +322,7 @@ function setAppMode(mode) {
 
     if (badgeContainer) {
       badgeContainer.innerHTML = `
-        <span style="font-size:11px; background:rgba(255,109,0,0.2); color:#FF6D00; padding:4px 10px; border-radius:12px; font-weight:900; border:1px solid #FF6D00;">🚛 MODO REPARTIDOR</span>
+        <span style="font-size:9.5px; background:rgba(86,188,55,0.2); color:#56BC37; padding:3px 6px; border-radius:8px; font-weight:900; border:1px solid #56BC37;">🚛 MODO REPARTIDOR</span>
       `;
     }
 
@@ -334,7 +334,7 @@ function setAppMode(mode) {
 
     if (badgeContainer) {
       badgeContainer.innerHTML = `
-        <span style="font-size:11px; background:rgba(2,136,209,0.2); color:#38BDF8; padding:4px 10px; border-radius:12px; font-weight:900; border:1px solid #0288D1;">🛍️ MODO COMPRADOR</span>
+        <span style="font-size:9.5px; background:rgba(2,136,209,0.2); color:#38BDF8; padding:3px 6px; border-radius:8px; font-weight:900; border:1px solid #0288D1;">🛍️ MODO COMPRADOR</span>
       `;
     }
   }
@@ -414,7 +414,7 @@ function obtenerIconoHtmlPorCategoria(catNombre) {
   } else if (c.includes('detergente') || c.includes('limpieza')) {
     return `<i class="fa-solid fa-pump-soap" style="color:#E040FB; font-size:22px; vertical-align:middle; margin-right:6px;"></i>`;
   } else if (c.includes('carbón') || c.includes('leña')) {
-    return `<i class="fa-solid fa-fire" style="color:#FF6D00; font-size:22px; vertical-align:middle; margin-right:6px;"></i>`;
+    return `<i class="fa-solid fa-fire" style="color:#56BC37; font-size:22px; vertical-align:middle; margin-right:6px;"></i>`;
   } else if (!c.includes('gas')) {
     return `<i class="fa-solid fa-box" style="color:#94A3B8; font-size:22px; vertical-align:middle; margin-right:6px;"></i>`;
   }
@@ -577,7 +577,7 @@ function actualizarFaviconSegunPedido(categoria) {
   const getSvgUrl = (svgContent) => "data:image/svg+xml;utf8," + encodeURIComponent(svgContent);
 
   if (cat.includes('gas')) {
-    favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#FF6D00"/><path d="M35 15h30v10H35V15zm40 20H25v15h50V35zm5 20H20c-5.5 0-10 4.5-10 10v20c0 5.5 4.5 10 10 10h60c5.5 0 10-4.5 10-10V65c0-5.5-4.5-10-10-10z" fill="#FFF"/><circle cx="50" cy="75" r="10" fill="#E65100"/></svg>`);
+    favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#56BC37"/><path d="M35 15h30v10H35V15zm40 20H25v15h50V35zm5 20H20c-5.5 0-10 4.5-10 10v20c0 5.5 4.5 10 10 10h60c5.5 0 10-4.5 10-10V65c0-5.5-4.5-10-10-10z" fill="#FFF"/><circle cx="50" cy="75" r="10" fill="#E65100"/></svg>`);
     document.title = "🔥 Pedido Activo: Garrafa de Gas GLP - NOTIGAS";
   } else if (cat.includes('detergente') || cat.includes('limpieza')) {
     favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#E040FB"/><path d="M40 10h20v15H40V10zm25 25H35v60h30V35zm-15 15c5 0 9 4 9 9s-4 9-9 9-9-4-9-9 4-9 9-9z" fill="#FFF"/></svg>`);
@@ -771,8 +771,8 @@ async function abrirPanoramicaPedidos() {
       const o = JSON.parse(rawPropio);
       const minutos = Math.floor((now - o.timestamp) / 60000);
       contenido += `
-        <div style="background: linear-gradient(135deg, rgba(255,109,0,0.15), rgba(0,230,118,0.08)); border: 1px solid #FF6D00; border-radius: 12px; padding: 12px; margin-bottom: 10px;">
-          <div style="font-weight: 900; font-size: 13px; color: #FF6D00; margin-bottom: 6px;"><i class="fa-solid fa-box"></i> Tu Pedido Activo</div>
+        <div style="background: linear-gradient(135deg, rgba(86,188,55,0.15), rgba(0,230,118,0.08)); border: 1px solid #56BC37; border-radius: 12px; padding: 12px; margin-bottom: 10px;">
+          <div style="font-weight: 900; font-size: 13px; color: #56BC37; margin-bottom: 6px;"><i class="fa-solid fa-box"></i> Tu Pedido Activo</div>
           <div style="font-size: 12px; color: #CBD5E1;"><strong>📦 Producto:</strong> ${escapeHtmlStr(o.categoria)}</div>
           <div style="font-size: 12px; color: #CBD5E1;"><strong>🔢 Cantidad:</strong> ${escapeHtmlStr(o.cantidad)}</div>
           <div style="font-size: 12px; color: #CBD5E1;"><strong>🚦 Calle:</strong> ${escapeHtmlStr(o.callePrincipal || 'En mapa')}</div>
@@ -801,7 +801,7 @@ async function abrirPanoramicaPedidos() {
           const iconHtml = typeof obtenerIconoHtmlPorCategoria === 'function' ? obtenerIconoHtmlPorCategoria(o.categoria) : '📦';
           otrosPedidosHtml += `
             <div style="background: rgba(30,41,59,0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 10px; margin-bottom: 8px; display:flex; align-items:center; gap:10px;">
-              <div style="width:36px; height:36px; background: rgba(255,109,0,0.1); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">${iconHtml}</div>
+              <div style="width:36px; height:36px; background: rgba(86,188,55,0.1); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">${iconHtml}</div>
               <div style="flex:1;">
                 <div style="font-size:12px; font-weight:700; color:white;">${escapeHtmlStr(o.categoria)}</div>
                 <div style="font-size:11px; color:#94A3B8;">📍 Vecino cercano • ⏱️ hace ${min} min</div>
