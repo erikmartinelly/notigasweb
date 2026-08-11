@@ -873,10 +873,13 @@ async function registrarEmail() {
     return;
   }
   
-  if (typeof showToast === 'function') showToast('Éxito', 'Registro completado. Ingresando...', 'success');
-  
-  if (data && data.user) {
+  if (data && data.session) {
+    if (typeof showToast === 'function') showToast('Éxito', 'Registro completado. Ingresando...', 'success');
     procesarSesionExitosa(data.user);
+  } else if (data && data.user) {
+    if (typeof showToast === 'function') showToast('Revisa tu correo', 'Te hemos enviado un enlace para confirmar tu cuenta. Confírmala y luego ingresa.', 'info', 8000);
+    // Cambiamos a la vista de login para que ingresen despues de confirmar
+    setAuthAction('login');
   }
 }
 
@@ -907,8 +910,29 @@ async function procesarSesionExitosa(user) {
         if (choferData.productos) clienteData.productos = choferData.productos;
         if (choferData.zonas) clienteData.zonas = choferData.zonas;
         if (choferData.schedule) clienteData.schedule = choferData.schedule;
+      } else {
+        // Driver NO EXISTE en la DB. Mostrar formulario de registro!
+        if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+        const modalAuth = document.getElementById('modalWelcomeAuth');
+        if (modalAuth) modalAuth.style.display = 'none';
+
+        const inputDriverNombre = document.getElementById('inputDriverNombre');
+        if (inputDriverNombre) inputDriverNombre.value = nombre;
+        
+        const modalDriver = document.getElementById('modalDriver');
+        if (modalDriver) modalDriver.style.display = 'flex';
+        
+        const titleEl = document.getElementById('driverModalTitleText');
+        const subtitleEl = document.getElementById('driverModalSubtitle');
+        if (titleEl) titleEl.textContent = 'Registro de Repartidor';
+        if (subtitleEl) subtitleEl.textContent = 'Completa tu ficha de negocio. Aparecerá en la lista de repartidores de la OTB.';
+
+        sessionStorage.setItem('notigas_temp_gmail', gmail);
+        return; // Detenemos aquí, el form modalDriver completará el registro
       }
-    } catch(e) {}
+    } catch(e) {
+      console.error("Error verificando repartidor:", e);
+    }
   }
   
   localStorage.setItem('notigas_user_data', JSON.stringify(clienteData));
