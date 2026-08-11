@@ -365,7 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Escuchar a que Supabase termine de inicializarse para conectar Realtime y cargar datos
-    document.addEventListener('supabase_ready', () => {
+    const initSupabaseFeatures = () => {
         console.log('🔗 Supabase conectado. Iniciando servicios en red...');
         if (typeof iniciarSuscripcionesRealtime === 'function') {
             iniciarSuscripcionesRealtime();
@@ -373,7 +373,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof cargarPedidosVecinalesEnVivo === 'function') {
             cargarPedidosVecinalesEnVivo();
         }
-    });
+    };
+
+    if (window.supabaseClient) {
+        initSupabaseFeatures();
+    } else {
+        document.addEventListener('supabase_ready', initSupabaseFeatures);
+    }
 });
 
 // 3. Manejo de eventos globales

@@ -15,6 +15,14 @@ const ADMIN_SESSION_MAX_MS = 30 * 60 * 1000;
 /* closeUserSettingsModal, guardarPrefUsuario y cerrarSesionUsuario residen en auth.js (que carga primero).
    Se eliminan aquí para evitar que admin.js sobreescriba las versiones correctas con soporte de rol Repartidor. */
 
+window.getVerifiedAdminEmail = function() {
+  try {
+    const data = JSON.parse(localStorage.getItem('notigas_user_data'));
+    const email = data && data.gmail ? data.gmail.toLowerCase().trim() : '';
+    const admins = ["erikmartinelly@gmail.com", "leonmartinelly13@gmail.com"];
+    return admins.includes(email) ? email : null;
+  } catch(e) { return null; }
+};
 
 window.abrirModalAdminDashboard = function() {
   if (typeof closeUserSettingsModal === 'function') closeUserSettingsModal();
@@ -909,7 +917,7 @@ window.borrarAnuncioLocalAdmin = async function(adId) {
     // 1. Obtener la URL de la imagen del anuncio
     const { data: adData, error: fetchError } = await window.supabaseClient
       .from('anuncios_globales')
-      .select('imagen_url')
+      .select('image_url')
       .eq('id', adId)
       .single();
 
@@ -920,8 +928,8 @@ window.borrarAnuncioLocalAdmin = async function(adId) {
     }
 
     // 2. Si tiene imagen en storage, borrarla
-    if (adData && adData.imagen_url && adData.imagen_url.includes('anuncios-media')) {
-      const urlParts = adData.imagen_url.split('/');
+    if (adData && adData.image_url && adData.image_url.includes('anuncios-media')) {
+      const urlParts = adData.image_url.split('/');
       const fileName = urlParts[urlParts.length - 1];
       if (fileName) {
         await window.supabaseClient.storage.from('anuncios-media').remove([fileName]);

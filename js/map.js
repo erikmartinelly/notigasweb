@@ -1156,6 +1156,20 @@ function cambiarCiudadCapital(cityKey) {
   if (typeof descargarChoferesYRenderizar === 'function') {
     descargarChoferesYRenderizar('TODOS');
   }
+
+  // P1: Limpiar pedidos antiguos de la ciudad anterior
+  for (let id in neighborOrderMarkers) {
+    if (map && neighborOrderMarkers[id]) {
+      map.removeLayer(neighborOrderMarkers[id]);
+    }
+  }
+  Object.keys(neighborOrderMarkers).forEach(k => delete neighborOrderMarkers[k]);
+  
+  if (typeof renderActiveOrdersMap === 'function') renderActiveOrdersMap();
+  
+  // Recargar foros y anuncios globales para la nueva ciudad
+  if (typeof renderForumFeed === 'function') renderForumFeed();
+  if (typeof cargarAnunciosGuardados === 'function') cargarAnunciosGuardados();
 }
 
 function procesarResultadoBusqueda(item, queryOriginal) {
