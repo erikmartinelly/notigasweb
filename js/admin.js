@@ -8,46 +8,29 @@ const ADMIN_EMAILS_ALLOWED = ['erikmartinelly@gmail.com', 'leonmartinelly13@gmai
 // Duración máxima de sesión admin sin re-autenticación: 30 minutos
 const ADMIN_SESSION_MAX_MS = 30 * 60 * 1000;
 
-/**
- * FIX C-03: Verifica si hay una sesión de administrador VÁLIDA Y VIGENTE.
- * El token en sessionStorage es INSUFICIENTE por sí solo — también se requiere
- * que el timestamp de verificación sea reciente (< 30 min).
- * Escribir el token desde la consola del navegador NO dará acceso porque
- * 'notigas_admin_verified_at' no existirá o estará expirado.
- */
-function getVerifiedAdminEmail() {
-  const token = sessionStorage.getItem('notigas_admin_token');
-  if (!token) return null;
 
-  // Verificar que el email sea de la lista permitida
-  const email = token.toLowerCase().trim();
-  if (!ADMIN_EMAILS_ALLOWED.includes(email)) return null;
-
-  // Verificar que la sesión no haya expirado (protección contra tokens inyectados desde consola)
-  const verifiedAt = parseInt(sessionStorage.getItem('notigas_admin_verified_at') || '0', 10);
-  if (!verifiedAt || (Date.now() - verifiedAt) > ADMIN_SESSION_MAX_MS) {
-    // Sesión expirada o nunca verificada — limpiar y denegar
-    sessionStorage.removeItem('notigas_admin_token');
-    sessionStorage.removeItem('notigas_admin_verified_at');
-    return null;
-  }
-
-  return email;
-}
-
-/**
- * Establece la sesión de admin con timestamp de verificación.
- * Solo debe llamarse DESPUÉS de verificar el hash SHA-256 contra Supabase.
- */
-function _setAdminSession(email) {
-  sessionStorage.setItem('notigas_admin_token', email.toLowerCase());
-  sessionStorage.setItem('notigas_admin_verified_at', Date.now().toString());
-}
 
 
 
 /* closeUserSettingsModal, guardarPrefUsuario y cerrarSesionUsuario residen en auth.js (que carga primero).
    Se eliminan aquí para evitar que admin.js sobreescriba las versiones correctas con soporte de rol Repartidor. */
+
+
+window.abrirModalAdminDashboard = function() {
+  if (typeof closeUserSettingsModal === 'function') closeUserSettingsModal();
+  const modalAdmin = document.getElementById('modalAdmin');
+  if (!modalAdmin) return;
+  
+  const adminEmail = getVerifiedAdminEmail();
+  if (!adminEmail) {
+    alert("❌ Acceso Denegado. Solo administradores autorizados.");
+    return;
+  }
+  
+  modalAdmin.style.display = 'flex';
+  renderAdminReports();
+  if (typeof cargarAnunciosGuardados === 'function') cargarAnunciosGuardados();
+}
 
 function cerrarSesionRepartidorActivarComprador() {
   if (typeof showConfirmModal === 'function') {
@@ -63,167 +46,19 @@ function cerrarSesionRepartidorActivarComprador() {
   }
 }
 
-function handleAdminCredentialResponse(response) {
-  try {
-    const payload = JSON.parse(atob(response.credential.split('.')[1]));
-    if (payload && payload.email) {
-      const email = payload.email.toLowerCase();
-      // FIX C-03: Verificar que el email sea de la lista permitida antes de otorgar acceso
-      if (!ADMIN_EMAILS_ALLOWED.includes(email)) {
-        alert('❌ Acceso Denegado\nEsta cuenta de Google no tiene privilegios de administrador.');
-        return;
-      }
-      // FIX C-03: Usar _setAdminSession() para guardar email + timestamp
-      _setAdminSession(email);
-      const loginScreen = document.getElementById('adminLoginScreen');
-      const dashboardScreen = document.getElementById('adminDashboardScreen');
-      if (loginScreen) loginScreen.style.display = 'none';
-      if (dashboardScreen) dashboardScreen.style.display = 'flex';
-      renderAdminReports();
-      if (typeof cargarAnunciosGuardados === 'function') cargarAnunciosGuardados();
-      if (typeof showToast === 'function') {
-        showToast('✅ Administrador Verificado', 'Sesión de admin activa por 30 minutos.', 'success', 3000);
-      }
-    } else {
-      alert('❌ Acceso Denegado\nEsta cuenta de Google no tiene privilegios de administrador.');
-    }
-  } catch(e) {
-    console.error('Error validando token admin', e);
-  }
-}
 
-async function encriptarSHA256(mensaje) {
-  const msgBuffer = new TextEncoder().encode(mensaje);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
 
-async function verificarEstadoAdmin() {
-  const loginScreen = document.getElementById('adminLoginScreen');
-  const setupScreen = document.getElementById('adminSetupScreen');
-  const dashboardScreen = document.getElementById('adminDashboardScreen');
 
-  if (loginScreen) loginScreen.style.display = 'block';
-  if (setupScreen) setupScreen.style.display = 'none';
-  if (dashboardScreen) dashboardScreen.style.display = 'none';
 
-  if (!window.supabaseClient) {
-    alert("❌ Error: No hay conexión con la base de datos.");
-    return;
-  }
 
-  try {
-    const { count, error } = await window.supabaseClient
-      .from('admin_credentials')
-      .select('*', { count: 'exact', head: true });
 
-    if (!error && count === 0) {
-      if (loginScreen) loginScreen.style.display = 'none';
-      if (setupScreen) setupScreen.style.display = 'block';
-    }
-  } catch(e) {
-    console.error('Error verificando estado admin', e);
-  }
-}
 
-async function abrirModalAdminLogin() {
-  if (typeof closeUserSettingsModal === 'function') closeUserSettingsModal();
-  const modalAdmin = document.getElementById('modalAdmin');
-  
-  if (!modalAdmin) return;
 
-  // Limpiar campos por seguridad
-  const f1 = document.getElementById('admin1Email');
-  const f2 = document.getElementById('admin1Password');
-  const f3 = document.getElementById('admin2Email');
-  const f4 = document.getElementById('admin2Password');
-  const s1 = document.getElementById('setupAdmin1Email');
-  const s2 = document.getElementById('setupAdmin1Password');
-  const s3 = document.getElementById('setupAdmin2Email');
-  const s4 = document.getElementById('setupAdmin2Password');
-  if(f1) f1.value = ''; if(f2) f2.value = ''; if(f3) f3.value = ''; if(f4) f4.value = '';
-  if(s1) s1.value = ''; if(s2) s2.value = ''; if(s3) s3.value = ''; if(s4) s4.value = '';
-
-  await verificarEstadoAdmin();
-  
-  modalAdmin.style.display = 'flex';
-}
-
-window.registrarAdminsIniciales = async function() {
-  const email1 = document.getElementById('setupAdmin1Email').value.trim().toLowerCase();
-  const pass1 = document.getElementById('setupAdmin1Password').value;
-  const email2 = document.getElementById('setupAdmin2Email').value.trim().toLowerCase();
-  const pass2 = document.getElementById('setupAdmin2Password').value;
-
-  if (!email1 || !pass1 || !email2 || !pass2) {
-    alert("❌ Por favor completa todos los campos de ambos administradores.");
-    return;
-  }
-  if (pass1.length < 8 || pass2.length < 8) {
-    alert("❌ Las contraseñas deben tener al menos 8 caracteres.");
-    return;
-  }
-  if (email1 === email2) {
-    alert("❌ Los correos deben ser diferentes para la Regla de los Dos Hombres.");
-    return;
-  }
-
-  const hash1 = await encriptarSHA256(email1 + ':' + pass1);
-  const hash2 = await encriptarSHA256(email2 + ':' + pass2);
-
-  const { error } = await window.supabaseClient
-    .from('admin_credentials')
-    .insert([
-      { email: email1, password_hash: hash1 },
-      { email: email2, password_hash: hash2 }
-    ]);
-
-  if (error) {
-    console.error("Error guardando credenciales", error);
-    alert("❌ Error al guardar en Supabase: " + error.message);
-  } else {
-    alert("✅ ¡Credenciales maestras creadas con éxito!\nAhora debes ingresar con ellas para desbloquear el panel.");
-    verificarEstadoAdmin();
-  }
-};
+;
 
 let adminLoginAttempts = 0;
 
-window.verificarAutenticacionAdmin = async function() {
-  if (!window.supabaseClient) return;
-
-  const { data: sessionData, error: sessionError } = await window.supabaseClient.auth.getSession();
-  const session = sessionData?.session;
-  
-  if (!session || sessionError) {
-    alert("❌ Primero debes iniciar sesión en la aplicación principal con una cuenta autorizada.");
-    return;
-  }
-
-  const email = session.user.email.toLowerCase().trim();
-
-  // Verificamos de lado cliente primero, pero el servidor también lo validará
-  if (!ADMIN_EMAILS_ALLOWED.includes(email)) {
-    alert(`❌ ACCESO DENEGADO\nEl correo ${email} no es administrador.`);
-    return;
-  }
-
-  // Éxito
-  _setAdminSession(email);
-  
-  const loginScreen = document.getElementById('adminLoginScreen');
-  const dashboardScreen = document.getElementById('adminDashboardScreen');
-  if (loginScreen) loginScreen.style.display = 'none';
-  if (dashboardScreen) dashboardScreen.style.display = 'flex';
-  
-  if(typeof renderAdminReports === 'function') renderAdminReports();
-  if(typeof cargarAnunciosGuardados === 'function') cargarAnunciosGuardados();
-  
-  if (typeof showToast === 'function') {
-    showToast('✅ Acceso Autorizado', 'Sesión de admin activa por 30 minutos.', 'success', 3000);
-  }
-};
+;
 
 /* guardarPrefUsuario reside en auth.js — eliminada de admin.js para que la versión con
    detección de rol Repartidor (GPS) no sea sobreescrita. */

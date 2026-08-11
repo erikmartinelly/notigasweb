@@ -294,8 +294,9 @@
       <!-- ACCIONES COMUNES -->
       <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 14px 0;">
 
-
-
+      <button id="btnAdminAccessQuick" style="display:none; width:100%; background: linear-gradient(135deg, #10B981, #059669); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-bottom: 8px; font-size: 12px; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(16,185,129,0.4);" onclick="abrirModalAdminDashboard()">
+        <i class="fa-solid fa-shield-halved"></i> Abrir Panel de Administración
+      </button>
       <button style="width:100%; background: linear-gradient(135deg, #D32F2F, #B71C1C); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 4px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(211,47,47,0.4);" onclick="cerrarSesionUsuario()">
         <i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión Completa
       </button>
@@ -694,6 +695,344 @@
   <script src="js/orders.js" defer></script>
   <script src="js/app.js" defer></script>
 
+<!-- MODAL ADMINISTRADOR EXCLUSIVO (ACCESO PROTEGIDO CON USUARIO Y CONTRASEÑA OBLIGATORIOS) -->
+  <div class="modal" id="modalAdmin">
+    <div class="modal-content" style="max-width: 850px; width: 95%;">
+      <div class="modal-title">
+        <span><i class="fa-solid fa-user-shield"></i> Área de Administración NOTIGAS</span>
+        <button class="btn-close" onclick="closeAdminModal()">✕</button>
+      </div>
+
+      <!-- PANTALLA 2: DASHBOARD DE ADMINISTRACIÓN (SOLO VISIBLE TRAS AUTENTICARSE) -->
+      <div id="adminDashboardScreen" style="display: flex; flex-direction: row; gap: 15px; align-items: stretch; margin-top: 10px;">
+        
+        <!-- SIDEBAR IZQUIERDO DE NAVEGACIÓN -->
+        <div class="modal-tab-nav" style="flex: 0 0 160px; display: flex; flex-direction: column; gap: 8px; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 12px;">
+          <button class="modal-tab-btn active" style="text-align:left; width:100%; justify-content:flex-start;" onclick="switchModalTab(0)"><i class="fa-solid fa-chart-line" style="width:20px;"></i> Métricas</button>
+          <button class="modal-tab-btn" style="text-align:left; width:100%; justify-content:flex-start;" onclick="switchModalTab(1)"><i class="fa-solid fa-store" style="width:20px;"></i> Repartidores</button>
+          <button class="modal-tab-btn" style="text-align:left; width:100%; justify-content:flex-start;" onclick="switchModalTab(2)"><i class="fa-solid fa-boxes-packing" style="width:20px;"></i> Pedidos</button>
+          <button class="modal-tab-btn" style="text-align:left; width:100%; justify-content:flex-start;" onclick="switchModalTab(3)"><i class="fa-solid fa-rectangle-ad" style="width:20px;"></i> Anuncios</button>
+          <button class="modal-tab-btn" style="text-align:left; width:100%; justify-content:flex-start;" onclick="switchModalTab(4)"><i class="fa-solid fa-shield-halved" style="width:20px;"></i> Moderación</button>
+          <button class="modal-tab-btn" style="text-align:left; width:100%; justify-content:flex-start;" onclick="switchModalTab(5)"><i class="fa-solid fa-file-csv" style="width:20px;"></i> Exportar</button>
+        </div>
+
+        <!-- CONTENIDO DERECHO -->
+        <div style="flex: 1; overflow-y: auto; max-height: 65vh; padding-right: 8px;">
+          
+          <!-- SUBMENÚ 0: MÉTRICAS EN VIVO, AVISO GENERAL & PURGA DE BD -->
+          <div class="modal-tab-pane active" id="modalPane0">
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px;">
+              <div style="background: rgba(14,165,233,0.15); border: 1px solid rgba(14,165,233,0.3); border-radius: 10px; padding: 12px; text-align: center;">
+                <div style="font-size: 10px; color: #38BDF8; font-weight: 700; margin-bottom: 4px;">👥 VECINOS / USUARIOS</div>
+                <div id="adminKpiUsers" style="font-size: 24px; font-weight: 900; color: white;">0</div>
+              </div>
+              <div style="background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); border-radius: 10px; padding: 12px; text-align: center;">
+                <div style="font-size: 10px; color: #FBBF24; font-weight: 700; margin-bottom: 4px;">🚚 REPARTIDORES</div>
+                <div id="adminKpiVendors" style="font-size: 24px; font-weight: 900; color: white;">0</div>
+              </div>
+              <div style="background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); border-radius: 10px; padding: 12px; text-align: center;">
+                <div style="font-size: 10px; color: #34D399; font-weight: 700; margin-bottom: 4px;">📦 PEDIDOS ACTIVOS</div>
+                <div id="adminKpiOrders" style="font-size: 24px; font-weight: 900; color: white;">0</div>
+              </div>
+              <div style="background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); border-radius: 10px; padding: 12px; text-align: center;">
+                <div style="font-size: 10px; color: #F87171; font-weight: 700; margin-bottom: 4px;">🚨 DENUNCIAS OPEN</div>
+                <div id="adminKpiReports" style="font-size: 24px; font-weight: 900; color: white;">0</div>
+              </div>
+            </div>
+
+            <div style="background: #0F172A; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 10px;">
+              <label style="font-size: 11px; font-weight: 700; color: #FF6D00;"><i class="fa-solid fa-bullhorn"></i> Emitir Alerta / Comunicado Oficial OTB:</label>
+              <div style="display: flex; gap: 6px; margin-top: 6px;">
+                <input type="text" id="inputAdminBroadcastMsg" placeholder="Ej: AVISO OTB: Camión Cisterna en la plaza principal..." style="flex: 1; padding: 8px; font-size: 11px; border-radius: 6px; background: #1E293B; border: 1px solid rgba(255,255,255,0.1); color: white;">
+                <button onclick="emitirAlertaOficialAdmin()" style="background: #FF6D00; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: 700; font-size: 11px; cursor: pointer;">Emitir</button>
+              </div>
+            </div>
+
+            <button onclick="ejecutarPurgaBaseDeDatosManual()" style="width: 100%; background: rgba(239,68,68,0.2); color: #F87171; border: 1px solid rgba(239,68,68,0.4); padding: 8px; border-radius: 8px; font-weight: 700; font-size: 11px; cursor: pointer; margin-bottom: 8px;">
+              <i class="fa-solid fa-broom"></i> Ejecutar Purga Manual de Base de Datos y Caché
+            </button>
+            <button style="width: 100%; background: #991B1B; color: white; border: none; padding: 8px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer;" onclick="restaurarBaseDatosPorDefecto()">
+              <i class="fa-solid fa-database"></i> Restaurar Base de Datos por Defecto (Quitar Baneos)
+            </button>
+          </div>
+
+          <!-- SUBMENÚ 1: GESTIÓN DE REPARTIDORES -->
+          <div class="modal-tab-pane" id="modalPane1">
+            <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Listado de Repartidores Registrados y Fichas de Negocio:</p>
+            <div id="adminVendorsListContainer" style="max-height: 350px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
+              <!-- Renderizado dinámico de repartidores -->
+            </div>
+          </div>
+
+          <!-- SUBMENÚ 2: MONITOR DE PEDIDOS VECINALES EN VIVO -->
+          <div class="modal-tab-pane" id="modalPane2">
+            <button style="width: 100%; background: linear-gradient(135deg, #FF6D00, #E65100); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 900; font-size: 12px; cursor: pointer; box-shadow: 0 4px 14px rgba(255,109,0,0.5); display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px;" onclick="activarMapaCalorAdminLive()">
+              <i class="fa-solid fa-fire"></i> 🔥 VER PEDIDOS EN VIVO EN EL MAPA (ZONAS DE CALOR)
+            </button>
+            
+            <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Monitor en Tiempo Real de Solicitudes y Pedidos Vecinales:</p>
+            <div id="adminOrdersMonitorContainer" style="max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
+              <!-- Renderizado dinámico de pedidos -->
+            </div>
+          </div>
+
+          <!-- SUBMENÚ 3: CONFIGURACIÓN DE PUBLICIDAD, IMÁGENES & ADSENSE -->
+          <div class="modal-tab-pane" id="modalPane3">
+            <div class="form-group">
+              <label>📸 Subir Imagen Banner para Anuncio Local (PNG/JPG):</label>
+              <input type="file" id="inputAdImageFile" accept="image/*" onchange="previewUploadAdImage(event)" style="font-size:11px; background:#1E293B; padding:6px; border-radius:6px; color:white; width:100%;">
+              <div id="adImagePreviewBox" style="margin-top:8px; display:none; align-items:center; gap:10px;">
+                <img id="adImagePreview" style="max-height:60px; max-width:200px; border-radius:6px; border:1px solid #FF6D00; object-fit:cover;">
+                <button type="button" onclick="eliminarImagenAnuncio()" style="background:#D32F2F; color:white; border:none; padding:4px 8px; border-radius:4px; font-weight:700; font-size:10px; cursor:pointer;">✕ Eliminar Imagen</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Texto del Anuncio Nativo Intercalado en Feed:</label>
+              <input type="text" id="inputAdText" value="Promociona tu negocio o servicio profesional directamente en tu OTB">
+            </div>
+            <div class="form-group">
+              <label>Enlace WhatsApp / Web del Anuncio:</label>
+              <input type="text" id="inputAdUrl" value="" placeholder="https://wa.me/59170000000?text=Hola">
+            </div>
+            <button class="btn-submit" onclick="guardarSubmenuAnuncios()"><i class="fa-solid fa-floppy-disk"></i> Guardar Configuración de Publicidad</button>
+
+            <div style="background-color: #0F172A; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.08); margin-top: 12px;">
+              <h4 style="font-size: 12px; color: #FF6D00; margin-bottom: 8px;"><i class="fa-solid fa-rectangle-ad"></i> Anuncios y Avisos OTB Publicados (Tab 3):</h4>
+              <div id="adminAdsListContainer" style="max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
+                <!-- Renderizado dinámico de anuncios y avisos -->
+              </div>
+            </div>
+          </div>
+
+          <!-- SUBMENÚ 4: MODERACIÓN, DENUNCIAS Y BANEOS -->
+          <div class="modal-tab-pane" id="modalPane4">
+            <p style="font-size: 11px; color: #94A3B8; margin-bottom: 10px;">Gestión de Denuncias por Spam/Acoso y Lista de Usuarios Baneados:</p>
+            
+            <div style="background-color: #0F172A; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 12px;">
+              <h4 style="font-size: 12px; color: #FF6D00; margin-bottom: 8px;"><i class="fa-solid fa-flag"></i> Denuncias Pendientes de Moderación:</h4>
+              <div id="adminReportsContainer" style="max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
+                <!-- Renderizado dinámico de denuncias -->
+              </div>
+            </div>
+
+            <div style="background-color: #0F172A; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.08);">
+              <h4 style="font-size: 12px; color: #EF4444; margin-bottom: 8px;"><i class="fa-solid fa-user-slash"></i> Banear Usuario / Repartidor Manualmente:</h4>
+              <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+                <input type="text" id="inputBanIdentifier" placeholder="Correo, Nombre o Placa a banear..." style="flex:1; padding: 8px; font-size: 11px; border-radius: 6px; background: #1E293B; border: 1px solid rgba(255,255,255,0.1); color: white;">
+                <button onclick="banearUsuarioAdmin()" style="background-color: #D32F2F; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: 700; font-size: 11px; cursor: pointer;">Banear</button>
+              </div>
+              <div id="adminBannedList" style="max-height: 100px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; font-size: 10px; color: #94A3B8;">
+                <!-- Renderizado dinámico de baneados -->
+              </div>
+            </div>
+          </div>
+
+          <!-- SUBMENÚ 5: EXPORTACIÓN DE CORREOS Y REGISTROS CSV -->
+          <div class="modal-tab-pane" id="modalPane5">
+            <p style="font-size: 11px; color: #94A3B8; margin-bottom: 8px;">Exportación de Datos del Sistema en Formato .CSV para Excel / Google Sheets:</p>
+            <button class="btn-csv-download" style="width:100%; text-align:left; background: linear-gradient(135deg, #475569, #334155); margin-bottom: 8px;" onclick="descargarListaCorreosCSV()"><i class="fa-solid fa-download"></i> 📥 Descargar Lista de Correos Gmail (.CSV)</button>
+            <button class="btn-csv-download" style="width:100%; text-align:left; background: linear-gradient(135deg, #059669, #10B981); margin-bottom: 8px;" onclick="descargarFichasRepartidoresCSV()"><i class="fa-solid fa-file-excel"></i> 📥 Descargar Fichas de Repartidores (.CSV)</button>
+            <button class="btn-csv-download" style="width:100%; text-align:left; background: linear-gradient(135deg, #2563EB, #1D4ED8); margin-bottom: 8px;" onclick="descargarEstadisticasGeneralesCSV()"><i class="fa-solid fa-chart-line"></i> 📈 Descargar Estadísticas Generales (.CSV)</button>
+          </div>
+        </div>
+      </div>
+
+      <button style="width:100%; background:none; border:1px solid rgba(255,255,255,0.15); color:#94A3B8; padding:8px; border-radius:8px; margin-top:14px; cursor:pointer; font-size:11px;" onclick="cerrarSesionAdminControl()">
+        <i class="fa-solid fa-lock"></i> Cerrar Sesión Segura de Administrador
+      </button>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- MODAL DE DENUNCIA PARA REPORTAR ACOSO O CONTENIDO INAPROPIADO -->
+  <div class="modal" id="modalReport">
+    <div class="modal-content">
+      <div class="modal-title">
+        <span>🚨 Denunciar Publicación o Acoso</span>
+        <button class="btn-close" onclick="closeReportModal()">✕</button>
+      </div>
+      <p style="font-size: 11px; color: #94A3B8; margin-bottom: 10px;" id="reportTargetLabel">Reportar elemento seleccionado:</p>
+      <input type="hidden" id="reportContext" value="">
+
+      <div class="form-group">
+        <label>Motivo de la Denuncia:</label>
+        <select id="selectReportMotivo">
+          <option value="Acoso o Bullying">🛑 Acoso o Bullying a un vecino</option>
+          <option value="Contenido Ofensivo / Inapropiado">⚠️ Contenido Ofensivo o Lenguaje Inapropiado</option>
+          <option value="Información Falsa / Spam">❌ Información Falsa o Spam</option>
+          <option value="Conducta Indebida del Repartidor / Cliente">🚨 Conducta Indebida</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Detalle Adicional (Opcional):</label>
+        <textarea id="inputReportDetalle" rows="3" placeholder="Explica brevemente lo sucedido para el equipo de moderación..."></textarea>
+      </div>
+      <button class="btn-submit" style="background-color: #D32F2F;" onclick="enviarDenuncia()"><i class="fa-solid fa-flag"></i> Enviar Reporte de Denuncia</button>
+    </div>
+  </div>
+
+  <!-- MODAL SUBMENÚ PEDIDOS MEJORADO -->
+  <div class="modal" id="modalSubmenu">
+    <div class="modal-content" style="max-width: 480px;">
+      <div class="modal-title">
+        <span>📦 ¿Qué deseas pedir a domicilio?</span>
+        <button class="btn-close" onclick="closeSubmenuModal()">✕</button>
+      </div>
+      <p style="font-size: 11px; color: #94A3B8; margin-bottom: 12px;">Selecciona el producto o servicio que necesitas en tu OTB:</p>
+      
+      <div class="submenu-grid">
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('🔥 Garrafa de Gas GLP')">
+          <img src="icons/garrafa_red_clean.svg" style="width: 38px; height: 42px; object-fit: contain; filter: drop-shadow(0 0 6px #FF1744); margin-bottom: 4px;" alt="Garrafa GLP 10Kg Roja">
+          <span class="submenu-title">🔥 Garrafa GLP</span>
+        </div>
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('💧 Botellón Agua Purificada 20L')">
+          <i class="fa-solid fa-bottle-water" style="color: #0288D1;"></i>
+          <span class="submenu-title">💧 Agua 20L</span>
+        </div>
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('♻️ Chatarra')">
+          <i class="fa-solid fa-recycle" style="color: #00E676;"></i>
+          <span class="submenu-title">♻️ Chatarra</span>
+        </div>
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('📄 Papel')">
+          <i class="fa-solid fa-newspaper" style="color: #4FC3F7;"></i>
+          <span class="submenu-title">📄 Papel / Cartón</span>
+        </div>
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('🍎 Frutas & Verduras')">
+          <i class="fa-solid fa-apple-whole" style="color: #FF5252;"></i>
+          <span class="submenu-title">🍎 Frutas / Verduras</span>
+        </div>
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('🧼 Detergentes & Limpieza')">
+          <i class="fa-solid fa-pump-soap" style="color: #E040FB;"></i>
+          <span class="submenu-title">🧼 Detergentes</span>
+        </div>
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('🪵 Carbón / Leña')">
+          <i class="fa-solid fa-fire-flame-curved" style="color: #FF9100;"></i>
+          <span class="submenu-title">🪵 Carbón / Leña</span>
+        </div>
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('📦 Otros')">
+          <i class="fa-solid fa-box-open" style="color: #FFC107;"></i>
+          <span class="submenu-title">📦 Otros Encargos</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL FICHA DE PEDIDO -->
+  <div class="modal" id="modalPedido">
+    <div class="modal-content">
+      <div class="modal-title">
+        <span>📦 Ficha de Pedido</span>
+        <button class="btn-close" onclick="closePedidoModal()">✕</button>
+      </div>
+      <div class="form-group">
+        <label>Producto / Servicio Seleccionado:</label>
+        <select id="selectCategoria" onchange="document.getElementById('groupOrderOtros').style.display = (this.value === '📦 Encargos & Otros Pedidos') ? 'block' : 'none';">
+          <option value="🔥 Garrafa de Gas GLP">🔥 Garrafa de Gas GLP</option>
+          <option value="💧 Botellón Agua Purificada 20L">💧 Botellón Agua Purificada 20L</option>
+          <option value="♻️ Chatarra">♻️ Chatarra</option>
+          <option value="📄 Papel / Reciclaje">📄 Papel / Reciclaje</option>
+          <option value="🍎 Frutas & Verduras">🍎 Frutas & Verduras</option>
+          <option value="🧼 Detergentes & Limpieza">🧼 Detergentes & Limpieza</option>
+          <option value="🪵 Carbón / Leña">🪵 Carbón / Leña</option>
+          <option value="📦 Encargos & Otros Pedidos">📦 Encargos & Otros Pedidos</option>
+        </select>
+      </div>
+
+      <div class="form-group" id="groupOrderOtros" style="display: none;">
+        <label>¿Qué tipo de vendedor necesitas?:</label>
+        <input type="text" id="inputOrderOtrosDetalle" placeholder="Ej: sal, helado, afilador de cuchillos...">
+      </div>
+
+      <div class="form-group">
+        <label>🏠 Dirección de Entrega (Opcional - GPS Ubicado en Mapa):</label>
+        <input type="text" id="inputCallePrincipal" placeholder="Ej: Av. Blanco Galindo #123 (Opcional)">
+      </div>
+
+      <div class="form-group">
+        <label>📞 Teléfono / WhatsApp de Contacto (Opcional):</label>
+        <input type="tel" id="inputTelefonoComprador" placeholder="Ej: 74xxxx28 (Opcional)">
+      </div>
+
+      <p style="font-size:11px; color:#38BDF8; margin: 8px 0;">✔ Coordinación directa con repartidor por Chat Privado 1-a-1 e indicación GPS.</p>
+      <button class="btn-submit" onclick="confirmarPedido()"><i class="fa-solid fa-truck-fast" style="color:#F59E0B;"></i> <img src="icons/garrafa_red_clean.svg" style="width:22px; height:22px; vertical-align:middle; filter:drop-shadow(0 0 4px #FF1744);" alt="Gas"> Confirmar y Solicitar en Mapa Vivo</button>
+    </div>
+  </div>
+
+  <!-- MODAL DE PEDIDOS RECIENTES EN VIVO PARA REPARTIDORES -->
+  <div class="modal" id="modalDriverOrders">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-title">
+        <span><i class="fa-solid fa-list-check"></i> Pedidos Recientes en Tu Zona (Repartidor)</span>
+        <button class="btn-close" onclick="closeDriverOrdersModal()">✕</button>
+      </div>
+      <p style="font-size: 11px; color: #94A3B8; margin-bottom: 10px;">
+        Lista en tiempo real de vecinos que solicitaron Garrafas GLP, Agua u otros productos cerca de tu ubicación:
+      </p>
+      
+      <div id="driverOrdersContainer" style="max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+        <!-- Renderizado dinámico de pedidos vecinos -->
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL COMENTARIOS NOTICIAS VECINALES -->
+  <div class="modal" id="modalComments">
+    <div class="modal-content" style="max-height: 85vh; display: flex; flex-direction: column;">
+      <div class="modal-title">
+        <span><i class="fa-solid fa-comments"></i> Comentarios de Vecinos</span>
+        <button class="btn-close" onclick="closeCommentsModal()">✕</button>
+      </div>
+      <div style="background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 12px;">
+        <span id="commentsPostCat" class="forum-cat">AVISO</span>
+        <div id="commentsPostTitle" style="font-weight: 700; font-size: 13px; color: white;"></div>
+        <div id="commentsPostDesc" style="font-size: 11px; color: #94A3B8; margin-top: 4px;"></div>
+      </div>
+      
+      <div id="commentsList" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; max-height: 250px;">
+      </div>
+
+      <div style="display: flex; gap: 8px;">
+        <input type="text" id="inputNewComment" placeholder="Escribe un comentario respetuoso para la OTB..." style="flex:1; padding: 10px; border-radius: 8px; background: #0F172A; border: 1px solid rgba(255,255,255,0.15); color: white; font-size: 12px; outline: none;" onkeypress="if(event.key==='Enter') agregarComentarioPost()">
+        <button onclick="agregarComentarioPost()" style="background-color: #FF6D00; color: white; border: none; padding: 10px 14px; border-radius: 8px; font-weight: 700; cursor: pointer;"><i class="fa-solid fa-paper-plane"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL NUEVO POST NOTICIAS VECINALES -->
+  <div class="modal" id="modalNuevoPost">
+    <div class="modal-content">
+      <div class="modal-title">
+        <span>💬 Publicar Anuncio Gratis en la OTB</span>
+        <button class="btn-close" onclick="closeNuevoPostModal()">✕</button>
+      </div>
+      <div class="form-group">
+        <label>Tipo de Publicación:</label>
+        <select id="selectPostTipo">
+          <option value="COMENTARIO">⚠️ COMENTARIO</option>
+          <option value="PIDO AYUDA">🤝 PIDO AYUDA</option>
+          <option value="SUGERENCIA">🚛 SUGERENCIA</option>
+          <option value="INTERCAMBIO">🔄 INTERCAMBIO / COMPRA VECINAL</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Título del Anuncio:</label>
+        <input type="text" id="inputPostTitulo" placeholder="Ej: Camión de lavandina y detergente pasando por la plaza">
+      </div>
+      <div class="form-group">
+        <label>Descripción / Detalle:</label>
+        <textarea id="inputPostDesc" rows="3" placeholder="Escribe tu mensaje para los vecinos (dura 72 horas)..."></textarea>
+      </div>
+      <button class="btn-submit" onclick="crearNuevoPost()"><i class="fa-solid fa-paper-plane"></i> Publicar Anuncio Gratis (72 horas)</button>
+    </div>
+  </div>
+
+
+  <!-- SISTEMA DE NOTIFICACIONES TOAST (ESTILO RAPPI / UBER EATS) -->
+  <div id="toastContainer" aria-live="polite" aria-atomic="true"></div>
+
+  
 </body>
 </html>
 

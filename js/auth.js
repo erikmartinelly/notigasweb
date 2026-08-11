@@ -273,12 +273,11 @@ async function handleCredentialResponse(response) {
     const gmail = user.email.toLowerCase().trim();
     const nombre = user.user_metadata?.full_name || gmail;
 
-    // Verificación de Administrador
+    // Los administradores ingresan como usuarios normales pero con privilegios extra
     const adminEmails = ["erikmartinelly@gmail.com", "leonmartinelly13@gmail.com"];
     if (adminEmails.includes(gmail)) {
-      if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-      alert("⚠️ Eres administrador. Por favor ingresa por el Panel de Administración protegido.");
-      return;
+       const btnAdmin = document.getElementById('btnAdminAccessQuick');
+       if (btnAdmin) btnAdmin.style.display = 'flex';
     }
 
     // Verificamos SIEMPRE si el usuario ya es repartidor en la BD
