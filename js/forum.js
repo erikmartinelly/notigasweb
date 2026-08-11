@@ -13,6 +13,12 @@ const escapeHtmlStr = window.escapeHtmlStr || function(str) {
     .replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 };
 
+// Escuchar el evento personalizado emitido por supabase-config.js
+document.addEventListener('supabase_ready', () => {
+  renderForumFeed();
+});
+
+// Respaldo en caso de que supabase_ready ya se haya emitido antes de que este script cargue
 document.addEventListener('DOMContentLoaded', () => {
   if (window.supabaseClient) {
       renderForumFeed();
@@ -151,7 +157,17 @@ async function votarPost(el, delta, postId) {
     
     // FIX #9: Actualización atómica de votos — elimina la race condition.
     // Usa una expresión SQL directa en lugar de leer+escribir en dos pasos.
-    await window.supabaseClient.rpc('incrementar_votos_aviso', { aviso_id: postId, incremento: delta });
+    const { error } = await window.supabaseClient.rpc('incrementar_votos_aviso', { aviso_id: postId, incremento: delta });
+    
+    // FIX: Rollback visual si la RPC falla por RLS o error de red
+    if (error) {
+      console.error('Error al votar:', error);
+      span.innerText = val - delta; // revertir
+      sessionStorage.removeItem(voteKey);
+      if (typeof showToast === 'function') {
+        showToast('⚠️ Error', 'No se pudo registrar tu voto.', 'warning', 3000);
+      }
+    }
   }
 }
 

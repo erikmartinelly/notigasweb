@@ -16,6 +16,7 @@ const SUPABASE_ANON_KEY = 'sb_publishable_wWVQ59Rejod5Oc1X4s_eeQ_ONbXzyi2';
         }
       });
       console.log('✅ Supabase Client inicializado correctamente.');
+      document.dispatchEvent(new Event('supabase_ready'));
     } else {
       // SDK aún no cargado — reintentar hasta que esté disponible
       let retries = 0;
@@ -30,6 +31,7 @@ const SUPABASE_ANON_KEY = 'sb_publishable_wWVQ59Rejod5Oc1X4s_eeQ_ONbXzyi2';
             }
           });
           console.log('✅ Supabase Client inicializado (reintento ' + retries + ').');
+          document.dispatchEvent(new Event('supabase_ready'));
           clearInterval(waitForSdk);
         } else if (retries >= 20) {
           console.error('❌ Supabase SDK no pudo cargarse después de ' + retries + ' intentos.');
@@ -102,6 +104,13 @@ window.iniciarSuscripcionesRealtime = function() {
         })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'avisos' }, payload => {
             if (typeof renderForumFeed === 'function') renderForumFeed();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'comentarios_avisos' }, payload => {
+            // Recargar comentarios del foro si el usuario tiene un post abierto, y refrescar el feed para los contadores
+            if (typeof renderForumFeed === 'function') renderForumFeed();
+            if (typeof renderPostComments === 'function' && typeof activePostCommentsRef !== 'undefined' && activePostCommentsRef !== null) {
+                 renderPostComments(activePostCommentsRef);
+            }
         })
         .subscribe((status, err) => {
             if (status === 'SUBSCRIBED') {
