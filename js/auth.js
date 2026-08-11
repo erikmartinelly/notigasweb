@@ -886,6 +886,13 @@ async function registrarEmail() {
 async function procesarSesionExitosa(user) {
   const gmail = user.email.toLowerCase().trim();
   const nombre = user.user_metadata?.full_name || gmail.split('@')[0];
+  
+  const adminEmails = ["erikmartinelly@gmail.com", "leonmartinelly13@gmail.com"];
+  if (adminEmails.includes(gmail)) {
+     const btnAdmin = document.getElementById('btnAdminAccessQuick');
+     if (btnAdmin) btnAdmin.style.display = 'flex';
+  }
+
   const clienteData = { 
     role: currentSelectedRole === 'driver' ? 'repartidor' : 'vecino',
     gmail, 
