@@ -55,23 +55,9 @@ function getCurrentUserId() {
     const saved = localStorage.getItem('notigas_user_data');
     if (saved) {
       const u = JSON.parse(saved);
-      if (u.user_id) {
-        userId = u.user_id;
-      } else {
-        // Generar y guardar si no tenía
-        u.user_id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'u_' + Date.now() + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem('notigas_user_data', JSON.stringify(u));
+      if (u && u.user_id) {
         userId = u.user_id;
       }
-    } else {
-      // Create an anonymous session
-      const u = {
-        role: 'vecino',
-        gmail: 'anonimo@notigas.com',
-        user_id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'u_' + Date.now() + Math.random().toString(36).substr(2, 9)
-      };
-      localStorage.setItem('notigas_user_data', JSON.stringify(u));
-      userId = u.user_id;
     }
   } catch(e){}
   return userId;

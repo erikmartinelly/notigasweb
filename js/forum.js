@@ -5,13 +5,6 @@
 let activePostCommentsRef = null;
 
 // escapeHtmlStr está centralizada en state.js — eliminada aquí para evitar duplicados.
-// Si state.js no cargó aún, usamos una versión de respaldo local.
-const escapeHtmlStr = window.escapeHtmlStr || function(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-};
 
 // Escuchar el evento personalizado emitido por supabase-config.js
 document.addEventListener('supabase_ready', () => {
@@ -49,8 +42,9 @@ async function renderForumFeed() {
       feed.innerHTML = `
         <div style="text-align:center; color:#EF4444; padding:40px 14px; background: #1E293B; border-radius: 14px; border: 1px dashed rgba(239, 68, 68, 0.3);">
           <i class="fa-solid fa-triangle-exclamation" style="font-size:32px; margin-bottom:10px;"></i><br>
-          <strong>Error de conexión</strong><br>
-          <span style="font-size: 12px;">No pudimos cargar los avisos en este momento. Intenta nuevamente más tarde o verifica tu inicio de sesión.</span>
+          <strong>Error de base de datos</strong><br>
+          <span style="font-size: 12px; color: #FCA5A5;">${error.message || 'Error de conexión.'}</span><br>
+          <span style="font-size: 10px; color: #94A3B8;">Código: ${error.code || 'N/A'} (Detalle: ${error.details || 'Ninguno'})</span>
         </div>
       `;
       return;

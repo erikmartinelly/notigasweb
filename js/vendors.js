@@ -2,16 +2,7 @@
    NOTIGAS - MÓDULO DE MINI PÁGINAS DE NEGOCIO ESTILO FACEBOOK POR CATEGORÍA
    ========================================================================== */
 
-// Fallback de seguridad: si state.js no cargó a tiempo
-const escapeHtmlStr = window.escapeHtmlStr || function(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-};
+// (escapeHtmlStr is handled by state.js)
 
 const defaultVendorsList = []; // LIMPIO SIN EJEMPLOS DUMMY PREDETERMINADOS
 
