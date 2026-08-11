@@ -27,8 +27,9 @@ async function renderDriverOrdersList() {
       
     if (data) {
       orders = data.filter(o => typeof isOrderCategoryMatchingDriver === 'function' && isOrderCategoryMatchingDriver(o.categoria));
-      // En la app del repartidor, ver pedidos pendientes y vistos
-      orders = orders.filter(o => o.estado === 'pendiente' || o.estado === 'visto');
+      const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
+      // En la app del repartidor, ver pedidos pendientes, y los que él mismo ha aceptado
+      orders = orders.filter(o => o.estado === 'pendiente' || (o.estado === 'asignado' && o.driver_id === localUserId));
     }
   }
 
@@ -56,9 +57,9 @@ async function renderDriverOrdersList() {
           <div style="font-size:12px; margin-bottom:4px; color:#475569;">📦 <strong>Prod:</strong> ${window.escapeHtmlStr(ord.categoria || '')} (${window.escapeHtmlStr(ord.cantidad || '')} un)</div>
           ${ord.telefono ? `<div style="font-size:12px; margin-bottom:8px; color:#475569;">📞 <strong>Tel:</strong> ${window.escapeHtmlStr(ord.telefono)}</div>` : ''}
           
-          ${(ord.estado === 'visto') 
-             ? `<div style="text-align:center; padding:6px; background:#FFF9C4; color:#F57F17; border-radius:6px; font-weight:bold; font-size:11px; margin-bottom:8px;"><i class="fa-solid fa-eye"></i> Visto por ti u otro repartidor</div>`
-             : `<button onclick="aceptarPedidoRepartidor('${ord.id}')" style="width:100%; padding:8px; background:linear-gradient(135deg, #0288D1, #0277BD); color:#FFF; border:none; border-radius:8px; font-weight:900; font-size:12px; cursor:pointer;"><i class="fa-solid fa-eye"></i> Marcar como Visto (Voy a la zona)</button>`
+          ${(ord.estado === 'asignado' && ord.driver_id === localUserId) 
+            ? `<button onclick="confirmarEntregaPedido('${ord.id}')" style="flex:1; padding:10px; border:none; border-radius:8px; background:linear-gradient(135deg, #22C55E, #16A34A); color:white; font-weight:700; cursor:pointer;"><i class="fa-solid fa-check"></i> Entregado</button>` 
+            : `<button onclick="aceptarPedidoRepartidor('${ord.id}')" style="flex:1; padding:10px; border:none; border-radius:8px; background:linear-gradient(135deg, #3B82F6, #2563EB); color:white; font-weight:700; cursor:pointer;"><i class="fa-solid fa-hand-holding"></i> Aceptar Pedido</button>`
           }
         </div>
       `;
@@ -66,61 +67,28 @@ async function renderDriverOrdersList() {
 
   container.innerHTML = html;
 }
-async function aceptarPedidoRepartidor(id) {
-  if (!window.supabaseClient) {
-    showToast('Error', 'No hay conexión a la base de datos.', 'error');
-    return;
-  }
-  
-  showConfirmModal('👀', '¿Marcar como Visto?', 'Avisarás al vecino que estás rondando su zona. Otros repartidores también podrán ver el pedido.', 'Sí, notificar', async () => {
-    if (window.supabaseClient) {
-        showLoadingOverlay('Verificando jurisdicción...');
-        
-        let driverCity = null;
-        try {
-          const { data: sessionData } = await window.supabaseClient.auth.getSession();
-          if (sessionData?.session?.user) {
-            const { data: choferData } = await window.supabaseClient
-              .from('choferes_habilitados')
-              .select('ciudad')
-              .eq('user_id', sessionData.session.user.id)
-              .single();
-            if (choferData) driverCity = choferData.ciudad;
-          }
-        } catch(e){}
-
-        if (!driverCity) {
-           hideLoadingOverlay();
-           showToast('Acceso Denegado', 'No pudimos verificar tu jurisdicción. Inicia sesión nuevamente.', 'error', 4000);
-           return;
-        }
-
-        const { data: orderData } = await window.supabaseClient.from('pedidos').select('ciudad').eq('id', id).single();
-        if (!orderData || orderData.ciudad !== driverCity) {
-           hideLoadingOverlay();
-           showToast('Acceso Denegado', 'Este pedido pertenece a una ciudad fuera de tu jurisdicción.', 'error', 4000);
-           return;
-        }
-
-        showLoadingOverlay('Marcando pedido...');
-        const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
-        const { error } = await window.supabaseClient.from('pedidos').update({ estado: 'visto', driver_id: localUserId }).eq('id', id);
-        hideLoadingOverlay();
-        
-        if(error) {
-            showToast('Error', 'No se pudo marcar.', 'error', 3000);
-        } else {
-            showToast('Notificado', 'Se le ha avisado al vecino que estás cerca.', 'success', 3000);
-            renderDriverOrdersList(); // refresh
-        }
+window.aceptarPedidoRepartidor = async function(id) {
+  if (!window.supabaseClient) return;
+  showConfirmModal('🚚', 'Aceptar Pedido', '¿Confirmas que te dirigirás a esta dirección ahora mismo?', 'Sí, iré ahora', async () => {
+    showLoadingOverlay('Asignando pedido...');
+    const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
+    const { error } = await window.supabaseClient.from('pedidos').update({ estado: 'asignado', driver_id: localUserId }).eq('id', id);
+    hideLoadingOverlay();
+    
+    if (error) {
+      console.error("Error al asignar pedido:", error);
+      showToast('Error', 'El pedido ya fue tomado o hubo un problema.', 'error', 3000);
+    } else {
+      showToast('Asignado', 'Has aceptado el pedido. El vecino será notificado.', 'success', 3000);
+      renderDriverOrdersList();
     }
   });
 }
 async function confirmarEntregaPedido(id) {
   if (!window.supabaseClient) return;
-  showConfirmModal('🏁', 'Confirmar Entrega', '¿El vecino ya recibió su pedido y se realizó el pago?', 'Sí, ya entregué el pedido', async () => {
-    showLoadingOverlay('Confirmando entrega...');
-    const { error } = await window.supabaseClient.from('pedidos').update({ estado: 'entregado' }).eq('id', id);
+  showConfirmModal('⚠️', 'Cancelar Pedido', '¿Estás seguro de cancelar tu solicitud de gas?', 'Sí, cancelar', async () => {
+    showLoadingOverlay('Cancelando...');
+    const { error } = await window.supabaseClient.from('pedidos').update({ estado: 'cancelado' }).eq('id', id);
     hideLoadingOverlay();
     
     if (error) {
@@ -134,7 +102,6 @@ async function confirmarEntregaPedido(id) {
 }
 function ejecutarPurgaBaseDeDatosAuto() {
   const now = Date.now();
-  // FIX W-07: Usar la constante centralizada de state.js
   const expirationMs = (window.NOTIGAS && window.NOTIGAS.ORDER_EXPIRATION_MS) ? window.NOTIGAS.ORDER_EXPIRATION_MS : 48 * 60 * 60 * 1000;
 
   try {
@@ -168,30 +135,32 @@ function checkActiveOrderStatus() {
     try {
       const order = JSON.parse(rawOrder);
       if (btnCancel) btnCancel.style.display = 'flex';
-      if (btnMain) btnMain.style.display = 'none'; // Ocultar Hacer Pedido para dar espacio limpio a Cancelar Pedido
+      if (btnMain) btnMain.style.display = 'none'; 
       actualizarFaviconSegunPedido(order.categoria);
       
-      // NUEVA LÓGICA: Revisar si está "visto"
       if (window.supabaseClient) {
          const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
-         window.supabaseClient.from('pedidos').select('estado').eq('user_id', localUserId).in('estado', ['pendiente', 'visto']).order('created_at', {ascending: false}).limit(1).single()
-         .then(({data, error}) => {
-            if (data && data.estado === 'visto') {
-               const btnCancel = document.getElementById('btnActiveOrderCancel');
-               if (btnCancel) {
-                  btnCancel.innerHTML = `<i class="fa-solid fa-check-circle"></i> Ya recibí mi pedido`;
-                  btnCancel.style.background = 'linear-gradient(135deg, #00E676, #00C853)';
-                  btnCancel.style.color = '#0F172A';
-                  btnCancel.onclick = function() { confirmarRecepcionComprador(); };
-               }
-               
-               // Mostrar toast indicando que lo vieron
-               if (!sessionStorage.getItem('notigas_notified_visto')) {
-                  showToast('👀 ¡Repartidor cerca!', 'Un repartidor ha visto los pedidos en tu zona y se dirige hacia allá.', 'success', 6000);
-                  sessionStorage.setItem('notigas_notified_visto', 'true');
-               }
-            }
-         });
+         if (document.getElementById('estadoPedidoActivo')) {
+           window.supabaseClient.from('pedidos').select('estado').eq('user_id', localUserId).in('estado', ['pendiente', 'asignado']).order('created_at', {ascending: false}).limit(1).single()
+           .then(({data, error}) => {
+              if (!error && data && data.estado === 'asignado') {
+                 const btnCancel = document.getElementById('btnActiveOrderCancel');
+                 if (btnCancel) {
+                    btnCancel.innerHTML = `<i class="fa-solid fa-check-circle"></i> Ya recibí mi pedido`;
+                    btnCancel.style.background = 'linear-gradient(135deg, #00E676, #00C853)';
+                 }
+                 document.getElementById('estadoPedidoActivo').innerHTML = `
+                   <div style="background:linear-gradient(135deg, #10B981, #059669); padding:4px 10px; border-radius:12px; display:inline-block; margin-bottom:5px; color:white;">
+                     <i class="fa-solid fa-truck-fast"></i> ¡Un Repartidor va en camino!
+                   </div>
+                 `;
+                 if (!sessionStorage.getItem('notigas_notified_asignado')) {
+                    showToast('🚚 ¡Repartidor asignado!', 'Un repartidor ha aceptado tu pedido y va hacia allá.', 'success', 6000);
+                    sessionStorage.setItem('notigas_notified_asignado', 'true');
+                 }
+              }
+           });
+         }
       }
 
       if (typeof renderActiveOrdersMap === 'function') {

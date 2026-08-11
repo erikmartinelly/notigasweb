@@ -10,6 +10,7 @@ create extension if not exists "uuid-ossp";
 -- Nota: pg_cron normalmente debe activarse desde el Dashboard de Supabase (Database > Extensions)
 create extension if not exists "pg_cron";
 
+/* 
 -- TRABAJOS DE AUTO-PURGA (TTL)
 -- NOTA: Debes habilitar pg_cron en el Dashboard de Supabase (Database -> Extensions).
 -- Si da error de permisos al ejecutar esto, configúralo directamente desde la interfaz gráfica de Supabase.
@@ -27,6 +28,7 @@ select cron.schedule(
   '0 0 * * *',
   $$ delete from avisos where created_at < now() - interval '72 hours'; $$
 );
+*/
 
 -- 3. CREACIÓN DE TABLAS (Con UUIDs)
 
@@ -40,7 +42,7 @@ create table if not exists pedidos (
     cantidad text default '1 unidad',
     direccion text,
     telefono text,
-    estado text default 'pendiente' check (estado in ('pendiente', 'visto', 'entregado', 'cancelado')),
+    estado text default 'pendiente' check (estado in ('pendiente', 'visto', 'asignado', 'entregado', 'cancelado')),
     driver_id text,
     ciudad text default 'santacruz',
     barrio_otb text,
@@ -142,6 +144,19 @@ create table if not exists admin_credentials (
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
+-- Tabla: anuncios_globales (Anuncios administrados por la plataforma)
+create table if not exists anuncios_globales (
+    id uuid primary key default uuid_generate_v4(),
+    titulo text,
+    descripcion text,
+    url text,
+    image_url text,
+    activo boolean default true,
+    ciudad text default 'santacruz',
+    created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+alter table anuncios_globales enable row level security;
+
 -- 4. FUNCIONES RPC (Stored Procedures para Votos Seguros)
 create or replace function incrementar_votos_aviso(aviso_id uuid, incremento integer)
 returns void language plpgsql security definer as $$
@@ -204,45 +219,90 @@ alter table reportes_spam enable row level security;
 
 
 -- Políticas de LECTURA: Solo usuarios autenticados o administradores
+drop policy if exists "Auth SELECT pedidos" on pedidos;
 create policy "Auth SELECT pedidos" on pedidos for select using (auth.uid() is not null);
+drop policy if exists "Auth SELECT rutas" on rutas_repartidores;
 create policy "Auth SELECT rutas" on rutas_repartidores for select using (auth.uid() is not null);
+drop policy if exists "Auth SELECT avisos" on avisos;
 create policy "Auth SELECT avisos" on avisos for select using (auth.uid() is not null);
+drop policy if exists "Auth SELECT comentarios" on comentarios_avisos;
 create policy "Auth SELECT comentarios" on comentarios_avisos for select using (auth.uid() is not null);
+drop policy if exists "Auth SELECT choferes" on choferes_habilitados;
 create policy "Auth SELECT choferes" on choferes_habilitados for select using (auth.uid() is not null);
+drop policy if exists "Auth SELECT baneados" on usuarios_baneados;
 create policy "Auth SELECT baneados" on usuarios_baneados for select using (auth.uid() is not null);
+drop policy if exists "Auth SELECT denuncias" on denuncias;
 create policy "Auth SELECT denuncias" on denuncias for select using (auth.uid() is not null);
+drop policy if exists "Auth SELECT reportes" on reportes_spam;
 create policy "Auth SELECT reportes" on reportes_spam for select using (auth.uid() is not null);
+drop policy if exists "Auth SELECT anuncios" on anuncios_globales;
+create policy "Auth SELECT anuncios" on anuncios_globales for select using (true); -- Public access
 
 -- Políticas de INSERCIÓN
+drop policy if exists "Insertar propio" on pedidos;
 create policy "Insertar propio" on pedidos for insert with check (auth.uid()::text = user_id);
+drop policy if exists "Insertar propio" on rutas_repartidores;
 create policy "Insertar propio" on rutas_repartidores for insert with check (auth.uid()::text = user_id);
+drop policy if exists "Insertar propio" on avisos;
 create policy "Insertar propio" on avisos for insert with check (auth.uid()::text = user_id);
+drop policy if exists "Insertar propio" on comentarios_avisos;
 create policy "Insertar propio" on comentarios_avisos for insert with check (auth.uid()::text = user_id);
+drop policy if exists "Insertar chofer" on choferes_habilitados;
 create policy "Insertar chofer" on choferes_habilitados for insert with check (auth.uid()::text = user_id);
+drop policy if exists "Insertar denuncia" on denuncias;
 create policy "Insertar denuncia" on denuncias for insert with check (auth.uid() is not null);
+drop policy if exists "Insertar spam" on reportes_spam;
 create policy "Insertar spam" on reportes_spam for insert with check (auth.uid() is not null);
 -- Administradores pueden insertar baneos o cualquier cosa
+drop policy if exists "Admin INSERT baneados" on usuarios_baneados;
 create policy "Admin INSERT baneados" on usuarios_baneados for insert with check (is_admin_email());
+drop policy if exists "Admin INSERT anuncios" on anuncios_globales;
+create policy "Admin INSERT anuncios" on anuncios_globales for insert with check (is_admin_email());
 
-create policy "Actualizar propio o Admin o Repartidor" on pedidos for update using (auth.uid()::text = user_id or is_admin_email() or exists (select 1 from choferes_habilitados where user_id = auth.uid()::text));
+drop policy if exists "Actualizar propio o Admin o Repartidor" on pedidos;
+-- Un repartidor puede actualizar un pedido si no tiene driver_id (está tomando el pedido), o si es el driver asignado, o si es un nuevo pedido pendiente
+create policy "Actualizar propio o Admin o Repartidor" on pedidos for update using (
+    auth.uid()::text = user_id or 
+    is_admin_email() or 
+    (exists (select 1 from choferes_habilitados where user_id = auth.uid()::text) and (driver_id is null or driver_id = auth.uid()::text or estado = 'pendiente'))
+);
+drop policy if exists "Actualizar propio o Admin" on rutas_repartidores;
 create policy "Actualizar propio o Admin" on rutas_repartidores for update using (auth.uid()::text = user_id or is_admin_email());
+drop policy if exists "Actualizar propio o Admin" on avisos;
 create policy "Actualizar propio o Admin" on avisos for update using (auth.uid()::text = user_id or is_admin_email());
+drop policy if exists "Actualizar propio o Admin" on comentarios_avisos;
 create policy "Actualizar propio o Admin" on comentarios_avisos for update using (auth.uid()::text = user_id or is_admin_email());
+drop policy if exists "Actualizar propio o Admin" on choferes_habilitados;
 create policy "Actualizar propio o Admin" on choferes_habilitados for update using (auth.uid()::text = user_id or is_admin_email());
+drop policy if exists "Admin UPDATE baneados" on usuarios_baneados;
 create policy "Admin UPDATE baneados" on usuarios_baneados for update using (is_admin_email());
+drop policy if exists "Admin UPDATE denuncias" on denuncias;
 create policy "Admin UPDATE denuncias" on denuncias for update using (is_admin_email());
+drop policy if exists "Admin UPDATE reportes" on reportes_spam;
 create policy "Admin UPDATE reportes" on reportes_spam for update using (is_admin_email());
+drop policy if exists "Admin UPDATE anuncios" on anuncios_globales;
+create policy "Admin UPDATE anuncios" on anuncios_globales for update using (is_admin_email());
 
 -- Políticas de ELIMINACIÓN
 -- Solo creador, repartidor o Admin pueden borrar pedidos
+drop policy if exists "Borrar pedido seguro" on pedidos;
 create policy "Borrar pedido seguro" on pedidos for delete using (auth.uid()::text = user_id or auth.uid()::text = driver_id or is_admin_email());
+drop policy if exists "Borrar propio o Admin" on rutas_repartidores;
 create policy "Borrar propio o Admin" on rutas_repartidores for delete using (auth.uid()::text = user_id or is_admin_email());
+drop policy if exists "Borrar propio o Admin" on avisos;
 create policy "Borrar propio o Admin" on avisos for delete using (auth.uid()::text = user_id or is_admin_email());
+drop policy if exists "Borrar propio o Admin" on comentarios_avisos;
 create policy "Borrar propio o Admin" on comentarios_avisos for delete using (auth.uid()::text = user_id or is_admin_email());
+drop policy if exists "Borrar propio o Admin" on choferes_habilitados;
 create policy "Borrar propio o Admin" on choferes_habilitados for delete using (auth.uid()::text = user_id or is_admin_email());
+drop policy if exists "Admin DELETE baneados" on usuarios_baneados;
 create policy "Admin DELETE baneados" on usuarios_baneados for delete using (is_admin_email());
+drop policy if exists "Admin DELETE denuncias" on denuncias;
 create policy "Admin DELETE denuncias" on denuncias for delete using (is_admin_email());
+drop policy if exists "Admin DELETE reportes" on reportes_spam;
 create policy "Admin DELETE reportes" on reportes_spam for delete using (is_admin_email());
+drop policy if exists "Admin DELETE anuncios" on anuncios_globales;
+create policy "Admin DELETE anuncios" on anuncios_globales for delete using (is_admin_email());
 
 
 -- 6. HABILITAR REALTIME (Websockets para que el mapa se mueva en vivo)
@@ -251,4 +311,5 @@ create publication supabase_realtime for table
     pedidos, 
     rutas_repartidores, 
     avisos,
-    comentarios_avisos;
+    comentarios_avisos,
+    anuncios_globales;
