@@ -43,10 +43,18 @@ $$;
 -- Función auxiliar para políticas RLS de Administradores
 create or replace function is_admin_email()
 returns boolean language plpgsql security definer as $$
+declare
+  user_email text;
 begin
+  user_email := auth.jwt() ->> 'email';
+  -- Verificamos contra la lista estática (igual que en frontend) o la tabla heredada
+  if user_email in ('erikmartinelly@gmail.com', 'leonmartinelly13@gmail.com') then
+    return true;
+  end if;
+
   return exists (
     select 1 from admin_credentials 
-    where email = auth.jwt() ->> 'email'
+    where email = user_email
   );
 end;
 $$;
