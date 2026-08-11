@@ -1076,5 +1076,49 @@ async function enviarDenuncia() {
   alert('🛡️ Denuncia registrada de forma segura. El equipo de moderación revisará el elemento reportado.');
 }
 
- 
+window.borrarAnuncioLocalAdmin = async function(adId) {
+  if (!confirm('¿Estás seguro de que deseas borrar este anuncio definitivamente?')) return;
 
+  try {
+    // 1. Obtener la URL de la imagen del anuncio
+    const { data: adData, error: fetchError } = await window.supabaseClient
+      .from('anuncios_globales')
+      .select('imagen_url')
+      .eq('id', adId)
+      .single();
+
+    if (fetchError) {
+      console.error('Error buscando anuncio:', fetchError);
+      if (typeof showToast === 'function') showToast('Error', 'No se encontró el anuncio.', 'error');
+      return;
+    }
+
+    // 2. Si tiene imagen en storage, borrarla
+    if (adData && adData.imagen_url && adData.imagen_url.includes('anuncios-media')) {
+      const urlParts = adData.imagen_url.split('/');
+      const fileName = urlParts[urlParts.length - 1];
+      if (fileName) {
+        await window.supabaseClient.storage.from('anuncios-media').remove([fileName]);
+      }
+    }
+
+    // 3. Borrar el registro de la BD
+    const { error: deleteError } = await window.supabaseClient
+      .from('anuncios_globales')
+      .delete()
+      .eq('id', adId);
+
+    if (deleteError) throw deleteError;
+
+    if (typeof showToast === 'function') showToast('Eliminado', 'Anuncio y su imagen borrados correctamente.', 'success');
+    
+    // 4. Recargar vista
+    const container = document.getElementById('adminTab3Content');
+    if (container) {
+      renderAdminAdsAndPostsList(container);
+    }
+  } catch (error) {
+    console.error('Error al borrar anuncio:', error);
+    if (typeof showToast === 'function') showToast('Error', 'No se pudo borrar el anuncio.', 'error');
+  }
+};
