@@ -135,8 +135,17 @@ function initNotigasMap() {
     iconAnchor: [25, 58]
   });
 
+  let startLat = currentGpsLat;
+  let startLng = currentGpsLng;
+  if (!startLat || !startLng) {
+    const city = localStorage.getItem('notigas_city') || 'santacruz';
+    if (city === 'cochabamba') { startLat = -17.3895; startLng = -66.1568; }
+    else if (city === 'lapaz') { startLat = -16.4897; startLng = -68.1193; }
+    else { startLat = -17.7833; startLng = -63.1821; }
+  }
+
   map = L.map('map', {
-    center: [currentGpsLat, currentGpsLng],
+    center: [startLat, startLng],
     zoom: 16,
     zoomControl: false
   });
