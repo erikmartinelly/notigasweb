@@ -177,32 +177,25 @@ window.registrarAdminsIniciales = async function() {
 let adminLoginAttempts = 0;
 
 window.verificarAutenticacionAdmin = async function() {
-  if (adminLoginAttempts >= 5) {
-    alert("⛔ PANEL BLOQUEADO\nHas superado el límite de 5 intentos fallidos. Por seguridad, refresca la página o vuelve más tarde.");
+  if (!window.supabaseClient) return;
+
+  const { data: sessionData, error: sessionError } = await window.supabaseClient.auth.getSession();
+  const session = sessionData?.session;
+  
+  if (!session || sessionError) {
+    alert("❌ Primero debes iniciar sesión en la aplicación principal con una cuenta autorizada.");
     return;
   }
 
-  const email = document.getElementById('loginAdminEmail').value.trim().toLowerCase();
-  const pass = document.getElementById('loginAdminPassword').value;
+  const email = session.user.email.toLowerCase().trim();
 
-  if (!email || !pass) {
-    alert("❌ Ingresa el correo y contraseña del administrador.");
-    return;
-  }
-
-  const hash = await encriptarSHA256(email + ':' + pass);
-
-  const { data: isValid, error } = await window.supabaseClient
-    .rpc('validar_admin', { p_email: email, p_password: hash });
-
-  if (error || !isValid) {
-    adminLoginAttempts++;
-    alert(`❌ ACCESO DENEGADO\nCredenciales incorrectas o administrador no encontrado.\nTe quedan ${5 - adminLoginAttempts} intentos.`);
+  // Verificamos de lado cliente primero, pero el servidor también lo validará
+  if (!ADMIN_EMAILS_ALLOWED.includes(email)) {
+    alert(`❌ ACCESO DENEGADO\nEl correo ${email} no es administrador.`);
     return;
   }
 
   // Éxito
-  adminLoginAttempts = 0;
   _setAdminSession(email);
   
   const loginScreen = document.getElementById('adminLoginScreen');

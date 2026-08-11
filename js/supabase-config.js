@@ -85,8 +85,10 @@ window.iniciarSuscripcionesRealtime = function() {
         cargarPedidosVecinalesEnVivo();
     }
 
-    _realtimeChannel = window.supabaseClient.channel('global_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, payload => {
+    const activeCity = localStorage.getItem('notigas_city') || 'santacruz';
+
+    _realtimeChannel = window.supabaseClient.channel('global_changes_' + activeCity)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos', filter: `ciudad=eq.${activeCity}` }, payload => {
             const data = payload.new;
             if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
                 if (typeof agregarPedidoVecinoEnMapa === 'function') agregarPedidoVecinoEnMapa(data);
@@ -94,7 +96,7 @@ window.iniciarSuscripcionesRealtime = function() {
                 if (typeof removerPublicacionDeMapa === 'function') removerPublicacionDeMapa(payload.old.id);
             }
         })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'rutas_repartidores' }, payload => {
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'rutas_repartidores', filter: `ciudad=eq.${activeCity}` }, payload => {
             const data = payload.new;
             if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
                 if (typeof actualizarRepartidorEnMapa === 'function') actualizarRepartidorEnMapa(data);
@@ -102,7 +104,7 @@ window.iniciarSuscripcionesRealtime = function() {
                 if (typeof removerPublicacionDeMapa === 'function') removerPublicacionDeMapa(payload.old.id);
             }
         })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'avisos' }, payload => {
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'avisos', filter: `ciudad=eq.${activeCity}` }, payload => {
             if (typeof renderForumFeed === 'function') renderForumFeed();
         })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'comentarios_avisos' }, payload => {

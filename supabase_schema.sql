@@ -10,7 +10,6 @@ create extension if not exists "uuid-ossp";
 -- Nota: pg_cron normalmente debe activarse desde el Dashboard de Supabase (Database > Extensions)
 create extension if not exists "pg_cron";
 
-/* 
 -- TRABAJOS DE AUTO-PURGA (TTL)
 -- NOTA: Debes habilitar pg_cron en el Dashboard de Supabase (Database -> Extensions).
 -- Si da error de permisos al ejecutar esto, configúralo directamente desde la interfaz gráfica de Supabase.
@@ -28,7 +27,6 @@ select cron.schedule(
   '0 0 * * *',
   $$ delete from avisos where created_at < now() - interval '72 hours'; $$
 );
-*/
 
 -- 3. CREACIÓN DE TABLAS (Con UUIDs)
 
@@ -50,6 +48,7 @@ create table if not exists pedidos (
     longitude double precision,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
+create index if not exists idx_pedidos_ciudad_otb_created on pedidos(ciudad, barrio_otb, created_at desc);
 
 -- Tabla: rutas_repartidores (Ubicación GPS de los camiones en vivo)
 create table if not exists rutas_repartidores (
@@ -65,6 +64,7 @@ create table if not exists rutas_repartidores (
     last_active timestamp with time zone default timezone('utc'::text, now()),
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
+create index if not exists idx_rutas_ciudad_last_active on rutas_repartidores(ciudad, last_active desc);
 
 -- Tabla: avisos (Foro vecinal y Anuncios de Admin)
 create table if not exists avisos (
@@ -139,7 +139,6 @@ create table if not exists denuncias (
 create table if not exists admin_credentials (
     id uuid primary key default uuid_generate_v4(),
     email text unique not null,
-    password_hash text not null,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -147,6 +146,18 @@ create table if not exists admin_credentials (
 create or replace function incrementar_votos_aviso(aviso_id uuid, incremento integer)
 returns void language plpgsql security definer as $$
 begin
+  if auth.uid() is null then
+    raise exception 'No autenticado';
+  end if;
+  
+  if exists (select 1 from usuarios_baneados where user_id = auth.uid()::text) then
+    raise exception 'Usuario baneado';
+  end if;
+  
+  if incremento not in (-1, 1) then
+    raise exception 'Incremento inválido';
+  end if;
+
   update avisos set votos = votos + incremento where id = aviso_id;
 end;
 $$;
@@ -154,21 +165,19 @@ $$;
 create or replace function incrementar_votos_comentario(comentario_id uuid, incremento integer)
 returns void language plpgsql security definer as $$
 begin
-  update comentarios_avisos set votos = votos + incremento where id = comentario_id;
-end;
-$$;
+  if auth.uid() is null then
+    raise exception 'No autenticado';
+  end if;
 
--- RPC: Autenticación segura de administrador
-create or replace function validar_admin(p_email text, p_password text)
-returns boolean language plpgsql security definer as $$
-declare
-  is_valid boolean;
-begin
-  select exists (
-    select 1 from admin_credentials 
-    where email = p_email and password_hash = p_password
-  ) into is_valid;
-  return is_valid;
+  if exists (select 1 from usuarios_baneados where user_id = auth.uid()::text) then
+    raise exception 'Usuario baneado';
+  end if;
+
+  if incremento not in (-1, 1) then
+    raise exception 'Incremento inválido';
+  end if;
+
+  update comentarios_avisos set votos = votos + incremento where id = comentario_id;
 end;
 $$;
 
