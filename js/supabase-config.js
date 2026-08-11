@@ -85,7 +85,7 @@ window.iniciarSuscripcionesRealtime = function() {
         cargarPedidosVecinalesEnVivo();
     }
 
-    const activeCity = localStorage.getItem('notigas_city') || 'santacruz';
+    const activeCity = AppState.get('city') || 'santacruz';
 
     _realtimeChannel = window.supabaseClient.channel('global_changes_' + activeCity)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos', filter: `ciudad=eq.${activeCity}` }, payload => {
@@ -156,3 +156,12 @@ function _programarReconexionRealtime() {
     }, delay);
 }
 
+document.addEventListener('DOMContentLoaded', () => {
+    // Escuchar cambios de ciudad para re-suscribir el canal en tiempo real
+    if (typeof AppState !== 'undefined') {
+        AppState.on('city', () => {
+            console.log('🔄 Cambio de ciudad detectado, reiniciando suscripciones Realtime...');
+            window.iniciarSuscripcionesRealtime();
+        });
+    }
+});

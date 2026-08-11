@@ -14,7 +14,7 @@ function abrirAnuncioWhatsApp() {
 
 async function cargarAnunciosGuardados() {
   if (!window.supabaseClient) return;
-  const activeCity = localStorage.getItem('notigas_city') || 'santacruz';
+  const activeCity = AppState.get('city') || 'santacruz';
 
   try {
     const { data, error } = await window.supabaseClient

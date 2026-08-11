@@ -749,7 +749,7 @@ function guardarSubmenuAnuncios() {
 
   const inputAd = (document.getElementById('inputAdText')?.value || '').trim();
   const inputUrl = (document.getElementById('inputAdUrl')?.value || '').trim();
-  const activeCity = localStorage.getItem('notigas_city') || 'santacruz';
+  const activeCity = AppState.get('city') || 'santacruz';
   const imgUrl = (window.pendingUploadUrl) ? window.pendingUploadUrl : null;
 
   if (typeof actualizarAnunciosEnVivo === 'function') {

@@ -28,7 +28,7 @@ async function renderForumFeed() {
 
   const tresDiasAtras = new Date(Date.now() - 72 * 3600 * 1000).toISOString();
 
-  const ciudadReal = localStorage.getItem('notigas_city') || 'santacruz';
+  const ciudadReal = AppState.get('city') || 'santacruz';
 
   // FIX: Seleccionar la cuenta de comentarios y filtrar avisos de más de 72h y por ciudad
   const { data: localPosts, error } = await window.supabaseClient.from('avisos')
@@ -237,7 +237,7 @@ async function crearNuevoPost() {
      return;
   }
 
-    const ciudadReal = localStorage.getItem('notigas_city') || 'santacruz';
+    const ciudadReal = AppState.get('city') || 'santacruz';
 
     const { error } = await window.supabaseClient.from('avisos').insert([{
       categoria: cat,

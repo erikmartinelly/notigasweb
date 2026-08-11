@@ -16,7 +16,7 @@ async function renderDriverOrdersList() {
 
   let orders = [];
   if (window.supabaseClient) {
-    let ciudadReal = localStorage.getItem('notigas_city') || 'santacruz';
+    let ciudadReal = AppState.get('city') || 'santacruz';
 
     const activeWindow = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
     const { data } = await window.supabaseClient
@@ -247,7 +247,7 @@ function confirmarPedido() {
          return;
       }
       
-      const ciudadReal = localStorage.getItem('notigas_city') || 'santacruz';
+      const ciudadReal = AppState.get('city') || 'santacruz';
 
       const { data: resultData, error } = await window.supabaseClient.from('pedidos').insert([{
           categoria: cat,
@@ -376,7 +376,7 @@ async function abrirPanoramicaPedidos() {
     try {
       const expirationMs = (window.NOTIGAS && window.NOTIGAS.ORDER_EXPIRATION_MS) ? window.NOTIGAS.ORDER_EXPIRATION_MS : 48 * 60 * 60 * 1000;
       const activeWindow = new Date(now - expirationMs).toISOString();
-      const ciudadReal = localStorage.getItem('notigas_city') || 'santacruz';
+      const ciudadReal = AppState.get('city') || 'santacruz';
       const { data: pedidosReales } = await window.supabaseClient
         .from('pedidos')
         .select('id, categoria, descripcion, created_at')
@@ -456,7 +456,7 @@ function notificarEscucheCamion() {
     lng: pos.lng,
     timestamp: Date.now(),
     reporter: reporterName,
-    ciudad: localStorage.getItem('notigas_city') || 'santacruz'
+    ciudad: AppState.get('city') || 'santacruz'
   };
 
   // Enviar a Supabase Realtime si está conectado
@@ -489,7 +489,7 @@ function lanzarEspecialEsperame() {
     lng: pos.lng,
     timestamp: Date.now(),
     reporter: `${reporterName} (🛑 Alerta Espérame)`,
-    ciudad: localStorage.getItem('notigas_city') || 'santacruz'
+    ciudad: AppState.get('city') || 'santacruz'
   };
 
   if (window.supabaseClient && window._realtimeChannel) {
@@ -507,7 +507,7 @@ function lanzarEspecialEsperame() {
 
 window.recibirAlertaVecinalBroadcast = function(payload) {
   // Solo procesar alertas de nuestra misma ciudad
-  const miCiudad = localStorage.getItem('notigas_city') || 'santacruz';
+  const miCiudad = AppState.get('city') || 'santacruz';
   if (payload.ciudad && payload.ciudad !== miCiudad) return;
 
   let buffer = [];

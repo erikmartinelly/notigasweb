@@ -138,7 +138,7 @@ function initNotigasMap() {
   let startLat = currentGpsLat;
   let startLng = currentGpsLng;
   if (!startLat || !startLng) {
-    const city = localStorage.getItem('notigas_city') || 'santacruz';
+    const city = AppState.get('city') || 'santacruz';
     if (city === 'cochabamba') { startLat = -17.3895; startLng = -66.1568; }
     else if (city === 'lapaz') { startLat = -16.4897; startLng = -68.1193; }
     else { startLat = -17.7833; startLng = -63.1821; }
@@ -1126,7 +1126,7 @@ function cambiarCiudadCapital(cityKey) {
 
   applyGpsPosition(mun.lat, mun.lon, '', false);
   localStorage.setItem('notigas_active_city', mun.nombre);
-  localStorage.setItem('notigas_city', mun.key);
+  AppState.set('city', mun.key);
 
   if (typeof descargarChoferesYRenderizar === 'function') {
     descargarChoferesYRenderizar('TODOS');

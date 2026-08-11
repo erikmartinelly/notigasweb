@@ -297,7 +297,7 @@ async function handleCredentialResponse(response) {
         
       if (existingDriver) {
         if (existingDriver.ciudad) {
-           localStorage.setItem('notigas_city', existingDriver.ciudad.toLowerCase());
+           AppState.set('city', existingDriver.ciudad.toLowerCase());
         }
         // Ya existe en la base de datos como repartidor, forzar rol y entrar
         currentSelectedRole = 'driver';
@@ -572,7 +572,7 @@ async function iniciarSesionRepartidor() {
   if (existingGmail) repartidorData.gmail = existingGmail;
 
   localStorage.setItem('notigas_user_data', JSON.stringify(repartidorData));
-  localStorage.setItem('notigas_city', ciudad.toLowerCase());
+  AppState.set('city', ciudad.toLowerCase());
   await guardarRepartidorEnBaseDeDatos(repartidorData);
   sessionStorage.removeItem('notigas_temp_gmail');
 
@@ -899,7 +899,7 @@ async function procesarSesionExitosa(user) {
         .eq('user_id', user.id)
         .maybeSingle();
       if (choferData && choferData.ciudad) {
-        localStorage.setItem('notigas_city', choferData.ciudad.toLowerCase());
+        AppState.set('city', choferData.ciudad.toLowerCase());
       }
     } catch(e) {}
   }

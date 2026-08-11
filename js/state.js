@@ -41,6 +41,7 @@ window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño m
   const _state = {
     userRole: 'vecino',        // 'vecino' | 'repartidor' | 'admin'
     userData: null,            // Objeto con datos del usuario autenticado
+    city: localStorage.getItem('notigas_city') || 'santacruz', // Única fuente de verdad temporal pre-login
     gpsLat: null,
     gpsLng: null,
     gpsReady: false,
@@ -71,6 +72,10 @@ window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño m
     set(key, value) {
       const prev = _state[key];
       _state[key] = value;
+
+      if (key === 'city') {
+        localStorage.setItem('notigas_city', value);
+      }
 
       if (prev !== value && _listeners[key]) {
         _listeners[key].forEach(fn => {

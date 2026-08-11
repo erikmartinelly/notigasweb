@@ -12,7 +12,7 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
     return;
   }
   
-  const city = localStorage.getItem('notigas_city') || 'santacruz';
+  const city = AppState.get('city') || 'santacruz';
 
   try {
     // Solo traemos choferes de la ciudad actual que estén pendientes o aprobados.
