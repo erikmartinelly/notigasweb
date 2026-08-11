@@ -286,11 +286,20 @@ function agregarPedidoVecinoEnMapa(order) {
     map.removeLayer(neighborOrderMarkers[orderId]);
   }
 
+  // Si el pedido está cancelado, lo quitamos del mapa visualmente
+  if (order.estado === 'cancelado') {
+    if (neighborOrderMarkers[orderId]) {
+      map.removeLayer(neighborOrderMarkers[orderId]);
+      delete neighborOrderMarkers[orderId];
+    }
+    return;
+  }
+
   // Asignar el icono dependiendo del estado
   let currentIcon = garrafaIcon;
   if (order.estado === 'visto') {
      currentIcon = garrafaYellowIcon;
-  } else if (order.estado === 'entregado') {
+  } else if (order.estado === 'asignado' || order.estado === 'entregado') {
      currentIcon = garrafaGreenIcon;
   }
 
@@ -310,7 +319,7 @@ function agregarPedidoVecinoEnMapa(order) {
      return; // Ignore orders outside of their category
   }
 
-  const marker = L.marker([order.latitude, order.longitude], { icon: currentIcon, zIndexOffset: 8000 }).addTo(map);
+  const marker = L.marker([order.lat, order.lng], { icon: currentIcon, zIndexOffset: 8000 }).addTo(map);
   marker.bindPopup(`
     <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
       <strong style="color:#FF6D00; font-size:13px;">🛒 Pedido de un Vecino</strong><br>
@@ -404,8 +413,9 @@ function applyGpsPosition(lat, lng, label, forceReset = false) {
   }
 
   if (!userMarker && map) {
+    const activeIcon = (typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver') ? truckIcon : userLocationIcon;
     userMarker = L.marker([activeLat, activeLng], {
-      icon: userLocationIcon,
+      icon: activeIcon,
       draggable: true,
       autoPan: true
     }).addTo(map);

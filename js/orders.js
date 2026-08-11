@@ -314,7 +314,7 @@ function cancelarPedidoActivo() {
       try {
         const order = JSON.parse(rawOrder);
         if (order.id) {
-          const { error } = await window.supabaseClient.from('pedidos').update({ estado: 'cancelado' }).eq('id', order.id);
+          const { error } = await window.supabaseClient.from('pedidos').delete().eq('id', order.id);
           if (error) console.error("Error cancelando pedido en Supabase:", error);
         }
       } catch(e) {}
