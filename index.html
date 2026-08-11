@@ -693,6 +693,8 @@
 
   <script src="js/ads.js" defer></script>
   <script src="js/orders.js" defer></script>
+  <script src="js/admin.js" defer></script>
+  <script src="js/admin_users.js" defer></script>
   <script src="js/app.js" defer></script>
 
 <!-- MODAL ADMINISTRADOR EXCLUSIVO (ACCESO PROTEGIDO CON USUARIO Y CONTRASEÑA OBLIGATORIOS) -->
@@ -957,23 +959,6 @@
 
       <p style="font-size:11px; color:#38BDF8; margin: 8px 0;">✔ Coordinación directa con repartidor por Chat Privado 1-a-1 e indicación GPS.</p>
       <button class="btn-submit" onclick="confirmarPedido()"><i class="fa-solid fa-truck-fast" style="color:#F59E0B;"></i> <img src="icons/garrafa_red_clean.svg" style="width:22px; height:22px; vertical-align:middle; filter:drop-shadow(0 0 4px #FF1744);" alt="Gas"> Confirmar y Solicitar en Mapa Vivo</button>
-    </div>
-  </div>
-
-  <!-- MODAL DE PEDIDOS RECIENTES EN VIVO PARA REPARTIDORES -->
-  <div class="modal" id="modalDriverOrders">
-    <div class="modal-content" style="max-width: 500px;">
-      <div class="modal-title">
-        <span><i class="fa-solid fa-list-check"></i> Pedidos Recientes en Tu Zona (Repartidor)</span>
-        <button class="btn-close" onclick="closeDriverOrdersModal()">✕</button>
-      </div>
-      <p style="font-size: 11px; color: #94A3B8; margin-bottom: 10px;">
-        Lista en tiempo real de vecinos que solicitaron Garrafas GLP, Agua u otros productos cerca de tu ubicación:
-      </p>
-      
-      <div id="driverOrdersContainer" style="max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
-        <!-- Renderizado dinámico de pedidos vecinos -->
-      </div>
     </div>
   </div>
 
