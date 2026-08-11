@@ -207,7 +207,7 @@ async function cargarPedidosVecinalesEnVivo() {
     const res = await window.supabaseClient
       .from('rutas_repartidores')
       .select('*')
-      .gte('created_at', tenMinsAgo);
+      .gte('last_active', tenMinsAgo);
 
     if (res.data && !res.error) {
        console.log(`✅ Supabase devolvió ${res.data.length} camiones activos.`);
@@ -1043,12 +1043,32 @@ function renderHeatmapOverlay() {
     return;
   }
 
-  let heatPoints = [
-    { lat: currentGpsLat + 0.0025, lng: currentGpsLng + 0.0030, count: 5, cat: "🔥 5 Garrafas GLP (Zona Alta Demanda)" },
-    { lat: currentGpsLat - 0.0020, lng: currentGpsLng + 0.0035, count: 3, cat: "💧 3 Botellones Agua 20L" },
-    { lat: currentGpsLat - 0.0040, lng: currentGpsLng - 0.0025, count: 8, cat: "🔥 8 Garrafas GLP (Concentración OTB)" },
-    { lat: currentGpsLat + 0.0035, lng: currentGpsLng - 0.0030, count: 4, cat: "🪵 4 Bolsas Carbón / Leña" }
-  ];
+  let heatPoints = [];
+  
+  // Extraer puntos reales de los pedidos vecinales
+  const orderIds = Object.keys(neighborOrderMarkers);
+  
+  if (orderIds.length === 0) {
+    if (typeof showToast === 'function') {
+       showToast('ℹ️ Mapa de Calor', 'No hay suficientes pedidos reales para generar un mapa de calor en este momento.', 'info', 3000);
+    }
+    isHeatmapActive = false;
+    document.getElementById('heatmapToggleBtn').classList.remove('active');
+    return;
+  }
+
+  // Agrupar pedidos reales para visualización en el mapa de calor
+  orderIds.forEach((id, index) => {
+     const marker = neighborOrderMarkers[id];
+     if (marker && marker._latlng) {
+        heatPoints.push({
+           lat: marker._latlng.lat,
+           lng: marker._latlng.lng,
+           count: 1, // Podría ser la cantidad del pedido, pero 1 es más seguro como base
+           cat: "🔥 Demanda Real"
+        });
+     }
+  });
 
   const rawOrder = localStorage.getItem('notigas_active_order');
   if (rawOrder) {

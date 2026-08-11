@@ -32,58 +32,10 @@ let globalLoadingTimeout;
 /* Modal de confirmación elegante (Reemplazo de confirm()) */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // FIX W-04: Geobloqueo mejorado — ya no destruye el DOM (compatibilidad con SW + SPA).
-  // Muestra un overlay encima del contenido con doble verificación GeoIP.
-  try {
-    const _verificarGeolocalizacion = async (url) => {
-      const r = await fetch(url);
-      const data = await r.json();
-      return data;
-    };
+  // FIX: El bloqueo por GeoIP se ha eliminado a favor del acceso libre global,
+  // dado que causaba bloqueos falsos por VPNs o lentitud de red.
+  // console.log('GeoIP desactivado');
 
-    const _mostrarOverlayGeobloqueo = (paisNombre) => {
-      // Verificar si ya existe el overlay (evitar duplicados)
-      if (document.getElementById('geoblock-overlay')) return;
-      const overlay = document.createElement('div');
-      overlay.id = 'geoblock-overlay';
-      overlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:#0F172A;z-index:999999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;font-family:\'Inter\',sans-serif;text-align:center;padding:20px;box-sizing:border-box;';
-      overlay.innerHTML = `
-        <h1 style="color:#FF1744;font-size:48px;margin:0;"><i class="fa-solid fa-earth-americas"></i></h1>
-        <h2 style="margin-top:10px;">Acceso Restringido</h2>
-        <p style="color:#94A3B8;font-size:14px;max-width:400px;line-height:1.5;">
-          NOTIGAS es una plataforma exclusiva para América.<br>
-          Tu conexión proviene de <strong>${paisNombre || 'otra región'}</strong>,
-          por lo que el acceso ha sido bloqueado por motivos de seguridad.
-        </p>
-      `;
-      document.body.appendChild(overlay);
-    };
-
-    // Intento 1: ipapi.co
-    _verificarGeolocalizacion('https://ipapi.co/json/')
-      .then(data => {
-        if (data && data.continent_code &&
-            data.continent_code !== 'SA' &&
-            data.continent_code !== 'NA' &&
-            data.country_code !== 'ES') {
-          _mostrarOverlayGeobloqueo(data.country_name);
-        }
-      })
-      .catch(() => {
-        // Intento 2 (fallback): freeipapi.com si ipapi.co falla
-        fetch('https://freeipapi.com/api/json')
-          .then(r => r.json())
-          .then(data => {
-            if (data && data.continentCode &&
-                data.continentCode !== 'SA' &&
-                data.continentCode !== 'NA' &&
-                data.countryCode !== 'ES') {
-              _mostrarOverlayGeobloqueo(data.countryName);
-            }
-          })
-          .catch(() => console.warn('GeoIP checks fallaron — acceso permitido por defecto'));
-      });
-  } catch(e) {}
 
 
 

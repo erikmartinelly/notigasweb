@@ -688,7 +688,23 @@ function eliminarMiCuentaCompleta() {
   }
 }
 
-function ejecutarEliminacionTotalCuenta() {
+async function ejecutarEliminacionTotalCuenta() {
+  if (window.supabaseClient) {
+    try {
+      const u = JSON.parse(localStorage.getItem('notigas_user_data') || '{}');
+      if (u && u.id) {
+         // Borrar la entrada de chofer si existe (el backend rechazará si no es suyo gracias a RLS)
+         await window.supabaseClient.from('choferes_habilitados').delete().eq('user_id', u.id);
+         // Detener el tracker de GPS si estaba activo
+         if (typeof window.stopDriverLocationBroadcast === 'function') {
+           window.stopDriverLocationBroadcast();
+         }
+      }
+    } catch (e) {
+      console.error('Error limpiando datos de Supabase', e);
+    }
+  }
+
   const keysToRemove = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
