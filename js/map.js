@@ -1120,6 +1120,15 @@ const GEOBOLIVIA_MUNICIPIOS = [
 ];
 
 function cambiarCiudadCapital(cityKey) {
+  if (AppState.get('appMode') === 'driver') {
+    if (typeof showToast === 'function') {
+      showToast('Acción no permitida', 'Como repartidor, solo puedes operar en tu ciudad de registro.', 'error', 4000);
+    }
+    const select = document.getElementById('selectCiudadCapital');
+    if (select) select.value = AppState.get('city');
+    return;
+  }
+
   const mun = GEOBOLIVIA_MUNICIPIOS.find(m => m.key === cityKey) || GEOBOLIVIA_MUNICIPIOS[0];
   currentGpsLat = mun.lat;
   currentGpsLng = mun.lon;

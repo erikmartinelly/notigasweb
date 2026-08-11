@@ -110,6 +110,20 @@ async function verificarEstadoAdmin() {
 
   if (!window.supabaseClient) {
     alert("❌ Error: No hay conexión con la base de datos.");
+    return;
+  }
+
+  try {
+    const { count, error } = await window.supabaseClient
+      .from('admin_credentials')
+      .select('*', { count: 'exact', head: true });
+
+    if (!error && count === 0) {
+      if (loginScreen) loginScreen.style.display = 'none';
+      if (setupScreen) setupScreen.style.display = 'block';
+    }
+  } catch(e) {
+    console.error('Error verificando estado admin', e);
   }
 }
 
@@ -288,7 +302,7 @@ async function renderAdminAdsAndPostsList() {
   }
 
   // 2. Avisos y Noticias de la OTB
-  const { data: localPosts } = await window.supabaseClient.from('publicaciones').select('*').neq('tipo', 'anuncioGlobal');
+  const { data: localPosts } = await window.supabaseClient.from('avisos').select('*');
   
   if (localPosts && localPosts.length > 0) {
     localPosts.forEach(p => {
@@ -311,11 +325,6 @@ async function renderAdminAdsAndPostsList() {
   }
 
   container.innerHTML = html;
-}
-
-  if (typeof showToast === 'function') {
-    showToast('🗑️ Anuncio Eliminado', 'El anuncio local de la OTB fue borrado del sistema.', 'info', 4000);
-  }
 }
 
 async function renderAdminDashboardKPIs() {
@@ -348,8 +357,8 @@ async function renderAdminDashboardKPIs() {
   if (window.supabaseClient) {
      const { data } = await window.supabaseClient.from('pedidos').select('estado');
      if (data) {
-        // Pedidos activos (pendiente + visto)
-        const activos = data.filter(p => p.estado === 'pendiente' || p.estado === 'visto').length;
+        // Pedidos activos (pendiente + asignado)
+        const activos = data.filter(p => p.estado === 'pendiente' || p.estado === 'asignado').length;
         ordersCount = activos > 0 ? activos : ordersCount;
         
         // Pedidos Entregados (NUEVO KPI)
@@ -576,7 +585,7 @@ async function renderAdminOrdersList() {
         
         let estadoBadge = '';
         let borderColor = '#56BC37';
-        if (order.estado === 'visto') {
+        if (order.estado === 'asignado') {
            estadoBadge = `<span style="font-size:10px; background:#F57F17; color:white; padding:3px 6px; border-radius:4px; font-weight:800;">👀 Visto (Driver: ${order.driver_id ? order.driver_id.substring(0,6) : 'N/A'})</span>`;
            borderColor = '#F57F17';
         } else {

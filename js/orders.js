@@ -72,7 +72,7 @@ window.aceptarPedidoRepartidor = async function(id) {
   showConfirmModal('🚚', 'Aceptar Pedido', '¿Confirmas que te dirigirás a esta dirección ahora mismo?', 'Sí, iré ahora', async () => {
     showLoadingOverlay('Asignando pedido...');
     const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
-    const { error } = await window.supabaseClient.from('pedidos').update({ estado: 'asignado', driver_id: localUserId }).eq('id', id);
+    const { error } = await window.supabaseClient.from('pedidos').update({ estado: 'asignado', driver_id: localUserId }).eq('id', id).eq('estado', 'pendiente');
     hideLoadingOverlay();
     
     if (error) {
@@ -314,7 +314,7 @@ function cancelarPedidoActivo() {
       try {
         const order = JSON.parse(rawOrder);
         if (order.id) {
-          const { error } = await window.supabaseClient.from('pedidos').delete().eq('id', order.id);
+          const { error } = await window.supabaseClient.from('pedidos').update({ estado: 'cancelado' }).eq('id', order.id);
           if (error) console.error("Error cancelando pedido en Supabase:", error);
         }
       } catch(e) {}

@@ -895,11 +895,16 @@ async function procesarSesionExitosa(user) {
     try {
       const { data: choferData } = await window.supabaseClient
         .from('choferes_habilitados')
-        .select('ciudad')
+        .select('ciudad, categoria, categoria2')
         .eq('user_id', user.id)
         .maybeSingle();
-      if (choferData && choferData.ciudad) {
-        AppState.set('city', choferData.ciudad.toLowerCase());
+      if (choferData) {
+        if (choferData.ciudad) {
+          clienteData.ciudad = choferData.ciudad.toLowerCase();
+          AppState.set('city', choferData.ciudad.toLowerCase());
+        }
+        if (choferData.categoria) clienteData.categoria = choferData.categoria;
+        if (choferData.categoria2) clienteData.categoria2 = choferData.categoria2;
       }
     } catch(e) {}
   }

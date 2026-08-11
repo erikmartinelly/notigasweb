@@ -5,10 +5,14 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "build": "echo OK"
+    "build": "echo 'Build OK'",
+    "test": "node test_jsdom.js"
   },
   "dependencies": {
     "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "jsdom": "^24.0.0"
   },
   "engines": {
     "node": ">=18.0.0"

@@ -46,7 +46,7 @@ NOTIGAS bridges this gap by democratizing access to Artificial Intelligence and 
 ├── forum.js                # Neighborhood forum posting and logic
 ├── supabase-config.js      # Supabase initialization and realtime subscriptions
 ├── sw.js                   # Service Worker for PWA caching
-├── supabase_schema.sql     # Database tables, RLS policies, and triggers
+├── supabase/migrations/    # Database tables, RLS policies, and triggers
 └── styles/                 # CSS stylesheets
 ```
 
@@ -60,7 +60,7 @@ NOTIGAS bridges this gap by democratizing access to Artificial Intelligence and 
 
 2.  **Configure Supabase:**
     *   Create a new project in Supabase.
-    *   Run the provided `supabase_schema.sql` (and the `admin_credentials` SQL) in the Supabase SQL Editor to create the required tables and RLS policies.
+    *   Run the SQL scripts located in the `supabase/migrations/` folder in numerical order (from `001_initial_setup.sql` to `007_storage_buckets.sql`) in the Supabase SQL Editor to create the required tables, RLS policies, and storage buckets.
     *   Open `supabase-config.js` and replace the placeholder `supabaseUrl` and `supabaseAnonKey` with your project's actual credentials.
 
 3.  **Run Locally (Development):**
