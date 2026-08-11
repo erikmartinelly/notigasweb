@@ -24,7 +24,7 @@ async function renderForumFeed() {
     const feed = document.getElementById('forumFeed');
     if (!feed || !window.supabaseClient) return;
 
-  const currentAdmin = getVerifiedAdminEmail();
+  const currentAdmin = (typeof getVerifiedAdminEmail === 'function') ? getVerifiedAdminEmail() : null;
   const isAdmin = currentAdmin && (currentAdmin.includes('erikmartinelly') || currentAdmin.includes('leonmartinelly'));
 
   const { data: localPosts, error } = await window.supabaseClient.from('avisos')
@@ -186,8 +186,8 @@ async function crearNuevoPost() {
   // Detectar si hay contenido en español (tildes, ñ, signos de interrogación/exclamación)
   const hasSpanishChars = /[à-ÿñÑ¡¿]/i.test(textoCompleto);
 
-  // Bloquear solo si hay 2+ palabras spam Y NO hay caracteres en español (probable bot/spam en inglés)
-  if (spamMatches && spamMatches.length >= 2 && !hasSpanishChars) {
+  // Bloquear si hay coincidencias claras de spam independientemente del idioma
+  if (spamMatches && spamMatches.length >= 1) {
     alert('⛔ ALERTA DE SEGURIDAD: Tu publicación ha sido bloqueada por el filtro Anti-Spam.\n\nNOTIGAS es una plataforma exclusiva para vecinos hispanohablantes.');
     if (window.supabaseClient) {
       window.supabaseClient.from('reportes_spam').insert([{ texto: textoCompleto, motivo: 'Filtro Anti-Spam mejorado' }]);
@@ -329,7 +329,7 @@ async function votarComentario(comentarioId, delta) {
   // FIX W-05: UPDATE directo por id en tabla propia — sin leer+modificar+escribir el JSON array
   try {
     await window.supabaseClient.rpc('incrementar_votos_comentario', {
-      comentario_id: parseInt(comentarioId, 10),
+      comentario_id: comentarioId,
       incremento: delta
     });
   } catch (e) {

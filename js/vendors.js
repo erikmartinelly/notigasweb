@@ -27,10 +27,11 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
   try {
     // Solo traemos choferes de la ciudad actual que estén pendientes o aprobados.
     // (Por ahora traemos todos y el admin ya los banea o aprueba).
+    const cityNormalized = city.trim().toLowerCase();
     const { data, error } = await window.supabaseClient
       .from('choferes_habilitados')
       .select('*')
-      .eq('ciudad', city);
+      .eq('ciudad', cityNormalized);
 
     if (error) {
       console.error("Error descargando choferes de Supabase:", error);
