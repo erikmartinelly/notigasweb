@@ -116,7 +116,7 @@ function renderVendorCards(filterCat) {
   const container = document.getElementById('vendorGridContainer');
   if (!container) return;
 
-  const currentAdmin = getVerifiedAdminEmail();
+  const currentAdmin = typeof getVerifiedAdminEmail === 'function' ? getVerifiedAdminEmail() : null;
   const isAdmin = currentAdmin && (currentAdmin.includes('erikmartinelly') || currentAdmin.includes('leonmartinelly'));
 
   const allVendors = getStoredVendors();

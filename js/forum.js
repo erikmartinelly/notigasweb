@@ -27,12 +27,23 @@ async function renderForumFeed() {
   const currentAdmin = (typeof getVerifiedAdminEmail === 'function') ? getVerifiedAdminEmail() : null;
   const isAdmin = currentAdmin && (currentAdmin.includes('erikmartinelly') || currentAdmin.includes('leonmartinelly'));
 
+  const tresDiasAtras = new Date(Date.now() - 72 * 3600 * 1000).toISOString();
+
+  // FIX: Seleccionar la cuenta de comentarios y filtrar avisos de más de 72h
   const { data: localPosts, error } = await window.supabaseClient.from('avisos')
-    .select('*')
+    .select('*, comentarios_avisos(count)')
+    .gte('created_at', tresDiasAtras)
     .order('created_at', { ascending: false });
 
   if (error) {
       console.error("Error cargando foro:", error);
+      feed.innerHTML = `
+        <div style="text-align:center; color:#EF4444; padding:40px 14px; background: #1E293B; border-radius: 14px; border: 1px dashed rgba(239, 68, 68, 0.3);">
+          <i class="fa-solid fa-triangle-exclamation" style="font-size:32px; margin-bottom:10px;"></i><br>
+          <strong>Error de conexión</strong><br>
+          <span style="font-size: 12px;">No pudimos cargar los avisos en este momento. Intenta nuevamente más tarde o verifica tu inicio de sesión.</span>
+        </div>
+      `;
       return;
   }
 
@@ -50,9 +61,8 @@ async function renderForumFeed() {
 
   let html = '';
   localPosts.forEach((post, index) => {
-    // Evitar errores si comentarios no existe aún en la BD
-    const commentsList = post.comentarios || [];
-    const commentCount = commentsList.length;
+    // FIX: Obtener contador de la relación Supabase
+    const commentCount = (post.comentarios_avisos && post.comentarios_avisos[0]) ? post.comentarios_avisos[0].count : 0;
     const escapedTitle = (post.titulo || '').replace(/'/g, "\\'");
     const escapedDesc = (post.descripcion || '').replace(/'/g, "\\'");
 
@@ -205,6 +215,13 @@ async function crearNuevoPost() {
     }
   } catch(e) {
     console.warn("No se pudo obtener la sesión de usuario para el aviso:", e);
+  }
+
+  // FIX: Bloquear la inserción si el usuario no tiene sesión
+  if (!userId) {
+     alert('Debes iniciar sesión con Google para poder publicar un aviso vecinal.');
+     closeNewPostModal();
+     return;
   }
 
   const { error } = await window.supabaseClient.from('avisos').insert([{
