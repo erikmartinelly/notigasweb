@@ -20,12 +20,16 @@ create extension if not exists "uuid-ossp";
 -- Nota: pg_cron normalmente debe activarse desde el Dashboard de Supabase (Database > Extensions)
 create extension if not exists "pg_cron";
 
+/* 
 -- Trabajo de auto-purga (TTL) para borrar pedidos antiguos (> 2 días) todos los días a medianoche
+-- NOTA: Debes habilitar pg_cron en el Dashboard de Supabase (Database -> Extensions).
+-- Si da error de permisos al ejecutar esto, configúralo directamente desde la interfaz gráfica de Supabase.
 select cron.schedule(
   'purge-old-pedidos',
   '0 0 * * *',
   $$ delete from pedidos where created_at < now() - interval '2 days'; $$
 );
+*/
 
 -- 3. CREACIÓN DE TABLAS (Con UUIDs)
 
@@ -180,7 +184,7 @@ alter table choferes_habilitados enable row level security;
 alter table usuarios_baneados enable row level security;
 alter table denuncias enable row level security;
 alter table reportes_spam enable row level security;
-alter table publicaciones enable row level security;
+
 
 -- Políticas Universales (MVP Público): Permitir lectura, inserción y borrado, basándose en la confianza del cliente.
 create policy "Public SELECT" on pedidos for select using (true);
