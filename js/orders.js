@@ -200,6 +200,7 @@ function seleccionarYPedirDirecto(catNombre) {
     }
     if (foundIdx !== -1) {
       sel.selectedIndex = foundIdx;
+      sel.dispatchEvent(new Event('change'));
     }
   }
   const modalPedido = document.getElementById('modalPedido');

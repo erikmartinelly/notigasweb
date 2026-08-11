@@ -6,6 +6,7 @@ create extension if not exists "pg_cron";
 
 -- Nota: pg_cron normalmente debe activarse desde el Dashboard de Supabase (Database > Extensions)
 
+/* 
 -- TRABAJOS DE AUTO-PURGA (TTL)
 -- TTL Pedidos (> 2 días)
 select cron.schedule(
@@ -20,3 +21,4 @@ select cron.schedule(
   '0 0 * * *',
   $$ delete from avisos where created_at < now() - interval '72 hours'; $$
 );
+*/
