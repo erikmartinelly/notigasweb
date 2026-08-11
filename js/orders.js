@@ -16,10 +16,12 @@ async function renderDriverOrdersList() {
 
   let orders = [];
   if (window.supabaseClient) {
+    const ciudadReal = localStorage.getItem('notigas_city') || 'santacruz';
     const activeWindow = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
     const { data } = await window.supabaseClient
       .from('pedidos')
       .select('*')
+      .eq('ciudad', ciudadReal)
       .gte('created_at', activeWindow);
       
     if (data) {
@@ -296,15 +298,12 @@ function confirmarPedido() {
         showToast('Pedido Publicado en Mapa', `🚀 ${cat}\n📍 ${direccion}${telefono ? '\n📞 Tel: ' + telefono : ''}`, 'order', 3000);
       }
     }).catch(e => {
-       showToast('✅ ¡Pedido Local!', 'Guardado localmente.', 'success', 3000);
-       closePedidoModal();
-       checkActiveOrderStatus();
+       if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+       console.error(e);
+       showToast('Error', 'Error de conexión con la cuenta. Tu pedido no pudo ser registrado.', 'error', 3000);
     });
   } else {
-    showToast('✅ ¡Pedido Local!', 'Modo sin conexión a Supabase.', 'success', 3000);
-    closePedidoModal();
-    checkActiveOrderStatus();
-    if (typeof renderActiveOrdersMap === 'function') renderActiveOrdersMap();
+    showToast('Error', 'El servidor no está disponible. No se puede crear el pedido.', 'error', 3000);
   }
 }
 function cancelarPedidoActivo() {
@@ -378,9 +377,11 @@ async function abrirPanoramicaPedidos() {
     try {
       const expirationMs = (window.NOTIGAS && window.NOTIGAS.ORDER_EXPIRATION_MS) ? window.NOTIGAS.ORDER_EXPIRATION_MS : 48 * 60 * 60 * 1000;
       const activeWindow = new Date(now - expirationMs).toISOString();
+      const ciudadReal = localStorage.getItem('notigas_city') || 'santacruz';
       const { data: pedidosReales } = await window.supabaseClient
         .from('pedidos')
         .select('id, categoria, descripcion, created_at')
+        .eq('ciudad', ciudadReal)
         .gte('created_at', activeWindow)
         .order('created_at', { ascending: false })
         .limit(10);
@@ -441,17 +442,6 @@ function cerrarPanoramicaPedidos() {
 }
 function notificarEscucheCamion() {
   const pos = getActiveUserLocation();
-
-  // Guardar en el buffer de reportes de vecinos (validez por 30 minutos)
-  let buffer = [];
-  try {
-    const raw = localStorage.getItem('notigas_reported_trucks_buffer');
-    if (raw) buffer = JSON.parse(raw);
-  } catch(e){}
-
-  const now = Date.now();
-  buffer = buffer.filter(t => (now - t.timestamp) < (30 * 60 * 1000));
-
   let reporterName = "Un vecino";
   try {
     const saved = localStorage.getItem('notigas_user_data');
@@ -461,36 +451,30 @@ function notificarEscucheCamion() {
     }
   } catch(e){}
 
-  buffer.unshift({
+  const alertPayload = {
     id: Date.now(),
     lat: pos.lat,
     lng: pos.lng,
-    timestamp: now,
-    reporter: reporterName
-  });
+    timestamp: Date.now(),
+    reporter: reporterName,
+    ciudad: localStorage.getItem('notigas_city') || 'santacruz'
+  };
 
-  localStorage.setItem('notigas_reported_trucks_buffer', JSON.stringify(buffer));
-
-  if (typeof renderReportedTrucksBuffer === 'function') {
-    renderReportedTrucksBuffer();
+  // Enviar a Supabase Realtime si está conectado
+  if (window.supabaseClient && window._realtimeChannel) {
+     window._realtimeChannel.send({
+       type: 'broadcast',
+       event: 'vecinos_alert',
+       payload: alertPayload
+     });
   }
-
-  mostrarPopupAlertaRepartidor(`🔔 <strong>AVISO VECINAL EN VIVO:</strong><br>${reporterName} acaba de reportar que escuchó al camión pasar por esta zona.`);
-  showToast('¡Gracias Vecino!', 'Se ha fijado un marcador de Camión Oído/Visto en tu ubicación para que los demás vecinos lo vean.', 'success', 5000);
+  // Guardar localmente y mostrar
+  recibirAlertaVecinalBroadcast(alertPayload);
+  showToast('📢 Alerta Enviada', 'Los vecinos de tu ciudad han sido notificados de que hay un camión cerca.', 'success', 4000);
 }
+
 function lanzarEspecialEsperame() {
   const pos = getActiveUserLocation();
-
-  // Guardar solicitud en el buffer de reportes
-  let buffer = [];
-  try {
-    const raw = localStorage.getItem('notigas_reported_trucks_buffer');
-    if (raw) buffer = JSON.parse(raw);
-  } catch(e){}
-
-  const now = Date.now();
-  buffer = buffer.filter(t => (now - t.timestamp) < (30 * 60 * 1000));
-
   let reporterName = "Un vecino";
   try {
     const saved = localStorage.getItem('notigas_user_data');
@@ -500,20 +484,46 @@ function lanzarEspecialEsperame() {
     }
   } catch(e){}
 
-  buffer.unshift({
+  const alertPayload = {
     id: Date.now(),
     lat: pos.lat,
     lng: pos.lng,
-    timestamp: now,
-    reporter: `${reporterName} (🛑 Alerta Espérame)`
-  });
+    timestamp: Date.now(),
+    reporter: `${reporterName} (🛑 Alerta Espérame)`,
+    ciudad: localStorage.getItem('notigas_city') || 'santacruz'
+  };
 
-  localStorage.setItem('notigas_reported_trucks_buffer', JSON.stringify(buffer));
-
-  if (typeof renderReportedTrucksBuffer === 'function') {
-    renderReportedTrucksBuffer();
+  if (window.supabaseClient && window._realtimeChannel) {
+     window._realtimeChannel.send({
+       type: 'broadcast',
+       event: 'vecinos_alert',
+       payload: alertPayload
+     });
   }
 
+  recibirAlertaVecinalBroadcast(alertPayload);
   mostrarPopupAlertaRepartidor(`🛑 <strong>¡ALERTA VECINAL "ESPÉRAME"!</strong><br>${reporterName} solicita que el camión detenga su marcha cerca de esta ubicación.`);
-  showToast('Alerta Emitida', `Se ha colocado un punto de alerta en el mapa visible para todos los vecinos y repartidores.`, 'warning', 1000);
+  showToast('Alerta Emitida', `Se ha colocado un punto de alerta en el mapa visible para todos los vecinos y repartidores.`, 'warning', 3000);
 }
+
+window.recibirAlertaVecinalBroadcast = function(payload) {
+  // Solo procesar alertas de nuestra misma ciudad
+  const miCiudad = localStorage.getItem('notigas_city') || 'santacruz';
+  if (payload.ciudad && payload.ciudad !== miCiudad) return;
+
+  let buffer = [];
+  try {
+    const raw = localStorage.getItem('notigas_reported_trucks_buffer');
+    if (raw) buffer = JSON.parse(raw);
+  } catch(e){}
+
+  // Evitar duplicados
+  if (buffer.find(a => a.id === payload.id)) return;
+
+  const now = Date.now();
+  buffer = buffer.filter(t => (now - t.timestamp) < (30 * 60 * 1000));
+  buffer.unshift(payload);
+  
+  localStorage.setItem('notigas_reported_trucks_buffer', JSON.stringify(buffer));
+  if (typeof renderReportedTrucksBuffer === 'function') renderReportedTrucksBuffer();
+};

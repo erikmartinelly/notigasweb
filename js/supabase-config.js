@@ -112,6 +112,11 @@ window.iniciarSuscripcionesRealtime = function() {
                  renderPostComments(activePostCommentsRef);
             }
         })
+        .on('broadcast', { event: 'vecinos_alert' }, payload => {
+            if (payload.payload && typeof recibirAlertaVecinalBroadcast === 'function') {
+                recibirAlertaVecinalBroadcast(payload.payload);
+            }
+        })
         .subscribe((status, err) => {
             if (status === 'SUBSCRIBED') {
                 console.log('✅ Realtime conectado correctamente.');

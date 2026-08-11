@@ -950,73 +950,9 @@ function verificarYMostrarRepartidorGPS() {
   renderReportedTrucksBuffer();
   renderActiveOrdersMap();
 
-  const driverGpsLive = localStorage.getItem('driverGpsLive');
-  let isDriverActive = (driverGpsLive === 'on');
-  let driverNombre = 'Camión GLP N° 42';
-  let driverCategoria = 'Gas GLP';
-  let userRole = 'vecino';
-
-  try {
-    const saved = localStorage.getItem('notigas_user_data');
-    if (saved) {
-      const u = JSON.parse(saved);
-      if (u.role) userRole = u.role;
-      if (u.nombre) driverNombre = u.nombre;
-      if (u.categoria) driverCategoria = u.categoria;
-      if (u.role === 'repartidor' && driverGpsLive !== 'off') {
-        isDriverActive = true;
-      }
-    }
-  } catch(e){}
-
-  if (userRole === 'repartidor' && typeof isOrderCategoryMatchingDriver === 'function' && !isOrderCategoryMatchingDriver(driverCategoria)) {
-    if (truckMarker) {
-      map.removeLayer(truckMarker);
-      truckMarker = null;
-    }
-    return;
-  }
-
-  if (isDriverActive || driverGpsLive === 'on') {
-    let lat = currentGpsLat;
-    let lng = currentGpsLng;
-
-    try {
-      const lastLoc = localStorage.getItem('notigas_driver_last_location');
-      if (lastLoc) {
-        const loc = JSON.parse(lastLoc);
-        if (loc.lat && loc.lng) {
-          lat = loc.lat;
-          lng = loc.lng;
-        }
-      }
-    } catch(e){}
-
-    if (!truckMarker) {
-      truckCurrentLat = lat;
-      truckCurrentLng = lng;
-      truckMarker = L.marker([lat, lng], { icon: truckIcon, zIndexOffset: 9000 }).addTo(map);
-      truckMarker.bindPopup(`
-        <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
-          <strong style="color:#FF6D00; font-size:13px;"><i class="fa-solid fa-truck-fast"></i> ${escapeHtmlStr(driverNombre)} — En Ruta</strong><br>
-          <span style="font-size:11px; color:#00E676;">🟢 GPS en Tiempo Real · ${escapeHtmlStr(driverCategoria)}</span><br>
-          <button style="margin-top:6px; background:#0288D1; color:white; border:none; padding:4px 8px; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer;" onclick="abrirChatDirectoVendedor('${escapeHtmlStr(driverCategoria)}')">💬 Chat Directo</button>
-        </div>
-      `);
-    }
-
-    truckTargetLat = lat;
-    truckTargetLng = lng;
-  } else {
-    if (truckMarker) {
-      map.removeLayer(truckMarker);
-      truckMarker = null;
-    }
-    if (animationTimer) {
-      clearInterval(animationTimer);
-      animationTimer = null;
-    }
-  }
+  // FIX: Ya no dibujamos el camión propio leyendo de localStorage.
+  // El GPS del repartidor viaja a Supabase y Supabase lo devuelve por Realtime
+  // para que TODOS (incluso el propio repartidor) vean el mismo estado en la nube.
 }
 
 function renderHeatmapOverlay() {
@@ -1068,7 +1004,7 @@ function renderHeatmapOverlay() {
     try {
       const o = JSON.parse(rawOrder);
       if (o.lat && o.lng) {
-        heatPoints.unshift({ lat: o.lat, lng: o.lng, count: 10, cat: `🚨 PEDIDO ACTIVO VECINAL: ${o.categoria}` });
+        heatPoints.unshift({ lat: o.lat, lng: o.lng, count: 1, cat: `🚨 PEDIDO ACTIVO VECINAL: ${o.categoria}` });
       }
     } catch(e){}
   }
