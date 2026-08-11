@@ -40,9 +40,9 @@ app.use((req, res, next) => {
     // Fuentes tipográficas
     "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net",
     // Conexiones de datos (Supabase, Google, OSM, GeoIP, OSRM)
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://accounts.google.com https://ipinfo.io https://ipapi.co https://freeipapi.com https://ipwho.is https://*.tile.openstreetmap.org https://router.project-osrm.org",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://accounts.google.com https://ipinfo.io https://ipapi.co https://freeipapi.com https://ipwho.is https://*.tile.openstreetmap.org https://router.project-osrm.org https://nominatim.openstreetmap.org https://photon.komoot.io",
     // Imágenes (OSM tiles + Supabase Storage + data URIs para favicons dinámicos)
-    "img-src 'self' data: blob: https://*.tile.openstreetmap.org https://*.supabase.co https://pagead2.googlesyndication.com",
+    "img-src 'self' data: blob: https://*.tile.openstreetmap.org https://*.supabase.co https://pagead2.googlesyndication.com https://*.google.com",
     // Workers (Service Worker)
     "worker-src 'self'",
     // Frames: solo Google para One-Tap

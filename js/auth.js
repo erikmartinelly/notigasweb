@@ -232,8 +232,8 @@ function iniciarConGoogleDirecto() {
         if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
           console.info("Google One Tap no disponible en este navegador/origen. Alternando a formulario...");
           selectAuthMethod('email');
-          const regGmail = document.getElementById('regGmail');
-          if (regGmail) regGmail.focus();
+          const authEmail = document.getElementById('authEmail');
+          if (authEmail) authEmail.focus();
           if (typeof showToast === 'function') {
             showToast('Verificación de Correo', 'Ingresa tu correo Gmail en el formulario para ingresar.', 'info', 4000);
           }
@@ -472,10 +472,9 @@ async function guardarRegistroUnico() {
       switchTab(0);
     }
   } else {
-    const gmailInput = document.getElementById('regGmail');
-    const gmail = (gmailInput?.value || '').trim().toLowerCase() || 'vecino@gmail.com';
-    const nombre = (document.getElementById('regNombre')?.value || '').trim() || 'Usuario';
-    const apellido = (document.getElementById('regApellido')?.value || '').trim() || 'Vecino';
+    const gmail = session.user.email.toLowerCase().trim();
+    const nombre = session.user.user_metadata?.full_name || gmail.split('@')[0];
+    const apellido = '';
 
     const clienteData = { 
       role: 'vecino', 
@@ -572,7 +571,13 @@ async function iniciarSesionRepartidor() {
 
   localStorage.setItem('notigas_user_data', JSON.stringify(repartidorData));
   AppState.set('city', ciudad.toLowerCase());
-  await guardarRepartidorEnBaseDeDatos(repartidorData);
+  const exito = await guardarRepartidorEnBaseDeDatos(repartidorData);
+  
+  if (!exito) {
+    if (typeof showToast === 'function') showToast('❌ Error', 'No se pudo guardar la configuración. Reintenta.', 'error', 3000);
+    return;
+  }
+  
   sessionStorage.removeItem('notigas_temp_gmail');
 
   if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
@@ -904,7 +909,7 @@ async function procesarSesionExitosa(user) {
     try {
       const { data: choferData } = await window.supabaseClient
         .from('choferes_habilitados')
-        .select('ciudad, categoria, categoria2, productos, zonas, schedule')
+        .select('ciudad, categoria, productos, zonas, schedule')
         .eq('user_id', user.id)
         .maybeSingle();
       if (choferData) {
@@ -913,7 +918,6 @@ async function procesarSesionExitosa(user) {
           AppState.set('city', choferData.ciudad.toLowerCase());
         }
         if (choferData.categoria) clienteData.categoria = choferData.categoria;
-        if (choferData.categoria2) clienteData.categoria2 = choferData.categoria2;
         if (choferData.productos) clienteData.productos = choferData.productos;
         if (choferData.zonas) clienteData.zonas = choferData.zonas;
         if (choferData.schedule) clienteData.schedule = choferData.schedule;
