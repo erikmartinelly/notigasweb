@@ -617,46 +617,7 @@
     </div>
   </div>
 
-  <!-- MODAL DE INGRESO / AUTENTICACIÓN MEJORADO CON SELECCIÓN DE ROL Y MÉTODOS DE INGRESO -->
-  <div class="modal" id="modalWelcomeAuth">
-    <div class="modal-content" style="max-width: 460px;">
-      <div class="modal-title" style="justify-content: center; text-align: center; font-size: 18px; margin-bottom: 4px;">
-        <span>👋 Bienvenido a NOTIGAS</span>
-      </div>
-      <p style="font-size: 11px; color: #94A3B8; text-align: center; margin-bottom: 14px;">
-        Selecciona tu rol e ingresa con tu Cuenta Google o Correo Electrónico.
-      </p>
 
-      <div id="roleSelectionButtons" style="text-align:center; margin-bottom: 20px; margin-top: 15px; display:flex; flex-direction:column; gap:12px; align-items:center;">
-        <a href="#" onclick="document.getElementById('roleSelectionButtons').style.display='none'; document.getElementById('authPaneGoogle').style.display='block'; selectAuthRole('buyer');" class="btn-premium-buyer">
-          <i class="fa-solid fa-cart-shopping" style="margin-right: 8px;"></i> Ingreso Compradores
-        </a>
-        <a href="#" onclick="document.getElementById('roleSelectionButtons').style.display='none'; document.getElementById('authPaneGoogle').style.display='block'; selectAuthRole('driver');" class="btn-premium-driver">
-          <i class="fa-solid fa-truck-fast" style="margin-right: 8px;"></i> Ingreso Repartidores
-        </a>
-      </div>
-
-      <!-- SELECCIONADOR VISUAL DE ROL: COMPRADOR VS REPARTIDOR (OCULTO POR DEFECTO PARA NO CONFUNDIR AL COMPRADOR) -->
-      <div class="role-selector-container" id="authRoleSelectorContainer" style="display: none;">
-        <button class="role-select-btn active" id="btnRoleBuyer" onclick="selectAuthRole('buyer')">
-          <i class="fa-solid fa-cart-shopping"></i>
-          <span>🛍️ COMPRADOR</span>
-        </button>
-        <button class="role-select-btn" id="btnRoleDriver" onclick="selectAuthRole('driver')">
-          <i class="fa-solid fa-truck-fast"></i>
-          <span>🚛 REPARTIDOR</span>
-        </button>
-      </div>
-
-      <!-- SELECCIÓN DE MÉTODO DE INGRESO ÚNICO (CUENTA GOOGLE) -->
-      <div id="authPaneGoogle" class="auth-method-pane" style="display: none;">
-        <p style="font-size: 11px; color: #CBD5E1; margin: 14px 0; text-align: center;">
-          Ingresa con 1 solo clic utilizando tu cuenta verificada de Google Gmail:
-        </p>
-        <div id="g_id_onload_container" style="display: flex; justify-content: center; margin-bottom: 10px;"></div>
-      </div>
-    </div>
-  </div>
 
   <!-- MODAL DE DENUNCIA PARA REPORTAR ACOSO O CONTENIDO INAPROPIADO -->
   <div class="modal" id="modalReport">

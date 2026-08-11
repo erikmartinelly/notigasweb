@@ -363,6 +363,10 @@ function moverMarcadorUbicacionManual(lat, lng) {
     userMarker.setLatLng([lat, lng]);
   }
 
+  if (typeof map !== 'undefined' && map) {
+    map.setView([lat, lng], map.getZoom(), { animate: true });
+  }
+
   actualizarCoordenadasPedidoActivo(lat, lng);
 
   if (userMarker) {
