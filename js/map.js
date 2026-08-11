@@ -181,10 +181,8 @@ function initNotigasMap() {
   applyGpsPosition(currentGpsLat, currentGpsLng, "Ubicación Inicial", true);
 
   conectarGPSAuto(false);
-  renderReportedTrucksBuffer();
-  if (typeof window.iniciarSuscripcionesRealtime === 'function') {
-    window.iniciarSuscripcionesRealtime();
-  }
+  renderReportedTrucksBuffer();  
+  // Realtime ya no se inicializa aquí para evitar duplicidad; app.js lo maneja.
   cargarPedidosVecinalesEnVivo();
 }
 
@@ -198,10 +196,13 @@ async function cargarPedidosVecinalesEnVivo() {
   const activeWindow = new Date(Date.now() - expirationMs).toISOString();
   console.log("🔍 Consultando pedidos en Supabase desde:", activeWindow);
 
+  const activeCity = AppState.get('city') || 'santacruz';
+
   try {
     const { data, error } = await window.supabaseClient
       .from('pedidos')
       .select('*')
+      .eq('ciudad', activeCity)
       .gte('created_at', activeWindow);
 
     if (error) {
@@ -216,6 +217,7 @@ async function cargarPedidosVecinalesEnVivo() {
     const res = await window.supabaseClient
       .from('rutas_repartidores')
       .select('*')
+      .eq('ciudad', activeCity)
       .gte('last_active', tenMinsAgo);
 
     if (res.data && !res.error) {

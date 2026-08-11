@@ -469,8 +469,8 @@
         <label>Motivo de la Denuncia:</label>
         <select id="selectReportMotivo">
           <option value="Acoso o Bullying">🛑 Acoso o Bullying a un vecino</option>
-          <option value="Contenido Ofensivo / Inapropiado">⚠️ Contenido Ofensivo o Lenguaje Inapropiado</option>
-          <option value="Información Falsa / Spam">âŒ Información Falsa o Spam</option>
+          <option value="Contenido Ofensivo / Inapropiado">⚠️  Contenido Ofensivo o Lenguaje Inapropiado</option>
+          <option value="Información Falsa / Spam">❌ Información Falsa o Spam</option>
           <option value="Conducta Indebida del Repartidor / Cliente">🚨 Conducta Indebida</option>
         </select>
       </div>
@@ -500,17 +500,17 @@
           <i class="fa-solid fa-bottle-water" style="color: #0288D1;"></i>
           <span class="submenu-title">💧 Agua 20L</span>
         </div>
-        <div class="submenu-card" onclick="seleccionarYPedirDirecto('♻️ Chatarra')">
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('♻️  Chatarra')">
           <i class="fa-solid fa-recycle" style="color: #00E676;"></i>
-          <span class="submenu-title">♻️ Chatarra</span>
+          <span class="submenu-title">♻️  Chatarra</span>
         </div>
         <div class="submenu-card" onclick="seleccionarYPedirDirecto('📄 Papel')">
           <i class="fa-solid fa-newspaper" style="color: #4FC3F7;"></i>
           <span class="submenu-title">📄 Papel / Cartón</span>
         </div>
-        <div class="submenu-card" onclick="seleccionarYPedirDirecto('ðŸŽ Frutas & Verduras')">
-          <i class="fa-solid fa-apple-whole" style="color: #FF5252;"></i>
-          <span class="submenu-title">ðŸŽ Frutas / Verduras</span>
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('🍎 Frutas & Verduras')">
+          <div class="submenu-icon">🍎</div>
+          <span class="submenu-title">🍎 Frutas / Verduras</span>
         </div>
         <div class="submenu-card" onclick="seleccionarYPedirDirecto('🧼 Detergentes & Limpieza')">
           <i class="fa-solid fa-pump-soap" style="color: #E040FB;"></i>
@@ -540,9 +540,9 @@
         <select id="selectCategoria" onchange="document.getElementById('groupOrderOtros').style.display = (this.value === '📦 Encargos & Otros Pedidos') ? 'block' : 'none';">
           <option value="🔥 Garrafa de Gas GLP">🔥 Garrafa de Gas GLP</option>
           <option value="💧 Botellón Agua Purificada 20L">💧 Botellón Agua Purificada 20L</option>
-          <option value="♻️ Chatarra">♻️ Chatarra</option>
+          <option value="♻️  Chatarra">♻️  Chatarra</option>
           <option value="📄 Papel / Reciclaje">📄 Papel / Reciclaje</option>
-          <option value="ðŸŽ Frutas & Verduras">ðŸŽ Frutas & Verduras</option>
+          <option value="🍎 Frutas & Verduras">🍎 Frutas & Verduras</option>
           <option value="🧼 Detergentes & Limpieza">🧼 Detergentes & Limpieza</option>
           <option value="🪵 Carbón / Leña">🪵 Carbón / Leña</option>
           <option value="📦 Encargos & Otros Pedidos">📦 Encargos & Otros Pedidos</option>
@@ -555,7 +555,7 @@
       </div>
 
       <div class="form-group">
-        <label>ðŸ  Dirección de Entrega (Opcional - GPS Ubicado en Mapa):</label>
+        <label>🏠 Dirección de Entrega (Opcional - GPS Ubicado en Mapa):</label>
         <input type="text" id="inputCallePrincipal" placeholder="Ej: Av. Blanco Galindo #123 (Opcional)">
       </div>
 
@@ -619,8 +619,8 @@
       <div class="form-group">
         <label>Tipo de Publicación:</label>
         <select id="selectPostTipo">
-          <option value="COMENTARIO">⚠️ COMENTARIO</option>
-          <option value="PIDO AYUDA">ðŸ¤ PIDO AYUDA</option>
+          <option value="COMENTARIO">⚠️  COMENTARIO</option>
+          <option value="PIDO AYUDA">🤝 PIDO AYUDA</option>
           <option value="SUGERENCIA">🚛 SUGERENCIA</option>
           <option value="INTERCAMBIO">🔄 INTERCAMBIO / COMPRA VECINAL</option>
         </select>

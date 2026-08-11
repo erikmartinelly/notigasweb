@@ -88,7 +88,11 @@ async function confirmarEntregaPedido(id) {
   if (!window.supabaseClient) return;
   showConfirmModal('🏁', 'Confirmar Entrega', '¿El vecino ya recibió su pedido y se realizó el pago?', 'Sí, ya entregué el pedido', async () => {
     showLoadingOverlay('Confirmando entrega...');
-    const { error } = await window.supabaseClient.from('pedidos').update({ estado: 'entregado' }).eq('id', id);
+    const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
+    const { error } = await window.supabaseClient.from('pedidos')
+      .update({ estado: 'entregado' })
+      .eq('id', id)
+      .eq('driver_id', localUserId);
     hideLoadingOverlay();
     
     if (error) {
@@ -143,7 +147,13 @@ function checkActiveOrderStatus() {
          if (document.getElementById('estadoPedidoActivo')) {
            window.supabaseClient.from('pedidos').select('estado').eq('user_id', localUserId).in('estado', ['pendiente', 'asignado']).order('created_at', {ascending: false}).limit(1).single()
            .then(({data, error}) => {
-              if (!error && data && data.estado === 'asignado') {
+              if (error || !data) {
+                 // Order is no longer active in DB
+                 localStorage.removeItem('notigas_active_order');
+                 checkActiveOrderStatus();
+                 return;
+              }
+              if (data.estado === 'asignado') {
                  const btnCancel = document.getElementById('btnActiveOrderCancel');
                  if (btnCancel) {
                     btnCancel.innerHTML = `<i class="fa-solid fa-check-circle"></i> Ya recibí mi pedido`;

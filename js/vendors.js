@@ -78,7 +78,10 @@ function getStoredVendors() {
   // FIX: Ya no inyectamos al usuario actual automáticamente con "active: true".
   // Su estado real vendrá de la tabla choferes_habilitados de Supabase.
 
-  return list.filter(v => !deletedIds.includes(v.id));
+  const currentAdmin = typeof getVerifiedAdminEmail === 'function' ? getVerifiedAdminEmail() : null;
+  const isAdmin = currentAdmin && (currentAdmin.includes('erikmartinelly') || currentAdmin.includes('leonmartinelly'));
+
+  return list.filter(v => !deletedIds.includes(v.id) && (v.active || isAdmin));
 }
 
 function renderVendorCards(filterCat) {
