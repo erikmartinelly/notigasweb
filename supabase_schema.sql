@@ -130,15 +130,7 @@ create table denuncias (
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- Tabla: mensajes_chat_privados
-create table mensajes_chat_privados (
-    id uuid primary key default uuid_generate_v4(),
-    remitente_id text,
-    destinatario_id text,
-    mensaje text,
-    leido boolean default false,
-    created_at timestamp with time zone default timezone('utc'::text, now()) not null
-);
+
 
 -- (Tabla publicaciones eliminada: fusionada con avisos usando la columna 'tipo')
 
@@ -188,7 +180,6 @@ alter table choferes_habilitados enable row level security;
 alter table usuarios_baneados enable row level security;
 alter table denuncias enable row level security;
 alter table reportes_spam enable row level security;
-alter table mensajes_chat_privados enable row level security;
 alter table publicaciones enable row level security;
 
 -- Políticas Universales (MVP Público): Permitir lectura, inserción y borrado, basándose en la confianza del cliente.
@@ -200,7 +191,6 @@ create policy "Public SELECT" on choferes_habilitados for select using (true);
 create policy "Public SELECT" on usuarios_baneados for select using (true);
 create policy "Public SELECT" on denuncias for select using (true);
 create policy "Public SELECT" on reportes_spam for select using (true);
-create policy "Privado SELECT" on mensajes_chat_privados for select using (auth.uid()::text = remitente_id OR auth.uid()::text = destinatario_id);
 
 create policy "Insertar propio" on pedidos for insert with check (auth.uid()::text = user_id);
 create policy "Insertar propio" on rutas_repartidores for insert with check (auth.uid()::text = user_id);
@@ -210,7 +200,6 @@ create policy "Public INSERT" on choferes_habilitados for insert with check (tru
 create policy "Public INSERT" on usuarios_baneados for insert with check (true);
 create policy "Public INSERT" on denuncias for insert with check (true);
 create policy "Public INSERT" on reportes_spam for insert with check (true);
-create policy "Public INSERT" on mensajes_chat_privados for insert with check (true);
 
 create policy "Actualizar propio" on pedidos for update using (auth.uid()::text = user_id);
 create policy "Actualizar propio" on rutas_repartidores for update using (auth.uid()::text = user_id);
@@ -220,7 +209,6 @@ create policy "Public UPDATE" on choferes_habilitados for update using (true);
 create policy "Public UPDATE" on usuarios_baneados for update using (true);
 create policy "Public UPDATE" on denuncias for update using (true);
 create policy "Public UPDATE" on reportes_spam for update using (true);
-create policy "Public UPDATE" on mensajes_chat_privados for update using (true);
 
 create policy "Borrar cualquier autenticado" on pedidos for delete using (auth.uid() is not null);
 create policy "Borrar propio" on rutas_repartidores for delete using (auth.uid()::text = user_id);
@@ -230,7 +218,6 @@ create policy "Public DELETE" on choferes_habilitados for delete using (true);
 create policy "Public DELETE" on usuarios_baneados for delete using (true);
 create policy "Public DELETE" on denuncias for delete using (true);
 create policy "Public DELETE" on reportes_spam for delete using (true);
-create policy "Public DELETE" on mensajes_chat_privados for delete using (true);
 
 
 -- 6. HABILITAR REALTIME (Websockets para que el mapa se mueva en vivo)

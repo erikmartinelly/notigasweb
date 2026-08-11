@@ -156,7 +156,7 @@ function renderVendorCards(filterCat) {
             </div>
 
             <div class="vendor-fb-footer" style="display:flex; gap:8px;">
-              <button class="btn-vendor-chat" style="flex:1;" onclick="abrirChatConRepartidor('Comprador Vecinal', decodeURIComponent('${encodeURIComponent(activeOrder.categoria)}'))"><i class="fa-solid fa-comments"></i> 💬 CHAT PRIVADO INTERNO</button>
+
               <button class="btn-vendor-order" style="flex:1; background: linear-gradient(135deg, #FF6D00, #E65100); color:white; border:none; border-radius:8px; font-weight:900; cursor:pointer;" onclick="aceptarPedidoRepartidor(decodeURIComponent('${encodeURIComponent(activeOrder.categoria)}'))"><i class="fa-solid fa-circle-check"></i> ✅ Aceptar Pedido</button>
             </div>
           </div>
@@ -203,7 +203,7 @@ function renderVendorCards(filterCat) {
         </div>
 
         <div class="vendor-fb-footer">
-          <button class="btn-vendor-chat" onclick="abrirChatConRepartidor(decodeURIComponent('${encodeURIComponent(vendor.name)}'), decodeURIComponent('${encodeURIComponent(vendor.category)}'))"><i class="fa-solid fa-comments"></i> 💬 CHAT PRIVADO INTERNO</button>
+
           <button class="btn-vendor-order" onclick="seleccionarYPedirDirecto(decodeURIComponent('${encodeURIComponent(vendor.category)}'))"><i class="fa-solid fa-cart-plus"></i> Pedir Producto</button>
         </div>
       </div>
@@ -242,7 +242,7 @@ function renderVendorCards(filterCat) {
 }
 
 function abrirChatSoporteOficial() {
-  abrirChatConRepartidor('Soporte OTB', 'Soporte');
+
 }
 
 function eliminarFichaAdmin(vendorId) {
@@ -279,41 +279,4 @@ function getIconForCategory(cat) {
   return '📦';
 }
 
-function abrirChatConRepartidor(vendorName, vendorCat) {
-  const modal = document.getElementById('modalChat') || document.getElementById('floatingChatWidget');
-  if (!modal) return;
 
-  if (typeof poblarSelectorVendedoresChat === 'function') {
-    poblarSelectorVendedoresChat();
-  }
-
-  const select = document.getElementById('selectVendorChat');
-  if (select && vendorName) {
-    let found = false;
-    const searchTarget = vendorName.toLowerCase().trim();
-
-    for (let i = 0; i < select.options.length; i++) {
-      const optVal = (select.options[i].value || '').toLowerCase();
-      const optText = (select.options[i].text || '').toLowerCase();
-      if (optVal.includes(searchTarget) || optText.includes(searchTarget) || searchTarget.includes(optVal)) {
-        select.selectedIndex = i;
-        found = true;
-        break;
-      }
-    }
-
-    if (!found) {
-      const opt = document.createElement('option');
-      opt.value = vendorName;
-      opt.text = `💬 ${vendorName} (${vendorCat || 'Repartidor'})`;
-      select.appendChild(opt);
-      select.value = vendorName;
-    }
-  }
-
-  modal.style.display = 'flex';
-
-  if (typeof cambiarVendedorChat === 'function') {
-    cambiarVendedorChat();
-  }
-}
