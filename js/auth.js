@@ -371,7 +371,7 @@ async function handleCredentialResponse(response) {
 }
 
 async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
-  if (!window.supabaseClient) return;
+  if (!window.supabaseClient) return false;
 
   if (typeof showLoadingOverlay === 'function') {
     showLoadingOverlay('Registrando repartidor en la nube...');
@@ -385,7 +385,6 @@ async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
     user_id: repartidorObj.user_id,
     nombre_completo: repartidorObj.nombre,
     telefono_whatsapp: repartidorObj.whatsapp,
-    estado_verificacion: 'pendiente',
     placa: repartidorObj.placa,
     categoria: repartidorObj.categoria,
     productos: repartidorObj.productos,
@@ -401,7 +400,9 @@ async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
   if (error) {
     console.error("Error registrando chofer en Supabase:", error);
     if (typeof showToast === 'function') showToast('Error', 'No se pudo guardar en la nube. Intenta de nuevo.', 'error');
+    return false;
   }
+  return true;
 }
 
 async function guardarRegistroUnico() {
@@ -455,8 +456,14 @@ async function guardarRegistroUnico() {
       user_id: userId // Usamos el ID seguro generado por Supabase
     };
 
+    const exito = await guardarRepartidorEnBaseDeDatos(repartidorData);
+    if (!exito) {
+       // FIX: Si falla la inserción en la nube, no guardar localmente ni activar el modo
+       return;
+    }
+
+    // Solo guardar en local y activar modo si la BD confirmó
     localStorage.setItem('notigas_user_data', JSON.stringify(repartidorData));
-    await guardarRepartidorEnBaseDeDatos(repartidorData);
 
     const modalAuth = document.getElementById('modalWelcomeAuth');
     if (modalAuth) modalAuth.style.display = 'none';

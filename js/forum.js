@@ -240,11 +240,13 @@ async function crearNuevoPost() {
      return;
   }
 
-  const { error } = await window.supabaseClient.from('avisos').insert([{
-    categoria: cat,
-    titulo: title,
-    descripcion: desc,
-    ciudad: 'Cochabamba',
+    const ciudadReal = localStorage.getItem('notigas_city') || 'santacruz';
+
+    const { error } = await window.supabaseClient.from('avisos').insert([{
+      categoria: cat,
+      titulo: title,
+      descripcion: desc,
+      ciudad: ciudadReal,
     barrio_otb: 'Global',
     user_id: userId,
     votos: 1

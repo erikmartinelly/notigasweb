@@ -235,56 +235,67 @@ function confirmarPedido() {
     }
   } catch(e){}
 
-  const activeOrderData = {
-    categoria: cat,
-    cantidad: '1 unidad',
-    callePrincipal: direccion,
-    telefono: telefono,
-    buyerName: buyerName,
-    lat: pos.lat,
-    lng: pos.lng,
-    timestamp: Date.now()
-  };
-
-  localStorage.setItem('notigas_active_order', JSON.stringify(activeOrderData));
-
   if (window.supabaseClient) {
-    // Obtener user_id de la sesión activa (Supabase v2)
-    const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
-    window.supabaseClient.auth.getSession().then(({ data: sessionData }) => {
-      window.supabaseClient.from('pedidos').insert([{
+    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Creando pedido...');
+    window.supabaseClient.auth.getSession().then(async ({ data: sessionData }) => {
+      // Usar UUID real de la sesión o bloquear si no hay sesión
+      const userId = sessionData?.session?.user?.id;
+      if (!userId) {
+         if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+         alert("❌ Error de seguridad: Debes iniciar sesión con Google para pedir.");
+         return;
+      }
+      
+      const ciudadReal = localStorage.getItem('notigas_city') || 'santacruz';
+
+      const { data: resultData, error } = await window.supabaseClient.from('pedidos').insert([{
           categoria: cat,
           cantidad: 1,
           direccion: direccion,
           telefono: telefono,
           descripcion: `Cantidad: 1 unidad. Dirección: ${direccion}. Teléfono: ${telefono}. Cliente: ${buyerName}`,
-          ciudad: 'Cochabamba',
+          ciudad: ciudadReal,
           barrio_otb: 'Por GPS',
-          user_id: localUserId, // Usar el ID local generado
+          user_id: userId,
           latitude: pos.lat,
           longitude: pos.lng
-      }]).then(({ error }) => {
-          if(error) {
-            console.error("Error enviando pedido a Supabase:", error);
-            showToast('Error', 'No se pudo enviar el pedido al servidor.', 'error', 3000);
-          } else {
-            console.log("✅ Pedido guardado en Supabase.");
-            if (typeof notigasTrack === 'function') notigasTrack('pedido_creado', { categoria: cat });
-            
-            showToast('✅ ¡Pedido en Camino!', 'Tu orden ha sido confirmada y transmitida a los repartidores de tu zona. Permanece atento a tu teléfono.', 'success', 4000);
-            closePedidoModal();
-            checkActiveOrderStatus();
+      }]).select('id').single();
 
-            if (typeof renderActiveOrdersMap === 'function') {
-              renderActiveOrdersMap();
-            }
+      if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
 
-            showToast('Pedido Publicado en Mapa', `🚀 ${cat}\n📍 ${direccion}${telefono ? '\n📞 Tel: ' + telefono : ''}`, 'order', 3000);
-          }
-      });
+      if(error) {
+        console.error("Error enviando pedido a Supabase:", error);
+        showToast('Error', 'No se pudo enviar el pedido al servidor.', 'error', 3000);
+      } else {
+        console.log("✅ Pedido guardado en Supabase.");
+        
+        // FIX: Solo guardar localmente si la BD aceptó, y añadir el ID real
+        const activeOrderData = {
+          id: resultData.id,
+          categoria: cat,
+          cantidad: '1 unidad',
+          callePrincipal: direccion,
+          telefono: telefono,
+          buyerName: buyerName,
+          lat: pos.lat,
+          lng: pos.lng,
+          timestamp: Date.now()
+        };
+        localStorage.setItem('notigas_active_order', JSON.stringify(activeOrderData));
+
+        if (typeof notigasTrack === 'function') notigasTrack('pedido_creado', { categoria: cat });
+        
+        showToast('✅ ¡Pedido en Camino!', 'Tu orden ha sido confirmada y transmitida a los repartidores de tu zona. Permanece atento a tu teléfono.', 'success', 4000);
+        closePedidoModal();
+        checkActiveOrderStatus();
+
+        if (typeof renderActiveOrdersMap === 'function') {
+          renderActiveOrdersMap();
+        }
+
+        showToast('Pedido Publicado en Mapa', `🚀 ${cat}\n📍 ${direccion}${telefono ? '\n📞 Tel: ' + telefono : ''}`, 'order', 3000);
+      }
     }).catch(e => {
-       console.warn('Error obteniendo sesión para pedido:', e);
-       // Fallback local si falla la sesión
        showToast('✅ ¡Pedido Local!', 'Guardado localmente.', 'success', 3000);
        closePedidoModal();
        checkActiveOrderStatus();
@@ -298,11 +309,17 @@ function confirmarPedido() {
 }
 function cancelarPedidoActivo() {
   showConfirmModal('❌', '¿Cancelar tu pedido?', 'Tu pedido activo será eliminado del mapa y los repartidores dejarán de verlo.', 'Sí, cancelar', async () => {
+    const rawOrder = localStorage.getItem('notigas_active_order');
     localStorage.removeItem('notigas_active_order');
-    if (window.supabaseClient) {
-      const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
-      const { error } = await window.supabaseClient.from('pedidos').delete().eq('user_id', localUserId).in('estado', ['pendiente', 'visto']);
-      if (error) console.error("Error cancelando pedido en Supabase:", error);
+    
+    if (window.supabaseClient && rawOrder) {
+      try {
+        const order = JSON.parse(rawOrder);
+        if (order.id) {
+          const { error } = await window.supabaseClient.from('pedidos').delete().eq('id', order.id);
+          if (error) console.error("Error cancelando pedido en Supabase:", error);
+        }
+      } catch(e) {}
     }
     showToast('Pedido Cancelado', 'Se ha restaurado el estado normal de la aplicación.', 'error', 4000);
     checkActiveOrderStatus();
@@ -313,13 +330,19 @@ function cancelarPedidoActivo() {
 }
 async function confirmarRecepcionComprador() {
   showConfirmModal('🏁', 'Confirmar Recepción', '¿Confirmas que el repartidor llegó y recibiste tu pedido de forma exitosa?', 'Sí, lo recibí', async () => {
+     const rawOrder = localStorage.getItem('notigas_active_order');
      localStorage.removeItem('notigas_active_order');
-     if (window.supabaseClient) {
+     
+     if (window.supabaseClient && rawOrder) {
          showLoadingOverlay('Confirmando entrega...');
-         const userId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
-         const { error } = await window.supabaseClient.from('pedidos').update({ estado: 'entregado' }).eq('user_id', userId).in('estado', ['pendiente', 'visto']);
-         hideLoadingOverlay();
-         if(error) console.error(error);
+         try {
+             const order = JSON.parse(rawOrder);
+             if (order.id) {
+                const { error } = await window.supabaseClient.from('pedidos').update({ estado: 'entregado' }).eq('id', order.id);
+                if (error) console.error(error);
+             }
+         } catch(e) {}
+         if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
      }
      showToast('¡Gracias!', 'Gracias por confirmar. El pedido ha sido finalizado exitosamente.', 'success', 5000);
      checkActiveOrderStatus();

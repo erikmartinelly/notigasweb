@@ -871,15 +871,8 @@ async function calcularYTrazarRutaEficiente() {
     } catch(e){}
   }
 
-  // 2. Si no hay pedido activo, usar puntos de demostración
-  if (pointsToVisit.length === 0) {
-    pointsToVisit = [
-      { lat: currentGpsLat + 0.0012, lng: currentGpsLng + 0.0015, title: "🔥 Pedido GLP", desc: "2 garrafas (Calle 4 #21)" },
-      { lat: currentGpsLat - 0.0008, lng: currentGpsLng + 0.0022, title: "💧 Agua 20L", desc: "1 botellón (Av. Principal)" },
-      { lat: currentGpsLat - 0.0015, lng: currentGpsLng - 0.0010, title: "🔥 Garrafas GLP", desc: "3 unidades (Zona Alta)" },
-      { lat: currentGpsLat + 0.0018, lng: currentGpsLng - 0.0018, title: "🧹 Detergentes / Limpieza", desc: "2 galones lavandina (Calle Bolivar)" }
-    ];
-  }
+  // FIX: Ya no se inyectan puntos de demostración si la lista de pedidos está vacía.
+  // La ruta del repartidor operará estrictamente con pedidos reales.
 
   if (typeof isOrderCategoryMatchingDriver === 'function') {
     pointsToVisit = pointsToVisit.filter(p => isOrderCategoryMatchingDriver(p.title));
