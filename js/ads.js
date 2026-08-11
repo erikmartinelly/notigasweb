@@ -90,7 +90,7 @@ function actualizarBannerConImagen(imageUrl) {
 // FUNCIONES DE ADMINISTRACIÓN
 // ---------------------------------------------------------
 
-let pendingUploadUrl = null;
+window.pendingUploadUrl = null;
 
 window.previewUploadAdImage = async function(event) {
   const file = event.target.files && event.target.files[0];
@@ -113,12 +113,12 @@ window.previewUploadAdImage = async function(event) {
       if (typeof showToast === 'function') showToast('Error', 'No se pudo subir la imagen.', 'error');
     } else {
       const { data: publicUrlData } = window.supabaseClient.storage.from('anuncios-media').getPublicUrl(fileName);
-      pendingUploadUrl = publicUrlData.publicUrl;
+      window.pendingUploadUrl = publicUrlData.publicUrl;
       
       const preview = document.getElementById('adImagePreview');
       const box = document.getElementById('adImagePreviewBox');
       if (preview && box) {
-        preview.src = pendingUploadUrl;
+        preview.src = window.pendingUploadUrl;
         box.style.display = 'flex';
       }
       if (typeof showToast === 'function') showToast('Éxito', 'Imagen subida al servidor.', 'success');
@@ -129,13 +129,13 @@ window.previewUploadAdImage = async function(event) {
 
 window.eliminarImagenAnuncio = async function() {
   // Try to delete from storage if there is a pending URL
-  if (pendingUploadUrl && window.supabaseClient) {
-     const urlParts = pendingUploadUrl.split('/');
+  if (window.pendingUploadUrl && window.supabaseClient) {
+     const urlParts = window.pendingUploadUrl.split('/');
      const fileName = urlParts[urlParts.length - 1];
      await window.supabaseClient.storage.from('anuncios-media').remove([fileName]);
   }
   
-  pendingUploadUrl = null;
+  window.pendingUploadUrl = null;
   const preview = document.getElementById('adImagePreview');
   const box = document.getElementById('adImagePreviewBox');
   const input = document.getElementById('inputAdImageFile');

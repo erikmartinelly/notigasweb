@@ -333,51 +333,42 @@ async function renderAdminDashboardKPIs() {
   const elOrders = document.getElementById('adminKpiOrders');
   const elReports = document.getElementById('adminKpiReports');
 
-  let usersCount = 2; // Usuarios base demostración
-  try {
-    const saved = localStorage.getItem('notigas_user_data');
-    if (saved) usersCount++;
-  } catch(e){}
-  if (elUsers) elUsers.innerText = usersCount;
-
-  let vendorsCount = 8; // Vendedores base de la OTB
-  try {
-    const saved = localStorage.getItem('notigas_user_data');
-    if (saved) {
-      const u = JSON.parse(saved);
-      if (u.role === 'repartidor') vendorsCount++;
-    }
-  } catch(e){}
-  if (elVendors) elVendors.innerText = vendorsCount;
-
+  let usersCount = 0;
+  let vendorsCount = 0;
   let ordersCount = 0;
-  const activeOrder = localStorage.getItem('notigas_active_order');
-  if (activeOrder) ordersCount = 1;
-  
+  let reportsCount = 0;
+
   if (window.supabaseClient) {
-     const { data } = await window.supabaseClient.from('pedidos').select('estado');
-     if (data) {
-        // Pedidos activos (pendiente + asignado)
+    try {
+      const { count: cVendors } = await window.supabaseClient.from('choferes_habilitados').select('*', { count: 'exact', head: true });
+      vendorsCount = cVendors || 0;
+
+      // Unique users from orders as a proxy for users count since auth.users isn't queryable publicly
+      const { data: pedidosData } = await window.supabaseClient.from('pedidos').select('user_id');
+      if (pedidosData) {
+        const uniqueUsers = new Set(pedidosData.map(p => p.user_id).filter(Boolean));
+        usersCount = uniqueUsers.size;
+      }
+
+      const { data } = await window.supabaseClient.from('pedidos').select('estado');
+      if (data) {
         const activos = data.filter(p => p.estado === 'pendiente' || p.estado === 'asignado').length;
-        ordersCount = activos > 0 ? activos : ordersCount;
-        
-        // Pedidos Entregados (NUEVO KPI)
+        ordersCount = activos;
         const entregados = data.filter(p => p.estado === 'entregado').length;
-        // Si quieres mostrar entregados, podríamos añadirlo al título:
         const elOrdersTitle = document.getElementById('adminKpiOrders').parentElement.querySelector('.kpi-title');
         if (elOrdersTitle) {
            elOrdersTitle.innerHTML = `Pedidos Activos <span style="display:block; font-size:10px; color:#56BC37;">+${entregados} Entregados (Histórico)</span>`;
         }
-     }
-  }
-  
-  if (elOrders) elOrders.innerText = ordersCount;
+      }
 
-  let reportsCount = 0;
-  try {
-    const reports = JSON.parse(localStorage.getItem('notigas_user_reports') || '[]');
-    reportsCount = reports.length;
-  } catch(e){}
+      const { count: cReports } = await window.supabaseClient.from('denuncias').select('*', { count: 'exact', head: true });
+      reportsCount = cReports || 0;
+    } catch(e) {}
+  }
+
+  if (elUsers) elUsers.innerText = usersCount;
+  if (elVendors) elVendors.innerText = vendorsCount;
+  if (elOrders) elOrders.innerText = ordersCount;
   if (elReports) elReports.innerText = reportsCount;
 }
 
@@ -969,12 +960,12 @@ async function renderAdminReports() {
       html += `
         <div style="background:#1E293B; padding:6px 8px; border-radius:6px; border-left:3px solid #EF4444; display:flex; justify-content:space-between; align-items:center;">
           <div>
-            <strong>${escapeHtmlStr(rep.target || 'Publicación')}</strong>: ${escapeHtmlStr(rep.motivo)}
-            <div style="font-size:9px; color:#94A3B8;">${escapeHtmlStr(rep.detalle || 'Sin detalle')}</div>
+            <strong>${escapeHtmlStr(rep.denunciado_id || 'Publicación')}</strong>: ${escapeHtmlStr(rep.motivo)}
+            <div style="font-size:9px; color:#94A3B8;">${escapeHtmlStr(rep.detalles || 'Sin detalle')}</div>
           </div>
           <div style="display:flex; gap:4px;">
             <button onclick="borrarDenunciaAdmin('${rep.id}')" style="background:#0288D1; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; cursor:pointer;" title="Desestimar">👍 Ok</button>
-            <button onclick="banearUsuarioAdmin('${escapeHtmlStr(rep.target)}')" style="background:#D32F2F; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; cursor:pointer;" title="Banear Usuario">🚫 Banear</button>
+            <button onclick="banearUsuarioAdmin('${escapeHtmlStr(rep.denunciado_id)}')" style="background:#D32F2F; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; cursor:pointer;" title="Banear Usuario">🚫 Banear</button>
           </div>
         </div>
       `;
@@ -1062,9 +1053,9 @@ async function enviarDenuncia() {
 
   if (window.supabaseClient) {
     const { error } = await window.supabaseClient.from('denuncias').insert([{
-      target: context,
+      denunciado_id: context,
       motivo: motivo,
-      detalle: detalle
+      detalles: detalle
     }]);
     if (error) console.error("Error enviando denuncia:", error);
   }

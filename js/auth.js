@@ -895,7 +895,7 @@ async function procesarSesionExitosa(user) {
     try {
       const { data: choferData } = await window.supabaseClient
         .from('choferes_habilitados')
-        .select('ciudad, categoria, categoria2')
+        .select('ciudad, categoria, categoria2, productos, zonas, schedule')
         .eq('user_id', user.id)
         .maybeSingle();
       if (choferData) {
@@ -905,6 +905,9 @@ async function procesarSesionExitosa(user) {
         }
         if (choferData.categoria) clienteData.categoria = choferData.categoria;
         if (choferData.categoria2) clienteData.categoria2 = choferData.categoria2;
+        if (choferData.productos) clienteData.productos = choferData.productos;
+        if (choferData.zonas) clienteData.zonas = choferData.zonas;
+        if (choferData.schedule) clienteData.schedule = choferData.schedule;
       }
     } catch(e) {}
   }
