@@ -80,4 +80,3 @@ app.get('*', (req, res) => {
 app.listen(PORT, () => {
     console.log(`NOTIGAS PWA Server running on port ${PORT}`);
 });
-

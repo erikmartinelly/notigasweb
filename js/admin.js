@@ -104,33 +104,12 @@ async function verificarEstadoAdmin() {
   const setupScreen = document.getElementById('adminSetupScreen');
   const dashboardScreen = document.getElementById('adminDashboardScreen');
 
-  if (loginScreen) loginScreen.style.display = 'none';
+  if (loginScreen) loginScreen.style.display = 'block';
   if (setupScreen) setupScreen.style.display = 'none';
   if (dashboardScreen) dashboardScreen.style.display = 'none';
 
   if (!window.supabaseClient) {
     alert("❌ Error: No hay conexión con la base de datos.");
-    return;
-  }
-
-  try {
-    const { data, error, count } = await window.supabaseClient
-      .from('admin_credentials')
-      .select('email', { count: 'exact', head: true });
-
-    if (error && error.code !== 'PGRST116') {
-      console.error("Error consultando estado admin:", error);
-      alert("❌ Error al conectar con Supabase. Verifica la consola.");
-      return;
-    }
-
-    if (count === 0) {
-      if (setupScreen) setupScreen.style.display = 'block';
-    } else {
-      if (loginScreen) loginScreen.style.display = 'block';
-    }
-  } catch (e) {
-    console.error(e);
   }
 }
 
@@ -213,38 +192,29 @@ window.verificarAutenticacionAdmin = async function() {
 
   const hash = await encriptarSHA256(email + ':' + pass);
 
-  const { data, error } = await window.supabaseClient
-    .from('admin_credentials')
-    .select('*')
-    .eq('email', email)
-    .single();
+  const { data: isValid, error } = await window.supabaseClient
+    .rpc('validar_admin', { p_email: email, p_password: hash });
 
-  if (error || !data) {
+  if (error || !isValid) {
     adminLoginAttempts++;
     alert(`❌ ACCESO DENEGADO\nCredenciales incorrectas o administrador no encontrado.\nTe quedan ${5 - adminLoginAttempts} intentos.`);
     return;
   }
 
-  if (data.password_hash === hash) {
-    // Éxito: verificación SHA-256 correcta contra Supabase
-    adminLoginAttempts = 0;
-    // FIX C-03: Usar _setAdminSession() para guardar email + timestamp de verificación
-    _setAdminSession(email);
-    
-    const loginScreen = document.getElementById('adminLoginScreen');
-    const dashboardScreen = document.getElementById('adminDashboardScreen');
-    if (loginScreen) loginScreen.style.display = 'none';
-    if (dashboardScreen) dashboardScreen.style.display = 'flex';
-    
-    if(typeof renderAdminReports === 'function') renderAdminReports();
-    if(typeof cargarAnunciosGuardados === 'function') cargarAnunciosGuardados();
-    
-    if (typeof showToast === 'function') {
-      showToast('✅ Acceso Autorizado', 'Sesión de admin activa por 30 minutos.', 'success', 3000);
-    }
-  } else {
-    adminLoginAttempts++;
-    alert(`❌ ACCESO DENEGADO\nContraseña incorrecta.\nTe quedan ${5 - adminLoginAttempts} intentos.`);
+  // Éxito
+  adminLoginAttempts = 0;
+  _setAdminSession(email);
+  
+  const loginScreen = document.getElementById('adminLoginScreen');
+  const dashboardScreen = document.getElementById('adminDashboardScreen');
+  if (loginScreen) loginScreen.style.display = 'none';
+  if (dashboardScreen) dashboardScreen.style.display = 'flex';
+  
+  if(typeof renderAdminReports === 'function') renderAdminReports();
+  if(typeof cargarAnunciosGuardados === 'function') cargarAnunciosGuardados();
+  
+  if (typeof showToast === 'function') {
+    showToast('✅ Acceso Autorizado', 'Sesión de admin activa por 30 minutos.', 'success', 3000);
   }
 };
 

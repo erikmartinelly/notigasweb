@@ -29,13 +29,15 @@ NOTIGAS bridges this gap by democratizing access to Artificial Intelligence and 
 *   **Backend & Database:** [Supabase](https://supabase.com/) (PostgreSQL).
 *   **Mapping Provider:** [Leaflet.js](https://leafletjs.com/) with OpenStreetMap tiles.
 *   **Authentication:** Google OAuth & Custom Auth for Admins.
-*   **Hosting:** Fully static, can be deployed on GitHub Pages, Vercel, Netlify, or any static file server.
+*   **Hosting:** Deployable on standard Node.js environments (like Hostinger, Heroku, or Render) using the provided Express server (`server.js`) which enforces strict security headers (CSP, HSTS).
 
 ## 📂 Project Structure
 
 ```text
 ├── index.html              # Main application entry point (Buyer/Vendor views)
 ├── panel270977.html        # Secret Administration Dashboard
+├── server.js               # Express server for production (Security headers & PWA routing)
+├── package.json            # Node.js dependencies for the server
 ├── app.js                  # Core business logic and state management
 ├── map.js                  # Leaflet map initialization, GPS tracking, and marker logic
 ├── auth.js                 # User roles, Google OAuth, and session management
@@ -61,16 +63,19 @@ NOTIGAS bridges this gap by democratizing access to Artificial Intelligence and 
     *   Run the provided `supabase_schema.sql` (and the `admin_credentials` SQL) in the Supabase SQL Editor to create the required tables and RLS policies.
     *   Open `supabase-config.js` and replace the placeholder `supabaseUrl` and `supabaseAnonKey` with your project's actual credentials.
 
-3.  **Run Locally:**
-    Since it's a static Vanilla JS app, you can use any local web server:
+3.  **Run Locally (Development):**
+    For quick development, you can use any static server:
     ```bash
-    # Using Node.js (npx)
     npx serve .
-    
-    # OR using Python
-    python -m http.server 8000
     ```
-    Navigate to `http://localhost:8000` in your browser.
+
+4.  **Run in Production:**
+    The application includes a Node.js Express server (`server.js`) designed to serve the static frontend while injecting critical security headers (CSP, HSTS, Anti-Clickjacking).
+    ```bash
+    npm install
+    npm start
+    ```
+    Navigate to `http://localhost:3000` in your browser.
 
 ## 🛡️ Security Notes
 *   **Row Level Security (RLS):** Ensure RLS is enabled on all Supabase tables so users can only insert/delete their own orders, while still being able to read the public map data.

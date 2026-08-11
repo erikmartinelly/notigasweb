@@ -17,6 +17,15 @@ drop table if exists admin_credentials cascade;
 
 -- 2. EXTENSIONES
 create extension if not exists "uuid-ossp";
+-- Nota: pg_cron normalmente debe activarse desde el Dashboard de Supabase (Database > Extensions)
+create extension if not exists "pg_cron";
+
+-- Trabajo de auto-purga (TTL) para borrar pedidos antiguos (> 2 días) todos los días a medianoche
+select cron.schedule(
+  'purge-old-pedidos',
+  '0 0 * * *',
+  $$ delete from pedidos where created_at < now() - interval '2 days'; $$
+);
 
 -- 3. CREACIÓN DE TABLAS (Con UUIDs)
 
@@ -54,10 +63,11 @@ create table rutas_repartidores (
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- Tabla: avisos (Foro vecinal)
+-- Tabla: avisos (Foro vecinal y Anuncios de Admin)
 create table avisos (
     id uuid primary key default uuid_generate_v4(),
     user_id text,
+    tipo text default 'aviso',
     categoria text,
     titulo text not null,
     descripcion text not null,
@@ -130,15 +140,7 @@ create table mensajes_chat_privados (
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- Tabla: publicaciones (Uso exclusivo para Anuncios Globales del Administrador)
-create table publicaciones (
-    id uuid primary key default uuid_generate_v4(),
-    tipo text default 'anuncioGlobal',
-    titulo text,
-    descripcion text,
-    user_id text,
-    created_at timestamp with time zone default timezone('utc'::text, now()) not null
-);
+-- (Tabla publicaciones eliminada: fusionada con avisos usando la columna 'tipo')
 
 -- Tabla: credenciales de administrador
 create table if not exists admin_credentials (
@@ -163,6 +165,20 @@ begin
 end;
 $$;
 
+-- RPC: Autenticación segura de administrador
+create or replace function validar_admin(p_email text, p_password text)
+returns boolean language plpgsql security definer as $$
+declare
+  is_valid boolean;
+begin
+  select exists (
+    select 1 from admin_credentials 
+    where email = p_email and password_hash = p_password
+  ) into is_valid;
+  return is_valid;
+end;
+$$;
+
 -- 5. HABILITAR SEGURIDAD (RLS)
 alter table pedidos enable row level security;
 alter table rutas_repartidores enable row level security;
@@ -184,8 +200,7 @@ create policy "Public SELECT" on choferes_habilitados for select using (true);
 create policy "Public SELECT" on usuarios_baneados for select using (true);
 create policy "Public SELECT" on denuncias for select using (true);
 create policy "Public SELECT" on reportes_spam for select using (true);
-create policy "Public SELECT" on mensajes_chat_privados for select using (true);
-create policy "Public SELECT" on publicaciones for select using (true);
+create policy "Privado SELECT" on mensajes_chat_privados for select using (auth.uid()::text = remitente_id OR auth.uid()::text = destinatario_id);
 
 create policy "Insertar propio" on pedidos for insert with check (auth.uid()::text = user_id);
 create policy "Insertar propio" on rutas_repartidores for insert with check (auth.uid()::text = user_id);
@@ -196,7 +211,6 @@ create policy "Public INSERT" on usuarios_baneados for insert with check (true);
 create policy "Public INSERT" on denuncias for insert with check (true);
 create policy "Public INSERT" on reportes_spam for insert with check (true);
 create policy "Public INSERT" on mensajes_chat_privados for insert with check (true);
-create policy "Public INSERT" on publicaciones for insert with check (true);
 
 create policy "Actualizar propio" on pedidos for update using (auth.uid()::text = user_id);
 create policy "Actualizar propio" on rutas_repartidores for update using (auth.uid()::text = user_id);
@@ -207,7 +221,6 @@ create policy "Public UPDATE" on usuarios_baneados for update using (true);
 create policy "Public UPDATE" on denuncias for update using (true);
 create policy "Public UPDATE" on reportes_spam for update using (true);
 create policy "Public UPDATE" on mensajes_chat_privados for update using (true);
-create policy "Public UPDATE" on publicaciones for update using (true);
 
 create policy "Borrar cualquier autenticado" on pedidos for delete using (auth.uid() is not null);
 create policy "Borrar propio" on rutas_repartidores for delete using (auth.uid()::text = user_id);
@@ -218,7 +231,6 @@ create policy "Public DELETE" on usuarios_baneados for delete using (true);
 create policy "Public DELETE" on denuncias for delete using (true);
 create policy "Public DELETE" on reportes_spam for delete using (true);
 create policy "Public DELETE" on mensajes_chat_privados for delete using (true);
-create policy "Public DELETE" on publicaciones for delete using (true);
 
 
 -- 6. HABILITAR REALTIME (Websockets para que el mapa se mueva en vivo)
