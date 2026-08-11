@@ -292,36 +292,36 @@ async function handleCredentialResponse(response) {
       return;
     }
 
-    // Si es repartidor, verificamos si ya existe o abrimos modal de registro
-    if (currentSelectedRole === 'driver') {
-      try {
-        const { data: existingDriver, error: driverCheckError } = await window.supabaseClient
-          .from('choferes_habilitados')
-          .select('id')
-          .eq('user_id', user.id)
-          .maybeSingle();
+    // Verificamos SIEMPRE si el usuario ya es repartidor en la BD
+    try {
+      const { data: existingDriver, error: driverCheckError } = await window.supabaseClient
+        .from('choferes_habilitados')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-        if (driverCheckError) {
-          // Error real de red/BD — no asumir que no existe, informar al usuario
-          if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-          if (typeof showToast === 'function') showToast('Error de conexión', 'No se pudo verificar tu cuenta. Intenta de nuevo.', 'error', 4000);
-          return;
-        }
-          
-        if (existingDriver) {
-          // Ya existe en la base de datos, ingresarlo directamente
-          if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-          procesarSesionExitosa(user);
-          return;
-        }
-      } catch(e) {
-        console.error("Error verificando repartidor existente:", e);
+      if (driverCheckError) {
         if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-        if (typeof showToast === 'function') showToast('Error', 'No se pudo verificar la sesión. Intenta de nuevo.', 'error', 4000);
+        if (typeof showToast === 'function') showToast('Error de conexión', 'No se pudo verificar tu cuenta. Intenta de nuevo.', 'error', 4000);
         return;
       }
+        
+      if (existingDriver) {
+        // Ya existe en la base de datos como repartidor, forzar rol y entrar
+        currentSelectedRole = 'driver';
+        if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+        procesarSesionExitosa(user);
+        return;
+      }
+    } catch(e) {
+      console.error("Error verificando repartidor existente:", e);
+      if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+      if (typeof showToast === 'function') showToast('Error', 'No se pudo verificar la sesión. Intenta de nuevo.', 'error', 4000);
+      return;
+    }
 
-      // NO EXISTE: abrimos el modal de registro y guardamos temporalmente el email
+    // Si NO es repartidor en la BD, verificamos si quería registrarse como uno
+    if (currentSelectedRole === 'driver') {
       if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
       const modalAuth = document.getElementById('modalWelcomeAuth');
       if (modalAuth) modalAuth.style.display = 'none';
@@ -341,7 +341,7 @@ async function handleCredentialResponse(response) {
       return;
     }
 
-    // Guardar el registro seguro con el ID de sesión de Supabase
+    // Si NO es repartidor y seleccionó 'vecino' (buyer), iniciar como vecino
     const clienteData = { 
       role: 'vecino', 
       gmail: gmail, 

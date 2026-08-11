@@ -173,6 +173,17 @@ begin
 end;
 $$;
 
+-- Función auxiliar para políticas RLS de Administradores
+create or replace function is_admin_email()
+returns boolean language plpgsql security definer as $$
+begin
+  return exists (
+    select 1 from admin_credentials 
+    where email = auth.jwt() ->> 'email'
+  );
+end;
+$$;
+
 -- 5. HABILITAR SEGURIDAD (RLS)
 alter table pedidos enable row level security;
 alter table rutas_repartidores enable row level security;
@@ -184,42 +195,47 @@ alter table denuncias enable row level security;
 alter table reportes_spam enable row level security;
 
 
--- Políticas Universales (MVP Público): Permitir lectura, inserción y borrado, basándose en la confianza del cliente.
-create policy "Public SELECT" on pedidos for select using (true);
-create policy "Public SELECT" on rutas_repartidores for select using (true);
-create policy "Public SELECT" on avisos for select using (true);
-create policy "Public SELECT" on comentarios_avisos for select using (true);
-create policy "Public SELECT" on choferes_habilitados for select using (true);
-create policy "Public SELECT" on usuarios_baneados for select using (true);
-create policy "Public SELECT" on denuncias for select using (true);
-create policy "Public SELECT" on reportes_spam for select using (true);
+-- Políticas de LECTURA: Solo usuarios autenticados o administradores
+create policy "Auth SELECT pedidos" on pedidos for select using (auth.uid() is not null);
+create policy "Auth SELECT rutas" on rutas_repartidores for select using (auth.uid() is not null);
+create policy "Auth SELECT avisos" on avisos for select using (auth.uid() is not null);
+create policy "Auth SELECT comentarios" on comentarios_avisos for select using (auth.uid() is not null);
+create policy "Auth SELECT choferes" on choferes_habilitados for select using (auth.uid() is not null);
+create policy "Auth SELECT baneados" on usuarios_baneados for select using (auth.uid() is not null);
+create policy "Auth SELECT denuncias" on denuncias for select using (auth.uid() is not null);
+create policy "Auth SELECT reportes" on reportes_spam for select using (auth.uid() is not null);
 
+-- Políticas de INSERCIÓN
 create policy "Insertar propio" on pedidos for insert with check (auth.uid()::text = user_id);
 create policy "Insertar propio" on rutas_repartidores for insert with check (auth.uid()::text = user_id);
 create policy "Insertar propio" on avisos for insert with check (auth.uid()::text = user_id);
 create policy "Insertar propio" on comentarios_avisos for insert with check (auth.uid()::text = user_id);
-create policy "Public INSERT" on choferes_habilitados for insert with check (true);
-create policy "Public INSERT" on usuarios_baneados for insert with check (true);
-create policy "Public INSERT" on denuncias for insert with check (true);
-create policy "Public INSERT" on reportes_spam for insert with check (true);
+create policy "Insertar chofer" on choferes_habilitados for insert with check (auth.uid()::text = user_id);
+create policy "Insertar denuncia" on denuncias for insert with check (auth.uid() is not null);
+create policy "Insertar spam" on reportes_spam for insert with check (auth.uid() is not null);
+-- Administradores pueden insertar baneos o cualquier cosa
+create policy "Admin INSERT baneados" on usuarios_baneados for insert with check (is_admin_email());
 
-create policy "Actualizar propio" on pedidos for update using (auth.uid()::text = user_id);
-create policy "Actualizar propio" on rutas_repartidores for update using (auth.uid()::text = user_id);
-create policy "Actualizar propio" on avisos for update using (auth.uid()::text = user_id);
-create policy "Actualizar propio" on comentarios_avisos for update using (auth.uid()::text = user_id);
-create policy "Public UPDATE" on choferes_habilitados for update using (true);
-create policy "Public UPDATE" on usuarios_baneados for update using (true);
-create policy "Public UPDATE" on denuncias for update using (true);
-create policy "Public UPDATE" on reportes_spam for update using (true);
+-- Políticas de ACTUALIZACIÓN
+create policy "Actualizar propio o Admin" on pedidos for update using (auth.uid()::text = user_id or is_admin_email());
+create policy "Actualizar propio o Admin" on rutas_repartidores for update using (auth.uid()::text = user_id or is_admin_email());
+create policy "Actualizar propio o Admin" on avisos for update using (auth.uid()::text = user_id or is_admin_email());
+create policy "Actualizar propio o Admin" on comentarios_avisos for update using (auth.uid()::text = user_id or is_admin_email());
+create policy "Actualizar propio o Admin" on choferes_habilitados for update using (auth.uid()::text = user_id or is_admin_email());
+create policy "Admin UPDATE baneados" on usuarios_baneados for update using (is_admin_email());
+create policy "Admin UPDATE denuncias" on denuncias for update using (is_admin_email());
+create policy "Admin UPDATE reportes" on reportes_spam for update using (is_admin_email());
 
-create policy "Borrar cualquier autenticado" on pedidos for delete using (auth.uid() is not null);
-create policy "Borrar propio" on rutas_repartidores for delete using (auth.uid()::text = user_id);
-create policy "Borrar propio" on avisos for delete using (auth.uid()::text = user_id);
-create policy "Borrar propio" on comentarios_avisos for delete using (auth.uid()::text = user_id);
-create policy "Public DELETE" on choferes_habilitados for delete using (true);
-create policy "Public DELETE" on usuarios_baneados for delete using (true);
-create policy "Public DELETE" on denuncias for delete using (true);
-create policy "Public DELETE" on reportes_spam for delete using (true);
+-- Políticas de ELIMINACIÓN
+-- Solo creador, repartidor o Admin pueden borrar pedidos
+create policy "Borrar pedido seguro" on pedidos for delete using (auth.uid()::text = user_id or auth.uid()::text = driver_id or is_admin_email());
+create policy "Borrar propio o Admin" on rutas_repartidores for delete using (auth.uid()::text = user_id or is_admin_email());
+create policy "Borrar propio o Admin" on avisos for delete using (auth.uid()::text = user_id or is_admin_email());
+create policy "Borrar propio o Admin" on comentarios_avisos for delete using (auth.uid()::text = user_id or is_admin_email());
+create policy "Borrar propio o Admin" on choferes_habilitados for delete using (auth.uid()::text = user_id or is_admin_email());
+create policy "Admin DELETE baneados" on usuarios_baneados for delete using (is_admin_email());
+create policy "Admin DELETE denuncias" on denuncias for delete using (is_admin_email());
+create policy "Admin DELETE reportes" on reportes_spam for delete using (is_admin_email());
 
 
 -- 6. HABILITAR REALTIME (Websockets para que el mapa se mueva en vivo)

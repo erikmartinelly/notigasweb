@@ -1025,9 +1025,11 @@ async function banearUsuarioAdmin(identifier) {
   if (!identifier || !window.supabaseClient) return;
 
   const { error } = await window.supabaseClient.from('usuarios_baneados').insert([{
-    identificador: identifier,
+    user_id: identifier,
     motivo: 'Baneado por Administrador'
   }]);
+
+  if (typeof descargarBaneadosDeSupabase === 'function') await descargarBaneadosDeSupabase();
 
   if (!error) {
     alert(`🚫 USUARIO BANEADO\nEl usuario (${identifier}) ha sido restringido de publicar en NOTIGAS.`);

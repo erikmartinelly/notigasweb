@@ -1,62 +1,46 @@
 /* ADMIN USER MODERATION LOGIC */
+// Lista global para la renderización síncrona
+window.globalBannedList = window.globalBannedList || [];
+
+async function descargarBaneadosDeSupabase() {
+  if (window.supabaseClient) {
+    try {
+      const { data, error } = await window.supabaseClient.from('usuarios_baneados').select('*');
+      if (!error && data) {
+        window.globalBannedList = data.map(d => String(d.motivo).toLowerCase().trim());
+      }
+    } catch(e) {
+      console.error('Error al descargar baneados', e);
+    }
+  }
+}
+
+// Llamar al cargar para tener los baneos listos para el render sincrónico
+document.addEventListener('DOMContentLoaded', descargarBaneadosDeSupabase);
+
 function esRepartidorBaneado(nombre, placa, whatsapp, gmail) {
-  let banned = [];
-  try {
-    const raw = localStorage.getItem('notigas_banned_users');
-    if (raw) banned = JSON.parse(raw);
-  } catch(e){}
-
-  let deletedIds = [];
-  try {
-    const raw = localStorage.getItem('notigas_deleted_vendor_ids');
-    if (raw) deletedIds = JSON.parse(raw);
-  } catch(e){}
-
   const checkList = [nombre, placa, whatsapp, gmail].filter(Boolean).map(s => String(s).toLowerCase().trim());
-
-  for (const b of banned) {
-    const cleanB = String(b).toLowerCase().trim();
-    if (cleanB && checkList.some(c => c.includes(cleanB) || cleanB.includes(c))) return true;
+  for (const b of window.globalBannedList) {
+    if (b && checkList.some(c => c.includes(b) || b.includes(c))) return true;
   }
-
-  for (const id of deletedIds) {
-    const cleanId = String(id).toLowerCase().trim();
-    if (cleanId && checkList.some(c => c.includes(cleanId) || cleanId.includes(c))) return true;
-  }
-
   return false;
 }
-function banearRepartidorAdmin(vendorId, vendorName, plate = '', whatsapp = '') {
-  let deletedIds = [];
-  try {
-    const raw = localStorage.getItem('notigas_deleted_vendor_ids');
-    if (raw) deletedIds = JSON.parse(raw);
-  } catch(e){}
-
-  if (!deletedIds.includes(vendorId)) {
-    deletedIds.push(vendorId);
-    localStorage.setItem('notigas_deleted_vendor_ids', JSON.stringify(deletedIds));
+async function banearRepartidorAdmin(vendorId, vendorName, plate = '', whatsapp = '') {
+  if (window.supabaseClient) {
+    const motivoText = [vendorName, plate, whatsapp].filter(Boolean).join(' | ');
+    await window.supabaseClient.from('usuarios_baneados').insert([{
+      user_id: vendorId,
+      motivo: motivoText
+    }]);
+    await descargarBaneadosDeSupabase();
   }
-
-  // Agregar a la lista de prohibición de acceso
-  let banned = [];
-  try {
-    const raw = localStorage.getItem('notigas_banned_users');
-    if (raw) banned = JSON.parse(raw);
-  } catch(e){}
-
-  [vendorName, plate, whatsapp].filter(Boolean).forEach(item => {
-    if (!banned.includes(item)) banned.push(item);
-  });
-
-  localStorage.setItem('notigas_banned_users', JSON.stringify(banned));
 
   renderAdminVendorsList();
   renderAdminDashboardKPIs();
   if (typeof renderVendorCards === 'function') renderVendorCards('TODOS');
 
   if (typeof showToast === 'function') {
-    showToast('🚫 Repartidor Baneado', `Se suspendió el acceso e ingreso de "${vendorName}". Su ficha ha sido bloqueada.`, 'error', 5000);
+    showToast('🚫 Repartidor Baneado', `Se suspendió el acceso e ingreso de "${vendorName}".`, 'error', 5000);
   }
 }
 function limpiarTodosLosBaneosAdmin() {
@@ -75,23 +59,11 @@ function limpiarTodosLosBaneosAdmin() {
     showToast('🔓 Todos los Bloqueos Eliminados', 'Se eliminaron todos los baneos y bloqueos de la base de datos.', 'info', 4500);
   }
 }
-function desbanearRepartidorAdmin(vendorId, vendorName) {
-  let deletedIds = [];
-  try {
-    const raw = localStorage.getItem('notigas_deleted_vendor_ids');
-    if (raw) deletedIds = JSON.parse(raw);
-  } catch(e){}
-
-  deletedIds = deletedIds.filter(id => id !== vendorId);
-  localStorage.setItem('notigas_deleted_vendor_ids', JSON.stringify(deletedIds));
-
-  let banned = [];
-  try {
-    const raw = localStorage.getItem('notigas_banned_users');
-    if (raw) banned = JSON.parse(raw);
-  } catch(e){}
-  banned = banned.filter(b => b !== vendorName);
-  localStorage.setItem('notigas_banned_users', JSON.stringify(banned));
+async function desbanearRepartidorAdmin(vendorId, vendorName) {
+  if (window.supabaseClient) {
+    await window.supabaseClient.from('usuarios_baneados').delete().eq('user_id', vendorId);
+    await descargarBaneadosDeSupabase();
+  }
 
   renderAdminVendorsList();
   renderAdminDashboardKPIs();
@@ -116,26 +88,12 @@ function borrarRepartidorPermanente(vendorId, vendorName) {
     }
   }
 }
-function ejecutarBorradoRepartidor(vendorId, vendorName) {
+async function ejecutarBorradoRepartidor(vendorId, vendorName) {
   // 1. Eliminar de lista de repartidores en Supabase
   if (window.supabaseClient) {
       const realId = vendorId.replace('driver_', '');
-      window.supabaseClient.from('choferes_habilitados').delete().eq('id', realId).then(({ error }) => {
-          if (error) console.error("Error borrando de Supabase:", error);
-      });
+      await window.supabaseClient.from('choferes_habilitados').delete().eq('id', realId);
   }
-
-  // 3. Añadir a lista negra de borrados para ocultar repartidores por defecto (hardcodeados)
-  try {
-    let deletedIds = [];
-    const rawDeleted = localStorage.getItem('notigas_deleted_vendor_ids');
-    if (rawDeleted) deletedIds = JSON.parse(rawDeleted);
-    
-    if (!deletedIds.includes(vendorId)) {
-      deletedIds.push(vendorId);
-      localStorage.setItem('notigas_deleted_vendor_ids', JSON.stringify(deletedIds));
-    }
-  } catch(e){}
 
   // 3. Limpiar notigas_user_data si coincide con el usuario activo
   try {
