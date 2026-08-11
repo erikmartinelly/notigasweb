@@ -215,8 +215,7 @@ create policy "Insertar spam" on reportes_spam for insert with check (auth.uid()
 -- Administradores pueden insertar baneos o cualquier cosa
 create policy "Admin INSERT baneados" on usuarios_baneados for insert with check (is_admin_email());
 
--- Políticas de ACTUALIZACIÓN
-create policy "Actualizar propio o Admin" on pedidos for update using (auth.uid()::text = user_id or is_admin_email());
+create policy "Actualizar propio o Admin o Repartidor" on pedidos for update using (auth.uid()::text = user_id or is_admin_email() or exists (select 1 from choferes_habilitados where user_id = auth.uid()::text));
 create policy "Actualizar propio o Admin" on rutas_repartidores for update using (auth.uid()::text = user_id or is_admin_email());
 create policy "Actualizar propio o Admin" on avisos for update using (auth.uid()::text = user_id or is_admin_email());
 create policy "Actualizar propio o Admin" on comentarios_avisos for update using (auth.uid()::text = user_id or is_admin_email());

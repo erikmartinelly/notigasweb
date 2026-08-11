@@ -16,25 +16,7 @@ async function renderDriverOrdersList() {
 
   let orders = [];
   if (window.supabaseClient) {
-    let ciudadReal = 'santacruz'; // fallback seguro
-
-    // 1. Obtener la sesión real para recuperar el perfil autorizado
-    try {
-      const { data: sessionData } = await window.supabaseClient.auth.getSession();
-      if (sessionData && sessionData.session && sessionData.session.user) {
-        // 2. Extraer la ciudad de su registro de habilitación
-        const { data: choferData } = await window.supabaseClient
-          .from('choferes_habilitados')
-          .select('ciudad')
-          .eq('user_id', sessionData.session.user.id)
-          .single();
-        if (choferData && choferData.ciudad) {
-          ciudadReal = choferData.ciudad;
-        }
-      }
-    } catch (e) {
-      console.warn("No se pudo verificar la ciudad del repartidor, se usarán filtros por defecto.", e);
-    }
+    let ciudadReal = localStorage.getItem('notigas_city') || 'santacruz';
 
     const activeWindow = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
     const { data } = await window.supabaseClient

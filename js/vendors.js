@@ -12,8 +12,7 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
     return;
   }
   
-  const citySelect = document.getElementById('selectCiudadCapital');
-  const city = citySelect ? citySelect.value : 'santacruz';
+  const city = localStorage.getItem('notigas_city') || 'santacruz';
 
   try {
     // Solo traemos choferes de la ciudad actual que estén pendientes o aprobados.

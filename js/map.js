@@ -1117,6 +1117,7 @@ function cambiarCiudadCapital(cityKey) {
 
   applyGpsPosition(mun.lat, mun.lon, '', false);
   localStorage.setItem('notigas_active_city', mun.nombre);
+  localStorage.setItem('notigas_city', mun.key);
 
   if (typeof descargarChoferesYRenderizar === 'function') {
     descargarChoferesYRenderizar('TODOS');
