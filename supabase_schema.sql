@@ -1,19 +1,9 @@
 -- ESQUEMA DE BASE DE DATOS PROFESIONAL PARA NOTIGAS
 -- ARQUITECTURA A PRUEBA DE FALLOS: UUIDs, RPCs, constraints, deletes y sincronización con frontend.
 
--- 1. DROPS INICIALES (Limpieza para evitar conflictos)
-drop publication if exists supabase_realtime;
-drop table if exists comentarios_avisos cascade;
-drop table if exists pedidos cascade;
-drop table if exists rutas_repartidores cascade;
-drop table if exists avisos cascade;
-drop table if exists choferes_habilitados cascade;
-drop table if exists usuarios_baneados cascade;
-drop table if exists denuncias cascade;
-drop table if exists reportes_spam cascade;
-drop table if exists mensajes_chat_privados cascade;
-drop table if exists publicaciones cascade;
-drop table if exists admin_credentials cascade;
+-- 1. DROPS INICIALES REMOVIDOS PARA PRODUCCIÓN
+-- Eliminamos los "drop table if exists cascade" para evitar destrucción accidental de datos en producción.
+-- NOTIGAS v2.0+ utiliza migraciones no destructivas.
 
 -- 2. EXTENSIONES
 create extension if not exists "uuid-ossp";
@@ -21,20 +11,29 @@ create extension if not exists "uuid-ossp";
 create extension if not exists "pg_cron";
 
 /* 
--- Trabajo de auto-purga (TTL) para borrar pedidos antiguos (> 2 días) todos los días a medianoche
+-- TRABAJOS DE AUTO-PURGA (TTL)
 -- NOTA: Debes habilitar pg_cron en el Dashboard de Supabase (Database -> Extensions).
 -- Si da error de permisos al ejecutar esto, configúralo directamente desde la interfaz gráfica de Supabase.
+
+-- TTL Pedidos (> 2 días)
 select cron.schedule(
   'purge-old-pedidos',
   '0 0 * * *',
   $$ delete from pedidos where created_at < now() - interval '2 days'; $$
+);
+
+-- TTL Avisos Vecinales (> 72 horas)
+select cron.schedule(
+  'purge-old-avisos',
+  '0 0 * * *',
+  $$ delete from avisos where created_at < now() - interval '72 hours'; $$
 );
 */
 
 -- 3. CREACIÓN DE TABLAS (Con UUIDs)
 
 -- Tabla: pedidos (Solicitudes de gas de los vecinos)
-create table pedidos (
+create table if not exists pedidos (
     id uuid primary key default uuid_generate_v4(),
     user_id text,
     categoria text not null,
@@ -45,7 +44,7 @@ create table pedidos (
     telefono text,
     estado text default 'pendiente' check (estado in ('pendiente', 'visto', 'entregado', 'cancelado')),
     driver_id text,
-    ciudad text default 'Cochabamba',
+    ciudad text default 'santacruz',
     barrio_otb text,
     latitude double precision,
     longitude double precision,
@@ -53,13 +52,13 @@ create table pedidos (
 );
 
 -- Tabla: rutas_repartidores (Ubicación GPS de los camiones en vivo)
-create table rutas_repartidores (
+create table if not exists rutas_repartidores (
     id uuid primary key default uuid_generate_v4(),
     user_id text unique,
     distribuidor_nombre text,
     categoria text default 'gas',
     titulo text,
-    ciudad text default 'Cochabamba',
+    ciudad text default 'santacruz',
     latitude double precision,
     longitude double precision,
     garrafas_agotadas boolean default false,
@@ -68,21 +67,21 @@ create table rutas_repartidores (
 );
 
 -- Tabla: avisos (Foro vecinal y Anuncios de Admin)
-create table avisos (
+create table if not exists avisos (
     id uuid primary key default uuid_generate_v4(),
     user_id text,
     tipo text default 'aviso',
     categoria text,
     titulo text not null,
     descripcion text not null,
-    ciudad text default 'Cochabamba',
+    ciudad text default 'santacruz',
     barrio_otb text default 'Global',
     votos integer default 1,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
 -- Tabla: comentarios_avisos
-create table comentarios_avisos (
+create table if not exists comentarios_avisos (
     id uuid primary key default uuid_generate_v4(),
     aviso_id uuid not null references avisos(id) on delete cascade,
     user_id text,
@@ -93,7 +92,7 @@ create table comentarios_avisos (
 );
 
 -- Tabla: reportes_spam (Filtro Anti-Inglés y denuncias de contenido)
-create table reportes_spam (
+create table if not exists reportes_spam (
     id uuid primary key default uuid_generate_v4(),
     texto text,
     motivo text,
@@ -101,7 +100,7 @@ create table reportes_spam (
 );
 
 -- Tabla: choferes_habilitados (Repartidores registrados)
-create table choferes_habilitados (
+create table if not exists choferes_habilitados (
     id uuid primary key default uuid_generate_v4(),
     user_id text unique,
     nombre_completo text,
@@ -117,7 +116,7 @@ create table choferes_habilitados (
 );
 
 -- Tabla: usuarios_baneados
-create table usuarios_baneados (
+create table if not exists usuarios_baneados (
     id uuid primary key default uuid_generate_v4(),
     user_id text,
     motivo text,
@@ -125,7 +124,7 @@ create table usuarios_baneados (
 );
 
 -- Tabla: denuncias
-create table denuncias (
+create table if not exists denuncias (
     id uuid primary key default uuid_generate_v4(),
     denunciante_id text,
     denunciado_id text,
@@ -239,6 +238,7 @@ create policy "Admin DELETE reportes" on reportes_spam for delete using (is_admi
 
 
 -- 6. HABILITAR REALTIME (Websockets para que el mapa se mueva en vivo)
+drop publication if exists supabase_realtime;
 create publication supabase_realtime for table 
     pedidos, 
     rutas_repartidores, 

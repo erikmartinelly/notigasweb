@@ -220,10 +220,13 @@ function parseGoogleJwt(token) {
 function iniciarConGoogleDirecto() {
   if (typeof google !== 'undefined' && google && google.accounts && google.accounts.id) {
     try {
-      google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: handleCredentialResponse
-      });
+      if (!_googleGisInitialized) {
+        google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: handleCredentialResponse
+        });
+        _googleGisInitialized = true;
+      }
 
       google.accounts.id.prompt((notification) => {
         if (notification.isNotDisplayed() || notification.isSkippedMoment()) {

@@ -18,8 +18,8 @@ window.neighborOrderTimers = {};
 let mapTileLayers = {};
 let animationTimer = null;
 let lastGpsBroadcastTime = 0;
-let currentGpsLat = -17.3895;
-let currentGpsLng = -66.1568;
+let currentGpsLat = null;
+let currentGpsLng = null;
 let heatmapLayerGroup = null;
 let activeGpsWatchId = null;
 let truckTargetLat = null;
@@ -461,7 +461,7 @@ let lastBroadcastLng = null;
    3. Camión en Movimiento (Movimiento >= 15 metros): Emisión óptima cada 35 segundos para permitir que vecinos salgan a tiempo.
    4. Ahorro Total: Menos de 0.2 MB de consumo al día por repartidor.
 */
-function transmitirUbicacionRepartidorServidorDB(lat, lng) {
+async function transmitirUbicacionRepartidorServidorDB(lat, lng) {
   // 1. Pausa total si la pestaña está inactiva o pantalla bloqueada
   if (document.hidden) return;
 
@@ -496,18 +496,35 @@ function transmitirUbicacionRepartidorServidorDB(lat, lng) {
         lastBroadcastLat = lat;
         lastBroadcastLng = lng;
         lastGpsBroadcastTime = now;
-        const driverLocationPayload = {
-          driver_id: u.gmail || u.nombre || "repartidor_1",
-          nombre: u.nombre || "Repartidor GLP",
-          lat: lat,
-          lng: lng,
-          timestamp: now
-        };
-        // Guardado UPSERT (1 sola fila activa sin almacenamiento pesado)
-        localStorage.setItem('notigas_driver_last_location', JSON.stringify(driverLocationPayload));
+
+        if (window.supabaseClient) {
+          // Obtener ciudad autorizada (con caché simple)
+          if (!window._cachedDriverCity) {
+            const { data: s } = await window.supabaseClient.auth.getSession();
+            if (s?.session?.user) {
+              const { data: c } = await window.supabaseClient.from('choferes_habilitados').select('ciudad').eq('user_id', s.session.user.id).single();
+              if (c) window._cachedDriverCity = c.ciudad;
+            }
+          }
+          const finalCity = window._cachedDriverCity || 'santacruz';
+          const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
+
+          await window.supabaseClient.from('rutas_repartidores').upsert({
+            user_id: localUserId,
+            distribuidor_nombre: u.nombre || "Repartidor GLP",
+            categoria: u.categoria || "Gas GLP",
+            titulo: `${u.placa || 'Camión'}`,
+            ciudad: finalCity,
+            latitude: lat,
+            longitude: lng,
+            last_active: new Date().toISOString()
+          }, { onConflict: 'user_id' });
+        }
       }
     }
-  } catch(e){}
+  } catch(e){
+    console.error("Error transmitiendo GPS", e);
+  }
 }
 
 let reportedTrucksLayerGroup = null;
@@ -847,6 +864,10 @@ function TrazarRutaCuadriculaManzana(waypoints) {
 
 async function calcularYTrazarRutaEficiente() {
   if (!map) return;
+  if (currentGpsLat === null || currentGpsLng === null) {
+    alert("⏳ Esperando señal GPS. No se puede calcular la ruta sin tu ubicación actual.");
+    return;
+  }
 
   if (!routePolylineLayerGroup) {
     routePolylineLayerGroup = L.layerGroup().addTo(map);

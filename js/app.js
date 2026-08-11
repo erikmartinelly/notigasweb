@@ -312,8 +312,8 @@ function switchTab(index) {
 }
 
 function getActiveUserLocation() {
-  let lat = (typeof currentGpsLat !== 'undefined' && currentGpsLat) ? currentGpsLat : -17.3895;
-  let lng = (typeof currentGpsLng !== 'undefined' && currentGpsLng) ? currentGpsLng : -66.1568;
+  let lat = (typeof currentGpsLat !== 'undefined' && currentGpsLat) ? currentGpsLat : null;
+  let lng = (typeof currentGpsLng !== 'undefined' && currentGpsLng) ? currentGpsLng : null;
 
   if (typeof userMarker !== 'undefined' && userMarker && userMarker.getLatLng) {
     try {

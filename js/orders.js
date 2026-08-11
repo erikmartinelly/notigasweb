@@ -16,7 +16,26 @@ async function renderDriverOrdersList() {
 
   let orders = [];
   if (window.supabaseClient) {
-    const ciudadReal = localStorage.getItem('notigas_city') || 'santacruz';
+    let ciudadReal = 'santacruz'; // fallback seguro
+
+    // 1. Obtener la sesión real para recuperar el perfil autorizado
+    try {
+      const { data: sessionData } = await window.supabaseClient.auth.getSession();
+      if (sessionData && sessionData.session && sessionData.session.user) {
+        // 2. Extraer la ciudad de su registro de habilitación
+        const { data: choferData } = await window.supabaseClient
+          .from('choferes_habilitados')
+          .select('ciudad')
+          .eq('user_id', sessionData.session.user.id)
+          .single();
+        if (choferData && choferData.ciudad) {
+          ciudadReal = choferData.ciudad;
+        }
+      }
+    } catch (e) {
+      console.warn("No se pudo verificar la ciudad del repartidor, se usarán filtros por defecto.", e);
+    }
+
     const activeWindow = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
     const { data } = await window.supabaseClient
       .from('pedidos')
@@ -73,10 +92,39 @@ async function aceptarPedidoRepartidor(id) {
   
   showConfirmModal('👀', '¿Marcar como Visto?', 'Avisarás al vecino que estás rondando su zona. Otros repartidores también podrán ver el pedido.', 'Sí, notificar', async () => {
     if (window.supabaseClient) {
+        showLoadingOverlay('Verificando jurisdicción...');
+        
+        let driverCity = null;
+        try {
+          const { data: sessionData } = await window.supabaseClient.auth.getSession();
+          if (sessionData?.session?.user) {
+            const { data: choferData } = await window.supabaseClient
+              .from('choferes_habilitados')
+              .select('ciudad')
+              .eq('user_id', sessionData.session.user.id)
+              .single();
+            if (choferData) driverCity = choferData.ciudad;
+          }
+        } catch(e){}
+
+        if (!driverCity) {
+           hideLoadingOverlay();
+           showToast('Acceso Denegado', 'No pudimos verificar tu jurisdicción. Inicia sesión nuevamente.', 'error', 4000);
+           return;
+        }
+
+        const { data: orderData } = await window.supabaseClient.from('pedidos').select('ciudad').eq('id', id).single();
+        if (!orderData || orderData.ciudad !== driverCity) {
+           hideLoadingOverlay();
+           showToast('Acceso Denegado', 'Este pedido pertenece a una ciudad fuera de tu jurisdicción.', 'error', 4000);
+           return;
+        }
+
         showLoadingOverlay('Marcando pedido...');
         const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
         const { error } = await window.supabaseClient.from('pedidos').update({ estado: 'visto', driver_id: localUserId }).eq('id', id);
         hideLoadingOverlay();
+        
         if(error) {
             showToast('Error', 'No se pudo marcar.', 'error', 3000);
         } else {

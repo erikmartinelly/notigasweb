@@ -76,29 +76,8 @@ function getStoredVendors() {
     if (raw) list = JSON.parse(raw);
   } catch(e){}
   
-  // Agregar también la ficha del repartidor actual si existe y no ha sido eliminada por admin
-  try {
-    const saved = localStorage.getItem('notigas_user_data');
-    if (saved) {
-      const u = JSON.parse(saved);
-      if (u.role === 'repartidor' && u.nombre) {
-        const myId = `vendor_my_profile`;
-        if (!deletedIds.includes(myId) && !list.some(v => v.id === myId || v.name === u.nombre)) {
-          list.unshift({
-            id: myId,
-            name: u.nombre,
-            category: u.categoria || "Gas GLP",
-            icon: getIconForCategory(u.categoria),
-            plate: `${u.placa || 'Placa registrada'} (Repartidor Activo)`,
-            products: u.productos || "Servicios de reparto a domicilio",
-            zones: u.zonas || "OTB Central y zonas aledañas",
-            schedule: u.schedule || "Lunes a Sábado: 08:00 a 18:00",
-            active: true
-          });
-        }
-      }
-    }
-  } catch(e){}
+  // FIX: Ya no inyectamos al usuario actual automáticamente con "active: true".
+  // Su estado real vendrá de la tabla choferes_habilitados de Supabase.
 
   return list.filter(v => !deletedIds.includes(v.id));
 }
@@ -118,46 +97,7 @@ function renderVendorCards(filterCat) {
 
   let html = '';
 
-  // SECCIÓN DESTACADA: PEDIDOS VECINALES EN VIVO SOLICITADOS POR COMPRADORES
-  const activeOrderRaw = localStorage.getItem('notigas_active_order');
-  if (activeOrderRaw) {
-    try {
-      const activeOrder = JSON.parse(activeOrderRaw);
-      if (typeof isOrderCategoryMatchingDriver !== 'function' || isOrderCategoryMatchingDriver(activeOrder.categoria)) {
-        const iconHtml = (typeof obtenerIconoHtmlPorCategoria === 'function') ? obtenerIconoHtmlPorCategoria(activeOrder.categoria) : '📦';
-        const mins = Math.floor((Date.now() - (activeOrder.timestamp || Date.now())) / 60000);
-        
-        html += `
-          <div class="vendor-fb-card" style="border: 2px solid #FF6D00; background: linear-gradient(135deg, rgba(255,109,0,0.18), rgba(15,23,42,0.95)); box-shadow: 0 6px 20px rgba(255,109,0,0.35); margin-bottom: 14px;">
-            <div class="vendor-fb-header">
-              <div class="vendor-profile">
-                <div class="vendor-avatar" style="background: rgba(255,109,0,0.25); color: #FF6D00;">🛒</div>
-                <div class="vendor-meta">
-                  <span class="vendor-name" style="color: #FF8F00; font-size: 13.5px; font-weight: 900;">🚨 PEDIDO DE COMPRADOR EN VIVO</span>
-                  <span class="vendor-badge-cat" style="background: rgba(255,109,0,0.25); color: #FF8F00; font-weight: 800;">${iconHtml} ${escapeHtmlStr(activeOrder.categoria)}</span>
-                </div>
-              </div>
-              <span class="ad-badge" style="background: rgba(239,68,68,0.2); color: #EF4444; border-color: #EF4444; animation: pulse 1.5s infinite; font-weight: 800;">⏱️ HACE ${mins} MIN</span>
-            </div>
-
-            <div class="vendor-fb-body">
-              <div class="vendor-field"><strong>📦 Producto Solicitado:</strong> <span style="color:white; font-weight:800;">${escapeHtmlStr(activeOrder.categoria)} (${escapeHtmlStr(activeOrder.cantidad || '1 unidad')})</span></div>
-              <div class="vendor-field"><strong>🏠 Dirección de Entrega:</strong> <span style="color:#F59E0B; font-weight:800;">${escapeHtmlStr(activeOrder.callePrincipal || 'Ubicación georeferenciada')}</span></div>
-              ${activeOrder.telefono ? `<div class="vendor-field"><strong>📞 Teléfono Contacto:</strong> <a href="tel:${activeOrder.telefono.replace(/[^0-9+]/g, '')}" style="color:#00E676; font-weight:800; text-decoration:none;">${escapeHtmlStr(activeOrder.telefono)} 📞 Llamar</a></div>` : ''}
-              <div class="vendor-field"><strong>💬 Coordinación:</strong> Chat Privado Interno 1-a-1 encriptado</div>
-            </div>
-
-            <div class="vendor-fb-footer" style="display:flex; gap:8px;">
-
-              <button class="btn-vendor-order" style="flex:1; background: linear-gradient(135deg, #FF6D00, #E65100); color:white; border:none; border-radius:8px; font-weight:900; cursor:pointer;" onclick="aceptarPedidoRepartidor(decodeURIComponent('${encodeURIComponent(activeOrder.categoria)}'))"><i class="fa-solid fa-circle-check"></i> ✅ Aceptar Pedido</button>
-            </div>
-          </div>
-        `;
-      }
-    } catch(e){
-      console.error("Error al renderizar pedido activo en pestaña repartidores:", e);
-    }
-  }
+  // (El pedido destacado vecinal ya se maneja en Tab 1 con datos en tiempo real de Supabase)
 
   if (filtered.length === 0) {
     container.innerHTML = html + `
