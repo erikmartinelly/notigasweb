@@ -47,80 +47,6 @@ const SUPABASE_ANON_KEY = 'sb_publishable_wWVQ59Rejod5Oc1X4s_eeQ_ONbXzyi2';
 window.currentDriverPublicationId = null;
 window.driverLocationInterval = null;
 
-// FIX W-06: Flag para evitar llamadas concurrentes mientras el await está pendiente
-let _broadcastInProgress = false;
-
-// --- FUNCIONES PARA REPARTIDORES ---
-  window.startDriverLocationBroadcast = async function(driverName, driverCategory) {
-      // FIX W-06: Evitar múltiples calls concurrentes que crearían intervals duplicados
-      if (_broadcastInProgress) {
-        console.warn('[GPS] startDriverLocationBroadcast ignorado: ya hay un broadcast en progreso.');
-        return;
-      }
-      if (!window.supabaseClient) return;
-
-      _broadcastInProgress = true;
-
-      const lat = typeof currentGpsLat !== 'undefined' ? currentGpsLat : -17.3895;
-      const lng = typeof currentGpsLng !== 'undefined' ? currentGpsLng : -66.1568;
-      
-      let userId = null;
-      try { 
-        const userStr = localStorage.getItem('notigas_user_data') || '{}';
-        userId = JSON.parse(userStr).user_id; 
-      } catch(e){}
-      
-      if (!userId) {
-          console.error("No hay user_id para registrar la ruta.");
-          _broadcastInProgress = false;
-          return;
-      }
-  
-      try {
-        const { data, error } = await window.supabaseClient.from('rutas_repartidores').upsert([{
-            user_id: userId,
-            categoria: driverCategory || 'gas',
-            titulo: `Repartidor en Ruta: ${driverName}`,
-            ciudad: 'Cochabamba',
-            latitude: lat,
-            longitude: lng,
-            distribuidor_nombre: driverName,
-            garrafas_agotadas: false
-        }], { onConflict: 'user_id' }).select('id').single();
-    
-        if (error) {
-            console.error("Error al iniciar broadcast en Supabase:", error);
-        } else if (data) {
-            window.currentDriverPublicationId = data.id;
-            console.log("Ruta de repartidor creada/actualizada en Supabase, ID:", window.currentDriverPublicationId);
-            
-            // Limpiar interval anterior antes de crear uno nuevo
-            if (window.driverLocationInterval) clearInterval(window.driverLocationInterval);
-            window.driverLocationInterval = setInterval(window.updateDriverLocation, 5000);
-        }
-      } catch(e) {
-        console.error("Excepción en startDriverLocationBroadcast:", e);
-      } finally {
-        // FIX W-06: Liberar el flag siempre, incluso si hubo error
-        _broadcastInProgress = false;
-      }
-  };
-  
-  window.updateDriverLocation = async function() {
-      if (!window.supabaseClient || !window.currentDriverPublicationId) return;
-      const lat = typeof currentGpsLat !== 'undefined' ? currentGpsLat : -17.3895;
-      const lng = typeof currentGpsLng !== 'undefined' ? currentGpsLng : -66.1568;
-  
-      try {
-        const { error } = await window.supabaseClient.from('rutas_repartidores')
-            .update({ latitude: lat, longitude: lng })
-            .eq('id', window.currentDriverPublicationId);
-        if (error) console.error("Error al actualizar ubicación en Supabase:", error);
-      } catch(e) {
-        console.error("Excepción en updateDriverLocation:", e);
-      }
-  };
-  
   window.stopDriverLocationBroadcast = async function() {
       if (window.driverLocationInterval) {
           clearInterval(window.driverLocationInterval);
@@ -194,6 +120,10 @@ function _programarReconexionRealtime() {
     if (_realtimeRetryTimeout) clearTimeout(_realtimeRetryTimeout);
     if (_realtimeRetryCount >= MAX_REALTIME_RETRIES) {
         console.error('❌ Realtime: se agotaron los reintentos de reconexión.');
+        if (_realtimeChannel) {
+            _realtimeChannel.unsubscribe();
+            _realtimeChannel = null;
+        }
         if (typeof showToast === 'function') {
             showToast('⚠️ Sin conexión en vivo', 'No se pudo reconectar al servidor. Usa el botón 🔄 para recargar datos.', 'warning', 6000);
         }

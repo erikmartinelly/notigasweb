@@ -173,8 +173,10 @@ function initNotigasMap() {
 
   conectarGPSAuto(false);
   renderReportedTrucksBuffer();
+  if (typeof window.iniciarSuscripcionesRealtime === 'function') {
+    window.iniciarSuscripcionesRealtime();
+  }
   cargarPedidosVecinalesEnVivo();
-  iniciarSuscripcionMapaRealtime();
 }
 
 async function cargarPedidosVecinalesEnVivo() {

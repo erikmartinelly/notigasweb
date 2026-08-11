@@ -136,8 +136,6 @@ create table denuncias (
 
 
 
--- (Tabla publicaciones eliminada: fusionada con avisos usando la columna 'tipo')
-
 -- Tabla: credenciales de administrador
 create table if not exists admin_credentials (
     id uuid primary key default uuid_generate_v4(),

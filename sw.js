@@ -11,8 +11,11 @@ const ASSETS_TO_CACHE = [
   './js/map.js',
   './js/forum.js',
   './js/ads.js',
-  './js/admin.js',
+  './js/ui.js',
+  './js/orders.js',
   './js/app.js',
+  './js/admin.js',
+  './js/admin_users.js',
   './icons/garrafa_red_clean.svg',
   './icons/camion_red.svg',
   './manifest.json'

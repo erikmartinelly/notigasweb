@@ -94,11 +94,17 @@ function buscarCalle() {
                     showToast('Calle no encontrada', `No se encontró la calle "${calleQuery}" en ${munObj.nombre}.`, 'warning', 4000);
                   }
                 }
-              })
-              .catch(() => {});
-          })
-          .catch(() => {});
+              }).catch(e => {
+                console.error("Error en geocoding Fallback:", e);
+              });
+          }).catch(e => {
+            console.error("Error en geocoding Photon:", e);
+          });
       }
-    })
-    .catch(() => {});
+    }).catch(e => {
+      console.error("Error en geocoding Nominatim:", e);
+      if (typeof showToast === 'function') {
+         showToast('Error de Búsqueda', 'Hubo un problema contactando al servidor de mapas.', 'error', 3000);
+      }
+    });
 }
