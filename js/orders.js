@@ -86,9 +86,9 @@ window.aceptarPedidoRepartidor = async function(id) {
 }
 async function confirmarEntregaPedido(id) {
   if (!window.supabaseClient) return;
-  showConfirmModal('⚠️', 'Cancelar Pedido', '¿Estás seguro de cancelar tu solicitud de gas?', 'Sí, cancelar', async () => {
-    showLoadingOverlay('Cancelando...');
-    const { error } = await window.supabaseClient.from('pedidos').update({ estado: 'cancelado' }).eq('id', id);
+  showConfirmModal('🏁', 'Confirmar Entrega', '¿El vecino ya recibió su pedido y se realizó el pago?', 'Sí, ya entregué el pedido', async () => {
+    showLoadingOverlay('Confirmando entrega...');
+    const { error } = await window.supabaseClient.from('pedidos').update({ estado: 'entregado' }).eq('id', id);
     hideLoadingOverlay();
     
     if (error) {

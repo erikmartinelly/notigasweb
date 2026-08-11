@@ -268,20 +268,23 @@ async function renderAdminAdsAndPostsList() {
   let count = 0;
 
   // 1. Anuncio Local Personalizado
-  const { data: adData } = await window.supabaseClient.from('publicaciones').select('*').eq('tipo', 'anuncioGlobal').single();
-  if (adData) {
-    count++;
-    html += `
-      <div style="background:#1E293B; padding:10px; border-radius:8px; border:1px solid #F59E0B; margin-bottom:8px;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <strong style="color:#F59E0B; font-size:11.5px;"><i class="fa-solid fa-rectangle-ad"></i> Anuncio Local Banner OTB</strong>
-          <button onclick="borrarAnuncioLocalAdmin('${adData.id}')" style="background:#D32F2F; color:white; border:none; padding:3px 8px; border-radius:4px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Borrar Anuncio</button>
+  const { data: adData } = await window.supabaseClient.from('anuncios_globales').select('*').order('created_at', { ascending: false });
+  if (adData && adData.length > 0) {
+    adData.forEach(ad => {
+      count++;
+      html += `
+        <div style="background:#1E293B; padding:10px; border-radius:8px; border:1px solid #F59E0B; margin-bottom:8px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong style="color:#F59E0B; font-size:11.5px;"><i class="fa-solid fa-rectangle-ad"></i> Anuncio en ${window.escapeHtmlStr(ad.ciudad)}</strong>
+            <button onclick="borrarAnuncioLocalAdmin('${ad.id}')" style="background:#D32F2F; color:white; border:none; padding:3px 8px; border-radius:4px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Borrar Anuncio</button>
+          </div>
+          <div style="font-size:11px; color:white; margin-top:4px;">
+            <strong>Texto:</strong> ${window.escapeHtmlStr(ad.titulo || '')}<br>
+            <strong>URL:</strong> ${window.escapeHtmlStr(ad.url || '')}<br>
+          </div>
         </div>
-        <div style="font-size:11px; color:white; margin-top:4px;">
-          ${adData.titulo ? `<strong>Texto:</strong> "${escapeHtmlStr(adData.titulo)}"` : 'Banner con Imagen activa'}
-        </div>
-      </div>
-    `;
+      `;
+    });
   }
 
   // 2. Avisos y Noticias de la OTB
@@ -309,18 +312,6 @@ async function renderAdminAdsAndPostsList() {
 
   container.innerHTML = html;
 }
-
-async function borrarAnuncioLocalAdmin(id) {
-  if (!window.supabaseClient) return;
-  const { error } = await window.supabaseClient.from('publicaciones').delete().eq('id', id);
-  if (error) console.error(error);
-
-  localStorage.removeItem('notigas_ad_text');
-  localStorage.removeItem('notigas_ad_url');
-  localStorage.removeItem('notigas_ad_image_base64');
-
-  if (typeof cargarAnunciosGuardados === 'function') cargarAnunciosGuardados();
-  renderAdminAdsAndPostsList();
 
   if (typeof showToast === 'function') {
     showToast('🗑️ Anuncio Eliminado', 'El anuncio local de la OTB fue borrado del sistema.', 'info', 4000);
@@ -756,52 +747,40 @@ function guardarSubmenuAnuncios() {
     return;
   }
 
-  const adsenseId = (document.getElementById('inputAdsenseId')?.value || '').trim();
-  const adsenseSlot = (document.getElementById('inputAdsenseSlotId')?.value || '').trim();
-  const adsenseMode = (document.getElementById('inputAdsenseMode')?.value || '').trim();
   const inputAd = (document.getElementById('inputAdText')?.value || '').trim();
   const inputUrl = (document.getElementById('inputAdUrl')?.value || '').trim();
-
-  localStorage.setItem('notigas_adsense_id', adsenseId);
-  localStorage.setItem('notigas_adsense_slot_id', adsenseSlot);
-  localStorage.setItem('notigas_adsense_mode', adsenseMode);
-  localStorage.setItem('notigas_ad_text', inputAd);
-  localStorage.setItem('notigas_ad_url', inputUrl);
-
-  if (adsenseMode === 'adsense' && adsenseId && typeof inyectarGoogleAdsenseScript === 'function') {
-    inyectarGoogleAdsenseScript(adsenseId);
-  }
+  const activeCity = localStorage.getItem('notigas_city') || 'santacruz';
+  const imgUrl = (window.pendingUploadUrl) ? window.pendingUploadUrl : null;
 
   if (typeof actualizarAnunciosEnVivo === 'function') {
     actualizarAnunciosEnVivo(inputAd, inputUrl);
   }
+  if (imgUrl && typeof actualizarBannerConImagen === 'function') {
+    actualizarBannerConImagen(imgUrl);
+  }
 
-  // Sincronizar con Supabase para que los clientes web y móviles lo vean
+  // Sincronizar con Supabase para la ciudad actual
   if (window.supabaseClient) {
-    const base64Img = localStorage.getItem('notigas_ad_image_base64') || '';
     const payload = {
-        tipo: 'anuncioGlobal',
         titulo: inputAd,
         descripcion: 'Anuncio Global Sponsor',
-        comentarios: [{ url: inputUrl, image: base64Img }], // Usamos comentarios como JSON storage
-        categoria: 'Publicidad',
-        user_email: 'admin@notigas.com',
-        user_role: 'admin',
-        ciudad: 'Global',
-        barrio_otb: 'Global'
+        url: inputUrl,
+        activo: true,
+        ciudad: activeCity
     };
+    if (imgUrl) payload.image_url = imgUrl;
     
-    window.supabaseClient.from('publicaciones').select('id').eq('tipo', 'anuncioGlobal').single().then(({data}) => {
+    window.supabaseClient.from('anuncios_globales').select('id').eq('ciudad', activeCity).single().then(({data}) => {
         if (data) {
-            window.supabaseClient.from('publicaciones').update(payload).eq('id', data.id).then();
+            window.supabaseClient.from('anuncios_globales').update(payload).eq('id', data.id).then();
         } else {
-            window.supabaseClient.from('publicaciones').insert([payload]).then();
+            window.supabaseClient.from('anuncios_globales').insert([payload]).then();
         }
     });
   }
 
   closeAdminModal();
-  alert('📢 CONFIGURACIÓN DE PUBLICIDAD Y ADSENSE GUARDADA CON ÉXITO\n\nLos cambios en anuncios locales e integración con Google AdSense ya están activos.');
+  alert('📢 CONFIGURACIÓN DE PUBLICIDAD GUARDADA\n\nLos cambios en anuncios locales para esta ciudad ya están activos.');
 }
 
 function guardarAdminConfig() {
