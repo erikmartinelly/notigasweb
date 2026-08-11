@@ -42,9 +42,8 @@ create policy "Actualizar propio" on rutas_repartidores for update using (auth.u
 create policy "Actualizar propio" on avisos for update using (auth.uid()::text = user_id);
 create policy "Actualizar propio" on comentarios_avisos for update using (auth.uid()::text = user_id);
 
-drop policy if exists "Borrar cualquier autenticado" on pedidos;
-drop policy if exists "Borrar propio" on pedidos;
-create policy "Borrar propio" on pedidos for delete using (auth.uid()::text = user_id);
+-- Para pedidos permitimos DELETE a cualquier autenticado para el flujo actual "aceptar = borrar"
+create policy "Borrar cualquier autenticado" on pedidos for delete using (auth.uid() is not null);
 create policy "Borrar propio" on rutas_repartidores for delete using (auth.uid()::text = user_id);
 create policy "Borrar propio" on avisos for delete using (auth.uid()::text = user_id);
 create policy "Borrar propio" on comentarios_avisos for delete using (auth.uid()::text = user_id);

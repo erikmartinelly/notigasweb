@@ -191,34 +191,34 @@ create policy "Insertar propio" on pedidos for insert with check (auth.uid()::te
 create policy "Insertar propio" on rutas_repartidores for insert with check (auth.uid()::text = user_id);
 create policy "Insertar propio" on avisos for insert with check (auth.uid()::text = user_id);
 create policy "Insertar propio" on comentarios_avisos for insert with check (auth.uid()::text = user_id);
-create policy "Insertar propio" on choferes_habilitados for insert with check (auth.uid()::text = user_id);
-create policy "Admin INSERT" on usuarios_baneados for insert with check (false);
-create policy "Insertar propio" on denuncias for insert with check (auth.uid() is not null);
-create policy "Insertar propio" on reportes_spam for insert with check (auth.uid() is not null);
-create policy "Insertar propio" on mensajes_chat_privados for insert with check (auth.uid()::text = remitente_id);
-create policy "Admin INSERT" on publicaciones for insert with check (false);
+create policy "Public INSERT" on choferes_habilitados for insert with check (true);
+create policy "Public INSERT" on usuarios_baneados for insert with check (true);
+create policy "Public INSERT" on denuncias for insert with check (true);
+create policy "Public INSERT" on reportes_spam for insert with check (true);
+create policy "Public INSERT" on mensajes_chat_privados for insert with check (true);
+create policy "Public INSERT" on publicaciones for insert with check (true);
 
 create policy "Actualizar propio" on pedidos for update using (auth.uid()::text = user_id);
 create policy "Actualizar propio" on rutas_repartidores for update using (auth.uid()::text = user_id);
 create policy "Actualizar propio" on avisos for update using (auth.uid()::text = user_id);
 create policy "Actualizar propio" on comentarios_avisos for update using (auth.uid()::text = user_id);
-create policy "Actualizar propio" on choferes_habilitados for update using (auth.uid()::text = user_id);
-create policy "Admin UPDATE" on usuarios_baneados for update using (false);
-create policy "Admin UPDATE" on denuncias for update using (false);
-create policy "Admin UPDATE" on reportes_spam for update using (false);
-create policy "Actualizar propio" on mensajes_chat_privados for update using (auth.uid()::text = remitente_id);
-create policy "Admin UPDATE" on publicaciones for update using (false);
+create policy "Public UPDATE" on choferes_habilitados for update using (true);
+create policy "Public UPDATE" on usuarios_baneados for update using (true);
+create policy "Public UPDATE" on denuncias for update using (true);
+create policy "Public UPDATE" on reportes_spam for update using (true);
+create policy "Public UPDATE" on mensajes_chat_privados for update using (true);
+create policy "Public UPDATE" on publicaciones for update using (true);
 
-create policy "Borrar propio" on pedidos for delete using (auth.uid()::text = user_id);
+create policy "Borrar cualquier autenticado" on pedidos for delete using (auth.uid() is not null);
 create policy "Borrar propio" on rutas_repartidores for delete using (auth.uid()::text = user_id);
 create policy "Borrar propio" on avisos for delete using (auth.uid()::text = user_id);
 create policy "Borrar propio" on comentarios_avisos for delete using (auth.uid()::text = user_id);
-create policy "Borrar propio" on choferes_habilitados for delete using (auth.uid()::text = user_id);
-create policy "Admin DELETE" on usuarios_baneados for delete using (false);
-create policy "Admin DELETE" on denuncias for delete using (false);
-create policy "Admin DELETE" on reportes_spam for delete using (false);
-create policy "Borrar propio" on mensajes_chat_privados for delete using (auth.uid()::text = remitente_id);
-create policy "Admin DELETE" on publicaciones for delete using (false);
+create policy "Public DELETE" on choferes_habilitados for delete using (true);
+create policy "Public DELETE" on usuarios_baneados for delete using (true);
+create policy "Public DELETE" on denuncias for delete using (true);
+create policy "Public DELETE" on reportes_spam for delete using (true);
+create policy "Public DELETE" on mensajes_chat_privados for delete using (true);
+create policy "Public DELETE" on publicaciones for delete using (true);
 
 
 -- 6. HABILITAR REALTIME (Websockets para que el mapa se mueva en vivo)
