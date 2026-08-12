@@ -54,12 +54,15 @@ window.driverLocationInterval = null;
           clearInterval(window.driverLocationInterval);
           window.driverLocationInterval = null;
       }
-      if (window.supabaseClient && window.currentDriverPublicationId) {
-          await window.supabaseClient.from('rutas_repartidores')
-              .delete()
-              .eq('id', window.currentDriverPublicationId);
+      if (window.supabaseClient) {
+          const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : null;
+          if (localUserId) {
+            await window.supabaseClient.from('rutas_repartidores')
+                .delete()
+                .eq('user_id', localUserId);
+            console.log("Ruta de repartidor eliminada de Supabase.");
+          }
           window.currentDriverPublicationId = null;
-          console.log("Ruta de repartidor eliminada de Supabase.");
       }
   };
 

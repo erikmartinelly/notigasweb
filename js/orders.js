@@ -52,15 +52,36 @@ async function renderDriverOrdersList() {
 
       
 
+    const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
+
     if (data) {
 
       orders = data.filter(o => typeof isOrderCategoryMatchingDriver === 'function' && isOrderCategoryMatchingDriver(o.categoria));
 
-      const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
-
       // En la app del repartidor, ver pedidos pendientes, y los que él mismo ha aceptado
 
       orders = orders.filter(o => o.estado === 'pendiente' || (o.estado === 'asignado' && o.driver_id === localUserId));
+
+      // Reemplazar la información ofuscada (***) de los pedidos asignados consultando la tabla original
+      const assignedIds = orders.filter(o => o.estado === 'asignado' && o.driver_id === localUserId).map(o => o.id);
+      if (assignedIds.length > 0 && window.supabaseClient) {
+        const { data: realData } = await window.supabaseClient
+          .from('pedidos')
+          .select('id, direccion, telefono')
+          .in('id', assignedIds);
+          
+        if (realData) {
+          orders = orders.map(o => {
+            if (o.estado === 'asignado' && o.driver_id === localUserId) {
+              const realOrder = realData.find(ro => ro.id === o.id);
+              if (realOrder) {
+                return { ...o, direccion: realOrder.direccion, telefono: realOrder.telefono };
+              }
+            }
+            return o;
+          });
+        }
+      }
 
     }
 

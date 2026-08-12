@@ -2,6 +2,15 @@
 -- Soluciona el error "there is no unique or exclusion constraint matching the ON CONFLICT specification"
 -- forzando la creación del índice único en user_id si no existía por una creación previa incompleta de la tabla.
 
+-- Primero, eliminar cualquier registro duplicado por user_id quedándose solo con el más antiguo.
+-- Esto asegura que la restricción UNIQUE no falle por datos previos.
+DELETE FROM public.choferes_habilitados
+WHERE ctid NOT IN (
+    SELECT min(ctid)
+    FROM public.choferes_habilitados
+    GROUP BY user_id
+);
+
 DO $$
 BEGIN
     IF NOT EXISTS (

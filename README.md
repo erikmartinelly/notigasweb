@@ -59,7 +59,7 @@ NOTIGAS bridges this gap by democratizing access to Artificial Intelligence and 
 
 2.  **Configure Supabase:**
     *   Create a new project in Supabase.
-    *   Run the SQL scripts located in the `supabase/migrations/` folder in numerical order (from `001_initial_setup.sql` to `017_seed_admin.sql`) in the Supabase SQL Editor to create the required tables, RLS policies, and storage buckets.
+    *   Run the SQL scripts located in the `supabase/migrations/` folder in numerical order (from `001_initial_setup.sql` to `018_fix_public_choferes.sql`) in the Supabase SQL Editor to create the required tables, RLS policies, and storage buckets.
         * **Note on 014_fix_auth_triggers.sql:** This migration forcefully deletes all triggers on `auth.users`. It is intended to fix database errors when users cannot register due to outdated tutorial triggers. Use it only if you experience the "Database error saving new user" issue.
     *   Open `supabase-config.js` and replace the placeholder `supabaseUrl` and `supabaseAnonKey` with your project's actual credentials.
     *   **⚠️ IMPORTANT - Email Confirmation:** Supabase requires email confirmation by default for new registrations. If you wish to disable this during testing or development, go to your Supabase Dashboard -> **Authentication** -> **Providers** -> **Email** and toggle off **Confirm email**. Ensure your `Site URL` and `Redirect URLs` in Supabase Auth configuration point to your production domain.
