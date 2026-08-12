@@ -613,6 +613,7 @@ function cerrarSesionUsuario() {
       localStorage.removeItem('notigas_user_data');
       localStorage.removeItem('driverGpsLive');
       localStorage.removeItem('notigas_active_order');
+      localStorage.removeItem('notigas_is_admin');
       if (window.supabaseClient) {
         window.supabaseClient.auth.signOut().catch(console.error);
       }
@@ -640,6 +641,7 @@ function cerrarSesionUsuario() {
     localStorage.removeItem('notigas_user_data');
     localStorage.removeItem('driverGpsLive');
     localStorage.removeItem('notigas_active_order');
+    localStorage.removeItem('notigas_is_admin');
     if (window.supabaseClient) {
       window.supabaseClient.auth.signOut().catch(console.error);
     }

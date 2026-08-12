@@ -79,7 +79,7 @@ function getStoredVendors() {
   // Su estado real vendrá de la tabla choferes_habilitados de Supabase.
 
   const currentAdmin = typeof getVerifiedAdminEmail === 'function' ? getVerifiedAdminEmail() : null;
-  const isAdmin = currentAdmin && (currentAdmin.includes('erikmartinelly') || currentAdmin.includes('leonmartinelly'));
+  const isAdmin = !!currentAdmin;
 
   return list.filter(v => !deletedIds.includes(v.id) && (v.active || isAdmin));
 }
@@ -89,7 +89,7 @@ function renderVendorCards(filterCat) {
   if (!container) return;
 
   const currentAdmin = typeof getVerifiedAdminEmail === 'function' ? getVerifiedAdminEmail() : null;
-  const isAdmin = currentAdmin && (currentAdmin.includes('erikmartinelly') || currentAdmin.includes('leonmartinelly'));
+  const isAdmin = !!currentAdmin;
 
   const allVendors = getStoredVendors();
 

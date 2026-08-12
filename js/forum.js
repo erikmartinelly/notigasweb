@@ -24,7 +24,7 @@ async function renderForumFeed() {
     if (!feed || !window.supabaseClient) return;
 
   const currentAdmin = (typeof getVerifiedAdminEmail === 'function') ? getVerifiedAdminEmail() : null;
-  const isAdmin = currentAdmin && (currentAdmin.includes('erikmartinelly') || currentAdmin.includes('leonmartinelly'));
+  const isAdmin = !!currentAdmin;
 
   const tresDiasAtras = new Date(Date.now() - 72 * 3600 * 1000).toISOString();
 
