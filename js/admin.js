@@ -2,9 +2,7 @@
    NOTIGAS - MÓDULO DE ADMINISTRACIÓN, ADSENSE, MODERACIÓN & BANEOS
    ========================================================================== */
 
-// FIX C-03: Lista de emails admin permitidos (doble verificación: aquí + SHA-256 en Supabase)
-const ADMIN_EMAILS_ALLOWED = window.ADMIN_EMAILS || ['erikmartinelly@gmail.com', 'leonmartinelly13@gmail.com'];
-
+// La lista quemada de emails ha sido eliminada. La validación se hace contra Supabase `admin_credentials`.
 // Duración máxima de sesión admin sin re-autenticación: 30 minutos
 const ADMIN_SESSION_MAX_MS = 30 * 60 * 1000;
 
@@ -18,19 +16,42 @@ const ADMIN_SESSION_MAX_MS = 30 * 60 * 1000;
 window.getVerifiedAdminEmail = function() {
   try {
     const data = JSON.parse(localStorage.getItem('notigas_user_data'));
-    const email = data && data.gmail ? data.gmail.toLowerCase().trim() : '';
-    const masterList = window.ADMIN_EMAILS || ["erikmartinelly@gmail.com", "leonmartinelly13@gmail.com"];
-    return masterList.includes(email) ? email : null;
+    const isAdmin = localStorage.getItem('notigas_is_admin') === 'true';
+    if (!isAdmin) return null;
+    return data && data.gmail ? data.gmail.toLowerCase().trim() : null;
   } catch(e) { return null; }
 };
 
-window.abrirModalAdminDashboard = function() {
+window.abrirModalAdminDashboard = async function() {
   if (typeof closeUserSettingsModal === 'function') closeUserSettingsModal();
   const modalAdmin = document.getElementById('modalAdmin');
   if (!modalAdmin) return;
   
-  const adminEmail = getVerifiedAdminEmail();
-  if (!adminEmail) {
+  try {
+    const data = JSON.parse(localStorage.getItem('notigas_user_data'));
+    const email = data && data.gmail ? data.gmail.toLowerCase().trim() : '';
+    if (!email) throw new Error("No email in local storage");
+    
+    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Verificando credenciales...');
+    
+    const { data: adminData, error } = await window.supabaseClient
+      .from('admin_credentials')
+      .select('email')
+      .eq('email', email)
+      .single();
+      
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+    
+    if (error || !adminData) {
+      alert("❌ Acceso Denegado. Solo administradores autorizados.");
+      return;
+    }
+    
+    // Si llegamos aquí, es administrador legítimo
+    localStorage.setItem('notigas_is_admin', 'true');
+    
+  } catch (e) {
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
     alert("❌ Acceso Denegado. Solo administradores autorizados.");
     return;
   }
