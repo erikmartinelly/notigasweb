@@ -73,6 +73,22 @@ async function desbanearRepartidorAdmin(vendorId, vendorName) {
     showToast('🔓 Repartidor Desbaneado', `Se restauró la cuenta e ingreso de "${vendorName}".`, 'success', 4000);
   }
 }
+
+async function aprobarRepartidorAdmin(idStr) {
+  if (!window.supabaseClient) return;
+  const dbId = idStr.replace('driver_', '');
+  const { error } = await window.supabaseClient
+    .from('choferes_habilitados')
+    .update({ estado_verificacion: 'aprobado' })
+    .eq('id', dbId);
+  if (error) {
+    if (typeof showToast === 'function') showToast('Error', 'No se pudo aprobar el repartidor', 'error');
+  } else {
+    if (typeof showToast === 'function') showToast('Éxito', 'Repartidor aprobado correctamente', 'success');
+    if (typeof renderAdminVendorsList === 'function') renderAdminVendorsList();
+    if (typeof descargarChoferesYRenderizar === 'function') descargarChoferesYRenderizar('TODOS');
+  }
+}
 function borrarRepartidorPermanente(vendorId, vendorName) {
   if (vendorId === 'driver_undefined' || !vendorId) {
     if (confirm(`⚠️ ¿Eliminar permanentemente a ${vendorName}?`)) {

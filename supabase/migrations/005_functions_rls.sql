@@ -134,7 +134,15 @@ drop policy if exists "Actualizar propio o Admin o Repartidor" on pedidos;
 create policy "Actualizar propio o Admin o Repartidor" on pedidos for update using (
     auth.uid()::text = user_id or 
     is_admin_email() or 
-    (exists (select 1 from choferes_habilitados where user_id = auth.uid()::text) and (driver_id is null or driver_id = auth.uid()::text or estado = 'pendiente'))
+    (
+        exists (
+            select 1 from choferes_habilitados 
+            where user_id = auth.uid()::text 
+              and ciudad = pedidos.ciudad 
+              and categoria = pedidos.categoria
+        ) 
+        and (driver_id is null or driver_id = auth.uid()::text or estado = 'pendiente')
+    )
 );
 drop policy if exists "Actualizar propio o Admin" on rutas_repartidores;
 create policy "Actualizar propio o Admin" on rutas_repartidores for update using (auth.uid()::text = user_id or is_admin_email());

@@ -235,7 +235,7 @@ async function crearNuevoPost() {
 
   // FIX: Bloquear la inserción si el usuario no tiene sesión
   if (!userId) {
-     alert('Debes iniciar sesión con Google para poder publicar un aviso vecinal.');
+     alert('Debes iniciar sesión con Google o Email para poder publicar un aviso vecinal.');
      closeNewPostModal();
      return;
   }

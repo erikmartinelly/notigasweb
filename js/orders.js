@@ -213,6 +213,7 @@ async function confirmarEntregaPedido(id) {
 
 }
 
+// Purga automática de caché local (elimina pedidos locales expirados, no la base de datos)
 function ejecutarPurgaBaseDeDatosAuto() {
 
   const now = Date.now();
@@ -513,7 +514,7 @@ function confirmarPedido() {
 
          if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
 
-         alert("❌ Error de seguridad: Debes iniciar sesión con Google para pedir.");
+         alert("❌ Error de seguridad: Debes iniciar sesión con Google o Email para pedir.");
 
          return;
 
@@ -654,11 +655,10 @@ function cancelarPedidoActivo() {
         const order = JSON.parse(rawOrder);
 
         if (order.id) {
-
-          const { error } = await window.supabaseClient.from('pedidos').update({ estado: 'cancelado' }).eq('id', order.id);
-
+          const u = JSON.parse(localStorage.getItem('notigas_user_data') || '{}');
+          const userId = u.user_id || u.id;
+          const { error } = await window.supabaseClient.from('pedidos').update({ estado: 'cancelado' }).eq('id', order.id).eq('user_id', userId);
           if (error) console.error("Error cancelando pedido en Supabase:", error);
-
         }
 
       } catch(e) {}

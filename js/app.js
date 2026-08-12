@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // REQUERIR GPS OBLIGATORIO Y PURGA AUTOMÁTICA DE BASE DE DATOS AL CARGAR
+  // PURGA AUTOMÁTICA DE CACHÉ LOCAL (Limpia pedidos antiguos del localStorage, no de la BD)
   // verificarGPSObligatorio() eliminada para no causar doble petición y bloquear PC
   ejecutarPurgaBaseDeDatosAuto();
   checkActiveOrderStatus();
@@ -359,10 +359,8 @@ if ('serviceWorker' in navigator) {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 NOTIGAS iniciando...');
     
-    // Inicializar estado de la aplicación
-    if (window.AppState) {
-        window.AppState.hydrate();
-    }
+    // Inicializar estado de la aplicación (hidratación en state.js)
+    // Se elimina la llamada redundante a window.AppState.hydrate()
     
     // Escuchar a que Supabase termine de inicializarse para conectar Realtime y cargar datos
     const initSupabaseFeatures = () => {

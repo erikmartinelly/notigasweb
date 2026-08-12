@@ -698,9 +698,10 @@ async function ejecutarEliminacionTotalCuenta() {
   if (window.supabaseClient) {
     try {
       const u = JSON.parse(localStorage.getItem('notigas_user_data') || '{}');
-      if (u && u.id) {
+      const userId = u.user_id || u.id;
+      if (userId) {
          // Borrar la entrada de chofer si existe (el backend rechazará si no es suyo gracias a RLS)
-         await window.supabaseClient.from('choferes_habilitados').delete().eq('user_id', u.id);
+         await window.supabaseClient.from('choferes_habilitados').delete().eq('user_id', userId);
          // Detener el tracker de GPS si estaba activo
          if (typeof window.stopDriverLocationBroadcast === 'function') {
            window.stopDriverLocationBroadcast();
@@ -901,6 +902,27 @@ async function procesarSesionExitosa(user) {
      if (btnAdmin) btnAdmin.style.display = 'flex';
   }
 
+  // VERIFICAR SIEMPRE si el usuario ya es repartidor en la BD, sin importar lo que seleccionó
+  let esRepartidorDB = false;
+  let choferData = null;
+  
+  if (window.supabaseClient) {
+    try {
+      const { data } = await window.supabaseClient
+        .from('choferes_habilitados')
+        .select('ciudad, categoria, productos, zonas, schedule')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (data) {
+        esRepartidorDB = true;
+        choferData = data;
+        currentSelectedRole = 'driver'; // Forzar rol
+      }
+    } catch(e) {
+      console.error("Error verificando repartidor:", e);
+    }
+  }
+
   const clienteData = { 
     role: currentSelectedRole === 'driver' ? 'repartidor' : 'vecino',
     gmail, 
@@ -908,44 +930,35 @@ async function procesarSesionExitosa(user) {
     user_id: user.id 
   };
   
-  if (currentSelectedRole === 'driver' && window.supabaseClient) {
-    try {
-      const { data: choferData } = await window.supabaseClient
-        .from('choferes_habilitados')
-        .select('ciudad, categoria, productos, zonas, schedule')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      if (choferData) {
-        if (choferData.ciudad) {
-          clienteData.ciudad = choferData.ciudad.toLowerCase();
-          AppState.set('city', choferData.ciudad.toLowerCase());
-        }
-        if (choferData.categoria) clienteData.categoria = choferData.categoria;
-        if (choferData.productos) clienteData.productos = choferData.productos;
-        if (choferData.zonas) clienteData.zonas = choferData.zonas;
-        if (choferData.schedule) clienteData.schedule = choferData.schedule;
-      } else {
-        // Driver NO EXISTE en la DB. Mostrar formulario de registro!
-        if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-        const modalAuth = document.getElementById('modalWelcomeAuth');
-        if (modalAuth) modalAuth.style.display = 'none';
-
-        const inputDriverNombre = document.getElementById('inputDriverNombre');
-        if (inputDriverNombre) inputDriverNombre.value = nombre;
-        
-        const modalDriver = document.getElementById('modalDriver');
-        if (modalDriver) modalDriver.style.display = 'flex';
-        
-        const titleEl = document.getElementById('driverModalTitleText');
-        const subtitleEl = document.getElementById('driverModalSubtitle');
-        if (titleEl) titleEl.textContent = 'Registro de Repartidor';
-        if (subtitleEl) subtitleEl.textContent = 'Completa tu ficha de negocio. Aparecerá en la lista de repartidores de la OTB.';
-
-        sessionStorage.setItem('notigas_temp_gmail', gmail);
-        return; // Detenemos aquí, el form modalDriver completará el registro
+  if (currentSelectedRole === 'driver') {
+    if (esRepartidorDB && choferData) {
+      if (choferData.ciudad) {
+        clienteData.ciudad = choferData.ciudad.toLowerCase();
+        AppState.set('city', choferData.ciudad.toLowerCase());
       }
-    } catch(e) {
-      console.error("Error verificando repartidor:", e);
+      if (choferData.categoria) clienteData.categoria = choferData.categoria;
+      if (choferData.productos) clienteData.productos = choferData.productos;
+      if (choferData.zonas) clienteData.zonas = choferData.zonas;
+      if (choferData.schedule) clienteData.schedule = choferData.schedule;
+    } else {
+      // Driver NO EXISTE en la DB. Mostrar formulario de registro!
+      if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+      const modalAuth = document.getElementById('modalWelcomeAuth');
+      if (modalAuth) modalAuth.style.display = 'none';
+
+      const inputDriverNombre = document.getElementById('inputDriverNombre');
+      if (inputDriverNombre) inputDriverNombre.value = nombre;
+      
+      const modalDriver = document.getElementById('modalDriver');
+      if (modalDriver) modalDriver.style.display = 'flex';
+      
+      const titleEl = document.getElementById('driverModalTitleText');
+      const subtitleEl = document.getElementById('driverModalSubtitle');
+      if (titleEl) titleEl.textContent = 'Registro de Repartidor';
+      if (subtitleEl) subtitleEl.textContent = 'Completa tu ficha de negocio. Aparecerá en la lista de repartidores de la OTB.';
+
+      sessionStorage.setItem('notigas_temp_gmail', gmail);
+      return; // Detenemos aquí, el form modalDriver completará el registro
     }
   }
   

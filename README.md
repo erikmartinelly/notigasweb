@@ -13,7 +13,7 @@ Built entirely with **Vanilla JavaScript** and powered by **Supabase**, NOTIGAS 
     *   **Repartidor (Vendor):** Creates a "Business Profile", broadcasts their real-time route, and accepts nearby orders.
 *   **Neighborhood Forum:** A community bulletin board for alerts, sales, and announcements. Posts automatically expire and are purged from the database after 72 hours (via Supabase `pg_cron`) to maintain app performance.
 *   **Offline-Ready (PWA):** Includes a Service Worker (`sw.js`) with progressive caching, allowing the app to load quickly and gracefully handle poor network conditions.
-*   **Secret Admin Dashboard:** A hidden administration panel (`panel270977.html`) protected by a strict dual-authentication system with SHA-256 local hashing and Supabase storage, preventing unauthorized access to business metrics and user moderation.
+*   **Secret Admin Dashboard:** A hidden administration modal protected by strict validation against the Supabase database and RLS policies, preventing unauthorized access to business metrics and user moderation.
 
 ## 🌍 Social Impact & Purpose (The "Why")
 
@@ -34,8 +34,7 @@ NOTIGAS bridges this gap by democratizing access to Artificial Intelligence and 
 ## 📂 Project Structure
 
 ```text
-├── index.html              # Main application entry point (Buyer/Vendor views)
-├── panel270977.html        # Secret Administration Dashboard
+├── index.html              # Main application entry point (Buyer/Vendor/Admin views)
 ├── server.js               # Express server for production (Security headers & PWA routing)
 ├── package.json            # Node.js dependencies for the server
 ├── app.js                  # Core business logic and state management
@@ -62,6 +61,7 @@ NOTIGAS bridges this gap by democratizing access to Artificial Intelligence and 
     *   Create a new project in Supabase.
     *   Run the SQL scripts located in the `supabase/migrations/` folder in numerical order (from `001_initial_setup.sql` to `007_storage_buckets.sql`) in the Supabase SQL Editor to create the required tables, RLS policies, and storage buckets.
     *   Open `supabase-config.js` and replace the placeholder `supabaseUrl` and `supabaseAnonKey` with your project's actual credentials.
+    *   **⚠️ IMPORTANT - Email Confirmation:** Supabase requires email confirmation by default for new registrations. If you wish to disable this during testing or development, go to your Supabase Dashboard -> **Authentication** -> **Providers** -> **Email** and toggle off **Confirm email**.
 
 3.  **Run Locally (Development):**
     For quick development, you can use any static server:
@@ -79,4 +79,4 @@ NOTIGAS bridges this gap by democratizing access to Artificial Intelligence and 
 
 ## 🛡️ Security Notes
 *   **Row Level Security (RLS):** Ensure RLS is enabled on all Supabase tables so users can only insert/delete their own orders, while still being able to read the public map data.
-*   **Admin Panel:** The admin panel uses Security by Obscurity (a hidden HTML file) combined with a mandatory encrypted login. The first time the panel is opened, it will ask to set up the master admin credentials.
+*   **Admin Panel:** The admin panel is integrated into the main application via a hidden modal, but real protection of sensitive operations depends exclusively on Supabase RLS and `is_admin_email()` policies validating the JWT.
