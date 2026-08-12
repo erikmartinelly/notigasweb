@@ -936,6 +936,19 @@ async function procesarSesionExitosa(user) {
     }
   }
 
+  // Si no es repartidor en BD y aún no ha seleccionado rol en esta sesión de login
+  if (!esRepartidorDB && !window._roleSelectedNow) {
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+    const modalAuth = document.getElementById('modalWelcomeAuth');
+    if (modalAuth) modalAuth.style.display = 'none';
+
+    window._tempAuthUser = user;
+    
+    const modalRole = document.getElementById('modalRoleSelection');
+    if (modalRole) modalRole.style.display = 'flex';
+    return;
+  }
+
   const clienteData = { 
     role: currentSelectedRole === 'driver' ? 'repartidor' : 'vecino',
     gmail, 
@@ -975,6 +988,7 @@ async function procesarSesionExitosa(user) {
   }
   
   localStorage.setItem('notigas_user_data', JSON.stringify(clienteData));
+  window._roleSelectedNow = false; // Reset state for next login
   
   const modalAuth = document.getElementById('modalWelcomeAuth');
   if (modalAuth) modalAuth.style.display = 'none';
@@ -987,6 +1001,18 @@ async function procesarSesionExitosa(user) {
     if (typeof showToast === 'function') showToast('✅ Sesión Segura', `Bienvenido a NOTIGAS (${gmail})`, 'success', 2000);
   }
 }
+
+window.finalizeRoleSelection = function(role) {
+  const modalRole = document.getElementById('modalRoleSelection');
+  if (modalRole) modalRole.style.display = 'none';
+  
+  currentSelectedRole = role === 'repartidor' ? 'driver' : 'buyer';
+  window._roleSelectedNow = true;
+  
+  if (window._tempAuthUser) {
+    procesarSesionExitosa(window._tempAuthUser);
+  }
+};
 
 
 let currentAuthAction = 'login'; // 'login' or 'register'
