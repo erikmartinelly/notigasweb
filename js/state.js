@@ -9,6 +9,11 @@
    ========================================================================== */
 
 /* =====================================================
+   ADMIN EMAILS
+   ===================================================== */
+window.ADMIN_EMAILS = ["erikmartinelly@gmail.com", "leonmartinelly13@gmail.com"];
+
+/* =====================================================
    FIX #16: FUNCIÓN COMPARTIDA escapeHtmlStr
    Única fuente de verdad — todos los módulos la usan via window.escapeHtmlStr
    ===================================================== */

@@ -34,8 +34,8 @@ document.addEventListener('DOMContentLoaded', () => {
           fecha: new Date().toISOString().split('T')[0] 
         });
 
-        const adminEmails = ["erikmartinelly@gmail.com", "leonmartinelly13@gmail.com"];
-        if (adminEmails.includes(u.gmail.toLowerCase())) {
+        const isMaster = window.ADMIN_EMAILS.includes(u.gmail.toLowerCase());
+        if (isMaster) {
           const btnAdmin = document.getElementById('btnAdminAccessQuick');
           if (btnAdmin) btnAdmin.style.display = 'flex';
           if (!sessionStorage.getItem('notigas_admin_token')) {
@@ -274,8 +274,8 @@ async function handleCredentialResponse(response) {
     const nombre = user.user_metadata?.full_name || gmail;
 
     // Los administradores ingresan como usuarios normales pero con privilegios extra
-    const adminEmails = ["erikmartinelly@gmail.com", "leonmartinelly13@gmail.com"];
-    if (adminEmails.includes(gmail)) {
+    const isMaster = window.ADMIN_EMAILS.includes(gmail);
+    if (isMaster) {
        const btnAdmin = document.getElementById('btnAdminAccessQuick');
        if (btnAdmin) btnAdmin.style.display = 'flex';
     }
@@ -417,11 +417,11 @@ async function guardarRegistroUnico() {
   if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
 
   if (currentSelectedRole === 'driver') {
-    const nombreNegocio = window.escapeHtmlStr((document.getElementById('regNombreNegocio')?.value || '').trim()) || 'Repartidor Gas GLP';
-    const whatsapp = window.escapeHtmlStr((document.getElementById('regWhatsapp')?.value || '').trim()) || '74xxxx28';
-    const placa = window.escapeHtmlStr((document.getElementById('regPlaca')?.value || '').trim()) || '3842-XYZ';
-    const categoria = window.escapeHtmlStr((document.getElementById('regCategoriaNegocio')?.value || 'Gas GLP').trim());
-    let productos = window.escapeHtmlStr((document.getElementById('regProductos')?.value || '').trim());
+    const nombreNegocio = (document.getElementById('regNombreNegocio')?.value || '').trim() || 'Repartidor Gas GLP';
+    const whatsapp = (document.getElementById('regWhatsapp')?.value || '').trim() || '74xxxx28';
+    const placa = (document.getElementById('regPlaca')?.value || '').trim() || '3842-XYZ';
+    const categoria = (document.getElementById('regCategoriaNegocio')?.value || 'Gas GLP').trim();
+    let productos = (document.getElementById('regProductos')?.value || '').trim();
     if (!productos) {
       if (categoria === 'Gas GLP') productos = 'Garrafas GLP 10kg';
       else if (categoria === 'Detergentes') productos = 'Detergentes y Productos de Limpieza';
@@ -430,9 +430,9 @@ async function guardarRegistroUnico() {
       else if (categoria === 'Frutas') productos = 'Frutas, Verduras y Hortalizas';
       else productos = 'Varios';
     }
-    const zonas = window.escapeHtmlStr((document.getElementById('regZonas')?.value || '').trim()) || 'OTB Central y calles vecinas';
-    const schedule = window.escapeHtmlStr((document.getElementById('regSchedule')?.value || '').trim()) || 'Lunes a Sábado: 07:00 a 18:00';
-    const ciudad = window.escapeHtmlStr((document.getElementById('regCiudad')?.value || '').trim()) || 'santacruz';
+    const zonas = (document.getElementById('regZonas')?.value || '').trim() || 'OTB Central y calles vecinas';
+    const schedule = (document.getElementById('regSchedule')?.value || '').trim() || 'Lunes a Sábado: 07:00 a 18:00';
+    const ciudad = (document.getElementById('regCiudad')?.value || '').trim() || 'santacruz';
 
     const repartidorData = {
       role: 'repartidor',
@@ -892,8 +892,7 @@ async function procesarSesionExitosa(user) {
   const gmail = user.email.toLowerCase().trim();
   const nombre = user.user_metadata?.full_name || gmail.split('@')[0];
   
-  const adminEmails = ["erikmartinelly@gmail.com", "leonmartinelly13@gmail.com"];
-  if (adminEmails.includes(gmail)) {
+  if (window.ADMIN_EMAILS.includes(gmail)) {
      const btnAdmin = document.getElementById('btnAdminAccessQuick');
      if (btnAdmin) btnAdmin.style.display = 'flex';
   }

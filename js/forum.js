@@ -66,8 +66,11 @@ async function renderForumFeed() {
   localPosts.forEach((post, index) => {
     // FIX: Obtener contador de la relación Supabase
     const commentCount = (post.comentarios_avisos && post.comentarios_avisos[0]) ? post.comentarios_avisos[0].count : 0;
-    const escapedTitle = (post.titulo || '').replace(/'/g, "\\'");
-    const escapedDesc = (post.descripcion || '').replace(/'/g, "\\'");
+    
+    // XSS Fix: Properly encode strings for injection into HTML onclick attributes
+    const safeTitle = encodeURIComponent(post.titulo || '').replace(/'/g, "%27");
+    const safeDesc = encodeURIComponent(post.descripcion || '').replace(/'/g, "%27");
+    const safeCat = encodeURIComponent(post.categoria || '').replace(/'/g, "%27");
 
     html += `
       <div class="forum-card">
@@ -77,15 +80,15 @@ async function renderForumFeed() {
           <i class="fa-solid fa-circle-chevron-down" title="▼ Me Disgusta" onclick="votarPost(this, -1, '${post.id}')"></i>
         </div>
         <div class="forum-body">
-          <span class="forum-cat"><i class="fa-solid fa-comments"></i> ${post.categoria}</span>
+          <span class="forum-cat"><i class="fa-solid fa-comments"></i> ${escapeHtmlStr(post.categoria)}</span>
           <div class="forum-title">${escapeHtmlStr(post.titulo)}</div>
           <div class="forum-desc">${escapeHtmlStr(post.descripcion)}</div>
           <div class="forum-footer" style="display:flex; justify-content:space-between; align-items:center;">
-            <button onclick="abrirComentariosPost('${post.id}', '${escapedTitle}', '${escapedDesc}', '${post.categoria}', this)" style="background: rgba(255,109,0,0.15); color: #FF6D00; border: 1px solid rgba(255,109,0,0.3); border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;">
+            <button onclick="abrirComentariosPost('${post.id}', decodeURIComponent('${safeTitle}'), decodeURIComponent('${safeDesc}'), decodeURIComponent('${safeCat}'), this)" style="background: rgba(255,109,0,0.15); color: #FF6D00; border: 1px solid rgba(255,109,0,0.3); border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;">
               <i class="fa-regular fa-comment"></i> <span class="comment-count-num">${commentCount}</span> Comentar
             </button>
             <div style="display:flex; gap:6px; align-items:center;">
-              <button class="btn-report" onclick="abrirModalDenuncia('Aviso Noticias Vecinales', '${escapedTitle}')"><i class="fa-solid fa-flag"></i> Denunciar</button>
+              <button class="btn-report" onclick="abrirModalDenuncia('Aviso Noticias Vecinales', decodeURIComponent('${safeTitle}'))"><i class="fa-solid fa-flag"></i> Denunciar</button>
               ${isAdmin ? `<button onclick="borrarPostForumAdmin('${post.id}')" style="background:#D32F2F; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; font-weight:700; cursor:pointer;" title="Borrar como Admin"><i class="fa-solid fa-trash"></i> Borrar (Admin)</button>` : ''}
             </div>
           </div>

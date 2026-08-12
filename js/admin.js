@@ -3,7 +3,7 @@
    ========================================================================== */
 
 // FIX C-03: Lista de emails admin permitidos (doble verificación: aquí + SHA-256 en Supabase)
-const ADMIN_EMAILS_ALLOWED = ['erikmartinelly@gmail.com', 'leonmartinelly13@gmail.com'];
+const ADMIN_EMAILS_ALLOWED = window.ADMIN_EMAILS;
 
 // Duración máxima de sesión admin sin re-autenticación: 30 minutos
 const ADMIN_SESSION_MAX_MS = 30 * 60 * 1000;
@@ -19,8 +19,7 @@ window.getVerifiedAdminEmail = function() {
   try {
     const data = JSON.parse(localStorage.getItem('notigas_user_data'));
     const email = data && data.gmail ? data.gmail.toLowerCase().trim() : '';
-    const admins = ["erikmartinelly@gmail.com", "leonmartinelly13@gmail.com"];
-    return admins.includes(email) ? email : null;
+    return window.ADMIN_EMAILS.includes(email) ? email : null;
   } catch(e) { return null; }
 };
 

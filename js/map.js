@@ -612,7 +612,7 @@ function renderReportedTrucksBuffer() {
     marker.bindPopup(`
       <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
         <strong style="color:#FF6D00; font-size:13px;"><i class="fa-solid fa-truck-fast"></i> Camión Oído / Visto en la Zona</strong><br>
-        <span style="font-size:11px; color:#CBD5E1;">📢 Reportado por: <strong>${t.reporter || 'Un vecino'}</strong></span><br>
+        <span style="font-size:11px; color:#CBD5E1;">📢 Reportado por: <strong>${escapeHtmlStr(t.reporter || 'Un vecino')}</strong></span><br>
         <span style="font-size:10px; color:#00E676; font-weight:700;">⏱️ ${timeText}</span><br>
         <button style="margin-top:6px; background:linear-gradient(135deg, #FF6D00, #E65100); color:white; border:none; padding:5px 10px; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer;" onclick="abrirSubmenuPedidos()">📦 Pedir Garrafa / Servicio Aquí</button>
       </div>
