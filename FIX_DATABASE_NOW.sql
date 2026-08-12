@@ -159,11 +159,11 @@ BEGIN
         WHERE table_schema = 'public' AND table_name = 'admin_credentials' AND column_name = 'password_hash'
     ) THEN
         INSERT INTO public.admin_credentials (email, password_hash) 
-        VALUES (LOWER('tu-correo-real@gmail.com'), 'dummy_hash_not_used')
+        VALUES (LOWER('erikmartinelly@gmail.com'), 'dummy_hash_not_used')
         ON CONFLICT (email) DO NOTHING;
     ELSE
         INSERT INTO public.admin_credentials (email) 
-        VALUES (LOWER('tu-correo-real@gmail.com'))
+        VALUES (LOWER('erikmartinelly@gmail.com'))
         ON CONFLICT (email) DO NOTHING;
     END IF;
 END $$;
