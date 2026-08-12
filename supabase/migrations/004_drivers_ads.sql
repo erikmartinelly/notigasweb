@@ -13,7 +13,7 @@ create table if not exists choferes_habilitados (
     zonas text,
     schedule text,
     ciudad text default 'santacruz',
-    estado_verificacion text default 'pendiente',
+    estado_verificacion text default 'aprobado',
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
