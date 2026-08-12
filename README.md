@@ -59,7 +59,7 @@ NOTIGAS bridges this gap by democratizing access to Artificial Intelligence and 
 
 2.  **Configure Supabase:**
     *   Create a new project in Supabase.
-    *   Run the SQL scripts located in the `supabase/migrations/` folder in numerical order (from `001_initial_setup.sql` to `007_storage_buckets.sql`) in the Supabase SQL Editor to create the required tables, RLS policies, and storage buckets.
+    *   Run the SQL scripts located in the `supabase/migrations/` folder in numerical order (from `001_initial_setup.sql` to `013_demand_clusters_v2.sql`) in the Supabase SQL Editor to create the required tables, RLS policies, and storage buckets.
     *   Open `supabase-config.js` and replace the placeholder `supabaseUrl` and `supabaseAnonKey` with your project's actual credentials.
     *   **⚠️ IMPORTANT - Email Confirmation:** Supabase requires email confirmation by default for new registrations. If you wish to disable this during testing or development, go to your Supabase Dashboard -> **Authentication** -> **Providers** -> **Email** and toggle off **Confirm email**.
 

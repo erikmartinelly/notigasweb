@@ -209,10 +209,11 @@ async function cargarPedidosVecinalesEnVivo() {
     }
 
     if (isDriverUser) {
-      const { data, error } = await window.supabaseClient.rpc('rpc_get_demand_clusters', {
+      const { data, error } = await window.supabaseClient.rpc('rpc_get_demand_clusters_v2', {
         p_ciudad: activeCity,
         p_categoria: driverCategoria,
-        p_decimals: 3
+        p_distancia_metros: 300,
+        p_min_pedidos: 2
       });
 
       if (error) {
@@ -855,7 +856,7 @@ function renderActiveOrdersMap() {
       });
 
       const btnAccion = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver')
-        ? `<button style="margin-top:6px; background:#00E676; color:#0F172A; border:none; padding:5px 12px; border-radius:6px; font-size:11px; font-weight:900; cursor:pointer;" onclick="aceptarPedidoRepartidor('${order.id}')">✅ Atender Pedido</button>`
+        ? '' // Repartidores deben usar grupos, no aceptación individual
         : `<button style="margin-top:6px; background:#D32F2F; color:white; border:none; padding:5px 12px; border-radius:6px; font-size:11px; font-weight:900; cursor:pointer;" onclick="cancelarPedidoActivo()">❌ Cancelar Pedido</button>`;
 
       const telInfo = order.telefono ? `<br><span style="font-size:10.5px; color:#00E676; font-weight:800;">📞 Tel: ${escapeHtmlStr(order.telefono)}</span>` : '';
@@ -1093,92 +1094,52 @@ function verificarYMostrarRepartidorGPS() {
 function renderHeatmapOverlay() {
   if (!map) return;
 
-  if (!heatmapLayerGroup) {
-    heatmapLayerGroup = L.layerGroup();
-  }
-
-  heatmapLayerGroup.clearLayers();
-
   if (!isHeatmapActive) {
-    if (map.hasLayer(heatmapLayerGroup)) {
-      map.removeLayer(heatmapLayerGroup);
+    if (window.demandClusterMarkers) {
+      for (const id in window.demandClusterMarkers) {
+        if (map.hasLayer(window.demandClusterMarkers[id])) {
+          map.removeLayer(window.demandClusterMarkers[id]);
+        }
+      }
     }
     map.flyTo([currentGpsLat, currentGpsLng], 16);
     return;
   }
 
-  let heatPoints = [];
-  
-  // Extraer puntos reales de los pedidos vecinales
-  const orderIds = Object.keys(neighborOrderMarkers);
-  
-  if (orderIds.length === 0) {
-    if (typeof showToast === 'function') {
-       showToast('ℹ️ Mapa de Calor', 'No hay suficientes pedidos reales para generar un mapa de calor en este momento.', 'info', 3000);
-    }
-    isHeatmapActive = false;
-    document.getElementById('heatmapToggleBtn').classList.remove('active');
-    return;
-  }
-
-  // Agrupar pedidos reales para visualización en el mapa de calor
-  orderIds.forEach((id, index) => {
-     const marker = neighborOrderMarkers[id];
-     if (marker && marker._latlng) {
-        heatPoints.push({
-           lat: marker._latlng.lat,
-           lng: marker._latlng.lng,
-           count: 1, // Podría ser la cantidad del pedido, pero 1 es más seguro como base
-           cat: "🔥 Demanda Real"
-        });
-     }
-  });
-
-  const rawOrder = localStorage.getItem('notigas_active_order');
-  if (rawOrder) {
-    try {
-      const o = JSON.parse(rawOrder);
-      if (o.lat && o.lng) {
-        heatPoints.unshift({ lat: o.lat, lng: o.lng, count: 1, cat: `🚨 PEDIDO ACTIVO VECINAL: ${o.categoria}` });
+  // Activar mapa de calor es simplemente asegurar que los clusters están visibles
+  // y ajustar el zoom a la zona de demanda
+  if (window.demandClusterMarkers) {
+    const allBounds = [[currentGpsLat, currentGpsLng]];
+    let count = 0;
+    
+    for (const id in window.demandClusterMarkers) {
+      const marker = window.demandClusterMarkers[id];
+      if (!map.hasLayer(marker)) {
+        marker.addTo(map);
       }
-    } catch(e){}
-  }
+      const latlng = marker.getLatLng();
+      if (latlng) {
+        allBounds.push([latlng.lat, latlng.lng]);
+        count++;
+      }
+    }
+    
+    if (count === 0) {
+      if (typeof showToast === 'function') {
+         showToast('ℹ️ Zonas de Demanda', 'No hay grupos de demanda activos en este momento.', 'info', 3000);
+      }
+      isHeatmapActive = false;
+      const btn = document.getElementById('heatmapToggleBtn');
+      if (btn) btn.classList.remove('active');
+      return;
+    }
 
-  const isDriverModeHeat = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver');
-  if (isDriverModeHeat && typeof isOrderCategoryMatchingDriver === 'function') {
-    heatPoints = heatPoints.filter(pt => isOrderCategoryMatchingDriver(pt.cat));
-  }
-
-  const allBounds = [[currentGpsLat, currentGpsLng]];
-
-  heatPoints.forEach(pt => {
-    allBounds.push([pt.lat, pt.lng]);
-
-    const outerCircle = L.circle([pt.lat, pt.lng], {
-      color: '#FF1744', fillColor: '#FF1744', fillOpacity: 0.25, weight: 1.5, radius: 180 + (pt.count * 18)
-    });
-
-    const innerCircle = L.circle([pt.lat, pt.lng], {
-      color: '#FF6D00', fillColor: '#FF8F00', fillOpacity: 0.55, weight: 2.5, radius: 90 + (pt.count * 10)
-    }).bindPopup(`
-      <div style="font-family:'Roboto',sans-serif; text-align:center; padding:6px;">
-        <strong style="color:#FF1744; font-size:13px;"><i class="fa-solid fa-fire"></i> ZONA DE ALTA DEMANDA VECINAL</strong><br>
-        <span style="font-size:12px; color:#FFFFFF; font-weight:800;">${escapeHtmlStr(pt.cat)}</span><br>
-        <span style="font-size:10px; color:#00E676; font-weight:700;">📍 Concentración de solicitudes de garrafas</span>
-      </div>
-    `);
-
-    heatmapLayerGroup.addLayer(outerCircle);
-    heatmapLayerGroup.addLayer(innerCircle);
-  });
-
-  heatmapLayerGroup.addTo(map);
-
-  if (allBounds.length > 1) {
-    const bounds = L.latLngBounds(allBounds);
-    map.fitBounds(bounds, { padding: [80, 80], maxZoom: 13.5 });
-  } else {
-    map.setZoom(13.5);
+    if (allBounds.length > 1) {
+      const bounds = L.latLngBounds(allBounds);
+      map.fitBounds(bounds, { padding: [80, 80], maxZoom: 13.5 });
+    } else {
+      map.setZoom(13.5);
+    }
   }
 }
 

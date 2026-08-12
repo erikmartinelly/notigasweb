@@ -117,11 +117,8 @@ async function renderDriverOrdersList() {
           
 
           ${(ord.estado === 'asignado' && ord.driver_id === localUserId) 
-
             ? `<button onclick="confirmarEntregaPedido('${ord.id}')" style="flex:1; padding:10px; border:none; border-radius:8px; background:linear-gradient(135deg, #22C55E, #16A34A); color:white; font-weight:700; cursor:pointer;"><i class="fa-solid fa-check"></i> Entregado</button>` 
-
-            : `<button onclick="aceptarPedidoRepartidor('${ord.id}')" style="flex:1; padding:10px; border:none; border-radius:8px; background:linear-gradient(135deg, #3B82F6, #2563EB); color:white; font-weight:700; cursor:pointer;"><i class="fa-solid fa-hand-holding"></i> Aceptar Pedido</button>`
-
+            : `<span style="flex:1; padding:10px; text-align:center; color:#64748B; font-weight:700; font-size:12px;">Solo grupos de demanda permitidos</span>`
           }
 
         </div>
@@ -136,43 +133,7 @@ async function renderDriverOrdersList() {
 
 }
 
-window.aceptarPedidoRepartidor = async function(id) {
-  if (typeof closeDriverOrdersModal === 'function') closeDriverOrdersModal();
-  if (!window.supabaseClient) {
-    if (typeof showToast === 'function') showToast('Error', 'Sin conexión a la base de datos.', 'error');
-    else alert('❌ Error: Sin conexión a la base de datos.');
-    return;
-  }
-  showConfirmModal('🚚', 'Aceptar Pedido', '¿Confirmas que te dirigirás a esta dirección ahora mismo?', 'Sí, iré ahora', async () => {
-    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Aceptando pedido...');
-    const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
-    
-    const { data, error } = await window.supabaseClient.from('pedidos')
-      .update({ estado: 'asignado', driver_id: localUserId })
-      .eq('id', id)
-      .eq('estado', 'pendiente')
-      .select()
-      .single();
-      
-    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-    
-    if (error || !data) {
-      console.error('Error al aceptar pedido:', error);
-      if (typeof showToast === 'function') showToast('Error', 'No se pudo aceptar el pedido. Es posible que otro repartidor ya lo haya tomado o haya sido cancelado.', 'error', 4000);
-      else alert('❌ No se pudo aceptar el pedido. Es posible que otro repartidor ya lo haya tomado o haya sido cancelado.');
-      return;
-    }
-    
-    if (typeof showToast === 'function') {
-      showToast('¡Pedido Aceptado!', 'Has aceptado el pedido exitosamente. El vecino ha sido notificado.', 'success', 5000);
-    } else {
-      alert('✅ ¡PEDIDO ACEPTADO!\nEl vecino ha sido notificado de que estás en camino.');
-    }
-    
-    if (typeof renderActiveOrdersMap === 'function') renderActiveOrdersMap();
-    if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
-  });
-}
+// window.aceptarPedidoRepartidor removido intencionalmente (Fase 3: Sólo grupos)
 
 window.aceptarGrupoDemanda = async function(clusterId, ciudad, categoria) {
   if (typeof closeDriverOrdersModal === 'function') closeDriverOrdersModal();
@@ -184,11 +145,12 @@ window.aceptarGrupoDemanda = async function(clusterId, ciudad, categoria) {
   showConfirmModal('🚚', 'Aceptar Grupo de Demanda', '¿Confirmas que atenderás a todos los pedidos de esta zona?', 'Sí, iré ahora', async () => {
     if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Asignando pedidos...');
     
-    const { error } = await window.supabaseClient.rpc('rpc_accept_demand_cluster', {
+    const { error } = await window.supabaseClient.rpc('rpc_accept_demand_cluster_v2', {
       p_cluster_id: clusterId,
       p_ciudad: ciudad,
       p_categoria: categoria,
-      p_decimals: 3
+      p_distancia_metros: 300,
+      p_min_pedidos: 2
     });
       
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();

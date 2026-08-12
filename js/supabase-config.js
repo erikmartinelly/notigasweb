@@ -103,10 +103,21 @@ window.iniciarSuscripcionesRealtime = function() {
     _realtimeChannel = window.supabaseClient.channel('global_changes_' + activeCity)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos', filter: `ciudad=eq.${activeCity}` }, payload => {
             const data = payload.new;
+            let isDriver = false;
+            try { if (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver') isDriver = true; } catch(e){}
+            
             if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-                if (typeof agregarPedidoVecinoEnMapa === 'function') agregarPedidoVecinoEnMapa(data);
+                if (isDriver) {
+                    if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
+                } else {
+                    if (typeof agregarPedidoVecinoEnMapa === 'function') agregarPedidoVecinoEnMapa(data);
+                }
             } else if (payload.eventType === 'DELETE') {
-                if (typeof removerPublicacionDeMapa === 'function') removerPublicacionDeMapa(payload.old.id);
+                if (isDriver) {
+                    if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
+                } else {
+                    if (typeof removerPublicacionDeMapa === 'function') removerPublicacionDeMapa(payload.old.id);
+                }
             }
         })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'rutas_repartidores', filter: `ciudad=eq.${activeCity}` }, payload => {
