@@ -34,7 +34,8 @@ document.addEventListener('DOMContentLoaded', () => {
           fecha: new Date().toISOString().split('T')[0] 
         });
 
-        const isMaster = window.ADMIN_EMAILS.includes(u.gmail.toLowerCase());
+        const masterList = window.ADMIN_EMAILS || ["erikmartinelly@gmail.com", "leonmartinelly13@gmail.com"];
+        const isMaster = masterList.includes(u.gmail.toLowerCase());
         if (isMaster) {
           const btnAdmin = document.getElementById('btnAdminAccessQuick');
           if (btnAdmin) btnAdmin.style.display = 'flex';
@@ -274,7 +275,8 @@ async function handleCredentialResponse(response) {
     const nombre = user.user_metadata?.full_name || gmail;
 
     // Los administradores ingresan como usuarios normales pero con privilegios extra
-    const isMaster = window.ADMIN_EMAILS.includes(gmail);
+    const masterList = window.ADMIN_EMAILS || ["erikmartinelly@gmail.com", "leonmartinelly13@gmail.com"];
+    const isMaster = masterList.includes(gmail);
     if (isMaster) {
        const btnAdmin = document.getElementById('btnAdminAccessQuick');
        if (btnAdmin) btnAdmin.style.display = 'flex';
@@ -779,6 +781,7 @@ async function migrarDatosAntiguosARepartidor() {
       productos: driverProfile.productos || driverProfile.products || 'Garrafas GLP 10kg',
       zonas: driverProfile.zonas || driverProfile.zones || 'OTB Central y calles vecinas',
       schedule: driverProfile.schedule || 'Lunes a Sábado: 07:00 a 18:00',
+      ciudad: driverProfile.ciudad || localStorage.getItem('notigas_city') || 'santacruz',
       user_id: existingUserId
     };
 
@@ -892,7 +895,8 @@ async function procesarSesionExitosa(user) {
   const gmail = user.email.toLowerCase().trim();
   const nombre = user.user_metadata?.full_name || gmail.split('@')[0];
   
-  if (window.ADMIN_EMAILS.includes(gmail)) {
+  const masterList = window.ADMIN_EMAILS || ["erikmartinelly@gmail.com", "leonmartinelly13@gmail.com"];
+  if (masterList.includes(gmail)) {
      const btnAdmin = document.getElementById('btnAdminAccessQuick');
      if (btnAdmin) btnAdmin.style.display = 'flex';
   }
