@@ -38,7 +38,7 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
           products: d.productos || 'Servicios de reparto a domicilio',
           zones: d.zonas || 'OTB local',
           schedule: d.schedule || 'Lunes a Sábado',
-          active: d.estado_verificacion === 'aprobado'
+          active: true // Fichas publicadas automáticamente
         });
       });
       localStorage.setItem('notigas_vendors_directory', JSON.stringify(list));

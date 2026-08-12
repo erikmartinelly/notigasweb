@@ -447,6 +447,16 @@
       <p style="font-size: 11px; color: #94A3B8; text-align: center; margin-bottom: 14px;">
         Selecciona tu rol para continuar:
       </p>
+      
+      <div style="margin-bottom: 16px; padding: 0 10px;">
+        <label style="font-size: 11px; color: #94A3B8; font-weight: 700; margin-bottom: 4px; display: block;">📍 Tu ciudad habitual:</label>
+        <select id="newUserCity" style="width: 100%; padding: 10px; background: #1E293B; border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 8px; font-size: 12px; cursor: pointer;">
+          <option value="santacruz" selected>Santa Cruz de la Sierra</option>
+          <option value="cochabamba">Cochabamba</option>
+          <option value="lapaz">La Paz</option>
+        </select>
+      </div>
+
       <div style="display:flex; flex-direction:column; gap:12px; align-items:center;">
         <a href="#" onclick="finalizeRoleSelection('vecino');" class="btn-premium-buyer" style="width:100%;">
           <i class="fa-solid fa-cart-shopping" style="margin-right: 8px;"></i> Soy Comprador (Vecino)
@@ -687,22 +697,22 @@
   <script src="js/supabase-config.js?v=60" defer></script>
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js?v=64')
+      navigator.serviceWorker.register('./sw.js?v=65')
         .then(reg => console.log('Service Worker registrado:', reg.scope))
         .catch(err => console.log('Error al registrar SW:', err));
     }
   </script>
-  <script src="js/auth.js?v=64" defer></script>
-  <script src="js/vendors.js?v=64" defer></script>
-  <script src="js/map.js?v=64" defer></script>
-  <script src="js/map_search.js?v=64" defer></script>
-  <script src="js/map_gps.js?v=64" defer></script>
-  <script src="js/forum.js?v=64" defer></script>
-  <script src="js/ads.js?v=64" defer></script>
-  <script src="js/orders.js?v=64" defer></script>
-  <script src="js/admin.js?v=64" defer></script>
-  <script src="js/admin_users.js?v=64" defer></script>
-  <script src="js/app.js?v=64" defer></script>
+  <script src="js/auth.js?v=65" defer></script>
+  <script src="js/vendors.js?v=65" defer></script>
+  <script src="js/map.js?v=65" defer></script>
+  <script src="js/map_search.js?v=65" defer></script>
+  <script src="js/map_gps.js?v=65" defer></script>
+  <script src="js/forum.js?v=65" defer></script>
+  <script src="js/ads.js?v=65" defer></script>
+  <script src="js/orders.js?v=65" defer></script>
+  <script src="js/admin.js?v=65" defer></script>
+  <script src="js/admin_users.js?v=65" defer></script>
+  <script src="js/app.js?v=65" defer></script>
 
 <!-- MODAL ADMINISTRADOR EXCLUSIVO (ACCESO PROTEGIDO CON USUARIO Y CONTRASEÑA OBLIGATORIOS) -->
   <div class="modal" id="modalAdmin">

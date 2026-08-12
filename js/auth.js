@@ -14,13 +14,43 @@ let databaseEmails = [
   { gmail: "gasero_express@gmail.com", role: "Repartidor Gas GLP", fecha: "2026-08-01" }
 ];
 
-document.addEventListener('DOMContentLoaded', () => {
-  // Siempre mostrar el modal de seleccion de rol primero
-  const modalAuth = document.getElementById('modalWelcomeAuth');
-  if (modalAuth) modalAuth.style.display = 'flex';
-  
-  // Iniciar One Tap en segundo plano
+document.addEventListener('DOMContentLoaded', async () => {
+  // 1. Iniciar One Tap en segundo plano
   initGoogleOneTap();
+
+  let hasSession = false;
+  if (window.supabaseClient) {
+    try {
+      const { data: sessionData } = await window.supabaseClient.auth.getSession();
+      if (sessionData && sessionData.session) {
+        hasSession = true;
+        // Restaurar sesión sin mostrar el modal
+        window._tempAuthUser = sessionData.session.user;
+        
+        const savedUser = localStorage.getItem('notigas_user_data');
+        if (savedUser) {
+          try {
+            const u = JSON.parse(savedUser);
+            if (u.ciudad) AppState.set('city', u.ciudad.toLowerCase());
+            
+            // Restablecer roles silenciosamente
+            currentSelectedRole = u.role === 'repartidor' ? 'driver' : 'buyer';
+            window._roleSelectedNow = true;
+          } catch(e){}
+        }
+
+        procesarSesionExitosa(sessionData.session.user);
+      }
+    } catch(e) {
+      console.warn("No se pudo restaurar la sesión automáticamente", e);
+    }
+  }
+
+  // 2. Si no hay sesión, mostrar el modal de seleccion de rol primero
+  if (!hasSession) {
+    const modalAuth = document.getElementById('modalWelcomeAuth');
+    if (modalAuth) modalAuth.style.display = 'flex';
+  }
 
   const savedUser = localStorage.getItem('notigas_user_data');
   if (savedUser) {
@@ -1007,6 +1037,22 @@ window.finalizeRoleSelection = function(role) {
   const modalRole = document.getElementById('modalRoleSelection');
   if (modalRole) modalRole.style.display = 'none';
   
+  const citySelect = document.getElementById('newUserCity');
+  if (citySelect && citySelect.value) {
+    const selectedCity = citySelect.value.toLowerCase();
+    AppState.set('city', selectedCity);
+    
+    // Si ya hay user_data local (Google OneTap lo crea antes), actualizarlo con la ciudad
+    const saved = localStorage.getItem('notigas_user_data');
+    if (saved) {
+      try {
+        const u = JSON.parse(saved);
+        u.ciudad = selectedCity;
+        localStorage.setItem('notigas_user_data', JSON.stringify(u));
+      } catch(e) {}
+    }
+  }
+
   currentSelectedRole = role === 'repartidor' ? 'driver' : 'buyer';
   window._roleSelectedNow = true;
   
