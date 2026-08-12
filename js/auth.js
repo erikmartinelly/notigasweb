@@ -67,7 +67,7 @@ function getCurrentUserId() {
   return userId;
 }
 
-function selectAuthRole(role) {
+async function selectAuthRole(role) {
   currentSelectedRole = role;
   const btnBuyer = document.getElementById('btnRoleBuyer');
   const btnDriver = document.getElementById('btnRoleDriver');
@@ -90,26 +90,24 @@ function selectAuthRole(role) {
     }
   }
 
-  // Validar sesión activa ANTES de pedir logueo
-  const savedUserStr = localStorage.getItem('notigas_user_data');
-  if (savedUserStr) {
+  // Validar sesión activa directamente contra Supabase (fuente de la verdad)
+  if (window.supabaseClient) {
+    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Verificando sesión...');
     try {
-      const u = JSON.parse(savedUserStr);
-      if (u && u.user_id) {
-        // Actualizar el rol según lo que escogió hoy
-        u.role = role === 'driver' ? 'repartidor' : 'vecino';
-        localStorage.setItem('notigas_user_data', JSON.stringify(u));
+      const { data: sessionData } = await window.supabaseClient.auth.getSession();
+      if (sessionData && sessionData.session) {
+        // Actualizar rol elegido temporalmente en memoria
+        currentSelectedRole = role;
         
-        // Cerrar modal y arrancar app directamente
-        const modalAuth = document.getElementById('modalWelcomeAuth');
-        if (modalAuth) modalAuth.style.display = 'none';
-        
-        if (typeof setAppMode === 'function') {
-           setAppMode(role);
-        }
-        return; // Detener flujo (ya entró directo)
+        if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+        // Si Supabase certifica la sesión, procesamos ingreso seguro
+        await procesarSesionExitosa(sessionData.session.user);
+        return; // Detener flujo
       }
-    } catch(e) {}
+    } catch (e) {
+      console.warn('No hay sesión activa', e);
+    }
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
   }
 
   // SI NO ESTÁ LOGUEADO -> Mostrar Paso 2 (Registro/Login)
@@ -885,7 +883,8 @@ async function registrarEmail() {
   
   const { data, error } = await window.supabaseClient.auth.signUp({
     email,
-    password
+    password,
+    options: { emailRedirectTo: window.location.origin }
   });
   
   if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
