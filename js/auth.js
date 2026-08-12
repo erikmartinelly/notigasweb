@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
         async function checkAdminAsync() {
           try {
             if (!window.supabaseClient) return;
-            const { data } = await window.supabaseClient.from('admin_credentials').select('email').eq('email', u.gmail).single();
+            const { data } = await window.supabaseClient.from('admin_credentials').select('email').ilike('email', u.gmail).single();
             if (data) {
               const btnAdmin = document.getElementById('btnAdminAccessQuick');
               if (btnAdmin) btnAdmin.style.display = 'flex';
@@ -278,7 +278,7 @@ async function handleCredentialResponse(response) {
     // Los administradores ingresan como usuarios normales pero con privilegios extra
     try {
       if (window.supabaseClient) {
-        const { data } = await window.supabaseClient.from('admin_credentials').select('email').eq('email', gmail).single();
+        const { data } = await window.supabaseClient.from('admin_credentials').select('email').ilike('email', gmail).single();
         if (data) {
           const btnAdmin = document.getElementById('btnAdminAccessQuick');
           if (btnAdmin) btnAdmin.style.display = 'flex';
@@ -906,7 +906,7 @@ async function procesarSesionExitosa(user) {
   
   try {
     if (window.supabaseClient) {
-      const { data } = await window.supabaseClient.from('admin_credentials').select('email').eq('email', gmail).single();
+      const { data } = await window.supabaseClient.from('admin_credentials').select('email').ilike('email', gmail).single();
       if (data) {
         const btnAdmin = document.getElementById('btnAdminAccessQuick');
         if (btnAdmin) btnAdmin.style.display = 'flex';

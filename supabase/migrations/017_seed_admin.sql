@@ -13,11 +13,16 @@ BEGIN
           AND column_name = 'password_hash'
     ) THEN
         INSERT INTO public.admin_credentials (email, password_hash) 
-        VALUES ('tu-correo-real@gmail.com', 'dummy_hash_not_used')
+        VALUES (LOWER('tu-correo-real@gmail.com'), 'dummy_hash_not_used')
         ON CONFLICT (email) DO NOTHING;
     ELSE
         INSERT INTO public.admin_credentials (email) 
-        VALUES ('tu-correo-real@gmail.com')
+        VALUES (LOWER('tu-correo-real@gmail.com'))
         ON CONFLICT (email) DO NOTHING;
     END IF;
 END $$;
+
+-- Aseguramos que la política RLS sea insensible a mayúsculas/minúsculas
+DROP POLICY IF EXISTS "Admins select own record" ON admin_credentials;
+CREATE POLICY "Admins select own record" ON admin_credentials
+FOR SELECT USING ( LOWER(email) = LOWER(auth.jwt() ->> 'email') );
