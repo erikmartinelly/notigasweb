@@ -255,8 +255,12 @@ function ejecutarPurgaBaseDeDatosManual() {
 
 
 /* Alias: el botón "Restaurar Base de Datos por Defecto (Quitar Baneos)" del panel admin
-   llama a restaurarBaseDatosPorDefecto(), que no existía. Reutiliza limpiarTodosLosBaneosAdmin(). */
-const restaurarBaseDatosPorDefecto = limpiarTodosLosBaneosAdmin;
+   llama a restaurarBaseDatosPorDefecto(). Reutiliza limpiarTodosLosBaneosAdmin(). */
+window.restaurarBaseDatosPorDefecto = function() {
+  if (typeof limpiarTodosLosBaneosAdmin === 'function') {
+    limpiarTodosLosBaneosAdmin();
+  }
+};
 
 
 
