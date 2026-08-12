@@ -59,9 +59,10 @@
 <body>
 
   <!-- BANNER DE AVISO GPS OBLIGATORIO -->
-  <div id="gpsMandatoryBanner" style="display:none; background: linear-gradient(135deg, #D32F2F, #B71C1C); color: white; padding: 8px 12px; font-size: 11px; font-weight: 700; text-align: center; z-index: 2000; box-shadow: 0 2px 10px rgba(0,0,0,0.5);">
+  <div id="gpsMandatoryBanner" style="display:none; position:relative; background: linear-gradient(135deg, #D32F2F, #B71C1C); color: white; padding: 8px 30px 8px 12px; font-size: 11px; font-weight: 700; text-align: center; z-index: 2000; box-shadow: 0 2px 10px rgba(0,0,0,0.5);">
     <i class="fa-solid fa-triangle-exclamation"></i> 📍 GPS Obligatorio: Activa tu ubicación para ubicar el camión garrafero y hacer pedidos a tu domicilio. 
     <button onclick="conectarGPSAuto()" style="background: white; color: #D32F2F; border: none; padding: 2px 8px; border-radius: 4px; font-weight: 900; margin-left: 6px; cursor: pointer;" aria-label="Activar GPS en vivo">Activar GPS</button>
+    <button onclick="document.getElementById('gpsMandatoryBanner').style.display='none'" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: white; font-size: 16px; font-weight: bold; cursor: pointer;" aria-label="Cerrar aviso">&times;</button>
   </div>
 
   <header>
@@ -686,22 +687,22 @@
   <script src="js/supabase-config.js?v=60" defer></script>
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js?v=63')
+      navigator.serviceWorker.register('./sw.js?v=64')
         .then(reg => console.log('Service Worker registrado:', reg.scope))
         .catch(err => console.log('Error al registrar SW:', err));
     }
   </script>
-  <script src="js/auth.js?v=63" defer></script>
-  <script src="js/vendors.js?v=63" defer></script>
-  <script src="js/map.js?v=63" defer></script>
-  <script src="js/map_search.js?v=63" defer></script>
-  <script src="js/map_gps.js?v=63" defer></script>
-  <script src="js/forum.js?v=63" defer></script>
-  <script src="js/ads.js?v=63" defer></script>
-  <script src="js/orders.js?v=63" defer></script>
-  <script src="js/admin.js?v=63" defer></script>
-  <script src="js/admin_users.js?v=63" defer></script>
-  <script src="js/app.js?v=63" defer></script>
+  <script src="js/auth.js?v=64" defer></script>
+  <script src="js/vendors.js?v=64" defer></script>
+  <script src="js/map.js?v=64" defer></script>
+  <script src="js/map_search.js?v=64" defer></script>
+  <script src="js/map_gps.js?v=64" defer></script>
+  <script src="js/forum.js?v=64" defer></script>
+  <script src="js/ads.js?v=64" defer></script>
+  <script src="js/orders.js?v=64" defer></script>
+  <script src="js/admin.js?v=64" defer></script>
+  <script src="js/admin_users.js?v=64" defer></script>
+  <script src="js/app.js?v=64" defer></script>
 
 <!-- MODAL ADMINISTRADOR EXCLUSIVO (ACCESO PROTEGIDO CON USUARIO Y CONTRASEÑA OBLIGATORIOS) -->
   <div class="modal" id="modalAdmin">
