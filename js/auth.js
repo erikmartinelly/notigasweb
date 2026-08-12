@@ -27,6 +27,19 @@ document.addEventListener('DOMContentLoaded', () => {
           hasSession = true;
           // Restaurar sesión sin mostrar el modal
           window._tempAuthUser = sessionData.session.user;
+          
+          // Restaurar estado local como fallback temporal (evita que el comprador vea el modal en cada F5)
+          const savedUser = localStorage.getItem('notigas_user_data');
+          if (savedUser) {
+            try {
+              const u = JSON.parse(savedUser);
+              if (u.ciudad) AppState.set('city', u.ciudad.toLowerCase());
+              
+              currentSelectedRole = u.role === 'repartidor' ? 'driver' : 'buyer';
+              window._roleSelectedNow = true;
+            } catch(e){}
+          }
+          
           // Esperamos a que la Base de Datos decida el rol y ciudad (Fuente de Verdad)
           await procesarSesionExitosa(sessionData.session.user);
         }
@@ -316,80 +329,9 @@ async function handleCredentialResponse(response) {
       }
     } catch(e) {}
 
-  let existingDriver = null;
-  if (window.supabaseClient) {
-    try {
-      const { data, error: driverCheckError } = await window.supabaseClient
-        .from('choferes_habilitados')
-        .select('id, ciudad')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (driverCheckError) {
-        if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-        if (typeof showToast === 'function') showToast('Error de conexión', 'No se pudo verificar tu cuenta. Intenta de nuevo.', 'error', 4000);
-        return;
-      }
-        
-      if (data) {
-        existingDriver = data;
-        if (existingDriver.ciudad) {
-           AppState.set('city', existingDriver.ciudad.toLowerCase());
-        }
-        // Ya existe en la BD, forzar rol para obviar lo que el usuario haya pinchado en la UI
-        currentSelectedRole = 'driver';
-      }
-    } catch(e) {
-      console.error("Error verificando repartidor existente:", e);
-      if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-      if (typeof showToast === 'function') showToast('Error', 'No se pudo verificar la sesión. Intenta de nuevo.', 'error', 4000);
-      return;
-    }
-  }
-
-  // Si quiere ser repartidor pero no existe en la BD, mandarlo a registrarse
-  if (currentSelectedRole === 'driver' && !existingDriver) {
-    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-    const modalAuth = document.getElementById('modalWelcomeAuth');
-    if (modalAuth) modalAuth.style.display = 'none';
-
-    const inputDriverNombre = document.getElementById('inputDriverNombre');
-    if (inputDriverNombre) inputDriverNombre.value = nombre;
+    // Delegar todo el flujo de resolución de rol, ciudad y UI a procesarSesionExitosa
+    await procesarSesionExitosa(user);
     
-    const modalDriver = document.getElementById('modalDriver');
-    if (modalDriver) modalDriver.style.display = 'flex';
-    
-    const titleEl = document.getElementById('driverModalTitleText');
-    const subtitleEl = document.getElementById('driverModalSubtitle');
-    if (titleEl) titleEl.textContent = 'Registro de Repartidor';
-    if (subtitleEl) subtitleEl.textContent = 'Completa tu ficha de negocio. Aparecerá en la lista de repartidores de la OTB.';
-
-    sessionStorage.setItem('notigas_temp_gmail', gmail);
-    return;
-  }
-
-  // Flujo normal de inicio (Vecino, o Repartidor ya existente)
-  const clienteData = { 
-    role: currentSelectedRole === 'driver' ? 'repartidor' : 'vecino', 
-    gmail: gmail, 
-    nombre: nombre, 
-    user_id: user.id 
-  };
-
-  localStorage.setItem('notigas_user_data', JSON.stringify(clienteData));
-
-  if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-  
-  const modalAuth = document.getElementById('modalWelcomeAuth');
-  if (modalAuth) modalAuth.style.display = 'none';
-
-  if (typeof setAppMode === 'function') setAppMode(clienteData.role === 'repartidor' ? 'driver' : 'buyer');
-  if (typeof verificarYActivarChatAdminAuto === 'function') verificarYActivarChatAdminAuto();
-  if (typeof showToast === 'function') showToast('✅ Sesión Segura', `Iniciaste sesión como ${nombre}`, 'success', 1000);
-  
-  if (typeof reproducirSonidoNotificacion === 'function') {
-    reproducirSonidoNotificacion();
-  }
   } catch (error) {
     console.error("Error en handleCredentialResponse:", error);
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
