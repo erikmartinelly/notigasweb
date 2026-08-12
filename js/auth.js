@@ -426,16 +426,16 @@ async function guardarRegistroUnico() {
     const nombreNegocio = (document.getElementById('regNombreNegocio')?.value || '').trim() || 'Repartidor Gas GLP';
     const whatsapp = (document.getElementById('regWhatsapp')?.value || '').trim() || '74xxxx28';
     const placa = (document.getElementById('regPlaca')?.value || '').trim() || '3842-XYZ';
-    const categoria = (document.getElementById('regCategoriaNegocio')?.value || 'Gas GLP').trim();
-    let productos = (document.getElementById('regProductos')?.value || '').trim();
-    if (!productos) {
-      if (categoria === 'Gas GLP') productos = 'Garrafas GLP 10kg';
-      else if (categoria === 'Detergentes') productos = 'Detergentes y Productos de Limpieza';
-      else if (categoria === 'Chatarra') productos = 'Compra de Chatarra y Metales';
-      else if (categoria === 'Papel') productos = 'Papel, Cartón y Reciclaje';
-      else if (categoria === 'Frutas') productos = 'Frutas, Verduras y Hortalizas';
-      else productos = 'Varios';
-    }
+    const categoria = (document.getElementById('regCategoriaNegocio')?.value || 'gas').trim();
+    
+    let productos = 'Varios';
+    if (categoria === 'gas') productos = 'Garrafas GLP 10kg';
+    else if (categoria === 'detergentes') productos = 'Detergentes y Productos de Limpieza';
+    else if (categoria === 'chatarra') productos = 'Compra de Chatarra y Metales';
+    else if (categoria === 'papel') productos = 'Papel, Cartón y Reciclaje';
+    else if (categoria === 'frutas') productos = 'Frutas, Verduras y Hortalizas';
+    else productos = 'Varios';
+    
     const schedule = (document.getElementById('regSchedule')?.value || '').trim() || 'Lunes a Sábado: 07:00 a 18:00';
     const ciudad = (document.getElementById('regCiudad')?.value || '').trim() || 'santacruz';
 
@@ -507,7 +507,7 @@ async function iniciarSesionRepartidor() {
   const nombreNegocio = (document.getElementById('inputDriverNombre')?.value || '').trim();
   const whatsapp = (document.getElementById('inputDriverTelRef')?.value || '').trim();
   const plate = (document.getElementById('inputDriverPlate')?.value || '').trim();
-  const categoria = (document.getElementById('inputDriverCat')?.value || 'Gas GLP').trim();
+  const categoria = (document.getElementById('inputDriverCat')?.value || 'gas').trim();
   const productos = (document.getElementById('inputDriverProductos')?.value || '').trim();
   const schedule = (document.getElementById('inputDriverSchedule')?.value || '').trim();
 
@@ -785,7 +785,7 @@ async function migrarDatosAntiguosARepartidor() {
       nombre: driverProfile.nombre || driverProfile.name || 'Repartidor Gas GLP',
       whatsapp: driverProfile.whatsapp || '74xxxx28',
       placa: driverProfile.placa || driverProfile.plate || '3842-XYZ',
-      categoria: driverProfile.categoria || driverProfile.category || 'Gas GLP',
+      categoria: driverProfile.categoria || driverProfile.category || 'gas',
       productos: driverProfile.productos || driverProfile.products || 'Garrafas GLP 10kg',
       zonas: driverProfile.zonas || driverProfile.zones || 'OTB Central y calles vecinas',
       schedule: driverProfile.schedule || 'Lunes a Sábado: 07:00 a 18:00',

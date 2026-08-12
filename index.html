@@ -343,12 +343,13 @@
       <div class="form-group">
         <label>Tipo de REPARTIDOR:</label>
         <select id="inputDriverCat">
-          <option value="Gas GLP">Gas GLP</option>
-          <option value="Detergentes">Detergentes & Limpieza</option>
-          <option value="Chatarra">Chatarra</option>
-          <option value="Papel">Papel / Reciclaje</option>
-          <option value="Frutas">Frutas & Verduras</option>
-          <option value="Otros">Otros</option>
+          <option value="gas">Gas GLP</option>
+          <option value="agua">Agua Purificada</option>
+          <option value="detergentes">Detergentes & Limpieza</option>
+          <option value="chatarra">Chatarra</option>
+          <option value="papel">Papel / Reciclaje</option>
+          <option value="frutas">Frutas & Verduras</option>
+          <option value="otros">Otros</option>
         </select>
       </div>
       <div class="form-group">
@@ -493,35 +494,35 @@
       <p style="font-size: 11px; color: #94A3B8; margin-bottom: 12px;">Selecciona el producto o servicio que necesitas en tu OTB:</p>
       
       <div class="submenu-grid">
-        <div class="submenu-card" onclick="seleccionarYPedirDirecto('🔥 Garrafa de Gas GLP')">
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('gas')">
           <img src="icons/garrafa_red_clean.svg" style="width: 38px; height: 42px; object-fit: contain; filter: drop-shadow(0 0 6px #FF1744); margin-bottom: 4px;" alt="Garrafa GLP 10Kg Roja">
           <span class="submenu-title">🔥 Garrafa GLP</span>
         </div>
-        <div class="submenu-card" onclick="seleccionarYPedirDirecto('💧 Botellón Agua Purificada 20L')">
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('agua')">
           <i class="fa-solid fa-bottle-water" style="color: #0288D1;"></i>
           <span class="submenu-title">💧 Agua 20L</span>
         </div>
-        <div class="submenu-card" onclick="seleccionarYPedirDirecto('♻️  Chatarra')">
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('chatarra')">
           <i class="fa-solid fa-recycle" style="color: #00E676;"></i>
           <span class="submenu-title">♻️  Chatarra</span>
         </div>
-        <div class="submenu-card" onclick="seleccionarYPedirDirecto('📄 Papel')">
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('papel')">
           <i class="fa-solid fa-newspaper" style="color: #4FC3F7;"></i>
           <span class="submenu-title">📄 Papel / Cartón</span>
         </div>
-        <div class="submenu-card" onclick="seleccionarYPedirDirecto('🍎 Frutas & Verduras')">
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('frutas')">
           <div class="submenu-icon">🍎</div>
           <span class="submenu-title">🍎 Frutas / Verduras</span>
         </div>
-        <div class="submenu-card" onclick="seleccionarYPedirDirecto('🧼 Detergentes & Limpieza')">
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('detergentes')">
           <i class="fa-solid fa-pump-soap" style="color: #E040FB;"></i>
           <span class="submenu-title">🧼 Detergentes</span>
         </div>
-        <div class="submenu-card" onclick="seleccionarYPedirDirecto('🪵 Carbón / Leña')">
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('otros')">
           <i class="fa-solid fa-fire-flame-curved" style="color: #FF9100;"></i>
           <span class="submenu-title">🪵 Carbón / Leña</span>
         </div>
-        <div class="submenu-card" onclick="seleccionarYPedirDirecto('📦 Otros')">
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('otros')">
           <i class="fa-solid fa-box-open" style="color: #FFC107;"></i>
           <span class="submenu-title">📦 Otros Encargos</span>
         </div>
@@ -538,15 +539,14 @@
       </div>
       <div class="form-group">
         <label>Producto / Servicio Seleccionado:</label>
-        <select id="selectCategoria" onchange="document.getElementById('groupOrderOtros').style.display = (this.value === '📦 Encargos & Otros Pedidos') ? 'block' : 'none';">
-          <option value="🔥 Garrafa de Gas GLP">🔥 Garrafa de Gas GLP</option>
-          <option value="💧 Botellón Agua Purificada 20L">💧 Botellón Agua Purificada 20L</option>
-          <option value="♻️  Chatarra">♻️  Chatarra</option>
-          <option value="📄 Papel / Reciclaje">📄 Papel / Reciclaje</option>
-          <option value="🍎 Frutas & Verduras">🍎 Frutas & Verduras</option>
-          <option value="🧼 Detergentes & Limpieza">🧼 Detergentes & Limpieza</option>
-          <option value="🪵 Carbón / Leña">🪵 Carbón / Leña</option>
-          <option value="📦 Encargos & Otros Pedidos">📦 Encargos & Otros Pedidos</option>
+        <select id="selectCategoria" onchange="document.getElementById('groupOrderOtros').style.display = (this.value === 'otros') ? 'block' : 'none';">
+          <option value="gas">🔥 Garrafa de Gas GLP</option>
+          <option value="agua">💧 Botellón Agua Purificada 20L</option>
+          <option value="chatarra">♻️  Chatarra</option>
+          <option value="papel">📄 Papel / Reciclaje</option>
+          <option value="frutas">🍎 Frutas & Verduras</option>
+          <option value="detergentes">🧼 Detergentes & Limpieza</option>
+          <option value="otros">📦 Encargos & Otros Pedidos</option>
         </select>
       </div>
 
@@ -681,20 +681,20 @@
   <!-- Leaflet movido aquí para no bloquear el render del HTML -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js" defer></script>
-  <script src="js/state.js?v=58" defer></script>
-  <script src="js/ui.js?v=58" defer></script>
-  <script src="js/supabase-config.js?v=58" defer></script>
-  <script src="js/auth.js?v=58" defer></script>
-  <script src="js/vendors.js?v=58" defer></script>
-  <script src="js/map.js?v=58" defer></script>
-  <script src="js/map_search.js?v=58" defer></script>
-  <script src="js/map_gps.js?v=58" defer></script>
-  <script src="js/forum.js?v=58" defer></script>
-  <script src="js/ads.js?v=58" defer></script>
-  <script src="js/orders.js?v=58" defer></script>
-  <script src="js/admin.js?v=58" defer></script>
-  <script src="js/admin_users.js?v=58" defer></script>
-  <script src="js/app.js?v=58" defer></script>
+  <script src="js/state.js?v=59" defer></script>
+  <script src="js/ui.js?v=59" defer></script>
+  <script src="js/supabase-config.js?v=59" defer></script>
+  <script src="js/auth.js?v=59" defer></script>
+  <script src="js/vendors.js?v=59" defer></script>
+  <script src="js/map.js?v=59" defer></script>
+  <script src="js/map_search.js?v=59" defer></script>
+  <script src="js/map_gps.js?v=59" defer></script>
+  <script src="js/forum.js?v=59" defer></script>
+  <script src="js/ads.js?v=59" defer></script>
+  <script src="js/orders.js?v=59" defer></script>
+  <script src="js/admin.js?v=59" defer></script>
+  <script src="js/admin_users.js?v=59" defer></script>
+  <script src="js/app.js?v=59" defer></script>
 
 <!-- MODAL ADMINISTRADOR EXCLUSIVO (ACCESO PROTEGIDO CON USUARIO Y CONTRASEÑA OBLIGATORIOS) -->
   <div class="modal" id="modalAdmin">
@@ -884,35 +884,35 @@
       <p style="font-size: 11px; color: #94A3B8; margin-bottom: 12px;">Selecciona el producto o servicio que necesitas en tu OTB:</p>
       
       <div class="submenu-grid">
-        <div class="submenu-card" onclick="seleccionarYPedirDirecto('🔥 Garrafa de Gas GLP')">
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('gas')">
           <img src="icons/garrafa_red_clean.svg" style="width: 38px; height: 42px; object-fit: contain; filter: drop-shadow(0 0 6px #FF1744); margin-bottom: 4px;" alt="Garrafa GLP 10Kg Roja">
           <span class="submenu-title">🔥 Garrafa GLP</span>
         </div>
-        <div class="submenu-card" onclick="seleccionarYPedirDirecto('💧 Botellón Agua Purificada 20L')">
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('agua')">
           <i class="fa-solid fa-bottle-water" style="color: #0288D1;"></i>
           <span class="submenu-title">💧 Agua 20L</span>
         </div>
-        <div class="submenu-card" onclick="seleccionarYPedirDirecto('♻️ Chatarra')">
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('chatarra')">
           <i class="fa-solid fa-recycle" style="color: #00E676;"></i>
           <span class="submenu-title">♻️ Chatarra</span>
         </div>
-        <div class="submenu-card" onclick="seleccionarYPedirDirecto('📄 Papel')">
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('papel')">
           <i class="fa-solid fa-newspaper" style="color: #4FC3F7;"></i>
           <span class="submenu-title">📄 Papel / Cartón</span>
         </div>
-        <div class="submenu-card" onclick="seleccionarYPedirDirecto('🍎 Frutas & Verduras')">
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('frutas')">
           <i class="fa-solid fa-apple-whole" style="color: #FF5252;"></i>
           <span class="submenu-title">🍎 Frutas / Verduras</span>
         </div>
-        <div class="submenu-card" onclick="seleccionarYPedirDirecto('🧼 Detergentes & Limpieza')">
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('detergentes')">
           <i class="fa-solid fa-pump-soap" style="color: #E040FB;"></i>
           <span class="submenu-title">🧼 Detergentes</span>
         </div>
-        <div class="submenu-card" onclick="seleccionarYPedirDirecto('🪵 Carbón / Leña')">
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('otros')">
           <i class="fa-solid fa-fire-flame-curved" style="color: #FF9100;"></i>
           <span class="submenu-title">🪵 Carbón / Leña</span>
         </div>
-        <div class="submenu-card" onclick="seleccionarYPedirDirecto('📦 Otros')">
+        <div class="submenu-card" onclick="seleccionarYPedirDirecto('otros')">
           <i class="fa-solid fa-box-open" style="color: #FFC107;"></i>
           <span class="submenu-title">📦 Otros Encargos</span>
         </div>

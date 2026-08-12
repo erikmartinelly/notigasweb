@@ -455,7 +455,7 @@ function confirmarPedido() {
 
   const pos = getActiveUserLocation();
 
-  let cat = document.getElementById('selectCategoria')?.value || 'Garrafa de Gas GLP';
+  let cat = document.getElementById('selectCategoria')?.value || 'gas';
 
   
 
