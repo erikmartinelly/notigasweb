@@ -586,7 +586,7 @@ function guardarSubmenuAnuncios() {
   const currentAdmin = getVerifiedAdminEmail();
   if (!currentAdmin) {
     alert("⛔ ACCESO RESTRINGIDO\nDebes ingresar tus credenciales de Administrador para modificar anuncios.");
-    abrirModalAdminLogin();
+    if (typeof showToast === 'function') showToast('Acceso Denegado', 'Inicia sesión con tu cuenta de administrador Google para realizar esta acción.', 'error');
     return;
   }
 
@@ -646,7 +646,7 @@ function descargarListaCorreosCSV() {
   
   if (!currentAdmin) {
     alert("⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña.");
-    abrirModalAdminLogin();
+    if (typeof showToast === 'function') showToast('Acceso Denegado', 'Inicia sesión con tu cuenta de administrador Google para realizar esta acción.', 'error');
     return;
   }
 
@@ -710,7 +710,7 @@ async function descargarFichasRepartidoresCSV() {
   
   if (!currentAdmin) {
     alert("⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña.");
-    abrirModalAdminLogin();
+    if (typeof showToast === 'function') showToast('Acceso Denegado', 'Inicia sesión con tu cuenta de administrador Google para realizar esta acción.', 'error');
     return;
   }
 
@@ -752,7 +752,7 @@ function descargarEstadisticasGeneralesCSV() {
   
   if (!currentAdmin) {
     alert("⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña.");
-    abrirModalAdminLogin();
+    if (typeof showToast === 'function') showToast('Acceso Denegado', 'Inicia sesión con tu cuenta de administrador Google para realizar esta acción.', 'error');
     return;
   }
 
