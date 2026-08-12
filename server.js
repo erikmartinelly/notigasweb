@@ -32,7 +32,8 @@ app.use((req, res, next) => {
   // FIX: Content-Security-Policy — Lista blanca explícita de todos los recursos permitidos
   // Dominios autorizados: Supabase, Google (Auth + Fonts + AdSense), OSM, Font Awesome, jsDelivr/unpkg (CDNs)
   const csp = [
-    // Solo scripts del mismo origen + CDNs explícitamente listados
+    // Solo scripts del mismo origen + CDNs explícitamente listados. 
+    // NOTA: 'unsafe-inline' se mantiene temporalmente por el uso intensivo de atributos onclick en el HTML y JS (se requiere refactorizar a addEventListener para removerlo).
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com https://pagead2.googlesyndication.com https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com",
     // Estilos del mismo origen + Google Fonts + Font Awesome

@@ -320,6 +320,8 @@ function renderFinalVendors(defaultVendors, deletedIds) {
 
   finalVendors.forEach((v) => {
     const isBanned = esRepartidorBaneado(v.name, v.plate, v.whatsapp);
+    const safeName = encodeURIComponent(v.name || '').replace(/'/g, "%27");
+    const safePlate = encodeURIComponent(v.plate || '').replace(/'/g, "%27");
     html += `
       <div style="background:#1E293B; padding:10px 12px; border-radius:10px; border:1px solid ${isBanned ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.08)'}; display:flex; justify-content:space-between; align-items:center; opacity: ${isBanned ? '0.7' : '1'}; margin-bottom:6px;">
         <div>
@@ -332,11 +334,11 @@ function renderFinalVendors(defaultVendors, deletedIds) {
             <button onclick="aprobarRepartidorAdmin('${v.id}')" style="background:#4CAF50; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-check"></i> Aprobar</button>
           ` : ''}
           ${isBanned ? `
-            <button onclick="desbanearRepartidorAdmin('${v.id}', '${v.name}')" style="background:#0288D1; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-lock-open"></i> Desbanear</button>
+            <button onclick="desbanearRepartidorAdmin('${v.id}', decodeURIComponent('${safeName}'))" style="background:#0288D1; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-lock-open"></i> Desbanear</button>
           ` : `
-            <button onclick="banearRepartidorAdmin('${v.id}', '${v.name}', '${v.plate}')" style="background:#E65100; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-user-slash"></i> Banear</button>
+            <button onclick="banearRepartidorAdmin('${v.id}', decodeURIComponent('${safeName}'), decodeURIComponent('${safePlate}'))" style="background:#E65100; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-user-slash"></i> Banear</button>
           `}
-          <button onclick="borrarRepartidorPermanente('${v.id}', '${v.name}')" style="background:#D32F2F; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Eliminar</button>
+          <button onclick="borrarRepartidorPermanente('${v.id}', decodeURIComponent('${safeName}'))" style="background:#D32F2F; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Eliminar</button>
         </div>
       </div>
     `;
