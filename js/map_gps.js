@@ -99,6 +99,11 @@ function solicitarPermisoGPSAndroidNativo() {
 }
 
 function conectarGPSAuto(forceReset = false) {
+  const banner = document.getElementById('gpsMandatoryBanner');
+  if (banner) banner.style.display = 'none';
+  const card = document.getElementById('gpsFloatingBanner');
+  if (card) card.style.display = 'none';
+
   const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   let gpsResolved = false;
 
@@ -106,17 +111,9 @@ function conectarGPSAuto(forceReset = false) {
   solicitarGeolocalizacionNativaNavegador(isMobile, forceReset)
     .then(() => {
       gpsResolved = true;
-      const banner = document.getElementById('gpsMandatoryBanner');
-      if (banner) banner.style.display = 'none';
-      const card = document.getElementById('gpsFloatingBanner');
-      if (card) card.style.display = 'none';
     })
     .catch((err) => {
       console.warn("⚠️ Geolocalización nativa no disponible:", err.message);
-      const banner = document.getElementById('gpsMandatoryBanner');
-      if (banner) banner.style.display = 'block';
-      const card = document.getElementById('gpsFloatingBanner');
-      if (card) card.style.display = 'block';
       if (!gpsResolved) {
         gpsResolved = true;
         obtenerUbicacionIPFallbackDesktop(true);

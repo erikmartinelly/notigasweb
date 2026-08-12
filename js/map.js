@@ -9,7 +9,6 @@
    - Reducción de carga en servidor DB: 96.6% de ahorro en IOPS y escrituras.
    ========================================================================== */
 
-const DRIVER_GPS_BROADCAST_INTERVAL_MS = 30000;
 const TRUCK_ANIM_INTERVAL_MS = 80;
 
 let map, userMarker, truckMarker;
