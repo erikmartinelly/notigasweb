@@ -523,15 +523,9 @@ async function transmitirUbicacionRepartidorServidorDB(lat, lng) {
         lastGpsBroadcastTime = now;
 
         if (window.supabaseClient) {
-          // Obtener ciudad autorizada (con caché simple)
-          if (!window._cachedDriverCity) {
-            const { data: s } = await window.supabaseClient.auth.getSession();
-            if (s?.session?.user) {
-              const { data: c } = await window.supabaseClient.from('choferes_habilitados').select('ciudad').eq('user_id', s.session.user.id).single();
-              if (c) window._cachedDriverCity = c.ciudad;
-            }
-          }
-          const finalCity = window._cachedDriverCity || 'santacruz';
+          // Usar la ciudad activa actualmente seleccionada por el usuario en la interfaz,
+          // no la que quedó cacheada del registro en BD, para permitir movilidad.
+          const finalCity = (window.AppState && window.AppState.get('city')) ? window.AppState.get('city') : (localStorage.getItem('notigas_city') || 'santacruz');
           const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
 
           await window.supabaseClient.from('rutas_repartidores').upsert({

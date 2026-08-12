@@ -113,12 +113,10 @@ function conectarGPSAuto(forceReset = false) {
     })
     .catch((err) => {
       console.warn("⚠️ Geolocalización nativa no disponible:", err.message);
-      if (isMobile) {
-        const banner = document.getElementById('gpsMandatoryBanner');
-        if (banner) banner.style.display = 'block';
-        const card = document.getElementById('gpsFloatingBanner');
-        if (card) card.style.display = 'block';
-      }
+      const banner = document.getElementById('gpsMandatoryBanner');
+      if (banner) banner.style.display = 'block';
+      const card = document.getElementById('gpsFloatingBanner');
+      if (card) card.style.display = 'block';
       if (!gpsResolved) {
         gpsResolved = true;
         obtenerUbicacionIPFallbackDesktop(true);
@@ -133,8 +131,8 @@ function conectarGPSAuto(forceReset = false) {
     }
   }, 5000);
 
-  // 3. En dispositivos móviles Android, activar watchPosition continuo
-  if (isMobile && "geolocation" in navigator) {
+  // 3. Activar watchPosition continuo en TODOS los dispositivos (incluyendo Desktop para pruebas)
+  if ("geolocation" in navigator) {
     try {
       if (activeGpsWatchId !== null && navigator.geolocation.clearWatch) {
         navigator.geolocation.clearWatch(activeGpsWatchId);
