@@ -59,8 +59,8 @@ const garrafaGreenSvgMarkerHtml = `
 // ICONO DE CAMIÓN REPARTIDOR
 const truckSvgMarkerHtml = `
   <div style="position: relative; width: 50px; height: 58px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
-    <div style="background: linear-gradient(135deg, #10B981, #059669); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2.5px solid #FFFFFF; box-shadow: 0 4px 12px rgba(16,185,129,0.5);">
-      <i class="fa-solid fa-truck-fast" style="color: #FFFFFF; font-size: 20px;"></i>
+    <div style="background: #FFFFFF; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2.5px solid #FF6D00; box-shadow: 0 4px 12px rgba(255,109,0,0.5);">
+      <img src="icons/camion_red.svg" style="width: 28px; height: 28px;" alt="Camión Repartidor">
     </div>
     <span style="position: absolute; top: 0px; right: 0px; background: #00E676; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #0F172A; box-shadow: 0 0 8px #00E676;" title="En ruta activa (GPS)"></span>
   </div>
