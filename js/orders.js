@@ -173,6 +173,49 @@ window.aceptarPedidoRepartidor = async function(id) {
     if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
   });
 }
+
+window.aceptarGrupoDemanda = async function(clusterId, ciudad, categoria) {
+  if (typeof closeDriverOrdersModal === 'function') closeDriverOrdersModal();
+  if (!window.supabaseClient) {
+    if (typeof showToast === 'function') showToast('Error', 'Sin conexión a la base de datos.', 'error');
+    else alert('❌ Error: Sin conexión a la base de datos.');
+    return;
+  }
+  showConfirmModal('🚚', 'Aceptar Grupo de Demanda', '¿Confirmas que atenderás a todos los pedidos de esta zona?', 'Sí, iré ahora', async () => {
+    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Asignando pedidos...');
+    
+    const { error } = await window.supabaseClient.rpc('rpc_accept_demand_cluster', {
+      p_cluster_id: clusterId,
+      p_ciudad: ciudad,
+      p_categoria: categoria,
+      p_decimals: 3
+    });
+      
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+    
+    if (error) {
+      console.error('Error al aceptar grupo de demanda:', error);
+      if (typeof showToast === 'function') showToast('Error', 'No se pudo aceptar el grupo. Es posible que otro repartidor ya lo haya tomado.', 'error', 4000);
+      else alert('❌ No se pudo aceptar el grupo.');
+      return;
+    }
+    
+    if (typeof showToast === 'function') {
+      showToast('¡Grupo Aceptado!', 'Has aceptado todos los pedidos de la zona. Se trazará tu ruta óptima.', 'success', 5000);
+    } else {
+      alert('✅ ¡GRUPO ACEPTADO!\nSe ha trazado la ruta para estas entregas.');
+    }
+    
+    if (window.demandClusterMarkers && window.demandClusterMarkers[clusterId]) {
+      if (typeof map !== 'undefined' && map) map.removeLayer(window.demandClusterMarkers[clusterId]);
+      delete window.demandClusterMarkers[clusterId];
+    }
+    
+    if (typeof window.calcularYTrazarRutaEficiente === 'function') window.calcularYTrazarRutaEficiente();
+    if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
+  });
+}
+
 async function confirmarEntregaPedido(id) {
 
   if (!window.supabaseClient) return;

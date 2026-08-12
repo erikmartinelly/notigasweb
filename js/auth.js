@@ -363,6 +363,11 @@ async function handleCredentialResponse(response) {
   if (typeof reproducirSonidoNotificacion === 'function') {
     reproducirSonidoNotificacion();
   }
+  } catch (error) {
+    console.error("Error en handleCredentialResponse:", error);
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+    if (typeof showToast === 'function') showToast('Error', 'Ocurrió un error inesperado al procesar la sesión', 'error');
+  }
 }
 
 async function guardarRepartidorEnBaseDeDatos(repartidorObj) {

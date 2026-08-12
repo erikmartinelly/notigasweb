@@ -199,17 +199,42 @@ async function cargarPedidosVecinalesEnVivo() {
   const activeCity = AppState.get('city') || 'santacruz';
 
   try {
-    const { data, error } = await window.supabaseClient
-      .from('pedidos_publicos')
-      .select('*')
-      .eq('ciudad', activeCity)
-      .gte('created_at', activeWindow);
+    let isDriverUser = false;
+    let driverCategoria = 'Gas GLP';
+    const saved = localStorage.getItem('notigas_user_data');
+    if (saved) {
+      const u = JSON.parse(saved);
+      if (u.role === 'repartidor') isDriverUser = true;
+      if (u.categoria) driverCategoria = u.categoria;
+    }
 
-    if (error) {
-      console.error("❌ Error de Supabase al cargar pedidos:", error.message, error.details);
-    } else if (data) {
-      console.log(`✅ Supabase devolvió ${data.length} pedidos.`);
-      data.forEach(order => agregarPedidoVecinoEnMapa(order));
+    if (isDriverUser) {
+      const { data, error } = await window.supabaseClient.rpc('rpc_get_demand_clusters', {
+        p_ciudad: activeCity,
+        p_categoria: driverCategoria,
+        p_decimals: 3
+      });
+
+      if (error) {
+        console.error("❌ Error de Supabase al cargar clusters:", error.message, error.details);
+      } else if (data) {
+        console.log(`✅ Supabase devolvió ${data.length} clusters de demanda.`);
+        data.forEach(cluster => agregarClusterEnMapa(cluster));
+      }
+    } else {
+      const { data, error } = await window.supabaseClient
+        .from('pedidos_publicos')
+        .select('*')
+        .eq('ciudad', activeCity)
+        .eq('estado', 'pendiente')
+        .gte('created_at', activeWindow);
+
+      if (error) {
+        console.error("❌ Error de Supabase al cargar pedidos:", error.message, error.details);
+      } else if (data) {
+        console.log(`✅ Supabase devolvió ${data.length} pedidos.`);
+        data.forEach(order => agregarPedidoVecinoEnMapa(order));
+      }
     }
 
     // FETCH LIVE TRUCKS (Last 10 minutes to avoid stale trucks)
@@ -229,6 +254,38 @@ async function cargarPedidosVecinalesEnVivo() {
   } catch(e) {
     console.error("❌ Error general cargando live data:", e);
   }
+}
+
+window.demandClusterMarkers = window.demandClusterMarkers || {};
+
+function agregarClusterEnMapa(cluster) {
+  if (!map) return;
+  const clusterId = cluster.cluster_id;
+
+  if (window.demandClusterMarkers[clusterId]) {
+    map.removeLayer(window.demandClusterMarkers[clusterId]);
+  }
+
+  // Radio basado en cantidad (pedidos_activos)
+  const baseRadius = 110; // m
+  const radius = baseRadius + (cluster.pedidos_activos * 20);
+
+  const circle = L.circle([cluster.centro_lat, cluster.centro_lng], {
+    color: '#FF1744', fillColor: '#FF1744', fillOpacity: 0.35, weight: 2, radius: radius
+  }).addTo(map);
+
+  circle.bindPopup(`
+    <div style="font-family:'Roboto',sans-serif; text-align:center; padding:6px;">
+      <strong style="color:#FF1744; font-size:14px;"><i class="fa-solid fa-fire"></i> GRUPO DE DEMANDA</strong><br>
+      <span style="font-size:12px; color:#333; font-weight:800;">${escapeHtmlStr(cluster.categoria)}</span><br>
+      <span style="font-size:11px; color:#666;">Pedidos activos: <b>${cluster.pedidos_activos}</b></span><br><br>
+      <button onclick="window.aceptarGrupoDemanda('${cluster.cluster_id}', '${cluster.ciudad}', '${cluster.categoria}')" style="background:#FF6D00; color:white; border:none; padding:8px 16px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px;">
+        🚀 ACEPTAR GRUPO
+      </button>
+    </div>
+  `);
+
+  window.demandClusterMarkers[clusterId] = circle;
 }
 
 function actualizarRepartidorEnMapa(data) {
@@ -321,7 +378,9 @@ function agregarPedidoVecinoEnMapa(order) {
      return; // Ignore orders outside of their category
   }
 
-  const marker = L.marker([order.lat, order.lng], { icon: currentIcon, zIndexOffset: 8000 }).addTo(map);
+  const lat = order.latitude || order.lat;
+  const lng = order.longitude || order.lng;
+  const marker = L.marker([lat, lng], { icon: currentIcon, zIndexOffset: 8000 }).addTo(map);
   marker.bindPopup(`
     <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
       <strong style="color:#FF6D00; font-size:13px;">🛒 Pedido de un Vecino</strong><br>
@@ -767,14 +826,16 @@ function renderActiveOrdersMap() {
       return;
     }
 
-    if (order.lat && order.lng) {
+    const lat = order.latitude || order.lat;
+    const lng = order.longitude || order.lng;
+    if (lat && lng) {
       if (userMarker && map.hasLayer(userMarker)) {
         map.removeLayer(userMarker);
       }
 
       const categoryIcon = obtenerIconoCategoriaMapa(order.categoria);
 
-      const orderMarker = L.marker([order.lat, order.lng], {
+      const orderMarker = L.marker([lat, lng], {
         icon: categoryIcon,
         draggable: true,
         autoPan: true
@@ -895,20 +956,54 @@ async function calcularYTrazarRutaEficiente() {
 
   let pointsToVisit = [];
 
-  // 1. Cargar pedido activo real del cliente si existe
-  const rawOrder = localStorage.getItem('notigas_active_order');
-  if (rawOrder) {
-    try {
-      const o = JSON.parse(rawOrder);
-      if (o.lat && o.lng) {
-        pointsToVisit.push({
-          lat: o.lat,
-          lng: o.lng,
-          title: o.categoria || 'Pedido Vecinal GLP',
-          desc: o.direccion || 'Ubicación fijada en mapa'
-        });
-      }
-    } catch(e){}
+  let isDriverUser = false;
+  try {
+    const saved = localStorage.getItem('notigas_user_data');
+    if (saved) {
+      const u = JSON.parse(saved);
+      if (u.role === 'repartidor') isDriverUser = true;
+    }
+  } catch(e){}
+
+  if (isDriverUser && window.supabaseClient) {
+    const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
+    const { data } = await window.supabaseClient.from('pedidos')
+       .select('*')
+       .eq('driver_id', localUserId)
+       .eq('estado', 'asignado');
+       
+    if (data && data.length > 0) {
+      data.forEach(o => {
+         const lat = o.latitude || o.lat;
+         const lng = o.longitude || o.lng;
+         if (lat && lng) {
+           pointsToVisit.push({
+              lat: lat,
+              lng: lng,
+              title: o.categoria || 'Pedido Vecinal GLP',
+              desc: o.direccion || 'Ubicación fijada en mapa'
+           });
+         }
+      });
+    }
+  } else {
+    // 1. Cargar pedido activo real del cliente si existe
+    const rawOrder = localStorage.getItem('notigas_active_order');
+    if (rawOrder) {
+      try {
+        const o = JSON.parse(rawOrder);
+        const lat = o.latitude || o.lat;
+        const lng = o.longitude || o.lng;
+        if (lat && lng) {
+          pointsToVisit.push({
+            lat: lat,
+            lng: lng,
+            title: o.categoria || 'Pedido Vecinal GLP',
+            desc: o.direccion || 'Ubicación fijada en mapa'
+          });
+        }
+      } catch(e){}
+    }
   }
 
   // FIX: Ya no se inyectan puntos de demostración si la lista de pedidos está vacía.
