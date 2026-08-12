@@ -386,7 +386,6 @@ async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
     placa: repartidorObj.placa,
     categoria: repartidorObj.categoria,
     productos: repartidorObj.productos,
-    zonas: repartidorObj.zonas,
     schedule: repartidorObj.schedule,
     ciudad: repartidorObj.ciudad || 'santacruz'
   }], { onConflict: 'user_id' });
@@ -437,7 +436,6 @@ async function guardarRegistroUnico() {
       else if (categoria === 'Frutas') productos = 'Frutas, Verduras y Hortalizas';
       else productos = 'Varios';
     }
-    const zonas = (document.getElementById('regZonas')?.value || '').trim() || 'OTB Central y calles vecinas';
     const schedule = (document.getElementById('regSchedule')?.value || '').trim() || 'Lunes a Sábado: 07:00 a 18:00';
     const ciudad = (document.getElementById('regCiudad')?.value || '').trim() || 'santacruz';
 
@@ -448,7 +446,6 @@ async function guardarRegistroUnico() {
       placa: placa,
       categoria: categoria,
       productos: productos,
-      zonas: zonas,
       schedule: schedule,
       ciudad: ciudad,
       user_id: userId // Usamos el ID seguro generado por Supabase
@@ -512,7 +509,6 @@ async function iniciarSesionRepartidor() {
   const plate = (document.getElementById('inputDriverPlate')?.value || '').trim();
   const categoria = (document.getElementById('inputDriverCat')?.value || 'Gas GLP').trim();
   const productos = (document.getElementById('inputDriverProductos')?.value || '').trim();
-  const zonas = (document.getElementById('inputDriverZonas')?.value || '').trim();
   const schedule = (document.getElementById('inputDriverSchedule')?.value || '').trim();
 
   if (!nombreNegocio || !whatsapp || !plate || !productos) {
@@ -568,7 +564,6 @@ async function iniciarSesionRepartidor() {
     placa: plate, 
     categoria: categoria, 
     productos: productos,
-    zonas: zonas,
     schedule: schedule,
     ciudad: ciudad,
     user_id: existingUserId
@@ -576,14 +571,15 @@ async function iniciarSesionRepartidor() {
   
   if (existingGmail) repartidorData.gmail = existingGmail;
 
-  localStorage.setItem('notigas_user_data', JSON.stringify(repartidorData));
-  AppState.set('city', ciudad.toLowerCase());
   const exito = await guardarRepartidorEnBaseDeDatos(repartidorData);
   
   if (!exito) {
     if (typeof showToast === 'function') showToast('❌ Error', 'No se pudo guardar la configuración. Reintenta.', 'error', 3000);
     return;
   }
+  
+  localStorage.setItem('notigas_user_data', JSON.stringify(repartidorData));
+  AppState.set('city', ciudad.toLowerCase());
   
   sessionStorage.removeItem('notigas_temp_gmail');
 
@@ -927,7 +923,7 @@ async function procesarSesionExitosa(user) {
     try {
       const { data } = await window.supabaseClient
         .from('choferes_habilitados')
-        .select('ciudad, categoria, productos, zonas, schedule')
+        .select('ciudad, categoria, productos, schedule')
         .eq('user_id', user.id)
         .maybeSingle();
       if (data) {
@@ -955,7 +951,6 @@ async function procesarSesionExitosa(user) {
       }
       if (choferData.categoria) clienteData.categoria = choferData.categoria;
       if (choferData.productos) clienteData.productos = choferData.productos;
-      if (choferData.zonas) clienteData.zonas = choferData.zonas;
       if (choferData.schedule) clienteData.schedule = choferData.schedule;
     } else {
       // Driver NO EXISTE en la DB. Mostrar formulario de registro!
@@ -997,18 +992,17 @@ async function procesarSesionExitosa(user) {
 let currentAuthAction = 'login'; // 'login' or 'register'
 
 window.showAuthStep = function(step) {
-  const step1 = document.getElementById('authStep1_Role');
-  const step2 = document.getElementById('authStep2_Action');
-  const step3 = document.getElementById('authStep3_Method');
+  const step1 = document.getElementById('authStep1_Action');
+  const step2 = document.getElementById('authStep2_Method');
+  
   if (step1) step1.style.display = (step === 1) ? 'block' : 'none';
   if (step2) step2.style.display = (step === 2) ? 'block' : 'none';
-  if (step3) step3.style.display = (step === 3) ? 'block' : 'none';
   
-  if (step === 3) {
+  if (step === 2) {
     const btnEmailAction = document.getElementById('btnEmailAction');
-    const step3Title = document.getElementById('authStep3Title');
+    const step2Title = document.getElementById('authStep2Title');
     if (btnEmailAction) btnEmailAction.innerText = (currentAuthAction === 'login') ? 'Ingresar' : 'Registrarse';
-    if (step3Title) step3Title.innerText = (currentAuthAction === 'login') ? 'Selecciona método de ingreso:' : 'Selecciona método de registro:';
+    if (step2Title) step2Title.innerText = (currentAuthAction === 'login') ? 'Selecciona método de ingreso:' : 'Selecciona método de registro:';
   }
 };
 

@@ -132,7 +132,7 @@ function abrirFichaRepartidorEdicion() {
       setVal('inputDriverPlate', u.placa);
       setVal('inputDriverCat', u.categoria);
       setVal('inputDriverProductos', u.productos);
-      setVal('inputDriverZonas', u.zonas);
+
       setVal('inputDriverSchedule', u.schedule);
     }
   } catch(e){}
