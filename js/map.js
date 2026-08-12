@@ -59,7 +59,9 @@ const garrafaGreenSvgMarkerHtml = `
 // ICONO DE CAMIÓN REPARTIDOR
 const truckSvgMarkerHtml = `
   <div style="position: relative; width: 50px; height: 58px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
-    <img src="icons/garrafa_red_clean.svg" class="garrafa-red-flashing-img" style="width: 44px; height: 54px;" alt="Camión Repartidor GLP">
+    <div style="background: linear-gradient(135deg, #10B981, #059669); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2.5px solid #FFFFFF; box-shadow: 0 4px 12px rgba(16,185,129,0.5);">
+      <i class="fa-solid fa-truck-fast" style="color: #FFFFFF; font-size: 20px;"></i>
+    </div>
     <span style="position: absolute; top: 0px; right: 0px; background: #00E676; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #0F172A; box-shadow: 0 0 8px #00E676;" title="En ruta activa (GPS)"></span>
   </div>
 `;
@@ -308,7 +310,7 @@ function actualizarRepartidorEnMapa(data) {
      return; // Repartidores solo ven camiones de su rubro
   }
 
-  const truckId = data.id || data.distribuidor_nombre;
+  const truckId = data.user_id || data.id || data.distribuidor_nombre;
   if (!truckId) return;
 
   if (activeTruckMarkers[truckId]) {
@@ -560,14 +562,14 @@ async function transmitirUbicacionRepartidorServidorDB(lat, lng) {
     const distMovida = calcularDistanciaMetros(lastBroadcastLat, lastBroadcastLng, lat, lng);
     const tiempoTranscurrido = now - lastGpsBroadcastTime;
 
-    // Si avanzó menos de 15 metros (estacionado o en parada), emitir solo cada 5 minutos
+    // Si avanzó menos de 15 metros (estacionado o en parada), emitir solo cada 30 segundos
     if (distMovida !== null && distMovida < 15) {
-      if (tiempoTranscurrido < 300000) {
+      if (tiempoTranscurrido < 30000) {
         return; // Vehículo estacionado: Ahorro de megas y batería
       }
     } else {
-      // Si avanzó más de 15 metros (en movimiento activo), emitir cada 35 segundos
-      if (tiempoTranscurrido < 35000) {
+      // Si avanzó más de 15 metros (en movimiento activo), emitir cada 5 segundos
+      if (tiempoTranscurrido < 5000) {
         return;
       }
     }

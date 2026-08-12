@@ -396,7 +396,8 @@ async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
 
   if (error) {
     console.error("Error registrando chofer en Supabase:", error);
-    if (typeof showToast === 'function') showToast('Error', 'No se pudo guardar en la nube. Intenta de nuevo.', 'error');
+    alert('Error al guardar la ficha: ' + error.message);
+    if (typeof showToast === 'function') showToast('Error', 'No se pudo guardar en la nube. ' + error.message, 'error');
     return false;
   }
   return true;

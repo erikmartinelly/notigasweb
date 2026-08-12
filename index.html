@@ -645,7 +645,7 @@
   <!-- MODAL DE CONFIRMACIÓN ELEGANTE (REEMPLAZO DE confirm() NATIVO) -->
   <div class="confirm-modal-overlay" id="confirmModalOverlay" style="display:none;">
     <div class="confirm-modal-box">
-      <div class="confirm-modal-icon" id="confirmModalIcon">⚠️</div>
+      <div class="confirm-modal-icon" id="confirmModalIcon">⚠️ </div>
       <div class="confirm-modal-title" id="confirmModalTitle">¿Estás seguro?</div>
       <div class="confirm-modal-text" id="confirmModalText">Esta acción no se puede deshacer.</div>
       <div class="confirm-modal-actions">
@@ -681,20 +681,27 @@
   <!-- Leaflet movido aquí para no bloquear el render del HTML -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js" defer></script>
-  <script src="js/state.js?v=59" defer></script>
-  <script src="js/ui.js?v=59" defer></script>
-  <script src="js/supabase-config.js?v=59" defer></script>
-  <script src="js/auth.js?v=59" defer></script>
-  <script src="js/vendors.js?v=59" defer></script>
-  <script src="js/map.js?v=59" defer></script>
-  <script src="js/map_search.js?v=59" defer></script>
-  <script src="js/map_gps.js?v=59" defer></script>
-  <script src="js/forum.js?v=59" defer></script>
-  <script src="js/ads.js?v=59" defer></script>
-  <script src="js/orders.js?v=59" defer></script>
-  <script src="js/admin.js?v=59" defer></script>
-  <script src="js/admin_users.js?v=59" defer></script>
-  <script src="js/app.js?v=59" defer></script>
+  <script src="js/state.js?v=60" defer></script>
+  <script src="js/ui.js?v=60" defer></script>
+  <script src="js/supabase-config.js?v=60" defer></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js?v=61')
+        .then(reg => console.log('Service Worker registrado:', reg.scope))
+        .catch(err => console.log('Error al registrar SW:', err));
+    }
+  </script>
+  <script src="js/auth.js?v=61" defer></script>
+  <script src="js/vendors.js?v=61" defer></script>
+  <script src="js/map.js?v=61" defer></script>
+  <script src="js/map_search.js?v=61" defer></script>
+  <script src="js/map_gps.js?v=61" defer></script>
+  <script src="js/forum.js?v=61" defer></script>
+  <script src="js/ads.js?v=61" defer></script>
+  <script src="js/orders.js?v=61" defer></script>
+  <script src="js/admin.js?v=61" defer></script>
+  <script src="js/admin_users.js?v=61" defer></script>
+  <script src="js/app.js?v=61" defer></script>
 
 <!-- MODAL ADMINISTRADOR EXCLUSIVO (ACCESO PROTEGIDO CON USUARIO Y CONTRASEÑA OBLIGATORIOS) -->
   <div class="modal" id="modalAdmin">
