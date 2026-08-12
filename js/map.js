@@ -200,7 +200,7 @@ async function cargarPedidosVecinalesEnVivo() {
 
   try {
     const { data, error } = await window.supabaseClient
-      .from('pedidos')
+      .from('pedidos_publicos')
       .select('*')
       .eq('ciudad', activeCity)
       .gte('created_at', activeWindow);

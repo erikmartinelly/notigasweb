@@ -42,7 +42,7 @@ async function renderDriverOrdersList() {
 
     const { data } = await window.supabaseClient
 
-      .from('pedidos')
+      .from('pedidos_publicos')
 
       .select('*')
 
