@@ -34,15 +34,18 @@ document.addEventListener('DOMContentLoaded', () => {
           fecha: new Date().toISOString().split('T')[0] 
         });
 
-        const masterList = window.ADMIN_EMAILS || ["erikmartinelly@gmail.com", "leonmartinelly13@gmail.com"];
-        const isMaster = masterList.includes(u.gmail.toLowerCase());
-        if (isMaster) {
-          const btnAdmin = document.getElementById('btnAdminAccessQuick');
-          if (btnAdmin) btnAdmin.style.display = 'flex';
-          if (!sessionStorage.getItem('notigas_admin_token')) {
-             sessionStorage.setItem('notigas_admin_token', u.gmail);
-          }
+        async function checkAdminAsync() {
+          try {
+            if (!window.supabaseClient) return;
+            const { data } = await window.supabaseClient.from('admin_credentials').select('email').eq('email', u.gmail).single();
+            if (data) {
+              const btnAdmin = document.getElementById('btnAdminAccessQuick');
+              if (btnAdmin) btnAdmin.style.display = 'flex';
+              localStorage.setItem('notigas_is_admin', 'true');
+            }
+          } catch(e) {}
         }
+        setTimeout(checkAdminAsync, 1000);
       }
     } catch (e) {
       console.error("Error al leer datos de usuario local:", e);
@@ -275,12 +278,16 @@ async function handleCredentialResponse(response) {
     const nombre = user.user_metadata?.full_name || gmail;
 
     // Los administradores ingresan como usuarios normales pero con privilegios extra
-    const masterList = window.ADMIN_EMAILS || ["erikmartinelly@gmail.com", "leonmartinelly13@gmail.com"];
-    const isMaster = masterList.includes(gmail);
-    if (isMaster) {
-       const btnAdmin = document.getElementById('btnAdminAccessQuick');
-       if (btnAdmin) btnAdmin.style.display = 'flex';
-    }
+    try {
+      if (window.supabaseClient) {
+        const { data } = await window.supabaseClient.from('admin_credentials').select('email').eq('email', gmail).single();
+        if (data) {
+          const btnAdmin = document.getElementById('btnAdminAccessQuick');
+          if (btnAdmin) btnAdmin.style.display = 'flex';
+          localStorage.setItem('notigas_is_admin', 'true');
+        }
+      }
+    } catch(e) {}
 
   let existingDriver = null;
   if (window.supabaseClient) {
@@ -635,6 +642,9 @@ function cerrarSesionUsuario() {
       localStorage.removeItem('notigas_user_data');
       localStorage.removeItem('driverGpsLive');
       localStorage.removeItem('notigas_active_order');
+      if (window.supabaseClient) {
+        window.supabaseClient.auth.signOut().catch(console.error);
+      }
 
       closeUserSettingsModal();
       if (typeof closeDriverModal === 'function') closeDriverModal();
@@ -659,6 +669,9 @@ function cerrarSesionUsuario() {
     localStorage.removeItem('notigas_user_data');
     localStorage.removeItem('driverGpsLive');
     localStorage.removeItem('notigas_active_order');
+    if (window.supabaseClient) {
+      window.supabaseClient.auth.signOut().catch(console.error);
+    }
 
     closeUserSettingsModal();
     if (typeof closeDriverModal === 'function') closeDriverModal();
@@ -891,11 +904,16 @@ async function procesarSesionExitosa(user) {
   const gmail = user.email.toLowerCase().trim();
   const nombre = user.user_metadata?.full_name || gmail.split('@')[0];
   
-  const masterList = window.ADMIN_EMAILS || ["erikmartinelly@gmail.com", "leonmartinelly13@gmail.com"];
-  if (masterList.includes(gmail)) {
-     const btnAdmin = document.getElementById('btnAdminAccessQuick');
-     if (btnAdmin) btnAdmin.style.display = 'flex';
-  }
+  try {
+    if (window.supabaseClient) {
+      const { data } = await window.supabaseClient.from('admin_credentials').select('email').eq('email', gmail).single();
+      if (data) {
+        const btnAdmin = document.getElementById('btnAdminAccessQuick');
+        if (btnAdmin) btnAdmin.style.display = 'flex';
+        localStorage.setItem('notigas_is_admin', 'true');
+      }
+    }
+  } catch(e) {}
 
   // VERIFICAR SIEMPRE si el usuario ya es repartidor en la BD, sin importar lo que seleccionó
   let esRepartidorDB = false;
