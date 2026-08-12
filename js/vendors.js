@@ -52,7 +52,7 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
   renderVendorCards(cat);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('notigas_auth_ready', () => {
   descargarChoferesYRenderizar('TODOS');
 });
 

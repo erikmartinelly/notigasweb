@@ -14,42 +14,41 @@ let databaseEmails = [
   { gmail: "gasero_express@gmail.com", role: "Repartidor Gas GLP", fecha: "2026-08-01" }
 ];
 
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
   // 1. Iniciar One Tap en segundo plano
   initGoogleOneTap();
 
-  let hasSession = false;
-  if (window.supabaseClient) {
-    try {
-      const { data: sessionData } = await window.supabaseClient.auth.getSession();
-      if (sessionData && sessionData.session) {
-        hasSession = true;
-        // Restaurar sesión sin mostrar el modal
-        window._tempAuthUser = sessionData.session.user;
-        
-        const savedUser = localStorage.getItem('notigas_user_data');
-        if (savedUser) {
-          try {
-            const u = JSON.parse(savedUser);
-            if (u.ciudad) AppState.set('city', u.ciudad.toLowerCase());
-            
-            // Restablecer roles silenciosamente
-            currentSelectedRole = u.role === 'repartidor' ? 'driver' : 'buyer';
-            window._roleSelectedNow = true;
-          } catch(e){}
+  const initAuthSession = async () => {
+    let hasSession = false;
+    if (window.supabaseClient) {
+      try {
+        const { data: sessionData } = await window.supabaseClient.auth.getSession();
+        if (sessionData && sessionData.session) {
+          hasSession = true;
+          // Restaurar sesión sin mostrar el modal
+          window._tempAuthUser = sessionData.session.user;
+          // Esperamos a que la Base de Datos decida el rol y ciudad (Fuente de Verdad)
+          await procesarSesionExitosa(sessionData.session.user);
         }
-
-        procesarSesionExitosa(sessionData.session.user);
+      } catch(e) {
+        console.warn("No se pudo restaurar la sesión automáticamente", e);
       }
-    } catch(e) {
-      console.warn("No se pudo restaurar la sesión automáticamente", e);
     }
-  }
 
-  // 2. Si no hay sesión, mostrar el modal de seleccion de rol primero
-  if (!hasSession) {
-    const modalAuth = document.getElementById('modalWelcomeAuth');
-    if (modalAuth) modalAuth.style.display = 'flex';
+    // 2. Si no hay sesión, mostrar el modal de seleccion de rol primero
+    if (!hasSession) {
+      const modalAuth = document.getElementById('modalWelcomeAuth');
+      if (modalAuth) modalAuth.style.display = 'flex';
+    }
+
+    // 3. Notificar al resto de la app que Auth terminó su validación inicial (ya sea con o sin sesión)
+    document.dispatchEvent(new Event('notigas_auth_ready'));
+  };
+
+  if (window.supabaseClient) {
+    initAuthSession();
+  } else {
+    document.addEventListener('supabase_ready', initAuthSession);
   }
 
   const savedUser = localStorage.getItem('notigas_user_data');

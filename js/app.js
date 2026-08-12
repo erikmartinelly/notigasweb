@@ -359,12 +359,9 @@ if ('serviceWorker' in navigator) {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 NOTIGAS iniciando...');
     
-    // Inicializar estado de la aplicación (hidratación en state.js)
-    // Se elimina la llamada redundante a window.AppState.hydrate()
-    
-    // Escuchar a que Supabase termine de inicializarse para conectar Realtime y cargar datos
+    // Escuchar a que Auth termine de inicializar y validar la BD (para asegurar rol y ciudad)
     const initSupabaseFeatures = () => {
-        console.log('🔗 Supabase conectado. Iniciando servicios en red...');
+        console.log('🔗 Auth y BD sincronizados. Iniciando servicios en red...');
         if (typeof iniciarSuscripcionesRealtime === 'function') {
             iniciarSuscripcionesRealtime();
         }
@@ -373,11 +370,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    if (window.supabaseClient) {
-        initSupabaseFeatures();
-    } else {
-        document.addEventListener('supabase_ready', initSupabaseFeatures);
-    }
+    document.addEventListener('notigas_auth_ready', initSupabaseFeatures);
 });
 
 // 3. Manejo de eventos globales
