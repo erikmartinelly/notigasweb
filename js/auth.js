@@ -282,9 +282,10 @@ async function handleCredentialResponse(response) {
        if (btnAdmin) btnAdmin.style.display = 'flex';
     }
 
-    // Verificamos SIEMPRE si el usuario ya es repartidor en la BD
+  let existingDriver = null;
+  if (window.supabaseClient) {
     try {
-      const { data: existingDriver, error: driverCheckError } = await window.supabaseClient
+      const { data, error: driverCheckError } = await window.supabaseClient
         .from('choferes_habilitados')
         .select('id, ciudad')
         .eq('user_id', user.id)
@@ -296,15 +297,13 @@ async function handleCredentialResponse(response) {
         return;
       }
         
-      if (existingDriver) {
+      if (data) {
+        existingDriver = data;
         if (existingDriver.ciudad) {
            AppState.set('city', existingDriver.ciudad.toLowerCase());
         }
-        // Ya existe en la base de datos como repartidor, forzar rol y entrar
+        // Ya existe en la BD, forzar rol para obviar lo que el usuario haya pinchado en la UI
         currentSelectedRole = 'driver';
-        if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-        procesarSesionExitosa(user);
-        return;
       }
     } catch(e) {
       console.error("Error verificando repartidor existente:", e);
@@ -312,54 +311,50 @@ async function handleCredentialResponse(response) {
       if (typeof showToast === 'function') showToast('Error', 'No se pudo verificar la sesión. Intenta de nuevo.', 'error', 4000);
       return;
     }
+  }
 
-    // Si NO es repartidor en la BD, verificamos si quería registrarse como uno
-    if (currentSelectedRole === 'driver') {
-      if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-      const modalAuth = document.getElementById('modalWelcomeAuth');
-      if (modalAuth) modalAuth.style.display = 'none';
-
-      const inputDriverNombre = document.getElementById('inputDriverNombre');
-      if (inputDriverNombre) inputDriverNombre.value = nombre;
-      
-      const modalDriver = document.getElementById('modalDriver');
-      if (modalDriver) modalDriver.style.display = 'flex';
-      
-      const titleEl = document.getElementById('driverModalTitleText');
-      const subtitleEl = document.getElementById('driverModalSubtitle');
-      if (titleEl) titleEl.textContent = 'Registro de Repartidor';
-      if (subtitleEl) subtitleEl.textContent = 'Completa tu ficha de negocio. Aparecerá en la lista de repartidores de la OTB.';
-
-      sessionStorage.setItem('notigas_temp_gmail', gmail);
-      return;
-    }
-
-    // Si NO es repartidor y seleccionó 'vecino' (buyer), iniciar como vecino
-    const clienteData = { 
-      role: 'vecino', 
-      gmail: gmail, 
-      nombre: nombre, 
-      user_id: user.id 
-    };
-
-    localStorage.setItem('notigas_user_data', JSON.stringify(clienteData));
-
+  // Si quiere ser repartidor pero no existe en la BD, mandarlo a registrarse
+  if (currentSelectedRole === 'driver' && !existingDriver) {
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-    
     const modalAuth = document.getElementById('modalWelcomeAuth');
     if (modalAuth) modalAuth.style.display = 'none';
 
-    if (typeof setAppMode === 'function') setAppMode('buyer');
-    if (typeof verificarYActivarChatAdminAuto === 'function') verificarYActivarChatAdminAuto();
-    if (typeof showToast === 'function') showToast('✅ Sesión Segura', `Iniciaste sesión como ${nombre}`, 'success', 1000);
+    const inputDriverNombre = document.getElementById('inputDriverNombre');
+    if (inputDriverNombre) inputDriverNombre.value = nombre;
     
-    if (typeof reproducirSonidoNotificacion === 'function') {
-      reproducirSonidoNotificacion();
-    }
-  } catch (err) {
-    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-    console.error("Error en Google Auth: ", err);
-    selectAuthMethod('email');
+    const modalDriver = document.getElementById('modalDriver');
+    if (modalDriver) modalDriver.style.display = 'flex';
+    
+    const titleEl = document.getElementById('driverModalTitleText');
+    const subtitleEl = document.getElementById('driverModalSubtitle');
+    if (titleEl) titleEl.textContent = 'Registro de Repartidor';
+    if (subtitleEl) subtitleEl.textContent = 'Completa tu ficha de negocio. Aparecerá en la lista de repartidores de la OTB.';
+
+    sessionStorage.setItem('notigas_temp_gmail', gmail);
+    return;
+  }
+
+  // Flujo normal de inicio (Vecino, o Repartidor ya existente)
+  const clienteData = { 
+    role: currentSelectedRole === 'driver' ? 'repartidor' : 'vecino', 
+    gmail: gmail, 
+    nombre: nombre, 
+    user_id: user.id 
+  };
+
+  localStorage.setItem('notigas_user_data', JSON.stringify(clienteData));
+
+  if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+  
+  const modalAuth = document.getElementById('modalWelcomeAuth');
+  if (modalAuth) modalAuth.style.display = 'none';
+
+  if (typeof setAppMode === 'function') setAppMode(clienteData.role === 'repartidor' ? 'driver' : 'buyer');
+  if (typeof verificarYActivarChatAdminAuto === 'function') verificarYActivarChatAdminAuto();
+  if (typeof showToast === 'function') showToast('✅ Sesión Segura', `Iniciaste sesión como ${nombre}`, 'success', 1000);
+  
+  if (typeof reproducirSonidoNotificacion === 'function') {
+    reproducirSonidoNotificacion();
   }
 }
 
