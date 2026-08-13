@@ -21,7 +21,8 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
     const { data, error } = await window.supabaseClient
       .from('choferes_habilitados')
       .select('*')
-      .eq('ciudad', cityNormalized);
+      .eq('ciudad', cityNormalized)
+      .eq('estado_verificacion', 'aprobado');
 
     if (error) {
       console.error("Error descargando choferes de Supabase:", error);

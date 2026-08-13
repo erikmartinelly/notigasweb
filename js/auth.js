@@ -409,7 +409,7 @@ async function guardarRegistroUnico() {
     else productos = 'Varios';
     
     const schedule = (document.getElementById('regSchedule')?.value || '').trim() || 'Lunes a Sábado: 07:00 a 18:00';
-    const ciudad = (document.getElementById('regCiudad')?.value || '').trim() || 'santacruz';
+    const ciudad = (document.getElementById('newUserCity')?.value || '').trim() || 'santacruz';
 
     const repartidorData = {
       role: 'repartidor',
@@ -527,7 +527,24 @@ async function iniciarSesionRepartidor() {
     existingUserId = session.user.id;
   }
 
-  const ciudad = (document.getElementById('inputDriverCiudad')?.value || '').trim() || 'santacruz';
+  let ciudad = (document.getElementById('inputDriverCiudad')?.value || '').trim();
+  if (!ciudad) {
+    try {
+      const saved = localStorage.getItem('notigas_user_data');
+      if (saved) {
+        const u = JSON.parse(saved);
+        if (u.ciudad) ciudad = u.ciudad;
+      }
+    } catch(e) {}
+  }
+
+  const validCities = ['santacruz', 'cochabamba', 'lapaz', 'elalto', 'sucre', 'tarija', 'oruro', 'potosi', 'trinidad', 'cobija'];
+  if (!ciudad || !validCities.includes(ciudad.toLowerCase())) {
+    if (typeof showToast === 'function') showToast('Error', 'Debes seleccionar una ciudad válida', 'error', 3000);
+    else alert('❌ Error: Debes seleccionar una ciudad válida');
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+    return;
+  }
 
   const repartidorData = { 
     role: 'repartidor', 
