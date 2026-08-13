@@ -107,29 +107,30 @@ function conectarGPSAuto(forceReset = false) {
   const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   let gpsResolved = false;
 
-  // 1. Intentar geolocalización nativa del navegador
-  solicitarGeolocalizacionNativaNavegador(isMobile, forceReset)
-    .then(() => {
-      gpsResolved = true;
-    })
-    .catch((err) => {
-      console.warn("⚠️ Geolocalización nativa no disponible:", err.message);
-      if (!gpsResolved) {
+  if (isMobile) {
+    // 1. Teléfono Celular: GPS Nativo Obligatorio
+    solicitarGeolocalizacionNativaNavegador(true, forceReset)
+      .then(() => {
         gpsResolved = true;
-        obtenerUbicacionIPFallbackDesktop(true);
-      }
-    });
+        if (banner) banner.style.display = 'none';
+        if (card) card.style.display = 'none';
+      })
+      .catch((err) => {
+        console.warn("⚠️ GPS Celular denegado o apagado:", err.message);
+        if (banner) banner.style.display = 'block';
+        if (card) card.style.display = 'block';
+        if (typeof showToast === 'function') {
+          showToast('⚠️ Activa tu GPS', 'Es obligatorio habilitar y permitir el GPS en tu celular para usar la app.', 'error', 6000);
+        }
+      });
+  } else {
+    // 2. PC Windows/Desktop: Ubicación por IP Inmediata y Obligatoria
+    gpsResolved = true;
+    obtenerUbicacionIPFallbackDesktop(forceReset);
+  }
 
-  // 2. Disparar resolución multicanal por IP si la nativa tarda demasiado
-  setTimeout(() => {
-    if (!gpsResolved) {
-      gpsResolved = true;
-      obtenerUbicacionIPFallbackDesktop(true);
-    }
-  }, 5000);
-
-  // 3. Activar watchPosition continuo en TODOS los dispositivos (incluyendo Desktop para pruebas)
-  if ("geolocation" in navigator) {
+  // 3. Activar watchPosition continuo (útil principalmente en móviles)
+  if (isMobile && "geolocation" in navigator) {
     try {
       if (activeGpsWatchId !== null && navigator.geolocation.clearWatch) {
         navigator.geolocation.clearWatch(activeGpsWatchId);
@@ -137,6 +138,8 @@ function conectarGPSAuto(forceReset = false) {
       activeGpsWatchId = navigator.geolocation.watchPosition(
         (pos) => {
           applyGpsPosition(pos.coords.latitude, pos.coords.longitude, "Ubicación GPS en Vivo", false);
+          if (banner) banner.style.display = 'none';
+          if (card) card.style.display = 'none';
         },
         (watchErr) => {
           console.warn("Señal GPS perdida o intermitente:", watchErr.message);
