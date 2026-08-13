@@ -86,19 +86,6 @@ window.iniciarSuscripcionesRealtime = function() {
     // Cargar datos iniciales al conectar
     if (_realtimeRetryCount === 0 && typeof cargarPedidosVecinalesEnVivo === 'function') {
         cargarPedidosVecinalesEnVivo();
-        
-        // Polling de respaldo (cada 15s) para Repartidores: 
-        // Ya que la política RLS estricta (009) bloquea la lectura de nuevos pedidos pendientes en Realtime,
-        // esto asegura que sigan recibiéndolos de la vista pública (pedidos_publicos)
-        if (!window._driverPollingInterval) {
-            window._driverPollingInterval = setInterval(() => {
-                if (typeof window.currentAppMode !== 'undefined' && window.currentAppMode === 'driver') {
-                    if (typeof cargarPedidosVecinalesEnVivo === 'function') {
-                        cargarPedidosVecinalesEnVivo();
-                    }
-                }
-            }, 15000);
-        }
     }
 
     const activeCity = AppState.get('city') || 'santacruz';

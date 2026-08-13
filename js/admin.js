@@ -15,8 +15,8 @@ const ADMIN_SESSION_MAX_MS = 30 * 60 * 1000;
 
 window.getVerifiedAdminEmail = function() {
   try {
-    const data = JSON.parse(localStorage.getItem('notigas_user_data'));
-    const isAdmin = localStorage.getItem('notigas_is_admin') === 'true';
+    const data = AppState.get('userData');
+    const isAdmin = (AppState.get('isAdmin') ? 'true' : 'false') === 'true';
     if (!isAdmin) return null;
     return data && data.gmail ? data.gmail.toLowerCase().trim() : null;
   } catch(e) { return null; }
@@ -28,7 +28,7 @@ window.abrirModalAdminDashboard = async function() {
   if (!modalAdmin) return;
   
   try {
-    const data = JSON.parse(localStorage.getItem('notigas_user_data'));
+    const data = AppState.get('userData');
     const email = data && data.gmail ? data.gmail.toLowerCase().trim() : '';
     if (!email) throw new Error("No email in local storage");
     
@@ -48,7 +48,7 @@ window.abrirModalAdminDashboard = async function() {
     }
     
     // Si llegamos aquí, es administrador legítimo
-    localStorage.setItem('notigas_is_admin', 'true');
+    AppState.set('isAdmin', 'true' === 'true' || 'true' === true);
     
   } catch (e) {
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
@@ -64,8 +64,8 @@ window.abrirModalAdminDashboard = async function() {
 function cerrarSesionRepartidorActivarComprador() {
   if (typeof showConfirmModal === 'function') {
     showConfirmModal('🔄', '¿Cambiar a Modo Comprador?', 'Tu ficha de negocio se mantendrá guardada. Solo se cambiará tu modo de ingreso.', 'Sí, cambiar', () => {
-      localStorage.removeItem('notigas_user_data');
-      localStorage.removeItem('driverGpsLive');
+      AppState.set('userData', null);
+      AppState.set('driverGpsLive', 'on');
       if (typeof closeUserSettingsModal === 'function') closeUserSettingsModal();
       if (typeof setAppMode === 'function') setAppMode('buyer');
       const modalAuth = document.getElementById('modalWelcomeAuth');
@@ -217,7 +217,7 @@ async function renderAdminDashboardKPIs() {
         databaseEmails.forEach(e => { if (e.gmail) uniqueUsers.add(e.gmail); });
       }
       try {
-        const saved = localStorage.getItem('notigas_user_data');
+        const saved = JSON.stringify(AppState.get('userData') || {});
         if (saved) {
           const u = JSON.parse(saved);
           if (u.gmail) uniqueUsers.add(u.gmail);
@@ -379,7 +379,7 @@ function renderFinalVendors(defaultVendors, deletedIds) {
   }
 
   try {
-    const saved = localStorage.getItem('notigas_user_data');
+    const saved = JSON.stringify(AppState.get('userData') || {});
     if (saved) {
       const u = JSON.parse(saved);
       if (u.role !== 'repartidor' && u.gmail && !buyersList.some(b => b.gmail === u.gmail)) {
@@ -486,7 +486,7 @@ async function renderAdminOrdersList() {
   }
 
   // 2. Pedido Activo de Comprador Local (Respaldo)
-  const rawOrder = localStorage.getItem('notigas_active_order');
+  const rawOrder = JSON.stringify(AppState.get('activeOrder'));
   if (rawOrder) {
     try {
       const order = JSON.parse(rawOrder);
@@ -562,7 +562,7 @@ async function borrarPedidoFantasmaAdmin(tipo, param = null) {
       return;
     }
   } else if (tipo === 'active_order') {
-    localStorage.removeItem('notigas_active_order');
+    AppState.set('activeOrder', null);
   } else if (tipo === 'truck_report' && param !== null) {
     try {
       const raw = localStorage.getItem('notigas_reported_trucks_buffer');
@@ -599,7 +599,7 @@ function limpiarTodosLosPedidosFantasmaAdmin() {
 }
 
 async function ejecutarLimpiezaTotalPedidos() {
-  localStorage.removeItem('notigas_active_order');
+  AppState.set('activeOrder', null);
   localStorage.removeItem('notigas_reported_trucks_buffer');
 
   if (window.supabaseClient) {
@@ -750,7 +750,7 @@ function guardarAdminConfig() {
 }
 
 function cerrarSesionAdminControl() {
-  localStorage.removeItem('notigas_is_admin');
+  AppState.set('isAdmin', false);
   const loginScreen = document.getElementById('adminLoginScreen');
   const dashboardScreen = document.getElementById('adminDashboardScreen');
   if (loginScreen) loginScreen.style.display = 'block';
@@ -776,7 +776,7 @@ function descargarListaCorreosCSV() {
 
   // Correos de la base de datos se exportan directamente
   try {
-    const saved = localStorage.getItem('notigas_user_data');
+    const saved = JSON.stringify(AppState.get('userData') || {});
     if (saved) {
       const u = JSON.parse(saved);
       if (u.gmail) {

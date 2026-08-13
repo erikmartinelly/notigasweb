@@ -394,7 +394,7 @@ async function agregarComentarioPost() {
   let authorName = 'Vecino de la OTB';
   let userId = null;
   try {
-    const saved = localStorage.getItem('notigas_user_data');
+    const saved = JSON.stringify(AppState.get('userData') || {});
     if (saved) {
       const u = JSON.parse(saved);
       if (u.nombre) authorName = u.nombre;

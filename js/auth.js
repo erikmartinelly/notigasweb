@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
           window._tempAuthUser = sessionData.session.user;
           
           // Restaurar estado local como fallback temporal (evita que el comprador vea el modal en cada F5)
-          const savedUser = localStorage.getItem('notigas_user_data');
+          const savedUser = JSON.stringify(AppState.get('userData') || {});
           if (savedUser) {
             try {
               const u = JSON.parse(savedUser);
@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('supabase_ready', initAuthSession);
   }
 
-  const savedUser = localStorage.getItem('notigas_user_data');
+  const savedUser = JSON.stringify(AppState.get('userData') || {});
   if (savedUser) {
     try {
       const u = JSON.parse(savedUser);
@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data) {
               const btnAdmin = document.getElementById('btnAdminAccessQuick');
               if (btnAdmin) btnAdmin.style.display = 'flex';
-              localStorage.setItem('notigas_is_admin', 'true');
+              AppState.set('isAdmin', 'true' === 'true' || 'true' === true);
             }
           } catch(e) {}
         }
@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function getCurrentUserId() {
   let userId = 'anonimo_id';
   try {
-    const saved = localStorage.getItem('notigas_user_data');
+    const saved = JSON.stringify(AppState.get('userData') || {});
     if (saved) {
       const u = JSON.parse(saved);
       if (u && u.user_id) {
@@ -324,7 +324,7 @@ async function handleCredentialResponse(response) {
         if (data) {
           const btnAdmin = document.getElementById('btnAdminAccessQuick');
           if (btnAdmin) btnAdmin.style.display = 'flex';
-          localStorage.setItem('notigas_is_admin', 'true');
+          AppState.set('isAdmin', 'true' === 'true' || 'true' === true);
         }
       }
     } catch(e) {}
@@ -430,7 +430,7 @@ async function guardarRegistroUnico() {
     }
 
     // Solo guardar en local y activar modo si la BD confirmó
-    localStorage.setItem('notigas_user_data', JSON.stringify(repartidorData));
+    AppState.set('userData', repartidorData);
 
     const modalAuth = document.getElementById('modalWelcomeAuth');
     if (modalAuth) modalAuth.style.display = 'none';
@@ -459,7 +459,7 @@ async function guardarRegistroUnico() {
       apellido, 
       user_id: userId // Usamos el ID seguro de Supabase Auth
     };
-    localStorage.setItem('notigas_user_data', JSON.stringify(clienteData));
+    AppState.set('userData', clienteData);
 
     const modalAuth = document.getElementById('modalWelcomeAuth');
     if (modalAuth) modalAuth.style.display = 'none';
@@ -492,7 +492,7 @@ async function iniciarSesionRepartidor() {
   let existingGmail = tempGmail;
   let existingUserId = null;
   try {
-     const saved = localStorage.getItem('notigas_user_data');
+     const saved = JSON.stringify(AppState.get('userData') || {});
      if (saved) {
        const u = JSON.parse(saved);
        if (u.gmail) existingGmail = u.gmail;
@@ -530,7 +530,7 @@ async function iniciarSesionRepartidor() {
   let ciudad = (document.getElementById('inputDriverCiudad')?.value || '').trim();
   if (!ciudad) {
     try {
-      const saved = localStorage.getItem('notigas_user_data');
+      const saved = JSON.stringify(AppState.get('userData') || {});
       if (saved) {
         const u = JSON.parse(saved);
         if (u.ciudad) ciudad = u.ciudad;
@@ -567,7 +567,7 @@ async function iniciarSesionRepartidor() {
     return;
   }
   
-  localStorage.setItem('notigas_user_data', JSON.stringify(repartidorData));
+  AppState.set('userData', repartidorData);
   AppState.set('city', ciudad.toLowerCase());
   
   sessionStorage.removeItem('notigas_temp_gmail');
@@ -598,7 +598,7 @@ function guardarPrefUsuario() {
   // Detectar si es repartidor
   let isDriver = false;
   try {
-    const saved = localStorage.getItem('notigas_user_data');
+    const saved = JSON.stringify(AppState.get('userData') || {});
     if (saved) { const u = JSON.parse(saved); isDriver = (u.role === 'repartidor'); }
   } catch(e){}
 
@@ -606,19 +606,19 @@ function guardarPrefUsuario() {
     // Guardar GPS
     const gpsSelect = document.getElementById('driverGpsLive');
     const gpsVal = gpsSelect ? gpsSelect.value : 'on';
-    localStorage.setItem('driverGpsLive', gpsVal);
+    AppState.set('driverGpsLive', gpsVal);
 
     // Guardar sonido repartidor
     const soundSelect = document.getElementById('userPrefSoundDriver');
     const soundVal = soundSelect ? soundSelect.value : 'enabled';
-    localStorage.setItem('notigas_pref_sound', soundVal);
+    AppState.set('prefSound', soundVal);
 
     if (typeof verificarYMostrarRepartidorGPS === 'function') verificarYMostrarRepartidorGPS();
   } else {
     // Guardar sonido comprador
     const soundSelect = document.getElementById('userPrefSound');
     const soundVal = soundSelect ? soundSelect.value : 'enabled';
-    localStorage.setItem('notigas_pref_sound', soundVal);
+    AppState.set('prefSound', soundVal);
   }
 
   closeUserSettingsModal();
@@ -627,10 +627,10 @@ function guardarPrefUsuario() {
 function cerrarSesionUsuario() {
   if (typeof showConfirmModal === 'function') {
     showConfirmModal('🚪', '¿Cerrar Sesión?', 'Al cerrar sesión podrás elegir ingresar como Comprador o Repartidor.', 'Sí, cerrar sesión', () => {
-      localStorage.removeItem('notigas_user_data');
-      localStorage.removeItem('driverGpsLive');
-      localStorage.removeItem('notigas_active_order');
-      localStorage.removeItem('notigas_is_admin');
+      AppState.set('userData', null);
+      AppState.set('driverGpsLive', 'on');
+      AppState.set('activeOrder', null);
+      AppState.set('isAdmin', false);
       if (window.supabaseClient) {
         window.supabaseClient.auth.signOut().catch(console.error);
       }
@@ -655,10 +655,10 @@ function cerrarSesionUsuario() {
       if (typeof showToast === 'function') showToast('🚪 Sesión Cerrada', 'Selecciona Comprador o Repartidor para ingresar.', 'info', 1000);
     });
   } else if (confirm("🚪 ¿Estás seguro de que deseas cerrar sesión en NOTIGAS?\n\nAl cerrar sesión podrás elegir ingresar como Comprador o Repartidor.")) {
-    localStorage.removeItem('notigas_user_data');
-    localStorage.removeItem('driverGpsLive');
-    localStorage.removeItem('notigas_active_order');
-    localStorage.removeItem('notigas_is_admin');
+    AppState.set('userData', null);
+    AppState.set('driverGpsLive', 'on');
+    AppState.set('activeOrder', null);
+    AppState.set('isAdmin', false);
     if (window.supabaseClient) {
       window.supabaseClient.auth.signOut().catch(console.error);
     }
@@ -695,7 +695,7 @@ function eliminarMiCuentaCompleta() {
 async function ejecutarEliminacionTotalCuenta() {
   if (window.supabaseClient) {
     try {
-      const u = JSON.parse(localStorage.getItem('notigas_user_data') || '{}');
+      const u = JSON.parse(JSON.stringify(AppState.get('userData') || {}) || '{}');
       const userId = u.user_id || u.id;
       if (userId) {
          // Borrar la entrada de chofer si existe (el backend rechazará si no es suyo gracias a RLS)
@@ -719,7 +719,7 @@ async function ejecutarEliminacionTotalCuenta() {
   }
   keysToRemove.forEach(k => localStorage.removeItem(k));
 
-  localStorage.removeItem('driverGpsLive');
+  AppState.set('driverGpsLive', 'on');
   sessionStorage.clear();
 
   closeUserSettingsModal();
@@ -747,7 +747,7 @@ async function migrarDatosAntiguosARepartidor() {
   // 1. Buscar si ya existe un perfil de repartidor en notigas_user_data
   let driverProfile = null;
   try {
-    const saved = localStorage.getItem('notigas_user_data');
+    const saved = JSON.stringify(AppState.get('userData') || {});
     if (saved) {
       const u = JSON.parse(saved);
       if (u.role === 'repartidor' && u.nombre) {
@@ -780,11 +780,11 @@ async function migrarDatosAntiguosARepartidor() {
       productos: driverProfile.productos || driverProfile.products || 'Garrafas GLP 10kg',
       zonas: driverProfile.zonas || driverProfile.zones || 'OTB Central y calles vecinas',
       schedule: driverProfile.schedule || 'Lunes a Sábado: 07:00 a 18:00',
-      ciudad: driverProfile.ciudad || localStorage.getItem('notigas_city') || 'santacruz',
+      ciudad: driverProfile.ciudad || AppState.get('city') || 'santacruz',
       user_id: existingUserId
     };
 
-    localStorage.setItem('notigas_user_data', JSON.stringify(repartidorData));
+    AppState.set('userData', repartidorData);
     if (typeof guardarRepartidorEnBaseDeDatos === 'function') {
       await guardarRepartidorEnBaseDeDatos(repartidorData);
     }
@@ -901,7 +901,7 @@ async function procesarSesionExitosa(user) {
       if (data) {
         const btnAdmin = document.getElementById('btnAdminAccessQuick');
         if (btnAdmin) btnAdmin.style.display = 'flex';
-        localStorage.setItem('notigas_is_admin', 'true');
+        AppState.set('isAdmin', 'true' === 'true' || 'true' === true);
       }
     }
   } catch(e) {}
@@ -978,7 +978,7 @@ async function procesarSesionExitosa(user) {
     }
   }
   
-  localStorage.setItem('notigas_user_data', JSON.stringify(clienteData));
+  AppState.set('userData', clienteData);
   window._roleSelectedNow = false; // Reset state for next login
   
   const modalAuth = document.getElementById('modalWelcomeAuth');
@@ -1003,12 +1003,12 @@ window.finalizeRoleSelection = function(role) {
     AppState.set('city', selectedCity);
     
     // Si ya hay user_data local (Google OneTap lo crea antes), actualizarlo con la ciudad
-    const saved = localStorage.getItem('notigas_user_data');
+    const saved = JSON.stringify(AppState.get('userData') || {});
     if (saved) {
       try {
         const u = JSON.parse(saved);
         u.ciudad = selectedCity;
-        localStorage.setItem('notigas_user_data', JSON.stringify(u));
+        AppState.set('userData', u);
       } catch(e) {}
     }
   }

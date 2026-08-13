@@ -69,17 +69,17 @@ window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño m
       return _state[key];
     },
 
-    /**
-     * Establece un valor en el estado y notifica a los oyentes.
-     * @param {string} key
-     * @param {*} value
-     */
     set(key, value) {
       const prev = _state[key];
       _state[key] = value;
 
-      if (key === 'city') {
-        localStorage.setItem('notigas_city', value);
+      // Sincronizar de forma transparente con Supabase Auth (metadata) en lugar de localStorage
+      if (key === 'city' && window.supabaseClient) {
+        window.supabaseClient.auth.updateUser({ data: { ciudad: value } }).catch(() => {});
+      }
+      
+      if (key === 'userData' && window.supabaseClient && value) {
+        window.supabaseClient.auth.updateUser({ data: value }).catch(() => {});
       }
 
       if (prev !== value && _listeners[key]) {
@@ -93,11 +93,6 @@ window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño m
       }
     },
 
-    /**
-     * Suscribe una función a cambios en una clave.
-     * @param {string} key
-     * @param {Function} fn
-     */
     on(key, fn) {
       if (!_listeners[key]) _listeners[key] = [];
       if (!_listeners[key].includes(fn)) {
@@ -105,58 +100,56 @@ window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño m
       }
     },
 
-    /**
-     * Cancela la suscripción de una función.
-     * @param {string} key
-     * @param {Function} fn
-     */
     off(key, fn) {
       if (_listeners[key]) {
         _listeners[key] = _listeners[key].filter(f => f !== fn);
       }
     },
 
-    /**
-     * Carga el estado del usuario desde localStorage al arrancar la app.
-     */
-    hydrate() {
+    async hydrate() {
+      // 100% Dependiente de Supabase Auth
       try {
-        const raw = localStorage.getItem('notigas_user_data');
-        if (raw) {
-          const userData = JSON.parse(raw);
-          this.set('userData', userData);
-          this.set('userRole', userData.role || 'vecino');
-          this.set('appMode', userData.role === 'repartidor' ? 'driver' : 'buyer');
-        }
-
-        const rawOrder = localStorage.getItem('notigas_active_order');
-        if (rawOrder) {
-          const order = JSON.parse(rawOrder);
-          const ORDER_EXPIRATION_MS = 48 * 60 * 60 * 1000;
-          if (order.timestamp && (Date.now() - order.timestamp) < ORDER_EXPIRATION_MS) {
-            this.set('activeOrder', order);
-          } else {
-            localStorage.removeItem('notigas_active_order');
+        if (!window.supabaseClient) return;
+        const { data } = await window.supabaseClient.auth.getSession();
+        if (data && data.session && data.session.user) {
+          const user = data.session.user;
+          const meta = user.user_metadata || {};
+          
+          if (Object.keys(meta).length > 0) {
+            // Establecer sin disparar el guardado nuevamente
+            _state['userData'] = meta;
+            _state['userRole'] = meta.role || 'vecino';
+            _state['city'] = meta.ciudad || meta.city || 'santacruz';
+            _state['appMode'] = meta.role === 'repartidor' ? 'driver' : 'buyer';
           }
         }
+        
+        // Pedido Activo (Consultar a Supabase en lugar de local storage)
+        if (data && data.session && data.session.user && _state['userRole'] === 'vecino') {
+           const { data: activeOrders } = await window.supabaseClient
+             .from('pedidos_vecinales')
+             .select('*')
+             .eq('user_id', data.session.user.id)
+             .in('estado', ['pendiente', 'aceptado'])
+             .order('created_at', { ascending: false })
+             .limit(1);
+             
+           if (activeOrders && activeOrders.length > 0) {
+             _state['activeOrder'] = activeOrders[0];
+           }
+        }
       } catch (e) {
-        console.error('[AppState] Error al hidratar estado desde localStorage:', e);
+        console.error('[AppState] Error al hidratar estado desde Supabase:', e);
       }
     },
 
-    /**
-     * Devuelve una copia del estado completo (solo para debugging).
-     */
     snapshot() {
       return { ..._state };
     }
   };
 
-  // Exponer globalmente
   window.AppState = AppState;
 
-  // Hidratar automáticamente al cargar
-  document.addEventListener('DOMContentLoaded', () => AppState.hydrate());
-
-  console.log('✅ AppState cargado correctamente.');
+  // Ya no hidratamos aquí. Se hidratará en initAuthSession de auth.js cuando Supabase esté listo.
+  console.log('✅ AppState cargado correctamente. Esperando conexión a Supabase...');
 })();

@@ -95,7 +95,7 @@ async function renderDriverOrdersList() {
 
     try {
 
-      const u = JSON.parse(localStorage.getItem('notigas_user_data') || '{}');
+      const u = JSON.parse(JSON.stringify(AppState.get('userData') || {}) || '{}');
 
       if (u.categoria) driverCategoryName = u.categoria;
 
@@ -250,7 +250,7 @@ function ejecutarPurgaBaseDeDatosAuto() {
 
   try {
 
-    const rawOrder = localStorage.getItem('notigas_active_order');
+    const rawOrder = JSON.stringify(AppState.get('activeOrder'));
 
     if (rawOrder) {
 
@@ -258,7 +258,7 @@ function ejecutarPurgaBaseDeDatosAuto() {
 
       if (order.timestamp && (now - order.timestamp) > expirationMs) {
 
-        localStorage.removeItem('notigas_active_order');
+        AppState.set('activeOrder', null);
 
       }
 
@@ -298,7 +298,7 @@ function checkActiveOrderStatus() {
 
   const btnMain = document.getElementById('btnMainOrder');
 
-  const rawOrder = localStorage.getItem('notigas_active_order');
+  const rawOrder = JSON.stringify(AppState.get('activeOrder'));
 
   
 
@@ -330,7 +330,7 @@ function checkActiveOrderStatus() {
 
                  // Order is no longer active in DB
 
-                 localStorage.removeItem('notigas_active_order');
+                 AppState.set('activeOrder', null);
 
                  checkActiveOrderStatus();
 
@@ -512,7 +512,7 @@ function confirmarPedido() {
 
   try {
 
-    const saved = localStorage.getItem('notigas_user_data');
+    const saved = JSON.stringify(AppState.get('userData') || {});
 
     if (saved) {
 
@@ -618,7 +618,7 @@ function confirmarPedido() {
 
         };
 
-        localStorage.setItem('notigas_active_order', JSON.stringify(activeOrderData));
+        AppState.set('activeOrder', activeOrderData);
 
 
 
@@ -668,9 +668,9 @@ function cancelarPedidoActivo() {
 
   showConfirmModal('❌', '¿Cancelar tu pedido?', 'Tu pedido activo será eliminado del mapa y los repartidores dejarán de verlo.', 'Sí, cancelar', async () => {
 
-    const rawOrder = localStorage.getItem('notigas_active_order');
+    const rawOrder = JSON.stringify(AppState.get('activeOrder'));
 
-    localStorage.removeItem('notigas_active_order');
+    AppState.set('activeOrder', null);
 
     
 
@@ -681,7 +681,7 @@ function cancelarPedidoActivo() {
         const order = JSON.parse(rawOrder);
 
         if (order.id) {
-          const u = JSON.parse(localStorage.getItem('notigas_user_data') || '{}');
+          const u = JSON.parse(JSON.stringify(AppState.get('userData') || {}) || '{}');
           const userId = u.user_id || u.id;
           const { error } = await window.supabaseClient.from('pedidos').update({ estado: 'cancelado' }).eq('id', order.id).eq('user_id', userId);
           if (error) console.error("Error cancelando pedido en Supabase:", error);
@@ -709,9 +709,9 @@ async function confirmarRecepcionComprador() {
 
   showConfirmModal('🏁', 'Confirmar Recepción', '¿Confirmas que el repartidor llegó y recibiste tu pedido de forma exitosa?', 'Sí, lo recibí', async () => {
 
-     const rawOrder = localStorage.getItem('notigas_active_order');
+     const rawOrder = JSON.stringify(AppState.get('activeOrder'));
 
-     localStorage.removeItem('notigas_active_order');
+     AppState.set('activeOrder', null);
 
      
 
@@ -757,7 +757,7 @@ async function abrirPanoramicaPedidos() {
 
   // Pedido propio activo (desde localStorage)
 
-  const rawPropio = localStorage.getItem('notigas_active_order');
+  const rawPropio = JSON.stringify(AppState.get('activeOrder'));
 
   if (rawPropio) {
 
@@ -939,7 +939,7 @@ function notificarEscucheCamion() {
 
   try {
 
-    const saved = localStorage.getItem('notigas_user_data');
+    const saved = JSON.stringify(AppState.get('userData') || {});
 
     if (saved) {
 
@@ -1005,7 +1005,7 @@ function lanzarEspecialEsperame() {
 
   try {
 
-    const saved = localStorage.getItem('notigas_user_data');
+    const saved = JSON.stringify(AppState.get('userData') || {});
 
     if (saved) {
 

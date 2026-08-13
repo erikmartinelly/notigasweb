@@ -202,7 +202,7 @@ async function cargarPedidosVecinalesEnVivo() {
   try {
     let isDriverUser = false;
     let driverCategoria = 'Gas GLP';
-    const saved = localStorage.getItem('notigas_user_data');
+    const saved = JSON.stringify(AppState.get('userData') || {});
     if (saved) {
       const u = JSON.parse(saved);
       if (u.role === 'repartidor') isDriverUser = true;
@@ -297,7 +297,7 @@ function actualizarRepartidorEnMapa(data) {
   let userRole = 'vecino';
   let driverCategoria = 'Gas GLP';
   try {
-    const saved = localStorage.getItem('notigas_user_data');
+    const saved = JSON.stringify(AppState.get('userData') || {});
     if (saved) {
       const u = JSON.parse(saved);
       if (u.role) userRole = u.role;
@@ -368,7 +368,7 @@ function agregarPedidoVecinoEnMapa(order) {
   let userRole = 'vecino';
   let driverCategoria = 'Gas GLP';
   try {
-    const saved = localStorage.getItem('notigas_user_data');
+    const saved = JSON.stringify(AppState.get('userData') || {});
     if (saved) {
       const u = JSON.parse(saved);
       if (u.role) userRole = u.role;
@@ -410,12 +410,12 @@ function removerPublicacionDeMapa(id) {
 
 function actualizarCoordenadasPedidoActivo(newLat, newLng, skipMarkerSet = false) {
   try {
-    const raw = localStorage.getItem('notigas_active_order');
+    const raw = JSON.stringify(AppState.get('activeOrder'));
     if (raw) {
       const order = JSON.parse(raw);
       order.lat = newLat;
       order.lng = newLng;
-      localStorage.setItem('notigas_active_order', JSON.stringify(order));
+      AppState.set('activeOrder', order);
     }
   } catch(e){}
 
@@ -554,7 +554,7 @@ async function transmitirUbicacionRepartidorServidorDB(lat, lng) {
   // 1. Pausa total si la pestaña está inactiva o pantalla bloqueada
   if (document.hidden) return;
 
-  const driverGpsLive = localStorage.getItem('driverGpsLive');
+  const driverGpsLive = (AppState.get('driverGpsLive') || 'on');
   if (driverGpsLive === 'off') return;
 
   const now = Date.now();
@@ -578,7 +578,7 @@ async function transmitirUbicacionRepartidorServidorDB(lat, lng) {
   }
 
   try {
-    const saved = localStorage.getItem('notigas_user_data');
+    const saved = JSON.stringify(AppState.get('userData') || {});
     if (saved) {
       const u = JSON.parse(saved);
       if (u.role === 'repartidor') {
@@ -589,7 +589,7 @@ async function transmitirUbicacionRepartidorServidorDB(lat, lng) {
         if (window.supabaseClient) {
           // Usar la ciudad activa actualmente seleccionada por el usuario en la interfaz,
           // no la que quedó cacheada del registro en BD, para permitir movilidad.
-          const finalCity = (window.AppState && window.AppState.get('city')) ? window.AppState.get('city') : (localStorage.getItem('notigas_city') || 'santacruz');
+          const finalCity = (window.AppState && window.AppState.get('city')) ? window.AppState.get('city') : (AppState.get('city') || 'santacruz');
           const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
 
           await window.supabaseClient.from('rutas_repartidores').upsert({
@@ -654,7 +654,7 @@ function renderReportedTrucksBuffer() {
   // Si el usuario actual es REPARTIDOR, filtrar camiones reportados por su categoría específica
   let isDriverUser = false;
   try {
-    const saved = localStorage.getItem('notigas_user_data');
+    const saved = JSON.stringify(AppState.get('userData') || {});
     if (saved) { const u = JSON.parse(saved); isDriverUser = (u.role === 'repartidor'); }
   } catch(e){}
 
@@ -703,7 +703,7 @@ function formatearDistanciaTriangulada(distMetros) {
 function isOrderCategoryMatchingDriver(orderCategory) {
   let driverCategory = '';
   try {
-    const saved = localStorage.getItem('notigas_user_data');
+    const saved = JSON.stringify(AppState.get('userData') || {});
     if (saved) {
       const u = JSON.parse(saved);
       if (u.role === 'repartidor' && u.categoria) {
@@ -810,7 +810,7 @@ function renderActiveOrdersMap() {
   }
   activeOrderLayerGroup.clearLayers();
 
-  const raw = localStorage.getItem('notigas_active_order');
+  const raw = JSON.stringify(AppState.get('activeOrder'));
   if (!raw) {
     if (userMarker && !map.hasLayer(userMarker)) {
       userMarker.addTo(map);
@@ -823,7 +823,7 @@ function renderActiveOrdersMap() {
 
     let isDriverUser = false;
     try {
-      const saved = localStorage.getItem('notigas_user_data');
+      const saved = JSON.stringify(AppState.get('userData') || {});
       if (saved) { const u = JSON.parse(saved); isDriverUser = (u.role === 'repartidor'); }
     } catch(e){}
 
@@ -963,7 +963,7 @@ async function calcularYTrazarRutaEficiente() {
 
   let isDriverUser = false;
   try {
-    const saved = localStorage.getItem('notigas_user_data');
+    const saved = JSON.stringify(AppState.get('userData') || {});
     if (saved) {
       const u = JSON.parse(saved);
       if (u.role === 'repartidor') isDriverUser = true;
@@ -993,7 +993,7 @@ async function calcularYTrazarRutaEficiente() {
     }
   } else {
     // 1. Cargar pedido activo real del cliente si existe
-    const rawOrder = localStorage.getItem('notigas_active_order');
+    const rawOrder = JSON.stringify(AppState.get('activeOrder'));
     if (rawOrder) {
       try {
         const o = JSON.parse(rawOrder);

@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // AUTODETECTAR Y ACTIVAR MODO SEGÚN ROL REGISTRADO (COMPRADOR VS REPARTIDOR)
   try {
-    const saved = localStorage.getItem('notigas_user_data');
+    const saved = JSON.stringify(AppState.get('userData') || {});
     if (saved) {
       const u = JSON.parse(saved);
       if (u.role === 'repartidor') {
@@ -88,7 +88,7 @@ function abrirConfiguracionSegunRol() {
 
   let isDriver = false;
   try {
-    const saved = localStorage.getItem('notigas_user_data');
+    const saved = JSON.stringify(AppState.get('userData') || {});
     if (saved) {
       const u = JSON.parse(saved);
       isDriver = (u.role === 'repartidor');
@@ -105,7 +105,7 @@ function abrirConfiguracionSegunRol() {
 
     // Cargar estado GPS guardado
     try {
-      const gpsVal = localStorage.getItem('driverGpsLive') || 'on';
+      const gpsVal = (AppState.get('driverGpsLive') || 'on') || 'on';
       const gpsSelect = document.getElementById('driverGpsLive');
       if (gpsSelect) gpsSelect.value = gpsVal;
     } catch(e){}
@@ -123,7 +123,7 @@ function abrirConfiguracionSegunRol() {
 function abrirFichaRepartidorEdicion() {
   // Cargar datos existentes del repartidor en el formulario
   try {
-    const saved = localStorage.getItem('notigas_user_data');
+    const saved = JSON.stringify(AppState.get('userData') || {});
     if (saved) {
       const u = JSON.parse(saved);
       const setVal = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
@@ -167,7 +167,7 @@ function setAppMode(mode) {
       `;
     }
 
-    localStorage.setItem('driverGpsLive', 'on');
+    AppState.set('driverGpsLive', 'on');
     if (typeof verificarYMostrarRepartidorGPS === 'function') verificarYMostrarRepartidorGPS();
   } else {
     if (buyerActions) buyerActions.style.display = 'flex';
@@ -185,7 +185,7 @@ function toggleDriverGpsTransmission() {
   isDriverGpsLive = !isDriverGpsLive;
   const btn = document.getElementById('btnDriverGpsToggle');
   if (isDriverGpsLive) {
-    localStorage.setItem('driverGpsLive', 'on');
+    AppState.set('driverGpsLive', 'on');
     if (btn) btn.innerHTML = '<i class="fa-solid fa-circle-stop"></i> 🔴 PAUSAR RECORRIDO EN VIVO';
     showToast('GPS Activado', 'Tu ubicación exacta ahora es visible para los vecinos de tu OTB.', 'success', 1000);
     
@@ -193,14 +193,14 @@ function toggleDriverGpsTransmission() {
     let driverName = 'Repartidor';
     let driverCat = 'gas';
     try {
-      const u = JSON.parse(localStorage.getItem('notigas_user_data'));
+      const u = AppState.get('userData');
       if (u && u.nombre) driverName = u.nombre;
     } catch(e){}
     if (typeof transmitirUbicacionRepartidorServidorDB === 'function' && typeof currentGpsLat !== 'undefined' && typeof currentGpsLng !== 'undefined') {
       transmitirUbicacionRepartidorServidorDB(currentGpsLat, currentGpsLng);
     }
   } else {
-    localStorage.setItem('driverGpsLive', 'off');
+    AppState.set('driverGpsLive', 'off');
     if (btn) btn.innerHTML = '<i class="fa-solid fa-location-arrow"></i> 🟢 INICIAR RECORRIDO EN VIVO';
     showToast('GPS Pausado', 'Tu camión ha sido ocultado del mapa vecinal.', 'warning', 1000);
     

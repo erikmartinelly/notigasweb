@@ -144,11 +144,11 @@ async function ejecutarBorradoRepartidor(vendorId, vendorName) {
 
   // 2. Limpiar notigas_user_data si coincide con el usuario activo
   try {
-    const saved = localStorage.getItem('notigas_user_data');
+    const saved = JSON.stringify(AppState.get('userData') || {});
     if (saved) {
       const u = JSON.parse(saved);
       if (u.nombre === vendorName) {
-        localStorage.removeItem('notigas_user_data');
+        AppState.set('userData', null);
       }
     }
   } catch(e){}
@@ -200,7 +200,7 @@ async function ejecutarBloqueoComprador(gmail, nombre) {
 }
 function verificarBloqueoAppUsuario() {
   try {
-    const saved = localStorage.getItem('notigas_user_data');
+    const saved = JSON.stringify(AppState.get('userData') || {});
     if (!saved) return;
     const u = JSON.parse(saved);
 
