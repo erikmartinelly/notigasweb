@@ -152,6 +152,7 @@ const abrirEdicionFichaRepartidor = abrirFichaRepartidorEdicion;
 
 function setAppMode(mode) {
   currentAppMode = mode;
+  if (typeof AppState !== 'undefined') AppState.set('appMode', mode);
   const buyerActions = document.getElementById('buyerFloatingActions');
   const driverActions = document.getElementById('driverFloatingActions');
   const badgeContainer = document.getElementById('headerRoleBadge');

@@ -476,7 +476,8 @@ function applyGpsPosition(lat, lng, label, forceReset = false) {
   }
 
   if (!userMarker && map) {
-    const activeIcon = (typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver') ? truckIcon : userLocationIcon;
+    const isDriver = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver') || (typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver');
+    const activeIcon = isDriver ? truckIcon : userLocationIcon;
     userMarker = L.marker([activeLat, activeLng], {
       icon: activeIcon,
       draggable: true,
@@ -518,6 +519,8 @@ function applyGpsPosition(lat, lng, label, forceReset = false) {
     });
   } else if (userMarker) {
     userMarker.setLatLng([activeLat, activeLng]);
+    const isDriver = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver') || (typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver');
+    userMarker.setIcon(isDriver ? truckIcon : userLocationIcon);
   }
 
   const banner = document.getElementById('gpsMandatoryBanner');
