@@ -127,7 +127,7 @@ window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño m
         // Pedido Activo (Consultar a Supabase en lugar de local storage)
         if (data && data.session && data.session.user && _state['userRole'] === 'vecino') {
            const { data: activeOrders } = await window.supabaseClient
-             .from('pedidos_vecinales')
+             .from('pedidos')
              .select('*')
              .eq('user_id', data.session.user.id)
              .in('estado', ['pendiente', 'aceptado'])

@@ -18,6 +18,9 @@ const ASSETS_TO_CACHE = [
   './js/admin_users.js?v=66',
   './icons/garrafa_red_clean.svg',
   './icons/camion_red.svg',
+  './js/events.js?v=66',
+  './js/map_search.js?v=66',
+  './js/map_gps.js?v=66',
   './manifest.json'
 ];
 

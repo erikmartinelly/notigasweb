@@ -350,11 +350,7 @@ function getActiveUserLocation() {
 
 // 1. Registro del Service Worker
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(() => console.log('✅ Service Worker registrado'))
-      .catch((err) => console.error('❌ Error Service Worker:', err));
-  });
+  // navigator.serviceWorker.register('./sw.js') (Registro delegado a index.html)
 }
 
 // 2. Inicialización principal de la aplicación
@@ -369,6 +365,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (typeof cargarPedidosVecinalesEnVivo === 'function') {
             cargarPedidosVecinalesEnVivo();
+            // Mecanismo de recuperación (polling backup) en caso de que falle Realtime
+            setInterval(cargarPedidosVecinalesEnVivo, 15000);
         }
     };
 
