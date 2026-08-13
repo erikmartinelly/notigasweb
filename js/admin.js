@@ -207,21 +207,36 @@ async function renderAdminDashboardKPIs() {
       const { count: cVendors } = await window.supabaseClient.from('choferes_habilitados').select('*', { count: 'exact', head: true });
       vendorsCount = cVendors || 0;
 
-      // Unique users from orders as a proxy for users count since auth.users isn't queryable publicly
+      // Unique users from orders + localStorage/databaseEmails as a proxy for users count
       const { data: pedidosData } = await window.supabaseClient.from('pedidos').select('user_id');
+      const uniqueUsers = new Set();
       if (pedidosData) {
-        const uniqueUsers = new Set(pedidosData.map(p => p.user_id).filter(Boolean));
-        usersCount = uniqueUsers.size;
+        pedidosData.forEach(p => { if (p.user_id) uniqueUsers.add(p.user_id); });
       }
+      if (typeof databaseEmails !== 'undefined' && Array.isArray(databaseEmails)) {
+        databaseEmails.forEach(e => { if (e.gmail) uniqueUsers.add(e.gmail); });
+      }
+      try {
+        const saved = localStorage.getItem('notigas_user_data');
+        if (saved) {
+          const u = JSON.parse(saved);
+          if (u.gmail) uniqueUsers.add(u.gmail);
+        }
+      } catch(e){}
+      usersCount = uniqueUsers.size;
 
-      const { data } = await window.supabaseClient.from('pedidos').select('estado');
+      const { data } = await window.supabaseClient.from('pedidos').select('estado, created_at');
       if (data) {
         const activos = data.filter(p => p.estado === 'pendiente' || p.estado === 'asignado').length;
         ordersCount = activos;
-        const entregados = data.filter(p => p.estado === 'entregado').length;
+        
+        const hoyStr = new Date().toISOString().split('T')[0];
+        const creadosHoy = data.filter(p => p.created_at && p.created_at.startsWith(hoyStr)).length;
+        const entregadosHoy = data.filter(p => p.estado === 'entregado' && p.created_at && p.created_at.startsWith(hoyStr)).length;
+
         const elOrdersTitle = document.getElementById('adminKpiOrders').parentElement.querySelector('.kpi-title');
         if (elOrdersTitle) {
-           elOrdersTitle.innerHTML = `Pedidos Activos <span style="display:block; font-size:10px; color:#56BC37;">+${entregados} Entregados (Histórico)</span>`;
+           elOrdersTitle.innerHTML = `Pedidos Activos <span style="display:block; font-size:10px; color:#56BC37;">${creadosHoy} Totales Hoy • ${entregadosHoy} Entregados</span>`;
         }
       }
 
@@ -300,29 +315,19 @@ function renderAdminVendorsList() {
     if (raw) deletedIds = JSON.parse(raw);
   } catch(e){}
 
-  const defaultVendors = [
-    { id: "vendor_1", name: "Gas GLP N° 42", category: "Gas GLP", plate: "3842-XYZ", verified: true },
-    { id: "vendor_2", name: "Agua Cristallina 20L", category: "Agua 20L", plate: "2105-ABC", verified: true },
-    { id: "vendor_3", name: "Chatarra El Vecino", category: "Chatarra", plate: "1892-DFG", verified: false },
-    { id: "vendor_4", name: "EcoReciclaje Papel", category: "Papel", plate: "4412-KLS", verified: true },
-    { id: "vendor_5", name: "Camión Agrícola Frutas", category: "Frutas", plate: "5011-BTR", verified: false },
-    { id: "vendor_6", name: "Detergentes Limpieza", category: "Detergentes", plate: "1098-MMN", verified: true },
-    { id: "vendor_7", name: "Carbonería El Fuego", category: "Carbón", plate: "2389-ZXP", verified: true }
-  ];
+  const defaultVendors = [];
 
   if (window.supabaseClient) {
       window.supabaseClient.from('choferes_habilitados').select('*').then(({ data }) => {
           if (data && data.length > 0) {
               data.forEach(d => {
-                  if (!defaultVendors.some(v => v.name === d.nombre_completo)) {
-                      defaultVendors.unshift({
-                          id: `driver_${d.id}`,
-                          name: d.nombre_completo,
-                          category: d.categoria || 'Gas GLP',
-                          plate: d.placa || 'Placa registrada',
-                          verified: d.estado_verificacion === 'aprobado'
-                      });
-                  }
+                  defaultVendors.unshift({
+                      id: `driver_${d.id}`,
+                      name: d.nombre_completo,
+                      category: d.categoria || 'Gas GLP',
+                      plate: d.placa || 'Placa registrada',
+                      verified: d.estado_verificacion === 'aprobado'
+                  });
               });
           }
           renderFinalVendors(defaultVendors, deletedIds);
@@ -427,7 +432,7 @@ async function renderAdminOrdersList() {
   let html = `
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
       <span style="font-size:11px; color:#94A3B8;">Inspecciona todos los pedidos y alertas activas en el mapa:</span>
-      <button onclick="limpiarTodosLosPedidosFantasmaAdmin()" style="background:#D32F2F; color:white; border:none; padding:5px 10px; border-radius:6px; font-weight:800; font-size:10px; cursor:pointer;"><i class="fa-solid fa-broom"></i> 🧹 Borrar TODOS los Pedidos Fantasma</button>
+      <button onclick="limpiarTodosLosPedidosFantasmaAdmin()" style="background:#D32F2F; color:white; border:none; padding:5px 10px; border-radius:6px; font-weight:800; font-size:10px; cursor:pointer;"><i class="fa-solid fa-broom"></i> 🧹 Limpiar Pedidos de Prueba/Caché</button>
     </div>
   `;
 
@@ -438,8 +443,6 @@ async function renderAdminOrdersList() {
       .select('*');
 
     if (pedidos && pedidos.length > 0) {
-      // Filtrar para no mostrar los entregados aquí, o mostrarlos con otro color si se desea.
-      // Por ahora, mostraremos todos, pero indicando su estado.
       const pedidosActivos = pedidos.filter(p => p.estado !== 'entregado');
       
       pedidosActivos.forEach(order => {
@@ -456,6 +459,8 @@ async function renderAdminOrdersList() {
            estadoBadge = `<span style="font-size:10px; background:rgba(86,188,55,0.2); color:#56BC37; padding:2px 6px; border-radius:4px; font-weight:700;">⏱ Hace ${mins} min</span>`;
         }
         
+        const isFantasmaOrExpired = order.estado === 'fantasma' || mins > 120;
+        
         html += `
           <div style="background:#FFFFFF; padding:12px; border-radius:10px; border:1.5px solid ${borderColor}; margin-bottom:8px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
             <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -469,9 +474,11 @@ async function renderAdminOrdersList() {
               <strong>Teléfono:</strong> <span style="color:${borderColor}; font-weight:800;">${escapeHtmlStr(order.telefono || 'No especificado')}</span><br>
               <span style="font-size:10px; color:#64748B;">Coordenadas: Lat ${order.lat ? order.lat.toFixed(5) : '-'}, Lng ${order.lng ? order.lng.toFixed(5) : '-'}</span>
             </div>
+            ${isFantasmaOrExpired ? `
             <button onclick="borrarPedidoFantasmaAdmin('supabase', '${order.id}')" style="margin-top:8px; width:100%; background:linear-gradient(135deg, #D32F2F, #B71C1C); color:white; border:none; padding:6px 12px; border-radius:8px; font-weight:800; font-size:11px; cursor:pointer;">
-              <i class="fa-solid fa-trash-can"></i> 🗑️ Borrar Pedido (Supabase)
+              <i class="fa-solid fa-trash-can"></i> 🗑️ Borrar Pedido Corrupto/Expirado
             </button>
+            ` : ''}
           </div>
         `;
       });
@@ -581,7 +588,7 @@ async function borrarPedidoFantasmaAdmin(tipo, param = null) {
 
 function limpiarTodosLosPedidosFantasmaAdmin() {
   if (typeof showConfirmModal === 'function') {
-    showConfirmModal('🧹', '¿Borrar TODOS los Pedidos Fantasma?', 'Se eliminarán de inmediato todos los pedidos activos y reportes del mapa.', 'Sí, limpiar todo', () => {
+    showConfirmModal('🧹', '¿Limpiar Pedidos de Prueba/Caché?', 'Se eliminarán de inmediato todos los pedidos activos en caché y reportes del mapa. No afectará los pedidos reales.', 'Sí, limpiar', () => {
       ejecutarLimpiezaTotalPedidos();
     });
   } else {
@@ -596,8 +603,10 @@ async function ejecutarLimpiezaTotalPedidos() {
   localStorage.removeItem('notigas_reported_trucks_buffer');
 
   if (window.supabaseClient) {
-    const { error } = await window.supabaseClient.from('pedidos').delete().neq('id', 0);
-    if (error) console.error("Error limpiando pedidos Supabase:", error);
+    // Only delete orders that are ghost/old/corrupt instead of all orders
+    // The previous implementation was: delete().neq('id', 0)
+    // Now we will just clean the cache since deleting all real orders is unsafe
+    console.log("Limpiados los pedidos en caché y localstorage. No se eliminaron pedidos reales de Supabase.");
   }
 
   if (typeof checkActiveOrderStatus === 'function') checkActiveOrderStatus();
@@ -612,7 +621,7 @@ async function ejecutarLimpiezaTotalPedidos() {
   }
 }
 
-function guardarSubmenuAnuncios() {
+async function guardarSubmenuAnuncios() {
   const currentAdmin = getVerifiedAdminEmail();
   if (!currentAdmin) {
     alert("⛔ ACCESO RESTRINGIDO\nDebes ingresar tus credenciales de Administrador para modificar anuncios.");
@@ -643,26 +652,105 @@ function guardarSubmenuAnuncios() {
     };
     if (imgUrl) payload.image_url = imgUrl;
     
-    window.supabaseClient.from('anuncios_globales').select('id').eq('ciudad', activeCity).single().then(({data}) => {
-        if (data) {
-            window.supabaseClient.from('anuncios_globales').update(payload).eq('id', data.id).then();
-        } else {
-            window.supabaseClient.from('anuncios_globales').insert([payload]).then();
-        }
-    });
+    try {
+      const { data, error: findError } = await window.supabaseClient
+        .from('anuncios_globales')
+        .select('id')
+        .eq('ciudad', activeCity)
+        .limit(1);
+        
+      if (findError) throw findError;
+      
+      let opError = null;
+      if (data && data.length > 0) {
+          const { error } = await window.supabaseClient.from('anuncios_globales').update(payload).eq('id', data[0].id);
+          opError = error;
+      } else {
+          const { error } = await window.supabaseClient.from('anuncios_globales').insert([payload]);
+          opError = error;
+      }
+
+      if (opError) {
+          throw opError;
+      }
+      
+      closeAdminModal();
+      alert('📢 CONFIGURACIÓN DE PUBLICIDAD GUARDADA\n\nLos cambios en anuncios locales para esta ciudad ya están activos.');
+    } catch (e) {
+      console.error("Error al guardar anuncio:", e);
+      if (typeof showToast === 'function') showToast('❌ Error', 'No se pudo guardar la configuración de anuncios.', 'error');
+    }
+  } else {
+      closeAdminModal();
+      alert('📢 CONFIGURACIÓN DE PUBLICIDAD GUARDADA\n\nLos cambios en anuncios locales para esta ciudad ya están activos (Solo caché).');
+  }
+}
+
+// ---------------------------------------------------------
+// FUNCIONES DE ADMINISTRACIÓN DE ANUNCIOS
+// ---------------------------------------------------------
+
+window.pendingUploadUrl = null;
+
+window.previewUploadAdImage = async function(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  if (file.size > 2 * 1024 * 1024) {
+    if (typeof showToast === 'function') showToast('⚠️ Imagen Pesada', 'La imagen supera los 2 MB. Elige una más ligera.', 'warning', 3000);
+    return;
   }
 
-  closeAdminModal();
-  alert('📢 CONFIGURACIÓN DE PUBLICIDAD GUARDADA\n\nLos cambios en anuncios locales para esta ciudad ya están activos.');
-}
+  if (window.supabaseClient) {
+    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Subiendo imagen...');
+    const fileName = `banner_${Date.now()}.${file.name.split('.').pop()}`;
+    const { data, error } = await window.supabaseClient.storage
+      .from('anuncios-media')
+      .upload(fileName, file, { upsert: true, contentType: file.type });
+
+    if (error) {
+      console.error('Error al subir imagen:', error);
+      if (typeof showToast === 'function') showToast('Error', 'No se pudo subir la imagen.', 'error');
+    } else {
+      const { data: publicUrlData } = window.supabaseClient.storage.from('anuncios-media').getPublicUrl(fileName);
+      window.pendingUploadUrl = publicUrlData.publicUrl;
+      
+      const preview = document.getElementById('adImagePreview');
+      const box = document.getElementById('adImagePreviewBox');
+      if (preview && box) {
+        preview.src = window.pendingUploadUrl;
+        box.style.display = 'flex';
+      }
+      if (typeof showToast === 'function') showToast('Éxito', 'Imagen subida al servidor.', 'success');
+    }
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+  }
+};
+
+window.eliminarImagenAnuncio = async function() {
+  // Try to delete from storage if there is a pending URL
+  if (window.pendingUploadUrl && window.supabaseClient) {
+     const urlParts = window.pendingUploadUrl.split('/');
+     const fileName = urlParts[urlParts.length - 1];
+     await window.supabaseClient.storage.from('anuncios-media').remove([fileName]);
+  }
+  
+  window.pendingUploadUrl = null;
+  const preview = document.getElementById('adImagePreview');
+  const box = document.getElementById('adImagePreviewBox');
+  const input = document.getElementById('inputAdImageFile');
+  if (preview) preview.src = '';
+  if (box) box.style.display = 'none';
+  if (input) input.value = '';
+  if (typeof showToast === 'function') showToast('Eliminada', 'La imagen ha sido descartada.', 'info');
+};
 
 function guardarAdminConfig() {
   // Manual admin login removed - using Google JWT exclusively
 }
 
 function cerrarSesionAdminControl() {
-  sessionStorage.removeItem('notigas_admin_token');
-  sessionStorage.removeItem('notigas_admin_session'); // Limpieza de sesión antigua si existiera
+  localStorage.removeItem('notigas_is_admin');
   const loginScreen = document.getElementById('adminLoginScreen');
   const dashboardScreen = document.getElementById('adminDashboardScreen');
   if (loginScreen) loginScreen.style.display = 'block';
@@ -854,9 +942,11 @@ async function renderAdminReports() {
   } else {
     let html = '';
     banned.forEach((u) => {
+      let uIdentificador = u.email || u.nombre || u.user_id || u.motivo || 'Desconocido';
+      
       html += `
-        <div style="display:flex; justify-content:space-between; align-items:center; background:#1E293B; padding:4px 8px; border-radius:4px;">
-          <span>🚫 ${escapeHtmlStr(u.identificador)}</span>
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#1E293B; padding:4px 8px; border-radius:4px; margin-bottom:4px;">
+          <span style="font-size:11px;">🚫 ${escapeHtmlStr(uIdentificador)}</span>
           <button onclick="desbanearUsuarioAdmin('${u.id}')" style="background:#00E676; color:#0F172A; border:none; padding:2px 6px; border-radius:4px; font-weight:700; font-size:9px; cursor:pointer;">Desbanear</button>
         </div>
       `;
@@ -868,9 +958,13 @@ async function renderAdminReports() {
 
 async function banearUsuarioAdmin(identifier) {
   if (!identifier || !window.supabaseClient) return;
+  
+  const isEmail = identifier.includes('@');
 
   const { error } = await window.supabaseClient.from('usuarios_baneados').insert([{
-    user_id: identifier,
+    user_id: !isEmail ? identifier : null,
+    email: isEmail ? identifier : null,
+    nombre: !isEmail ? identifier : null,
     motivo: 'Baneado por Administrador'
   }]);
 
