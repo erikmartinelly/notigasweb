@@ -2,8 +2,18 @@
    NOTIGAS - MÓDULO DE PUBLICIDAD (ARQUITECTURA NUEVA)
    ========================================================================== */
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('notigas_auth_ready', () => {
   cargarAnunciosGuardados();
+  
+  if (window.supabaseClient && !window.adsSubscriptionActive) {
+    window.adsSubscriptionActive = true;
+    const activeCity = AppState.get('city') || 'santacruz';
+    window.supabaseClient.channel('custom-all-channel-ads')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'anuncios_globales', filter: `ciudad=eq.${activeCity}` }, payload => {
+          cargarAnunciosGuardados();
+      })
+      .subscribe();
+  }
 });
 
 let currentAdUrl = 'https://wa.me/59170000000?text=Hola';

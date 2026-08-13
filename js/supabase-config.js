@@ -121,9 +121,6 @@ window.iniciarSuscripcionesRealtime = function() {
         .on('postgres_changes', { event: '*', schema: 'public', table: 'avisos', filter: `ciudad=eq.${activeCity}` }, payload => {
             if (typeof renderForumFeed === 'function') renderForumFeed();
         })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'anuncios_globales', filter: `ciudad=eq.${activeCity}` }, payload => {
-            if (typeof cargarAnunciosGuardados === 'function') cargarAnunciosGuardados();
-        })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'comentarios_avisos' }, payload => {
             // Recargar comentarios del foro si el usuario tiene un post abierto, y refrescar el feed para los contadores
             if (typeof renderForumFeed === 'function') renderForumFeed();

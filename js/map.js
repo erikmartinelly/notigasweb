@@ -715,30 +715,10 @@ function isOrderCategoryMatchingDriver(orderCategory) {
   if (!driverCategory) return true; // Si es comprador (vecino), coincide con todas las categorías
 
   const cat = (orderCategory || '').toLowerCase().trim();
+  // Extraemos la parte principal antes del guion si es que hay un detalle
+  const catCode = cat.split('-')[0].trim();
 
-  if (driverCategory.includes('gas')) {
-    return cat.includes('gas') || cat.includes('garrafa') || cat.includes('glp');
-  }
-  if (driverCategory.includes('agua')) {
-    return cat.includes('agua') || cat.includes('botellón') || cat.includes('bidón') || cat.includes('20l');
-  }
-  if (driverCategory.includes('carbón') || driverCategory.includes('leña')) {
-    return cat.includes('carbón') || cat.includes('carbon') || cat.includes('leña') || cat.includes('lena');
-  }
-  if (driverCategory.includes('detergente') || driverCategory.includes('limpieza')) {
-    return cat.includes('detergente') || cat.includes('limpieza') || cat.includes('lavandina') || cat.includes('jabón');
-  }
-  if (driverCategory.includes('chatarra')) {
-    return cat.includes('chatarra') || cat.includes('reciclaje');
-  }
-  if (driverCategory.includes('papel') || driverCategory.includes('cartón')) {
-    return cat.includes('papel') || cat.includes('cartón') || cat.includes('carton');
-  }
-  if (driverCategory.includes('fruta') || driverCategory.includes('verdura')) {
-    return cat.includes('fruta') || cat.includes('verdura');
-  }
-
-  return cat.includes(driverCategory) || driverCategory.includes(cat);
+  return driverCategory === catCode;
 }
 
 let activeOrderLayerGroup = null;
@@ -1223,7 +1203,6 @@ function cambiarCiudadCapital(cityKey) {
   
   // Recargar foros y anuncios globales para la nueva ciudad
   if (typeof renderForumFeed === 'function') renderForumFeed();
-  if (typeof cargarAnunciosGuardados === 'function') cargarAnunciosGuardados();
 }
 
 function procesarResultadoBusqueda(item, queryOriginal) {

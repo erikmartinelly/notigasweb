@@ -58,7 +58,6 @@ window.abrirModalAdminDashboard = async function() {
   
   modalAdmin.style.display = 'flex';
   renderAdminReports();
-  if (typeof cargarAnunciosGuardados === 'function') cargarAnunciosGuardados();
 }
 
 function cerrarSesionRepartidorActivarComprador() {
