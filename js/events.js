@@ -173,3 +173,136 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_auto_event_71 = document.getElementById('auto-event-71');
     if (el_auto_event_71) el_auto_event_71.addEventListener('click', (event) => { cerrarSesionAdminControl() });
 });
+
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const action = btn.getAttribute('data-action');
+  
+  if (action === 'confirmarEntregaPedido') {
+    const id = btn.getAttribute('data-id');
+    if (typeof confirmarEntregaPedido === 'function') confirmarEntregaPedido(id);
+  }
+  else if (action === 'cancelarPedidoActivo') {
+    if (typeof cancelarPedidoActivo === 'function') cancelarPedidoActivo();
+    if (typeof cerrarPanoramicaPedidos === 'function') cerrarPanoramicaPedidos();
+  }
+  else if (action === 'cerrarPanoramicaPedidos') {
+    if (typeof cerrarPanoramicaPedidos === 'function') cerrarPanoramicaPedidos();
+  }
+  else if (action === 'aceptarGrupoDemanda') {
+    const cid = btn.getAttribute('data-cluster-id');
+    const city = btn.getAttribute('data-ciudad');
+    const cat = btn.getAttribute('data-categoria');
+    if (typeof aceptarGrupoDemanda === 'function') aceptarGrupoDemanda(cid, city, cat);
+  }
+  else if (action === 'abrirSubmenuPedidos') {
+    if (typeof abrirSubmenuPedidos === 'function') abrirSubmenuPedidos();
+  }
+  else if (action === 'abrirModalNuevoPost') {
+    if (typeof abrirModalNuevoPost === 'function') abrirModalNuevoPost();
+  }
+  else if (action === 'votarPost') {
+    const val = parseInt(btn.getAttribute('data-val'));
+    const id = btn.getAttribute('data-id');
+    if (typeof votarPost === 'function') votarPost(btn, val, id);
+  }
+  else if (action === 'abrirComentariosPost') {
+    const id = btn.getAttribute('data-id');
+    const title = decodeURIComponent(btn.getAttribute('data-title'));
+    const desc = decodeURIComponent(btn.getAttribute('data-desc'));
+    const cat = decodeURIComponent(btn.getAttribute('data-cat'));
+    if (typeof abrirComentariosPost === 'function') abrirComentariosPost(id, title, desc, cat, btn);
+  }
+  else if (action === 'abrirModalDenuncia') {
+    const title = decodeURIComponent(btn.getAttribute('data-title'));
+    if (typeof abrirModalDenuncia === 'function') abrirModalDenuncia('Aviso Noticias Vecinales', title);
+  }
+  else if (action === 'borrarPostForumAdmin') {
+    const id = btn.getAttribute('data-id');
+    if (typeof borrarPostForumAdmin === 'function') borrarPostForumAdmin(id);
+  }
+  else if (action === 'abrirAnuncioWhatsApp') {
+    if (typeof abrirAnuncioWhatsApp === 'function') abrirAnuncioWhatsApp();
+  }
+  else if (action === 'votarComentario') {
+    const id = btn.getAttribute('data-id');
+    const val = parseInt(btn.getAttribute('data-val'));
+    if (typeof votarComentario === 'function') votarComentario(id, val);
+  }
+  else if (action === 'abrirModalDriver') {
+    const modal = document.getElementById('modalDriver');
+    if (modal) modal.style.display='flex';
+  }
+  else if (action === 'eliminarFichaAdmin') {
+    const id = btn.getAttribute('data-id');
+    if (typeof eliminarFichaAdmin === 'function') eliminarFichaAdmin(id);
+  }
+  else if (action === 'seleccionarYPedirDirecto') {
+    const cat = decodeURIComponent(btn.getAttribute('data-cat'));
+    if (typeof seleccionarYPedirDirecto === 'function') seleccionarYPedirDirecto(cat);
+  }
+});
+
+
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const action = btn.getAttribute('data-action');
+  
+  if (action === 'borrarAnuncioLocalAdmin') {
+    const id = btn.getAttribute('data-id');
+    if (typeof borrarAnuncioLocalAdmin === 'function') borrarAnuncioLocalAdmin(id);
+  }
+  else if (action === 'aprobarRepartidorAdmin') {
+    const id = btn.getAttribute('data-id');
+    if (typeof aprobarRepartidorAdmin === 'function') aprobarRepartidorAdmin(id);
+  }
+  else if (action === 'desbanearRepartidorAdmin') {
+    const id = btn.getAttribute('data-id');
+    const name = decodeURIComponent(btn.getAttribute('data-name'));
+    if (typeof desbanearRepartidorAdmin === 'function') desbanearRepartidorAdmin(id, name);
+  }
+  else if (action === 'banearRepartidorAdmin') {
+    const id = btn.getAttribute('data-id');
+    const name = decodeURIComponent(btn.getAttribute('data-name'));
+    const plate = decodeURIComponent(btn.getAttribute('data-plate'));
+    if (typeof banearRepartidorAdmin === 'function') banearRepartidorAdmin(id, name, plate);
+  }
+  else if (action === 'borrarRepartidorPermanente') {
+    const id = btn.getAttribute('data-id');
+    const name = decodeURIComponent(btn.getAttribute('data-name'));
+    if (typeof borrarRepartidorPermanente === 'function') borrarRepartidorPermanente(id, name);
+  }
+  else if (action === 'banearUsuarioAdmin') {
+    const gmailOrId = btn.getAttribute('data-gmail') || btn.getAttribute('data-id');
+    if (typeof banearUsuarioAdmin === 'function') banearUsuarioAdmin(gmailOrId);
+  }
+  else if (action === 'borrarCompradorPermanente') {
+    const gmail = btn.getAttribute('data-gmail');
+    const name = btn.getAttribute('data-name');
+    if (typeof borrarCompradorPermanente === 'function') borrarCompradorPermanente(gmail, name);
+  }
+  else if (action === 'limpiarTodosLosPedidosFantasmaAdmin') {
+    if (typeof limpiarTodosLosPedidosFantasmaAdmin === 'function') limpiarTodosLosPedidosFantasmaAdmin();
+  }
+  else if (action === 'borrarPedidoFantasmaAdmin') {
+    const type = btn.getAttribute('data-type');
+    const id = btn.getAttribute('data-id');
+    const idx = btn.getAttribute('data-idx');
+    if (typeof borrarPedidoFantasmaAdmin === 'function') {
+      if (type === 'supabase') borrarPedidoFantasmaAdmin(type, id);
+      else if (type === 'truck_report') borrarPedidoFantasmaAdmin(type, parseInt(idx));
+      else borrarPedidoFantasmaAdmin(type);
+    }
+  }
+  else if (action === 'borrarDenunciaAdmin') {
+    const id = btn.getAttribute('data-id');
+    if (typeof borrarDenunciaAdmin === 'function') borrarDenunciaAdmin(id);
+  }
+  else if (action === 'desbanearUsuarioAdmin') {
+    const id = btn.getAttribute('data-id');
+    if (typeof desbanearUsuarioAdmin === 'function') desbanearUsuarioAdmin(id);
+  }
+});
+

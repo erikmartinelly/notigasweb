@@ -108,7 +108,7 @@ function renderVendorCards(filterCat) {
         <i class="fa-solid fa-store-slash" style="font-size:32px; color:#FF6D00; margin-bottom:10px;"></i><br>
         <strong>Aún no hay Fichas de Repartidores registradas en esta categoría.</strong><br>
         <span style="font-size: 11px; color: #64748B;">¿Eres repartidor? Registra tu ficha de negocio gratis y conéctate con los vecinos de tu OTB.</span><br><br>
-        <button class="btn-driver" style="margin: 0 auto; padding: 10px 16px; font-size: 12px;" onclick="document.getElementById('modalDriver').style.display='flex'">➕ Publicar Mi Mini Página de Negocio</button>
+        <button class="btn-driver" style="margin: 0 auto; padding: 10px 16px; font-size: 12px;" data-action="abrirModalDriver">🚚 Publicar Mi Mini Página de Negocio</button>
       </div>
     `;
     return;
@@ -128,7 +128,7 @@ function renderVendorCards(filterCat) {
               <span class="vendor-badge-cat"><i class="fa-solid fa-circle-check"></i> ${escapeHtmlStr(vendor.category)}</span>
             </div>
           </div>
-          ${isAdmin ? `<button onclick="eliminarFichaAdmin('${vendor.id}')" style="background:#D32F2F; color:white; border:none; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;" title="Borrar como Admin"><i class="fa-solid fa-trash"></i> Borrar (Admin)</button>` : `<span class="ad-badge" style="background: rgba(0,230,118,0.15); color: #00E676; border-color: rgba(0,230,118,0.4);">REPARTIDOR VERIFICADO</span>`}
+          ${isAdmin ? `<button data-action="eliminarFichaAdmin" data-id="${vendor.id}" style="background:#D32F2F; color:white; border:none; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;" title="Borrar como Admin"><i class="fa-solid fa-trash"></i> Borrar (Admin)</button>` : `<span class="ad-badge" style="background: rgba(0,230,118,0.15); color: #00E676; border-color: rgba(0,230,118,0.4);">REPARTIDOR VERIFICADO</span>`}
         </div>
 
         <div class="vendor-fb-body">
@@ -139,7 +139,7 @@ function renderVendorCards(filterCat) {
 
         <div class="vendor-fb-footer">
 
-          <button class="btn-vendor-order" onclick="seleccionarYPedirDirecto(decodeURIComponent('${encodeURIComponent(vendor.category)}'))"><i class="fa-solid fa-cart-plus"></i> Pedir Producto</button>
+          <button class="btn-vendor-order" data-action="seleccionarYPedirDirecto" data-cat="${encodeURIComponent(vendor.category)}"><i class="fa-solid fa-cart-plus"></i> Pedir Producto</button>
         </div>
       </div>
     `;
@@ -147,7 +147,7 @@ function renderVendorCards(filterCat) {
     // ANUNCIO PATROCINADO INTERCALADO AL MEDIO DEL FEED
     if (index === 0) {
       html += `
-        <div class="ad-facebook-feed-card" onclick="abrirAnuncioWhatsApp()" style="cursor:pointer;">
+        <div class="ad-facebook-feed-card" data-action="abrirAnuncioWhatsApp" style="cursor:pointer;">
           <div class="ad-fb-header">
             <div class="ad-fb-profile">
               <div class="ad-fb-icon"><i class="fa-solid fa-bullhorn"></i></div>
@@ -166,7 +166,7 @@ function renderVendorCards(filterCat) {
               <div class="ad-fb-media-title">Destaca tu Negocio o Servicio</div>
               <div class="ad-fb-media-desc">Espacio publicitario disponible en NOTIGAS</div>
             </div>
-            <button class="btn-ad-contact" onclick="event.stopPropagation(); abrirAnuncioWhatsApp()"><i class="fa-solid fa-arrow-up-right-from-square"></i> Anunciar</button>
+            <button class="btn-ad-contact" data-action="abrirAnuncioWhatsApp"><i class="fa-solid fa-arrow-up-right-from-square"></i> Anunciar</button>
           </div>
         </div>
       `;

@@ -138,7 +138,7 @@ async function renderDriverOrdersList() {
           
 
           ${(ord.estado === 'asignado' && ord.driver_id === localUserId) 
-            ? `<button onclick="confirmarEntregaPedido('${ord.id}')" style="flex:1; padding:10px; border:none; border-radius:8px; background:linear-gradient(135deg, #22C55E, #16A34A); color:white; font-weight:700; cursor:pointer;"><i class="fa-solid fa-check"></i> Entregado</button>` 
+            ? `<button data-action="confirmarEntregaPedido" data-id="${ord.id}" style="flex:1; padding:10px; border:none; border-radius:8px; background:linear-gradient(135deg, #22C55E, #16A34A); color:white; font-weight:700; cursor:pointer;"><i class="fa-solid fa-check"></i> Entregado</button>` 
             : `<span style="flex:1; padding:10px; text-align:center; color:#64748B; font-weight:700; font-size:12px;">Solo grupos de demanda permitidos</span>`
           }
 
@@ -781,7 +781,7 @@ async function abrirPanoramicaPedidos() {
 
           <div style="font-size: 11px; color: #64748B; margin-top: 4px;">⏱️ Publicado hace ${minutos} min</div>
 
-          <button onclick="cancelarPedidoActivo(); cerrarPanoramicaPedidos();" style="margin-top:8px; background:#D32F2F; color:white; border:none; padding:6px 12px; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer; width:100%;">❌ Cancelar este Pedido</button>
+          <button data-action="cancelarPedidoActivo" style="margin-top:8px; background:#D32F2F; color:white; border:none; padding:6px 12px; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer; width:100%;">❌ Cancelar este Pedido</button>
 
         </div>
 
@@ -897,7 +897,7 @@ async function abrirPanoramicaPedidos() {
 
           <span><i class="fa-solid fa-chart-bar"></i> 📊 Panorámica de Pedidos Activos</span>
 
-          <button class="btn-close" onclick="cerrarPanoramicaPedidos()">✕</button>
+          <button class="btn-close" data-action="cerrarPanoramicaPedidos">✖</button>
 
         </div>
 
