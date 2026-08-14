@@ -26,6 +26,8 @@ SET categoria =
   END;
 
 -- Reemplazar rpc_get_demand_clusters_v2 para que asuma matching exacto (las apps ya deben mandar códigos limpios)
+DROP FUNCTION IF EXISTS rpc_get_demand_clusters_v2(text, text, double precision, integer);
+
 CREATE OR REPLACE FUNCTION rpc_get_demand_clusters_v2(
     p_ciudad text DEFAULT NULL,
     p_categoria text DEFAULT NULL,
