@@ -270,8 +270,28 @@ function checkActiveOrderStatus() {
       const order = JSON.parse(rawOrder);
 
       if (btnCancel) btnCancel.style.display = 'flex';
+      if (btnMain) btnMain.style.display = 'none';
+      
+      const tripCard = document.getElementById('notigasTripCard');
+      const buyerActions = document.getElementById('buyerFloatingActions');
+      if (tripCard) {
+        tripCard.style.display = 'block';
+        if (buyerActions) buyerActions.style.display = 'none'; // Hide floating dock when trip card is active
+      }
+      
+      const statusText = document.getElementById('tripCardStatusText');
+      const driverName = document.getElementById('tripCardDriverName');
+      const timeEst = document.getElementById('tripCardTime');
+      const statusIndicator = document.getElementById('tripCardStatusIndicator');
+      
+      if (statusText) statusText.innerText = (order.estado || 'ESPERA').toUpperCase();
+      if (driverName) driverName.innerText = order.repartidor_asignado ? 'EN CAMINO' : 'BUSCANDO...';
+      if (timeEst) timeEst.innerText = order.repartidor_asignado ? 'Aproximadamente 8-15 min.' : 'Asignando repartidor...';
+      if (statusIndicator) {
+         statusIndicator.style.background = order.repartidor_asignado ? '#27d17f' : '#FF9800';
+         statusIndicator.style.boxShadow = order.repartidor_asignado ? '0 0 7px rgba(39,209,127,.55)' : '0 0 7px rgba(255,152,0,.55)';
+      }
 
-      if (btnMain) btnMain.style.display = 'none'; 
 
       actualizarFaviconSegunPedido(order.categoria, order.estado);
 
