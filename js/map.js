@@ -331,6 +331,8 @@ function agregarPedidoVecinoEnMapa(order) {
   let currentIcon = garrafaIcon;
   if (order.estado === 'entregado') {
      currentIcon = garrafaGreenIcon;
+  } else if (order.visto === true) {
+     currentIcon = garrafaYellowIcon;
   }
 
   // Si el usuario actual es REPARTIDOR, solo ver pedidos de SU MISMA CATEGORÍA
@@ -371,6 +373,39 @@ function agregarPedidoVecinoEnMapa(order) {
        </div>`;
 
   marker.bindPopup(popupHtml);
+
+  marker.on('popupopen', () => {
+      if (
+          userRole === 'repartidor' &&
+          order.estado === 'pendiente' &&
+          !order.visto
+      ) {
+          if (window.supabaseClient) {
+              window.supabaseClient
+                  .rpc(
+                      'rpc_mark_order_seen',
+                      {
+                          p_order_id: orderId
+                      }
+                  )
+                  .then(({ error }) => {
+                      if (error) {
+                          console.warn(
+                              'No se pudo marcar pedido como visto:',
+                              error
+                          );
+                          return;
+                      }
+                      order.visto = true;
+                      if (neighborOrderMarkers[orderId]) {
+                          neighborOrderMarkers[orderId]
+                              .setIcon(garrafaYellowIcon);
+                      }
+                  });
+          }
+      }
+  });
+
   neighborOrderMarkers[orderId] = marker;
 
   // FIX W-07: Usar la constante centralizada de state.js en lugar del literal duplicado
@@ -643,22 +678,54 @@ async function transmitirUbicacionRepartidorServidorDB(lat, lng) {
         lastGpsBroadcastTime = now;
 
         if (window.supabaseClient) {
-          // Usar la ciudad activa actualmente seleccionada por el usuario en la interfaz,
-          // no la que quedó cacheada del registro en BD, para permitir movilidad.
-          const finalCity = (window.AppState && window.AppState.get('city')) ? window.AppState.get('city') : (AppState.get('city') || 'santacruz');
           const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
 
-          await window.supabaseClient.from('rutas_repartidores').upsert({
-            user_id: localUserId,
-            distribuidor_nombre: u.nombre || "Repartidor GLP",
-            categoria: u.categoria || "Gas GLP",
-            titulo: `${u.placa || 'Camión'}`,
-            ciudad: finalCity,
-            latitude: lat,
-            longitude: lng,
-            telefono: u.telefono || "",
-            last_active: new Date().toISOString()
-          }, { onConflict: 'user_id' });
+          const { data: driver } =
+              await window.supabaseClient
+                  .from('choferes_habilitados')
+                  .select(
+                      'nombre_completo, telefono_whatsapp, placa, categoria, ciudad'
+                  )
+                  .eq('user_id', localUserId)
+                  .single();
+
+          if (!driver) {
+              return;
+          }
+
+          await window.supabaseClient
+              .from('rutas_repartidores')
+              .upsert(
+                  {
+                      user_id: localUserId,
+                      distribuidor_nombre:
+                          driver.nombre_completo ||
+                          'Repartidor GLP',
+
+                      categoria:
+                          driver.categoria ||
+                          'Gas GLP',
+
+                      titulo:
+                          driver.placa ||
+                          'Camión',
+
+                      ciudad:
+                          driver.ciudad,
+
+                      latitude: lat,
+                      longitude: lng,
+
+                      telefono:
+                          driver.telefono_whatsapp || '',
+
+                      last_active:
+                          new Date().toISOString()
+                  },
+                  {
+                      onConflict: 'user_id'
+                  }
+              );
         }
       }
     }
@@ -1246,48 +1313,113 @@ window.activeRouteInterval = null;
 window.activeRouteDest = null;
 
 window.dibujarRutaAlPedido = function(destLat, destLng) {
-  if (window.activeRouteDest && window.activeRouteDest.lat === destLat && window.activeRouteDest.lng === destLng) return;
-  
-  window.activeRouteDest = { lat: destLat, lng: destLng };
-  actualizarRutaOSRM();
-  
-  if (window.activeRouteInterval) clearInterval(window.activeRouteInterval);
-  window.activeRouteInterval = setInterval(() => {
-    actualizarRutaOSRM();
-  }, 15000); // Recalcular cada 15 segundos
-  
-  if (map) map.closePopup();
-  if (typeof showToast === 'function') showToast('Ruta Trazada', 'Iniciando navegación hacia el pedido...', 'info', 4000);
+    window.activeRouteDest = {
+        lat: destLat,
+        lng: destLng
+    };
 
-  // Activar seguimiento y acercar la cámara al camión
-  if (typeof activarSeguirme === 'function') {
-    activarSeguirme();
-    if (typeof currentGpsLat !== 'undefined' && typeof currentGpsLng !== 'undefined' && map) {
-      setTimeout(() => {
-        map.flyTo([currentGpsLat, currentGpsLng], 17, { duration: 1.5 });
-      }, 100);
+    window.activeRouteLastOrigin = null;
+
+    actualizarRutaOSRM(true);
+
+    if (map) map.closePopup();
+    if (typeof showToast === 'function') showToast('Ruta Trazada', 'Iniciando navegación hacia el pedido...', 'info', 4000);
+
+    // Activar seguimiento y acercar la cámara al camión
+    if (typeof activarSeguirme === 'function') {
+        activarSeguirme();
+        if (typeof currentGpsLat !== 'undefined' && typeof currentGpsLng !== 'undefined' && map) {
+            setTimeout(() => {
+                map.flyTo([currentGpsLat, currentGpsLng], 17, { duration: 1.5 });
+            }, 100);
+        }
     }
-  }
-}
+};
 
-async function actualizarRutaOSRM() {
-  if (!window.activeRouteDest || typeof currentGpsLat === 'undefined' || typeof currentGpsLng === 'undefined') return;
-  if (!currentGpsLat || !currentGpsLng) return;
-  
-  const origin = `${currentGpsLng},${currentGpsLat}`;
-  const dest = `${window.activeRouteDest.lng},${window.activeRouteDest.lat}`;
-  const url = `https://router.project-osrm.org/route/v1/driving/${origin};${dest}?overview=full&geometries=geojson`;
-  
-  try {
-     const res = await fetch(url);
-     const data = await res.json();
-     if (data.routes && data.routes.length > 0) {
-        if (window.activeRouteLayer) map.removeLayer(window.activeRouteLayer);
-        window.activeRouteLayer = L.geoJSON(data.routes[0].geometry, {
-           style: { color: '#0288D1', weight: 5, opacity: 0.8, dashArray: '10, 10' }
-        }).addTo(map);
-     }
-  } catch (e) {
-     console.error("OSRM Error", e);
-  }
+window.activeRouteLastOrigin = null;
+
+async function actualizarRutaOSRM(force = false) {
+    if (
+        !window.activeRouteDest ||
+        currentGpsLat == null ||
+        currentGpsLng == null
+    ) {
+        return;
+    }
+
+    if (
+        !force &&
+        window.activeRouteLastOrigin
+    ) {
+        const distancia =
+            calcularDistanciaMetros(
+                window.activeRouteLastOrigin.lat,
+                window.activeRouteLastOrigin.lng,
+                currentGpsLat,
+                currentGpsLng
+            );
+
+        if (
+            distancia !== null &&
+            distancia < 30
+        ) {
+            return;
+        }
+    }
+
+    window.activeRouteLastOrigin = {
+        lat: currentGpsLat,
+        lng: currentGpsLng
+    };
+
+    const origin =
+        `${currentGpsLng},${currentGpsLat}`;
+
+    const destination =
+        `${window.activeRouteDest.lng},${window.activeRouteDest.lat}`;
+
+    const url =
+        `https://router.project-osrm.org/route/v1/driving/` +
+        `${origin};${destination}` +
+        `?overview=full&geometries=geojson`;
+
+    try {
+        const response =
+            await fetch(url);
+
+        const data =
+            await response.json();
+
+        if (
+            data.routes &&
+            data.routes.length > 0
+        ) {
+            if (
+                window.activeRouteLayer
+            ) {
+                map.removeLayer(
+                    window.activeRouteLayer
+                );
+            }
+
+            window.activeRouteLayer =
+                L.geoJSON(
+                    data.routes[0].geometry,
+                    {
+                        style: {
+                            color: '#0288D1',
+                            weight: 5,
+                            opacity: 0.8,
+                            dashArray: '10, 10'
+                        }
+                    }
+                ).addTo(map);
+        }
+
+    } catch (error) {
+        console.error(
+            'OSRM Error:',
+            error
+        );
+    }
 }

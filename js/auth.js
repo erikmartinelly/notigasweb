@@ -113,6 +113,145 @@ async function getAuthenticatedUserId() {
   return data.user.id;
 }
 
+async function guardarPerfilSupabase(user, changes = {}) {
+    if (!window.supabaseClient || !user?.id) {
+        throw new Error(
+            'Supabase o usuario no disponibles'
+        );
+    }
+
+    const { data, error } =
+        await window.supabaseClient
+            .from('profiles')
+            .upsert(
+                [{
+                    id: user.id,
+                    ...changes,
+                    updated_at: new Date().toISOString()
+                }],
+                {
+                    onConflict: 'id'
+                }
+            )
+            .select()
+            .single();
+
+    if (error) {
+        console.error(
+            'Error actualizando profile:',
+            error
+        );
+        throw error;
+    }
+
+    return data;
+}
+
+async function guardarUbicacionHabitualUsuario(
+    user,
+    lat,
+    lng
+) {
+    const ciudad =
+        typeof inferMainCityFromCoords === 'function'
+            ? inferMainCityFromCoords(lat, lng)
+            : AppState.get('city');
+
+    await guardarPerfilSupabase(
+        user,
+        {
+            role: 'vecino',
+            ciudad: ciudad || 'santacruz',
+            latitude: lat,
+            longitude: lng,
+            location_updated_at:
+                new Date().toISOString()
+        }
+    );
+
+    AppState.set(
+        'city',
+        ciudad || 'santacruz'
+    );
+
+    AppState.set(
+        'gpsLat',
+        lat
+    );
+
+    AppState.set(
+        'gpsLng',
+        lng
+    );
+
+    if (typeof showToast === 'function') {
+        showToast(
+            '📍 Ubicación guardada',
+            'Tu ubicación habitual quedó registrada. Ya puedes apagar el GPS.',
+            'success',
+            7000
+        );
+    }
+}
+
+async function solicitarYGuardarUbicacionHabitual(user) {
+    if (!navigator.geolocation) {
+        if (typeof showToast === 'function') {
+            showToast(
+                'GPS no disponible',
+                'Este dispositivo no permite obtener tu ubicación.',
+                'error',
+                6000
+            );
+        }
+        return false;
+    }
+
+    try {
+        if (typeof showLoadingOverlay === 'function') {
+            showLoadingOverlay(
+                'Obteniendo tu ubicación habitual...'
+            );
+        }
+
+        const position =
+            await solicitarGeolocalizacionNativaNavegador(
+                /Mobi|Android|iPhone|iPad|iPod/i.test(
+                    navigator.userAgent
+                ),
+                true
+            );
+
+        await guardarUbicacionHabitualUsuario(
+            user,
+            position.coords.latitude,
+            position.coords.longitude
+        );
+
+        if (typeof detenerGPSComprador === 'function') {
+            detenerGPSComprador();
+        }
+
+        if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+
+        return true;
+
+    } catch (error) {
+        if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+
+        if (typeof showToast === 'function') {
+            showToast(
+                '⚠️ Ubicación necesaria',
+                'Debemos registrar tu ubicación habitual para completar el registro.',
+                'warning',
+                7000
+            );
+        }
+
+        return false;
+    }
+}
+
 async function selectAuthRole(role) {
   currentSelectedRole = role;
   const btnBuyer = document.getElementById('btnRoleBuyer');
@@ -999,6 +1138,19 @@ async function procesarSesionExitosa(user) {
     if (typeof setAppMode === 'function') setAppMode('driver');
     if (typeof showToast === 'function') showToast('✅ Sesión Segura', `Ingresaste como Repartidor (${gmail})`, 'success', 2000);
   } else {
+    // Comprador
+    const profile = await guardarPerfilSupabase(user, {
+        nombre,
+        role: 'vecino',
+        ciudad: AppState.get('city') || 'santacruz'
+    });
+
+    const tieneUbicacion = profile.latitude != null && profile.longitude != null;
+
+    if (!tieneUbicacion) {
+        await solicitarYGuardarUbicacionHabitual(user);
+    }
+
     if (typeof setAppMode === 'function') setAppMode('buyer');
     if (typeof showToast === 'function') showToast('✅ Sesión Segura', `Bienvenido a NOTIGAS (${gmail})`, 'success', 2000);
   }

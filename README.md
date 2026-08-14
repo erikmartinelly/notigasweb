@@ -81,3 +81,32 @@ NOTIGAS bridges this gap by democratizing access to Artificial Intelligence and 
 ## 🛡️ Security Notes
 *   **Row Level Security (RLS):** Ensure RLS is enabled on all Supabase tables so users can only insert/delete their own orders, while still being able to read the public map data.
 *   **Admin Panel:** The admin panel is integrated into the main application via a hidden modal, but real protection of sensitive operations depends exclusively on Supabase RLS and `is_admin_email()` policies validating the JWT.
+
+## 🏗️ ARQUITECTURA DE PRODUCCIÓN
+
+### Base de Datos
+*   **Supabase Auth**: Maneja la identidad.
+*   **profiles**: Perfil persistente del usuario y ubicación habitual del comprador.
+*   **choferes_habilitados**: Ficha del repartidor, ciudad operativa y categoría.
+*   **pedidos**: Fuente única de verdad de los pedidos.
+*   **rutas_repartidores**: Posición temporal de los repartidores.
+*   **AppState**: Solamente estado de interfaz (no debe escribir persistentemente en Auth).
+
+### Ubicación y GPS
+*   **Comprador**: Usa GPS (getCurrentPosition) una sola vez durante el registro para guardar su ubicación habitual en `profiles`. Se informa al usuario que puede apagar el GPS. NUNCA usa `watchPosition`.
+*   **PC**: Intenta `navigator.geolocation` primero. Si falla, usa IP solamente como fallback aproximado. La IP nunca se considera domicilio exacto.
+*   **Repartidor**: Usa GPS continuo (`watchPosition`) con precisión adaptativa. Transmite ubicación a Supabase cuando hay movimiento significativo (~15 metros) y usa un heartbeat para indicar que está detenido.
+
+### Pedidos
+*   Los pedidos son grupales y un repartidor puede ver los pedidos de su zona/categoría.
+*   **Rojo**: Pedido nuevo o no visto.
+*   **Amarillo**: Pedido "visto" por algún repartidor. 
+*   **Importante**: Que un pedido esté amarillo (`visto = true`) NO significa que esté asignado/tomado. Su estado continúa siendo `pendiente` y sigue formando parte de los grupos en el mapa.
+
+### Realtime y Enrutamiento
+*   **Realtime**: Es el mecanismo principal.
+*   **Polling**: Se utiliza como fallback solamente cuando Realtime está desconectado.
+*   **Rutas OSRM**: No se recalculan por tiempo fijo, sino cuando el repartidor se ha desplazado aproximadamente 30 metros.
+
+### Eliminación de Cuentas
+*   La función RPC `delete_user_account()` es la autoridad única en la base de datos para eliminar la cuenta y todos los datos asociados de forma segura, garantizando la limpieza en cascada.

@@ -399,7 +399,30 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof cargarPedidosVecinalesEnVivo === 'function') {
             cargarPedidosVecinalesEnVivo();
             // Mecanismo de recuperación (polling backup) en caso de que falle Realtime
-            setInterval(cargarPedidosVecinalesEnVivo, 15000);
+            if (
+                typeof iniciarSuscripcionesRealtime === 'function'
+            ) {
+                iniciarSuscripcionesRealtime();
+
+                if (
+                    window.notigasRealtimeFallbackInterval
+                ) {
+                    clearInterval(
+                        window.notigasRealtimeFallbackInterval
+                    );
+                }
+
+                window.notigasRealtimeFallbackInterval =
+                    setInterval(() => {
+                        if (
+                            AppState.get(
+                                'realtimeConnected'
+                            ) === false
+                        ) {
+                            cargarPedidosVecinalesEnVivo();
+                        }
+                    }, 15000);
+            }
         }
     };
 

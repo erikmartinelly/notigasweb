@@ -69,14 +69,6 @@ window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño m
       _state[key] = value;
 
       // Sincronizar de forma transparente con Supabase Auth (metadata) en lugar de localStorage
-      if (key === 'city' && window.supabaseClient) {
-        window.supabaseClient.auth.updateUser({ data: { ciudad: value } }).catch(() => {});
-      }
-      
-      if (key === 'userData' && window.supabaseClient && value) {
-        window.supabaseClient.auth.updateUser({ data: value }).catch(() => {});
-      }
-
       if (prev !== value && _listeners[key]) {
         _listeners[key].forEach(fn => {
           try {
