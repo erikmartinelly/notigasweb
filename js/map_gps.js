@@ -101,33 +101,41 @@ function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
                 response.ok
                     ? response.json()
 async function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
-    // En Bolivia, las APIs de IP suelen devolver Santa Cruz sin importar la ciudad real.
-    // Es mejor usar la ciudad seleccionada en el estado (AppState).
-    let lat = -17.7833; // Default Santa Cruz
-    let lng = -63.1821;
-    
-    if (typeof AppState !== 'undefined') {
-        const city = AppState.get('city');
-        if (city === 'cochabamba') {
-            lat = -17.3895;
-            lng = -66.1568;
-        } else if (city === 'lapaz') {
-            lat = -16.4897;
-            lng = -68.1193;
-        }
-    }
-    
-    if (forceReset || typeof window.currentGpsLat === 'undefined' || window.currentGpsLat === null) {
-        if (typeof window.applyGpsPosition === 'function') {
-            window.applyGpsPosition(
-                lat,
-                lng,
-                'Ubicación predeterminada de ciudad',
-                true
-            );
-        }
-    }
-    return { lat, lng };
+    const fetchIP = (url, parser) =>
+        fetch(url)
+            .then(response => response.ok ? response.json() : Promise.reject(new Error('HTTP ' + response.status)))
+            .then(parser);
+
+    const apis = [
+        fetchIP('https://ipinfo.io/json', data => data?.loc ? { lat: parseFloat(data.loc.split(',')[0]), lng: parseFloat(data.loc.split(',')[1]) } : Promise.reject()),
+        fetchIP('https://freeipapi.com/api/json', data => data?.latitude != null && data?.longitude != null ? { lat: data.latitude, lng: data.longitude } : Promise.reject()),
+        fetchIP('https://ipwho.is/', data => data?.success && data?.latitude != null && data?.longitude != null ? { lat: data.latitude, lng: data.longitude } : Promise.reject())
+    ];
+
+    return Promise.any(apis)
+        .then(coords => {
+            if (forceReset || typeof window.currentGpsLat === 'undefined' || window.currentGpsLat === null) {
+                if (typeof window.applyGpsPosition === 'function') {
+                    window.applyGpsPosition(coords.lat, coords.lng, 'Ubicación aproximada por IP', forceReset);
+                }
+            }
+            return coords;
+        })
+        .catch(() => {
+            // Si todo falla (adblocker, etc), usamos la ciudad de AppState
+            let lat = -17.3895; let lng = -66.1568;
+            if (typeof AppState !== 'undefined') {
+                const city = AppState.get('city');
+                if (city === 'santacruz') { lat = -17.7833; lng = -63.1821; }
+                else if (city === 'lapaz') { lat = -16.4897; lng = -68.1193; }
+            }
+            if (forceReset || typeof window.currentGpsLat === 'undefined' || window.currentGpsLat === null) {
+                if (typeof window.applyGpsPosition === 'function') {
+                    window.applyGpsPosition(lat, lng, 'Ubicación predeterminada (IP fallida)', forceReset);
+                }
+            }
+            return { lat, lng };
+        });
 }
 
 function iniciarWatchGPSRepartidor() {
@@ -218,26 +226,33 @@ function conectarGPSAuto(forceReset = false) {
     // REPARTIDOR
     // =====================================================
     if (isDriver) {
-        solicitarGeolocalizacionNativaNavegador(
-            true,
-            forceReset
-        )
+        solicitarGeolocalizacionNativaNavegador(true, forceReset)
         .then(() => {
             iniciarWatchGPSRepartidor();
         })
         .catch(error => {
-            console.warn(
-                'No se pudo iniciar GPS del repartidor:',
-                error
-            );
-            if (typeof showToast === 'function') {
-                showToast(
-                    '⚠️ GPS requerido',
-                    'El repartidor necesita mantener activada la ubicación.',
-                    'warning',
-                    6000
-                );
-            }
+            console.warn('GPS nativo falló para repartidor. Intentando fallback por IP:', error);
+            
+            // Intenta localizar por IP
+            obtenerUbicacionIPFallbackDesktop(forceReset).then(coords => {
+                if (typeof showToast === 'function') {
+                    showToast('📍 Ubicación IP Activa', 'Usando geolocalización por IP debido a la falta de GPS nativo.', 'info', 4000);
+                }
+                
+                // Como la IP es estática, usamos setInterval para transmitirla periódicamente
+                // y mantener al repartidor "en vivo" en la base de datos sin simular movimiento.
+                if (window.activeGpsWatchId) clearInterval(window.activeGpsWatchId);
+                window.activeGpsWatchId = setInterval(() => {
+                    if (typeof transmitirUbicacionRepartidorServidorDB === 'function') {
+                        transmitirUbicacionRepartidorServidorDB(coords.lat, coords.lng);
+                    }
+                }, 10000); // Transmitir cada 10 segundos
+                
+            }).catch(ipError => {
+                if (typeof showToast === 'function') {
+                    showToast('❌ Error de Ubicación', 'No pudimos obtener ubicación ni por GPS ni por IP.', 'error', 4000);
+                }
+            });
         });
         return;
     }
