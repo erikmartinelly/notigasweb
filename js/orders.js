@@ -119,7 +119,7 @@ async function renderDriverOrdersList() {
 
     html += `
 
-        <div style="background:#FFF; padding:12px; margin-bottom:10px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.05); border:1px solid #E2E8F0;">
+        <div onclick="window.centrarPedidoEnMapa(${ord.latitude || ord.lat}, ${ord.longitude || ord.lng}, '${ord.id}')" style="background:#FFF; padding:12px; margin-bottom:10px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.05); border:1px solid #E2E8F0; cursor:pointer; transition: transform 0.1s ease-in-out;" onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'" onmouseleave="this.style.transform='scale(1)'">
 
           <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
 
@@ -138,13 +138,10 @@ async function renderDriverOrdersList() {
           
 
           ${(ord.estado === 'asignado' && ord.driver_id === localUserId) 
-            ? `<span style="flex:1; padding:10px; text-align:center; color:#00E676; font-weight:700; font-size:12px;"><i class="fa-solid fa-truck-fast"></i> En ruta (El GPS detectará tu llegada)</span>` 
-            : `<span style="flex:1; padding:10px; text-align:center; color:#64748B; font-weight:700; font-size:12px;">El GPS marcará tu llegada</span>`
+            ? `<span style="display:block; padding:8px; text-align:center; color:#00E676; font-weight:700; font-size:12px;"><i class="fa-solid fa-truck-fast"></i> En ruta (El GPS detectará tu llegada)</span>` 
+            : `<span style="display:block; padding:8px; text-align:center; color:#64748B; font-weight:700; font-size:12px;"><i class="fa-solid fa-hand-pointer"></i> Toca para ver en el mapa</span>`
           }
 
-          <div style="display:flex; margin-top:8px;">
-            <button onclick="window.centrarPedidoEnMapa(${ord.latitude || ord.lat}, ${ord.longitude || ord.lng}, '${ord.id}')" style="flex:1; background:linear-gradient(135deg, #0288D1, #0277BD); color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:12px; box-shadow:0 2px 6px rgba(2,136,209,0.4);">📍 Ver Pedido en el Mapa</button>
-          </div>
         </div>
 
       `;
