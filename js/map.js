@@ -351,10 +351,14 @@ function agregarPedidoVecinoEnMapa(order) {
   const lat = order.latitude || order.lat;
   const lng = order.longitude || order.lng;
   const marker = L.marker([lat, lng], { icon: currentIcon, zIndexOffset: 8000 }).addTo(map);
+  const telStr = order.telefono ? `<span style="font-size:11px; color:#00E676; font-weight:800;">📞 ${escapeHtmlStr(order.telefono)}</span><br>` : '';
+  const dirStr = order.direccion ? `<span style="font-size:11px; color:#94A3B8;">📍 ${escapeHtmlStr(order.direccion)}</span><br>` : '';
   const popupHtml = userRole === 'repartidor'
     ? `<div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
          <strong style="color:#FF6D00; font-size:13px;">🛒 Pedido de un Vecino</strong><br>
          <span style="font-size:11px; color:#64748B;">${escapeHtmlStr(order.categoria)}</span><br>
+         ${dirStr}
+         ${telStr}
          <button onclick="dibujarRutaAlPedido(${lat}, ${lng})" style="margin-top:8px; background:#0288D1; color:white; border:none; padding:6px 12px; border-radius:15px; font-weight:bold; cursor:pointer; width:100%;"><i class="fa-solid fa-route"></i> IR A ESTA SOLICITUD</button>
        </div>`
     : `<div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
