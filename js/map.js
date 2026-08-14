@@ -187,7 +187,11 @@ function initNotigasMap() {
   cargarPedidosVecinalesEnVivo();
 }
 
+let _lastCargarPedidosTime = 0;
 async function cargarPedidosVecinalesEnVivo() {
+  if (Date.now() - _lastCargarPedidosTime < 2000) return;
+  _lastCargarPedidosTime = Date.now();
+
   if (!window.supabaseClient || !map) {
     console.warn("⚠️ cargarPedidosVecinalesEnVivo cancelado: Supabase o el Mapa no están listos.");
     return;
@@ -714,9 +718,7 @@ function isOrderCategoryMatchingDriver(orderCategory) {
 
   if (!driverCategory) return true; // Si es comprador (vecino), coincide con todas las categorías
 
-  const cat = (orderCategory || '').toLowerCase().trim();
-  // Extraemos la parte principal antes del guion si es que hay un detalle
-  const catCode = cat.split('-')[0].trim();
+  const catCode = (orderCategory || '').toLowerCase().trim();
 
   return driverCategory === catCode;
 }

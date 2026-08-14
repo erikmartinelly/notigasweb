@@ -9,10 +9,7 @@ const GOOGLE_CLIENT_ID = "994996215118-d8vhi4qjtbosvak58mm1c6ritq65hnc9.apps.goo
 let currentSelectedRole = 'buyer'; // 'buyer' o 'driver'
 let currentSelectedMethod = 'google'; // 'google' o 'email'
 
-let databaseEmails = [
-  { gmail: "cliente_otb@gmail.com", role: "Cliente", fecha: "2026-08-01" },
-  { gmail: "gasero_express@gmail.com", role: "Repartidor Gas GLP", fecha: "2026-08-01" }
-];
+let databaseEmails = [];
 
 document.addEventListener('DOMContentLoaded', () => {
   // 1. Iniciar One Tap en segundo plano
@@ -83,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data) {
               const btnAdmin = document.getElementById('btnAdminAccessQuick');
               if (btnAdmin) btnAdmin.style.display = 'flex';
-              AppState.set('isAdmin', 'true' === 'true' || 'true' === true);
+              AppState.set('isAdmin', true);
             }
           } catch(e) {}
         }
@@ -324,7 +321,7 @@ async function handleCredentialResponse(response) {
         if (data) {
           const btnAdmin = document.getElementById('btnAdminAccessQuick');
           if (btnAdmin) btnAdmin.style.display = 'flex';
-          AppState.set('isAdmin', 'true' === 'true' || 'true' === true);
+          AppState.set('isAdmin', true);
         }
       }
     } catch(e) {}
@@ -396,8 +393,8 @@ async function guardarRegistroUnico() {
 
   if (currentSelectedRole === 'driver') {
     const nombreNegocio = (document.getElementById('regNombreNegocio')?.value || '').trim() || 'Repartidor Gas GLP';
-    const whatsapp = (document.getElementById('regWhatsapp')?.value || '').trim() || '74xxxx28';
-    const placa = (document.getElementById('regPlaca')?.value || '').trim() || '3842-XYZ';
+    const whatsapp = (document.getElementById('regWhatsapp')?.value || '').trim();
+    const placa = (document.getElementById('regPlaca')?.value || '').trim();
     const categoria = (document.getElementById('regCategoriaNegocio')?.value || 'gas').trim();
     
     let productos = 'Varios';
@@ -700,10 +697,17 @@ async function ejecutarEliminacionTotalCuenta() {
       if (userId) {
          // Borrar la entrada de chofer si existe (el backend rechazará si no es suyo gracias a RLS)
          await window.supabaseClient.from('choferes_habilitados').delete().eq('user_id', userId);
+         
+         // Llamar a la función RPC para eliminar el usuario por completo de auth.users
+         await window.supabaseClient.rpc('delete_user_account');
+         
          // Detener el tracker de GPS si estaba activo
          if (typeof window.stopDriverLocationBroadcast === 'function') {
            window.stopDriverLocationBroadcast();
          }
+         
+         // Cerrar sesión localmente
+         await window.supabaseClient.auth.signOut();
       }
     } catch (e) {
       console.error('Error limpiando datos de Supabase', e);
@@ -774,8 +778,8 @@ async function migrarDatosAntiguosARepartidor() {
     const repartidorData = {
       role: 'repartidor',
       nombre: driverProfile.nombre || driverProfile.name || 'Repartidor Gas GLP',
-      whatsapp: driverProfile.whatsapp || '74xxxx28',
-      placa: driverProfile.placa || driverProfile.plate || '3842-XYZ',
+      whatsapp: driverProfile.whatsapp || '',
+      placa: driverProfile.placa || driverProfile.plate || '',
       categoria: driverProfile.categoria || driverProfile.category || 'gas',
       productos: driverProfile.productos || driverProfile.products || 'Garrafas GLP 10kg',
       zonas: driverProfile.zonas || driverProfile.zones || 'OTB Central y calles vecinas',
@@ -901,7 +905,7 @@ async function procesarSesionExitosa(user) {
       if (data) {
         const btnAdmin = document.getElementById('btnAdminAccessQuick');
         if (btnAdmin) btnAdmin.style.display = 'flex';
-        AppState.set('isAdmin', 'true' === 'true' || 'true' === true);
+        AppState.set('isAdmin', true);
       }
     }
   } catch(e) {}
