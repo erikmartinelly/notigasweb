@@ -1132,57 +1132,6 @@ function verificarYMostrarRepartidorGPS() {
   // para que TODOS (incluso el propio repartidor) vean el mismo estado en la nube.
 }
 
-function renderHeatmapOverlay() {
-  if (!map) return;
-
-  if (!isHeatmapActive) {
-    if (window.demandClusterMarkers) {
-      for (const id in window.demandClusterMarkers) {
-        if (map.hasLayer(window.demandClusterMarkers[id])) {
-          map.removeLayer(window.demandClusterMarkers[id]);
-        }
-      }
-    }
-    map.flyTo([currentGpsLat, currentGpsLng], 16);
-    return;
-  }
-
-  // Activar mapa de calor es simplemente asegurar que los clusters están visibles
-  // y ajustar el zoom a la zona de demanda
-  if (window.demandClusterMarkers) {
-    const allBounds = [[currentGpsLat, currentGpsLng]];
-    let count = 0;
-    
-    for (const id in window.demandClusterMarkers) {
-      const marker = window.demandClusterMarkers[id];
-      if (!map.hasLayer(marker)) {
-        marker.addTo(map);
-      }
-      const latlng = marker.getLatLng();
-      if (latlng) {
-        allBounds.push([latlng.lat, latlng.lng]);
-        count++;
-      }
-    }
-    
-    if (count === 0) {
-      if (typeof showToast === 'function') {
-         showToast('ℹ️ Zonas de Demanda', 'No hay grupos de demanda activos en este momento.', 'info', 3000);
-      }
-      isHeatmapActive = false;
-      const btn = document.getElementById('heatmapToggleBtn');
-      if (btn) btn.classList.remove('active');
-      return;
-    }
-
-    if (allBounds.length > 1) {
-      const bounds = L.latLngBounds(allBounds);
-      map.fitBounds(bounds, { padding: [80, 80], maxZoom: 13.5 });
-    } else {
-      map.setZoom(13.5);
-    }
-  }
-}
 
 /* Las funciones de geolocalización nativa y fallback IP (obtenerUbicacionIPFallbackDesktop, conectarGPSAuto, etc.) han sido movidas a map_gps.js para evitar que fallos del GPS corrompan el resto de la app. */
 
