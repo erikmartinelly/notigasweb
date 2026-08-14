@@ -225,6 +225,37 @@ window.desactivarSeguirme = function() {
   }
 };
 
+window.pausarRecorridoRepartidor = function() {
+  isDriverGpsLive = false;
+  AppState.set('driverGpsLive', 'off');
+  
+  if (typeof window.stopDriverLocationBroadcast === 'function') {
+    window.stopDriverLocationBroadcast();
+  }
+  
+  // Detener el watchPosition y OSRM si existen
+  if (typeof activeGpsWatchId !== 'undefined' && activeGpsWatchId !== null && navigator.geolocation) {
+    navigator.geolocation.clearWatch(activeGpsWatchId);
+  }
+  if (typeof window.activeRouteInterval !== 'undefined' && window.activeRouteInterval !== null) {
+    clearInterval(window.activeRouteInterval);
+    if (typeof map !== 'undefined' && window.activeRouteLayer) {
+      map.removeLayer(window.activeRouteLayer);
+    }
+    window.activeRouteDest = null;
+  }
+  
+  // Desactivar UI
+  const btnFollow = document.getElementById('btnDriverFollowMe');
+  if (btnFollow) {
+    btnFollow.style.background = '#1E293B';
+    btnFollow.innerHTML = '🎯 INICIAR RECORRIDO';
+  }
+  isMapInteractedByUser = true; // stops auto-panning
+  
+  if (typeof showToast === 'function') showToast('Recorrido Pausado', 'Se ocultó el camión y se detuvo la transmisión GPS.', 'warning', 2000);
+};
+
 function toggleHeatmapOverlay() {
   window.isHeatmapActive = !window.isHeatmapActive;
   const btn = document.getElementById('btnDriverHeatmap');

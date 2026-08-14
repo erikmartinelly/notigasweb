@@ -147,9 +147,12 @@
 
       <!-- PANEL DE ACCIONES FLOTANTES EXCLUSIVO PARA REPARTIDOR (DRIVER / REPARTIDOR MODE) -->
       <div class="floating-actions-container driver-actions-panel" id="driverFloatingActions" style="display: none;">
+        <div class="action-row" style="display:flex; gap:8px; margin-bottom:8px;">
+          <button class="btn-driver-my-location" id="btnDriverMyLocation" style="background:#0288D1; color:white; border:none; padding:10px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; width:100%;">📍 Mi ubicación exacta</button>
+        </div>
         <div class="action-row" style="display:flex; gap:8px;">
-          <button class="btn-driver-my-location" id="btnDriverMyLocation" style="background:#0288D1; color:white; border:none; padding:10px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; flex:1;">📍 Mi ubicación</button>
           <button class="btn-driver-follow-me" id="btnDriverFollowMe" style="background:#1E293B; color:white; border:1px solid rgba(255,255,255,0.2); padding:10px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; flex:1;">🎯 INICIAR RECORRIDO</button>
+          <button class="btn-driver-pause" id="btnDriverPause" style="background:#D32F2F; color:white; border:none; padding:10px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; flex:1;">🔴 PAUSAR</button>
         </div>
 
         <!-- BOTÓN PRINCIPAL PROMINENTE: MAPA DE CALOR Y ZONAS DE ALTA DEMANDA -->
@@ -159,7 +162,6 @@
 
         <div class="action-row" style="display:flex; gap:8px;">
           <button class="btn-driver-orders-list"  id="auto-event-10"  style="background:#1E293B; color:white; border:1px solid rgba(255,255,255,0.2); padding:10px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; flex:1;"><i class="fa-solid fa-list-check"></i> PEDIDOS ZONA</button>
-          <button class="btn-edit-profile"  id="auto-event-11"  style="background:#0288D1; color:white; border:none; padding:10px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; flex:1;"><i class="fa-solid fa-pen-to-square"></i> MI FICHA DE REPARTIDOR</button>
         </div>
       </div>
     </div>

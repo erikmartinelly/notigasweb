@@ -30,6 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (el_btnDriverMyLocation) el_btnDriverMyLocation.addEventListener('click', (event) => { if (typeof activarMiUbicacionRepartidor === 'function') activarMiUbicacionRepartidor() });
     const el_btnDriverFollowMe = document.getElementById('btnDriverFollowMe');
     if (el_btnDriverFollowMe) el_btnDriverFollowMe.addEventListener('click', (event) => { if (typeof activarSeguirme === 'function') activarSeguirme() });
+    const el_btnDriverPause = document.getElementById('btnDriverPause');
+    if (el_btnDriverPause) el_btnDriverPause.addEventListener('click', (event) => { if (typeof pausarRecorridoRepartidor === 'function') pausarRecorridoRepartidor() });
     const el_btnDriverHeatmap = document.getElementById('btnDriverHeatmap');
     if (el_btnDriverHeatmap) el_btnDriverHeatmap.addEventListener('click', (event) => { toggleHeatmapOverlay() });
     const el_auto_event_10 = document.getElementById('auto-event-10');
