@@ -221,8 +221,9 @@ async function cargarPedidosVecinalesEnVivo() {
     }
 
     // 1. Siempre cargar pedidos individuales para dibujar los pines (vecinos y choferes)
+    const tableToQuery = isDriverUser ? 'pedidos' : 'pedidos_publicos';
     const { data: pedidosData, error: pedidosError } = await window.supabaseClient
-      .from('pedidos_publicos')
+      .from(tableToQuery)
       .select('*')
       .eq('ciudad', activeCity)
       .eq('estado', 'pendiente')
@@ -353,9 +354,11 @@ function agregarPedidoVecinoEnMapa(order) {
   const marker = L.marker([lat, lng], { icon: currentIcon, zIndexOffset: 8000 }).addTo(map);
   const telStr = order.telefono ? `<span style="font-size:11px; color:#00E676; font-weight:800;">📞 ${escapeHtmlStr(order.telefono)}</span><br>` : '';
   const dirStr = order.direccion ? `<span style="font-size:11px; color:#94A3B8;">📍 ${escapeHtmlStr(order.direccion)}</span><br>` : '';
+  const nombreStr = order.titulo ? `<span style="font-size:12px; color:#F8FAFC; font-weight:900;">👤 ${escapeHtmlStr(order.titulo)}</span><br>` : '';
   const popupHtml = userRole === 'repartidor'
     ? `<div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
          <strong style="color:#FF6D00; font-size:13px;">🛒 Pedido de un Vecino</strong><br>
+         ${nombreStr}
          <span style="font-size:11px; color:#64748B;">${escapeHtmlStr(order.categoria)}</span><br>
          ${dirStr}
          ${telStr}

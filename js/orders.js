@@ -527,6 +527,8 @@ function confirmarPedido() {
 
           cantidad: 1,
 
+          titulo: buyerName,
+
           direccion: direccion,
 
           telefono: telefono,
