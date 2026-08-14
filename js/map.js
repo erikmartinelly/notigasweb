@@ -468,6 +468,30 @@ function moverMarcadorUbicacionManual(lat, lng) {
   verificarYMostrarRepartidorGPS();
 }
 
+window.inferMainCityFromCoords = function(lat, lng) {
+  const mainCities = [
+    { key: "santacruz", lat: -17.7833, lon: -63.1821 },
+    { key: "cochabamba", lat: -17.3895, lon: -66.1568 },
+    { key: "lapaz", lat: -16.5000, lon: -68.1500 },
+    { key: "sucre", lat: -19.0333, lon: -65.2627 },
+    { key: "tarija", lat: -21.5355, lon: -64.7296 },
+    { key: "oruro", lat: -17.9833, lon: -67.1500 },
+    { key: "potosi", lat: -19.5836, lon: -65.7531 },
+    { key: "trinidad", lat: -14.8333, lon: -64.9000 },
+    { key: "cobija", lat: -11.0333, lon: -68.7333 }
+  ];
+  let closest = "santacruz";
+  let minDist = Infinity;
+  for (const c of mainCities) {
+    const d = calcularDistanciaMetros(lat, lng, c.lat, c.lon);
+    if (d !== null && d < minDist) {
+      minDist = d;
+      closest = c.key;
+    }
+  }
+  return closest;
+};
+
 function applyGpsPosition(lat, lng, label, forceReset = false) {
   if (forceReset) {
     isUserMarkerDraggedManually = false;
@@ -476,6 +500,21 @@ function applyGpsPosition(lat, lng, label, forceReset = false) {
 
   currentGpsLat = lat;
   currentGpsLng = lng;
+  
+  // Auto-detectar ciudad al obtener GPS inicial
+  if (forceReset && typeof window.inferMainCityFromCoords === 'function') {
+      const inferred = window.inferMainCityFromCoords(lat, lng);
+      const currentCity = AppState.get('city') || 'santacruz';
+      // Solo cambiar si es diferente para evitar refrescos innecesarios
+      if (inferred && inferred !== currentCity) {
+          AppState.set('city', inferred);
+          const sel = document.getElementById('newUserCity');
+          if (sel) sel.value = inferred;
+          
+          if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
+          if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
+      }
+  }
 
   const activeLat = isUserMarkerDraggedManually ? currentGpsLat : lat;
   const activeLng = isUserMarkerDraggedManually ? currentGpsLng : lng;
