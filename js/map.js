@@ -213,33 +213,35 @@ async function cargarPedidosVecinalesEnVivo() {
       if (u.categoria) driverCategoria = u.categoria;
     }
 
+    // 1. Siempre cargar pedidos individuales para dibujar los pines (vecinos y choferes)
+    const { data: pedidosData, error: pedidosError } = await window.supabaseClient
+      .from('pedidos_publicos')
+      .select('*')
+      .eq('ciudad', activeCity)
+      .eq('estado', 'pendiente')
+      .gte('created_at', activeWindow);
+
+    if (pedidosError) {
+      console.error("❌ Error de Supabase al cargar pedidos:", pedidosError.message, pedidosError.details);
+    } else if (pedidosData) {
+      console.log(`✅ Supabase devolvió ${pedidosData.length} pedidos.`);
+      pedidosData.forEach(order => agregarPedidoVecinoEnMapa(order));
+    }
+
+    // 2. Si es chofer, cargar también los clusters (zonas de calor)
     if (isDriverUser) {
-      const { data, error } = await window.supabaseClient.rpc('rpc_get_demand_clusters_v2', {
+      const { data: clusterData, error: clusterError } = await window.supabaseClient.rpc('rpc_get_demand_clusters_v2', {
         p_ciudad: activeCity,
         p_categoria: driverCategoria,
         p_distancia_metros: 1000,
-        p_min_pedidos: 3
+        p_min_pedidos: 2
       });
 
-      if (error) {
-        console.error("❌ Error de Supabase al cargar clusters:", error.message, error.details);
-      } else if (data) {
-        console.log(`✅ Supabase devolvió ${data.length} clusters de demanda.`);
-        data.forEach(cluster => agregarClusterEnMapa(cluster));
-      }
-    } else {
-      const { data, error } = await window.supabaseClient
-        .from('pedidos_publicos')
-        .select('*')
-        .eq('ciudad', activeCity)
-        .eq('estado', 'pendiente')
-        .gte('created_at', activeWindow);
-
-      if (error) {
-        console.error("❌ Error de Supabase al cargar pedidos:", error.message, error.details);
-      } else if (data) {
-        console.log(`✅ Supabase devolvió ${data.length} pedidos.`);
-        data.forEach(order => agregarPedidoVecinoEnMapa(order));
+      if (clusterError) {
+        console.error("❌ Error de Supabase al cargar clusters:", clusterError.message, clusterError.details);
+      } else if (clusterData) {
+        console.log(`✅ Supabase devolvió ${clusterData.length} clusters de demanda.`);
+        clusterData.forEach(cluster => agregarClusterEnMapa(cluster));
       }
     }
 
@@ -388,12 +390,18 @@ function agregarPedidoVecinoEnMapa(order) {
   const lat = order.latitude || order.lat;
   const lng = order.longitude || order.lng;
   const marker = L.marker([lat, lng], { icon: currentIcon, zIndexOffset: 8000 }).addTo(map);
-  marker.bindPopup(`
-    <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
-      <strong style="color:#FF6D00; font-size:13px;">🛒 Pedido de un Vecino</strong><br>
-      <span style="font-size:11px; color:#64748B;">${escapeHtmlStr(order.categoria)}</span>
-    </div>
-  `);
+  const popupHtml = userRole === 'repartidor'
+    ? `<div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
+         <strong style="color:#FF6D00; font-size:13px;">🛒 Pedido de un Vecino</strong><br>
+         <span style="font-size:11px; color:#64748B;">${escapeHtmlStr(order.categoria)}</span><br>
+         <button onclick="dibujarRutaAlPedido(${lat}, ${lng})" style="margin-top:8px; background:#0288D1; color:white; border:none; padding:6px 12px; border-radius:15px; font-weight:bold; cursor:pointer; width:100%;"><i class="fa-solid fa-route"></i> IR A ESTA SOLICITUD</button>
+       </div>`
+    : `<div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
+         <strong style="color:#FF6D00; font-size:13px;">🛒 Pedido de un Vecino</strong><br>
+         <span style="font-size:11px; color:#64748B;">${escapeHtmlStr(order.categoria)}</span>
+       </div>`;
+
+  marker.bindPopup(popupHtml);
   neighborOrderMarkers[orderId] = marker;
 
   // FIX W-07: Usar la constante centralizada de state.js en lugar del literal duplicado
@@ -1237,3 +1245,47 @@ function procesarResultadoBusqueda(item, queryOriginal) {
 /* Alias eliminado (código muerto) — se usa transmitirUbicacionRepartidorServidorDB directamente */
 
 /* Suscripciones Realtime del mapa se encuentran en supabase-config.js */
+
+// ==========================================
+// RUTAS OSRM PARA CHOFERES (NIVEL 1)
+// ==========================================
+window.activeRouteLayer = null;
+window.activeRouteInterval = null;
+window.activeRouteDest = null;
+
+window.dibujarRutaAlPedido = function(destLat, destLng) {
+  if (window.activeRouteDest && window.activeRouteDest.lat === destLat && window.activeRouteDest.lng === destLng) return;
+  
+  window.activeRouteDest = { lat: destLat, lng: destLng };
+  actualizarRutaOSRM();
+  
+  if (window.activeRouteInterval) clearInterval(window.activeRouteInterval);
+  window.activeRouteInterval = setInterval(() => {
+    actualizarRutaOSRM();
+  }, 15000); // Recalcular cada 15 segundos
+  
+  if (map) map.closePopup();
+  if (typeof showToast === 'function') showToast('Ruta Trazada', 'Sigue la línea azul. Se recalculará automáticamente.', 'info', 4000);
+}
+
+async function actualizarRutaOSRM() {
+  if (!window.activeRouteDest || typeof currentGpsLat === 'undefined' || typeof currentGpsLng === 'undefined') return;
+  if (!currentGpsLat || !currentGpsLng) return;
+  
+  const origin = `${currentGpsLng},${currentGpsLat}`;
+  const dest = `${window.activeRouteDest.lng},${window.activeRouteDest.lat}`;
+  const url = `https://router.project-osrm.org/route/v1/driving/${origin};${dest}?overview=full&geometries=geojson`;
+  
+  try {
+     const res = await fetch(url);
+     const data = await res.json();
+     if (data.routes && data.routes.length > 0) {
+        if (window.activeRouteLayer) map.removeLayer(window.activeRouteLayer);
+        window.activeRouteLayer = L.geoJSON(data.routes[0].geometry, {
+           style: { color: '#0288D1', weight: 5, opacity: 0.8, dashArray: '10, 10' }
+        }).addTo(map);
+     }
+  } catch (e) {
+     console.error("OSRM Error", e);
+  }
+}
