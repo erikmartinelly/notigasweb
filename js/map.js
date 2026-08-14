@@ -402,6 +402,41 @@ function actualizarCoordenadasPedidoActivo(newLat, newLng, skipMarkerSet = false
   }
 }
 
+function verPedidosEnMapa() {
+  if (!map) return;
+  // Detenemos el seguimiento si estaba activo para que el usuario pueda ver los pedidos libremente
+  if (typeof desactivarSeguirme === 'function') desactivarSeguirme();
+  
+  const allBounds = [];
+  for (const id in neighborOrderMarkers) {
+    const marker = neighborOrderMarkers[id];
+    if (map.hasLayer(marker)) {
+      const latlng = marker.getLatLng();
+      allBounds.push([latlng.lat, latlng.lng]);
+    }
+  }
+
+  if (allBounds.length > 0) {
+    if (allBounds.length === 1) {
+      map.flyTo(allBounds[0], 15);
+    } else {
+      const bounds = L.latLngBounds(allBounds);
+      map.flyToBounds(bounds, { padding: [80, 80], maxZoom: 15 });
+    }
+    if (typeof showToast === 'function') {
+       showToast('🗺️ Mapa de Pedidos', 'Mostrando pedidos activos en tu zona.', 'success', 2000);
+    }
+  } else {
+    if (typeof showToast === 'function') {
+       showToast('ℹ️ Sin Pedidos', 'Actualmente no hay pedidos activos.', 'info', 3000);
+    }
+    // Si no hay pedidos, al menos hacemos un poco de zoom out
+    if (currentGpsLat && currentGpsLng) {
+      map.flyTo([currentGpsLat, currentGpsLng], 13.5);
+    }
+  }
+}
+
 function moverMarcadorUbicacionManual(lat, lng) {
   isUserMarkerDraggedManually = true;
   currentGpsLat = lat;
