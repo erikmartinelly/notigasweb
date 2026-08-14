@@ -90,16 +90,6 @@ function solicitarGeolocalizacionNativaNavegador(
     });
 }
 
-function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
-    console.log(
-        '📍 Fallback IP: ubicación aproximada de red.'
-    );
-
-    const fetchIP = (url, parser) =>
-        fetch(url)
-            .then(response =>
-                response.ok
-                    ? response.json()
 async function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
     const fetchIP = (url, parser) =>
         fetch(url)
@@ -107,9 +97,10 @@ async function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
             .then(parser);
 
     const apis = [
-        fetchIP('https://ipinfo.io/json', data => data?.loc ? { lat: parseFloat(data.loc.split(',')[0]), lng: parseFloat(data.loc.split(',')[1]) } : Promise.reject()),
-        fetchIP('https://freeipapi.com/api/json', data => data?.latitude != null && data?.longitude != null ? { lat: data.latitude, lng: data.longitude } : Promise.reject()),
-        fetchIP('https://ipwho.is/', data => data?.success && data?.latitude != null && data?.longitude != null ? { lat: data.latitude, lng: data.longitude } : Promise.reject())
+        fetchIP('https://ipapi.co/json/', data => data?.latitude != null && data?.longitude != null ? { lat: data.latitude, lng: data.longitude } : Promise.reject(new Error('no lat/lng'))),
+        fetchIP('https://ipinfo.io/json', data => data?.loc ? { lat: parseFloat(data.loc.split(',')[0]), lng: parseFloat(data.loc.split(',')[1]) } : Promise.reject(new Error('no loc'))),
+        fetchIP('https://freeipapi.com/api/json', data => data?.latitude != null && data?.longitude != null ? { lat: data.latitude, lng: data.longitude } : Promise.reject(new Error('no lat/lng'))),
+        fetchIP('https://ipwho.is/', data => data?.success && data?.latitude != null && data?.longitude != null ? { lat: data.latitude, lng: data.longitude } : Promise.reject(new Error('no success')))
     ];
 
     return Promise.any(apis)
