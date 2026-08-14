@@ -131,10 +131,13 @@ function initNotigasMap() {
   });
 
   truckIcon = L.divIcon({
-    className: 'truck-flashing-marker',
-    html: truckSvgMarkerHtml,
-    iconSize: [50, 58],
-    iconAnchor: [25, 58]
+    className: 'notigas-driver-marker',
+    html: `
+      <div class="driver-pulse"></div>
+      <div class="driver-dot"></div>
+    `,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16]
   });
 
   let startLat = currentGpsLat;
@@ -921,10 +924,21 @@ function obtenerIconoCategoriaMapa(catNombre) {
     badgeColor = '#94A3B8';
     iconContent = `<div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #94A3B8);"><i class="fa-solid fa-box" style="font-size: 34px; color: #94A3B8;"></i></div>`;
   } else {
-    // GAS GLP - GARRAFA ROJA LIMPIA
-    badgeLabel = '🔥 Gas GLP';
-    badgeColor = '#FF1744';
-    iconContent = `<div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center;"><img src="icons/garrafa_red_clean.svg" class="garrafa-red-flashing-img" style="width:38px; height:46px;" alt="Garrafa GLP"></div>`;
+    // ESTÉTICA NOTIGAS ORDER (GAS)
+    return L.divIcon({
+      className: 'notigas-order-icon',
+      html: `
+        <div class="order-marker">
+          <div class="gas-cylinder">▮</div>
+        </div>
+        <div class="order-label">
+          ENTREGA <strong>RÁPIDA</strong>
+        </div>
+      `,
+      iconSize: [90, 82],
+      iconAnchor: [45, 58],
+      popupAnchor: [0, -55]
+    });
   }
 
   const markerHtml = `
