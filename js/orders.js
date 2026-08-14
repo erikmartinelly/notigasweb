@@ -138,7 +138,7 @@ async function renderDriverOrdersList() {
           
 
           ${(ord.estado === 'asignado' && ord.driver_id === localUserId) 
-            ? `<button data-action="confirmarEntregaPedido" data-id="${ord.id}" style="flex:1; padding:10px; border:none; border-radius:8px; background:linear-gradient(135deg, #22C55E, #16A34A); color:white; font-weight:700; cursor:pointer;"><i class="fa-solid fa-check"></i> Entregado</button>` 
+            ? `<span style="flex:1; padding:10px; text-align:center; color:#00E676; font-weight:700; font-size:12px;"><i class="fa-solid fa-truck-fast"></i> En ruta (El GPS detectará tu llegada)</span>` 
             : `<span style="flex:1; padding:10px; text-align:center; color:#64748B; font-weight:700; font-size:12px;">Solo grupos de demanda permitidos</span>`
           }
 
@@ -693,6 +693,11 @@ function cancelarPedidoActivo() {
 
     }
     
+    if (typeof userMarker !== 'undefined' && userMarker && typeof garrafaGreenIcon !== 'undefined') {
+        userMarker.setIcon(garrafaGreenIcon);
+        await new Promise(r => setTimeout(r, 1500));
+    }
+    
     AppState.set('activeOrder', null);
 
     showToast('Pedido Cancelado', 'Se ha restaurado el estado normal de la aplicación.', 'error', 4000);
@@ -745,6 +750,11 @@ async function confirmarRecepcionComprador() {
 
          if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
 
+     }
+     
+     if (typeof userMarker !== 'undefined' && userMarker && typeof garrafaGreenIcon !== 'undefined') {
+         userMarker.setIcon(garrafaGreenIcon);
+         await new Promise(r => setTimeout(r, 1500));
      }
      
      AppState.set('activeOrder', null);

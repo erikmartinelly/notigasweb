@@ -285,9 +285,9 @@ function agregarClusterEnMapa(cluster) {
       <strong style="color:#FF1744; font-size:14px;"><i class="fa-solid fa-fire"></i> GRUPO DE DEMANDA</strong><br>
       <span style="font-size:12px; color:#333; font-weight:800;">${escapeHtmlStr(cluster.categoria)}</span><br>
       <span style="font-size:11px; color:#666;">Pedidos activos: <b>${cluster.pedidos_activos}</b></span><br><br>
-      <button data-action="aceptarGrupoDemanda" data-cluster-id="${cluster.cluster_id}" data-ciudad="${cluster.ciudad}" data-categoria="${cluster.categoria}" style="background:#FF6D00; color:white; border:none; padding:8px 16px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px;">
-        🚀 ACEPTAR GRUPO
-      </button>
+      <span style="background:#00E676; color:#0F172A; padding:6px 12px; border-radius:4px; font-weight:bold; font-size:11px; display:inline-block; margin-top:5px;">
+        <i class="fa-solid fa-truck-fast"></i> Simplemente conduce a esta zona
+      </span>
     </div>
   `);
 
@@ -338,6 +338,40 @@ function actualizarRepartidorEnMapa(data) {
       delete activeTruckMarkers[truckId];
     }
   }, 10 * 60000);
+
+  // LOGICA DE PROXIMIDAD: Si el usuario es vecino y su pedido está pendiente, verificar si el camión pasó cerca
+  if (userRole !== 'repartidor') {
+      try {
+          const rawPropio = AppState.get('activeOrder');
+          if (rawPropio && rawPropio.id && rawPropio.lat && rawPropio.lng) {
+              // Si el estado en AppState es nulo o pendiente (es decir, no es entregado o cancelado)
+              const orderState = rawPropio.estado || 'pendiente';
+              if (orderState === 'pendiente') {
+                  const dist = calcularDistanciaMetros(data.latitude, data.longitude, rawPropio.lat, rawPropio.lng);
+                  // 150 metros de radio de sensibilidad para que el camión "pase"
+                  if (dist !== null && dist <= 150) {
+                      if (window.supabaseClient) {
+                          const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
+                          window.supabaseClient.from('pedidos')
+                            .update({ estado: 'visto' })
+                            .eq('id', rawPropio.id)
+                            .eq('user_id', localUserId)
+                            .eq('estado', 'pendiente')
+                            .then(({error}) => {
+                                if (!error) {
+                                    rawPropio.estado = 'visto';
+                                    AppState.set('activeOrder', rawPropio);
+                                    if (typeof showToast === 'function') showToast('¡El Camión llegó!', 'Un repartidor está pasando justo por tu ubicación.', 'success', 8000);
+                                    // Forzar render para actualizar el marcador a amarillo (visto)
+                                    if (typeof renderActiveOrdersMap === 'function') renderActiveOrdersMap();
+                                }
+                            });
+                      }
+                  }
+              }
+          }
+      } catch(e) { console.error("Error en proximidad GPS", e); }
+  }
 }
 
 function agregarPedidoVecinoEnMapa(order) {
