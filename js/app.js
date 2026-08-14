@@ -256,26 +256,6 @@ window.pausarRecorridoRepartidor = function() {
   if (typeof showToast === 'function') showToast('Recorrido Pausado', 'Se ocultó el camión y se detuvo la transmisión GPS.', 'warning', 2000);
 };
 
-function toggleHeatmapOverlay() {
-  window.isHeatmapActive = !window.isHeatmapActive;
-  const btn = document.getElementById('btnDriverHeatmap');
-
-  if (typeof renderHeatmapOverlay === 'function') {
-    renderHeatmapOverlay();
-  }
-
-  if (btn) {
-    if (window.isHeatmapActive) {
-      btn.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> ❌ SALIR MAPA DE CALOR';
-      btn.style.background = 'linear-gradient(135deg, #D32F2F, #B71C1C)';
-    } else {
-      btn.innerHTML = '<i class="fa-solid fa-fire"></i> 🔥 MAPA DE CALOR DE PEDIDOS';
-      btn.style.background = '';
-    }
-  }
-}
-
-
 
 function obtenerIconoHtmlPorCategoria(catNombre) {
   const c = (catNombre || '').toLowerCase();

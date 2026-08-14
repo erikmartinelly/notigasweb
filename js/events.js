@@ -32,8 +32,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (el_btnDriverFollowMe) el_btnDriverFollowMe.addEventListener('click', (event) => { if (typeof activarSeguirme === 'function') activarSeguirme() });
     const el_btnDriverPause = document.getElementById('btnDriverPause');
     if (el_btnDriverPause) el_btnDriverPause.addEventListener('click', (event) => { if (typeof pausarRecorridoRepartidor === 'function') pausarRecorridoRepartidor() });
-    const el_btnDriverHeatmap = document.getElementById('btnDriverHeatmap');
-    if (el_btnDriverHeatmap) el_btnDriverHeatmap.addEventListener('click', (event) => { toggleHeatmapOverlay() });
     const el_auto_event_10 = document.getElementById('auto-event-10');
     if (el_auto_event_10) el_auto_event_10.addEventListener('click', (event) => { abrirModalDriverOrders() });
     const el_auto_event_11 = document.getElementById('auto-event-11');
