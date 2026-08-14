@@ -25,8 +25,13 @@ END;
 $$;
 
 -- 3. Programar el cron job para que corre cada hora
--- Se revoca si ya existía para asegurar idempotencia
-SELECT cron.unschedule('purge_old_records_job');
+-- Se revoca si ya existía para asegurar idempotencia (ignorando error si no existe)
+DO $$
+BEGIN
+    PERFORM cron.unschedule('purge_old_records_job');
+EXCEPTION WHEN OTHERS THEN
+    -- Ignorar el error si el job no existía
+END $$;
 
 SELECT cron.schedule(
     'purge_old_records_job', -- nombre del job
