@@ -2421,3 +2421,56 @@ button:active, .tab-btn:active, .cat-chip:active {
 .leaflet-control-attribution a { color: #8294a9 !important; }
 
 
+
+/* MARCADOR AZUL DEL REPARTIDOR */
+.notigas-driver-marker { position: relative; }
+.driver-dot {
+  position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; transform: translate(-50%, -50%);
+  background: #2494e8; border: 3px solid #ffffff; border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0,0,0,.45), 0 0 12px rgba(36,148,232,.55);
+}
+.driver-pulse {
+  position: absolute; left: 50%; top: 50%; width: 32px; height: 32px; transform: translate(-50%, -50%);
+  border-radius: 50%; background: rgba(36,148,232,.12); border: 1px solid rgba(36,148,232,.25);
+}
+
+/* MARCADOR NARANJA DE PEDIDO */
+.notigas-order-icon { background: transparent !important; border: 0 !important; }
+.order-marker {
+  width: 34px; height: 34px; margin: 0 auto; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient( 145deg, #ff7c22, #ed570b ); border-radius: 9px;
+  border: 2px solid rgba(255,255,255,.15); box-shadow: 0 4px 12px rgba(0,0,0,.5), 0 0 16px rgba(255,105,20,.35);
+}
+.gas-cylinder {
+  width: 11px; height: 19px; color: #ffffff; font-size: 0; background: #fff; border-radius: 3px; position: relative;
+}
+.gas-cylinder::before {
+  content: ""; position: absolute; width: 7px; height: 3px; left: 2px; top: -4px; background: #fff; border-radius: 2px;
+}
+.gas-cylinder::after {
+  content: ""; position: absolute; width: 15px; height: 3px; left: -2px; bottom: 3px; background: #ed570b;
+}
+/* Etiqueta Pedido */
+.order-label {
+  margin-top: 6px; padding: 4px 7px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-width: 58px; background: rgba(20,31,45,.94); border: 1px solid rgba(255,255,255,.08); border-radius: 6px;
+  color: #ffffff; font-size: 8px; line-height: 1.15; font-weight: 800; letter-spacing: .3px; box-shadow: 0 3px 10px rgba(0,0,0,.35);
+}
+.order-label strong { margin-top: 2px; color: #ff7620; font-size: 8px; }
+
+/* TRIP CARD: TU PEDIDO EN CAMINO */
+.notigas-trip-card {
+  position: absolute; left: 14px; right: 14px; bottom: 14px; z-index: 2000; padding: 14px 16px 15px;
+  color: #ffffff; background: linear-gradient( 145deg, rgba(27,42,59,.97), rgba(19,31,47,.97) );
+  border: 1px solid rgba(255,255,255,.08); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.48);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  display: none;
+}
+.trip-title { font-size: 15px; font-weight: 750; line-height: 1.2; margin-bottom: 4px; }
+.trip-info { color: #aebaca; font-size: 11px; line-height: 1.4; }
+.trip-info strong { color: #e4ebf2; }
+.trip-driver { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 10px; font-weight: 700; color: #dbe4ed; }
+.trip-status { width: 7px; height: 7px; background: #27d17f; border-radius: 50%; box-shadow: 0 0 7px rgba(39,209,127,.55); }
+.trip-status-text { color: #27d17f; font-size: 9px; }
+.trip-time { margin-top: 3px; color: #7f90a4; font-size: 10px; }
+
