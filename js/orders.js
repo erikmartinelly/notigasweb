@@ -136,30 +136,16 @@ window.aceptarGrupoDemanda = async function(clusterId, ciudad, categoria) {
     else alert('❌ Error: Sin conexión a la base de datos.');
     return;
   }
-  showConfirmModal('🚚', 'Aceptar Grupo de Demanda', '¿Confirmas que atenderás a todos los pedidos de esta zona?', 'Sí, iré ahora', async () => {
-    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Asignando pedidos...');
+  showConfirmModal('🚚', 'Trazar Ruta', '¿Deseas trazar una ruta hacia este grupo de pedidos?', 'Sí, trazar ruta', async () => {
     
-    const { error } = await window.supabaseClient.rpc('rpc_accept_demand_cluster_v2', {
-      p_cluster_id: clusterId,
-      p_ciudad: ciudad,
-      p_categoria: categoria,
-      p_distancia_metros: 300,
-      p_min_pedidos: 2
-    });
-      
-    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-    
-    if (error) {
-      console.error('Error al aceptar grupo de demanda:', error);
-      if (typeof showToast === 'function') showToast('Error', 'No se pudo aceptar el grupo. Es posible que otro repartidor ya lo haya tomado.', 'error', 4000);
-      else alert('❌ No se pudo aceptar el grupo.');
-      return;
-    }
+    AppState.set('activeClusterId', clusterId);
+    AppState.set('activeClusterCity', ciudad);
+    AppState.set('activeClusterCategoria', categoria);
     
     if (typeof showToast === 'function') {
-      showToast('¡Grupo Aceptado!', 'Has aceptado todos los pedidos de la zona. Se trazará tu ruta óptima.', 'success', 5000);
+      showToast('¡Ruta Trazada!', 'Calculando la ruta óptima hacia los pedidos de la zona.', 'success', 5000);
     } else {
-      alert('✅ ¡GRUPO ACEPTADO!\nSe ha trazado la ruta para estas entregas.');
+      alert('✅ ¡RUTA TRAZADA!\nCalculando la ruta óptima hacia los pedidos de la zona.');
     }
     
     if (window.demandClusterMarkers && window.demandClusterMarkers[clusterId]) {

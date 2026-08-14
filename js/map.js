@@ -154,14 +154,13 @@ function initNotigasMap() {
 
   L.control.zoom({ position: 'topright' }).addTo(map);
 
-  // Google Maps Tiles Directos: Apariencia 100% Google Maps
-  mapTileLayers['google'] = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-    maxZoom: 20,
-    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-    attribution: '&copy; Google Maps'
+  // Usando un proveedor minimalista y moderno basado en OSM (CartoDB Voyager)
+  mapTileLayers['osm'] = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
   });
 
-  mapTileLayers['google'].addTo(map);
+  mapTileLayers['osm'].addTo(map);
 
   setTimeout(() => { if (map) map.invalidateSize(); }, 500);
 
@@ -626,10 +625,19 @@ function applyGpsPosition(lat, lng, label, forceReset = false) {
   renderActiveOrdersMap();
   verificarYMostrarRepartidorGPS();
 
-  // Emitir posición GPS a base de datos si es repartidor activo
-  const _lat = isUserMarkerDraggedManually ? currentGpsLat : lat;
-  const _lng = isUserMarkerDraggedManually ? currentGpsLng : lng;
-  transmitirUbicacionRepartidorServidorDB(_lat, _lng);
+  // Emitir posición GPS a base de datos solo si explícitamente es repartidor
+  const savedUser = JSON.stringify(AppState.get('userData') || {});
+  let isRepartidor = false;
+  try {
+      const u = JSON.parse(savedUser);
+      if (u.role === 'repartidor') isRepartidor = true;
+  } catch(e) {}
+  
+  if (isRepartidor) {
+      const _lat = isUserMarkerDraggedManually ? currentGpsLat : lat;
+      const _lng = isUserMarkerDraggedManually ? currentGpsLng : lng;
+      transmitirUbicacionRepartidorServidorDB(_lat, _lng);
+  }
 }
 
 let lastBroadcastLat = null;
@@ -1073,25 +1081,33 @@ async function calcularYTrazarRutaEficiente() {
   } catch(e){}
 
   if (isDriverUser && window.supabaseClient) {
-    const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
-    const { data } = await window.supabaseClient.from('pedidos')
-       .select('*')
-       .eq('driver_id', localUserId)
-       .eq('estado', 'asignado');
-       
-    if (data && data.length > 0) {
-      data.forEach(o => {
-         const lat = o.latitude || o.lat;
-         const lng = o.longitude || o.lng;
-         if (lat && lng) {
-           pointsToVisit.push({
-              lat: lat,
-              lng: lng,
-              title: o.categoria || 'Pedido Vecinal GLP',
-              desc: o.direccion || 'Ubicación fijada en mapa'
-           });
-         }
+    const activeClusterId = AppState.get('activeClusterId');
+    const activeClusterCity = AppState.get('activeClusterCity');
+    const activeClusterCategoria = AppState.get('activeClusterCategoria');
+    
+    if (activeClusterId && activeClusterCity && activeClusterCategoria) {
+      const { data, error } = await window.supabaseClient.rpc('rpc_get_orders_for_cluster_v2', {
+          p_cluster_id: activeClusterId,
+          p_ciudad: activeClusterCity,
+          p_categoria: activeClusterCategoria,
+          p_distancia_metros: 300,
+          p_min_pedidos: 2
       });
+      
+      if (!error && data && data.length > 0) {
+        data.forEach(o => {
+           const lat = o.latitude || o.lat;
+           const lng = o.longitude || o.lng;
+           if (lat && lng) {
+             pointsToVisit.push({
+                lat: lat,
+                lng: lng,
+                title: o.categoria || 'Pedido Vecinal GLP',
+                desc: o.direccion || 'Ubicación fijada en mapa'
+             });
+           }
+        });
+      }
     }
   } else {
     // 1. Cargar pedido activo real del cliente si existe

@@ -196,6 +196,10 @@ window.activarMiUbicacionRepartidor = function() {
 window.activarSeguirme = function() {
   isMapInteractedByUser = false;
   
+  if (typeof conectarGPSAuto === 'function') {
+      conectarGPSAuto(true);
+  }
+
   if (typeof currentGpsLat !== 'undefined' && typeof currentGpsLng !== 'undefined' && map) {
     map.flyTo([currentGpsLat, currentGpsLng], map.getZoom() || 16, { duration: 1.0 });
   }
