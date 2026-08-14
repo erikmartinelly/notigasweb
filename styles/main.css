@@ -2401,8 +2401,23 @@ button:active, .tab-btn:active, .cat-chip:active {
 }
 
 
-/* Filtro para el mapa: Contraste alto para bordes de manzanas blancos y texto blanco */
-.leaflet-tile-pane {
-  filter: brightness(1.2) contrast(2.5) grayscale(1) !important;
+/* MAPA NOTIGAS: Fondo azul marino con etiquetas nítidas */
+.map-base-layer { 
+  filter: brightness(0.88) saturate(0.85) hue-rotate(8deg); 
 }
+
+/* Controles de Zoom Discretos */
+.leaflet-control-zoom { border: 0 !important; box-shadow: 0 5px 16px rgba(0,0,0,.35) !important; }
+.leaflet-control-zoom a { 
+  width: 36px !important; 
+  height: 36px !important; 
+  line-height: 36px !important; 
+  color: #dce5ef !important; 
+  background: #19283b !important; 
+  border: 1px solid rgba(255,255,255,.07) !important; 
+}
+.leaflet-control-zoom a:hover { background: #26394f !important; color: #ffffff !important; }
+.leaflet-control-attribution { background: rgba(12,22,36,.70) !important; color: #718096 !important; font-size: 8px !important; }
+.leaflet-control-attribution a { color: #8294a9 !important; }
+
 

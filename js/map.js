@@ -154,13 +154,29 @@ function initNotigasMap() {
 
   L.control.zoom({ position: 'topright' }).addTo(map);
 
-  // Usando un proveedor minimalista y moderno basado en OSM (CartoDB Dark Matter para modo oscuro)
-  mapTileLayers['osm'] = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    maxZoom: 19,
-    attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+  // CARTO Dark Matter separado en base y etiquetas para aplicar filtros solo al fondo
+  map.createPane('labels');
+  map.getPane('labels').style.zIndex = 650;
+  map.getPane('labels').style.pointerEvents = 'none';
+
+  mapTileLayers['osm_base'] = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
+    maxZoom: 20,
+    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+    className: 'map-base-layer',
+    subdomains: 'abcd',
+    detectRetina: true
+  });
+  
+  mapTileLayers['osm_labels'] = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', {
+    maxZoom: 20,
+    pane: 'labels',
+    className: 'map-labels-layer',
+    subdomains: 'abcd',
+    detectRetina: true
   });
 
-  mapTileLayers['osm'].addTo(map);
+  mapTileLayers['osm_base'].addTo(map);
+  mapTileLayers['osm_labels'].addTo(map);
 
   setTimeout(() => { if (map) map.invalidateSize(); }, 500);
 
