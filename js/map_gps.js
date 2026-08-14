@@ -100,80 +100,34 @@ function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
             .then(response =>
                 response.ok
                     ? response.json()
-                    : Promise.reject(
-                        new Error(
-                            'HTTP ' + response.status
-                        )
-                    )
-            )
-            .then(parser);
-
-    const apis = [
-        fetchIP(
-            'https://ipinfo.io/json',
-            data => data?.loc
-                ? {
-                    lat: parseFloat(
-                        data.loc.split(',')[0]
-                    ),
-                    lng: parseFloat(
-                        data.loc.split(',')[1]
-                    )
-                }
-                : Promise.reject()
-        ),
-        fetchIP(
-            'https://freeipapi.com/api/json',
-            data =>
-                data?.latitude != null &&
-                data?.longitude != null
-                    ? {
-                        lat: data.latitude,
-                        lng: data.longitude
-                    }
-                    : Promise.reject()
-        ),
-        fetchIP(
-            'https://ipwho.is/',
-            data =>
-                data?.success &&
-                data?.latitude != null &&
-                data?.longitude != null
-                    ? {
-                        lat: data.latitude,
-                        lng: data.longitude
-                    }
-                    : Promise.reject()
-        )
-    ];
-
-    return Promise.any(apis)
-        .then(coords => {
-            /*
-             * IMPORTANTE:
-             * IP NO ES DOMICILIO EXACTO.
-             *
-             * Solamente sirve para aproximar ciudad
-             * y centrar inicialmente el mapa.
-             */
-            if (forceReset || typeof window.currentGpsLat === 'undefined' || window.currentGpsLat === null) {
-                if (typeof window.applyGpsPosition === 'function') {
-                    window.applyGpsPosition(
-                        coords.lat,
-                        coords.lng,
-                        'Ubicación aproximada por red',
-                        true
-                    );
-                }
-            }
-            return coords;
-        })
-        .catch(() => {
-            return {
-                lat: -17.3895,
-                lng: -66.1568
-            };
-        });
+async function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
+    // En Bolivia, las APIs de IP suelen devolver Santa Cruz sin importar la ciudad real.
+    // Es mejor usar la ciudad seleccionada en el estado (AppState).
+    let lat = -17.7833; // Default Santa Cruz
+    let lng = -63.1821;
+    
+    if (typeof AppState !== 'undefined') {
+        const city = AppState.get('city');
+        if (city === 'cochabamba') {
+            lat = -17.3895;
+            lng = -66.1568;
+        } else if (city === 'lapaz') {
+            lat = -16.4897;
+            lng = -68.1193;
+        }
+    }
+    
+    if (forceReset || typeof window.currentGpsLat === 'undefined' || window.currentGpsLat === null) {
+        if (typeof window.applyGpsPosition === 'function') {
+            window.applyGpsPosition(
+                lat,
+                lng,
+                'Ubicación predeterminada de ciudad',
+                true
+            );
+        }
+    }
+    return { lat, lng };
 }
 
 function iniciarWatchGPSRepartidor() {

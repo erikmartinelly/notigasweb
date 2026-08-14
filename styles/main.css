@@ -2401,9 +2401,10 @@ button:active, .tab-btn:active, .cat-chip:active {
 }
 
 
-/* MAPA NOTIGAS: Fondo azul marino con etiquetas nítidas */
+/* MAPA NOTIGAS: Fondo azul marino real (Tintado sobre escala de grises) */
 .map-base-layer { 
-  filter: brightness(0.88) saturate(0.85) hue-rotate(8deg); 
+  /* Sepia lo colorea, hue-rotate lo vuelve azul marino, saturate lo intensifica y brightness lo mantiene oscuro */
+  filter: sepia(100%) hue-rotate(185deg) saturate(300%) brightness(0.6) contrast(1.1); 
 }
 
 /* Controles de Zoom Discretos */
