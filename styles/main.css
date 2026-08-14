@@ -2400,3 +2400,9 @@ button:active, .tab-btn:active, .cat-chip:active {
   display: none !important;
 }
 
+
+/* Filtro para el mapa: Contraste alto para bordes de manzanas blancos y texto blanco */
+.leaflet-tile-pane {
+  filter: brightness(1.2) contrast(2.5) grayscale(1) !important;
+}
+
