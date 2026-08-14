@@ -133,6 +133,12 @@ window.iniciarSuscripcionesRealtime = function() {
                 recibirAlertaVecinalBroadcast(payload.payload);
             }
         })
+        .on('system', { event: '*' }, payload => {
+            if (payload.status === 'error' || payload.status === 'disconnected') {
+                console.warn('⚠️ Realtime system event reportó error/desconexión', payload);
+                if (window.AppState) window.AppState.set('realtimeConnected', false);
+            }
+        })
         .subscribe((status, err) => {
             if (status === 'SUBSCRIBED') {
                 console.log('✅ Realtime conectado correctamente.');

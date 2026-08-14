@@ -27,13 +27,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_auto_event_9 = document.getElementById('auto-event-9');
     if (el_auto_event_9) el_auto_event_9.addEventListener('click', (event) => { conectarGPSAuto(true) });
     const el_btnDriverMyLocation = document.getElementById('btnDriverMyLocation');
-    if (el_btnDriverMyLocation) el_btnDriverMyLocation.addEventListener('click', (event) => { if (typeof activarMiUbicacionRepartidor === 'function') activarMiUbicacionRepartidor() });
+    if (el_btnDriverMyLocation) el_btnDriverMyLocation.addEventListener('click', (event) => { if (typeof window.activarMiUbicacionRepartidor === 'function') window.activarMiUbicacionRepartidor() });
     const el_btnDriverFollowMe = document.getElementById('btnDriverFollowMe');
-    if (el_btnDriverFollowMe) el_btnDriverFollowMe.addEventListener('click', (event) => { if (typeof activarSeguirme === 'function') activarSeguirme() });
+    if (el_btnDriverFollowMe) el_btnDriverFollowMe.addEventListener('click', (event) => { if (typeof window.activarSeguirme === 'function') window.activarSeguirme() });
     const el_btnDriverPause = document.getElementById('btnDriverPause');
-    if (el_btnDriverPause) el_btnDriverPause.addEventListener('click', (event) => { if (typeof pausarRecorridoRepartidor === 'function') pausarRecorridoRepartidor() });
+    if (el_btnDriverPause) el_btnDriverPause.addEventListener('click', (event) => { if (typeof window.pausarRecorridoRepartidor === 'function') window.pausarRecorridoRepartidor() });
     const el_auto_event_10 = document.getElementById('auto-event-10');
-    if (el_auto_event_10) el_auto_event_10.addEventListener('click', (event) => { if (typeof verPedidosEnMapa === 'function') verPedidosEnMapa() });
+    if (el_auto_event_10) el_auto_event_10.addEventListener('click', (event) => { if (typeof window.verPedidosEnMapa === 'function') window.verPedidosEnMapa() });
     const el_auto_event_11 = document.getElementById('auto-event-11');
     if (el_auto_event_11) el_auto_event_11.addEventListener('click', (event) => { abrirEdicionFichaRepartidor() });
     const el_auto_event_12 = document.getElementById('auto-event-12');
@@ -183,54 +183,54 @@ document.addEventListener('click', (e) => {
   
   if (action === 'confirmarEntregaPedido') {
     const id = btn.getAttribute('data-id');
-    if (typeof confirmarEntregaPedido === 'function') confirmarEntregaPedido(id);
+    if (typeof window.confirmarEntregaPedido === 'function') window.confirmarEntregaPedido(id);
   }
   else if (action === 'cancelarPedidoActivo') {
-    if (typeof cancelarPedidoActivo === 'function') cancelarPedidoActivo();
-    if (typeof cerrarPanoramicaPedidos === 'function') cerrarPanoramicaPedidos();
+    if (typeof window.cancelarPedidoActivo === 'function') window.cancelarPedidoActivo();
+    if (typeof window.cerrarPanoramicaPedidos === 'function') window.cerrarPanoramicaPedidos();
   }
   else if (action === 'cerrarPanoramicaPedidos') {
-    if (typeof cerrarPanoramicaPedidos === 'function') cerrarPanoramicaPedidos();
+    if (typeof window.cerrarPanoramicaPedidos === 'function') window.cerrarPanoramicaPedidos();
   }
   else if (action === 'aceptarGrupoDemanda') {
     const cid = btn.getAttribute('data-cluster-id');
     const city = btn.getAttribute('data-ciudad');
     const cat = btn.getAttribute('data-categoria');
-    if (typeof aceptarGrupoDemanda === 'function') aceptarGrupoDemanda(cid, city, cat);
+    if (typeof window.aceptarGrupoDemanda === 'function') window.aceptarGrupoDemanda(cid, city, cat);
   }
   else if (action === 'abrirSubmenuPedidos') {
-    if (typeof abrirSubmenuPedidos === 'function') abrirSubmenuPedidos();
+    if (typeof window.abrirSubmenuPedidos === 'function') window.abrirSubmenuPedidos();
   }
   else if (action === 'abrirModalNuevoPost') {
-    if (typeof abrirModalNuevoPost === 'function') abrirModalNuevoPost();
+    if (typeof window.abrirModalNuevoPost === 'function') window.abrirModalNuevoPost();
   }
   else if (action === 'votarPost') {
     const val = parseInt(btn.getAttribute('data-val'));
     const id = btn.getAttribute('data-id');
-    if (typeof votarPost === 'function') votarPost(btn, val, id);
+    if (typeof window.votarPost === 'function') window.votarPost(btn, val, id);
   }
   else if (action === 'abrirComentariosPost') {
     const id = btn.getAttribute('data-id');
     const title = decodeURIComponent(btn.getAttribute('data-title'));
     const desc = decodeURIComponent(btn.getAttribute('data-desc'));
     const cat = decodeURIComponent(btn.getAttribute('data-cat'));
-    if (typeof abrirComentariosPost === 'function') abrirComentariosPost(id, title, desc, cat, btn);
+    if (typeof window.abrirComentariosPost === 'function') window.abrirComentariosPost(id, title, desc, cat, btn);
   }
   else if (action === 'abrirModalDenuncia') {
     const title = decodeURIComponent(btn.getAttribute('data-title'));
-    if (typeof abrirModalDenuncia === 'function') abrirModalDenuncia('Aviso Noticias Vecinales', title);
+    if (typeof window.abrirModalDenuncia === 'function') window.abrirModalDenuncia('Aviso Noticias Vecinales', title);
   }
   else if (action === 'borrarPostForumAdmin') {
     const id = btn.getAttribute('data-id');
-    if (typeof borrarPostForumAdmin === 'function') borrarPostForumAdmin(id);
+    if (typeof window.borrarPostForumAdmin === 'function') window.borrarPostForumAdmin(id);
   }
   else if (action === 'abrirAnuncioWhatsApp') {
-    if (typeof abrirAnuncioWhatsApp === 'function') abrirAnuncioWhatsApp();
+    if (typeof window.abrirAnuncioWhatsApp === 'function') window.abrirAnuncioWhatsApp();
   }
   else if (action === 'votarComentario') {
     const id = btn.getAttribute('data-id');
     const val = parseInt(btn.getAttribute('data-val'));
-    if (typeof votarComentario === 'function') votarComentario(id, val);
+    if (typeof window.votarComentario === 'function') window.votarComentario(id, val);
   }
   else if (action === 'abrirModalDriver') {
     const modal = document.getElementById('modalDriver');
@@ -238,11 +238,11 @@ document.addEventListener('click', (e) => {
   }
   else if (action === 'eliminarFichaAdmin') {
     const id = btn.getAttribute('data-id');
-    if (typeof eliminarFichaAdmin === 'function') eliminarFichaAdmin(id);
+    if (typeof window.eliminarFichaAdmin === 'function') window.eliminarFichaAdmin(id);
   }
   else if (action === 'seleccionarYPedirDirecto') {
     const cat = decodeURIComponent(btn.getAttribute('data-cat'));
-    if (typeof seleccionarYPedirDirecto === 'function') seleccionarYPedirDirecto(cat);
+    if (typeof window.seleccionarYPedirDirecto === 'function') window.seleccionarYPedirDirecto(cat);
   }
 });
 
@@ -254,45 +254,45 @@ document.addEventListener('click', (e) => {
   
   if (action === 'borrarAnuncioLocalAdmin') {
     const id = btn.getAttribute('data-id');
-    if (typeof borrarAnuncioLocalAdmin === 'function') borrarAnuncioLocalAdmin(id);
+    if (typeof window.borrarAnuncioLocalAdmin === 'function') window.borrarAnuncioLocalAdmin(id);
   }
   else if (action === 'aprobarRepartidorAdmin') {
     const id = btn.getAttribute('data-id');
-    if (typeof aprobarRepartidorAdmin === 'function') aprobarRepartidorAdmin(id);
+    if (typeof window.aprobarRepartidorAdmin === 'function') window.aprobarRepartidorAdmin(id);
   }
   else if (action === 'desbanearRepartidorAdmin') {
     const id = btn.getAttribute('data-id');
     const name = decodeURIComponent(btn.getAttribute('data-name'));
-    if (typeof desbanearRepartidorAdmin === 'function') desbanearRepartidorAdmin(id, name);
+    if (typeof window.desbanearRepartidorAdmin === 'function') window.desbanearRepartidorAdmin(id, name);
   }
   else if (action === 'banearRepartidorAdmin') {
     const id = btn.getAttribute('data-id');
     const name = decodeURIComponent(btn.getAttribute('data-name'));
     const plate = decodeURIComponent(btn.getAttribute('data-plate'));
-    if (typeof banearRepartidorAdmin === 'function') banearRepartidorAdmin(id, name, plate);
+    if (typeof window.banearRepartidorAdmin === 'function') window.banearRepartidorAdmin(id, name, plate);
   }
   else if (action === 'borrarRepartidorPermanente') {
     const id = btn.getAttribute('data-id');
     const name = decodeURIComponent(btn.getAttribute('data-name'));
-    if (typeof borrarRepartidorPermanente === 'function') borrarRepartidorPermanente(id, name);
+    if (typeof window.borrarRepartidorPermanente === 'function') window.borrarRepartidorPermanente(id, name);
   }
   else if (action === 'banearUsuarioAdmin') {
     const gmailOrId = btn.getAttribute('data-gmail') || btn.getAttribute('data-id');
-    if (typeof banearUsuarioAdmin === 'function') banearUsuarioAdmin(gmailOrId);
+    if (typeof window.banearUsuarioAdmin === 'function') window.banearUsuarioAdmin(gmailOrId);
   }
   else if (action === 'borrarCompradorPermanente') {
     const gmail = btn.getAttribute('data-gmail');
     const name = btn.getAttribute('data-name');
-    if (typeof borrarCompradorPermanente === 'function') borrarCompradorPermanente(gmail, name);
+    if (typeof window.borrarCompradorPermanente === 'function') window.borrarCompradorPermanente(gmail, name);
   }
   else if (action === 'limpiarTodosLosPedidosFantasmaAdmin') {
-    if (typeof limpiarTodosLosPedidosFantasmaAdmin === 'function') limpiarTodosLosPedidosFantasmaAdmin();
+    if (typeof window.limpiarTodosLosPedidosFantasmaAdmin === 'function') window.limpiarTodosLosPedidosFantasmaAdmin();
   }
   else if (action === 'borrarPedidoFantasmaAdmin') {
     const type = btn.getAttribute('data-type');
     const id = btn.getAttribute('data-id');
     const idx = btn.getAttribute('data-idx');
-    if (typeof borrarPedidoFantasmaAdmin === 'function') {
+    if (typeof window.borrarPedidoFantasmaAdmin === 'function') {
       if (type === 'supabase') borrarPedidoFantasmaAdmin(type, id);
       else if (type === 'truck_report') borrarPedidoFantasmaAdmin(type, parseInt(idx));
       else borrarPedidoFantasmaAdmin(type);
@@ -300,11 +300,11 @@ document.addEventListener('click', (e) => {
   }
   else if (action === 'borrarDenunciaAdmin') {
     const id = btn.getAttribute('data-id');
-    if (typeof borrarDenunciaAdmin === 'function') borrarDenunciaAdmin(id);
+    if (typeof window.borrarDenunciaAdmin === 'function') window.borrarDenunciaAdmin(id);
   }
   else if (action === 'desbanearUsuarioAdmin') {
     const id = btn.getAttribute('data-id');
-    if (typeof desbanearUsuarioAdmin === 'function') desbanearUsuarioAdmin(id);
+    if (typeof window.desbanearUsuarioAdmin === 'function') window.desbanearUsuarioAdmin(id);
   }
 });
 

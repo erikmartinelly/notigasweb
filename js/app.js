@@ -403,14 +403,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof cargarPedidosVecinalesEnVivo === 'function') {
             cargarPedidosVecinalesEnVivo();
             // Mecanismo de recuperación (polling backup) en caso de que falle Realtime
-            if (
-                typeof iniciarSuscripcionesRealtime === 'function'
-            ) {
-                iniciarSuscripcionesRealtime();
-
-                if (
-                    window.notigasRealtimeFallbackInterval
-                ) {
+            if (typeof iniciarSuscripcionesRealtime === 'function') {
+                if (window.notigasRealtimeFallbackInterval) {
                     clearInterval(
                         window.notigasRealtimeFallbackInterval
                     );

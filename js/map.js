@@ -622,8 +622,10 @@ function applyGpsPosition(lat, lng, label, forceReset = false) {
     map.invalidateSize();
   }
 
-  renderActiveOrdersMap();
-  verificarYMostrarRepartidorGPS();
+  if (forceReset) {
+    renderActiveOrdersMap();
+    verificarYMostrarRepartidorGPS();
+  }
 
   // Emitir posición GPS a base de datos solo si explícitamente es repartidor
   const savedUser = JSON.stringify(AppState.get('userData') || {});
@@ -637,6 +639,20 @@ function applyGpsPosition(lat, lng, label, forceReset = false) {
       const _lat = isUserMarkerDraggedManually ? currentGpsLat : lat;
       const _lng = isUserMarkerDraggedManually ? currentGpsLng : lng;
       transmitirUbicacionRepartidorServidorDB(_lat, _lng);
+      
+      if (typeof L !== 'undefined' && L.latLng && typeof window.lastRouteCalcLat !== 'undefined' && window.lastRouteCalcLat !== null) {
+          const dist = L.latLng(_lat, _lng).distanceTo(L.latLng(window.lastRouteCalcLat, window.lastRouteCalcLng));
+          if (dist >= 30) {
+              if (AppState.get('activeClusterId') && typeof window.calcularYTrazarRutaEficiente === 'function') {
+                  window.calcularYTrazarRutaEficiente();
+              }
+              window.lastRouteCalcLat = _lat;
+              window.lastRouteCalcLng = _lng;
+          }
+      } else {
+          window.lastRouteCalcLat = _lat;
+          window.lastRouteCalcLng = _lng;
+      }
   }
 }
 
