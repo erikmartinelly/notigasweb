@@ -27,7 +27,13 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
+      // Usar Promise.allSettled para que un solo archivo 404 no rompa todo el Service Worker
+      return Promise.allSettled(ASSETS_TO_CACHE.map(asset => {
+         return fetch(asset).then(response => {
+            if (response.ok) return cache.put(asset, response);
+            console.warn('SW: No se pudo cachear:', asset);
+         }).catch(err => console.warn('SW: Error cacheando:', asset, err));
+      }));
     }).then(() => self.skipWaiting())
   );
 });
@@ -48,6 +54,7 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  if (!event.request.url.startsWith('http')) return; // Prevenir errores con extensiones de Chrome (chrome-extension://)
   
   const url = event.request.url;
   // Bypass: peticiones externas y Supabase (autenticación/realtime nunca deben cachearse)
