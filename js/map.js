@@ -170,8 +170,14 @@ function initNotigasMap() {
   }
 
   // REGISTRAR INTERACCIÓN MANUAL DE ZOOM / ARRASTRE PARA EVITAR RE-CENTRADOS AUTOMÁTICOS MOLESTOS
-  map.on('dragstart', () => { isMapInteractedByUser = true; });
-  map.on('zoomstart', () => { isMapInteractedByUser = true; });
+  map.on('dragstart', () => { 
+    isMapInteractedByUser = true; 
+    if (typeof desactivarSeguirme === 'function') desactivarSeguirme(); 
+  });
+  map.on('zoomstart', () => { 
+    isMapInteractedByUser = true; 
+    if (typeof desactivarSeguirme === 'function') desactivarSeguirme(); 
+  });
 
   // HABILITAR AJUSTE DE UBICACIÓN AL HACER CLIC DIRECTO EN CUALQUIER PUNTO DEL MAPA
   map.on('click', (e) => {

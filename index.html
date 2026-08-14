@@ -147,9 +147,10 @@
 
       <!-- PANEL DE ACCIONES FLOTANTES EXCLUSIVO PARA REPARTIDOR (DRIVER / REPARTIDOR MODE) -->
       <div class="floating-actions-container driver-actions-panel" id="driverFloatingActions" style="display: none;">
-        <button class="btn-driver-gps-toggle" id="btnDriverGpsToggle" >
-          <i class="fa-solid fa-location-arrow"></i> INICIAR RECORRIDO EN VIVO
-        </button>
+        <div class="action-row" style="display:flex; gap:8px;">
+          <button class="btn-driver-my-location" id="btnDriverMyLocation" style="background:#0288D1; color:white; border:none; padding:10px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; flex:1;">📍 Mi ubicación</button>
+          <button class="btn-driver-follow-me" id="btnDriverFollowMe" style="background:#1E293B; color:white; border:1px solid rgba(255,255,255,0.2); padding:10px; border-radius:10px; font-weight:800; font-size:12px; cursor:pointer; flex:1;">🎯 INICIAR RECORRIDO</button>
+        </div>
 
         <!-- BOTÓN PRINCIPAL PROMINENTE: MAPA DE CALOR Y ZONAS DE ALTA DEMANDA -->
         <button class="btn-driver-heatmap" id="btnDriverHeatmap"  style="width: 100%; background: linear-gradient(135deg, #FF6D00 0%, #E65100 100%); color: white; border: 1.5px solid #F59E0B; padding: 14px; border-radius: 14px; font-weight: 900; font-size: 14px; cursor: pointer; box-shadow: 0 4px 22px rgba(255,109,0,0.6), inset 0 1px 0 rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: 0.5px;">

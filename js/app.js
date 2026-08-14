@@ -181,36 +181,49 @@ function setAppMode(mode) {
   }
 }
 
-function toggleDriverGpsTransmission() {
-  isDriverGpsLive = !isDriverGpsLive;
-  const btn = document.getElementById('btnDriverGpsToggle');
-  if (isDriverGpsLive) {
-    AppState.set('driverGpsLive', 'on');
-    if (btn) btn.innerHTML = '<i class="fa-solid fa-circle-stop"></i> 🔴 PAUSAR RECORRIDO EN VIVO';
-    showToast('GPS Activado', 'Tu ubicación exacta ahora es visible para los vecinos de tu OTB.', 'success', 1000);
-    
-    // Broadcast a Supabase
-    let driverName = 'Repartidor';
-    let driverCat = 'gas';
-    try {
-      const u = AppState.get('userData');
-      if (u && u.nombre) driverName = u.nombre;
-    } catch(e){}
-    if (typeof transmitirUbicacionRepartidorServidorDB === 'function' && typeof currentGpsLat !== 'undefined' && typeof currentGpsLng !== 'undefined') {
-      transmitirUbicacionRepartidorServidorDB(currentGpsLat, currentGpsLng);
-    }
-  } else {
-    AppState.set('driverGpsLive', 'off');
-    if (btn) btn.innerHTML = '<i class="fa-solid fa-location-arrow"></i> 🟢 INICIAR RECORRIDO EN VIVO';
-    showToast('GPS Pausado', 'Tu camión ha sido ocultado del mapa vecinal.', 'warning', 1000);
-    
-    // Detener Broadcast en Supabase
-    if (typeof window.stopDriverLocationBroadcast === 'function') {
-      window.stopDriverLocationBroadcast();
+window.activarMiUbicacionRepartidor = function() {
+  if (typeof conectarGPSAuto === 'function') {
+    conectarGPSAuto(true); // forceReset = true (centra el mapa una vez)
+  }
+  
+  isDriverGpsLive = true;
+  AppState.set('driverGpsLive', 'on');
+  if (typeof showToast === 'function') showToast('Ubicación Obtenida', 'El mapa se ha centrado en tu posición y el GPS está activo.', 'success', 2000);
+  
+  if (typeof transmitirUbicacionRepartidorServidorDB === 'function' && typeof currentGpsLat !== 'undefined' && typeof currentGpsLng !== 'undefined') {
+    transmitirUbicacionRepartidorServidorDB(currentGpsLat, currentGpsLng);
+  }
+  
+  // Activar seguirme automáticamente al presionar Mi ubicación
+  activarSeguirme();
+};
+
+window.activarSeguirme = function() {
+  isMapInteractedByUser = false;
+  
+  if (typeof currentGpsLat !== 'undefined' && typeof currentGpsLng !== 'undefined' && map) {
+    map.flyTo([currentGpsLat, currentGpsLng], map.getZoom() || 16, { duration: 1.0 });
+  }
+  
+  const btn = document.getElementById('btnDriverFollowMe');
+  if (btn) {
+    btn.style.background = '#059669'; // verde esmeralda para indicar ACTIVO
+    btn.innerHTML = '🎯 SIGUIENDO';
+  }
+  
+  if (typeof showToast === 'function') showToast('Seguimiento Activado', 'El mapa seguirá tus movimientos automáticamente.', 'info', 1500);
+};
+
+window.desactivarSeguirme = function() {
+  if (isMapInteractedByUser) {
+    const btn = document.getElementById('btnDriverFollowMe');
+    if (btn && btn.innerHTML.includes('SIGUIENDO')) {
+      btn.style.background = '#1E293B';
+      btn.innerHTML = '🎯 INICIAR RECORRIDO';
+      if (typeof showToast === 'function') showToast('Seguimiento Pausado', 'Modo exploración manual activo.', 'warning', 1500);
     }
   }
-  if (typeof verificarYMostrarRepartidorGPS === 'function') verificarYMostrarRepartidorGPS();
-}
+};
 
 function toggleHeatmapOverlay() {
   window.isHeatmapActive = !window.isHeatmapActive;

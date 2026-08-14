@@ -26,8 +26,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (el_auto_event_8) el_auto_event_8.addEventListener('click', (event) => { notificarEscucheCamion() });
     const el_auto_event_9 = document.getElementById('auto-event-9');
     if (el_auto_event_9) el_auto_event_9.addEventListener('click', (event) => { conectarGPSAuto(true) });
-    const el_btnDriverGpsToggle = document.getElementById('btnDriverGpsToggle');
-    if (el_btnDriverGpsToggle) el_btnDriverGpsToggle.addEventListener('click', (event) => { toggleDriverGpsTransmission() });
+    const el_btnDriverMyLocation = document.getElementById('btnDriverMyLocation');
+    if (el_btnDriverMyLocation) el_btnDriverMyLocation.addEventListener('click', (event) => { if (typeof activarMiUbicacionRepartidor === 'function') activarMiUbicacionRepartidor() });
+    const el_btnDriverFollowMe = document.getElementById('btnDriverFollowMe');
+    if (el_btnDriverFollowMe) el_btnDriverFollowMe.addEventListener('click', (event) => { if (typeof activarSeguirme === 'function') activarSeguirme() });
     const el_btnDriverHeatmap = document.getElementById('btnDriverHeatmap');
     if (el_btnDriverHeatmap) el_btnDriverHeatmap.addEventListener('click', (event) => { toggleHeatmapOverlay() });
     const el_auto_event_10 = document.getElementById('auto-event-10');
