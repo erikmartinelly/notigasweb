@@ -204,7 +204,11 @@ function initNotigasMap() {
   });
 
   // CREAR DE INMEDIATO EL MARCADOR DE ENTREGA PARA PERMITIR ARRASTRE MANUAL AL INSTANTE
-  applyGpsPosition(currentGpsLat, currentGpsLng, "Ubicación Inicial", true);
+  if (currentGpsLat && currentGpsLng) {
+    applyGpsPosition(currentGpsLat, currentGpsLng, "Ubicación Inicial", true, true);
+  } else {
+    applyGpsPosition(startLat, startLng, "Ciudad Seleccionada", true, false);
+  }
 
   conectarGPSAuto(false);
   renderReportedTrucksBuffer();  
@@ -546,10 +550,15 @@ window.inferMainCityFromCoords = function(lat, lng) {
       closest = c.key;
     }
   }
+  // Si la distancia a la ciudad más cercana es mayor a 15km, retorna fuera de cobertura
+  if (minDist > 15000) {
+    return "fuera_de_cobertura";
+  }
   return closest;
 };
 
-function applyGpsPosition(lat, lng, label, forceReset = false) {
+function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
+  window.isGpsExact = isExact;
   if (forceReset) {
     isUserMarkerDraggedManually = false;
     isMapInteractedByUser = false;
@@ -685,9 +694,6 @@ let lastBroadcastLng = null;
    4. Ahorro Total: Menos de 0.2 MB de consumo al día por repartidor.
 */
 async function transmitirUbicacionRepartidorServidorDB(lat, lng) {
-  // 1. Pausa total si la pestaña está inactiva o pantalla bloqueada
-  if (document.hidden) return;
-
   const driverGpsLive = (AppState.get('driverGpsLive') || 'on');
   if (driverGpsLive === 'off') return;
 
@@ -931,8 +937,8 @@ function obtenerIconoCategoriaMapa(catNombre) {
         <div class="order-marker">
           <div class="gas-cylinder">▮</div>
         </div>
-        <div class="order-label">
-          ENTREGA <strong>RÁPIDA</strong>
+        <div class="order-label" style="color: #ffffff; text-shadow: 0 1px 3px rgba(0,0,0,1); -webkit-font-smoothing: antialiased; transform: translateZ(0);">
+          ENTREGA <strong style="color: #ffffff; text-shadow: 0 0 5px #ff7620, 0 1px 3px rgba(0,0,0,1);">RÁPIDA</strong>
         </div>
       `,
       iconSize: [90, 82],
@@ -944,7 +950,7 @@ function obtenerIconoCategoriaMapa(catNombre) {
   const markerHtml = `
     <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; user-select: none;">
       ${iconContent}
-      <div style="margin-top: 2px; background: #0F172A; color: white; border: 1.5px solid ${badgeColor}; padding: 2px 7px; border-radius: 12px; font-size: 10px; font-weight: 900; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.5); pointer-events: none;">
+      <div style="margin-top: 2px; background: #0F172A; color: #ffffff; border: 1.5px solid ${badgeColor}; padding: 2px 7px; border-radius: 12px; font-size: 10px; font-weight: 900; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.5); pointer-events: none; -webkit-font-smoothing: antialiased; text-rendering: geometricPrecision; text-shadow: 0 1px 3px rgba(0,0,0,0.9); transform: translateZ(0);">
         ${badgeLabel}
       </div>
     </div>
@@ -1215,7 +1221,7 @@ async function calcularYTrazarRutaEficiente() {
     if (pt.distFromLast) accumulatedDist += pt.distFromLast;
 
     const seqBadgeHtml = `
-      <div style="background: linear-gradient(135deg, #0EA5E9, #0288D1); color: #FFFFFF; font-size: 11px; font-weight: 900; padding: 5px 9px; border-radius: 12px; border: 2px solid #FFFFFF; box-shadow: 0 4px 14px rgba(0,0,0,0.6); white-space: nowrap;">
+      <div style="background: linear-gradient(135deg, #0EA5E9, #0288D1); color: #ffffff; font-size: 11px; font-weight: 900; padding: 5px 9px; border-radius: 12px; border: 2px solid #FFFFFF; box-shadow: 0 4px 14px rgba(0,0,0,0.6); white-space: nowrap; -webkit-font-smoothing: antialiased; text-rendering: geometricPrecision; text-shadow: 0 1px 3px rgba(0,0,0,0.9); transform: translateZ(0);">
         ${idx + 1}º ${pt.title}
       </div>
     `;

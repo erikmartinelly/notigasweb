@@ -1,26 +1,26 @@
 /* NOTIGAS SERVICE WORKER v52.0 - CACHÉ PROGRESIVO Y MODO OFFLINE */
-const CACHE_NAME = 'notigas-cache-v66';
+const CACHE_NAME = 'notigas-cache-v67';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './styles/main.css?v=66',
-  './js/state.js?v=66',
-  './js/supabase-config.js?v=66',
-  './js/auth.js?v=66',
-  './js/vendors.js?v=66',
-  './js/map.js?v=66',
-  './js/forum.js?v=66',
-  './js/ads.js?v=66',
-  './js/ui.js?v=66',
-  './js/orders.js?v=66',
-  './js/app.js?v=66',
-  './js/admin.js?v=66',
-  './js/admin_users.js?v=66',
+  './styles/main.css?v=67',
+  './js/state.js?v=67',
+  './js/supabase-config.js?v=67',
+  './js/auth.js?v=67',
+  './js/vendors.js?v=67',
+  './js/map.js?v=67',
+  './js/forum.js?v=67',
+  './js/ads.js?v=67',
+  './js/ui.js?v=67',
+  './js/orders.js?v=67',
+  './js/app.js?v=67',
+  './js/admin.js?v=67',
+  './js/admin_users.js?v=67',
   './icons/garrafa_red_clean.svg',
   './icons/camion_red.svg',
-  './js/events.js?v=66',
-  './js/map_search.js?v=66',
-  './js/map_gps.js?v=66',
+  './js/events.js?v=67',
+  './js/map_search.js?v=67',
+  './js/map_gps.js?v=67',
   './manifest.json'
 ];
 

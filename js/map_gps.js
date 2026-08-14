@@ -51,17 +51,34 @@ function solicitarGeolocalizacionNativaNavegador(
                 maximumAge: 30000
             };
 
+        console.log(`
+NOTIGAS GEOLOCATION -------------------
+Secure Context: ${window.isSecureContext ? 'YES' : 'NO'}
+Native GPS: Attempting...`);
+
         navigator.geolocation.getCurrentPosition(
             position => {
+                console.log(`
+NOTIGAS GEOLOCATION -------------------
+Secure Context: ${window.isSecureContext ? 'YES' : 'NO'}
+Native GPS: SUCCESS
+Accuracy: EXACT (${position.coords.accuracy}m)`);
                 applyGpsPosition(
                     position.coords.latitude,
                     position.coords.longitude,
                     'Ubicación GPS del navegador',
-                    forceReset
+                    forceReset,
+                    true // isExact
                 );
                 resolve(position);
             },
             error => {
+                console.log(`
+NOTIGAS GEOLOCATION -------------------
+Secure Context: ${window.isSecureContext ? 'YES' : 'NO'}
+Native GPS: FAILED
+Error code: ${error.code}
+Error message: ${error.message}`);
                 console.warn(
                     'GPS inicial falló:',
                     error.message
@@ -73,7 +90,8 @@ function solicitarGeolocalizacionNativaNavegador(
                             position.coords.latitude,
                             position.coords.longitude,
                             'Ubicación GPS de respaldo',
-                            forceReset
+                            forceReset,
+                            true // isExact
                         );
                         resolve(position);
                     },
@@ -105,9 +123,13 @@ async function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
 
     return Promise.any(apis)
         .then(coords => {
+            console.log(`
+NOTIGAS GEOLOCATION -------------------
+IP fallback: SUCCESS
+Accuracy: APPROXIMATE`);
             if (forceReset || typeof window.currentGpsLat === 'undefined' || window.currentGpsLat === null) {
                 if (typeof window.applyGpsPosition === 'function') {
-                    window.applyGpsPosition(coords.lat, coords.lng, 'Ubicación aproximada por IP', forceReset);
+                    window.applyGpsPosition(coords.lat, coords.lng, 'Ubicación aproximada por IP', forceReset, false); // isExact = false
                 }
             }
             return coords;
@@ -122,7 +144,7 @@ async function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
             }
             if (forceReset || typeof window.currentGpsLat === 'undefined' || window.currentGpsLat === null) {
                 if (typeof window.applyGpsPosition === 'function') {
-                    window.applyGpsPosition(lat, lng, 'Ubicación predeterminada (IP fallida)', forceReset);
+                    window.applyGpsPosition(lat, lng, 'Ubicación predeterminada (IP fallida)', forceReset, false); // isExact = false
                 }
             }
             return { lat, lng };
@@ -180,7 +202,8 @@ function iniciarWatchGPSRepartidor() {
                     lat,
                     lng,
                     'GPS repartidor',
-                    false
+                    false,
+                    true // isExact
                 );
 
                 if (moved >= 30) {

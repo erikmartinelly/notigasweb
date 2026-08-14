@@ -59,7 +59,7 @@ NOTIGAS bridges this gap by democratizing access to Artificial Intelligence and 
 
 2.  **Configure Supabase:**
     *   Create a new project in Supabase.
-    *   Run the SQL scripts located in the `supabase/migrations/` folder in numerical order (from `001_initial_setup.sql` to `018_fix_public_choferes.sql`) in the Supabase SQL Editor to create the required tables, RLS policies, and storage buckets.
+    *   Run the SQL scripts located in the `supabase/migrations/` folder in numerical order (from `001_initial_setup.sql` to `030_auto_purge_cron.sql`) in the Supabase SQL Editor to create the required tables, RLS policies, and storage buckets.
         * **Note on 014_fix_auth_triggers.sql:** This migration forcefully deletes conflicting triggers on `auth.users` and is **mandatory** for all deployments to prevent registration failures.
     *   Open `supabase-config.js` and replace the placeholder `supabaseUrl` and `supabaseAnonKey` with your project's actual credentials.
     *   **⚠️ IMPORTANT - Email Confirmation:** Supabase requires email confirmation by default for new registrations. If you wish to disable this during testing or development, go to your Supabase Dashboard -> **Authentication** -> **Providers** -> **Email** and toggle off **Confirm email**. Ensure your `Site URL` and `Redirect URLs` in Supabase Auth configuration point to your production domain.
@@ -95,7 +95,7 @@ NOTIGAS bridges this gap by democratizing access to Artificial Intelligence and 
 ### Ubicación y GPS
 *   **Comprador**: Usa GPS (getCurrentPosition) una sola vez durante el registro para guardar su ubicación habitual en `profiles`. Se informa al usuario que puede apagar el GPS. NUNCA usa `watchPosition`.
 *   **PC**: Intenta `navigator.geolocation` primero. Si falla, usa IP solamente como fallback aproximado. La IP nunca se considera domicilio exacto.
-*   **Repartidor**: Usa GPS continuo (`watchPosition`) con precisión adaptativa. Transmite ubicación a Supabase cuando hay movimiento significativo (~15 metros) y usa un heartbeat para indicar que está detenido.
+*   **Repartidor**: Usa GPS continuo (`watchPosition`) con precisión adaptativa. Transmite ubicación a Supabase cuando hay movimiento significativo (~15 metros) y usa un heartbeat para indicar que está detenido. *Nota Técnica: Al ser una PWA que corre en el navegador, el tracking en background (pantalla apagada o app minimizada) depende estrictamente de las políticas de ahorro de batería de iOS/Android y podría ser pausado por el sistema operativo.*
 
 ### Pedidos
 *   Los pedidos son grupales y un repartidor puede ver los pedidos de su zona/categoría.
