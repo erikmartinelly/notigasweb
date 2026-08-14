@@ -9,11 +9,6 @@
    ========================================================================== */
 
 /* =====================================================
-   ADMIN EMAILS
-   ===================================================== */
-window.ADMIN_EMAILS = ["erikmartinelly@gmail.com", "leonmartinelly13@gmail.com"];
-
-/* =====================================================
    FIX #16: FUNCIÓN COMPARTIDA escapeHtmlStr
    Única fuente de verdad — todos los módulos la usan via window.escapeHtmlStr
    ===================================================== */
@@ -46,7 +41,7 @@ window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño m
   const _state = {
     userRole: 'vecino',        // 'vecino' | 'repartidor' | 'admin'
     userData: null,            // Objeto con datos del usuario autenticado
-    city: localStorage.getItem('notigas_city') || 'santacruz', // Única fuente de verdad temporal pre-login
+    city: 'santacruz', // Única fuente de verdad temporal pre-login
     gpsLat: null,
     gpsLng: null,
     gpsReady: false,

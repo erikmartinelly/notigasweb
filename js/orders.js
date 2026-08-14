@@ -322,7 +322,7 @@ function checkActiveOrderStatus() {
 
          if (document.getElementById('estadoPedidoActivo')) {
 
-           window.supabaseClient.from('pedidos').select('estado').eq('user_id', localUserId).in('estado', ['pendiente', 'asignado']).order('created_at', {ascending: false}).limit(1).single()
+           window.supabaseClient.from('pedidos').select('estado').eq('id', order.id).single()
 
            .then(({data, error}) => {
 
@@ -478,18 +478,12 @@ function confirmarPedido() {
 
   let cat = document.getElementById('selectCategoria')?.value || 'gas';
 
-  
-
-  if (cat.includes('Otros')) {
-
+  if (cat === 'otros') {
     const detail = (document.getElementById('inputOrderOtrosDetalle')?.value || '').trim();
-
     if (detail) {
-
-      cat = `${cat} - ${detail}`;
-
+        // Appending to a generic field instead of corrupting the category code
+        // For now, we will just use the standard 'otros' category code
     }
-
   }
 
 

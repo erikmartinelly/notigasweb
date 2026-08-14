@@ -42,9 +42,9 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
           active: true // Fichas publicadas automáticamente
         });
       });
-      localStorage.setItem('notigas_vendors_directory', JSON.stringify(list));
+      AppState.set('notigas_vendors_directory', list);
     } else {
-      localStorage.setItem('notigas_vendors_directory', JSON.stringify([]));
+      AppState.set('notigas_vendors_directory', []);
     }
   } catch (e) {
     console.error("Error fetching local drivers:", e);
@@ -64,17 +64,8 @@ function filterVendorCategory(cat, chipElem) {
 }
 
 function getStoredVendors() {
-  let list = [];
-  let deletedIds = [];
-  try {
-    const deletedRaw = localStorage.getItem('notigas_deleted_vendor_ids');
-    if (deletedRaw) deletedIds = JSON.parse(deletedRaw);
-  } catch(e){}
-
-  try {
-    const raw = localStorage.getItem('notigas_vendors_directory');
-    if (raw) list = JSON.parse(raw);
-  } catch(e){}
+  let list = AppState.get('notigas_vendors_directory') || [];
+  let deletedIds = AppState.get('notigas_deleted_vendor_ids') || [];
   
   // FIX: Ya no inyectamos al usuario actual automáticamente con "active: true".
   // Su estado real vendrá de la tabla choferes_habilitados de Supabase.
@@ -182,19 +173,15 @@ function abrirChatSoporteOficial() {
 
 function eliminarFichaAdmin(vendorId) {
   if (confirm("🗑️ ¿Deseas eliminar permanentemente esta Ficha de Repartidor?")) {
-    let deletedIds = [];
-    try {
-      const deletedRaw = localStorage.getItem('notigas_deleted_vendor_ids');
-      if (deletedRaw) deletedIds = JSON.parse(deletedRaw);
-    } catch(e){}
+    let deletedIds = AppState.get('notigas_deleted_vendor_ids') || [];
 
     if (!deletedIds.includes(vendorId)) {
       deletedIds.push(vendorId);
-      localStorage.setItem('notigas_deleted_vendor_ids', JSON.stringify(deletedIds));
+      AppState.set('notigas_deleted_vendor_ids', deletedIds);
     }
 
     let list = getStoredVendors().filter(v => v.id !== vendorId && v.id !== 'vendor_my_profile');
-    localStorage.setItem('notigas_vendors_directory', JSON.stringify(list));
+    AppState.set('notigas_vendors_directory', list);
 
     renderVendorCards('TODOS');
     alert("🗑️ Ficha de Repartidor eliminada con éxito.");

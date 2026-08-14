@@ -384,13 +384,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // 3. Manejo de eventos globales
-window.addEventListener('beforeunload', () => {
-    // Guardar estado antes de cerrar
-    if (window.AppState) {
-        const state = window.AppState.snapshot();
-        localStorage.setItem('notigas_app_state', JSON.stringify(state));
-    }
-});
+// (El guardado de estado en localStorage al cerrar ha sido eliminado)
 
 // (El handler de error global ya está registrado al inicio del archivo)
 

@@ -64,8 +64,8 @@ async function limpiarTodosLosBaneosAdmin() {
 
 async function ejecutarLimpiezaBaneos() {
   try {
-    localStorage.removeItem('notigas_banned_users');
-    localStorage.removeItem('notigas_deleted_vendor_ids');
+    AppState.set('notigas_banned_users', []);
+    AppState.set('notigas_deleted_vendor_ids', []);
   } catch(e){}
 
   if (window.supabaseClient) {
@@ -155,12 +155,9 @@ async function ejecutarBorradoRepartidor(vendorId, vendorName) {
 
   // 3. Remover del directorio local para refrescar la UI inmediatamente
   try {
-    const dir = localStorage.getItem('notigas_vendors_directory');
-    if (dir) {
-      let list = JSON.parse(dir);
-      list = list.filter(v => v.id !== vendorId);
-      localStorage.setItem('notigas_vendors_directory', JSON.stringify(list));
-    }
+    let list = AppState.get('notigas_vendors_directory') || [];
+    list = list.filter(v => v.id !== vendorId);
+    AppState.set('notigas_vendors_directory', list);
   } catch(e){}
 
   if (typeof renderAdminVendorsList === 'function') renderAdminVendorsList();
