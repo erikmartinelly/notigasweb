@@ -69,7 +69,7 @@ function cerrarSesionRepartidorActivarComprador() {
       if (typeof setAppMode === 'function') setAppMode('buyer');
       const modalAuth = document.getElementById('modalWelcomeAuth');
       if (modalAuth) modalAuth.style.display = 'flex';
-      if (typeof showToast === 'function') showToast('ðŸ›’ Modo Comprador', 'Modo Repartidor cerrado. Puedes ingresar como Comprador.', 'info', 2000);
+      if (typeof showToast === 'function') showToast('🛒 Modo Comprador', 'Modo Repartidor cerrado. Puedes ingresar como Comprador.', 'info', 2000);
     });
   }
 }
@@ -267,7 +267,7 @@ function emitirAlertaOficialAdmin() {
   localStorage.setItem('notigas_admin_broadcast', JSON.stringify(broadcastData));
   
   if (typeof mostrarPopupAlertaRepartidor === 'function') {
-    mostrarPopupAlertaRepartidor(`ðŸ‘‘ <strong>COMUNICADO OFICIAL ADMINISTRACIÓN OTB:</strong><br>${text}`);
+    mostrarPopupAlertaRepartidor(`👑 <strong>COMUNICADO OFICIAL ADMINISTRACIÓN OTB:</strong><br>${text}`);
   }
 
   input.value = '';
@@ -276,12 +276,12 @@ function emitirAlertaOficialAdmin() {
 
 function ejecutarPurgaBaseDeDatosManual() {
   if (typeof showConfirmModal === 'function') {
-    showConfirmModal('ðŸ§¹', '¿Ejecutar Purga de Sistema?', 'Se limpiará el caché y los registros de chat >48h y avisos >72h.', 'Sí, purgar', () => {
+    showConfirmModal('🧹', '¿Ejecutar Purga de Sistema?', 'Se limpiará el caché y los registros de chat >48h y avisos >72h.', 'Sí, purgar', () => {
       if (typeof ejecutarPurgaBaseDeDatosAuto === 'function') {
         ejecutarPurgaBaseDeDatosAuto();
       }
       renderAdminDashboardKPIs();
-      if (typeof showToast === 'function') showToast('ðŸ§¹ Purga Completada', 'Se liberó almacenamiento y memoria en caché.', 'info', 2000);
+      if (typeof showToast === 'function') showToast('🧹 Purga Completada', 'Se liberó almacenamiento y memoria en caché.', 'info', 2000);
     });
   }
 }
@@ -350,7 +350,7 @@ function renderFinalVendors(defaultVendors, deletedIds) {
     html += `
       <div style="background:#1E293B; padding:10px 12px; border-radius:10px; border:1px solid ${isBanned ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.08)'}; display:flex; justify-content:space-between; align-items:center; opacity: ${isBanned ? '0.7' : '1'}; margin-bottom:6px;">
         <div>
-          <strong style="color:${isBanned ? '#EF4444' : '#FF6D00'}; font-size:12px;">${isBanned ? 'ðŸš« [BLOQUEADO/BANEADO] ' : (v.verified ? 'ðŸ‘‘ ' : '')}${escapeHtmlStr(v.name)}</strong>
+          <strong style="color:${isBanned ? '#EF4444' : '#FF6D00'}; font-size:12px;">${isBanned ? '🚫 [BLOQUEADO/BANEADO] ' : (v.verified ? '👑 ' : '')}${escapeHtmlStr(v.name)}</strong>
           <span style="font-size:10.5px; color:#CBD5E1;"> (${escapeHtmlStr(v.category)})</span>
           <div style="font-size:10px; color:#94A3B8; margin-top:2px;">Placa: ${escapeHtmlStr(v.plate)} â€¢ Estado: ${isBanned ? '<span style="color:#EF4444; font-weight:700;">ACCESO BLOQUEADO</span>' : (v.verified ? '<span style="color:#00B0FF; font-weight:700;">ACTIVO/APROBADO</span>' : '<span style="color:#F57F17; font-weight:700;">PENDIENTE</span>')}</div>
         </div>
@@ -395,11 +395,11 @@ function renderFinalVendors(defaultVendors, deletedIds) {
       html += `
         <div style="background:#1E293B; padding:8px 10px; border-radius:8px; border:1px solid ${isBanned ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.08)'}; display:flex; justify-content:space-between; align-items:center; opacity: ${isBanned ? '0.7' : '1'}; margin-bottom:4px;">
           <div>
-            <strong style="color:${isBanned ? '#EF4444' : '#38BDF8'}; font-size:11.5px;">${isBanned ? 'ðŸš« [BLOQUEADO] ' : 'ðŸ‘¤ '}${escapeHtmlStr(b.nombre || b.gmail)}</strong>
+            <strong style="color:${isBanned ? '#EF4444' : '#38BDF8'}; font-size:11.5px;">${isBanned ? '🚫 [BLOQUEADO] ' : '👤 '}${escapeHtmlStr(b.nombre || b.gmail)}</strong>
             <div style="font-size:9.5px; color:#94A3B8;">${escapeHtmlStr(b.gmail)} â€¢ ${isBanned ? '<span style="color:#EF4444; font-weight:700;">ACCESO BLOQUEADO</span>' : '<span style="color:#00B0FF;">Activo</span>'}</div>
           </div>
           <div style="display:flex; gap:4px;">
-            <button data-action="banearUsuarioAdmin" data-gmail="${escapeHtmlStr(b.gmail)}" style="background:${isBanned ? '#0288D1' : '#E65100'}; color:white; border:none; padding:4px 8px; border-radius:6px; font-weight:800; font-size:9px; cursor:pointer;">${isBanned ? 'ðŸ”“ Desbanear' : 'ðŸš« Banear'}</button>
+            <button data-action="banearUsuarioAdmin" data-gmail="${escapeHtmlStr(b.gmail)}" style="background:${isBanned ? '#0288D1' : '#E65100'}; color:white; border:none; padding:4px 8px; border-radius:6px; font-weight:800; font-size:9px; cursor:pointer;">${isBanned ? '🔓 Desbanear' : '🚫 Banear'}</button>
             <button data-action="borrarCompradorPermanente" data-gmail="${escapeHtmlStr(b.gmail)}" data-name="${escapeHtmlStr(b.nombre || b.gmail)}" style="background:#D32F2F; color:white; border:none; padding:4px 8px; border-radius:6px; font-weight:800; font-size:9px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Eliminar</button>
           </div>
         </div>
@@ -431,7 +431,7 @@ async function renderAdminOrdersList() {
   let html = `
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
       <span style="font-size:11px; color:#94A3B8;">Inspecciona todos los pedidos y alertas activas en el mapa:</span>
-      <button data-action="limpiarTodosLosPedidosFantasmaAdmin" style="background:#D32F2F; color:white; border:none; padding:5px 10px; border-radius:6px; font-weight:800; font-size:10px; cursor:pointer;"><i class="fa-solid fa-broom"></i> ðŸ§¹ Limpiar Pedidos de Prueba/Caché</button>
+      <button data-action="limpiarTodosLosPedidosFantasmaAdmin" style="background:#D32F2F; color:white; border:none; padding:5px 10px; border-radius:6px; font-weight:800; font-size:10px; cursor:pointer;"><i class="fa-solid fa-broom"></i> 🧹 Limpiar Pedidos de Prueba/Caché</button>
     </div>
   `;
 
@@ -452,7 +452,7 @@ async function renderAdminOrdersList() {
         let estadoBadge = '';
         let borderColor = '#56BC37';
         if (order.estado === 'asignado') {
-           estadoBadge = `<span style="font-size:10px; background:#F57F17; color:white; padding:3px 6px; border-radius:4px; font-weight:800;">ðŸ‘€ Visto (Driver: ${order.driver_id ? order.driver_id.substring(0,6) : 'N/A'})</span>`;
+           estadoBadge = `<span style="font-size:10px; background:#F57F17; color:white; padding:3px 6px; border-radius:4px; font-weight:800;">👀 Visto (Driver: ${order.driver_id ? order.driver_id.substring(0,6) : 'N/A'})</span>`;
            borderColor = '#F57F17';
         } else {
            estadoBadge = `<span style="font-size:10px; background:rgba(86,188,55,0.2); color:#56BC37; padding:2px 6px; border-radius:4px; font-weight:700;">â± Hace ${mins} min</span>`;
@@ -587,11 +587,11 @@ async function borrarPedidoFantasmaAdmin(tipo, param = null) {
 
 function limpiarTodosLosPedidosFantasmaAdmin() {
   if (typeof showConfirmModal === 'function') {
-    showConfirmModal('ðŸ§¹', '¿Limpiar Pedidos de Prueba/Caché?', 'Se eliminarán de inmediato todos los pedidos activos en caché y reportes del mapa. No afectará los pedidos reales.', 'Sí, limpiar', () => {
+    showConfirmModal('🧹', '¿Limpiar Pedidos de Prueba/Caché?', 'Se eliminarán de inmediato todos los pedidos activos en caché y reportes del mapa. No afectará los pedidos reales.', 'Sí, limpiar', () => {
       ejecutarLimpiezaTotalPedidos();
     });
   } else {
-    if (confirm('ðŸ§¹ ¿Borrar TODOS los pedidos y reportes del mapa?')) {
+    if (confirm('🧹 ¿Borrar TODOS los pedidos y reportes del mapa?')) {
       ejecutarLimpiezaTotalPedidos();
     }
   }
@@ -754,7 +754,7 @@ function cerrarSesionAdminControl() {
   const dashboardScreen = document.getElementById('adminDashboardScreen');
   if (loginScreen) loginScreen.style.display = 'block';
   if (dashboardScreen) dashboardScreen.style.display = 'none';
-  alert('ðŸ”’ Sesión de Administrador cerrada correctamente.');
+  alert('🔒 Sesión de Administrador cerrada correctamente.');
 }
 
 /* DESCARGA COMPLETA DE CORREOS ELECTRONICOS REGISTRADOS (.CSV DE USUARIOS) */
@@ -925,7 +925,7 @@ async function renderAdminReports() {
           </div>
           <div style="display:flex; gap:4px;">
             <button data-action="borrarDenunciaAdmin" data-id="${rep.id}" style="background:#0288D1; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; cursor:pointer;" title="Desestimar">ðŸ‘ Ok</button>
-            <button data-action="banearUsuarioAdmin" data-id="${escapeHtmlStr(rep.denunciado_id)}" style="background:#D32F2F; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; cursor:pointer;" title="Banear Usuario">ðŸš« Banear</button>
+            <button data-action="banearUsuarioAdmin" data-id="${escapeHtmlStr(rep.denunciado_id)}" style="background:#D32F2F; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; cursor:pointer;" title="Banear Usuario">🚫 Banear</button>
           </div>
         </div>
       `;
@@ -945,7 +945,7 @@ async function renderAdminReports() {
       
       html += `
         <div style="display:flex; justify-content:space-between; align-items:center; background:#1E293B; padding:4px 8px; border-radius:4px; margin-bottom:4px;">
-          <span style="font-size:11px;">ðŸš« ${escapeHtmlStr(uIdentificador)}</span>
+          <span style="font-size:11px;">🚫 ${escapeHtmlStr(uIdentificador)}</span>
           <button data-action="desbanearUsuarioAdmin" data-id="${u.id}" style="background:#00E676; color:#0F172A; border:none; padding:2px 6px; border-radius:4px; font-weight:700; font-size:9px; cursor:pointer;">Desbanear</button>
         </div>
       `;
@@ -970,7 +970,7 @@ async function banearUsuarioAdmin(identifier) {
   if (typeof descargarBaneadosDeSupabase === 'function') await descargarBaneadosDeSupabase();
 
   if (!error) {
-    alert(`ðŸš« USUARIO BANEADO\nEl usuario (${identifier}) ha sido restringido de publicar en NOTIGAS.`);
+    alert(`🚫 USUARIO BANEADO\nEl usuario (${identifier}) ha sido restringido de publicar en NOTIGAS.`);
   }
 
   renderAdminReports();
