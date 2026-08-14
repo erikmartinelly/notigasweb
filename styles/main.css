@@ -2220,3 +2220,47 @@ button:active, .tab-btn:active, .cat-chip:active {
 #geminiBtnEnviar:hover { transform: scale(1.08); box-shadow: 0 6px 18px rgba(79,70,229,0.6); }
 #geminiBtnEnviar:active { transform: scale(0.94); }
 #geminiBtnEnviar:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* RADAR PULSE PARA MARCADORES */
+.radar-marker-wrapper {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.radar-marker-wrapper img {
+  z-index: 2;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.radar-pulse-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  background: rgba(220, 38, 38, 0.4); /* Rojo suave */
+  border-radius: 50%;
+  z-index: 1;
+  animation: radar-pulse 2s infinite ease-out;
+  pointer-events: none;
+}
+
+@keyframes radar-pulse {
+  0% {
+    width: 30px;
+    height: 30px;
+    opacity: 1;
+  }
+  100% {
+    width: 100px;
+    height: 100px;
+    opacity: 0;
+  }
+}
