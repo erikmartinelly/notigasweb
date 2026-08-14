@@ -182,20 +182,15 @@ function setAppMode(mode) {
 }
 
 window.activarMiUbicacionRepartidor = function() {
-  if (typeof conectarGPSAuto === 'function') {
-    conectarGPSAuto(true); // forceReset = true (centra el mapa una vez)
+  if (typeof currentGpsLat !== 'undefined' && typeof currentGpsLng !== 'undefined' && map) {
+    map.flyTo([currentGpsLat, currentGpsLng], 16, { duration: 1.0 });
+    if (typeof showToast === 'function') showToast('📍 Ubicación Centrada', 'El mapa se ha enfocado en tu posición actual.', 'info', 2000);
+  } else {
+    if (typeof conectarGPSAuto === 'function') {
+      conectarGPSAuto(true);
+    }
+    if (typeof showToast === 'function') showToast('📍 Buscando GPS', 'Obteniendo tu ubicación actual...', 'info', 2000);
   }
-  
-  isDriverGpsLive = true;
-  AppState.set('driverGpsLive', 'on');
-  if (typeof showToast === 'function') showToast('Ubicación Obtenida', 'El mapa se ha centrado en tu posición y el GPS está activo.', 'success', 2000);
-  
-  if (typeof transmitirUbicacionRepartidorServidorDB === 'function' && typeof currentGpsLat !== 'undefined' && typeof currentGpsLng !== 'undefined') {
-    transmitirUbicacionRepartidorServidorDB(currentGpsLat, currentGpsLng);
-  }
-  
-  // Activar seguirme automáticamente al presionar Mi ubicación
-  activarSeguirme();
 };
 
 window.activarSeguirme = function() {

@@ -359,7 +359,8 @@ function agregarPedidoVecinoEnMapa(order) {
          <span style="font-size:11px; color:#64748B;">${escapeHtmlStr(order.categoria)}</span><br>
          ${dirStr}
          ${telStr}
-         <button onclick="dibujarRutaAlPedido(${lat}, ${lng})" style="margin-top:8px; background:#0288D1; color:white; border:none; padding:6px 12px; border-radius:15px; font-weight:bold; cursor:pointer; width:100%;"><i class="fa-solid fa-route"></i> IR A ESTA SOLICITUD</button>
+         <button onclick="dibujarRutaAlPedido(${lat}, ${lng})" style="margin-top:8px; background:#0288D1; color:white; border:none; padding:6px 12px; border-radius:8px; font-weight:bold; cursor:pointer; width:100%;"><i class="fa-solid fa-route"></i> IR A ESTA SOLICITUD</button>
+         <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank" style="margin-top:6px; display:inline-block; background:#10B981; color:white; border:none; padding:6px 12px; border-radius:8px; font-weight:bold; cursor:pointer; width:100%; text-decoration:none; box-sizing:border-box;"><i class="fa-solid fa-map-location-dot"></i> ABRIR EN GOOGLE MAPS</a>
        </div>`
     : `<div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
          <strong style="color:#FF6D00; font-size:13px;">🛒 Pedido de un Vecino</strong><br>
