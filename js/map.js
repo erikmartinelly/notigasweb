@@ -36,7 +36,8 @@ let currentActiveOrderMarker = null;
 
 // ICONO DE GARRAFA GLP ROJA LIMPIA
 const garrafaSvgMarkerHtml = `
-  <div style="position: relative; width: 44px; height: 54px; display: flex; align-items: center; justify-content: center; cursor: grab;">
+  <div class="radar-marker-wrapper" style="width: 44px; height: 54px; cursor: grab;">
+    <div class="radar-pulse-ring"></div>
     <img src="icons/garrafa_red_clean.svg" class="garrafa-red-flashing-img" alt="Garrafa GLP Roja">
   </div>
 `;
@@ -234,22 +235,6 @@ async function cargarPedidosVecinalesEnVivo() {
       pedidosData.forEach(order => agregarPedidoVecinoEnMapa(order));
     }
 
-    // 2. Si es chofer, cargar también los clusters (zonas de calor)
-    if (isDriverUser) {
-      const { data: clusterData, error: clusterError } = await window.supabaseClient.rpc('rpc_get_demand_clusters_v2', {
-        p_ciudad: activeCity,
-        p_categoria: driverCategoria,
-        p_distancia_metros: 1000,
-        p_min_pedidos: 2
-      });
-
-      if (clusterError) {
-        console.error("❌ Error de Supabase al cargar clusters:", clusterError.message, clusterError.details);
-      } else if (clusterData) {
-        console.log(`✅ Supabase devolvió ${clusterData.length} clusters de demanda.`);
-        clusterData.forEach(cluster => agregarClusterEnMapa(cluster));
-      }
-    }
 
     // FETCH LIVE TRUCKS (Last 10 minutes to avoid stale trucks)
     const tenMinsAgo = new Date(Date.now() - 10 * 60000).toISOString();
@@ -271,36 +256,6 @@ async function cargarPedidosVecinalesEnVivo() {
 }
 
 window.demandClusterMarkers = window.demandClusterMarkers || {};
-
-function agregarClusterEnMapa(cluster) {
-  if (!map) return;
-  const clusterId = cluster.cluster_id;
-
-  if (window.demandClusterMarkers[clusterId]) {
-    map.removeLayer(window.demandClusterMarkers[clusterId]);
-  }
-
-  // Radio basado en cantidad (pedidos_activos)
-  const baseRadius = 110; // m
-  const radius = baseRadius + (cluster.pedidos_activos * 20);
-
-  const circle = L.circle([cluster.centro_lat, cluster.centro_lng], {
-    color: '#FF1744', fillColor: '#FF1744', fillOpacity: 0.35, weight: 2, radius: radius
-  }).addTo(map);
-
-  circle.bindPopup(`
-    <div style="font-family:'Roboto',sans-serif; text-align:center; padding:6px;">
-      <strong style="color:#FF1744; font-size:14px;"><i class="fa-solid fa-fire"></i> GRUPO DE DEMANDA</strong><br>
-      <span style="font-size:12px; color:#333; font-weight:800;">${escapeHtmlStr(cluster.categoria)}</span><br>
-      <span style="font-size:11px; color:#666;">Pedidos activos: <b>${cluster.pedidos_activos}</b></span><br><br>
-      <span style="background:#00E676; color:#0F172A; padding:6px 12px; border-radius:4px; font-weight:bold; font-size:11px; display:inline-block; margin-top:5px;">
-        <i class="fa-solid fa-truck-fast"></i> Simplemente conduce a esta zona
-      </span>
-    </div>
-  `);
-
-  window.demandClusterMarkers[clusterId] = circle;
-}
 
 function actualizarRepartidorEnMapa(data) {
   if (!map) return;
