@@ -719,7 +719,8 @@ async function confirmarRecepcionComprador() {
 
              if (order.id) {
 
-                const { error } = await window.supabaseClient.from('pedidos').update({ estado: 'entregado' }).eq('id', order.id);
+                const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
+                const { error } = await window.supabaseClient.from('pedidos').update({ estado: 'entregado' }).eq('id', order.id).eq('user_id', localUserId);
 
                 if (error) console.error(error);
 
