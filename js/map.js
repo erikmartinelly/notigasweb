@@ -217,8 +217,8 @@ async function cargarPedidosVecinalesEnVivo() {
       const { data, error } = await window.supabaseClient.rpc('rpc_get_demand_clusters_v2', {
         p_ciudad: activeCity,
         p_categoria: driverCategoria,
-        p_distancia_metros: 300,
-        p_min_pedidos: 2
+        p_distancia_metros: 1000,
+        p_min_pedidos: 3
       });
 
       if (error) {
@@ -324,7 +324,8 @@ function actualizarRepartidorEnMapa(data) {
       <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
         <strong style="color:#00E676; font-size:13px;">🚛 Camión en Vivo</strong><br>
         <span style="font-size:12px; color:#FFFFFF; font-weight:800;">${escapeHtmlStr(data.distribuidor_nombre || 'Repartidor')}</span><br>
-        <span style="font-size:11px; color:#64748B;">${escapeHtmlStr(data.categoria || 'Servicio de Entrega')}</span>
+        <span style="font-size:11px; color:#64748B;">${escapeHtmlStr(data.categoria || 'Servicio de Entrega')}</span><br>
+        ${data.telefono ? `<a href="tel:${escapeHtmlStr(data.telefono)}" style="display:inline-block; margin-top:5px; font-size:11px; color:#1E293B; background:#FFD54F; padding:4px 8px; border-radius:12px; text-decoration:none; font-weight:bold;">📞 Llama: ${escapeHtmlStr(data.telefono)}</a>` : ''}
       </div>
     `);
     activeTruckMarkers[truckId] = marker;
@@ -339,39 +340,7 @@ function actualizarRepartidorEnMapa(data) {
     }
   }, 10 * 60000);
 
-  // LOGICA DE PROXIMIDAD: Si el usuario es vecino y su pedido está pendiente, verificar si el camión pasó cerca
-  if (userRole !== 'repartidor') {
-      try {
-          const rawPropio = AppState.get('activeOrder');
-          if (rawPropio && rawPropio.id && rawPropio.lat && rawPropio.lng) {
-              // Si el estado en AppState es nulo o pendiente (es decir, no es entregado o cancelado)
-              const orderState = rawPropio.estado || 'pendiente';
-              if (orderState === 'pendiente') {
-                  const dist = calcularDistanciaMetros(data.latitude, data.longitude, rawPropio.lat, rawPropio.lng);
-                  // 150 metros de radio de sensibilidad para que el camión "pase"
-                  if (dist !== null && dist <= 150) {
-                      if (window.supabaseClient) {
-                          const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
-                          window.supabaseClient.from('pedidos')
-                            .update({ estado: 'visto' })
-                            .eq('id', rawPropio.id)
-                            .eq('user_id', localUserId)
-                            .eq('estado', 'pendiente')
-                            .then(({error}) => {
-                                if (!error) {
-                                    rawPropio.estado = 'visto';
-                                    AppState.set('activeOrder', rawPropio);
-                                    if (typeof showToast === 'function') showToast('¡El Camión llegó!', 'Un repartidor está pasando justo por tu ubicación.', 'success', 8000);
-                                    // Forzar render para actualizar el marcador a amarillo (visto)
-                                    if (typeof renderActiveOrdersMap === 'function') renderActiveOrdersMap();
-                                }
-                            });
-                      }
-                  }
-              }
-          }
-      } catch(e) { console.error("Error en proximidad GPS", e); }
-  }
+  // Lógica de proximidad GPS eliminada (Fase de simplificación binaria)
 }
 
 function agregarPedidoVecinoEnMapa(order) {
@@ -396,9 +365,7 @@ function agregarPedidoVecinoEnMapa(order) {
 
   // Asignar el icono dependiendo del estado
   let currentIcon = garrafaIcon;
-  if (order.estado === 'visto') {
-     currentIcon = garrafaYellowIcon;
-  } else if (order.estado === 'asignado' || order.estado === 'entregado') {
+  if (order.estado === 'entregado') {
      currentIcon = garrafaGreenIcon;
   }
 
@@ -638,6 +605,7 @@ async function transmitirUbicacionRepartidorServidorDB(lat, lng) {
             ciudad: finalCity,
             latitude: lat,
             longitude: lng,
+            telefono: u.telefono || "",
             last_active: new Date().toISOString()
           }, { onConflict: 'user_id' });
         }

@@ -41,48 +41,15 @@ async function renderDriverOrdersList() {
     const activeWindow = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
 
     const { data } = await window.supabaseClient
-
-      .from('pedidos_publicos')
-
+      .from('pedidos')
       .select('*')
-
       .eq('ciudad', ciudadReal)
-
       .gte('created_at', activeWindow);
-
       
-
-    const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
-
     if (data) {
-
       orders = data.filter(o => typeof isOrderCategoryMatchingDriver === 'function' && isOrderCategoryMatchingDriver(o.categoria));
-
-      // En la app del repartidor, ver pedidos pendientes, y los que él mismo ha aceptado
-
-      orders = orders.filter(o => o.estado === 'pendiente' || (o.estado === 'asignado' && o.driver_id === localUserId));
-
-      // Reemplazar la información ofuscada (***) de los pedidos asignados consultando la tabla original
-      const assignedIds = orders.filter(o => o.estado === 'asignado' && o.driver_id === localUserId).map(o => o.id);
-      if (assignedIds.length > 0 && window.supabaseClient) {
-        const { data: realData } = await window.supabaseClient
-          .from('pedidos')
-          .select('id, direccion, telefono')
-          .in('id', assignedIds);
-          
-        if (realData) {
-          orders = orders.map(o => {
-            if (o.estado === 'asignado' && o.driver_id === localUserId) {
-              const realOrder = realData.find(ro => ro.id === o.id);
-              if (realOrder) {
-                return { ...o, direccion: realOrder.direccion, telefono: realOrder.telefono };
-              }
-            }
-            return o;
-          });
-        }
-      }
-
+      // Filtramos por estado 'pendiente' por si queda algún rastro, aunque físicamente se borran.
+      orders = orders.filter(o => o.estado === 'pendiente' || o.estado === 'activo');
     }
 
   }
@@ -135,12 +102,7 @@ async function renderDriverOrdersList() {
 
           ${ord.telefono ? `<div style="font-size:12px; margin-bottom:8px; color:#475569;">📞 <strong>Tel:</strong> ${window.escapeHtmlStr(ord.telefono)}</div>` : ''}
 
-          
-
-          ${(ord.estado === 'asignado' && ord.driver_id === localUserId) 
-            ? `<span style="display:block; padding:8px; text-align:center; color:#00E676; font-weight:700; font-size:12px;"><i class="fa-solid fa-truck-fast"></i> En ruta (El GPS detectará tu llegada)</span>` 
-            : `<span style="display:block; padding:8px; text-align:center; color:#64748B; font-weight:700; font-size:12px;"><i class="fa-solid fa-hand-pointer"></i> Toca para ver en el mapa</span>`
-          }
+          <span style="display:block; padding:8px; text-align:center; color:#0288D1; font-weight:700; font-size:12px;"><i class="fa-solid fa-fire"></i> Pedido Activo</span>
 
         </div>
 
@@ -687,10 +649,9 @@ function cancelarPedidoActivo() {
           const userId = await getAuthenticatedUserId();
           if (userId) {
              const { error } = await window.supabaseClient.from('pedidos')
-                .update({ estado: 'cancelado' })
+                .delete()
                 .eq('id', order.id)
-                .eq('user_id', userId)
-                .in('estado', ['pendiente', 'asignado']);
+                .eq('user_id', userId);
                 
              if (error) {
                  console.error("Error cancelando pedido en Supabase:", error);
@@ -743,10 +704,9 @@ async function confirmarRecepcionComprador() {
 
                 const localUserId = await getAuthenticatedUserId();
                 const { error } = await window.supabaseClient.from('pedidos')
-                    .update({ estado: 'entregado' })
+                    .delete()
                     .eq('id', order.id)
-                    .eq('user_id', localUserId)
-                    .eq('estado', 'asignado');
+                    .eq('user_id', localUserId);
 
                 if (error) {
                     console.error(error);
