@@ -262,44 +262,48 @@ function obtenerIconoHtmlPorCategoria(catNombre) {
 
 
 /* CAMBIO DE FAVICON E ICONO DE PESTAÑA SEGÚN EL TIPO DE PEDIDO SELECCIONADO */
-function actualizarFaviconSegunPedido(categoria) {
+function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
   let favEl = document.getElementById('dynamicFavicon');
   if (!favEl) favEl = document.querySelector("link[rel*='icon']");
   if (!favEl) return;
 
-  if (!categoria) {
+  if (!categoria && !estado) {
     favEl.href = "favicon.svg?v=4";
     document.title = "NOTIGAS - Plataforma Vecinal en Vivo";
     return;
   }
 
-  const cat = categoria.toLowerCase();
+  const cat = (categoria || '').toLowerCase();
   const getSvgUrl = (svgContent) => "data:image/svg+xml;utf8," + encodeURIComponent(svgContent);
 
+  let color = "#FF1744"; // pendiente = rojo
+  if (estado === 'visto') color = "#FFC107"; // visto = amarillo
+  else if (estado === 'cancelado' || estado === 'entregado') color = "#00E676"; // final = verde
+
   if (cat.includes('gas')) {
-    favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#FF6D00"/><path d="M35 15h30v10H35V15zm40 20H25v15h50V35zm5 20H20c-5.5 0-10 4.5-10 10v20c0 5.5 4.5 10 10 10h60c5.5 0 10-4.5 10-10V65c0-5.5-4.5-10-10-10z" fill="#FFF"/><circle cx="50" cy="75" r="10" fill="#E65100"/></svg>`);
+    favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="${color}"/><path d="M35 15h30v10H35V15zm40 20H25v15h50V35zm5 20H20c-5.5 0-10 4.5-10 10v20c0 5.5 4.5 10 10 10h60c5.5 0 10-4.5 10-10V65c0-5.5-4.5-10-10-10z" fill="#FFF"/><circle cx="50" cy="75" r="10" fill="#E65100"/></svg>`);
     document.title = "🔥 Pedido Activo: Garrafa de Gas GLP - NOTIGAS";
   } else if (cat.includes('detergente') || cat.includes('limpieza')) {
-    favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#E040FB"/><path d="M40 10h20v15H40V10zm25 25H35v60h30V35zm-15 15c5 0 9 4 9 9s-4 9-9 9-9-4-9-9 4-9 9-9z" fill="#FFF"/></svg>`);
+    favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="${color}"/><path d="M40 10h20v15H40V10zm25 25H35v60h30V35zm-15 15c5 0 9 4 9 9s-4 9-9 9-9-4-9-9 4-9 9-9z" fill="#FFF"/></svg>`);
     document.title = "🧼 Pedido Activo: Detergentes - NOTIGAS";
   } else if (cat.includes('agua')) {
-    favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#0288D1"/><path d="M50 15 C30 45, 20 60, 20 70 A30 30 0 0 0 80 70 C80 60, 70 45, 50 15 Z" fill="#FFF"/></svg>`);
+    favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="${color}"/><path d="M50 15 C30 45, 20 60, 20 70 A30 30 0 0 0 80 70 C80 60, 70 45, 50 15 Z" fill="#FFF"/></svg>`);
     document.title = "💧 Pedido Activo: Agua 20L - NOTIGAS";
   } else if (cat.includes('chatarra')) {
-    favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#00E676"/><path d="M50 15 L65 40 H35 Z M20 50 L35 75 H5 Z M80 50 L95 75 H65 Z" fill="#FFF"/></svg>`);
+    favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="${color}"/><path d="M50 15 L65 40 H35 Z M20 50 L35 75 H5 Z M80 50 L95 75 H65 Z" fill="#FFF"/></svg>`);
     document.title = "♻️ Pedido Activo: Chatarra - NOTIGAS";
   } else if (cat.includes('papel')) {
-    favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#4FC3F7"/><rect x="25" y="20" width="50" height="60" rx="4" fill="#FFF"/><line x1="35" y1="35" x2="65" y2="35" stroke="#0288D1" stroke-width="4"/><line x1="35" y1="50" x2="65" y2="50" stroke="#0288D1" stroke-width="4"/><line x1="35" y1="65" x2="55" y2="65" stroke="#0288D1" stroke-width="4"/></svg>`);
+    favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="${color}"/><rect x="25" y="20" width="50" height="60" rx="4" fill="#FFF"/><line x1="35" y1="35" x2="65" y2="35" stroke="#0288D1" stroke-width="4"/><line x1="35" y1="50" x2="65" y2="50" stroke="#0288D1" stroke-width="4"/><line x1="35" y1="65" x2="55" y2="65" stroke="#0288D1" stroke-width="4"/></svg>`);
     document.title = "📄 Pedido Activo: Papel / Cartón - NOTIGAS";
   } else if (cat.includes('frutas') || cat.includes('verduras')) {
-    favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#FF5252"/><path d="M50 30 C30 30, 20 50, 20 65 C20 80, 35 90, 50 90 C65 90, 80 80, 80 65 C80 50, 70 30, 50 30 Z" fill="#FFF"/><path d="M50 15 Q60 10 65 25" stroke="#4CAF50" stroke-width="6" fill="none"/></svg>`);
+    favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="${color}"/><path d="M50 30 C30 30, 20 50, 20 65 C20 80, 35 90, 50 90 C65 90, 80 80, 80 65 C80 50, 70 30, 50 30 Z" fill="#FFF"/><path d="M50 15 Q60 10 65 25" stroke="#4CAF50" stroke-width="6" fill="none"/></svg>`);
     document.title = "🍎 Pedido Activo: Frutas / Verduras - NOTIGAS";
   } else if (cat.includes('carbón') || cat.includes('leña')) {
-    favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#FF9100"/><path d="M50 15 C30 45, 60 55, 35 85 C65 85, 80 60, 50 15 Z" fill="#FFF"/></svg>`);
+    favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="${color}"/><path d="M50 15 C30 45, 60 55, 35 85 C65 85, 80 60, 50 15 Z" fill="#FFF"/></svg>`);
     document.title = "🪵 Pedido Activo: Carbón / Leña - NOTIGAS";
   } else {
-    favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#FFC107"/><rect x="20" y="35" width="60" height="45" fill="#FFF"/><path d="M15 35 L50 15 L85 35 Z" fill="#FFF"/></svg>`);
-    document.title = "📦 Pedido Activo: Encargo - NOTIGAS";
+    favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="${color}"/><rect x="20" y="35" width="60" height="45" fill="#FFF"/><path d="M15 35 L50 15 L85 35 Z" fill="#FFF"/></svg>`);
+    document.title = "📦 Pedido Activo - NOTIGAS";
   }
 }
 

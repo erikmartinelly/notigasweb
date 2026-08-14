@@ -40,7 +40,7 @@ END $$;
 
 select cron.schedule(
   'purge-old-pedidos',
-  '0 0 * * *',
+  '0 * * * *',
   $$ delete from pedidos where created_at < now() - interval '2 days'; $$
 );
 

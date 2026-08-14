@@ -139,9 +139,12 @@ async function renderDriverOrdersList() {
 
           ${(ord.estado === 'asignado' && ord.driver_id === localUserId) 
             ? `<span style="flex:1; padding:10px; text-align:center; color:#00E676; font-weight:700; font-size:12px;"><i class="fa-solid fa-truck-fast"></i> En ruta (El GPS detectará tu llegada)</span>` 
-            : `<span style="flex:1; padding:10px; text-align:center; color:#64748B; font-weight:700; font-size:12px;">Solo grupos de demanda permitidos</span>`
+            : `<span style="flex:1; padding:10px; text-align:center; color:#64748B; font-weight:700; font-size:12px;">El GPS marcará tu llegada</span>`
           }
 
+          <div style="display:flex; margin-top:8px;">
+            <button onclick="window.centrarPedidoEnMapa(${ord.latitude || ord.lat}, ${ord.longitude || ord.lng}, '${ord.id}')" style="flex:1; background:linear-gradient(135deg, #0288D1, #0277BD); color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:12px; box-shadow:0 2px 6px rgba(2,136,209,0.4);">📍 Ver Pedido en el Mapa</button>
+          </div>
         </div>
 
       `;
@@ -151,7 +154,18 @@ async function renderDriverOrdersList() {
 
 
   container.innerHTML = html;
+}
 
+window.centrarPedidoEnMapa = function(lat, lng, id) {
+  if (typeof map !== 'undefined' && lat && lng) {
+     const m = document.getElementById('modalDriverOrders');
+     if (m) m.style.display = 'none';
+     map.flyTo([lat, lng], 18, { duration: 1.5 });
+     // Abrir el popup si el marcador existe en la vista del mapa
+     if (window.neighborOrderMarkers && window.neighborOrderMarkers[id]) {
+        setTimeout(() => window.neighborOrderMarkers[id].openPopup(), 1500);
+     }
+  }
 }
 
 // window.aceptarPedidoRepartidor removido intencionalmente (Fase 3: Sólo grupos)
@@ -314,7 +328,7 @@ function checkActiveOrderStatus() {
 
       if (btnMain) btnMain.style.display = 'none'; 
 
-      actualizarFaviconSegunPedido(order.categoria);
+      actualizarFaviconSegunPedido(order.categoria, order.estado);
 
       
 
@@ -558,7 +572,7 @@ function confirmarPedido() {
 
           telefono: telefono,
 
-          descripcion: `Cantidad: 1 unidad. Dirección: ${direccion}. Teléfono: ${telefono}. Cliente: ${buyerName}`,
+          descripcion: `Pedido rápido: 1 unidad.`,
 
           ciudad: ciudadReal,
 
