@@ -1257,7 +1257,17 @@ window.dibujarRutaAlPedido = function(destLat, destLng) {
   }, 15000); // Recalcular cada 15 segundos
   
   if (map) map.closePopup();
-  if (typeof showToast === 'function') showToast('Ruta Trazada', 'Sigue la línea azul. Se recalculará automáticamente.', 'info', 4000);
+  if (typeof showToast === 'function') showToast('Ruta Trazada', 'Iniciando navegación hacia el pedido...', 'info', 4000);
+
+  // Activar seguimiento y acercar la cámara al camión
+  if (typeof activarSeguirme === 'function') {
+    activarSeguirme();
+    if (typeof currentGpsLat !== 'undefined' && typeof currentGpsLng !== 'undefined' && map) {
+      setTimeout(() => {
+        map.flyTo([currentGpsLat, currentGpsLng], 17, { duration: 1.5 });
+      }, 100);
+    }
+  }
 }
 
 async function actualizarRutaOSRM() {
