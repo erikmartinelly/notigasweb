@@ -2264,3 +2264,139 @@ button:active, .tab-btn:active, .cat-chip:active {
     opacity: 0;
   }
 }
+
+/* ==========================================================================
+   NUEVA ESTÉTICA DARK NEON Y MAPA
+   ========================================================================== */
+
+/* Glowing Route para la línea del mapa */
+.glowing-route {
+  filter: drop-shadow(0 0 6px #FF9800) drop-shadow(0 0 12px #FF9800);
+}
+
+/* Rediseño del contenedor inferior (Dark Dock) */
+.dark-dock {
+  background: #000000 !important;
+  border-radius: 30px 30px 0 0 !important;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.8) !important;
+  padding-top: 10px !important;
+  border-top: 1px solid #333 !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dock-handle {
+  width: 40px;
+  height: 4px;
+  background-color: #444;
+  border-radius: 2px;
+  margin-bottom: 12px;
+}
+
+.dock-buttons {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+/* Botón Neón Rojo */
+.neon-red-btn {
+  flex: 1;
+  background: #000 !important;
+  color: #FFF !important;
+  border: 2px solid #FF1744 !important;
+  border-radius: 50px !important;
+  padding: 8px 12px !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 0 10px rgba(255, 23, 68, 0.6), inset 0 0 8px rgba(255, 23, 68, 0.4) !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.neon-red-btn:active {
+  transform: scale(0.97);
+  box-shadow: 0 0 15px rgba(255, 23, 68, 0.9), inset 0 0 10px rgba(255, 23, 68, 0.6) !important;
+}
+
+/* Botón Naranja Sólido */
+.solid-orange-btn {
+  flex: 1;
+  background: #FF9800 !important;
+  color: #000 !important;
+  border: none !important;
+  border-radius: 50px !important;
+  padding: 8px 12px !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 900 !important;
+  box-shadow: 0 4px 10px rgba(255, 152, 0, 0.4) !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.solid-orange-btn:active {
+  transform: scale(0.97);
+}
+
+.btn-text-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.1;
+}
+
+.btn-title {
+  font-size: 13px;
+  font-weight: 900;
+}
+.btn-subtitle {
+  font-size: 10px;
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.btn-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+/* Controles Laterales Flotantes */
+.map-controls-side {
+  position: fixed;
+  top: 50%;
+  right: 15px;
+  transform: translateY(-50%);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.map-controls-side .control-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #1A1F2B;
+  color: #FFF;
+  border: 1px solid #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.map-controls-side .control-btn:hover {
+  background: #2A3142;
+}
+
+/* Ocultar map-controls antiguo si existe por algún lado */
+.map-controls {
+  display: none !important;
+}
+

@@ -154,8 +154,8 @@ function initNotigasMap() {
 
   L.control.zoom({ position: 'topright' }).addTo(map);
 
-  // Usando un proveedor minimalista y moderno basado en OSM (CartoDB Voyager)
-  mapTileLayers['osm'] = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+  // Usando un proveedor minimalista y moderno basado en OSM (CartoDB Dark Matter para modo oscuro)
+  mapTileLayers['osm'] = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
     maxZoom: 19,
     attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
   });
@@ -1203,11 +1203,10 @@ async function calcularYTrazarRutaEficiente() {
   });
 
   const routePolyline = L.polyline(finalPolylineCoords, {
-    color: '#0EA5E9',
-    weight: 6,
-    opacity: 0.95,
-    lineCap: 'round',
-    lineJoin: 'round'
+    color: '#FF9800',
+    weight: 4,
+    opacity: 0.9,
+    className: 'glowing-route'
   });
 
   routePolylineLayerGroup.addLayer(routePolyline);
@@ -1439,10 +1438,10 @@ async function actualizarRutaOSRM(force = false) {
                     data.routes[0].geometry,
                     {
                         style: {
-                            color: '#0288D1',
+                            color: '#FF9800',
                             weight: 5,
-                            opacity: 0.8,
-                            dashArray: '10, 10'
+                            opacity: 0.9,
+                            className: 'glowing-route'
                         }
                     }
                 ).addTo(map);

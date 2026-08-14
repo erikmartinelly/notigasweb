@@ -156,13 +156,15 @@ function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
              * Solamente sirve para aproximar ciudad
              * y centrar inicialmente el mapa.
              */
-            if (forceReset) {
-                applyGpsPosition(
-                    coords.lat,
-                    coords.lng,
-                    'Ubicación aproximada por red',
-                    true
-                );
+            if (forceReset || typeof window.currentGpsLat === 'undefined' || window.currentGpsLat === null) {
+                if (typeof window.applyGpsPosition === 'function') {
+                    window.applyGpsPosition(
+                        coords.lat,
+                        coords.lng,
+                        'Ubicación aproximada por red',
+                        true
+                    );
+                }
             }
             return coords;
         })
