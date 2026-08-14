@@ -23,7 +23,7 @@ RETURNS TABLE (
     created_at_ultimo timestamp with time zone
 )
 LANGUAGE plpgsql
-SECURITY DEFINER
+SECURITY DEFINER SET search_path = public
 AS $$
 BEGIN
     RETURN QUERY
@@ -81,7 +81,7 @@ CREATE OR REPLACE FUNCTION rpc_accept_demand_cluster_v2(
 )
 RETURNS void
 LANGUAGE plpgsql
-SECURITY DEFINER
+SECURITY DEFINER SET search_path = public
 AS $$
 DECLARE
     v_driver_id text;
@@ -145,6 +145,7 @@ BEGIN
     FROM clustered_orders co
     JOIN valid_clusters vc ON co.cluster_id_raw = vc.cluster_id_raw
     WHERE up.id = co.id
+      AND up.estado = 'pendiente'
       AND vc.gen_cluster_id = p_cluster_id
       AND vc.cluster_count >= p_min_pedidos;
 

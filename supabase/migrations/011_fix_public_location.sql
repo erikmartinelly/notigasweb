@@ -11,7 +11,6 @@ SELECT
     user_id,
     categoria,
     titulo,
-    descripcion,
     cantidad,
     '***' as direccion,
     '***' as telefono,

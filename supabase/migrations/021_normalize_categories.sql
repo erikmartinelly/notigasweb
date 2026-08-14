@@ -44,7 +44,7 @@ RETURNS TABLE (
     created_at_ultimo timestamp with time zone
 )
 LANGUAGE plpgsql
-SECURITY DEFINER
+SECURITY DEFINER SET search_path = public
 AS $$
 BEGIN
     RETURN QUERY

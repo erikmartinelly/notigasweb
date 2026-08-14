@@ -3,7 +3,7 @@
 
 -- 4. FUNCIONES RPC (Stored Procedures para Votos Seguros)
 create or replace function incrementar_votos_aviso(aviso_id uuid, incremento integer)
-returns void language plpgsql security definer as $$
+returns void language plpgsql security definer set search_path = public as $$
 begin
   if auth.uid() is null then
     raise exception 'No autenticado';
@@ -22,7 +22,7 @@ end;
 $$;
 
 create or replace function incrementar_votos_comentario(comentario_id uuid, incremento integer)
-returns void language plpgsql security definer as $$
+returns void language plpgsql security definer set search_path = public as $$
 begin
   if auth.uid() is null then
     raise exception 'No autenticado';
@@ -42,7 +42,7 @@ $$;
 
 -- Función auxiliar para políticas RLS de Administradores
 create or replace function is_admin_email()
-returns boolean language plpgsql security definer as $$
+returns boolean language plpgsql security definer set search_path = public as $$
 declare
   user_email text;
 begin
@@ -61,7 +61,7 @@ $$;
 
 -- Función auxiliar para verificar si un usuario está baneado
 create or replace function is_banned()
-returns boolean language plpgsql security definer as $$
+returns boolean language plpgsql security definer set search_path = public as $$
 declare
   u_email text;
   u_id text;
@@ -130,19 +130,11 @@ drop policy if exists "Admin INSERT anuncios" on anuncios_globales;
 create policy "Admin INSERT anuncios" on anuncios_globales for insert with check (is_admin_email());
 
 drop policy if exists "Actualizar propio o Admin o Repartidor" on pedidos;
--- Un repartidor puede actualizar un pedido si no tiene driver_id (está tomando el pedido), o si es el driver asignado, o si es un nuevo pedido pendiente
+-- Un repartidor solo puede actualizar un pedido si es el driver asignado, o si el usuario o Admin lo editan
 create policy "Actualizar propio o Admin o Repartidor" on pedidos for update using (
     auth.uid()::text = user_id or 
     is_admin_email() or 
-    (
-        exists (
-            select 1 from choferes_habilitados 
-            where user_id = auth.uid()::text 
-              and ciudad = pedidos.ciudad 
-              and categoria = pedidos.categoria
-        ) 
-        and (driver_id is null or driver_id = auth.uid()::text or estado = 'pendiente')
-    )
+    driver_id = auth.uid()::text
 );
 drop policy if exists "Actualizar propio o Admin" on rutas_repartidores;
 create policy "Actualizar propio o Admin" on rutas_repartidores for update using (auth.uid()::text = user_id or is_admin_email());

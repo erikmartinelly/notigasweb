@@ -106,6 +106,13 @@ function getCurrentUserId() {
   return userId;
 }
 
+async function getAuthenticatedUserId() {
+  if (!window.supabaseClient) return null;
+  const { data, error } = await window.supabaseClient.auth.getUser();
+  if (error || !data?.user) return null;
+  return data.user.id;
+}
+
 async function selectAuthRole(role) {
   currentSelectedRole = role;
   const btnBuyer = document.getElementById('btnRoleBuyer');
