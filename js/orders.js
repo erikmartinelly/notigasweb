@@ -664,10 +664,6 @@ function cancelarPedidoActivo() {
 
     const rawOrder = JSON.stringify(AppState.get('activeOrder'));
 
-    AppState.set('activeOrder', null);
-
-    
-
     if (window.supabaseClient && rawOrder) {
 
       try {
@@ -675,15 +671,27 @@ function cancelarPedidoActivo() {
         const order = JSON.parse(rawOrder);
 
         if (order.id) {
-          const u = JSON.parse(JSON.stringify(AppState.get('userData') || {}) || '{}');
-          const userId = u.user_id || u.id;
-          const { error } = await window.supabaseClient.from('pedidos').update({ estado: 'cancelado' }).eq('id', order.id).eq('user_id', userId);
-          if (error) console.error("Error cancelando pedido en Supabase:", error);
+          const userId = await getAuthenticatedUserId();
+          if (userId) {
+             const { error } = await window.supabaseClient.from('pedidos')
+                .update({ estado: 'cancelado' })
+                .eq('id', order.id)
+                .eq('user_id', userId)
+                .in('estado', ['pendiente', 'asignado']);
+                
+             if (error) {
+                 console.error("Error cancelando pedido en Supabase:", error);
+                 showToast('Error', 'No se pudo cancelar el pedido.', 'error', 3000);
+                 return;
+             }
+          }
         }
 
       } catch(e) {}
 
     }
+    
+    AppState.set('activeOrder', null);
 
     showToast('Pedido Cancelado', 'Se ha restaurado el estado normal de la aplicación.', 'error', 4000);
 
@@ -705,10 +713,6 @@ async function confirmarRecepcionComprador() {
 
      const rawOrder = JSON.stringify(AppState.get('activeOrder'));
 
-     AppState.set('activeOrder', null);
-
-     
-
      if (window.supabaseClient && rawOrder) {
 
          showLoadingOverlay('Confirmando entrega...');
@@ -719,10 +723,19 @@ async function confirmarRecepcionComprador() {
 
              if (order.id) {
 
-                const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
-                const { error } = await window.supabaseClient.from('pedidos').update({ estado: 'entregado' }).eq('id', order.id).eq('user_id', localUserId);
+                const localUserId = await getAuthenticatedUserId();
+                const { error } = await window.supabaseClient.from('pedidos')
+                    .update({ estado: 'entregado' })
+                    .eq('id', order.id)
+                    .eq('user_id', localUserId)
+                    .eq('estado', 'asignado');
 
-                if (error) console.error(error);
+                if (error) {
+                    console.error(error);
+                    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+                    showToast('Error', 'No se pudo confirmar la entrega.', 'error');
+                    return;
+                }
 
              }
 
@@ -731,6 +744,8 @@ async function confirmarRecepcionComprador() {
          if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
 
      }
+     
+     AppState.set('activeOrder', null);
 
      showToast('¡Gracias!', 'Gracias por confirmar. El pedido ha sido finalizado exitosamente.', 'success', 5000);
 
@@ -803,10 +818,8 @@ async function abrirPanoramicaPedidos() {
       const ciudadReal = AppState.get('city') || 'santacruz';
 
       const { data: pedidosReales } = await window.supabaseClient
-
-        .from('pedidos')
-
-        .select('id, categoria, descripcion, created_at')
+        .from('pedidos_publicos')
+        .select('id, categoria, created_at')
 
         .eq('ciudad', ciudadReal)
 
