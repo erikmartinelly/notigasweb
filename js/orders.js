@@ -207,7 +207,7 @@ async function confirmarEntregaPedido(id) {
 
     showLoadingOverlay('Confirmando entrega...');
 
-    const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
+    const localUserId = await getAuthenticatedUserId();
 
     const { error } = await window.supabaseClient.from('pedidos')
 
@@ -215,7 +215,9 @@ async function confirmarEntregaPedido(id) {
 
       .eq('id', id)
 
-      .eq('driver_id', localUserId);
+      .eq('driver_id', localUserId)
+      
+      .eq('estado', 'asignado');
 
     hideLoadingOverlay();
 
