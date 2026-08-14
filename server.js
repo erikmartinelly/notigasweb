@@ -14,35 +14,35 @@ app.use((req, res, next) => {
   // Previene que la app sea embebida en iframes ajenos (clickjacking)
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
 
-  // Protección XSS legacy para browsers antiguos
+  // ProtecciÃ³n XSS legacy para browsers antiguos
   res.setHeader('X-XSS-Protection', '1; mode=block');
 
-  // Controla qué información de origen se envía en cabeceras Referer
+  // Controla quÃ© informaciÃ³n de origen se envÃ­a en cabeceras Referer
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
 
-  // Permisos de APIs de hardware (solo geolocalización permitida)
+  // Permisos de APIs de hardware (solo geolocalizaciÃ³n permitida)
   res.setHeader('Permissions-Policy', 'geolocation=(self), camera=(), microphone=()');
 
-  // FIX: Fuerza HTTPS en el navegador durante 1 año (HSTS)
+  // FIX: Fuerza HTTPS en el navegador durante 1 aÃ±o (HSTS)
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
 
   // FIX: Bloquea acceso de dominios externos a recursos Flash/PDF cruzados
   res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
 
-  // FIX: Content-Security-Policy — Lista blanca explícita de todos los recursos permitidos
+  // FIX: Content-Security-Policy â€” Lista blanca explÃ­cita de todos los recursos permitidos
   // Dominios autorizados: Supabase, Google (Auth + Fonts + AdSense), OSM, Font Awesome, jsDelivr/unpkg (CDNs)
   const csp = [
-    // Solo scripts del mismo origen + CDNs explícitamente listados. 
+    // Solo scripts del mismo origen + CDNs explÃ­citamente listados. 
     // NOTA: 'unsafe-inline' se mantiene temporalmente por el uso intensivo de atributos onclick en el HTML y JS (se requiere refactorizar a addEventListener para removerlo).
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com https://pagead2.googlesyndication.com https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com",
+    "script-src 'self' https://accounts.google.com https://apis.google.com https://pagead2.googlesyndication.com https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com",
     // Estilos del mismo origen + Google Fonts + Font Awesome
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com",
-    // Fuentes tipográficas
+    // Fuentes tipogrÃ¡ficas
     "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net",
     // Conexiones de datos (Supabase, Google, OSM, GeoIP, OSRM)
     "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://accounts.google.com https://ipinfo.io https://ipapi.co https://freeipapi.com https://ipwho.is https://*.tile.openstreetmap.org https://router.project-osrm.org https://nominatim.openstreetmap.org https://photon.komoot.io",
-    // Imágenes (OSM tiles + Supabase Storage + data URIs para favicons dinámicos)
+    // ImÃ¡genes (OSM tiles + Supabase Storage + data URIs para favicons dinÃ¡micos)
     "img-src 'self' data: blob: https://*.tile.openstreetmap.org https://*.supabase.co https://pagead2.googlesyndication.com https://*.google.com",
     // Workers (Service Worker)
     "worker-src 'self'",
@@ -59,7 +59,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Servir archivos estáticos del directorio actual
+// Servir archivos estÃ¡ticos del directorio actual
 app.use(express.static(__dirname, {
   setHeaders: (res, filePath) => {
     // Asegurar tipo MIME correcto para manifest y SW
@@ -81,3 +81,4 @@ app.get('*', (req, res) => {
 app.listen(PORT, () => {
     console.log(`NOTIGAS PWA Server running on port ${PORT}`);
 });
+

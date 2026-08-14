@@ -345,12 +345,22 @@ function getActiveUserLocation() {
 
 
 /* ==========================================================================
-   NOTIGAS - MÓDULO PRINCIPAL DE LA APLICACIÓN
+   NOTIGAS - APLICACIÓN PRINCIPAL (CARRITO, GEOLOCALIZACIÓN Y NOTIFICACIONES)
    ========================================================================== */
+
+// notigasTrack stub hasta configurar GA real
+window.notigasTrack = window.notigasTrack || function(event, params) {
+  console.log('[Analytics stub]', event, params || {});
+};
+
 
 // 1. Registro del Service Worker
 if ('serviceWorker' in navigator) {
-  // navigator.serviceWorker.register('./sw.js') (Registro delegado a index.html)
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js?v=66')
+      .then((reg) => console.log('✅ Service Worker registrado', reg.scope))
+      .catch((err) => console.error('❌ Error Service Worker:', err));
+  });
 }
 
 // 2. Inicialización principal de la aplicación

@@ -1,9 +1,9 @@
-/* ==========================================================================
-   NOTIGAS - MÓDULO DE ADMINISTRACIÓN, ADSENSE, MODERACIÓN & BANEOS
+﻿/* ==========================================================================
+   NOTIGAS - MÃ“DULO DE ADMINISTRACIÃ“N, ADSENSE, MODERACIÃ“N & BANEOS
    ========================================================================== */
 
-// La lista quemada de emails ha sido eliminada. La validación se hace contra Supabase `admin_credentials`.
-// Duración máxima de sesión admin sin re-autenticación: 30 minutos
+// La lista quemada de emails ha sido eliminada. La validaciÃ³n se hace contra Supabase `admin_credentials`.
+// DuraciÃ³n mÃ¡xima de sesiÃ³n admin sin re-autenticaciÃ³n: 30 minutos
 const ADMIN_SESSION_MAX_MS = 30 * 60 * 1000;
 
 
@@ -11,7 +11,7 @@ const ADMIN_SESSION_MAX_MS = 30 * 60 * 1000;
 
 
 /* closeUserSettingsModal, guardarPrefUsuario y cerrarSesionUsuario residen en auth.js (que carga primero).
-   Se eliminan aquí para evitar que admin.js sobreescriba las versiones correctas con soporte de rol Repartidor. */
+   Se eliminan aquÃ­ para evitar que admin.js sobreescriba las versiones correctas con soporte de rol Repartidor. */
 
 window.getVerifiedAdminEmail = function() {
   try {
@@ -43,16 +43,16 @@ window.abrirModalAdminDashboard = async function() {
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
     
     if (error || !adminData) {
-      alert("❌ Acceso Denegado. Solo administradores autorizados.");
+      alert("âŒ Acceso Denegado. Solo administradores autorizados.");
       return;
     }
     
-    // Si llegamos aquí, es administrador legítimo
+    // Si llegamos aquÃ­, es administrador legÃ­timo
     AppState.set('isAdmin', 'true' === 'true' || 'true' === true);
     
   } catch (e) {
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-    alert("❌ Acceso Denegado. Solo administradores autorizados.");
+    alert("âŒ Acceso Denegado. Solo administradores autorizados.");
     return;
   }
   
@@ -62,14 +62,14 @@ window.abrirModalAdminDashboard = async function() {
 
 function cerrarSesionRepartidorActivarComprador() {
   if (typeof showConfirmModal === 'function') {
-    showConfirmModal('🔄', '¿Cambiar a Modo Comprador?', 'Tu ficha de negocio se mantendrá guardada. Solo se cambiará tu modo de ingreso.', 'Sí, cambiar', () => {
+    showConfirmModal('ðŸ”„', 'Â¿Cambiar a Modo Comprador?', 'Tu ficha de negocio se mantendrÃ¡ guardada. Solo se cambiarÃ¡ tu modo de ingreso.', 'SÃ­, cambiar', () => {
       AppState.set('userData', null);
       AppState.set('driverGpsLive', 'on');
       if (typeof closeUserSettingsModal === 'function') closeUserSettingsModal();
       if (typeof setAppMode === 'function') setAppMode('buyer');
       const modalAuth = document.getElementById('modalWelcomeAuth');
       if (modalAuth) modalAuth.style.display = 'flex';
-      if (typeof showToast === 'function') showToast('🛒 Modo Comprador', 'Modo Repartidor cerrado. Puedes ingresar como Comprador.', 'info', 2000);
+      if (typeof showToast === 'function') showToast('ðŸ›’ Modo Comprador', 'Modo Repartidor cerrado. Puedes ingresar como Comprador.', 'info', 2000);
     });
   }
 }
@@ -88,16 +88,16 @@ let adminLoginAttempts = 0;
 
 ;
 
-/* guardarPrefUsuario reside en auth.js — eliminada de admin.js para que la versión con
-   detección de rol Repartidor (GPS) no sea sobreescrita. */
+/* guardarPrefUsuario reside en auth.js â€” eliminada de admin.js para que la versiÃ³n con
+   detecciÃ³n de rol Repartidor (GPS) no sea sobreescrita. */
 
 
 
-/* cerrarSesionUsuario reside en auth.js — eliminada de admin.js para evitar sobreescritura */
+/* cerrarSesionUsuario reside en auth.js â€” eliminada de admin.js para evitar sobreescritura */
 
 
 
-/* GESTIÓN DEL MODAL EXCLUSIVO DE ADMINISTRADOR */
+/* GESTIÃ“N DEL MODAL EXCLUSIVO DE ADMINISTRADOR */
 function closeAdminModal() { 
   const modalAdmin = document.getElementById('modalAdmin');
   if (modalAdmin) modalAdmin.style.display = 'none'; 
@@ -117,11 +117,11 @@ function activarMapaCalorAdminLive() {
 
   const btn = document.getElementById('btnDriverHeatmap');
   if (btn) {
-    btn.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> ❌ SALIR MAPA DE CALOR';
+    btn.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> âŒ SALIR MAPA DE CALOR';
     btn.style.background = 'linear-gradient(135deg, #D32F2F, #B71C1C)';
   }
 
-  if (typeof showToast === 'function') showToast('🔥 Monitor Admin', 'Visualizando pedidos en vivo y zonas de concentración en mapa.', 'info', 2000);
+  if (typeof showToast === 'function') showToast('ðŸ”¥ Monitor Admin', 'Visualizando pedidos en vivo y zonas de concentraciÃ³n en mapa.', 'info', 2000);
 }
 
 function switchModalTab(idx) {
@@ -153,7 +153,7 @@ async function renderAdminAdsAndPostsList() {
         <div style="background:#1E293B; padding:10px; border-radius:8px; border:1px solid #F59E0B; margin-bottom:8px;">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <strong style="color:#F59E0B; font-size:11.5px;"><i class="fa-solid fa-rectangle-ad"></i> Anuncio en ${window.escapeHtmlStr(ad.ciudad)}</strong>
-            <button onclick="borrarAnuncioLocalAdmin('${ad.id}')" style="background:#D32F2F; color:white; border:none; padding:3px 8px; border-radius:4px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Borrar Anuncio</button>
+            <button data-action="borrarAnuncioLocalAdmin" data-id="${ad.id}" style="background:#D32F2F; color:white; border:none; padding:3px 8px; border-radius:4px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Borrar Anuncio</button>
           </div>
           <div style="font-size:11px; color:white; margin-top:4px;">
             <strong>Texto:</strong> ${window.escapeHtmlStr(ad.titulo || '')}<br>
@@ -174,9 +174,9 @@ async function renderAdminAdsAndPostsList() {
         <div style="background:#1E293B; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.08); margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
           <div>
             <span style="font-size:9px; background:rgba(255,109,0,0.2); color:#FF8F00; padding:1px 5px; border-radius:4px; font-weight:700;">${escapeHtmlStr(p.categoria || 'Aviso')}</span>
-            <strong style="color:white; font-size:11px; margin-left:4px;">${escapeHtmlStr(p.titulo || 'Sin Título')}</strong>
+            <strong style="color:white; font-size:11px; margin-left:4px;">${escapeHtmlStr(p.titulo || 'Sin TÃ­tulo')}</strong>
           </div>
-          <button onclick="borrarPostForumAdmin('${p.id}')" style="background:#D32F2F; color:white; border:none; padding:3px 8px; border-radius:4px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Borrar</button>
+          <button data-action="borrarPostForumAdmin" data-id="${p.id}" style="background:#D32F2F; color:white; border:none; padding:3px 8px; border-radius:4px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Borrar</button>
         </div>
       `;
     });
@@ -235,7 +235,7 @@ async function renderAdminDashboardKPIs() {
 
         const elOrdersTitle = document.getElementById('adminKpiOrders').parentElement.querySelector('.kpi-title');
         if (elOrdersTitle) {
-           elOrdersTitle.innerHTML = `Pedidos Activos <span style="display:block; font-size:10px; color:#56BC37;">${creadosHoy} Totales Hoy • ${entregadosHoy} Entregados</span>`;
+           elOrdersTitle.innerHTML = `Pedidos Activos <span style="display:block; font-size:10px; color:#56BC37;">${creadosHoy} Totales Hoy â€¢ ${entregadosHoy} Entregados</span>`;
         }
       }
 
@@ -255,7 +255,7 @@ function emitirAlertaOficialAdmin() {
   const text = (input?.value || '').trim();
 
   if (!text) {
-    if (typeof showToast === 'function') showToast('⚠️ Texto Requerido', 'Ingresa el texto de la Alerta Oficial OTB.', 'warning', 2000);
+    if (typeof showToast === 'function') showToast('âš ï¸ Texto Requerido', 'Ingresa el texto de la Alerta Oficial OTB.', 'warning', 2000);
     return;
   }
 
@@ -267,21 +267,21 @@ function emitirAlertaOficialAdmin() {
   localStorage.setItem('notigas_admin_broadcast', JSON.stringify(broadcastData));
   
   if (typeof mostrarPopupAlertaRepartidor === 'function') {
-    mostrarPopupAlertaRepartidor(`👑 <strong>COMUNICADO OFICIAL ADMINISTRACIÓN OTB:</strong><br>${text}`);
+    mostrarPopupAlertaRepartidor(`ðŸ‘‘ <strong>COMUNICADO OFICIAL ADMINISTRACIÃ“N OTB:</strong><br>${text}`);
   }
 
   input.value = '';
-  if (typeof showToast === 'function') showToast('📢 Comunicado Emitido', 'Mensaje transmitido a todos los vecinos en el mapa.', 'success', 2000);
+  if (typeof showToast === 'function') showToast('ðŸ“¢ Comunicado Emitido', 'Mensaje transmitido a todos los vecinos en el mapa.', 'success', 2000);
 }
 
 function ejecutarPurgaBaseDeDatosManual() {
   if (typeof showConfirmModal === 'function') {
-    showConfirmModal('🧹', '¿Ejecutar Purga de Sistema?', 'Se limpiará el caché y los registros de chat >48h y avisos >72h.', 'Sí, purgar', () => {
+    showConfirmModal('ðŸ§¹', 'Â¿Ejecutar Purga de Sistema?', 'Se limpiarÃ¡ el cachÃ© y los registros de chat >48h y avisos >72h.', 'SÃ­, purgar', () => {
       if (typeof ejecutarPurgaBaseDeDatosAuto === 'function') {
         ejecutarPurgaBaseDeDatosAuto();
       }
       renderAdminDashboardKPIs();
-      if (typeof showToast === 'function') showToast('🧹 Purga Completada', 'Se liberó almacenamiento y memoria en caché.', 'info', 2000);
+      if (typeof showToast === 'function') showToast('ðŸ§¹ Purga Completada', 'Se liberÃ³ almacenamiento y memoria en cachÃ©.', 'info', 2000);
     });
   }
 }
@@ -289,7 +289,7 @@ function ejecutarPurgaBaseDeDatosManual() {
 
 
 
-/* Alias: el botón "Restaurar Base de Datos por Defecto (Quitar Baneos)" del panel admin
+/* Alias: el botÃ³n "Restaurar Base de Datos por Defecto (Quitar Baneos)" del panel admin
    llama a restaurarBaseDatosPorDefecto(). Reutiliza limpiarTodosLosBaneosAdmin(). */
 window.restaurarBaseDatosPorDefecto = function() {
   if (typeof limpiarTodosLosBaneosAdmin === 'function') {
@@ -341,7 +341,7 @@ function renderFinalVendors(defaultVendors, deletedIds) {
   if (!container) return;
   const finalVendors = defaultVendors.filter(v => !deletedIds.includes(v.id));
 
-  let html = `<div style="font-weight:900; color:#FF6D00; margin-bottom:6px; font-size:11.5px;"><i class="fa-solid fa-truck-fast"></i> 🚛 REPARTIDORES Y NEGOCIOS DEL SISTEMA:</div>`;
+  let html = `<div style="font-weight:900; color:#FF6D00; margin-bottom:6px; font-size:11.5px;"><i class="fa-solid fa-truck-fast"></i> ðŸš› REPARTIDORES Y NEGOCIOS DEL SISTEMA:</div>`;
 
   finalVendors.forEach((v) => {
     const isBanned = esRepartidorBaneado(v.name, v.plate, v.whatsapp);
@@ -350,27 +350,27 @@ function renderFinalVendors(defaultVendors, deletedIds) {
     html += `
       <div style="background:#1E293B; padding:10px 12px; border-radius:10px; border:1px solid ${isBanned ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.08)'}; display:flex; justify-content:space-between; align-items:center; opacity: ${isBanned ? '0.7' : '1'}; margin-bottom:6px;">
         <div>
-          <strong style="color:${isBanned ? '#EF4444' : '#FF6D00'}; font-size:12px;">${isBanned ? '🚫 [BLOQUEADO/BANEADO] ' : (v.verified ? '👑 ' : '')}${escapeHtmlStr(v.name)}</strong>
+          <strong style="color:${isBanned ? '#EF4444' : '#FF6D00'}; font-size:12px;">${isBanned ? 'ðŸš« [BLOQUEADO/BANEADO] ' : (v.verified ? 'ðŸ‘‘ ' : '')}${escapeHtmlStr(v.name)}</strong>
           <span style="font-size:10.5px; color:#CBD5E1;"> (${escapeHtmlStr(v.category)})</span>
-          <div style="font-size:10px; color:#94A3B8; margin-top:2px;">Placa: ${escapeHtmlStr(v.plate)} • Estado: ${isBanned ? '<span style="color:#EF4444; font-weight:700;">ACCESO BLOQUEADO</span>' : (v.verified ? '<span style="color:#00B0FF; font-weight:700;">ACTIVO/APROBADO</span>' : '<span style="color:#F57F17; font-weight:700;">PENDIENTE</span>')}</div>
+          <div style="font-size:10px; color:#94A3B8; margin-top:2px;">Placa: ${escapeHtmlStr(v.plate)} â€¢ Estado: ${isBanned ? '<span style="color:#EF4444; font-weight:700;">ACCESO BLOQUEADO</span>' : (v.verified ? '<span style="color:#00B0FF; font-weight:700;">ACTIVO/APROBADO</span>' : '<span style="color:#F57F17; font-weight:700;">PENDIENTE</span>')}</div>
         </div>
         <div style="display:flex; gap:4px;">
           ${!v.verified && !isBanned ? `
-            <button onclick="aprobarRepartidorAdmin('${v.id}')" style="background:#4CAF50; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-check"></i> Aprobar</button>
+            <button data-action="aprobarRepartidorAdmin" data-id="${v.id}" style="background:#4CAF50; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-check"></i> Aprobar</button>
           ` : ''}
           ${isBanned ? `
-            <button onclick="desbanearRepartidorAdmin('${v.id}', decodeURIComponent('${safeName}'))" style="background:#0288D1; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-lock-open"></i> Desbanear</button>
+            <button data-action="desbanearRepartidorAdmin" data-id="${v.id}" data-name="${safeName}" style="background:#0288D1; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-lock-open"></i> Desbanear</button>
           ` : `
-            <button onclick="banearRepartidorAdmin('${v.id}', decodeURIComponent('${safeName}'), decodeURIComponent('${safePlate}'))" style="background:#E65100; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-user-slash"></i> Banear</button>
+            <button data-action="banearRepartidorAdmin" data-id="${v.id}" data-name="${safeName}" data-plate="${safePlate}" style="background:#E65100; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-user-slash"></i> Banear</button>
           `}
-          <button onclick="borrarRepartidorPermanente('${v.id}', decodeURIComponent('${safeName}'))" style="background:#D32F2F; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Eliminar</button>
+          <button data-action="borrarRepartidorPermanente" data-id="${v.id}" data-name="${safeName}" style="background:#D32F2F; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Eliminar</button>
         </div>
       </div>
     `;
   });
 
-  // SECCIÓN COMPRADORES REGISTRADOS
-  html += `<div style="font-weight:900; color:#38BDF8; margin:12px 0 6px; font-size:11.5px;"><i class="fa-solid fa-users"></i> 🛍️ COMPRADORES Y USUARIOS VECINALES:</div>`;
+  // SECCIÃ“N COMPRADORES REGISTRADOS
+  html += `<div style="font-weight:900; color:#38BDF8; margin:12px 0 6px; font-size:11.5px;"><i class="fa-solid fa-users"></i> ðŸ›ï¸ COMPRADORES Y USUARIOS VECINALES:</div>`;
 
   let buyersList = [];
   if (typeof databaseEmails !== 'undefined' && Array.isArray(databaseEmails)) {
@@ -388,19 +388,19 @@ function renderFinalVendors(defaultVendors, deletedIds) {
   } catch(e){}
 
   if (buyersList.length === 0) {
-    html += '<div style="color:#64748B; font-style:italic; font-size:10.5px;">No hay compradores registrados aún.</div>';
+    html += '<div style="color:#64748B; font-style:italic; font-size:10.5px;">No hay compradores registrados aÃºn.</div>';
   } else {
     buyersList.forEach(b => {
       const isBanned = esRepartidorBaneado(b.nombre || '', '', '', b.gmail);
       html += `
         <div style="background:#1E293B; padding:8px 10px; border-radius:8px; border:1px solid ${isBanned ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.08)'}; display:flex; justify-content:space-between; align-items:center; opacity: ${isBanned ? '0.7' : '1'}; margin-bottom:4px;">
           <div>
-            <strong style="color:${isBanned ? '#EF4444' : '#38BDF8'}; font-size:11.5px;">${isBanned ? '🚫 [BLOQUEADO] ' : '👤 '}${escapeHtmlStr(b.nombre || b.gmail)}</strong>
-            <div style="font-size:9.5px; color:#94A3B8;">${escapeHtmlStr(b.gmail)} • ${isBanned ? '<span style="color:#EF4444; font-weight:700;">ACCESO BLOQUEADO</span>' : '<span style="color:#00B0FF;">Activo</span>'}</div>
+            <strong style="color:${isBanned ? '#EF4444' : '#38BDF8'}; font-size:11.5px;">${isBanned ? 'ðŸš« [BLOQUEADO] ' : 'ðŸ‘¤ '}${escapeHtmlStr(b.nombre || b.gmail)}</strong>
+            <div style="font-size:9.5px; color:#94A3B8;">${escapeHtmlStr(b.gmail)} â€¢ ${isBanned ? '<span style="color:#EF4444; font-weight:700;">ACCESO BLOQUEADO</span>' : '<span style="color:#00B0FF;">Activo</span>'}</div>
           </div>
           <div style="display:flex; gap:4px;">
-            <button onclick="banearUsuarioAdmin('${escapeHtmlStr(b.gmail)}')" style="background:${isBanned ? '#0288D1' : '#E65100'}; color:white; border:none; padding:4px 8px; border-radius:6px; font-weight:800; font-size:9px; cursor:pointer;">${isBanned ? '🔓 Desbanear' : '🚫 Banear'}</button>
-            <button onclick="borrarCompradorPermanente('${escapeHtmlStr(b.gmail)}', '${escapeHtmlStr(b.nombre || b.gmail)}')" style="background:#D32F2F; color:white; border:none; padding:4px 8px; border-radius:6px; font-weight:800; font-size:9px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Eliminar</button>
+            <button data-action="banearUsuarioAdmin" data-gmail="${escapeHtmlStr(b.gmail)}" style="background:${isBanned ? '#0288D1' : '#E65100'}; color:white; border:none; padding:4px 8px; border-radius:6px; font-weight:800; font-size:9px; cursor:pointer;">${isBanned ? 'ðŸ”“ Desbanear' : 'ðŸš« Banear'}</button>
+            <button data-action="borrarCompradorPermanente" data-gmail="${escapeHtmlStr(b.gmail)}" data-name="${escapeHtmlStr(b.nombre || b.gmail)}" style="background:#D32F2F; color:white; border:none; padding:4px 8px; border-radius:6px; font-weight:800; font-size:9px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Eliminar</button>
           </div>
         </div>
       `;
@@ -422,7 +422,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(verificarBloqueoAppUsuario, 400);
 });
 
-/* INSPECCIÓN Y ELIMINACIÓN DE PEDIDOS FANTASMA PARA EL ADMINISTRADOR */
+/* INSPECCIÃ“N Y ELIMINACIÃ“N DE PEDIDOS FANTASMA PARA EL ADMINISTRADOR */
 async function renderAdminOrdersList() {
   const container = document.getElementById('adminOrdersMonitorContainer');
   if (!container) return;
@@ -431,7 +431,7 @@ async function renderAdminOrdersList() {
   let html = `
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
       <span style="font-size:11px; color:#94A3B8;">Inspecciona todos los pedidos y alertas activas en el mapa:</span>
-      <button onclick="limpiarTodosLosPedidosFantasmaAdmin()" style="background:#D32F2F; color:white; border:none; padding:5px 10px; border-radius:6px; font-weight:800; font-size:10px; cursor:pointer;"><i class="fa-solid fa-broom"></i> 🧹 Limpiar Pedidos de Prueba/Caché</button>
+      <button data-action="limpiarTodosLosPedidosFantasmaAdmin" style="background:#D32F2F; color:white; border:none; padding:5px 10px; border-radius:6px; font-weight:800; font-size:10px; cursor:pointer;"><i class="fa-solid fa-broom"></i> ðŸ§¹ Limpiar Pedidos de Prueba/CachÃ©</button>
     </div>
   `;
 
@@ -452,10 +452,10 @@ async function renderAdminOrdersList() {
         let estadoBadge = '';
         let borderColor = '#56BC37';
         if (order.estado === 'asignado') {
-           estadoBadge = `<span style="font-size:10px; background:#F57F17; color:white; padding:3px 6px; border-radius:4px; font-weight:800;">👀 Visto (Driver: ${order.driver_id ? order.driver_id.substring(0,6) : 'N/A'})</span>`;
+           estadoBadge = `<span style="font-size:10px; background:#F57F17; color:white; padding:3px 6px; border-radius:4px; font-weight:800;">ðŸ‘€ Visto (Driver: ${order.driver_id ? order.driver_id.substring(0,6) : 'N/A'})</span>`;
            borderColor = '#F57F17';
         } else {
-           estadoBadge = `<span style="font-size:10px; background:rgba(86,188,55,0.2); color:#56BC37; padding:2px 6px; border-radius:4px; font-weight:700;">⏱ Hace ${mins} min</span>`;
+           estadoBadge = `<span style="font-size:10px; background:rgba(86,188,55,0.2); color:#56BC37; padding:2px 6px; border-radius:4px; font-weight:700;">â± Hace ${mins} min</span>`;
         }
         
         const isFantasmaOrExpired = order.estado === 'fantasma' || mins > 120;
@@ -469,13 +469,13 @@ async function renderAdminOrdersList() {
             <div style="font-size:11.5px; color:#2F3C45; margin-top:6px;">
               <strong>Estado DB:</strong> ${order.estado}<br>
               <strong>Producto:</strong> ${escapeHtmlStr(order.categoria || 'Gas')} (${escapeHtmlStr(order.cantidad || '1 un')})<br>
-              <strong>Dirección:</strong> ${escapeHtmlStr(order.direccion || 'Georeferenciada')}<br>
-              <strong>Teléfono:</strong> <span style="color:${borderColor}; font-weight:800;">${escapeHtmlStr(order.telefono || 'No especificado')}</span><br>
+              <strong>DirecciÃ³n:</strong> ${escapeHtmlStr(order.direccion || 'Georeferenciada')}<br>
+              <strong>TelÃ©fono:</strong> <span style="color:${borderColor}; font-weight:800;">${escapeHtmlStr(order.telefono || 'No especificado')}</span><br>
               <span style="font-size:10px; color:#64748B;">Coordenadas: Lat ${order.lat ? order.lat.toFixed(5) : '-'}, Lng ${order.lng ? order.lng.toFixed(5) : '-'}</span>
             </div>
             ${isFantasmaOrExpired ? `
-            <button onclick="borrarPedidoFantasmaAdmin('supabase', '${order.id}')" style="margin-top:8px; width:100%; background:linear-gradient(135deg, #D32F2F, #B71C1C); color:white; border:none; padding:6px 12px; border-radius:8px; font-weight:800; font-size:11px; cursor:pointer;">
-              <i class="fa-solid fa-trash-can"></i> 🗑️ Borrar Pedido Corrupto/Expirado
+            <button data-action="borrarPedidoFantasmaAdmin" data-type="supabase" data-id="${order.id}" style="margin-top:8px; width:100%; background:linear-gradient(135deg, #D32F2F, #B71C1C); color:white; border:none; padding:6px 12px; border-radius:8px; font-weight:800; font-size:11px; cursor:pointer;">
+              <i class="fa-solid fa-trash-can"></i> ðŸ—‘ï¸ Borrar Pedido Corrupto/Expirado
             </button>
             ` : ''}
           </div>
@@ -494,24 +494,24 @@ async function renderAdminOrdersList() {
       html += `
         <div style="background:#FFFFFF; padding:12px; border-radius:10px; border:1.5px solid #56BC37; margin-bottom:8px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
           <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:12.5px; font-weight:900; color:#56BC37;"><i class="fa-solid fa-box"></i> Pedido Local (Caché)</span>
-            <span style="font-size:10px; background:rgba(86,188,55,0.2); color:#56BC37; padding:2px 6px; border-radius:4px; font-weight:700;">⏱ Hace ${mins} min</span>
+            <span style="font-size:12.5px; font-weight:900; color:#56BC37;"><i class="fa-solid fa-box"></i> Pedido Local (CachÃ©)</span>
+            <span style="font-size:10px; background:rgba(86,188,55,0.2); color:#56BC37; padding:2px 6px; border-radius:4px; font-weight:700;">â± Hace ${mins} min</span>
           </div>
           <div style="font-size:11.5px; color:#2F3C45; margin-top:6px;">
             <strong>Producto:</strong> ${escapeHtmlStr(order.categoria)} (${escapeHtmlStr(order.cantidad || '1 un')})<br>
-            <strong>Dirección:</strong> ${escapeHtmlStr(order.callePrincipal || 'Georeferenciada')}<br>
-            <strong>Teléfono:</strong> <span style="color:#56BC37; font-weight:800;">${escapeHtmlStr(order.telefono || 'No especificado')}</span><br>
+            <strong>DirecciÃ³n:</strong> ${escapeHtmlStr(order.callePrincipal || 'Georeferenciada')}<br>
+            <strong>TelÃ©fono:</strong> <span style="color:#56BC37; font-weight:800;">${escapeHtmlStr(order.telefono || 'No especificado')}</span><br>
             <span style="font-size:10px; color:#64748B;">Coordenadas: Lat ${order.lat ? order.lat.toFixed(5) : '-'}, Lng ${order.lng ? order.lng.toFixed(5) : '-'}</span>
           </div>
-          <button onclick="borrarPedidoFantasmaAdmin('active_order')" style="margin-top:8px; width:100%; background:linear-gradient(135deg, #D32F2F, #B71C1C); color:white; border:none; padding:6px 12px; border-radius:8px; font-weight:800; font-size:11px; cursor:pointer;">
-            <i class="fa-solid fa-trash-can"></i> 🗑️ Borrar Pedido (Local)
+          <button data-action="borrarPedidoFantasmaAdmin" data-type="active_order" style="margin-top:8px; width:100%; background:linear-gradient(135deg, #D32F2F, #B71C1C); color:white; border:none; padding:6px 12px; border-radius:8px; font-weight:800; font-size:11px; cursor:pointer;">
+            <i class="fa-solid fa-trash-can"></i> ðŸ—‘ï¸ Borrar Pedido (Local)
           </button>
         </div>
       `;
     } catch(e){}
   }
 
-  // 3. Alertas de Camión / Pánico reportadas por vecinos
+  // 3. Alertas de CamiÃ³n / PÃ¡nico reportadas por vecinos
   let truckBuffer = [];
   try {
     const raw = localStorage.getItem('notigas_reported_trucks_buffer');
@@ -524,15 +524,15 @@ async function renderAdminOrdersList() {
     html += `
       <div style="background:#FFFFFF; padding:12px; border-radius:10px; border:1px solid rgba(86,188,55,0.4); margin-bottom:8px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-size:12px; font-weight:800; color:#56BC37;"><i class="fa-solid fa-bell"></i> Alerta Camión Oído / Visto</span>
+          <span style="font-size:12px; font-weight:800; color:#56BC37;"><i class="fa-solid fa-bell"></i> Alerta CamiÃ³n OÃ­do / Visto</span>
           <span style="font-size:10px; background:rgba(86,188,55,0.15); color:#56BC37; padding:2px 6px; border-radius:4px; font-weight:700;">Hace ${mins} min</span>
         </div>
         <div style="font-size:11px; color:#2F3C45; margin-top:4px;">
           <strong>Reportado por:</strong> ${escapeHtmlStr(t.reporter || 'Vecino')}<br>
           <span style="font-size:10px; color:#64748B;">Coordenadas: Lat ${t.lat ? t.lat.toFixed(5) : '-'}, Lng ${t.lng ? t.lng.toFixed(5) : '-'}</span>
         </div>
-        <button onclick="borrarPedidoFantasmaAdmin('truck_report', ${idx})" style="margin-top:8px; width:100%; background:rgba(211,47,47,0.8); color:white; border:none; padding:6px 12px; border-radius:8px; font-weight:800; font-size:10px; cursor:pointer;">
-          <i class="fa-solid fa-trash-can"></i> 🗑️ Borrar Alerta Fantasma
+        <button data-action="borrarPedidoFantasmaAdmin" data-type="truck_report" data-idx="${idx}" style="margin-top:8px; width:100%; background:rgba(211,47,47,0.8); color:white; border:none; padding:6px 12px; border-radius:8px; font-weight:800; font-size:10px; cursor:pointer;">
+          <i class="fa-solid fa-trash-can"></i> ðŸ—‘ï¸ Borrar Alerta Fantasma
         </button>
       </div>
     `;
@@ -543,7 +543,7 @@ async function renderAdminOrdersList() {
       <div style="text-align:center; padding:24px 12px; color:#64748B; font-size:12px; background:#FFFFFF; border-radius:10px; border:1px dashed rgba(0,0,0,0.15);">
         <i class="fa-solid fa-box-open" style="font-size:28px; color:#56BC37; margin-bottom:8px;"></i><br>
         <strong style="color:#2F3C45;">No hay pedidos activos ni alertas en el mapa.</strong><br>
-        <span style="font-size:10px;">El mapa está limpio. Todos los pedidos de Supabase se mostrarán aquí.</span>
+        <span style="font-size:10px;">El mapa estÃ¡ limpio. Todos los pedidos de Supabase se mostrarÃ¡n aquÃ­.</span>
       </div>
     `;
     return;
@@ -557,7 +557,7 @@ async function borrarPedidoFantasmaAdmin(tipo, param = null) {
     const { error } = await window.supabaseClient.from('pedidos').delete().eq('id', param);
     if (error) {
       console.error("Error borrando pedido supabase:", error);
-      if (typeof showToast === 'function') showToast('❌ Error', 'No se pudo borrar de Supabase.', 'error', 3000);
+      if (typeof showToast === 'function') showToast('âŒ Error', 'No se pudo borrar de Supabase.', 'error', 3000);
       return;
     }
   } else if (tipo === 'active_order') {
@@ -581,17 +581,17 @@ async function borrarPedidoFantasmaAdmin(tipo, param = null) {
   renderAdminDashboardKPIs();
 
   if (typeof showToast === 'function') {
-    showToast('🗑️ Pedido/Alerta Removido', 'Eliminado correctamente del sistema.', 'info', 4000);
+    showToast('ðŸ—‘ï¸ Pedido/Alerta Removido', 'Eliminado correctamente del sistema.', 'info', 4000);
   }
 }
 
 function limpiarTodosLosPedidosFantasmaAdmin() {
   if (typeof showConfirmModal === 'function') {
-    showConfirmModal('🧹', '¿Limpiar Pedidos de Prueba/Caché?', 'Se eliminarán de inmediato todos los pedidos activos en caché y reportes del mapa. No afectará los pedidos reales.', 'Sí, limpiar', () => {
+    showConfirmModal('ðŸ§¹', 'Â¿Limpiar Pedidos de Prueba/CachÃ©?', 'Se eliminarÃ¡n de inmediato todos los pedidos activos en cachÃ© y reportes del mapa. No afectarÃ¡ los pedidos reales.', 'SÃ­, limpiar', () => {
       ejecutarLimpiezaTotalPedidos();
     });
   } else {
-    if (confirm('🧹 ¿Borrar TODOS los pedidos y reportes del mapa?')) {
+    if (confirm('ðŸ§¹ Â¿Borrar TODOS los pedidos y reportes del mapa?')) {
       ejecutarLimpiezaTotalPedidos();
     }
   }
@@ -605,7 +605,7 @@ async function ejecutarLimpiezaTotalPedidos() {
     // Only delete orders that are ghost/old/corrupt instead of all orders
     // The previous implementation was: delete().neq('id', 0)
     // Now we will just clean the cache since deleting all real orders is unsafe
-    console.log("Limpiados los pedidos en caché y localstorage. No se eliminaron pedidos reales de Supabase.");
+    console.log("Limpiados los pedidos en cachÃ© y localstorage. No se eliminaron pedidos reales de Supabase.");
   }
 
   if (typeof checkActiveOrderStatus === 'function') checkActiveOrderStatus();
@@ -616,15 +616,15 @@ async function ejecutarLimpiezaTotalPedidos() {
   renderAdminDashboardKPIs();
 
   if (typeof showToast === 'function') {
-    showToast('✨ Limpieza Total', 'Todos los pedidos y alertas han sido eliminados.', 'success', 3000);
+    showToast('âœ¨ Limpieza Total', 'Todos los pedidos y alertas han sido eliminados.', 'success', 3000);
   }
 }
 
 async function guardarSubmenuAnuncios() {
   const currentAdmin = getVerifiedAdminEmail();
   if (!currentAdmin) {
-    alert("⛔ ACCESO RESTRINGIDO\nDebes ingresar tus credenciales de Administrador para modificar anuncios.");
-    if (typeof showToast === 'function') showToast('Acceso Denegado', 'Inicia sesión con tu cuenta de administrador Google para realizar esta acción.', 'error');
+    alert("â›” ACCESO RESTRINGIDO\nDebes ingresar tus credenciales de Administrador para modificar anuncios.");
+    if (typeof showToast === 'function') showToast('Acceso Denegado', 'Inicia sesiÃ³n con tu cuenta de administrador Google para realizar esta acciÃ³n.', 'error');
     return;
   }
 
@@ -674,19 +674,19 @@ async function guardarSubmenuAnuncios() {
       }
       
       closeAdminModal();
-      alert('📢 CONFIGURACIÓN DE PUBLICIDAD GUARDADA\n\nLos cambios en anuncios locales para esta ciudad ya están activos.');
+      alert('ðŸ“¢ CONFIGURACIÃ“N DE PUBLICIDAD GUARDADA\n\nLos cambios en anuncios locales para esta ciudad ya estÃ¡n activos.');
     } catch (e) {
       console.error("Error al guardar anuncio:", e);
-      if (typeof showToast === 'function') showToast('❌ Error', 'No se pudo guardar la configuración de anuncios.', 'error');
+      if (typeof showToast === 'function') showToast('âŒ Error', 'No se pudo guardar la configuraciÃ³n de anuncios.', 'error');
     }
   } else {
       closeAdminModal();
-      alert('📢 CONFIGURACIÓN DE PUBLICIDAD GUARDADA\n\nLos cambios en anuncios locales para esta ciudad ya están activos (Solo caché).');
+      alert('ðŸ“¢ CONFIGURACIÃ“N DE PUBLICIDAD GUARDADA\n\nLos cambios en anuncios locales para esta ciudad ya estÃ¡n activos (Solo cachÃ©).');
   }
 }
 
 // ---------------------------------------------------------
-// FUNCIONES DE ADMINISTRACIÓN DE ANUNCIOS
+// FUNCIONES DE ADMINISTRACIÃ“N DE ANUNCIOS
 // ---------------------------------------------------------
 
 window.pendingUploadUrl = null;
@@ -696,7 +696,7 @@ window.previewUploadAdImage = async function(event) {
   if (!file) return;
 
   if (file.size > 2 * 1024 * 1024) {
-    if (typeof showToast === 'function') showToast('⚠️ Imagen Pesada', 'La imagen supera los 2 MB. Elige una más ligera.', 'warning', 3000);
+    if (typeof showToast === 'function') showToast('âš ï¸ Imagen Pesada', 'La imagen supera los 2 MB. Elige una mÃ¡s ligera.', 'warning', 3000);
     return;
   }
 
@@ -720,7 +720,7 @@ window.previewUploadAdImage = async function(event) {
         preview.src = window.pendingUploadUrl;
         box.style.display = 'flex';
       }
-      if (typeof showToast === 'function') showToast('Éxito', 'Imagen subida al servidor.', 'success');
+      if (typeof showToast === 'function') showToast('Ã‰xito', 'Imagen subida al servidor.', 'success');
     }
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
   }
@@ -754,7 +754,7 @@ function cerrarSesionAdminControl() {
   const dashboardScreen = document.getElementById('adminDashboardScreen');
   if (loginScreen) loginScreen.style.display = 'block';
   if (dashboardScreen) dashboardScreen.style.display = 'none';
-  alert('🔒 Sesión de Administrador cerrada correctamente.');
+  alert('ðŸ”’ SesiÃ³n de Administrador cerrada correctamente.');
 }
 
 /* DESCARGA COMPLETA DE CORREOS ELECTRONICOS REGISTRADOS (.CSV DE USUARIOS) */
@@ -762,8 +762,8 @@ function descargarListaCorreosCSV() {
   let currentAdmin = getVerifiedAdminEmail();
   
   if (!currentAdmin) {
-    alert("⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña.");
-    if (typeof showToast === 'function') showToast('Acceso Denegado', 'Inicia sesión con tu cuenta de administrador Google para realizar esta acción.', 'error');
+    alert("â›” ACCESO DENEGADO\nDebes desbloquear el Ãrea de AdministraciÃ³n con tu usuario y contraseÃ±a.");
+    if (typeof showToast === 'function') showToast('Acceso Denegado', 'Inicia sesiÃ³n con tu cuenta de administrador Google para realizar esta acciÃ³n.', 'error');
     return;
   }
 
@@ -798,7 +798,7 @@ function descargarListaCorreosCSV() {
   const finalEmails = Array.from(uniqueEmailsMap.values());
 
   if (finalEmails.length === 0) {
-    alert('No hay correos electrónicos de usuarios registrados aún.');
+    alert('No hay correos electrÃ³nicos de usuarios registrados aÃºn.');
     return;
   }
 
@@ -818,7 +818,7 @@ function descargarListaCorreosCSV() {
   link.click();
   document.body.removeChild(link);
 
-  alert(`📥 DESCARGA COMPLETADA EN FORMATO .CSV\n\nSe exportaron ${finalEmails.length} correos electrónicos de usuarios para campañas de Email Marketing.`);
+  alert(`ðŸ“¥ DESCARGA COMPLETADA EN FORMATO .CSV\n\nSe exportaron ${finalEmails.length} correos electrÃ³nicos de usuarios para campaÃ±as de Email Marketing.`);
 }
 
 /* DESCARGA COMPLETA DE FICHAS DE REPARTIDORES REGISTRADOS (.CSV DE REPARTIDORES) */
@@ -826,8 +826,8 @@ async function descargarFichasRepartidoresCSV() {
   let currentAdmin = getVerifiedAdminEmail();
   
   if (!currentAdmin) {
-    alert("⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña.");
-    if (typeof showToast === 'function') showToast('Acceso Denegado', 'Inicia sesión con tu cuenta de administrador Google para realizar esta acción.', 'error');
+    alert("â›” ACCESO DENEGADO\nDebes desbloquear el Ãrea de AdministraciÃ³n con tu usuario y contraseÃ±a.");
+    if (typeof showToast === 'function') showToast('Acceso Denegado', 'Inicia sesiÃ³n con tu cuenta de administrador Google para realizar esta acciÃ³n.', 'error');
     return;
   }
 
@@ -839,7 +839,7 @@ async function descargarFichasRepartidoresCSV() {
 
   if (driversList.length === 0) {
     driversList = [
-      { nombre_completo: "Gas GLP N° 42", telefono_whatsapp: "74xxxx28", placa: "3842-XYZ", categoria: "Gas GLP", productos: "Garrafas GLP 10kg, reguladores", zonas: "OTB Central", schedule: "07:00 a 18:00", created_at: "2026-08-01" },
+      { nombre_completo: "Gas GLP NÂ° 42", telefono_whatsapp: "74xxxx28", placa: "3842-XYZ", categoria: "Gas GLP", productos: "Garrafas GLP 10kg, reguladores", zonas: "OTB Central", schedule: "07:00 a 18:00", created_at: "2026-08-01" },
       { nombre_completo: "Agua Cristallina 20L", telefono_whatsapp: "74xxxx28", placa: "2105-ABC", categoria: "Agua 20L", productos: "Botellones 20L, surtidores", zonas: "Zona Norte", schedule: "08:00 a 17:00", created_at: "2026-08-01" }
     ];
   }
@@ -860,16 +860,16 @@ async function descargarFichasRepartidoresCSV() {
   link.click();
   document.body.removeChild(link);
 
-  alert(`📥 DESCARGA COMPLETADA EN FORMATO .CSV\n\nSe exportaron ${driversList.length} Fichas de Repartidores registradas para el panel de administración.`);
+  alert(`ðŸ“¥ DESCARGA COMPLETADA EN FORMATO .CSV\n\nSe exportaron ${driversList.length} Fichas de Repartidores registradas para el panel de administraciÃ³n.`);
 }
 
-/* DESCARGA COMPLETA DE ESTADÍSTICAS GENERALES (.CSV) */
+/* DESCARGA COMPLETA DE ESTADÃSTICAS GENERALES (.CSV) */
 function descargarEstadisticasGeneralesCSV() {
   let currentAdmin = getVerifiedAdminEmail();
   
   if (!currentAdmin) {
-    alert("⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña.");
-    if (typeof showToast === 'function') showToast('Acceso Denegado', 'Inicia sesión con tu cuenta de administrador Google para realizar esta acción.', 'error');
+    alert("â›” ACCESO DENEGADO\nDebes desbloquear el Ãrea de AdministraciÃ³n con tu usuario y contraseÃ±a.");
+    if (typeof showToast === 'function') showToast('Acceso Denegado', 'Inicia sesiÃ³n con tu cuenta de administrador Google para realizar esta acciÃ³n.', 'error');
     return;
   }
 
@@ -901,7 +901,7 @@ function descargarEstadisticasGeneralesCSV() {
   link.click();
   document.body.removeChild(link);
 
-  alert(`📥 DESCARGA COMPLETADA EN FORMATO .CSV\n\nSe exportaron las estadísticas generales del panel de administración.`);
+  alert(`ðŸ“¥ DESCARGA COMPLETADA EN FORMATO .CSV\n\nSe exportaron las estadÃ­sticas generales del panel de administraciÃ³n.`);
 }
 
 async function renderAdminReports() {
@@ -913,19 +913,19 @@ async function renderAdminReports() {
   const { data: reports } = await window.supabaseClient.from('denuncias').select('*').order('created_at', { ascending: false });
   
   if (!reports || reports.length === 0) {
-    container.innerHTML = '<div style="color:#64748B; font-style:italic;">No hay denuncias pendientes de revisión.</div>';
+    container.innerHTML = '<div style="color:#64748B; font-style:italic;">No hay denuncias pendientes de revisiÃ³n.</div>';
   } else {
     let html = '';
     reports.forEach((rep) => {
       html += `
         <div style="background:#1E293B; padding:6px 8px; border-radius:6px; border-left:3px solid #EF4444; display:flex; justify-content:space-between; align-items:center;">
           <div>
-            <strong>${escapeHtmlStr(rep.denunciado_id || 'Publicación')}</strong>: ${escapeHtmlStr(rep.motivo)}
+            <strong>${escapeHtmlStr(rep.denunciado_id || 'PublicaciÃ³n')}</strong>: ${escapeHtmlStr(rep.motivo)}
             <div style="font-size:9px; color:#94A3B8;">${escapeHtmlStr(rep.detalles || 'Sin detalle')}</div>
           </div>
           <div style="display:flex; gap:4px;">
-            <button onclick="borrarDenunciaAdmin('${rep.id}')" style="background:#0288D1; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; cursor:pointer;" title="Desestimar">👍 Ok</button>
-            <button onclick="banearUsuarioAdmin('${escapeHtmlStr(rep.denunciado_id)}')" style="background:#D32F2F; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; cursor:pointer;" title="Banear Usuario">🚫 Banear</button>
+            <button data-action="borrarDenunciaAdmin" data-id="${rep.id}" style="background:#0288D1; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; cursor:pointer;" title="Desestimar">ðŸ‘ Ok</button>
+            <button data-action="banearUsuarioAdmin" data-id="${escapeHtmlStr(rep.denunciado_id)}" style="background:#D32F2F; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; cursor:pointer;" title="Banear Usuario">ðŸš« Banear</button>
           </div>
         </div>
       `;
@@ -945,8 +945,8 @@ async function renderAdminReports() {
       
       html += `
         <div style="display:flex; justify-content:space-between; align-items:center; background:#1E293B; padding:4px 8px; border-radius:4px; margin-bottom:4px;">
-          <span style="font-size:11px;">🚫 ${escapeHtmlStr(uIdentificador)}</span>
-          <button onclick="desbanearUsuarioAdmin('${u.id}')" style="background:#00E676; color:#0F172A; border:none; padding:2px 6px; border-radius:4px; font-weight:700; font-size:9px; cursor:pointer;">Desbanear</button>
+          <span style="font-size:11px;">ðŸš« ${escapeHtmlStr(uIdentificador)}</span>
+          <button data-action="desbanearUsuarioAdmin" data-id="${u.id}" style="background:#00E676; color:#0F172A; border:none; padding:2px 6px; border-radius:4px; font-weight:700; font-size:9px; cursor:pointer;">Desbanear</button>
         </div>
       `;
     });
@@ -970,7 +970,7 @@ async function banearUsuarioAdmin(identifier) {
   if (typeof descargarBaneadosDeSupabase === 'function') await descargarBaneadosDeSupabase();
 
   if (!error) {
-    alert(`🚫 USUARIO BANEADO\nEl usuario (${identifier}) ha sido restringido de publicar en NOTIGAS.`);
+    alert(`ðŸš« USUARIO BANEADO\nEl usuario (${identifier}) ha sido restringido de publicar en NOTIGAS.`);
   }
 
   renderAdminReports();
@@ -982,7 +982,7 @@ async function desbanearUsuarioAdmin(id) {
   const { error } = await window.supabaseClient.from('usuarios_baneados').delete().eq('id', id);
 
   if (!error) {
-    alert(`✅ USUARIO DESBANEADO\nSe ha retirado el ban.`);
+    alert(`âœ… USUARIO DESBANEADO\nSe ha retirado el ban.`);
   }
 
   renderAdminReports();
@@ -1030,11 +1030,11 @@ async function enviarDenuncia() {
   const inputDetalle = document.getElementById('inputReportDetalle');
   if (inputDetalle) inputDetalle.value = '';
 
-  alert('🛡️ Denuncia registrada de forma segura. El equipo de moderación revisará el elemento reportado.');
+  alert('ðŸ›¡ï¸ Denuncia registrada de forma segura. El equipo de moderaciÃ³n revisarÃ¡ el elemento reportado.');
 }
 
 window.borrarAnuncioLocalAdmin = async function(adId) {
-  if (!confirm('¿Estás seguro de que deseas borrar este anuncio definitivamente?')) return;
+  if (!confirm('Â¿EstÃ¡s seguro de que deseas borrar este anuncio definitivamente?')) return;
 
   try {
     // 1. Obtener la URL de la imagen del anuncio
@@ -1046,7 +1046,7 @@ window.borrarAnuncioLocalAdmin = async function(adId) {
 
     if (fetchError) {
       console.error('Error buscando anuncio:', fetchError);
-      if (typeof showToast === 'function') showToast('Error', 'No se encontró el anuncio.', 'error');
+      if (typeof showToast === 'function') showToast('Error', 'No se encontrÃ³ el anuncio.', 'error');
       return;
     }
 
@@ -1079,3 +1079,4 @@ window.borrarAnuncioLocalAdmin = async function(adId) {
     if (typeof showToast === 'function') showToast('Error', 'No se pudo borrar el anuncio.', 'error');
   }
 };
+

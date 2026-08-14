@@ -56,7 +56,7 @@ async function renderForumFeed() {
         <i class="fa-solid fa-comments" style="font-size:32px; color:#FF6D00; margin-bottom:10px;"></i><br>
         <strong>El Tablón de Anuncios Vecinal está limpio.</strong><br>
         <span style="font-size: 11px; color: #64748B;">Sé el primero en publicar un aviso, alerta u oferta para los vecinos de tu OTB.</span><br><br>
-        <button class="btn-new-post" style="margin: 0 auto; padding: 10px 16px; font-size: 12px;" onclick="abrirModalNuevoPost()">📌 Publicar Nuevo Aviso (72 Horas)</button>
+        <button class="btn-new-post" style="margin: 0 auto; padding: 10px 16px; font-size: 12px;" data-action="abrirModalNuevoPost">📝 Publicar Nuevo Aviso (72 Horas)</button>
       </div>
     `;
     return;
@@ -75,21 +75,21 @@ async function renderForumFeed() {
     html += `
       <div class="forum-card">
         <div class="forum-votes">
-          <i class="fa-solid fa-circle-chevron-up" title="▲ Me Gusta" onclick="votarPost(this, 1, '${post.id}')"></i>
+          <i class="fa-solid fa-circle-chevron-up" title="👍 Me Gusta" data-action="votarPost" data-val="1" data-id="${post.id}"></i>
           <span class="v-count" style="color:#FF6D00;">${post.votos || 1}</span>
-          <i class="fa-solid fa-circle-chevron-down" title="▼ Me Disgusta" onclick="votarPost(this, -1, '${post.id}')"></i>
+          <i class="fa-solid fa-circle-chevron-down" title="👎 Me Disgusta" data-action="votarPost" data-val="-1" data-id="${post.id}"></i>
         </div>
         <div class="forum-body">
           <span class="forum-cat"><i class="fa-solid fa-comments"></i> ${escapeHtmlStr(post.categoria)}</span>
           <div class="forum-title">${escapeHtmlStr(post.titulo)}</div>
           <div class="forum-desc">${escapeHtmlStr(post.descripcion)}</div>
           <div class="forum-footer" style="display:flex; justify-content:space-between; align-items:center;">
-            <button onclick="abrirComentariosPost('${post.id}', decodeURIComponent('${safeTitle}'), decodeURIComponent('${safeDesc}'), decodeURIComponent('${safeCat}'), this)" style="background: rgba(255,109,0,0.15); color: #FF6D00; border: 1px solid rgba(255,109,0,0.3); border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;">
+            <button data-action="abrirComentariosPost" data-id="${post.id}" data-title="${safeTitle}" data-desc="${safeDesc}" data-cat="${safeCat}" style="background: rgba(255,109,0,0.15); color: #FF6D00; border: 1px solid rgba(255,109,0,0.3); border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;">
               <i class="fa-regular fa-comment"></i> <span class="comment-count-num">${commentCount}</span> Comentar
             </button>
             <div style="display:flex; gap:6px; align-items:center;">
-              <button class="btn-report" onclick="abrirModalDenuncia('Aviso Noticias Vecinales', decodeURIComponent('${safeTitle}'))"><i class="fa-solid fa-flag"></i> Denunciar</button>
-              ${isAdmin ? `<button onclick="borrarPostForumAdmin('${post.id}')" style="background:#D32F2F; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; font-weight:700; cursor:pointer;" title="Borrar como Admin"><i class="fa-solid fa-trash"></i> Borrar (Admin)</button>` : ''}
+              <button class="btn-report" data-action="abrirModalDenuncia" data-title="${safeTitle}"><i class="fa-solid fa-flag"></i> Denunciar</button>
+              ${isAdmin ? `<button data-action="borrarPostForumAdmin" data-id="${post.id}" style="background:#D32F2F; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; font-weight:700; cursor:pointer;" title="Borrar como Admin"><i class="fa-solid fa-trash"></i> Borrar (Admin)</button>` : ''}
             </div>
           </div>
         </div>
@@ -99,7 +99,7 @@ async function renderForumFeed() {
     // PROPAGANDA FACEBOOK FEED AL MEDIO DEL TABLÓN DE NOTICIAS VECINALES
     if (index === 0) {
       html += `
-        <div class="ad-facebook-feed-card" onclick="abrirAnuncioWhatsApp()" style="cursor:pointer;">
+        <div class="ad-facebook-feed-card" data-action="abrirAnuncioWhatsApp" style="cursor:pointer;">
           <div class="ad-fb-header">
             <div class="ad-fb-profile">
               <div class="ad-fb-icon"><i class="fa-solid fa-bullhorn"></i></div>
@@ -118,7 +118,7 @@ async function renderForumFeed() {
               <div class="ad-fb-media-title">Destaca tu Anuncio Comercial</div>
               <div class="ad-fb-media-desc">Llega a toda la comunidad de tu OTB</div>
             </div>
-            <button class="btn-ad-contact" onclick="event.stopPropagation(); abrirAnuncioWhatsApp()"><i class="fa-solid fa-arrow-up-right-from-square"></i> Anunciar</button>
+            <button class="btn-ad-contact" data-action="abrirAnuncioWhatsApp"><i class="fa-solid fa-arrow-up-right-from-square"></i> Anunciar</button>
           </div>
         </div>
       `;
@@ -327,9 +327,9 @@ function renderCommentsListUI(comments) {
         html += `
         <div style="background:#0F172A; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.05); margin-bottom:6px; display:flex; gap:10px;">
             <div style="display:flex; flex-direction:column; align-items:center; justify-content:start; min-width:24px; gap:6px; padding-top:2px;">
-              <i class="fa-solid fa-arrow-up" style="color:#64748B; font-size:13px; cursor:pointer;" onclick="votarComentario('${cId}', 1)"></i>
+              <i class="fa-solid fa-arrow-up" style="color:#64748B; font-size:13px; cursor:pointer;" data-action="votarComentario" data-id="${cId}" data-val="1"></i>
               <span style="color:#FF6D00; font-size:12px; font-weight:900;" id="c_votos_${cId}">${v}</span>
-              <i class="fa-solid fa-arrow-down" style="color:#64748B; font-size:13px; cursor:pointer;" onclick="votarComentario('${cId}', -1)"></i>
+              <i class="fa-solid fa-arrow-down" style="color:#64748B; font-size:13px; cursor:pointer;" data-action="votarComentario" data-id="${cId}" data-val="-1"></i>
             </div>
             <div style="flex:1;">
               <div style="display:flex; justify-content:space-between; font-size:10.5px; font-weight:800; color:#38BDF8;">

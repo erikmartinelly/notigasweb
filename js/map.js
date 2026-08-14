@@ -281,7 +281,7 @@ function agregarClusterEnMapa(cluster) {
       <strong style="color:#FF1744; font-size:14px;"><i class="fa-solid fa-fire"></i> GRUPO DE DEMANDA</strong><br>
       <span style="font-size:12px; color:#333; font-weight:800;">${escapeHtmlStr(cluster.categoria)}</span><br>
       <span style="font-size:11px; color:#666;">Pedidos activos: <b>${cluster.pedidos_activos}</b></span><br><br>
-      <button onclick="window.aceptarGrupoDemanda('${cluster.cluster_id}', '${cluster.ciudad}', '${cluster.categoria}')" style="background:#FF6D00; color:white; border:none; padding:8px 16px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px;">
+      <button data-action="aceptarGrupoDemanda" data-cluster-id="${cluster.cluster_id}" data-ciudad="${cluster.ciudad}" data-categoria="${cluster.categoria}" style="background:#FF6D00; color:white; border:none; padding:8px 16px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px;">
         🚀 ACEPTAR GRUPO
       </button>
     </div>
@@ -672,7 +672,7 @@ function renderReportedTrucksBuffer() {
         <strong style="color:#FF6D00; font-size:13px;"><i class="fa-solid fa-truck-fast"></i> Camión Oído / Visto en la Zona</strong><br>
         <span style="font-size:11px; color:#CBD5E1;">📢 Reportado por: <strong>${escapeHtmlStr(t.reporter || 'Un vecino')}</strong></span><br>
         <span style="font-size:10px; color:#00E676; font-weight:700;">⏱️ ${timeText}</span><br>
-        <button style="margin-top:6px; background:linear-gradient(135deg, #FF6D00, #E65100); color:white; border:none; padding:5px 10px; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer;" onclick="abrirSubmenuPedidos()">📦 Pedir Garrafa / Servicio Aquí</button>
+        <button style="margin-top:6px; background:linear-gradient(135deg, #FF6D00, #E65100); color:white; border:none; padding:5px 10px; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer;" data-action="abrirSubmenuPedidos">🛒 Pedir Garrafa / Servicio Aquí</button>
       </div>
     `);
 
@@ -841,7 +841,7 @@ function renderActiveOrdersMap() {
 
       const btnAccion = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver')
         ? '' // Repartidores deben usar grupos, no aceptación individual
-        : `<button style="margin-top:6px; background:#D32F2F; color:white; border:none; padding:5px 12px; border-radius:6px; font-size:11px; font-weight:900; cursor:pointer;" onclick="cancelarPedidoActivo()">❌ Cancelar Pedido</button>`;
+        : `<button style="margin-top:6px; background:#D32F2F; color:white; border:none; padding:5px 12px; border-radius:6px; font-size:11px; font-weight:900; cursor:pointer;" data-action="cancelarPedidoActivo">⛔ Cancelar Pedido</button>`;
 
       const telInfo = order.telefono ? `<br><span style="font-size:10.5px; color:#00E676; font-weight:800;">📞 Tel: ${escapeHtmlStr(order.telefono)}</span>` : '';
       const addrInfo = order.callePrincipal ? `<br><span style="font-size:10.5px; color:#FFB300; font-weight:800;">🏠 ${escapeHtmlStr(order.callePrincipal)}</span>` : '';
