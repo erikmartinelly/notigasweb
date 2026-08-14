@@ -76,13 +76,23 @@ document.addEventListener('DOMContentLoaded', () => {
         async function checkAdminAsync() {
           try {
             if (!window.supabaseClient) return;
-            const { data } = await window.supabaseClient.from('admin_credentials').select('email').ilike('email', u.gmail).single();
+            
+            // Verificar primero si hay sesión real en Supabase para evitar spoofing
+            const { data: sessionData } = await window.supabaseClient.auth.getSession();
+            if (!sessionData || !sessionData.session || !sessionData.session.user) return;
+            const userEmail = sessionData.session.user.email;
+            
+            const { data } = await window.supabaseClient.from('admin_credentials').select('email').ilike('email', userEmail).single();
             if (data) {
               const btnAdmin = document.getElementById('btnAdminAccessQuick');
               if (btnAdmin) btnAdmin.style.display = 'flex';
               AppState.set('isAdmin', true);
+            } else {
+              AppState.set('isAdmin', false);
             }
-          } catch(e) {}
+          } catch(e) {
+            AppState.set('isAdmin', false);
+          }
         }
         setTimeout(checkAdminAsync, 1000);
       }
@@ -93,6 +103,11 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function getCurrentUserId() {
+  // Priorizar siempre el ID de la sesión autenticada real
+  if (window._tempAuthUser && window._tempAuthUser.id) {
+    return window._tempAuthUser.id;
+  }
+  
   let userId = 'anonimo_id';
   try {
     const saved = JSON.stringify(AppState.get('userData') || {});

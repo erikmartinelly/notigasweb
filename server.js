@@ -35,7 +35,7 @@ app.use((req, res, next) => {
     // Solo scripts del mismo origen + CDNs explícitamente listados. 
     // NOTA: 'unsafe-inline' se mantiene temporalmente por el uso intensivo de atributos onclick en el HTML y JS (se requiere refactorizar a addEventListener para removerlo).
     "default-src 'self'",
-    "script-src 'self' https://accounts.google.com https://apis.google.com https://pagead2.googlesyndication.com https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://apis.google.com https://pagead2.googlesyndication.com https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com",
     // Estilos del mismo origen + Google Fonts + Font Awesome
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com",
     // Fuentes tipográficas
