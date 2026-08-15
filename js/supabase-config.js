@@ -113,7 +113,7 @@ window.iniciarSuscripcionAvisos = function() {
                         showToast('📢 Comunicado Oficial OTB', mensaje, 'info', 6000);
                     }
                 }
-                
+
                 // Si es un aviso vecinal o general, actualizar el feed del foro
                 if (typeof renderForumFeed === 'function') {
                     renderForumFeed();

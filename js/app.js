@@ -16,14 +16,10 @@ window.isHeatmapActive = window.isHeatmapActive || false;
    de forma amigable en vez de fallar silenciosamente.
    ===================================================== */
 
-
-
 /* =====================================================
    SISTEMA DE LOADING GLOBAL (ANTI-FREEZE)
    ===================================================== */
 window.globalLoadingTimeout = null;
-
-
 
 /* =====================================================
    SISTEMA DE TOAST NOTIFICATIONS (Reemplazo de alert())
@@ -35,11 +31,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // FIX: El bloqueo por GeoIP se ha eliminado a favor del acceso libre global,
   // dado que causaba bloqueos falsos por VPNs o lentitud de red.
   // console.log('GeoIP desactivado');
-
-
-
-
-
 
   const btnUserSettings = document.getElementById('btnOpenUserSettings');
   const modalUserSettings = document.getElementById('modalUserSettings');
@@ -193,7 +184,7 @@ window.activarMiUbicacionRepartidor = function() {
 
 window.activarSeguirme = function() {
   isMapInteractedByUser = false;
-  
+
   if (typeof conectarGPSAuto === 'function') {
       conectarGPSAuto(true);
   }
@@ -201,13 +192,13 @@ window.activarSeguirme = function() {
   if (typeof currentGpsLat !== 'undefined' && typeof currentGpsLng !== 'undefined' && map) {
     map.flyTo([currentGpsLat, currentGpsLng], map.getZoom() || 16, { duration: 1.0 });
   }
-  
+
   const btn = document.getElementById('btnDriverFollowMe');
   if (btn) {
     btn.style.background = '#059669'; // verde esmeralda para indicar ACTIVO
     btn.innerHTML = '🎯 SIGUIENDO';
   }
-  
+
   if (typeof showToast === 'function') showToast('Seguimiento Activado', 'El mapa seguirá tus movimientos automáticamente.', 'info', 1500);
 };
 
@@ -225,16 +216,16 @@ window.desactivarSeguirme = function() {
 window.pausarRecorridoRepartidor = function() {
   isDriverGpsLive = false;
   AppState.set('driverGpsLive', 'off');
-  
+
   if (typeof window.stopDriverLocationBroadcast === 'function') {
     window.stopDriverLocationBroadcast();
   }
-  
+
   // Detener el watchPosition si existe
   if (typeof activeGpsWatchId !== 'undefined' && activeGpsWatchId !== null && navigator.geolocation) {
     navigator.geolocation.clearWatch(activeGpsWatchId);
   }
-  
+
   // Desactivar UI
   const btnFollow = document.getElementById('btnDriverFollowMe');
   if (btnFollow) {
@@ -242,10 +233,9 @@ window.pausarRecorridoRepartidor = function() {
     btnFollow.innerHTML = '🎯 INICIAR RECORRIDO';
   }
   isMapInteractedByUser = true; // stops auto-panning
-  
+
   if (typeof showToast === 'function') showToast('Recorrido Pausado', 'Se ocultó el camión y se detuvo la transmisión GPS.', 'warning', 2000);
 };
-
 
 function obtenerIconoHtmlPorCategoria(catNombre) {
   const c = (catNombre || '').toLowerCase();
@@ -267,13 +257,7 @@ function obtenerIconoHtmlPorCategoria(catNombre) {
   return `<img src="icons/garrafa_red_clean.svg" style="width:24px; height:24px; vertical-align:middle; margin-right:6px; filter:drop-shadow(0 0 4px #FF1744);" alt="Gas GLP">`;
 }
 
-
-
-
-
-
 /* PURGA AUTOMÁTICA DE BASE DE DATOS LOCAL Y MEMORIA PARA EVITAR COLAPSO */
-
 
 /* CAMBIO DE FAVICON E ICONO DE PESTAÑA SEGÚN EL TIPO DE PEDIDO SELECCIONADO */
 function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
@@ -326,7 +310,7 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
 function switchTab(index) {
   document.querySelectorAll('.tab-btn').forEach((btn, i) => btn.classList.toggle('active', i === index));
   document.querySelectorAll('.tab-content').forEach((tab, i) => tab.classList.toggle('active', i === index));
-  
+
   if (index === 0) {
     if (typeof map !== 'undefined' && map) {
       setTimeout(() => map.invalidateSize(), 200);
@@ -370,20 +354,8 @@ function getActiveUserLocation() {
   return { lat, lng };
 }
 
-
-
-
-
-
-
-
 /* PANORÁMICA DE PEDIDOS ACTIVOS */
 // FIX W-02: Reemplaza los mockOrders hardcodeados con datos reales de Supabase.
-
-
-
-
-
 
 /* ==========================================================================
    NOTIGAS - APLICACIÓN PRINCIPAL (CARRITO, GEOLOCALIZACIÓN Y NOTIFICACIONES)
@@ -393,7 +365,6 @@ function getActiveUserLocation() {
 window.notigasTrack = window.notigasTrack || function(event, params) {
   console.log('[Analytics stub]', event, params || {});
 };
-
 
 // 1. Registro del Service Worker
 if ('serviceWorker' in navigator) {
@@ -407,7 +378,7 @@ if ('serviceWorker' in navigator) {
 // 2. Inicialización principal de la aplicación
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 NOTIGAS iniciando...');
-    
+
     // Escuchar a que Auth termine de inicializar y validar la BD (para asegurar rol y ciudad)
     const initSupabaseFeatures = () => {
         console.log('🔗 Auth y BD sincronizados. Iniciando servicios en red...');
@@ -449,18 +420,18 @@ document.addEventListener('DOMContentLoaded', () => {
 // 5. Función de navegación entre vistas
 window.navegarA = function(vista) {
     const vistas = ['mapa', 'foro', 'vendedores', 'pedidos'];
-    
+
     if (!vistas.includes(vista)) {
         console.error('Vista no válida:', vista);
         return;
     }
-    
+
     // Ocultar todas las vistas
     vistas.forEach(v => {
         const elemento = document.getElementById(`vista-${v}`);
         if (elemento) elemento.style.display = 'none';
     });
-    
+
     // Mostrar la vista solicitada
     const vistaActual = document.getElementById(`vista-${vista}`);
     if (vistaActual) {

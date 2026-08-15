@@ -149,7 +149,7 @@ function initNotigasMap() {
   if (!startLat || !startLng) {
     // Si no hay coordenadas GPS ni IP, no fabricamos una ubicación falsa.
     // Mostramos la vista nacional (Bolivia) y pedimos seleccionar.
-    startLat = -16.290154; 
+    startLat = -16.290154;
     startLng = -63.588653;
     isNationalView = true;
   }
@@ -175,7 +175,7 @@ function initNotigasMap() {
     subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
     detectRetina: true
   });
-  
+
   // Google Maps ya incluye etiquetas, así que podemos omitir la capa extra o poner una vacía temporalmente si la lógica la requiere
   mapTileLayers['osm_labels'] = L.tileLayer('data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', {
     maxZoom: 20,
@@ -194,15 +194,15 @@ function initNotigasMap() {
   }
 
   // REGISTRAR INTERACCIÓN MANUAL DE ZOOM / ARRASTRE PARA EVITAR RE-CENTRADOS AUTOMÁTICOS MOLESTOS
-  map.on('dragstart', () => { 
-    isMapInteractedByUser = true; 
-    if (typeof desactivarSeguirme === 'function') desactivarSeguirme(); 
+  map.on('dragstart', () => {
+    isMapInteractedByUser = true;
+    if (typeof desactivarSeguirme === 'function') desactivarSeguirme();
   });
-  map.on('moveend', () => { 
-    isMapInteractedByUser = true; 
-    if (typeof desactivarSeguirme === 'function') desactivarSeguirme(); 
+  map.on('moveend', () => {
+    isMapInteractedByUser = true;
+    if (typeof desactivarSeguirme === 'function') desactivarSeguirme();
   });
-  
+
   if (isNationalView) {
     setTimeout(() => {
         if (typeof showToast === 'function') {
@@ -224,7 +224,7 @@ function initNotigasMap() {
   }
 
   conectarGPSAuto(false);
-  renderReportedTrucksBuffer();  
+  renderReportedTrucksBuffer();
   // Realtime ya no se inicializa aquí para evitar duplicidad; app.js lo maneja.
   cargarPedidosVecinalesEnVivo();
 }
@@ -291,7 +291,6 @@ async function cargarPedidosVecinalesEnVivo() {
         }
       });
     }
-
 
     // FETCH LIVE TRUCKS (Last 10 minutes to avoid stale trucks)
     const tenMinsAgo = new Date(Date.now() - 10 * 60000).toISOString();
@@ -507,7 +506,7 @@ function verPedidosEnMapa() {
   if (!map) return;
   // Detenemos el seguimiento si estaba activo para que el usuario pueda ver los pedidos libremente
   if (typeof desactivarSeguirme === 'function') desactivarSeguirme();
-  
+
   const allBounds = [];
   for (const id in neighborOrderMarkers) {
     const marker = neighborOrderMarkers[id];
@@ -623,7 +622,7 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
   window.currentGpsLat = currentGpsLat;
   currentGpsLng = lng;
   window.currentGpsLng = currentGpsLng;
-  
+
   // Auto-detectar ciudad al obtener GPS inicial
   if (forceReset && typeof window.inferMainCityFromCoords === 'function') {
       const inferred = window.inferMainCityFromCoords(lat, lng);
@@ -637,7 +636,7 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
           }
           const sel = document.getElementById('newUserCity');
           if (sel) sel.value = inferred;
-          
+
           if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
           if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
       }
@@ -725,7 +724,7 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
       const u = JSON.parse(savedUser);
       if (u.role === 'repartidor') isRepartidor = true;
   } catch(e) {}
-  
+
   if (isRepartidor) {
       const _lat = isUserMarkerDraggedManually ? currentGpsLat : lat;
       const _lng = isUserMarkerDraggedManually ? currentGpsLng : lng;
@@ -1126,7 +1125,6 @@ function verificarYMostrarRepartidorGPS() {
   // para que TODOS (incluso el propio repartidor) vean el mismo estado en la nube.
 }
 
-
 /* Las funciones de geolocalización nativa y fallback IP (obtenerUbicacionIPFallbackDesktop, conectarGPSAuto, etc.) han sido movidas a map_gps.js para evitar que fallos del GPS corrompan el resto de la app. */
 
 /* COORDENADAS OFICIALES GEOBOLIVIA Y MUNICIPIOS POR ÁREA METROPOLITANA */
@@ -1166,8 +1164,8 @@ const GEOBOLIVIA_MUNICIPIOS = [
 ];
 
 async function cambiarCiudadCapital(cityKey) {
-  const mun = GEOBOLIVIA_MUNICIPIOS.find(m => m.key === cityKey) 
-    || (window.BOLIVIA_CITIES && window.BOLIVIA_CITIES[cityKey]) 
+  const mun = GEOBOLIVIA_MUNICIPIOS.find(m => m.key === cityKey)
+    || (window.BOLIVIA_CITIES && window.BOLIVIA_CITIES[cityKey])
     || GEOBOLIVIA_MUNICIPIOS[0];
 
   currentGpsLat = mun.lat;

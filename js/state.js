@@ -1,6 +1,6 @@
 /* ==========================================================================
    NOTIGAS - SISTEMA DE GESTIÓN DE ESTADO CENTRALIZADO (Pub/Sub)
-   
+
    Uso:
    - AppState.set('userRole', 'repartidor')       → cambia el estado
    - AppState.get('userRole')                      → lee el estado
@@ -101,7 +101,7 @@ window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño m
         if (data && data.session && data.session.user) {
           const user = data.session.user;
           const meta = user.user_metadata || {};
-          
+
           if (Object.keys(meta).length > 0) {
             // Establecer sin disparar el guardado nuevamente
             _state['userData'] = meta;
@@ -112,7 +112,7 @@ window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño m
             _state['appMode'] = meta.role === 'repartidor' ? 'driver' : 'buyer';
           }
         }
-        
+
         // Pedido Activo (Consultar a Supabase en lugar de local storage)
         if (data && data.session && data.session.user && _state['userRole'] === 'vecino') {
            const { data: activeOrders } = await window.supabaseClient
@@ -122,7 +122,7 @@ window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño m
              .in('estado', ['pendiente', 'visto', 'asignado'])
              .order('created_at', { ascending: false })
              .limit(1);
-             
+
            if (activeOrders && activeOrders.length > 0) {
              _state['activeOrder'] = activeOrders[0];
            }

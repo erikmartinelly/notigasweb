@@ -231,9 +231,9 @@ async function ejecutarBloqueoComprador(gmail, nombre) {
 
     await descargarBaneadosDeSupabase();
   }
-  
+
   if (typeof renderAdminVendorsList === 'function') renderAdminVendorsList();
-  
+
   if (typeof showToast === 'function') {
     showToast('🚫 Comprador Bloqueado', `El usuario ${nombre} ha sido bloqueado exitosamente.`, 'success', 4000);
   }
@@ -244,7 +244,7 @@ function verificarBloqueoAppUsuario() {
     if (!saved) return;
     const u = JSON.parse(saved);
 
-    const isBanned = (typeof esRepartidorBaneado === 'function') 
+    const isBanned = (typeof esRepartidorBaneado === 'function')
       ? esRepartidorBaneado(u.nombre, u.placa, u.whatsapp, u.gmail)
       : false;
 

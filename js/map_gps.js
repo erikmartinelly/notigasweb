@@ -267,13 +267,13 @@ function conectarGPSAuto(forceReset = false) {
         })
         .catch(error => {
             console.warn('GPS nativo falló para repartidor. Intentando fallback por IP:', error);
-            
+
             // Intenta localizar por IP
             obtenerUbicacionIPFallbackDesktop(forceReset).then(coords => {
                 if (typeof showToast === 'function') {
                     showToast('📍 Ubicación IP Activa', 'Usando geolocalización por IP debido a la falta de GPS nativo.', 'info', 4000);
                 }
-                
+
                 // Como la IP es estática, usamos setInterval para transmitirla periódicamente
                 // y mantener al repartidor "en vivo" en la base de datos sin simular movimiento.
                 if (window.activeGpsIpInterval) clearInterval(window.activeGpsIpInterval);
@@ -282,7 +282,7 @@ function conectarGPSAuto(forceReset = false) {
                         transmitirUbicacionRepartidorServidorDB(coords.lat, coords.lng);
                     }
                 }, 10000); // Transmitir cada 10 segundos
-                
+
             }).catch(ipError => {
                 if (typeof showToast === 'function') {
                     showToast('❌ Error de Ubicación', 'No pudimos obtener ubicación ni por GPS ni por IP.', 'error', 4000);

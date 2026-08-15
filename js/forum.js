@@ -76,7 +76,7 @@ async function renderForumFeed() {
   localPosts.forEach((post, index) => {
     // FIX: Obtener contador de la relación Supabase
     const commentCount = (post.comentarios_avisos && post.comentarios_avisos[0]) ? post.comentarios_avisos[0].count : 0;
-    
+
     // XSS Fix: Properly encode strings for injection into HTML onclick attributes
     const safeTitle = encodeURIComponent(post.titulo || '').replace(/'/g, "%27");
     const safeDesc = encodeURIComponent(post.descripcion || '').replace(/'/g, "%27");
@@ -164,11 +164,11 @@ async function votarPost(el, delta, postId) {
     let val = parseInt(span.innerText) || 1;
     val += delta;
     span.innerText = val;
-    
+
     // FIX #9: Actualización atómica de votos — elimina la race condition.
     // Usa una expresión SQL directa en lugar de leer+escribir en dos pasos.
     const { error } = await window.supabaseClient.rpc('incrementar_votos_aviso', { aviso_id: postId, incremento: delta });
-    
+
     // FIX: Rollback visual si la RPC falla por RLS o error de red
     if (error) {
       console.error('Error al votar:', error);
@@ -200,7 +200,7 @@ async function crearNuevoPost() {
     const titleEl = document.getElementById('inputPostTitulo');
     const descEl = document.getElementById('inputPostDesc');
     const catEl = document.getElementById('selectPostTipo');
-  
+
   const title = (titleEl ? titleEl.value : '').trim();
   const desc = (descEl ? descEl.value : '').trim();
   const cat = (catEl ? catEl.value : 'AVISO VECINAL');
@@ -404,7 +404,7 @@ async function votarComentario(comentarioId, delta) {
       comentario_id: comentarioId,
       incremento: delta
     });
-    
+
     if (error) {
       if (span) span.innerText = val; // revert
       sessionStorage.removeItem(voteKey);

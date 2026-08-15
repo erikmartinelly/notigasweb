@@ -3,7 +3,6 @@
    ========================================================================== */
 // FIX #16: escapeHtmlStr centralizada en state.js — eliminada aquí para evitar conflictos.
 
-
 const GOOGLE_CLIENT_ID = "994996215118-d8vhi4qjtbosvak58mm1c6ritq65hnc9.apps.googleusercontent.com";
 
 let currentSelectedRole = 'buyer'; // 'buyer' o 'driver'
@@ -22,19 +21,19 @@ document.addEventListener('DOMContentLoaded', () => {
           hasSession = true;
           // Restaurar sesión sin mostrar el modal
           window._tempAuthUser = sessionData.session.user;
-          
+
           // Restaurar estado local como fallback temporal (evita que el comprador vea el modal en cada F5)
           const savedUser = JSON.stringify(AppState.get('userData') || {});
           if (savedUser) {
             try {
               const u = JSON.parse(savedUser);
               if (u.ciudad) AppState.set('city', u.ciudad.toLowerCase());
-              
+
               currentSelectedRole = u.role === 'repartidor' ? 'driver' : 'buyer';
               window._roleSelectedNow = true;
             } catch(e){}
           }
-          
+
           // Esperamos a que la Base de Datos decida el rol y ciudad (Fuente de Verdad)
           await procesarSesionExitosa(sessionData.session.user);
         }
@@ -128,7 +127,7 @@ function getCurrentUserId() {
   if (window._tempAuthUser && window._tempAuthUser.id) {
     return window._tempAuthUser.id;
   }
-  
+
   let userId = 'anonimo_id';
   try {
     const saved = JSON.stringify(AppState.get('userData') || {});
@@ -323,7 +322,7 @@ async function selectAuthRole(role) {
       if (sessionData && sessionData.session) {
         // Actualizar rol elegido temporalmente en memoria
         currentSelectedRole = role;
-        
+
         if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
         // Si Supabase certifica la sesión, procesamos ingreso seguro
         await procesarSesionExitosa(sessionData.session.user);
@@ -514,7 +513,7 @@ async function handleCredentialResponse(response) {
 
     // Delegar todo el flujo de resolución de rol, ciudad y UI a procesarSesionExitosa
     await procesarSesionExitosa(user);
-    
+
   } catch (error) {
     console.error("Error en handleCredentialResponse:", error);
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
@@ -543,7 +542,7 @@ async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
     schedule: repartidorObj.schedule,
     ciudad: repartidorObj.ciudad || AppState.get('city') || null
   }], { onConflict: 'user_id' });
-  
+
   if (typeof hideLoadingOverlay === 'function') {
     hideLoadingOverlay();
   }
@@ -563,7 +562,7 @@ async function guardarRegistroUnico() {
     return;
   }
   if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Asegurando conexión...');
-  
+
   // 1. Obtener sesión activa de Supabase
   const { data: sessionData, error: authError } = await window.supabaseClient.auth.getSession();
   const session = sessionData?.session;
@@ -573,7 +572,7 @@ async function guardarRegistroUnico() {
     console.error(authError);
     return;
   }
-  
+
   const userId = session.user.id;
   if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
 
@@ -582,7 +581,7 @@ async function guardarRegistroUnico() {
     const whatsapp = (document.getElementById('regWhatsapp')?.value || '').trim();
     const placa = (document.getElementById('regPlaca')?.value || '').trim();
     const categoria = (document.getElementById('regCategoriaNegocio')?.value || 'gas').trim();
-    
+
     let productos = 'Varios';
     if (categoria === 'gas') productos = 'Garrafas GLP 10kg';
     else if (categoria === 'detergentes') productos = 'Detergentes y Productos de Limpieza';
@@ -590,7 +589,7 @@ async function guardarRegistroUnico() {
     else if (categoria === 'papel') productos = 'Papel, Cartón y Reciclaje';
     else if (categoria === 'frutas') productos = 'Frutas, Verduras y Hortalizas';
     else productos = 'Varios';
-    
+
     const schedule = (document.getElementById('regSchedule')?.value || '').trim() || 'Lunes a Sábado: 07:00 a 18:00';
     const ciudad = (document.getElementById('newUserCity')?.value || AppState.get('city') || '').trim();
 
@@ -640,11 +639,11 @@ async function guardarRegistroUnico() {
     const nombre = session.user.user_metadata?.full_name || gmail.split('@')[0];
     const apellido = '';
 
-    const clienteData = { 
-      role: 'vecino', 
-      gmail, 
-      nombre, 
-      apellido, 
+    const clienteData = {
+      role: 'vecino',
+      gmail,
+      nombre,
+      apellido,
       user_id: userId // Usamos el ID seguro de Supabase Auth
     };
     AppState.set('userData', clienteData);
@@ -658,9 +657,9 @@ async function guardarRegistroUnico() {
   }
 }
 
-function closeDriverModal() { 
+function closeDriverModal() {
   const modalDriver = document.getElementById('modalDriver');
-  if (modalDriver) modalDriver.style.display = 'none'; 
+  if (modalDriver) modalDriver.style.display = 'none';
 }
 
 async function iniciarSesionRepartidor() {
@@ -734,30 +733,30 @@ async function iniciarSesionRepartidor() {
     return;
   }
 
-  const repartidorData = { 
-    role: 'repartidor', 
+  const repartidorData = {
+    role: 'repartidor',
     nombre: nombreNegocio,
-    whatsapp: whatsapp, 
-    placa: plate, 
-    categoria: categoria, 
+    whatsapp: whatsapp,
+    placa: plate,
+    categoria: categoria,
     productos: productos,
     schedule: schedule,
     ciudad: ciudad,
     user_id: existingUserId
   };
-  
+
   if (existingGmail) repartidorData.gmail = existingGmail;
 
   const exito = await guardarRepartidorEnBaseDeDatos(repartidorData);
-  
+
   if (!exito) {
     if (typeof showToast === 'function') showToast('❌ Error', 'No se pudo guardar la configuración. Reintenta.', 'error', 3000);
     return;
   }
-  
+
   AppState.set('userData', repartidorData);
   AppState.set('city', ciudad.toLowerCase());
-  
+
   sessionStorage.removeItem('notigas_temp_gmail');
 
   if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
@@ -768,7 +767,7 @@ async function iniciarSesionRepartidor() {
   }
 
   if (typeof showToast === 'function') showToast('🟢 Negocio Activado', `Ficha de ${nombreNegocio} registrada.`, 'success', 2000);
-  
+
   if (typeof renderVendorCards === 'function') {
     renderVendorCards('TODOS');
   }
@@ -888,15 +887,15 @@ async function ejecutarEliminacionTotalCuenta() {
       if (userId) {
          // Borrar la entrada de chofer si existe (el backend rechazará si no es suyo gracias a RLS)
          await window.supabaseClient.from('choferes_habilitados').delete().eq('user_id', userId);
-         
+
          // Llamar a la función RPC para eliminar el usuario por completo de auth.users
          await window.supabaseClient.rpc('delete_user_account');
-         
+
          // Detener el tracker de GPS si estaba activo
          if (typeof window.stopDriverLocationBroadcast === 'function') {
            window.stopDriverLocationBroadcast();
          }
-         
+
          // Cerrar sesión localmente
          await window.supabaseClient.auth.signOut();
       }
@@ -954,7 +953,7 @@ async function migrarDatosAntiguosARepartidor() {
   // 2. Si ya hay un perfil de repartidor, activar el modo repartidor inmediatamente
   if (driverProfile) {
     if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Reactivando sesión...');
-    
+
     let existingUserId = driverProfile.user_id;
     if (!existingUserId) {
       if (window.supabaseClient) {
@@ -1018,26 +1017,26 @@ async function iniciarSesionEmail() {
   const passwordEl = document.getElementById('authPassword');
   const email = emailEl ? emailEl.value.trim() : '';
   const password = passwordEl ? passwordEl.value : '';
-  
+
   if (!email || !password) {
     if (typeof showToast === 'function') showToast('Error', 'Ingresa correo y contraseña', 'error');
     return;
   }
-  
+
   if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Autenticando...');
-  
+
   const { data, error } = await window.supabaseClient.auth.signInWithPassword({
     email,
     password
   });
-  
+
   if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-  
+
   if (error) {
     if (typeof showToast === 'function') showToast('Error de acceso', error.message, 'error');
     return;
   }
-  
+
   if (data && data.user) procesarSesionExitosa(data.user);
 }
 
@@ -1050,32 +1049,32 @@ async function registrarEmail() {
   const passwordEl = document.getElementById('authPassword');
   const email = emailEl ? emailEl.value.trim() : '';
   const password = passwordEl ? passwordEl.value : '';
-  
+
   if (!email || !password) {
     if (typeof showToast === 'function') showToast('Error', 'Ingresa correo y contraseña', 'error');
     return;
   }
-  
+
   if (password.length < 6) {
     if (typeof showToast === 'function') showToast('Error', 'La contraseña debe tener al menos 6 caracteres', 'error');
     return;
   }
-  
+
   if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Registrando...');
-  
+
   const { data, error } = await window.supabaseClient.auth.signUp({
     email,
     password,
     options: { emailRedirectTo: window.location.origin }
   });
-  
+
   if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-  
+
   if (error) {
     if (typeof showToast === 'function') showToast('Error de registro', error.message, 'error');
     return;
   }
-  
+
   if (data && data.session) {
     if (typeof showToast === 'function') showToast('Éxito', 'Registro completado. Ingresando...', 'success');
     procesarSesionExitosa(data.user);
@@ -1089,7 +1088,7 @@ async function registrarEmail() {
 async function procesarSesionExitosa(user) {
   const gmail = user.email.toLowerCase().trim();
   const nombre = user.user_metadata?.full_name || gmail.split('@')[0];
-  
+
   try {
     if (window.supabaseClient) {
       const { data } = await window.supabaseClient.from('admin_credentials').select('email').ilike('email', gmail).maybeSingle();
@@ -1104,7 +1103,7 @@ async function procesarSesionExitosa(user) {
   // VERIFICAR SIEMPRE si el usuario ya es repartidor en la BD, sin importar lo que seleccionó
   let esRepartidorDB = false;
   let choferData = null;
-  
+
   if (window.supabaseClient) {
     try {
       const { data } = await window.supabaseClient
@@ -1129,19 +1128,19 @@ async function procesarSesionExitosa(user) {
     if (modalAuth) modalAuth.style.display = 'none';
 
     window._tempAuthUser = user;
-    
+
     const modalRole = document.getElementById('modalRoleSelection');
     if (modalRole) modalRole.style.display = 'flex';
     return;
   }
 
-  const clienteData = { 
+  const clienteData = {
     role: currentSelectedRole === 'driver' ? 'repartidor' : 'vecino',
-    gmail, 
-    nombre, 
-    user_id: user.id 
+    gmail,
+    nombre,
+    user_id: user.id
   };
-  
+
   if (currentSelectedRole === 'driver') {
     if (esRepartidorDB && choferData) {
       if (choferData.ciudad) {
@@ -1159,10 +1158,10 @@ async function procesarSesionExitosa(user) {
 
       const inputDriverNombre = document.getElementById('inputDriverNombre');
       if (inputDriverNombre) inputDriverNombre.value = nombre;
-      
+
       const modalDriver = document.getElementById('modalDriver');
       if (modalDriver) modalDriver.style.display = 'flex';
-      
+
       const titleEl = document.getElementById('driverModalTitleText');
       const subtitleEl = document.getElementById('driverModalSubtitle');
       if (titleEl) titleEl.textContent = 'Registro de Repartidor';
@@ -1172,13 +1171,13 @@ async function procesarSesionExitosa(user) {
       return; // Detenemos aquí, el form modalDriver completará el registro
     }
   }
-  
+
   AppState.set('userData', clienteData);
   window._roleSelectedNow = false; // Reset state for next login
-  
+
   const modalAuth = document.getElementById('modalWelcomeAuth');
   if (modalAuth) modalAuth.style.display = 'none';
-  
+
   if (currentSelectedRole === 'driver') {
     if (typeof setAppMode === 'function') setAppMode('driver');
     if (typeof showToast === 'function') showToast('✅ Sesión Segura', `Ingresaste como Repartidor (${gmail})`, 'success', 2000);
@@ -1204,12 +1203,12 @@ async function procesarSesionExitosa(user) {
 window.finalizeRoleSelection = function(role) {
   const modalRole = document.getElementById('modalRoleSelection');
   if (modalRole) modalRole.style.display = 'none';
-  
+
   const citySelect = document.getElementById('newUserCity');
   if (citySelect && citySelect.value) {
     const selectedCity = citySelect.value.toLowerCase();
     AppState.set('city', selectedCity);
-    
+
     // Si ya hay user_data local (Google OneTap lo crea antes), actualizarlo con la ciudad
     const saved = JSON.stringify(AppState.get('userData') || {});
     if (saved) {
@@ -1223,22 +1222,21 @@ window.finalizeRoleSelection = function(role) {
 
   currentSelectedRole = role === 'repartidor' ? 'driver' : 'buyer';
   window._roleSelectedNow = true;
-  
+
   if (window._tempAuthUser) {
     procesarSesionExitosa(window._tempAuthUser);
   }
 };
-
 
 let currentAuthAction = 'login'; // 'login' or 'register'
 
 window.showAuthStep = function(step) {
   const step1 = document.getElementById('authStep1_Action');
   const step2 = document.getElementById('authStep2_Method');
-  
+
   if (step1) step1.style.display = (step === 1) ? 'block' : 'none';
   if (step2) step2.style.display = (step === 2) ? 'block' : 'none';
-  
+
   if (step === 2) {
     const btnEmailAction = document.getElementById('btnEmailAction');
     const step2Title = document.getElementById('authStep2Title');

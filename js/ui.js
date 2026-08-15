@@ -22,7 +22,7 @@ window.showLoadingOverlay = function(message = "Procesando...") {
   const overlay = document.getElementById('globalLoadingOverlay');
   const msgEl = document.getElementById('globalLoadingMessage');
   const btn = document.getElementById('globalLoadingCancelBtn');
-  
+
   if (overlay && msgEl && btn) {
     msgEl.innerText = message;
     btn.style.display = 'none';

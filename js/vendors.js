@@ -11,7 +11,7 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
     renderVendorCards(cat);
     return;
   }
-  
+
   const city = AppState.get('city');
   if (!city) {
     renderVendorCards(cat);
@@ -64,7 +64,7 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
   } catch (e) {
     console.error("Error fetching local drivers:", e);
   }
-  
+
   renderVendorCards(cat);
 }
 
@@ -81,7 +81,7 @@ function filterVendorCategory(cat, chipElem) {
 function getStoredVendors() {
   let list = AppState.get('notigas_vendors_directory') || [];
   let deletedIds = AppState.get('notigas_deleted_vendor_ids') || [];
-  
+
   // FIX: Ya no inyectamos al usuario actual automáticamente con "active: true".
   // Su estado real vendrá de la tabla choferes_habilitados de Supabase.
 
@@ -100,8 +100,8 @@ function renderVendorCards(filterCat) {
 
   const allVendors = getStoredVendors();
 
-  const filtered = (filterCat === 'TODOS') 
-    ? allVendors 
+  const filtered = (filterCat === 'TODOS')
+    ? allVendors
     : allVendors.filter(v => v.category.toLowerCase().includes(filterCat.toLowerCase()) || filterCat.toLowerCase().includes(v.category.toLowerCase()));
 
   let html = '';
@@ -215,5 +215,3 @@ function getIconForCategory(cat) {
   if (c.includes('carbón') || c.includes('leña')) return '🪵';
   return '📦';
 }
-
-

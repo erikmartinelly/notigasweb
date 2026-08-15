@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_btnDriverPause = document.getElementById('btnDriverPause');
     if (el_btnDriverPause) el_btnDriverPause.addEventListener('click', (event) => { if (typeof window.pausarRecorridoRepartidor === 'function') window.pausarRecorridoRepartidor() });
     const el_auto_event_10 = document.getElementById('auto-event-10');
-    if (el_auto_event_10) el_auto_event_10.addEventListener('click', (event) => { 
+    if (el_auto_event_10) el_auto_event_10.addEventListener('click', (event) => {
       if (typeof window.abrirModalDriverOrders === 'function') window.abrirModalDriverOrders();
       else if (typeof abrirModalDriverOrders === 'function') abrirModalDriverOrders();
     });
@@ -192,7 +192,7 @@ document.addEventListener('click', (e) => {
   const btn = e.target.closest('[data-action]');
   if (!btn) return;
   const action = btn.getAttribute('data-action');
-  
+
   if (action === 'confirmarEntregaPedido') {
     const id = btn.getAttribute('data-id');
     if (typeof window.confirmarEntregaPedido === 'function') window.confirmarEntregaPedido(id);
@@ -341,4 +341,3 @@ document.addEventListener('click', (e) => {
     if (typeof window.centrarPedidoEnMapa === 'function') window.centrarPedidoEnMapa(lat, lng, orderId);
   }
 });
-

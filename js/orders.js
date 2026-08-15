@@ -159,7 +159,7 @@ window.aceptarGrupoDemanda = async function(clusterId, ciudad, categoria) {
   }
   showConfirmModal('🚚', 'Aceptar Grupo', '¿Deseas asignarte este grupo de pedidos?', 'Sí, aceptar pedidos', async () => {
     if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Asignando pedidos...');
-    
+
     // Call RPC to officially assign the orders in backend
     const { error } = await window.supabaseClient.rpc('rpc_accept_demand_cluster_v2', {
         p_cluster_id: clusterId,
@@ -179,7 +179,7 @@ window.aceptarGrupoDemanda = async function(clusterId, ciudad, categoria) {
     AppState.set('activeClusterId', clusterId);
     AppState.set('activeClusterCity', ciudad);
     AppState.set('activeClusterCategoria', categoria);
-    
+
     if (typeof showToast === 'function') {
       showToast('¡Pedidos Asignados!', 'Los pedidos de la zona han sido asignados a ti.', 'success', 5000);
     }
@@ -330,10 +330,7 @@ function ejecutarPurgaBaseDeDatosAuto() {
 }
 
 function checkActiveOrderStatus() {
-
   ejecutarPurgaBaseDeDatosAuto();
-
-
 
   const btnCancel = document.getElementById('btnCancelOrder');
 
@@ -348,7 +345,7 @@ function checkActiveOrderStatus() {
 
       if (btnCancel) btnCancel.style.display = 'flex';
       if (btnMain) btnMain.style.display = 'none';
-      
+
       const tripCard = document.getElementById('notigasTripCard');
       const buyerActions = document.getElementById('buyerFloatingActions');
       if (tripCard) {
@@ -356,14 +353,14 @@ function checkActiveOrderStatus() {
         // Mostrar buyerActions pero ocultar btnMain y botones irrelevantes
         if (buyerActions) buyerActions.style.display = 'flex';
       }
-      
+
       const statusText = document.getElementById('tripCardStatusText');
       const driverName = document.getElementById('tripCardDriverName');
       const timeEst = document.getElementById('tripCardTime');
       const statusIndicator = document.getElementById('tripCardStatusIndicator');
-      
+
       const estado = String(order.estado || 'pendiente').toLowerCase();
-      
+
       if (estado === 'pendiente' || estado === 'visto') {
         if (statusText) statusText.innerText = 'BUSCANDO';
         if (driverName) driverName.innerText = 'SOLICITUD ENVIADA';
@@ -434,10 +431,7 @@ function checkActiveOrderStatus() {
          }
       }
 
-
-
       if (typeof renderActiveOrdersMap === 'function') {
-
         renderActiveOrdersMap();
 
       }
@@ -448,11 +442,9 @@ function checkActiveOrderStatus() {
 
   }
 
-  
-
   if (btnCancel) btnCancel.style.display = 'none';
   if (btnMain) btnMain.style.display = 'flex'; // Restaurar Hacer Pedido
-  
+
   const tripCard = document.getElementById('notigasTripCard');
   if (tripCard) tripCard.style.display = 'none';
   const buyerActions = document.getElementById('buyerFloatingActions');
@@ -461,27 +453,21 @@ function checkActiveOrderStatus() {
   actualizarFaviconSegunPedido(null);
 
   if (typeof renderActiveOrdersMap === 'function') {
-
     renderActiveOrdersMap();
 
   }
-
 }
 
-function abrirSubmenuPedidos() { 
-
+function abrirSubmenuPedidos() {
   const modalSubmenu = document.getElementById('modalSubmenu');
 
-  if (modalSubmenu) modalSubmenu.style.display = 'flex'; 
-
+  if (modalSubmenu) modalSubmenu.style.display = 'flex';
 }
 
-function closeSubmenuModal() { 
-
+function closeSubmenuModal() {
   const modalSubmenu = document.getElementById('modalSubmenu');
 
-  if (modalSubmenu) modalSubmenu.style.display = 'none'; 
-
+  if (modalSubmenu) modalSubmenu.style.display = 'none';
 }
 
 window.centrarMapaEnMiPedido = function() {
@@ -499,25 +485,20 @@ window.centrarMapaEnMiPedido = function() {
   }
 };
 
-
 function seleccionarYPedirDirecto(catNombre) {
-
   closeSubmenuModal();
 
   const sel = document.getElementById('selectCategoria');
 
   if (sel && catNombre) {
-
     let foundIdx = -1;
 
     const cleanSearch = catNombre.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 
     for (let i = 0; i < sel.options.length; i++) {
-
       const cleanVal = sel.options[i].value.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 
       if (cleanVal && (cleanVal.includes(cleanSearch) || cleanSearch.includes(cleanVal))) {
-
         foundIdx = i;
 
         break;
@@ -527,7 +508,6 @@ function seleccionarYPedirDirecto(catNombre) {
     }
 
     if (foundIdx !== -1) {
-
       sel.selectedIndex = foundIdx;
 
       sel.dispatchEvent(new Event('change'));
@@ -539,15 +519,12 @@ function seleccionarYPedirDirecto(catNombre) {
   const modalPedido = document.getElementById('modalPedido');
 
   if (modalPedido) modalPedido.style.display = 'flex';
-
 }
 
-function closePedidoModal() { 
-
+function closePedidoModal() {
   const modalPedido = document.getElementById('modalPedido');
 
-  if (modalPedido) modalPedido.style.display = 'none'; 
-
+  if (modalPedido) modalPedido.style.display = 'none';
 }
 
 function confirmarPedido() {
@@ -648,12 +625,9 @@ function confirmarPedido() {
         console.log("✅ Pedido guardado en Supabase.");
         closePedidoModal();
 
-        
-
         // FIX: Solo guardar localmente si la BD aceptó, y añadir el ID real
 
         const activeOrderData = {
-
           id: resultData.id,
 
           categoria: cat,
@@ -676,8 +650,6 @@ function confirmarPedido() {
 
         AppState.set('activeOrder', activeOrderData);
 
-
-
         if (typeof notigasTrack === 'function') notigasTrack('pedido_creado', { categoria: cat });
 
         showToast('✅ Pedido Recibido', 'Tu solicitud fue enviada a los repartidores disponibles de tu zona. La atención depende de la disponibilidad de un repartidor.', 'success', 5000);
@@ -692,7 +664,6 @@ function confirmarPedido() {
       }
 
     }).catch(e => {
-
        if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
 
        console.error(e);
@@ -702,22 +673,17 @@ function confirmarPedido() {
     });
 
   } else {
-
     showToast('Error', 'El servidor no está disponible. No se puede crear el pedido.', 'error', 3000);
 
   }
-
 }
 
 function cancelarPedidoActivo() {
   showConfirmModal('❌', '¿Cancelar tu pedido?', 'Tu pedido activo será eliminado del mapa y los repartidores dejarán de verlo.', 'Sí, cancelar', async () => {
-
     const rawOrder = JSON.stringify(AppState.get('activeOrder'));
 
     if (window.supabaseClient && rawOrder) {
-
       try {
-
         const order = JSON.parse(rawOrder);
 
         if (order.id) {
@@ -727,7 +693,7 @@ function cancelarPedidoActivo() {
                 .delete()
                 .eq('id', order.id)
                 .eq('user_id', userId);
-                
+
              if (error) {
                  console.error("Error cancelando pedido en Supabase:", error);
                  showToast('Error', 'No se pudo cancelar el pedido.', 'error', 3000);
@@ -740,12 +706,12 @@ function cancelarPedidoActivo() {
       }
 
     }
-    
+
     if (typeof userMarker !== 'undefined' && userMarker && typeof userLocationIcon !== 'undefined') {
         userMarker.setIcon(userLocationIcon);
         await new Promise(r => setTimeout(r, 1500));
     }
-    
+
     AppState.set('activeOrder', null);
 
     showToast('Pedido Cancelado', 'Se ha restaurado el estado normal de la aplicación.', 'error', 4000);
@@ -753,7 +719,6 @@ function cancelarPedidoActivo() {
     checkActiveOrderStatus();
 
     if (typeof renderActiveOrdersMap === 'function') {
-
       renderActiveOrdersMap();
 
     }
@@ -764,19 +729,15 @@ window.cancelarPedidoActivo = cancelarPedidoActivo;
 
 async function confirmarRecepcionComprador() {
   showConfirmModal('🏁', 'Confirmar Recepción', '¿Confirmas que el repartidor llegó y recibiste tu pedido de forma exitosa?', 'Sí, lo recibí', async () => {
-
      const rawOrder = JSON.stringify(AppState.get('activeOrder'));
 
      if (window.supabaseClient && rawOrder) {
-
          showLoadingOverlay('Confirmando entrega...');
 
          try {
-
              const order = JSON.parse(rawOrder);
 
              if (order.id) {
-
                 const localUserId = await getAuthenticatedUserId();
                 const { error } = await window.supabaseClient.from('pedidos')
                     .delete()
@@ -797,12 +758,12 @@ async function confirmarRecepcionComprador() {
          if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
 
      }
-     
+
      if (typeof userMarker !== 'undefined' && userMarker && typeof garrafaGreenIcon !== 'undefined') {
          userMarker.setIcon(garrafaGreenIcon);
          await new Promise(r => setTimeout(r, 1500));
      }
-     
+
      AppState.set('activeOrder', null);
 
      showToast('¡Gracias!', 'Gracias por confirmar. El pedido ha sido finalizado exitosamente.', 'success', 5000);
@@ -812,25 +773,19 @@ async function confirmarRecepcionComprador() {
      if (typeof renderActiveOrdersMap === 'function') renderActiveOrdersMap();
 
   });
-
 }
 
 async function abrirPanoramicaPedidos() {
-
   let contenido = '';
 
   const now = Date.now();
-
-
 
   // Pedido propio activo (desde localStorage)
 
   const rawPropio = JSON.stringify(AppState.get('activeOrder'));
 
   if (rawPropio) {
-
     try {
-
       const o = JSON.parse(rawPropio);
 
       const minutos = Math.floor((now - o.timestamp) / 60000);
@@ -859,16 +814,12 @@ async function abrirPanoramicaPedidos() {
 
   }
 
-
-
   // FIX W-02: Cargar pedidos reales de otros vecinos desde Supabase (en lugar de mockOrders)
 
   let otrosPedidosHtml = '';
 
   if (window.supabaseClient) {
-
     try {
-
       const expirationMs = (window.NOTIGAS && window.NOTIGAS.ORDER_EXPIRATION_MS) ? window.NOTIGAS.ORDER_EXPIRATION_MS : 48 * 60 * 60 * 1000;
 
       const activeWindow = new Date(now - expirationMs).toISOString();
@@ -887,12 +838,8 @@ async function abrirPanoramicaPedidos() {
 
         .limit(10);
 
-
-
       if (pedidosReales && pedidosReales.length > 0) {
-
         pedidosReales.forEach(o => {
-
           const min = Math.floor((now - new Date(o.created_at).getTime()) / 60000);
 
           const iconHtml = typeof obtenerIconoHtmlPorCategoria === 'function' ? obtenerIconoHtmlPorCategoria(o.categoria) : '📦';
@@ -922,33 +869,25 @@ async function abrirPanoramicaPedidos() {
         contenido += otrosPedidosHtml;
 
       } else if (!rawPropio) {
-
         contenido = `<div style="text-align:center; color:#64748B; padding:20px 0;"><i class="fa-solid fa-inbox" style="font-size:32px; margin-bottom:10px; display:block;"></i>No hay pedidos activos en tu zona en este momento.</div>`;
 
       }
 
     } catch (e) {
-
       console.warn('Error cargando pedidos reales en panorámica:', e);
 
     }
 
   }
 
-
-
   if (!contenido) {
-
     contenido = `<div style="text-align:center; color:#64748B; padding:20px 0;"><i class="fa-solid fa-inbox" style="font-size:32px; margin-bottom:10px; display:block;"></i>No hay pedidos activos en tu zona en este momento.</div>`;
 
   }
 
-
-
   let modal = document.getElementById('modalPanoramicaPedidos');
 
   if (!modal) {
-
     modal = document.createElement('div');
 
     modal.id = 'modalPanoramicaPedidos';
@@ -979,36 +918,28 @@ async function abrirPanoramicaPedidos() {
 
   }
 
-
-
   const contentEl = document.getElementById('panoramicaContent');
 
   if (contentEl) contentEl.innerHTML = contenido;
 
   modal.style.display = 'flex';
-
 }
 
 function cerrarPanoramicaPedidos() {
-
   const modal = document.getElementById('modalPanoramicaPedidos');
 
   if (modal) modal.style.display = 'none';
-
 }
 
 function notificarEscucheCamion() {
-
   const pos = getActiveUserLocation();
 
   let reporterName = "Un vecino";
 
   try {
-
     const saved = JSON.stringify(AppState.get('userData') || {});
 
     if (saved) {
-
       const u = JSON.parse(saved);
 
       if (u.nombre) reporterName = u.nombre;
@@ -1017,10 +948,7 @@ function notificarEscucheCamion() {
 
   } catch(e){}
 
-
-
   const alertPayload = {
-
     id: Date.now(),
 
     lat: pos.lat,
@@ -1035,14 +963,10 @@ function notificarEscucheCamion() {
 
   };
 
-
-
   // Enviar a Supabase Realtime si está conectado
 
   if (window.supabaseClient && window._realtimeChannel) {
-
      window._realtimeChannel.send({
-
        type: 'broadcast',
 
        event: 'vecinos_alert',
@@ -1058,23 +982,17 @@ function notificarEscucheCamion() {
   recibirAlertaVecinalBroadcast(alertPayload);
 
   showToast('📢 Alerta Enviada', 'Los vecinos de tu ciudad han sido notificados de que hay un camión cerca.', 'success', 4000);
-
 }
 
-
-
 function lanzarEspecialEsperame() {
-
   const pos = getActiveUserLocation();
 
   let reporterName = "Un vecino";
 
   try {
-
     const saved = JSON.stringify(AppState.get('userData') || {});
 
     if (saved) {
-
       const u = JSON.parse(saved);
 
       if (u.nombre) reporterName = u.nombre;
@@ -1083,10 +1001,7 @@ function lanzarEspecialEsperame() {
 
   } catch(e){}
 
-
-
   const alertPayload = {
-
     id: Date.now(),
 
     lat: pos.lat,
@@ -1101,12 +1016,8 @@ function lanzarEspecialEsperame() {
 
   };
 
-
-
   if (window.supabaseClient && window._realtimeChannel) {
-
      window._realtimeChannel.send({
-
        type: 'broadcast',
 
        event: 'vecinos_alert',
@@ -1117,45 +1028,32 @@ function lanzarEspecialEsperame() {
 
   }
 
-
-
   recibirAlertaVecinalBroadcast(alertPayload);
 
   mostrarPopupAlertaRepartidor(`🛑 <strong>¡ALERTA VECINAL "ESPÉRAME"!</strong><br>${reporterName} solicita que el camión detenga su marcha cerca de esta ubicación.`);
 
   showToast('Alerta Emitida', `Se ha colocado un punto de alerta en el mapa visible para todos los vecinos y repartidores.`, 'warning', 3000);
-
 }
 
-
-
 window.recibirAlertaVecinalBroadcast = function(payload) {
-
   // Solo procesar alertas de nuestra misma ciudad
 
   const miCiudad = AppState.get('city');
 
   if (payload.ciudad && payload.ciudad !== miCiudad) return;
 
-
-
   let buffer = [];
 
   try {
-
     const raw = localStorage.getItem('notigas_reported_trucks_buffer');
 
     if (raw) buffer = JSON.parse(raw);
 
   } catch(e){}
 
-
-
   // Evitar duplicados
 
   if (buffer.find(a => a.id === payload.id)) return;
-
-
 
   const now = Date.now();
 
@@ -1163,12 +1061,7 @@ window.recibirAlertaVecinalBroadcast = function(payload) {
 
   buffer.unshift(payload);
 
-  
-
   localStorage.setItem('notigas_reported_trucks_buffer', JSON.stringify(buffer));
 
   if (typeof renderReportedTrucksBuffer === 'function') renderReportedTrucksBuffer();
-
 };
-
-
