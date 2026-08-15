@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    NOTIGAS - MÓDULO DE MAPA EN VIVO, POSICIONAMIENTO GPS OBLIGATORIO,
    ANIMACIONES Y MAPA DE CALOR DE PEDIDOS PARA MODO REPARTIDOR
    ==========================================================================
@@ -142,16 +142,18 @@ function initNotigasMap() {
 
   let startLat = currentGpsLat;
   let startLng = currentGpsLng;
+  let isNationalView = false;
   if (!startLat || !startLng) {
-    const city = AppState.get('city') || 'santacruz';
-    if (city === 'cochabamba') { startLat = -17.3895; startLng = -66.1568; }
-    else if (city === 'lapaz') { startLat = -16.4897; startLng = -68.1193; }
-    else { startLat = -17.7833; startLng = -63.1821; }
+    // Si no hay coordenadas GPS ni IP, no fabricamos una ubicación falsa.
+    // Mostramos la vista nacional (Bolivia) y pedimos seleccionar.
+    startLat = -16.290154; 
+    startLng = -63.588653;
+    isNationalView = true;
   }
 
   map = L.map('map', {
     center: [startLat, startLng],
-    zoom: 16,
+    zoom: isNationalView ? 6 : 16,
     zoomControl: false
   });
 
@@ -193,10 +195,18 @@ function initNotigasMap() {
     isMapInteractedByUser = true; 
     if (typeof desactivarSeguirme === 'function') desactivarSeguirme(); 
   });
-  map.on('zoomstart', () => { 
+  map.on('moveend', () => { 
     isMapInteractedByUser = true; 
     if (typeof desactivarSeguirme === 'function') desactivarSeguirme(); 
   });
+  
+  if (isNationalView) {
+    setTimeout(() => {
+        if (typeof showToast === 'function') {
+            showToast('Ubicación desconocida', 'Por favor, activa el GPS o busca tu ciudad manualmente.', 'warning', 6000);
+        }
+    }, 1500);
+  }
 
   // HABILITAR AJUSTE DE UBICACIÓN AL HACER CLIC DIRECTO EN CUALQUIER PUNTO DEL MAPA
   map.on('click', (e) => {

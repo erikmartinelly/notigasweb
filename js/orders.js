@@ -1,4 +1,4 @@
-﻿/* ORDERS LOGIC */
+/* ORDERS LOGIC */
 
 function abrirModalDriverOrders() {
 
@@ -34,7 +34,8 @@ async function renderDriverOrdersList() {
 
   if (window.supabaseClient) {
 
-    let ciudadReal = AppState.get('city') || 'santacruz';
+    const userData = AppState.get('userData');
+    let ciudadReal = (userData && (userData.ciudad || userData.city)) ? (userData.ciudad || userData.city) : (AppState.get('city') || 'santacruz');
 
 
 
@@ -153,6 +154,16 @@ window.aceptarGrupoDemanda = async function(clusterId, ciudad, categoria) {
       delete window.demandClusterMarkers[clusterId];
     }
     
+    // Call RPC to officially assign the orders
+    const localUserId = typeof getCurrentUserId === 'function' ? getCurrentUserId() : (AppState.get('userData') ? AppState.get('userData').id : null);
+    if (localUserId) {
+        await window.supabaseClient.rpc('rpc_accept_demand_cluster_v2', {
+            p_cluster_id: clusterId,
+            p_ciudad: ciudad,
+            p_categoria: categoria
+        });
+    }
+
     if (typeof window.calcularYTrazarRutaEficiente === 'function') window.calcularYTrazarRutaEficiente();
     if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
   });
