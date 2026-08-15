@@ -2,7 +2,7 @@
 -- Por solicitud, se elimina el enmascaramiento de los datos del comprador
 -- para que los repartidores puedan ver la ubicación exacta y el teléfono de contacto.
 
-DROP VIEW IF EXISTS pedidos_publicos;
+DROP VIEW IF EXISTS pedidos_publicos CASCADE;
 
 CREATE OR REPLACE VIEW pedidos_publicos AS
 SELECT

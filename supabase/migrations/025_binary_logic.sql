@@ -2,7 +2,7 @@
 -- Simplificación a modelo binario (activo/borrado) y privacidad dual
 
 -- 1. Restaurar el enmascaramiento en la vista pública
-DROP VIEW IF EXISTS pedidos_publicos;
+DROP VIEW IF EXISTS pedidos_publicos CASCADE;
 
 CREATE OR REPLACE VIEW pedidos_publicos AS
 SELECT

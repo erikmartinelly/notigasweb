@@ -3,7 +3,7 @@
 -- Para proteger la ubicación exacta del domicilio del usuario, truncamos lat y long
 -- a 3 decimales (aproximadamente 111 metros de margen de error).
 
-DROP VIEW IF EXISTS pedidos_publicos;
+DROP VIEW IF EXISTS pedidos_publicos CASCADE;
 
 CREATE OR REPLACE VIEW pedidos_publicos AS
 SELECT

@@ -16,6 +16,8 @@ CREATE POLICY "Auth SELECT pedidos" ON pedidos FOR SELECT USING (
 );
 
 -- 3. Crear vista de pedidos para consultas públicas y mapas
+DROP VIEW IF EXISTS pedidos_publicos CASCADE;
+
 CREATE OR REPLACE VIEW pedidos_publicos AS
 SELECT
     id,

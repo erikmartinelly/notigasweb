@@ -12,6 +12,8 @@ FOR SELECT USING (
 );
 
 -- 3. Crear vista pública filtrando datos no públicos y usuarios baneados
+DROP VIEW IF EXISTS public.choferes_publicos CASCADE;
+
 CREATE OR REPLACE VIEW public.choferes_publicos AS
 SELECT 
     id, 
