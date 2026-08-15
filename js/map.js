@@ -240,7 +240,7 @@ async function cargarPedidosVecinalesEnVivo() {
   const activeWindow = new Date(Date.now() - expirationMs).toISOString();
   console.log("🔍 Consultando pedidos en Supabase desde:", activeWindow);
 
-  const activeCity = AppState.get('city') || 'santacruz';
+  const activeCity = AppState.get('city');
 
   try {
     let isDriverUser = false;

@@ -35,7 +35,7 @@ async function renderDriverOrdersList() {
   if (window.supabaseClient) {
 
     const userData = AppState.get('userData');
-    let ciudadReal = (userData && (userData.ciudad || userData.city)) ? (userData.ciudad || userData.city) : (AppState.get('city') || 'santacruz');
+    let ciudadReal = (userData && (userData.ciudad || userData.city)) ? (userData.ciudad || userData.city) : AppState.get('city');
 
 
 
@@ -535,7 +535,7 @@ function confirmarPedido() {
 
       
 
-      const ciudadReal = AppState.get('city') || 'santacruz';
+      const ciudadReal = AppState.get('city');
 
 
 
@@ -818,7 +818,7 @@ async function abrirPanoramicaPedidos() {
 
       const activeWindow = new Date(now - expirationMs).toISOString();
 
-      const ciudadReal = AppState.get('city') || 'santacruz';
+      const ciudadReal = AppState.get('city');
 
       const { data: pedidosReales } = await window.supabaseClient
         .from('pedidos_publicos')
@@ -976,7 +976,7 @@ function notificarEscucheCamion() {
 
     reporter: reporterName,
 
-    ciudad: AppState.get('city') || 'santacruz'
+    ciudad: AppState.get('city')
 
   };
 
@@ -1042,7 +1042,7 @@ function lanzarEspecialEsperame() {
 
     reporter: `${reporterName} (🛑 Alerta Espérame)`,
 
-    ciudad: AppState.get('city') || 'santacruz'
+    ciudad: AppState.get('city')
 
   };
 
@@ -1078,7 +1078,7 @@ window.recibirAlertaVecinalBroadcast = function(payload) {
 
   // Solo procesar alertas de nuestra misma ciudad
 
-  const miCiudad = AppState.get('city') || 'santacruz';
+  const miCiudad = AppState.get('city');
 
   if (payload.ciudad && payload.ciudad !== miCiudad) return;
 

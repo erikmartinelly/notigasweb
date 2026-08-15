@@ -7,7 +7,7 @@ document.addEventListener('notigas_auth_ready', () => {
   
   if (window.supabaseClient && !window.adsSubscriptionActive) {
     window.adsSubscriptionActive = true;
-    const activeCity = AppState.get('city') || 'santacruz';
+    const activeCity = AppState.get('city');
     window.supabaseClient.channel('custom-all-channel-ads')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'anuncios_globales', filter: `ciudad=eq.${activeCity}` }, payload => {
           cargarAnunciosGuardados();
@@ -24,7 +24,7 @@ function abrirAnuncioWhatsApp() {
 
 async function cargarAnunciosGuardados() {
   if (!window.supabaseClient) return;
-  const activeCity = AppState.get('city') || 'santacruz';
+  const activeCity = AppState.get('city');
 
   try {
     const { data, error } = await window.supabaseClient

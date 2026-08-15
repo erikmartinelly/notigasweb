@@ -41,7 +41,7 @@ window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño m
   const _state = {
     userRole: 'vecino',        // 'vecino' | 'repartidor' | 'admin'
     userData: null,            // Objeto con datos del usuario autenticado
-    city: 'santacruz', // Única fuente de verdad temporal pre-login
+    city: undefined, // Se establecerá dinámicamente según GPS/login
     gpsLat: null,
     gpsLng: null,
     gpsReady: false,
