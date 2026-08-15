@@ -33,25 +33,37 @@ async function renderDriverOrdersList() {
   let orders = [];
 
   if (window.supabaseClient) {
-
-    const userData = AppState.get('userData');
+    const userData = (typeof AppState !== 'undefined') ? (AppState.get('userData') || {}) : {};
+    const ciudad = userData.ciudad || userData.city || ((typeof AppState !== 'undefined') ? AppState.get('city') : null);
+    const categoria = userData.categoria || userData.category;
     const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : (userData ? userData.id : null);
-    let ciudadReal = (userData && (userData.ciudad || userData.city)) ? (userData.ciudad || userData.city) : AppState.get('city');
+
+    if (!ciudad || !categoria) {
+      console.error('Falta ciudad o categoría del repartidor:', { ciudad, categoria });
+      container.innerHTML = `<div style="padding:24px; text-align:center; color:#94A3B8; font-size:13px;"><i class="fa-solid fa-triangle-exclamation" style="font-size:28px; color:#F59E0B; margin-bottom:10px;"></i><br><strong style="color:white;">No se pudo determinar la ciudad o categoría del repartidor.</strong><br><span style="font-size:11px; color:#64748B;">Revisa tu perfil de repartidor o selecciona tu ciudad.</span></div>`;
+      return;
+    }
 
     const activeWindow = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
 
-    const { data } = await window.supabaseClient
+    const { data, error } = await window.supabaseClient
       .from('pedidos')
       .select('*')
-      .eq('ciudad', ciudadReal)
-      .gte('created_at', activeWindow);
-      
-    if (data) {
-      orders = data.filter(o => typeof isOrderCategoryMatchingDriver === 'function' && isOrderCategoryMatchingDriver(o.categoria));
-      // Filtramos por pedidos pendientes, vistos o asignados a este repartidor
-      orders = orders.filter(o => o.estado === 'pendiente' || o.estado === 'visto' || (o.estado === 'asignado' && o.driver_id === localUserId));
+      .eq('ciudad', ciudad)
+      .eq('categoria', categoria)
+      .gte('created_at', activeWindow)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error cargando pedidos:', error);
+      container.innerHTML = `<div style="padding:24px; text-align:center; color:#EF4444; font-size:13px;"><i class="fa-solid fa-circle-exclamation" style="font-size:28px; margin-bottom:10px;"></i><br><strong>Error cargando pedidos.</strong></div>`;
+      return;
     }
 
+    if (data) {
+      // Filtramos por pedidos pendientes, vistos o asignados a este repartidor
+      orders = data.filter(o => o.estado === 'pendiente' || o.estado === 'visto' || (o.estado === 'asignado' && o.driver_id === localUserId));
+    }
   }
 
 
@@ -179,10 +191,10 @@ window.aceptarGrupoDemanda = async function(clusterId, ciudad, categoria) {
   });
 }
 
-window.abrirRutaGoogleMaps = async function(a, b, c) {
+window.abrirRutaGoogleMaps = async function (a, b, c) {
   let orderId, lat, lng;
 
-  // Soportar ambas firmas: (lat, lng, orderId) y (orderId, lat, lng)
+  // Soportar ambas firmas: (orderId, lat, lng) y (lat, lng, orderId)
   if (typeof a === 'string' && (typeof b === 'number' || typeof b === 'string') && (typeof c === 'number' || typeof c === 'string') && isNaN(Number(a))) {
     orderId = a;
     lat = Number(b);
@@ -195,45 +207,71 @@ window.abrirRutaGoogleMaps = async function(a, b, c) {
 
   if (typeof closeDriverOrdersModal === 'function') closeDriverOrdersModal();
 
-  if (!orderId || isNaN(lat) || isNaN(lng)) {
-    console.error('Datos incompletos del pedido para navegación:', { orderId, lat, lng });
+  if (!orderId || lat == null || lng == null || isNaN(lat) || isNaN(lng)) {
+    console.error('Datos incompletos del pedido:', {
+      orderId,
+      lat,
+      lng
+    });
+
     if (typeof showToast === 'function') {
-      showToast('Error', 'Datos incompletos del pedido.', 'error', 3000);
+      showToast('Error', 'No se puede abrir la ruta: faltan datos del pedido.', 'error', 4000);
+    } else {
+      alert('No se puede abrir la ruta: faltan datos del pedido.');
     }
     return;
   }
 
-  // 1. Asignar el pedido al repartidor (validación atómica de ciudad/categoría en PostgreSQL)
-  if (window.supabaseClient) {
+  try {
     if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Asignando pedido...');
-    try {
-      const { data, error } = await window.supabaseClient.rpc('rpc_assign_order', {
-        p_order_id: orderId
-      });
 
-      if (error) {
-        console.error('Error asignando pedido:', error);
-        if (typeof showToast === 'function') {
-          showToast('No disponible', error.message || 'Este pedido ya no está disponible o no corresponde a tu zona.', 'error', 5000);
-        } else {
-          alert('❌ ' + (error.message || 'Este pedido ya no está disponible o no corresponde a tu zona.'));
-        }
-        return;
+    const { data, error } = await window.supabaseClient.rpc(
+      'rpc_assign_order',
+      {
+        p_order_id: orderId
       }
-    } catch (err) {
-      console.error('Excepción asignando pedido:', err);
+    );
+
+    if (error) {
+      console.error('Error asignando pedido:', error);
+      const msg = error.message || 'El pedido ya no está disponible.';
       if (typeof showToast === 'function') {
-        showToast('Error', 'No se pudo verificar la asignación del pedido.', 'error', 4000);
+        showToast('No disponible', msg, 'error', 5000);
+      } else {
+        alert('❌ ' + msg);
       }
       return;
-    } finally {
-      if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
     }
-  }
 
-  // 2. Solo abrir Google Maps si la asignación fue exitosa en Supabase
-  const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-  window.open(url, '_blank', 'noopener,noreferrer');
+    if (!data?.ok) {
+      if (typeof showToast === 'function') {
+        showToast('Error', 'No se pudo asignar el pedido.', 'error', 4000);
+      } else {
+        alert('No se pudo asignar el pedido.');
+      }
+      return;
+    }
+
+    const url =
+      `https://www.google.com/maps/dir/?api=1` +
+      `&destination=${encodeURIComponent(`${lat},${lng}`)}`;
+
+    window.open(
+      url,
+      '_blank',
+      'noopener,noreferrer'
+    );
+
+  } catch (err) {
+    console.error('Error inesperado asignando pedido:', err);
+    if (typeof showToast === 'function') {
+      showToast('Error', 'No se pudo asignar el pedido. Intenta nuevamente.', 'error', 4000);
+    } else {
+      alert('No se pudo asignar el pedido. Intenta nuevamente.');
+    }
+  } finally {
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+  }
 };
 
 async function confirmarEntregaPedido(id) {
