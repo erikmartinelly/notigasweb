@@ -18,19 +18,28 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
     // Solo traemos choferes de la ciudad actual que estén pendientes o aprobados.
     // (Por ahora traemos todos y el admin ya los banea o aprueba).
     const cityNormalized = city.trim().toLowerCase();
-    // Consultar de la vista pública que ya filtra por estado=aprobado
-    const { data, error } = await window.supabaseClient
-      .from('choferes_habilitados')
+    // Consultar de la vista pública que no está bloqueada por RLS para vecinos
+    let { data, error } = await window.supabaseClient
+      .from('choferes_publicos')
       .select('*')
       .eq('ciudad', cityNormalized);
 
     if (error) {
-      console.error("Error descargando choferes de Supabase:", error);
-      // Continuar con los datos locales en caché
+      // Fallback a tabla choferes_habilitados si la vista no está creada
+      const res = await window.supabaseClient
+        .from('choferes_habilitados')
+        .select('*')
+        .eq('ciudad', cityNormalized);
+      data = res.data;
+      error = res.error;
+    }
+
+    if (error) {
+      console.warn("Aviso descargando choferes de Supabase:", error.message);
     } else if (data && data.length > 0) {
       let list = [];
       data.forEach(d => {
-        if (d.estado_verificacion === 'aprobado') {
+        if (!d.estado_verificacion || d.estado_verificacion === 'aprobado') {
           list.push({
             id: `driver_${d.id}`,
             name: d.nombre_completo,

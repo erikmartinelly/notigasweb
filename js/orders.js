@@ -324,7 +324,7 @@ function checkActiveOrderStatus() {
 
          const estadoEl = document.getElementById('estadoPedidoActivo');
          if (estadoEl) {
-           window.supabaseClient.from('pedidos').select('estado').eq('id', order.id).single()
+           window.supabaseClient.from('pedidos').select('estado').eq('id', order.id).maybeSingle()
            .then(({data, error}) => {
               if (error || !data) {
                  // Order is no longer active in DB
@@ -483,120 +483,93 @@ function closePedidoModal() {
 }
 
 function confirmarPedido() {
-
   const pos = getActiveUserLocation();
+  if (!pos.lat || !pos.lng) {
+    const defaultCoords = {
+      santacruz: { lat: -17.7833, lng: -63.1821 },
+      cochabamba: { lat: -17.3895, lng: -66.1568 },
+      lapaz: { lat: -16.5000, lng: -68.1500 },
+      elalto: { lat: -16.5000, lng: -68.1900 },
+      sucre: { lat: -19.0333, lng: -65.2627 },
+      tarija: { lat: -21.5355, lng: -64.7296 },
+      oruro: { lat: -17.9833, lng: -67.1500 },
+      potosi: { lat: -19.5836, lng: -65.7531 },
+      trinidad: { lat: -14.8333, lng: -64.9000 },
+      cobija: { lat: -11.0267, lng: -68.7692 }
+    };
+    const c = AppState.get('city') || 'santacruz';
+    pos.lat = (defaultCoords[c] || defaultCoords.santacruz).lat;
+    pos.lng = (defaultCoords[c] || defaultCoords.santacruz).lng;
+  }
 
   let cat = document.getElementById('selectCategoria')?.value || 'gas';
-
   if (cat === 'otros') {
     const detail = (document.getElementById('inputOrderOtrosDetalle')?.value || '').trim();
     if (detail) {
-        // Appending to a generic field instead of corrupting the category code
-        // For now, we will just use the standard 'otros' category code
+        // Standard category code 'otros'
     }
   }
 
-
-
   const inputAddr = (document.getElementById('inputCallePrincipal')?.value || '').trim();
-
   const inputTel = (document.getElementById('inputTelefonoComprador')?.value || '').trim();
-
-
-
-  // Tanto la dirección como el teléfono son OPCIONALES (el mapa ya ubica al comprador vía GPS)
-
   const direccion = inputAddr || 'Ubicación fijada en mapa por GPS';
-
   const telefono = inputTel || '';
 
-
-
   let buyerName = 'Comprador Vecinal';
-
   try {
-
     const saved = JSON.stringify(AppState.get('userData') || {});
-
     if (saved) {
-
       const u = JSON.parse(saved);
-
       if (u.nombre) buyerName = `${u.nombre}${u.apellido ? ' ' + u.apellido[0] + '.' : ''}`;
-
     }
-
   } catch(e){}
 
-
-
   if (window.supabaseClient) {
-
     if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Creando pedido...');
 
     window.supabaseClient.auth.getSession().then(async ({ data: sessionData }) => {
-
-      // Usar UUID real de la sesión o bloquear si no hay sesión
-
       const userId = sessionData?.session?.user?.id;
-
       if (!userId) {
-
          if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-
-         if (typeof showToast === 'function') { showToast('Notificación', "❌ Error de seguridad: Debes iniciar sesión con Google o Email para pedir.", 'info', 4000); } else { alert("❌ Error de seguridad: Debes iniciar sesión con Google o Email para pedir."); };
-
+         if (typeof showToast === 'function') {
+           showToast('Inicia Sesión', 'Debes iniciar sesión con Google o Email para enviar tu pedido.', 'warning', 4000);
+         } else {
+           alert("Debes iniciar sesión con Google o Email para enviar tu pedido.");
+         }
+         closePedidoModal();
+         const modalAuth = document.getElementById('modalWelcomeAuth');
+         if (modalAuth) modalAuth.style.display = 'flex';
          return;
-
       }
 
-      
-
-      const ciudadReal = AppState.get('city');
-
-
+      const ciudadReal = AppState.get('city') || 'santacruz';
 
       const { data: resultData, error } = await window.supabaseClient.from('pedidos').insert([{
-
           categoria: cat,
-
-          cantidad: 1,
-
+          cantidad: '1 unidad',
           titulo: buyerName,
-
           direccion: direccion,
-
           telefono: telefono,
-
           descripcion: `Pedido rápido: 1 unidad.`,
-
           ciudad: ciudadReal,
-
           barrio_otb: 'Por GPS',
-
           user_id: userId,
-
           latitude: pos.lat,
-
           longitude: pos.lng
-
       }]).select('id').single();
-
-
 
       if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
 
-
-
-      if(error) {
-
+      if (error) {
         console.error("Error enviando pedido a Supabase:", error);
-
-        showToast('Error', 'No se pudo enviar el pedido al servidor.', 'error', 3000);
-
+        if (typeof showToast === 'function') {
+          showToast('Error', 'No se pudo enviar el pedido al servidor: ' + (error.message || ''), 'error', 4000);
+        } else {
+          alert('Error al enviar pedido: ' + error.message);
+        }
       } else {
-
         console.log("✅ Pedido guardado en Supabase.");
+        closePedidoModal();
 
         
 

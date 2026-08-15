@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    NOTIGAS - MÓDULO DE AUTENTICACIÓN & GOOGLE IDENTITY SERVICES (1-TAP SIGN-IN)
    ========================================================================== */
 // FIX #16: escapeHtmlStr centralizada en state.js — eliminada aquí para evitar conflictos.
@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!sessionData || !sessionData.session || !sessionData.session.user) return;
             const userEmail = sessionData.session.user.email;
             
-            const { data } = await window.supabaseClient.from('admin_credentials').select('email').ilike('email', userEmail).single();
+            const { data } = await window.supabaseClient.from('admin_credentials').select('email').ilike('email', userEmail).maybeSingle();
             if (data) {
               const btnAdmin = document.getElementById('btnAdminAccessQuick');
               if (btnAdmin) btnAdmin.style.display = 'flex';
@@ -478,7 +478,7 @@ async function handleCredentialResponse(response) {
     // Los administradores ingresan como usuarios normales pero con privilegios extra
     try {
       if (window.supabaseClient) {
-        const { data } = await window.supabaseClient.from('admin_credentials').select('email').ilike('email', gmail).single();
+        const { data } = await window.supabaseClient.from('admin_credentials').select('email').ilike('email', gmail).maybeSingle();
         if (data) {
           const btnAdmin = document.getElementById('btnAdminAccessQuick');
           if (btnAdmin) btnAdmin.style.display = 'flex';
@@ -1062,7 +1062,7 @@ async function procesarSesionExitosa(user) {
   
   try {
     if (window.supabaseClient) {
-      const { data } = await window.supabaseClient.from('admin_credentials').select('email').ilike('email', gmail).single();
+      const { data } = await window.supabaseClient.from('admin_credentials').select('email').ilike('email', gmail).maybeSingle();
       if (data) {
         const btnAdmin = document.getElementById('btnAdminAccessQuick');
         if (btnAdmin) btnAdmin.style.display = 'flex';

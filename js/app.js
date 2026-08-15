@@ -334,8 +334,8 @@ function switchTab(index) {
 }
 
 function getActiveUserLocation() {
-  let lat = (typeof currentGpsLat !== 'undefined' && currentGpsLat) ? currentGpsLat : null;
-  let lng = (typeof currentGpsLng !== 'undefined' && currentGpsLng) ? currentGpsLng : null;
+  let lat = (typeof currentGpsLat !== 'undefined' && currentGpsLat) ? currentGpsLat : (AppState.get('gpsLat') || null);
+  let lng = (typeof currentGpsLng !== 'undefined' && currentGpsLng) ? currentGpsLng : (AppState.get('gpsLng') || null);
 
   if (typeof userMarker !== 'undefined' && userMarker && userMarker.getLatLng) {
     try {
@@ -346,6 +346,18 @@ function getActiveUserLocation() {
       }
     } catch(e){}
   }
+
+  // Fallback al centro actual del mapa si las coordenadas no están fijadas
+  if ((!lat || !lng) && typeof map !== 'undefined' && map && map.getCenter) {
+    try {
+      const center = map.getCenter();
+      if (center && center.lat && center.lng) {
+        lat = center.lat;
+        lng = center.lng;
+      }
+    } catch(e){}
+  }
+
   return { lat, lng };
 }
 

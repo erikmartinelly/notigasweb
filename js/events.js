@@ -34,8 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (el_btnDriverPause) el_btnDriverPause.addEventListener('click', (event) => { if (typeof window.pausarRecorridoRepartidor === 'function') window.pausarRecorridoRepartidor() });
     const el_auto_event_10 = document.getElementById('auto-event-10');
     if (el_auto_event_10) el_auto_event_10.addEventListener('click', (event) => { if (typeof window.verPedidosEnMapa === 'function') window.verPedidosEnMapa() });
-    const el_auto_event_11 = document.getElementById('auto-event-11');
-    if (el_auto_event_11) el_auto_event_11.addEventListener('click', (event) => { abrirEdicionFichaRepartidor() });
     const el_auto_event_12 = document.getElementById('auto-event-12');
     if (el_auto_event_12) el_auto_event_12.addEventListener('click', (event) => { filterVendorCategory('TODOS', document.getElementById('auto-event-12')) });
     const el_auto_event_13 = document.getElementById('auto-event-13');
