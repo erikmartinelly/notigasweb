@@ -326,10 +326,21 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
 function switchTab(index) {
   document.querySelectorAll('.tab-btn').forEach((btn, i) => btn.classList.toggle('active', i === index));
   document.querySelectorAll('.tab-content').forEach((tab, i) => tab.classList.toggle('active', i === index));
-  if (index === 0 && typeof map !== 'undefined' && map) {
-    setTimeout(() => map.invalidateSize(), 200);
+  
+  if (index === 0) {
+    if (typeof map !== 'undefined' && map) {
+      setTimeout(() => map.invalidateSize(), 200);
+    }
+  } else if (index === 1) {
+    // Carga bajo demanda del directorio de repartidores y publicidad
+    if (typeof descargarChoferesYRenderizar === 'function') descargarChoferesYRenderizar('TODOS');
+    if (typeof cargarAnunciosGuardados === 'function') cargarAnunciosGuardados();
+  } else if (index === 2) {
+    // Carga bajo demanda del muro vecinal
+    if (typeof renderForumFeed === 'function') renderForumFeed();
   }
 }
+window.switchTab = switchTab;
 
 function getActiveUserLocation() {
   let lat = (typeof currentGpsLat !== 'undefined' && currentGpsLat) ? currentGpsLat : (AppState.get('gpsLat') || null);
@@ -387,7 +398,7 @@ window.notigasTrack = window.notigasTrack || function(event, params) {
 // 1. Registro del Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=68')
+    navigator.serviceWorker.register('./sw.js?v=69')
       .then((reg) => console.log('✅ Service Worker registrado', reg.scope))
       .catch((err) => console.error('❌ Error Service Worker:', err));
   });

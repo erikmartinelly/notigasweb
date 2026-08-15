@@ -150,36 +150,45 @@ window.iniciarSuscripcionesRealtime = function() {
         cargarPedidosVecinalesEnVivo();
     }
 
+    let _debounceOrdersTimer = null;
+    const debouncedRefreshOrders = () => {
+        clearTimeout(_debounceOrdersTimer);
+        _debounceOrdersTimer = setTimeout(() => {
+            if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
+            const modal = document.getElementById('modalDriverOrders');
+            if (modal && modal.style.display !== 'none' && typeof renderDriverOrdersList === 'function') {
+                renderDriverOrdersList();
+            }
+        }, 300);
+    };
+
+    let _debounceForumTimer = null;
+    const debouncedRefreshForum = () => {
+        const pane = document.getElementById('tabPane2');
+        if (!pane || !pane.classList.contains('active')) return;
+        clearTimeout(_debounceForumTimer);
+        _debounceForumTimer = setTimeout(() => {
+            if (typeof renderForumFeed === 'function') renderForumFeed();
+        }, 400);
+    };
+
     window.notigasGlobalChannel = window.supabaseClient.channel('global_changes_' + activeCity)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos', filter: `ciudad=eq.${activeCity}` }, payload => {
-            const data = payload.new;
-            
-            if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-                if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
-                if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
-                if (data && typeof agregarPedidoVecinoEnMapa === 'function') agregarPedidoVecinoEnMapa(data);
-            } else if (payload.eventType === 'DELETE') {
-                if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
-                if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
-                if (payload.old && payload.old.id && typeof removerPublicacionDeMapa === 'function') {
-                    removerPublicacionDeMapa(payload.old.id);
-                }
-            }
+            debouncedRefreshOrders();
         })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'rutas_repartidores', filter: `ciudad=eq.${activeCity}` }, payload => {
             const data = payload.new;
             if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
                 if (typeof actualizarRepartidorEnMapa === 'function') actualizarRepartidorEnMapa(data);
             } else if (payload.eventType === 'DELETE') {
-                if (typeof removerPublicacionDeMapa === 'function') removerPublicacionDeMapa(payload.old.id);
+                if (typeof removerPublicacionDeMapa === 'function') removerPublicacionDeMapa(payload.old?.id);
             }
         })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'avisos', filter: `ciudad=eq.${activeCity}` }, payload => {
-            if (typeof renderForumFeed === 'function') renderForumFeed();
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'avisos', filter: `ciudad=eq.${activeCity}` }, () => {
+            debouncedRefreshForum();
         })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'comentarios_avisos' }, payload => {
-            // Recargar comentarios del foro si el usuario tiene un post abierto, y refrescar el feed para los contadores
-            if (typeof renderForumFeed === 'function') renderForumFeed();
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'comentarios_avisos' }, () => {
+            debouncedRefreshForum();
             if (typeof renderPostComments === 'function' && typeof activePostCommentsRef !== 'undefined' && activePostCommentsRef !== null) {
                  renderPostComments(activePostCommentsRef);
             }
