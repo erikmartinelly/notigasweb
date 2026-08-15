@@ -19,33 +19,56 @@ function closeDriverOrdersModal() {
 }
 
 async function renderDriverOrdersList() {
-
   const container = document.getElementById('driverOrdersContainer');
-
   if (!container) return;
 
-
-
   container.innerHTML = '<div style="color:white;text-align:center;padding:20px;">Cargando pedidos...</div>';
-
-
 
   let orders = [];
 
   if (window.supabaseClient) {
-    const userData = (typeof AppState !== 'undefined') ? (AppState.get('userData') || {}) : {};
-    const ciudad = userData.ciudad || userData.city || ((typeof AppState !== 'undefined') ? AppState.get('city') : null);
-    const categoria = userData.categoria || userData.category;
-    const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : (userData ? userData.id : null);
+    let driverCiudad = '';
+    let driverCategoria = '';
+    let localUserId = null;
 
-    if (!ciudad) {
-      console.warn('Falta ciudad del repartidor:', { ciudad, categoria });
+    try {
+      const { data: sessionData } = await window.supabaseClient.auth.getSession();
+      const user = sessionData?.session?.user;
+      if (user) {
+        localUserId = user.id;
+        const { data: driverRow } = await window.supabaseClient
+          .from('choferes_habilitados')
+          .select('ciudad, categoria')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (driverRow) {
+          driverCiudad = driverRow.ciudad || '';
+          driverCategoria = driverRow.categoria || '';
+        }
+      }
+    } catch (e) {
+      console.warn('Error obteniendo perfil de chofer desde base de datos:', e);
+    }
+
+    // Fallback secundario a AppState
+    if (!driverCiudad || !driverCategoria) {
+      const userData = (typeof AppState !== 'undefined') ? (AppState.get('userData') || {}) : {};
+      driverCiudad = driverCiudad || userData.ciudad || userData.city || ((typeof AppState !== 'undefined') ? AppState.get('city') : '');
+      driverCategoria = driverCategoria || userData.categoria || userData.category || 'gas';
+    }
+
+    if (!localUserId && typeof getCurrentUserId === 'function') {
+      localUserId = getCurrentUserId();
+    }
+
+    if (!driverCiudad) {
       container.innerHTML = `<div style="padding:24px; text-align:center; color:#94A3B8; font-size:13px;"><i class="fa-solid fa-triangle-exclamation" style="font-size:28px; color:#F59E0B; margin-bottom:10px;"></i><br><strong style="color:white;">No se pudo determinar la ciudad activa.</strong><br><span style="font-size:11px; color:#64748B;">Selecciona tu ciudad en el mapa o perfil para ver pedidos.</span></div>`;
       return;
     }
 
     const activeWindow = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
-    const normCity = String(ciudad).toLowerCase().trim();
+    const normCity = String(driverCiudad).toLowerCase().trim();
 
     const { data, error } = await window.supabaseClient
       .from('pedidos')
@@ -65,7 +88,7 @@ async function renderDriverOrdersList() {
       // Filtramos con normalización de categoría flexible y por disponibilidad de pedido
       orders = data.filter(o => {
         const matchesCategory = (typeof window.isOrderCategoryMatchingDriver === 'function')
-          ? window.isOrderCategoryMatchingDriver(o.categoria, categoria)
+          ? window.isOrderCategoryMatchingDriver(o.categoria, driverCategoria)
           : true;
         const isAvailable = o.estado === 'pendiente' || o.estado === 'visto' || (o.estado === 'asignado' && o.driver_id === localUserId);
         return matchesCategory && isAvailable;
@@ -73,68 +96,43 @@ async function renderDriverOrdersList() {
     }
   }
 
-
-
   if (orders.length === 0) {
-
     let driverCategoryName = "tu categoría";
-
     try {
-
       const u = JSON.parse(JSON.stringify(AppState.get('userData') || {}) || '{}');
-
       if (u.categoria) driverCategoryName = u.categoria;
-
     } catch(e){}
 
-
-
     container.innerHTML = `<div style="padding:24px; text-align:center; color:#94A3B8; font-size:13px;"><i class="fa-solid fa-filter-circle-xmark" style="font-size:28px; color:#F59E0B; margin-bottom:10px;"></i><br><strong style="color:white;">No hay pedidos activos de ${driverCategoryName}</strong><br><span style="font-size:11px; color:#64748B;">Solo recibes pedidos de tu rubro exclusivo en este momento.</span></div>`;
-
     return;
-
   }
 
-
-
   let html = '';
-
   orders.forEach(ord => {
-
     const mins = Math.floor((Date.now() - new Date(ord.created_at).getTime()) / 60000);
-
     html += `
-
-        <div class="order-card-pressable" data-action="centrarPedidoEnMapa" data-lat="${ord.latitude || ord.lat}" data-lng="${ord.longitude || ord.lng}" data-order-id="${window.escapeHtmlStr(String(ord.id || ''))}" style="background:#FFF; padding:12px; margin-bottom:10px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.05); border:1px solid #E2E8F0; cursor:pointer;">
-
+        <div class="order-card-pressable" data-action="centrarPedidoEnMapa" data-lat="${ord.latitude || ord.lat}" data-lng="${ord.longitude || ord.lng}" data-order-id="${window.escapeHtmlStr(String(ord.id || ''))}" style="background:#1E293B; padding:12px; margin-bottom:10px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.25); border:1px solid rgba(245, 158, 11, 0.2); cursor:pointer;">
           <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-
-            <span style="font-weight:900; font-size:13px; color:#1E293B;">🛒 Pedido #${ord.id || '?'}</span>
-
-            <span style="font-size:10px; color:#64748B;">⏱ ${mins} min</span>
-
+            <span style="font-weight:900; font-size:13px; color:#F8FAFC;">🛒 Pedido #${ord.id ? String(ord.id).slice(0, 8) : '?'}</span>
+            <span style="font-size:10px; color:#F59E0B; font-weight:700;">⏱ ${mins} min</span>
           </div>
-
-          <div style="font-size:12px; margin-bottom:4px; color:#475569;">📍 <strong>Dir:</strong> ${window.escapeHtmlStr(ord.direccion || '')}</div>
-
-          <div style="font-size:12px; margin-bottom:4px; color:#475569;">📦 <strong>Prod:</strong> ${window.escapeHtmlStr(ord.categoria || '')} (${window.escapeHtmlStr(ord.cantidad || '')} un)</div>
-
-          ${ord.telefono ? `<div style="font-size:12px; margin-bottom:8px; color:#475569;">📞 <strong>Tel:</strong> ${window.escapeHtmlStr(ord.telefono)}</div>` : ''}
-
+          <div style="font-size:12px; margin-bottom:4px; color:#CBD5E1;">📍 <strong>Dir:</strong> ${window.escapeHtmlStr(ord.direccion || '')}</div>
+          <div style="font-size:12px; margin-bottom:4px; color:#CBD5E1;">📦 <strong>Prod:</strong> ${window.escapeHtmlStr(ord.categoria || '')} (${window.escapeHtmlStr(ord.cantidad || '')} un)</div>
+          ${ord.telefono ? `<div style="font-size:12px; margin-bottom:8px; color:#00E676;">📞 <strong>Tel:</strong> ${window.escapeHtmlStr(ord.telefono)}</div>` : ''}
           <div style="display:flex; gap:8px; margin-top:10px;">
-            <button data-action="centrarPedidoEnMapa" data-lat="${ord.latitude || ord.lat}" data-lng="${ord.longitude || ord.lng}" data-id="${ord.id}" data-order-id="${ord.id}" style="flex:1; background:#E2E8F0; color:#1E293B; border:none; padding:8px; border-radius:6px; font-weight:700; font-size:12px; cursor:pointer;">
+            <button data-action="centrarPedidoEnMapa" data-lat="${ord.latitude || ord.lat}" data-lng="${ord.longitude || ord.lng}" data-id="${ord.id}" data-order-id="${ord.id}" class="btn-secondary" style="flex:1; padding:8px; border-radius:8px; font-weight:700; font-size:12px; cursor:pointer;">
               📍 Ver mapa
             </button>
-            <button data-action="abrirRutaGoogleMaps" data-lat="${ord.latitude || ord.lat}" data-lng="${ord.longitude || ord.lng}" data-id="${ord.id}" style="flex:1; background:#2494e8; color:white; border:none; padding:8px; border-radius:6px; font-weight:700; font-size:12px; cursor:pointer;">
+            <button data-action="abrirRutaGoogleMaps" data-lat="${ord.latitude || ord.lat}" data-lng="${ord.longitude || ord.lng}" data-id="${ord.id}" class="btn-driver-route" style="flex:1; padding:8px; border-radius:8px; font-weight:800; font-size:12px; cursor:pointer;">
               🚀 Ir al pedido
             </button>
           </div>
-
         </div>
-
       `;
-
   });
+
+  container.innerHTML = html;
+}
 
 
 
@@ -380,30 +378,50 @@ function checkActiveOrderStatus() {
       const timeEst = document.getElementById('tripCardTime');
       const statusIndicator = document.getElementById('tripCardStatusIndicator');
       
-      const isDriverAssigned = Boolean(order.driver_id || order.repartidor_asignado);
-      if (statusText) statusText.innerText = (order.estado || 'ESPERA').toUpperCase();
-      if (driverName) driverName.innerText = isDriverAssigned ? 'EN CAMINO' : 'BUSCANDO...';
-      if (timeEst) timeEst.innerText = isDriverAssigned ? 'Aproximadamente 8-15 min.' : 'Asignando repartidor...';
-      if (statusIndicator) {
-         statusIndicator.style.background = isDriverAssigned ? '#27d17f' : '#FF9800';
-         statusIndicator.style.boxShadow = isDriverAssigned ? '0 0 7px rgba(39,209,127,.55)' : '0 0 7px rgba(255,152,0,.55)';
+      const estado = String(order.estado || 'pendiente').toLowerCase();
+      
+      if (estado === 'pendiente' || estado === 'visto') {
+        if (statusText) statusText.innerText = 'BUSCANDO';
+        if (driverName) driverName.innerText = 'SOLICITUD ENVIADA';
+        if (timeEst) timeEst.innerText = 'Esperando disponibilidad de un repartidor en tu zona...';
+        if (statusIndicator) {
+          statusIndicator.style.background = '#FF9800';
+          statusIndicator.style.boxShadow = '0 0 7px rgba(255,152,0,.55)';
+        }
+      } else if (estado === 'asignado') {
+        if (statusText) statusText.innerText = 'ASIGNADO';
+        if (driverName) driverName.innerText = 'REPARTIDOR ASIGNADO';
+        if (timeEst) timeEst.innerText = 'Un repartidor aceptó tu pedido.';
+        if (statusIndicator) {
+          statusIndicator.style.background = '#3B82F6';
+          statusIndicator.style.boxShadow = '0 0 7px rgba(59,130,246,.55)';
+        }
+      } else if (estado === 'en_ruta' || estado === 'en_camino') {
+        if (statusText) statusText.innerText = 'EN RUTA';
+        if (driverName) driverName.innerText = 'REPARTIDOR EN CAMINO';
+        if (timeEst) timeEst.innerText = 'El repartidor está transmitiendo su ruta en vivo.';
+        if (statusIndicator) {
+          statusIndicator.style.background = '#10B981';
+          statusIndicator.style.boxShadow = '0 0 7px rgba(16,185,129,.55)';
+        }
+      } else if (estado === 'entregado') {
+        if (statusText) statusText.innerText = 'ENTREGADO';
+        if (driverName) driverName.innerText = 'PEDIDO COMPLETADO';
+        if (timeEst) timeEst.innerText = 'Pedido entregado exitosamente.';
+        if (statusIndicator) {
+          statusIndicator.style.background = '#10B981';
+          statusIndicator.style.boxShadow = '0 0 7px rgba(16,185,129,.55)';
+        }
       }
-
 
       actualizarFaviconSegunPedido(order.categoria, order.estado);
 
-      
-
       if (window.supabaseClient) {
-
-         const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
-
          const estadoEl = document.getElementById('estadoPedidoActivo');
          if (estadoEl) {
            window.supabaseClient.from('pedidos').select('estado').eq('id', order.id).maybeSingle()
            .then(({data, error}) => {
               if (error || !data) {
-                 // Order is no longer active in DB
                  AppState.set('activeOrder', null);
                  checkActiveOrderStatus();
                  return;
@@ -412,18 +430,17 @@ function checkActiveOrderStatus() {
                  const btnCancel = document.getElementById('btnActiveOrderCancel');
                  if (btnCancel) {
                     btnCancel.innerHTML = `<i class="fa-solid fa-check-circle"></i> Ya recibí mi pedido`;
-                    btnCancel.style.background = 'linear-gradient(135deg, #00E676, #00C853)';
                  }
                  const el = document.getElementById('estadoPedidoActivo');
                  if (el) {
                    el.innerHTML = `
-                   <div style="background:linear-gradient(135deg, #10B981, #059669); padding:4px 10px; border-radius:12px; display:inline-block; margin-bottom:5px; color:white;">
-                     <i class="fa-solid fa-truck-fast"></i> ¡Un Repartidor va en camino!
+                   <div style="background:rgba(59, 130, 246, 0.2); border:1px solid #3B82F6; padding:4px 10px; border-radius:12px; display:inline-block; margin-bottom:5px; color:#60A5FA; font-weight:700; font-size:11px;">
+                     <i class="fa-solid fa-user-check"></i> Repartidor asignado
                    </div>
                    `;
                  }
                  if (!sessionStorage.getItem('notigas_notified_asignado')) {
-                    showToast('🚚 ¡Repartidor asignado!', 'Un repartidor ha aceptado tu pedido y va hacia allá.', 'success', 6000);
+                    showToast('🚚 Repartidor Asignado', 'Un repartidor ha aceptado tu pedido.', 'success', 5000);
                     sessionStorage.setItem('notigas_notified_asignado', 'true');
                  }
               }
@@ -431,7 +448,6 @@ function checkActiveOrderStatus() {
               console.warn("Verificación de estado de pedido:", err);
            });
          }
-
       }
 
 
@@ -682,7 +698,7 @@ function confirmarPedido() {
 
         
 
-        showToast('✅ ¡Pedido en Camino!', 'Tu orden ha sido confirmada y transmitida a los repartidores de tu zona. Permanece atento a tu teléfono.', 'success', 4000);
+        showToast('✅ Pedido Recibido', 'Tu solicitud fue enviada a los repartidores disponibles de tu zona. La atención depende de la disponibilidad de un repartidor.', 'success', 5000);
 
         closePedidoModal();
 
