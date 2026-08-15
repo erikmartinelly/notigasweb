@@ -47,8 +47,8 @@ function solicitarGeolocalizacionNativaNavegador(
             }
             : {
                 enableHighAccuracy: false,
-                timeout: 20000,
-                maximumAge: 30000
+                timeout: (window.NOTIGAS && window.NOTIGAS.GPS_TIMEOUT_MS) ? window.NOTIGAS.GPS_TIMEOUT_MS : 12000,
+                maximumAge: 5000
             };
 
         console.log(`
@@ -135,19 +135,11 @@ Accuracy: APPROXIMATE`);
             return coords;
         })
         .catch(() => {
-            // Si todo falla (adblocker, etc), usamos la ciudad de AppState
-            let lat = -17.3895; let lng = -66.1568;
-            if (typeof AppState !== 'undefined') {
-                const city = AppState.get('city');
-                if (city === 'santacruz') { lat = -17.7833; lng = -63.1821; }
-                else if (city === 'lapaz') { lat = -16.4897; lng = -68.1193; }
-            }
-            if (forceReset || typeof window.currentGpsLat === 'undefined' || window.currentGpsLat === null) {
-                if (typeof window.applyGpsPosition === 'function') {
-                    window.applyGpsPosition(lat, lng, 'Ubicación predeterminada (IP fallida)', forceReset, false); // isExact = false
-                }
-            }
-            return { lat, lng };
+            console.log(`
+NOTIGAS GEOLOCATION -------------------
+IP fallback: FAILED
+No location found. User must select manually.`);
+            return null;
         });
 }
 
