@@ -1,16 +1,17 @@
 -- 022_choferes_publicos_view.sql
 -- Crea una vista pública para los choferes y revoca el acceso directo a la tabla.
 
--- 1. Eliminar acceso irrestricto de la tabla real
+-- 1. Eliminar políticas anteriores si existían
 DROP POLICY IF EXISTS "Public SELECT choferes" ON public.choferes_habilitados;
+DROP POLICY IF EXISTS "Auth SELECT choferes" ON public.choferes_habilitados;
 
--- 2. Asegurarse que solo dueños o admins la ven
+-- 2. Asegurarse que solo dueños o admins ven la tabla base directamente
 CREATE POLICY "Auth SELECT choferes" ON public.choferes_habilitados 
 FOR SELECT USING (
     auth.uid()::text = user_id OR is_admin_email()
 );
 
--- 3. Crear vista pública filtrando datos no públicos
+-- 3. Crear vista pública filtrando datos no públicos y usuarios baneados
 CREATE OR REPLACE VIEW public.choferes_publicos AS
 SELECT 
     id, 
@@ -21,7 +22,8 @@ SELECT
     zonas, 
     schedule, 
     placa, 
-    productos
+    productos,
+    estado_verificacion
 FROM public.choferes_habilitados ch
 WHERE NOT EXISTS (SELECT 1 FROM public.usuarios_baneados WHERE user_id = ch.user_id);
 

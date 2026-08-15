@@ -4,10 +4,10 @@
 -- 1. Habilitar RLS en admin_credentials
 ALTER TABLE admin_credentials ENABLE ROW LEVEL SECURITY;
 
-
 -- 3. Privacidad de tabla pedidos:
 -- Primero revocamos el acceso público de SELECT en la tabla pedidos y la hacemos estricta
 DROP POLICY IF EXISTS "Auth SELECT pedidos" ON pedidos;
+DROP POLICY IF EXISTS "Dueño Driver Admin SELECT" ON pedidos;
 CREATE POLICY "Dueño Driver Admin SELECT" ON pedidos FOR SELECT USING (
     auth.uid()::text = user_id OR auth.uid()::text = driver_id OR is_admin_email()
 );

@@ -22,12 +22,14 @@ FOR SELECT USING ( email = auth.jwt() ->> 'email' );
 -- 3. Corregir Políticas de Storage para 'anuncios-media'
 -- Solo los administradores pueden insertar imágenes
 DROP POLICY IF EXISTS "Insercion anuncios-media para auth" ON storage.objects;
+DROP POLICY IF EXISTS "Insercion anuncios-media para admin" ON storage.objects;
 CREATE POLICY "Insercion anuncios-media para admin"
 ON storage.objects FOR INSERT
 WITH CHECK ( bucket_id = 'anuncios-media' AND public.is_admin_email() );
 
 -- Solo los administradores pueden eliminar imágenes
 DROP POLICY IF EXISTS "Eliminacion anuncios-media para auth" ON storage.objects;
+DROP POLICY IF EXISTS "Eliminacion anuncios-media para admin" ON storage.objects;
 CREATE POLICY "Eliminacion anuncios-media para admin"
 ON storage.objects FOR DELETE
 USING ( bucket_id = 'anuncios-media' AND public.is_admin_email() );
