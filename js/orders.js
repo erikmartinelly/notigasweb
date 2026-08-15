@@ -87,7 +87,7 @@ async function renderDriverOrdersList() {
 
     html += `
 
-        <div onclick="window.centrarPedidoEnMapa(${ord.latitude || ord.lat}, ${ord.longitude || ord.lng}, '${ord.id}')" style="background:#FFF; padding:12px; margin-bottom:10px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.05); border:1px solid #E2E8F0; cursor:pointer; transition: transform 0.1s ease-in-out;" onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'" onmouseleave="this.style.transform='scale(1)'">
+        <div style="background:#FFF; padding:12px; margin-bottom:10px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.05); border:1px solid #E2E8F0;">
 
           <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
 
@@ -103,7 +103,14 @@ async function renderDriverOrdersList() {
 
           ${ord.telefono ? `<div style="font-size:12px; margin-bottom:8px; color:#475569;">📞 <strong>Tel:</strong> ${window.escapeHtmlStr(ord.telefono)}</div>` : ''}
 
-          <span style="display:block; padding:8px; text-align:center; color:#0288D1; font-weight:700; font-size:12px;"><i class="fa-solid fa-fire"></i> Pedido Activo</span>
+          <div style="display:flex; gap:8px; margin-top:10px;">
+            <button onclick="window.centrarPedidoEnMapa(${ord.latitude || ord.lat}, ${ord.longitude || ord.lng}, '${ord.id}')" style="flex:1; background:#E2E8F0; color:#1E293B; border:none; padding:8px; border-radius:6px; font-weight:700; font-size:12px; cursor:pointer;">
+              📍 Ver mapa
+            </button>
+            <button onclick="window.abrirRutaGoogleMaps(${ord.latitude || ord.lat}, ${ord.longitude || ord.lng}, '${ord.id}')" style="flex:1; background:#2494e8; color:white; border:none; padding:8px; border-radius:6px; font-weight:700; font-size:12px; cursor:pointer;">
+              🚀 Ir al pedido
+            </button>
+          </div>
 
         </div>
 
@@ -137,16 +144,16 @@ window.aceptarGrupoDemanda = async function(clusterId, ciudad, categoria) {
     else if (typeof showToast === 'function') { showToast('Notificación', '❌ Error: Sin conexión a la base de datos.', 'info', 4000); } else { alert('❌ Error: Sin conexión a la base de datos.'); };
     return;
   }
-  showConfirmModal('🚚', 'Trazar Ruta', '¿Deseas trazar una ruta hacia este grupo de pedidos?', 'Sí, trazar ruta', async () => {
+  showConfirmModal('🚚', 'Aceptar Grupo', '¿Deseas asignarte este grupo de pedidos?', 'Sí, aceptar pedidos', async () => {
     
     AppState.set('activeClusterId', clusterId);
     AppState.set('activeClusterCity', ciudad);
     AppState.set('activeClusterCategoria', categoria);
     
     if (typeof showToast === 'function') {
-      showToast('¡Ruta Trazada!', 'Calculando la ruta óptima hacia los pedidos de la zona.', 'success', 5000);
+      showToast('¡Pedidos Asignados!', 'Los pedidos de la zona han sido asignados a ti.', 'success', 5000);
     } else {
-      if (typeof showToast === 'function') { showToast('Notificación', '✅ ¡RUTA TRAZADA!\nCalculando la ruta óptima hacia los pedidos de la zona.', 'info', 4000); } else { alert('✅ ¡RUTA TRAZADA!\nCalculando la ruta óptima hacia los pedidos de la zona.'); };
+      if (typeof showToast === 'function') { showToast('Notificación', '✅ ¡PEDIDOS ASIGNADOS!\nLos pedidos de la zona han sido asignados a ti.', 'info', 4000); } else { alert('✅ ¡PEDIDOS ASIGNADOS!\nLos pedidos de la zona han sido asignados a ti.'); };
     }
     
     if (window.demandClusterMarkers && window.demandClusterMarkers[clusterId]) {
@@ -164,9 +171,27 @@ window.aceptarGrupoDemanda = async function(clusterId, ciudad, categoria) {
         });
     }
 
-    if (typeof window.calcularYTrazarRutaEficiente === 'function') window.calcularYTrazarRutaEficiente();
     if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
   });
+}
+
+window.abrirRutaGoogleMaps = async function(lat, lng, orderId) {
+  if (typeof closeDriverOrdersModal === 'function') closeDriverOrdersModal();
+  
+  if (window.supabaseClient && orderId) {
+    const localUserId = typeof getCurrentUserId === 'function' ? getCurrentUserId() : (AppState.get('userData') ? AppState.get('userData').id : null);
+    if (localUserId) {
+      // Intentar asignar el pedido al repartidor si aún no está asignado
+      await window.supabaseClient.from('pedidos')
+        .update({ estado: 'asignado', repartidor_asignado: localUserId })
+        .eq('id', orderId)
+        .eq('estado', 'pendiente');
+    }
+  }
+
+  // Abrir Google Maps con las coordenadas
+  const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+  window.open(url, '_blank');
 }
 
 async function confirmarEntregaPedido(id) {
