@@ -86,7 +86,7 @@ async function renderDriverOrdersList() {
 
     html += `
 
-        <div style="background:#FFF; padding:12px; margin-bottom:10px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.05); border:1px solid #E2E8F0;">
+        <div class="order-card-pressable" data-action="centrarPedidoEnMapa" data-lat="${ord.latitude || ord.lat}" data-lng="${ord.longitude || ord.lng}" data-order-id="${window.escapeHtmlStr(String(ord.id || ''))}" style="background:#FFF; padding:12px; margin-bottom:10px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.05); border:1px solid #E2E8F0; cursor:pointer;">
 
           <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
 
@@ -103,10 +103,10 @@ async function renderDriverOrdersList() {
           ${ord.telefono ? `<div style="font-size:12px; margin-bottom:8px; color:#475569;">📞 <strong>Tel:</strong> ${window.escapeHtmlStr(ord.telefono)}</div>` : ''}
 
           <div style="display:flex; gap:8px; margin-top:10px;">
-            <button data-action="centrarPedidoEnMapa" data-lat="${ord.latitude || ord.lat}" data-lng="${ord.longitude || ord.lng}" data-id="${ord.id}" onclick="window.centrarPedidoEnMapa(${ord.latitude || ord.lat}, ${ord.longitude || ord.lng}, '${ord.id}')" style="flex:1; background:#E2E8F0; color:#1E293B; border:none; padding:8px; border-radius:6px; font-weight:700; font-size:12px; cursor:pointer;">
+            <button data-action="centrarPedidoEnMapa" data-lat="${ord.latitude || ord.lat}" data-lng="${ord.longitude || ord.lng}" data-id="${ord.id}" data-order-id="${ord.id}" style="flex:1; background:#E2E8F0; color:#1E293B; border:none; padding:8px; border-radius:6px; font-weight:700; font-size:12px; cursor:pointer;">
               📍 Ver mapa
             </button>
-            <button data-action="abrirRutaGoogleMaps" data-lat="${ord.latitude || ord.lat}" data-lng="${ord.longitude || ord.lng}" data-id="${ord.id}" onclick="window.abrirRutaGoogleMaps(${ord.latitude || ord.lat}, ${ord.longitude || ord.lng}, '${ord.id}')" style="flex:1; background:#2494e8; color:white; border:none; padding:8px; border-radius:6px; font-weight:700; font-size:12px; cursor:pointer;">
+            <button data-action="abrirRutaGoogleMaps" data-lat="${ord.latitude || ord.lat}" data-lng="${ord.longitude || ord.lng}" data-id="${ord.id}" style="flex:1; background:#2494e8; color:white; border:none; padding:8px; border-radius:6px; font-weight:700; font-size:12px; cursor:pointer;">
               🚀 Ir al pedido
             </button>
           </div>

@@ -32,16 +32,37 @@ function esRepartidorBaneado(nombre, placa, whatsapp, gmail) {
   }
   return false;
 }
-async function banearRepartidorAdmin(vendorId, vendorName, plate = '', whatsapp = '') {
+async function banearRepartidorAdmin(vendorUserId, vendorName, plate = '', whatsapp = '') {
+  // IMPORTANTE: vendorUserId debe ser el auth.uid() real del chofer (viene de
+  // choferes_habilitados.user_id vía data-user-id), NO el id de la fila
+  // choferes_habilitados.id. Antes se guardaba "driver_<id-de-fila>" en
+  // usuarios_baneados.user_id, que nunca coincidía con auth.uid(), así que
+  // is_banned() jamás detectaba el baneo a nivel de base de datos.
+  if (!vendorUserId) {
+    console.error('banearRepartidorAdmin: falta vendorUserId (auth.uid real del chofer)');
+    if (typeof showToast === 'function') {
+      showToast('❌ Error', 'No se pudo banear: falta el identificador real del usuario.', 'error', 5000);
+    }
+    return;
+  }
+
   if (window.supabaseClient) {
     const { error } = await window.supabaseClient.from('usuarios_baneados').insert([{
-      user_id: vendorId,
+      user_id: vendorUserId,
       nombre: vendorName,
       placa: plate,
       telefono: whatsapp,
       motivo: 'Baneado por Administrador'
     }]);
-    if (error) { console.error('Error', error); if (typeof showToast === 'function') showToast('Error', error.message, 'error'); return; }
+
+    if (error) {
+      console.error('Error al banear repartidor:', error);
+      if (typeof showToast === 'function') {
+        showToast('❌ Error al Banear', error.message || 'No se pudo registrar el baneo en la base de datos.', 'error', 5000);
+      }
+      return; // No refrescar como si hubiera funcionado
+    }
+
     await descargarBaneadosDeSupabase();
   }
 
@@ -86,10 +107,17 @@ async function ejecutarLimpiezaBaneos() {
     showToast('🔓 Todos los Bloqueos Eliminados', 'Se eliminaron todos los baneos y bloqueos de la base de datos.', 'info', 4500);
   }
 }
-async function desbanearRepartidorAdmin(vendorId, vendorName) {
+async function desbanearRepartidorAdmin(vendorUserId, vendorName) {
+  // IMPORTANTE: vendorUserId debe ser el auth.uid() real (ver nota en banearRepartidorAdmin).
   if (window.supabaseClient) {
-    const { error } = await window.supabaseClient.from('usuarios_baneados').delete().eq('user_id', vendorId);
-    if (error) { console.error('Error', error); if (typeof showToast === 'function') showToast('Error', error.message, 'error'); return; }
+    const { error } = await window.supabaseClient.from('usuarios_baneados').delete().eq('user_id', vendorUserId);
+    if (error) {
+      console.error('Error al desbanear repartidor:', error);
+      if (typeof showToast === 'function') {
+        showToast('❌ Error', 'No se pudo desbanear al repartidor.', 'error', 5000);
+      }
+      return;
+    }
     await descargarBaneadosDeSupabase();
   }
 
@@ -192,7 +220,15 @@ async function ejecutarBloqueoComprador(gmail, nombre) {
       nombre: nombre,
       motivo: 'Bloqueado Permanentemente'
     }]);
-    if (error) { console.error('Error', error); if (typeof showToast === 'function') showToast('Error', error.message, 'error'); return; }
+
+    if (error) {
+      console.error('Error al bloquear comprador:', error);
+      if (typeof showToast === 'function') {
+        showToast('❌ Error', 'No se pudo bloquear al comprador en la base de datos.', 'error', 5000);
+      }
+      return;
+    }
+
     await descargarBaneadosDeSupabase();
   }
   

@@ -664,11 +664,15 @@ function renderAdminVendorsList() {
 
                       id: `driver_${d.id}`,
 
+                      user_id: d.user_id, // FIX: id real de Supabase Auth, necesario para banear correctamente
+
                       name: d.nombre_completo,
 
                       category: d.categoria || 'Gas GLP',
 
                       plate: d.placa || 'Placa registrada',
+
+                      whatsapp: d.telefono_whatsapp || '',
 
                       verified: d.estado_verificacion === 'aprobado'
 
@@ -738,11 +742,11 @@ function renderFinalVendors(defaultVendors, deletedIds) {
 
           ${isBanned ? `
 
-            <button data-action="desbanearRepartidorAdmin" data-id="${v.id}" data-name="${safeName}" style="background:#0288D1; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-lock-open"></i> Desbanear</button>
+            <button data-action="desbanearRepartidorAdmin" data-id="${v.id}" data-user-id="${encodeURIComponent(v.user_id || '')}" data-name="${safeName}" style="background:#0288D1; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-lock-open"></i> Desbanear</button>
 
           ` : `
 
-            <button data-action="banearRepartidorAdmin" data-id="${v.id}" data-name="${safeName}" data-plate="${safePlate}" style="background:#E65100; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-user-slash"></i> Banear</button>
+            <button data-action="banearRepartidorAdmin" data-id="${v.id}" data-user-id="${encodeURIComponent(v.user_id || '')}" data-name="${safeName}" data-plate="${safePlate}" style="background:#E65100; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-user-slash"></i> Banear</button>
 
           `}
 

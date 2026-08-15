@@ -304,7 +304,7 @@ async function abrirComentariosPost(postId, title, desc, cat, el) {
 
   if (elTitle) elTitle.innerText = title;
   if (elDesc) elDesc.innerText = desc;
-  if (elCat) elCat.innerHTML = `<i class="fa-solid fa-comments"></i> ${cat}`;
+  if (elCat) elCat.innerHTML = `<i class="fa-solid fa-comments"></i> ${window.escapeHtmlStr(cat)}`;
 
   const box = document.getElementById('commentsList') || document.getElementById('commentsContainer');
   if (box) box.innerHTML = '<div style="color:#94A3B8; font-size:11px; text-align:center;">Cargando comentarios...</div>';

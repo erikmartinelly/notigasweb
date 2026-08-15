@@ -274,15 +274,21 @@ document.addEventListener('click', (e) => {
     if (typeof window.aprobarRepartidorAdmin === 'function') window.aprobarRepartidorAdmin(id);
   }
   else if (action === 'desbanearRepartidorAdmin') {
+    // FIX: usar el user_id real (auth.uid) en vez del id de la fila de choferes_habilitados,
+    // que nunca coincidía con auth.uid() y dejaba el desbaneo sin efecto en la BD.
+    const userId = decodeURIComponent(btn.getAttribute('data-user-id') || '');
     const id = btn.getAttribute('data-id');
     const name = decodeURIComponent(btn.getAttribute('data-name') || '');
-    if (typeof window.desbanearRepartidorAdmin === 'function') window.desbanearRepartidorAdmin(id, name);
+    if (typeof window.desbanearRepartidorAdmin === 'function') window.desbanearRepartidorAdmin(userId || id, name);
   }
   else if (action === 'banearRepartidorAdmin') {
+    // FIX: idem — sin esto, el INSERT en usuarios_baneados.user_id guardaba "driver_<uuid-de-la-fila>",
+    // que jamás coincide con auth.uid(), y is_banned() nunca detectaba al chofer como baneado.
+    const userId = decodeURIComponent(btn.getAttribute('data-user-id') || '');
     const id = btn.getAttribute('data-id');
     const name = decodeURIComponent(btn.getAttribute('data-name') || '');
     const plate = decodeURIComponent(btn.getAttribute('data-plate') || '');
-    if (typeof window.banearRepartidorAdmin === 'function') window.banearRepartidorAdmin(id, name, plate);
+    if (typeof window.banearRepartidorAdmin === 'function') window.banearRepartidorAdmin(userId || id, name, plate);
   }
   else if (action === 'borrarRepartidorPermanente') {
     const id = btn.getAttribute('data-id');
@@ -318,6 +324,18 @@ document.addEventListener('click', (e) => {
   else if (action === 'desbanearUsuarioAdmin') {
     const id = btn.getAttribute('data-id');
     if (typeof window.desbanearUsuarioAdmin === 'function') window.desbanearUsuarioAdmin(id);
+  }
+  // FIX CSP: reemplazan los onclick="" inline de map.js (popup) y orders.js (tarjetas de pedido)
+  else if (action === 'dibujarRutaAlPedido') {
+    const lat = parseFloat(btn.getAttribute('data-lat'));
+    const lng = parseFloat(btn.getAttribute('data-lng'));
+    if (typeof window.dibujarRutaAlPedido === 'function') window.dibujarRutaAlPedido(lat, lng);
+  }
+  else if (action === 'centrarPedidoEnMapa') {
+    const lat = parseFloat(btn.getAttribute('data-lat'));
+    const lng = parseFloat(btn.getAttribute('data-lng'));
+    const orderId = btn.getAttribute('data-order-id') || btn.getAttribute('data-id');
+    if (typeof window.centrarPedidoEnMapa === 'function') window.centrarPedidoEnMapa(lat, lng, orderId);
   }
 });
 
