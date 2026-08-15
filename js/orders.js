@@ -35,9 +35,8 @@ async function renderDriverOrdersList() {
   if (window.supabaseClient) {
 
     const userData = AppState.get('userData');
+    const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : (userData ? userData.id : null);
     let ciudadReal = (userData && (userData.ciudad || userData.city)) ? (userData.ciudad || userData.city) : AppState.get('city');
-
-
 
     const activeWindow = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
 
@@ -49,8 +48,8 @@ async function renderDriverOrdersList() {
       
     if (data) {
       orders = data.filter(o => typeof isOrderCategoryMatchingDriver === 'function' && isOrderCategoryMatchingDriver(o.categoria));
-      // Filtramos por estado 'pendiente' por si queda algún rastro, aunque físicamente se borran.
-      orders = orders.filter(o => o.estado === 'pendiente' || o.estado === 'activo');
+      // Filtramos por pedidos pendientes, vistos o asignados a este repartidor
+      orders = orders.filter(o => o.estado === 'pendiente' || o.estado === 'visto' || (o.estado === 'asignado' && o.driver_id === localUserId));
     }
 
   }
@@ -246,12 +245,8 @@ async function confirmarEntregaPedido(id) {
 
 // Purga automática de caché local (elimina pedidos locales expirados, no la base de datos)
 function ejecutarPurgaBaseDeDatosAuto() {
-
   const now = Date.now();
-
   const expirationMs = (window.NOTIGAS && window.NOTIGAS.ORDER_EXPIRATION_MS) ? window.NOTIGAS.ORDER_EXPIRATION_MS : 48 * 60 * 60 * 1000;
-
-
 
   try {
     const order = AppState.get('activeOrder');
@@ -262,25 +257,15 @@ function ejecutarPurgaBaseDeDatosAuto() {
     }
   } catch(e) {}
 
-  } catch(e){}
-
-
-
   try {
-
     const rawPosts = localStorage.getItem('notigas_forum_posts');
-
     if (rawPosts) {
-
       let posts = JSON.parse(rawPosts);
-
       const cleanPosts = posts.filter(p => (now - p.timestamp) < (72 * 60 * 60 * 1000));
-
       localStorage.setItem('notigas_forum_posts', JSON.stringify(cleanPosts));
-
     }
-
   } catch(e){}
+}
 
 
 

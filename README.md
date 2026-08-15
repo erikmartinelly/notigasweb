@@ -37,16 +37,27 @@ NOTIGAS bridges this gap by democratizing access to Artificial Intelligence and 
 ├── index.html              # Main application entry point (Buyer/Vendor/Admin views)
 ├── server.js               # Express server for production (Security headers & PWA routing)
 ├── package.json            # Node.js dependencies for the server
-├── app.js                  # Core business logic and state management
-├── map.js                  # Leaflet map initialization, GPS tracking, and marker logic
-├── auth.js                 # User roles, Google OAuth, and session management
-├── admin.js                # Admin dashboard logic and authentication system
-├── vendors.js              # Vendor business profile management
-├── forum.js                # Neighborhood forum posting and logic
-├── supabase-config.js      # Supabase initialization and realtime subscriptions
-├── sw.js                   # Service Worker for PWA caching
-├── supabase/migrations/    # Database tables, RLS policies, and triggers
-└── styles/                 # CSS stylesheets
+├── sw.js                   # Service Worker for PWA caching & offline support
+├── manifest.json           # PWA web manifest
+├── js/                     # Application JavaScript modules
+│   ├── state.js            # Centralized reactive application state management (Pub/Sub)
+│   ├── ui.js               # Common UI helpers, loading overlays, modals and toasts
+│   ├── supabase-config.js  # Supabase initialization, connection and Realtime subscriptions
+│   ├── auth.js             # User roles, Google OAuth (One-Tap), email auth, and session management
+│   ├── vendors.js          # Vendor business profiles & category filtering
+│   ├── map.js              # Leaflet map initialization, live markers, and clustering
+│   ├── map_search.js       # Street & city geocoding with multi-engine fallback (Nominatim/Photon)
+│   ├── map_gps.js          # Adaptive GPS tracking and fallback geolocation
+│   ├── forum.js            # Neighborhood community forum & live comment threads
+│   ├── ads.js              # Live local ads & dynamic banners
+│   ├── orders.js           # Order creation, individual & cluster assignment, delivery flows
+│   ├── admin.js            # Admin dashboard logic, metrics, and security authentication
+│   ├── admin_users.js      # User & driver moderation, banning, and approval workflows
+│   └── events.js           # Event listeners and UI interactions
+├── styles/
+│   └── main.css            # Application CSS stylesheet
+└── supabase/
+    └── migrations/         # Database tables, RLS policies, RPC functions, and triggers (001 - 031)
 ```
 
 ## ⚙️ Setup & Installation
@@ -59,8 +70,9 @@ NOTIGAS bridges this gap by democratizing access to Artificial Intelligence and 
 
 2.  **Configure Supabase:**
     *   Create a new project in Supabase.
-    *   Run the SQL scripts located in the `supabase/migrations/` folder in numerical order (from `001_initial_setup.sql` to `030_auto_purge_cron.sql`) in the Supabase SQL Editor to create the required tables, RLS policies, and storage buckets.
+    *   Run the SQL scripts located in the `supabase/migrations/` folder in numerical order (from `001_initial_setup.sql` to `031_fix_order_assignment_and_rls.sql`) in the Supabase SQL Editor to create the required tables, RLS policies, storage buckets, and secure RPC functions.
         * **Note on 014_fix_auth_triggers.sql:** This migration forcefully deletes conflicting triggers on `auth.users` and is **mandatory** for all deployments to prevent registration failures.
+        * **Note on 031_fix_order_assignment_and_rls.sql:** Implements the secure atomic RPC `rpc_assign_order` required for drivers to accept orders safely without RLS conflicts.
     *   Open `supabase-config.js` and replace the placeholder `supabaseUrl` and `supabaseAnonKey` with your project's actual credentials.
     *   **⚠️ IMPORTANT - Email Confirmation:** Supabase requires email confirmation by default for new registrations. If you wish to disable this during testing or development, go to your Supabase Dashboard -> **Authentication** -> **Providers** -> **Email** and toggle off **Confirm email**. Ensure your `Site URL` and `Redirect URLs` in Supabase Auth configuration point to your production domain.
 
