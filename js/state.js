@@ -106,7 +106,9 @@ window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño m
             // Establecer sin disparar el guardado nuevamente
             _state['userData'] = meta;
             _state['userRole'] = meta.role || 'vecino';
-            _state['city'] = meta.ciudad || meta.city || 'santacruz';
+            if (meta.ciudad || meta.city) {
+              _state['city'] = (meta.ciudad || meta.city).toLowerCase();
+            }
             _state['appMode'] = meta.role === 'repartidor' ? 'driver' : 'buyer';
           }
         }

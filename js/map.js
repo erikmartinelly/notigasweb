@@ -586,10 +586,14 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
   // Auto-detectar ciudad al obtener GPS inicial
   if (forceReset && typeof window.inferMainCityFromCoords === 'function') {
       const inferred = window.inferMainCityFromCoords(lat, lng);
-      const currentCity = AppState.get('city') || 'santacruz';
+      const currentCity = AppState.get('city');
       // Solo cambiar si es diferente para evitar refrescos innecesarios
       if (inferred && inferred !== currentCity) {
-          AppState.set('city', inferred);
+          if (typeof window.cambiarCiudad === 'function') {
+              window.cambiarCiudad(inferred);
+          } else {
+              AppState.set('city', inferred);
+          }
           const sel = document.getElementById('newUserCity');
           if (sel) sel.value = inferred;
           
@@ -1105,7 +1109,7 @@ const GEOBOLIVIA_MUNICIPIOS = [
   { key: "cobija", nombre: "Cobija", keywords: ["cobija", "pando"], lat: -11.0333, lon: -68.7667, querySuffix: "Cobija, Bolivia" }
 ];
 
-function cambiarCiudadCapital(cityKey) {
+async function cambiarCiudadCapital(cityKey) {
   if (AppState.get('appMode') === 'driver') {
     if (typeof showToast === 'function') {
       showToast('Acción no permitida', 'Como repartidor, solo puedes operar en tu ciudad de registro.', 'error', 4000);
@@ -1127,11 +1131,6 @@ function cambiarCiudadCapital(cityKey) {
 
   applyGpsPosition(mun.lat, mun.lon, '', false);
   localStorage.setItem('notigas_active_city', mun.nombre);
-  AppState.set('city', mun.key);
-
-  if (typeof descargarChoferesYRenderizar === 'function') {
-    descargarChoferesYRenderizar('TODOS');
-  }
 
   // P1: Limpiar pedidos antiguos de la ciudad anterior
   for (let id in neighborOrderMarkers) {
@@ -1147,11 +1146,19 @@ function cambiarCiudadCapital(cityKey) {
     }
   }
   Object.keys(activeTruckMarkers).forEach(k => delete activeTruckMarkers[k]);
+
+  if (typeof window.cambiarCiudad === 'function') {
+    await window.cambiarCiudad(mun.key);
+  } else {
+    AppState.set('city', mun.key);
+    if (typeof descargarChoferesYRenderizar === 'function') {
+      descargarChoferesYRenderizar('TODOS');
+    }
+    if (typeof renderForumFeed === 'function') renderForumFeed();
+    if (typeof cargarAnunciosGuardados === 'function') cargarAnunciosGuardados();
+  }
   
   if (typeof renderActiveOrdersMap === 'function') renderActiveOrdersMap();
-  
-  // Recargar foros y anuncios globales para la nueva ciudad
-  if (typeof renderForumFeed === 'function') renderForumFeed();
 }
 
 function procesarResultadoBusqueda(item, queryOriginal) {

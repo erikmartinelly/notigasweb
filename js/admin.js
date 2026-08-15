@@ -506,74 +506,87 @@ async function renderAdminDashboardKPIs() {
 
 
 
-function emitirAlertaOficialAdmin() {
-
+async function emitirAlertaOficialAdmin(mensaje) {
   const input = document.getElementById('inputAdminBroadcastMsg');
+  const texto = String(mensaje || input?.value || '').trim();
+  const ciudad = (typeof AppState !== 'undefined') ? AppState.get('city') : null;
 
-  const text = (input?.value || '').trim();
-
-
-
-  if (!text) {
-
+  if (!texto) {
     if (typeof showToast === 'function') showToast('⚠️ Texto Requerido', 'Ingresa el texto de la Alerta Oficial OTB.', 'warning', 2000);
-
     return;
-
   }
 
-
-
-  const broadcastData = {
-
-    message: text,
-
-    timestamp: Date.now()
-
-  };
-
-
-
-  localStorage.setItem('notigas_admin_broadcast', JSON.stringify(broadcastData));
-
-  
-
-  if (typeof mostrarPopupAlertaRepartidor === 'function') {
-
-    mostrarPopupAlertaRepartidor(`👑 <strong>COMUNICADO OFICIAL ADMINISTRACIÓN OTB:</strong><br>${text}`);
-
+  if (!ciudad) {
+    if (typeof showToast === 'function') showToast('⚠️ Ciudad Requerida', 'No hay ciudad activa seleccionada.', 'warning', 2000);
+    return;
   }
 
+  if (!window.supabaseClient) {
+    if (typeof showToast === 'function') showToast('Error', 'Sin conexión a Supabase.', 'error', 3000);
+    return;
+  }
 
+  if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Transmitiendo comunicado oficial...');
 
-  input.value = '';
+  try {
+    const userData = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
+    const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : (userData ? userData.id : null);
 
-  if (typeof showToast === 'function') showToast('📢 Comunicado Emitido', 'Mensaje transmitido a todos los vecinos en el mapa.', 'success', 2000);
+    const { data, error } = await window.supabaseClient
+      .from('avisos')
+      .insert({
+        ciudad: ciudad,
+        mensaje: texto,
+        titulo: 'COMUNICADO OFICIAL',
+        descripcion: texto,
+        tipo: 'oficial',
+        activo: true,
+        user_id: localUserId
+      })
+      .select()
+      .single();
 
+    if (error) throw error;
+
+    if (input) input.value = '';
+    if (typeof showToast === 'function') showToast('📢 Comunicado Emitido', `Aviso oficial guardado en base de datos y transmitido a ${ciudad}.`, 'success', 3500);
+
+    return data;
+  } catch (err) {
+    console.error('Error emitiendo alerta oficial admin:', err);
+    if (typeof showToast === 'function') showToast('Error', err.message || 'No se pudo emitir la alerta oficial.', 'error', 4000);
+  } finally {
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+  }
 }
 
-
-
-function ejecutarPurgaBaseDeDatosManual() {
-
+async function ejecutarPurgaBaseDeDatosManual() {
   if (typeof showConfirmModal === 'function') {
+    showConfirmModal('🧹', '¿Ejecutar Purga de Base de Datos?', 'Se eliminarán de PostgreSQL pedidos mayores a 48h y avisos mayores a 72h, además de limpiar el caché local.', 'Sí, purgar BD', async () => {
+      if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Ejecutando purga en PostgreSQL...');
+      try {
+        if (window.supabaseClient) {
+          const { data, error } = await window.supabaseClient.rpc('rpc_purge_old_records');
+          if (error) throw error;
+        }
 
-    showConfirmModal('🧹', '¿Ejecutar Purga de Sistema?', 'Se limpiará el caché y los registros de chat >48h y avisos >72h.', 'Sí, purgar', () => {
+        if (typeof ejecutarPurgaBaseDeDatosAuto === 'function') {
+          ejecutarPurgaBaseDeDatosAuto();
+        }
 
-      if (typeof ejecutarPurgaBaseDeDatosAuto === 'function') {
+        if (typeof renderAdminDashboardKPIs === 'function') {
+          renderAdminDashboardKPIs();
+        }
 
-        ejecutarPurgaBaseDeDatosAuto();
-
+        if (typeof showToast === 'function') showToast('🧹 Purga Completada', 'Se ejecutó la purga en PostgreSQL y se liberó almacenamiento.', 'info', 3000);
+      } catch (err) {
+        console.error('Error ejecutando purga manual en PostgreSQL:', err);
+        if (typeof showToast === 'function') showToast('Error en Purga', err.message || 'No se pudo completar la purga en la base de datos.', 'error', 4000);
+      } finally {
+        if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
       }
-
-      renderAdminDashboardKPIs();
-
-      if (typeof showToast === 'function') showToast('🧹 Purga Completada', 'Se liberó almacenamiento y memoria en caché.', 'info', 2000);
-
     });
-
   }
-
 }
 
 
@@ -1267,7 +1280,11 @@ async function guardarSubmenuAnuncios() {
 
   const inputUrl = (document.getElementById('inputAdUrl')?.value || '').trim();
 
-  const activeCity = AppState.get('city') || 'santacruz';
+  const activeCity = AppState.get('city');
+  if (!activeCity) {
+    if (typeof showToast === 'function') showToast('⚠️ Ciudad Requerida', 'Debes seleccionar una ciudad activa antes de guardar el anuncio.', 'warning', 3000);
+    return;
+  }
 
   const imgUrl = (window.pendingUploadUrl) ? window.pendingUploadUrl : null;
 

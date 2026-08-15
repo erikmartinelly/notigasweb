@@ -169,7 +169,7 @@ async function guardarUbicacionHabitualUsuario(
         user,
         {
             role: 'vecino',
-            ciudad: ciudad || 'santacruz',
+            ciudad: ciudad || null,
             latitude: lat,
             longitude: lng,
             location_updated_at:
@@ -177,10 +177,9 @@ async function guardarUbicacionHabitualUsuario(
         }
     );
 
-    AppState.set(
-        'city',
-        ciudad || 'santacruz'
-    );
+    if (ciudad) {
+        AppState.set('city', ciudad);
+    }
 
     AppState.set(
         'gpsLat',
@@ -513,7 +512,7 @@ async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
     categoria: repartidorObj.categoria,
     productos: repartidorObj.productos,
     schedule: repartidorObj.schedule,
-    ciudad: repartidorObj.ciudad || 'santacruz'
+    ciudad: repartidorObj.ciudad || AppState.get('city') || null
   }], { onConflict: 'user_id' });
   
   if (typeof hideLoadingOverlay === 'function') {
@@ -564,7 +563,12 @@ async function guardarRegistroUnico() {
     else productos = 'Varios';
     
     const schedule = (document.getElementById('regSchedule')?.value || '').trim() || 'Lunes a Sábado: 07:00 a 18:00';
-    const ciudad = (document.getElementById('newUserCity')?.value || '').trim() || 'santacruz';
+    const ciudad = (document.getElementById('newUserCity')?.value || AppState.get('city') || '').trim();
+
+    if (!ciudad) {
+      if (typeof showToast === 'function') showToast('⚠️ Ciudad Requerida', 'Por favor selecciona la ciudad de operación para tu registro.', 'warning', 4000);
+      return;
+    }
 
     const repartidorData = {
       role: 'repartidor',
@@ -942,7 +946,7 @@ async function migrarDatosAntiguosARepartidor() {
       productos: driverProfile.productos || driverProfile.products || 'Garrafas GLP 10kg',
       zonas: driverProfile.zonas || driverProfile.zones || 'OTB Central y calles vecinas',
       schedule: driverProfile.schedule || 'Lunes a Sábado: 07:00 a 18:00',
-      ciudad: driverProfile.ciudad || AppState.get('city') || 'santacruz',
+      ciudad: driverProfile.ciudad || AppState.get('city') || '',
       user_id: existingUserId
     };
 
@@ -1154,7 +1158,7 @@ async function procesarSesionExitosa(user) {
     const profile = await guardarPerfilSupabase(user, {
         nombre,
         role: 'vecino',
-        ciudad: AppState.get('city') || 'santacruz'
+        ciudad: AppState.get('city') || null
     });
 
     const tieneUbicacion = profile.latitude != null && profile.longitude != null;

@@ -12,7 +12,11 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
     return;
   }
   
-  const city = AppState.get('city') || 'santacruz';
+  const city = AppState.get('city');
+  if (!city) {
+    renderVendorCards(cat);
+    return;
+  }
 
   try {
     // Solo traemos choferes de la ciudad actual que estén pendientes o aprobados.

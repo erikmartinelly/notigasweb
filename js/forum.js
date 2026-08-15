@@ -29,7 +29,16 @@ async function renderForumFeed() {
   const tresDiasAtras = new Date(Date.now() - 72 * 3600 * 1000).toISOString();
 
   const userData = AppState.get('userData');
-  const ciudadReal = (userData && userData.ciudad) ? userData.ciudad : (AppState.get('city') || 'santacruz');
+  const ciudadReal = (userData && userData.ciudad) ? userData.ciudad : AppState.get('city');
+  if (!ciudadReal) {
+    feed.innerHTML = `
+      <div style="text-align:center; color:#94A3B8; padding:30px 14px; background: #1E293B; border-radius: 14px;">
+        <i class="fa-solid fa-location-dot" style="font-size:28px; margin-bottom:8px; color:#F59E0B;"></i><br>
+        <strong>Selecciona una ciudad en el mapa para ver avisos vecinales.</strong>
+      </div>
+    `;
+    return;
+  }
 
   // FIX: Seleccionar la cuenta de comentarios y filtrar avisos de más de 72h y por ciudad
   const { data: localPosts, error } = await window.supabaseClient.from('avisos')
@@ -242,17 +251,26 @@ async function crearNuevoPost() {
   }
 
     const userData = AppState.get('userData');
-    const ciudadReal = (userData && userData.ciudad) ? userData.ciudad : (AppState.get('city') || 'santacruz');
+    const ciudadReal = (userData && userData.ciudad) ? userData.ciudad : AppState.get('city');
+
+    if (!ciudadReal) {
+      if (typeof showToast === 'function') {
+        showToast('⚠️ Ciudad Requerida', 'No se ha definido la ciudad. Por favor selecciona tu ciudad en el mapa antes de publicar.', 'warning', 4000);
+      } else {
+        alert('No se ha definido la ciudad.');
+      }
+      return;
+    }
 
     const { error } = await window.supabaseClient.from('avisos').insert([{
       categoria: cat,
       titulo: title,
       descripcion: desc,
       ciudad: ciudadReal,
-    barrio_otb: 'Global',
-    user_id: userId,
-    votos: 1
-  }]);
+      barrio_otb: 'Global',
+      user_id: userId,
+      votos: 1
+    }]);
 
   if (error) {
       console.error(error);

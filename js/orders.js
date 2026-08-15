@@ -179,37 +179,62 @@ window.aceptarGrupoDemanda = async function(clusterId, ciudad, categoria) {
   });
 }
 
-window.abrirRutaGoogleMaps = async function(lat, lng, orderId) {
+window.abrirRutaGoogleMaps = async function(a, b, c) {
+  let orderId, lat, lng;
+
+  // Soportar ambas firmas: (lat, lng, orderId) y (orderId, lat, lng)
+  if (typeof a === 'string' && (typeof b === 'number' || typeof b === 'string') && (typeof c === 'number' || typeof c === 'string') && isNaN(Number(a))) {
+    orderId = a;
+    lat = Number(b);
+    lng = Number(c);
+  } else {
+    lat = Number(a);
+    lng = Number(b);
+    orderId = c;
+  }
+
   if (typeof closeDriverOrdersModal === 'function') closeDriverOrdersModal();
-  
-  // 1. Asignar el pedido al repartidor (validación de ciudad/categoría en backend)
-  if (window.supabaseClient && orderId) {
+
+  if (!orderId || isNaN(lat) || isNaN(lng)) {
+    console.error('Datos incompletos del pedido para navegación:', { orderId, lat, lng });
+    if (typeof showToast === 'function') {
+      showToast('Error', 'Datos incompletos del pedido.', 'error', 3000);
+    }
+    return;
+  }
+
+  // 1. Asignar el pedido al repartidor (validación atómica de ciudad/categoría en PostgreSQL)
+  if (window.supabaseClient) {
+    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Asignando pedido...');
     try {
-      const { error } = await window.supabaseClient.rpc('rpc_assign_order', {
+      const { data, error } = await window.supabaseClient.rpc('rpc_assign_order', {
         p_order_id: orderId
       });
+
       if (error) {
-        console.error('No se pudo asignar el pedido:', error.message);
+        console.error('Error asignando pedido:', error);
         if (typeof showToast === 'function') {
-          showToast('Error', error.message || 'El pedido ya no está disponible.', 'error', 4000);
+          showToast('No disponible', error.message || 'Este pedido ya no está disponible o no corresponde a tu zona.', 'error', 5000);
         } else {
-          alert('❌ ' + (error.message || 'El pedido ya no está disponible.'));
+          alert('❌ ' + (error.message || 'Este pedido ya no está disponible o no corresponde a tu zona.'));
         }
         return;
       }
-    } catch(err) {
-      console.error('Error asignando pedido:', err);
+    } catch (err) {
+      console.error('Excepción asignando pedido:', err);
       if (typeof showToast === 'function') {
-        showToast('Error', 'No se pudo asignar el pedido.', 'error', 3000);
+        showToast('Error', 'No se pudo verificar la asignación del pedido.', 'error', 4000);
       }
       return;
+    } finally {
+      if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
     }
   }
 
-  // 2. Solo abrir Google Maps si la asignación fue exitosa
+  // 2. Solo abrir Google Maps si la asignación fue exitosa en Supabase
   const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
   window.open(url, '_blank', 'noopener,noreferrer');
-}
+};
 
 async function confirmarEntregaPedido(id) {
 
@@ -481,6 +506,16 @@ function closePedidoModal() {
 }
 
 function confirmarPedido() {
+  const ciudad = (typeof AppState !== 'undefined') ? AppState.get('city') : null;
+  if (!ciudad) {
+    if (typeof showToast === 'function') {
+      showToast('⚠️ Ciudad Requerida', 'No se ha definido la ciudad. Por favor selecciona tu ciudad en el mapa antes de pedir.', 'warning', 4500);
+    } else {
+      alert('No se ha definido la ciudad.');
+    }
+    return;
+  }
+
   const pos = getActiveUserLocation();
   if (!pos.lat || !pos.lng) {
     const defaultCoords = {
@@ -495,9 +530,10 @@ function confirmarPedido() {
       trinidad: { lat: -14.8333, lng: -64.9000 },
       cobija: { lat: -11.0267, lng: -68.7692 }
     };
-    const c = AppState.get('city') || 'santacruz';
-    pos.lat = (defaultCoords[c] || defaultCoords.santacruz).lat;
-    pos.lng = (defaultCoords[c] || defaultCoords.santacruz).lng;
+    if (defaultCoords[ciudad]) {
+      pos.lat = defaultCoords[ciudad].lat;
+      pos.lng = defaultCoords[ciudad].lng;
+    }
   }
 
   let cat = document.getElementById('selectCategoria')?.value || 'gas';
@@ -540,8 +576,6 @@ function confirmarPedido() {
          return;
       }
 
-      const ciudadReal = AppState.get('city') || 'santacruz';
-
       const { data: resultData, error } = await window.supabaseClient.from('pedidos').insert([{
           categoria: cat,
           cantidad: '1 unidad',
@@ -549,7 +583,7 @@ function confirmarPedido() {
           direccion: direccion,
           telefono: telefono,
           descripcion: `Pedido rápido: 1 unidad.`,
-          ciudad: ciudadReal,
+          ciudad: ciudad,
           barrio_otb: 'Por GPS',
           user_id: userId,
           latitude: pos.lat,
