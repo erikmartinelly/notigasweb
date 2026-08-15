@@ -34,7 +34,7 @@ async function cargarAnunciosGuardados() {
       .eq('activo', true)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (!error && data) {
       actualizarAnunciosEnVivo(data.titulo, data.url);
