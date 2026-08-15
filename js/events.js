@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_auto_event_5 = document.getElementById('auto-event-5');
     if (el_auto_event_5) el_auto_event_5.addEventListener('click', (event) => { switchTab(2) });
     const el_auto_event_6 = document.getElementById('auto-event-6');
-    if (el_auto_event_6) el_auto_event_6.addEventListener('click', (event) => { solicitarPermisoGPSAndroidNativo() });
+    if (el_auto_event_6) el_auto_event_6.addEventListener('click', (event) => { conectarGPSAuto(true); });
     const el_selectCiudadCapital = document.getElementById('selectCiudadCapital');
     if (el_selectCiudadCapital) el_selectCiudadCapital.addEventListener('change', (event) => { cambiarCiudadCapital(document.getElementById('selectCiudadCapital').value) });
     const el_btnCancelOrder = document.getElementById('btnCancelOrder');
@@ -174,6 +174,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (el_auto_event_70) el_auto_event_70.addEventListener('click', (event) => { descargarEstadisticasGeneralesCSV() });
     const el_auto_event_71 = document.getElementById('auto-event-71');
     if (el_auto_event_71) el_auto_event_71.addEventListener('click', (event) => { cerrarSesionAdminControl() });
+    const el_btnVerMiPedidoTrip = document.getElementById('btnVerMiPedidoTrip');
+    if (el_btnVerMiPedidoTrip) el_btnVerMiPedidoTrip.addEventListener('click', (event) => { if (typeof window.centrarMapaEnMiPedido === 'function') window.centrarMapaEnMiPedido(); });
+    const el_btnCambiarCiudadPref = document.getElementById('btnCambiarCiudadPref');
+    if (el_btnCambiarCiudadPref) el_btnCambiarCiudadPref.addEventListener('click', (event) => {
+        if (typeof closeUserSettingsModal === 'function') closeUserSettingsModal();
+        const sel = document.getElementById('selectCiudadCapital');
+        if (sel) {
+            sel.focus();
+            sel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
 });
 
 document.addEventListener('click', (e) => {

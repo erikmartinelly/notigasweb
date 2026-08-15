@@ -1,33 +1,33 @@
-/* NOTIGAS SERVICE WORKER v52.0 - CACHÉ PROGRESIVO Y MODO OFFLINE */
-const CACHE_NAME = 'notigas-cache-v67';
+/* NOTIGAS SERVICE WORKER v68.0 - CACHÉ PROGRESIVO Y MODO OFFLINE */
+const CACHE_NAME = 'notigas-cache-v68';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './styles/main.css?v=67',
-  './js/state.js?v=67',
-  './js/supabase-config.js?v=67',
-  './js/auth.js?v=67',
-  './js/vendors.js?v=67',
-  './js/map.js?v=67',
-  './js/forum.js?v=67',
-  './js/ads.js?v=67',
-  './js/ui.js?v=67',
-  './js/orders.js?v=67',
-  './js/app.js?v=67',
-  './js/admin.js?v=67',
-  './js/admin_users.js?v=67',
+  './styles/main.css?v=68',
+  './js/state.js?v=68',
+  './js/ui.js?v=68',
+  './js/supabase-config.js?v=68',
+  './js/auth.js?v=68',
+  './js/vendors.js?v=68',
+  './js/map.js?v=68',
+  './js/map_search.js?v=68',
+  './js/map_gps.js?v=68',
+  './js/forum.js?v=68',
+  './js/ads.js?v=68',
+  './js/orders.js?v=68',
+  './js/admin.js?v=68',
+  './js/admin_users.js?v=68',
+  './js/app.js?v=68',
+  './js/events.js?v=68',
   './icons/garrafa_red_clean.svg',
   './icons/camion_red.svg',
-  './js/events.js?v=67',
-  './js/map_search.js?v=67',
-  './js/map_gps.js?v=67',
   './manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      // Usar Promise.allSettled para que un solo archivo 404 no rompa todo el Service Worker
+      // Usar Promise.allSettled para que un solo archivo no rompa todo el Service Worker
       return Promise.allSettled(ASSETS_TO_CACHE.map(asset => {
          return fetch(asset).then(response => {
             if (response.ok) return cache.put(asset, response);
@@ -60,6 +60,7 @@ self.addEventListener('fetch', (event) => {
   // Bypass: peticiones externas y Supabase (autenticación/realtime nunca deben cachearse)
   if (
     url.includes('google.com') ||
+    url.includes('googleusercontent.com') ||
     url.includes('openstreetmap.org') ||
     url.includes('cloudflare.com') ||
     url.includes('supabase.co') ||
@@ -67,6 +68,7 @@ self.addEventListener('fetch', (event) => {
     url.includes('ipwho') ||
     url.includes('freeipapi') ||
     url.includes('osrm.org') ||
+    url.includes('komoot.io') ||
     url.includes('jsdelivr.net') ||
     url.includes('unpkg.com') ||
     url.includes('accounts.google.com')
@@ -75,7 +77,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
+    caches.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
       if (cachedResponse) {
         // Stale-While-Revalidate: servir caché y actualizar en segundo plano
         fetch(event.request).then((networkResponse) => {
@@ -96,10 +98,9 @@ self.addEventListener('fetch', (event) => {
       }).catch(() => {
         // Fallback offline para páginas HTML
         if (event.request.headers.get('accept')?.includes('text/html')) {
-          return caches.match('./index.html');
+          return caches.match('./index.html', { ignoreSearch: true });
         }
       });
     })
   );
 });
-

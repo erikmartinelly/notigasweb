@@ -328,51 +328,39 @@ function checkActiveOrderStatus() {
 
          const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
 
-         if (document.getElementById('estadoPedidoActivo')) {
-
+         const estadoEl = document.getElementById('estadoPedidoActivo');
+         if (estadoEl) {
            window.supabaseClient.from('pedidos').select('estado').eq('id', order.id).single()
-
            .then(({data, error}) => {
-
               if (error || !data) {
-
                  // Order is no longer active in DB
-
                  AppState.set('activeOrder', null);
-
                  checkActiveOrderStatus();
-
                  return;
-
               }
-
               if (data.estado === 'asignado') {
-
                  const btnCancel = document.getElementById('btnActiveOrderCancel');
-
                  if (btnCancel) {
-
                     btnCancel.innerHTML = `<i class="fa-solid fa-check-circle"></i> Ya recibí mi pedido`;
-
                     btnCancel.style.background = 'linear-gradient(135deg, #00E676, #00C853)';
-
                  }
-
-                 document.getElementById('estadoPedidoActivo').innerHTML = `
-
+                 const el = document.getElementById('estadoPedidoActivo');
+                 if (el) {
+                   el.innerHTML = `
                    <div style="background:linear-gradient(135deg, #10B981, #059669); padding:4px 10px; border-radius:12px; display:inline-block; margin-bottom:5px; color:white;">
-
                      <i class="fa-solid fa-truck-fast"></i> ¡Un Repartidor va en camino!
-
                    </div>
-
-                 `;
-
+                   `;
+                 }
                  if (!sessionStorage.getItem('notigas_notified_asignado')) {
-
                     showToast('🚚 ¡Repartidor asignado!', 'Un repartidor ha aceptado tu pedido y va hacia allá.', 'success', 6000);
-
                     sessionStorage.setItem('notigas_notified_asignado', 'true');
+                 }
+              }
+           }).catch(err => {
+              console.warn("Verificación de estado de pedido:", err);
+           });
+         }
 
                  }
 

@@ -742,7 +742,7 @@ function renderFinalVendors(defaultVendors, deletedIds) {
 
   // SECCIÓN COMPRADORES REGISTRADOS
 
-  html += `<div style="font-weight:900; color:#38BDF8; margin:12px 0 6px; font-size:11.5px;"><i class="fa-solid fa-users"></i> ðŸ›ï¸ COMPRADORES Y USUARIOS VECINALES:</div>`;
+  html += `<div style="font-weight:900; color:#38BDF8; margin:12px 0 6px; font-size:11.5px;"><i class="fa-solid fa-users"></i> ï¸ COMPRADORES Y USUARIOS VECINALES:</div>`;
 
 
 
@@ -1499,19 +1499,15 @@ function guardarAdminConfig() {
 
 
 function cerrarSesionAdminControl() {
-
   AppState.set('isAdmin', false);
-
-  const loginScreen = document.getElementById('adminLoginScreen');
-
-  const dashboardScreen = document.getElementById('adminDashboardScreen');
-
-  if (loginScreen) loginScreen.style.display = 'block';
-
-  if (dashboardScreen) dashboardScreen.style.display = 'none';
-
-  if (typeof showToast === 'function') { showToast('Notificación', '🔒 Sesión de Administrador cerrada correctamente.', 'info', 4000); } else { alert('🔒 Sesión de Administrador cerrada correctamente.'); };
-
+  const btnAdmin = document.getElementById('btnAdminAccessQuick');
+  if (btnAdmin) btnAdmin.style.display = 'none';
+  if (typeof closeAdminModal === 'function') closeAdminModal();
+  if (typeof showToast === 'function') {
+    showToast('Notificación', '🔒 Sesión de Administrador cerrada correctamente.', 'info', 4000);
+  } else {
+    alert('🔒 Sesión de Administrador cerrada correctamente.');
+  }
 }
 
 
@@ -1850,7 +1846,7 @@ async function renderAdminReports() {
 
           <div style="display:flex; gap:4px;">
 
-            <button data-action="borrarDenunciaAdmin" data-id="${rep.id}" style="background:#0288D1; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; cursor:pointer;" title="Desestimar">ðŸ‘ Ok</button>
+            <button data-action="borrarDenunciaAdmin" data-id="${rep.id}" style="background:#0288D1; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; cursor:pointer;" title="Desestimar">👍 Ok</button>
 
             <button data-action="banearUsuarioAdmin" data-id="${escapeHtmlStr(rep.denunciado_id)}" style="background:#D32F2F; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; cursor:pointer;" title="Banear Usuario">🚫 Banear</button>
 
@@ -2062,7 +2058,7 @@ async function enviarDenuncia() {
 
 
 
-  if (typeof showToast === 'function') { showToast('Notificación', 'ðŸ›¡ï¸ Denuncia registrada de forma segura. El equipo de moderación revisará el elemento reportado.', 'info', 4000); } else { alert('ðŸ›¡ï¸ Denuncia registrada de forma segura. El equipo de moderación revisará el elemento reportado.'); };
+  if (typeof showToast === 'function') { showToast('Notificación', 'ï¸ Denuncia registrada de forma segura. El equipo de moderación revisará el elemento reportado.', 'info', 4000); } else { alert('ï¸ Denuncia registrada de forma segura. El equipo de moderación revisará el elemento reportado.'); };
 
 }
 
@@ -2142,7 +2138,7 @@ window.borrarAnuncioLocalAdmin = async function(adId) {
 
     // 4. Recargar vista
 
-    const container = document.getElementById('adminTab3Content');
+    const container = document.getElementById('adminAdsListContainer');
 
     if (container) {
 

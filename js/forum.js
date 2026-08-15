@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    NOTIGAS - MÓDULO DE NOTICIAS VECINALES (AVISOS, VOTOS, COMENTARIOS EN SUPABASE)
    ========================================================================== */
 
@@ -345,6 +345,23 @@ function renderCommentsListUI(comments) {
     });
     box.innerHTML = html;
 }
+
+window.renderPostComments = async function(ref) {
+  if (!ref || !ref.id) return;
+  if (!window.supabaseClient) return;
+  try {
+    const { data, error } = await window.supabaseClient
+      .from('comentarios_avisos')
+      .select('*')
+      .eq('aviso_id', ref.id)
+      .order('created_at', { ascending: true });
+    if (!error && data) {
+      renderCommentsListUI(data);
+    }
+  } catch (e) {
+    console.error('Error al actualizar comentarios en tiempo real:', e);
+  }
+};
 
 /**
  * FIX W-01+W-05: Voto atómico sobre la tabla 'comentarios_avisos'.
