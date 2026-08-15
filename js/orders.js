@@ -182,23 +182,33 @@ window.aceptarGrupoDemanda = async function(clusterId, ciudad, categoria) {
 window.abrirRutaGoogleMaps = async function(lat, lng, orderId) {
   if (typeof closeDriverOrdersModal === 'function') closeDriverOrdersModal();
   
-  // Abrir Google Maps con las coordenadas (síncrono, no bloqueado por navegador)
-  const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-  window.open(url, '_blank');
-
+  // 1. Asignar el pedido al repartidor (validación de ciudad/categoría en backend)
   if (window.supabaseClient && orderId) {
     try {
-      // Asignar el pedido al repartidor de forma atómica y segura mediante RPC
       const { error } = await window.supabaseClient.rpc('rpc_assign_order', {
         p_order_id: orderId
       });
       if (error) {
-        console.warn("Aviso asignando pedido vía RPC:", error.message);
+        console.error('No se pudo asignar el pedido:', error.message);
+        if (typeof showToast === 'function') {
+          showToast('Error', error.message || 'El pedido ya no está disponible.', 'error', 4000);
+        } else {
+          alert('❌ ' + (error.message || 'El pedido ya no está disponible.'));
+        }
+        return;
       }
     } catch(err) {
-      console.warn("Error asignando pedido:", err);
+      console.error('Error asignando pedido:', err);
+      if (typeof showToast === 'function') {
+        showToast('Error', 'No se pudo asignar el pedido.', 'error', 3000);
+      }
+      return;
     }
   }
+
+  // 2. Solo abrir Google Maps si la asignación fue exitosa
+  const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+  window.open(url, '_blank', 'noopener,noreferrer');
 }
 
 async function confirmarEntregaPedido(id) {
