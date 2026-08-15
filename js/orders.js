@@ -302,7 +302,8 @@ function checkActiveOrderStatus() {
       const buyerActions = document.getElementById('buyerFloatingActions');
       if (tripCard) {
         tripCard.style.display = 'block';
-        if (buyerActions) buyerActions.style.display = 'none'; // Hide floating dock when trip card is active
+        // Mostrar buyerActions pero ocultar btnMain y botones irrelevantes
+        if (buyerActions) buyerActions.style.display = 'flex';
       }
       
       const statusText = document.getElementById('tripCardStatusText');
@@ -432,6 +433,22 @@ function closeSubmenuModal() {
   if (modalSubmenu) modalSubmenu.style.display = 'none'; 
 
 }
+
+window.centrarMapaEnMiPedido = function() {
+  try {
+    const order = AppState.get('activeOrder');
+    if (order) {
+      const lat = order.latitude || order.lat;
+      const lng = order.longitude || order.lng;
+      if (lat && lng && typeof map !== 'undefined') {
+        map.flyTo([lat, lng], 17, { duration: 1.0 });
+      }
+    }
+  } catch(e) {
+    console.error("Error al centrar en el pedido:", e);
+  }
+};
+
 
 function seleccionarYPedirDirecto(catNombre) {
 
