@@ -164,20 +164,20 @@ function initNotigasMap() {
   map.getPane('labels').style.zIndex = 650;
   map.getPane('labels').style.pointerEvents = 'none';
 
-  mapTileLayers['osm_base'] = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png', {
+  // Google Maps Base Layer para máxima fidelidad al estilo Google
+  mapTileLayers['osm_base'] = L.tileLayer('https://mt0.google.com/vt/lyrs=m&hl=es&x={x}&y={y}&z={z}', {
     maxZoom: 20,
-    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+    attribution: '&copy; Google Maps',
     className: 'map-base-layer',
-    subdomains: 'abcd',
+    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
     detectRetina: true
   });
   
-  mapTileLayers['osm_labels'] = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', {
+  // Google Maps ya incluye etiquetas, así que podemos omitir la capa extra o poner una vacía temporalmente si la lógica la requiere
+  mapTileLayers['osm_labels'] = L.tileLayer('data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', {
     maxZoom: 20,
     pane: 'labels',
     className: 'map-labels-layer',
-    subdomains: 'abcd',
-    detectRetina: true
   });
 
   mapTileLayers['osm_base'].addTo(map);

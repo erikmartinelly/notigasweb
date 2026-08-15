@@ -270,15 +270,12 @@ function checkActiveOrderStatus() {
 
   const btnMain = document.getElementById('btnMainOrder');
 
-  const rawOrder = JSON.stringify(AppState.get('activeOrder'));
+  const activeOrder = AppState.get('activeOrder');
+  const isAdmin = AppState.get('isAdmin');
 
-  
-
-  if (rawOrder) {
-
+  if (activeOrder && !isAdmin) {
     try {
-
-      const order = JSON.parse(rawOrder);
+      const order = activeOrder;
 
       if (btnCancel) btnCancel.style.display = 'flex';
       if (btnMain) btnMain.style.display = 'none';
@@ -385,8 +382,12 @@ function checkActiveOrderStatus() {
   
 
   if (btnCancel) btnCancel.style.display = 'none';
-
   if (btnMain) btnMain.style.display = 'flex'; // Restaurar Hacer Pedido
+  
+  const tripCard = document.getElementById('notigasTripCard');
+  if (tripCard) tripCard.style.display = 'none';
+  const buyerActions = document.getElementById('buyerFloatingActions');
+  if (buyerActions) buyerActions.style.display = 'flex';
 
   actualizarFaviconSegunPedido(null);
 
