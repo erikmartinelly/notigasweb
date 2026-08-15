@@ -55,45 +55,73 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (window.supabaseClient) {
     initAuthSession();
-  } else {
-    document.addEventListener('supabase_ready', initAuthSession);
-  }
-
-  const savedUser = JSON.stringify(AppState.get('userData') || {});
-  if (savedUser) {
-    try {
-      const u = JSON.parse(savedUser);
-      // Solo configurar adminEmails y databaseEmails, SIN entrar a la app automaticamente
-      if (u.gmail) {
-
-        async function checkAdminAsync() {
-          try {
-            if (!window.supabaseClient) return;
-            
-            // Verificar primero si hay sesión real en Supabase para evitar spoofing
-            const { data: sessionData } = await window.supabaseClient.auth.getSession();
-            if (!sessionData || !sessionData.session || !sessionData.session.user) return;
-            const userEmail = sessionData.session.user.email;
-            
-            const { data } = await window.supabaseClient.from('admin_credentials').select('email').ilike('email', userEmail).maybeSingle();
-            if (data) {
-              const btnAdmin = document.getElementById('btnAdminAccessQuick');
-              if (btnAdmin) btnAdmin.style.display = 'flex';
-              AppState.set('isAdmin', true);
-            } else {
-              AppState.set('isAdmin', false);
-            }
-          } catch(e) {
-            AppState.set('isAdmin', false);
-          }
-        }
-        setTimeout(checkAdminAsync, 1000);
+    window.supabaseClient.auth.onAuthStateChange((event, session) => {
+      if (session && session.user) {
+        window._tempAuthUser = session.user;
+        window.checkAndApplyAdminStatus(session.user);
       }
-    } catch (e) {
-      console.error("Error al leer datos de usuario local:", e);
-    }
+    });
+  } else {
+    document.addEventListener('supabase_ready', () => {
+      initAuthSession();
+      if (window.supabaseClient) {
+        window.supabaseClient.auth.onAuthStateChange((event, session) => {
+          if (session && session.user) {
+            window._tempAuthUser = session.user;
+            window.checkAndApplyAdminStatus(session.user);
+          }
+        });
+      }
+    });
   }
 });
+
+window.checkAndApplyAdminStatus = async function(user) {
+  if (!window.supabaseClient) return false;
+  try {
+    let email = user?.email;
+    if (!email) {
+      const { data: sessionData } = await window.supabaseClient.auth.getSession();
+      email = sessionData?.session?.user?.email;
+    }
+    if (!email) {
+      const { data: userData } = await window.supabaseClient.auth.getUser();
+      email = userData?.user?.email;
+    }
+    if (!email) {
+      const btnAdmin = document.getElementById('btnAdminAccessQuick');
+      if (btnAdmin) btnAdmin.style.display = 'none';
+      AppState.set('isAdmin', false);
+      window._verifiedAdminEmail = null;
+      return false;
+    }
+
+    const { data: adminData, error } = await window.supabaseClient
+      .from('admin_credentials')
+      .select('email')
+      .ilike('email', email.toLowerCase().trim())
+      .limit(1)
+      .maybeSingle();
+
+    if (adminData && adminData.email) {
+      const btnAdmin = document.getElementById('btnAdminAccessQuick');
+      if (btnAdmin) btnAdmin.style.display = 'flex';
+      AppState.set('isAdmin', true);
+      window._verifiedAdminEmail = email.toLowerCase().trim();
+      return true;
+    } else {
+      const btnAdmin = document.getElementById('btnAdminAccessQuick');
+      if (btnAdmin) btnAdmin.style.display = 'none';
+      AppState.set('isAdmin', false);
+      window._verifiedAdminEmail = null;
+      return false;
+    }
+  } catch(e) {
+    console.warn("Error comprobando estado de admin:", e);
+    AppState.set('isAdmin', false);
+    return false;
+  }
+};
 
 function getCurrentUserId() {
   // Priorizar siempre el ID de la sesión autenticada real

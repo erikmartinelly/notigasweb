@@ -29,87 +29,98 @@ const ADMIN_SESSION_MAX_MS = 30 * 60 * 1000;
 
 
 window.getVerifiedAdminEmail = function() {
-
   try {
-
-    const data = AppState.get('userData');
-
-    const isAdmin = AppState.get('isAdmin') === true;
-
+    const isAdmin = (typeof AppState !== 'undefined') && AppState.get('isAdmin') === true;
     if (!isAdmin) return null;
-
-    return data && data.gmail ? data.gmail.toLowerCase().trim() : null;
-
+    if (window._verifiedAdminEmail) return window._verifiedAdminEmail.toLowerCase().trim();
+    if (window._tempAuthUser && window._tempAuthUser.email) return window._tempAuthUser.email.toLowerCase().trim();
+    const data = AppState.get('userData');
+    return data && (data.gmail || data.email) ? (data.gmail || data.email).toLowerCase().trim() : null;
   } catch(e) { return null; }
-
 };
 
-
-
 window.abrirModalAdminDashboard = async function() {
-
   if (typeof closeUserSettingsModal === 'function') closeUserSettingsModal();
 
   const modalAdmin = document.getElementById('modalAdmin');
-
   if (!modalAdmin) return;
 
-  
+  if (!window.supabaseClient) {
+    if (typeof showToast === 'function') {
+      showToast('Error', 'Sin conexión con el servidor Supabase.', 'error', 3000);
+    } else {
+      alert('Sin conexión con el servidor.');
+    }
+    return;
+  }
+
+  if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Verificando credenciales de administrador...');
 
   try {
+    // 1. Obtener el usuario autenticado real desde Supabase Auth (Fuente de Verdad)
+    let email = '';
+    const { data: sessionData, error: sessionErr } = await window.supabaseClient.auth.getSession();
+    const user = sessionData?.session?.user;
 
-    const data = AppState.get('userData');
+    if (user && user.email) {
+      email = user.email.toLowerCase().trim();
+    } else {
+      // Fallback a getUser()
+      const { data: userData } = await window.supabaseClient.auth.getUser();
+      if (userData?.user?.email) {
+        email = userData.user.email.toLowerCase().trim();
+      }
+    }
 
-    const email = data && data.gmail ? data.gmail.toLowerCase().trim() : '';
+    if (!email || sessionErr) {
+      if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+      if (typeof showToast === 'function') {
+        showToast('Acceso Restringido', 'Debes iniciar sesión con tu cuenta de Administrador.', 'warning', 4500);
+      } else {
+        alert('Debes iniciar sesión con tu cuenta de Administrador.');
+      }
+      const modalAuth = document.getElementById('modalWelcomeAuth');
+      if (modalAuth) modalAuth.style.display = 'flex';
+      return;
+    }
 
-    if (!email) throw new Error("No email in local storage");
-
-    
-
-    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Verificando credenciales...');
-
-    
-
+    // 2. Comprobar contra admin_credentials en PostgreSQL (insensible a mayúsculas)
     const { data: adminData, error } = await window.supabaseClient
-
       .from('admin_credentials')
-
       .select('email')
-
-      .eq('email', email)
+      .ilike('email', email)
       .limit(1)
       .maybeSingle();
 
-      
-
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-
-    
 
     if (error || !adminData) {
-
-      if (typeof showToast === 'function') { showToast('Notificación', "❌ Acceso Denegado. Solo administradores autorizados.", 'info', 4000); } else { alert("❌ Acceso Denegado. Solo administradores autorizados."); };
-
+      console.warn('Acceso denegado a admin:', email, error);
+      if (typeof showToast === 'function') {
+        showToast('⛔ Acceso Denegado', `El correo "${email}" no está registrado como Administrador.`, 'error', 5000);
+      } else {
+        alert(`❌ Acceso Denegado. El correo ${email} no es administrador.`);
+      }
       return;
-
     }
 
-    
-
-    // Si llegamos aquí, es administrador legítimo
-
+    // 3. Administrador verificado
+    window._verifiedAdminEmail = email;
     AppState.set('isAdmin', true);
 
-    
+    modalAdmin.style.display = 'flex';
+    if (typeof switchModalTab === 'function') switchModalTab(0);
+    if (typeof renderAdminDashboardKPIs === 'function') renderAdminDashboardKPIs();
 
   } catch (e) {
-
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-
-    if (typeof showToast === 'function') { showToast('Notificación', "❌ Acceso Denegado. Solo administradores autorizados.", 'info', 4000); } else { alert("❌ Acceso Denegado. Solo administradores autorizados."); };
-
+    console.error('Error al abrir panel de admin:', e);
+    if (typeof showToast === 'function') {
+      showToast('Error', 'No se pudieron verificar las credenciales de administrador.', 'error', 4000);
+    } else {
+      alert('Error verificando credenciales.');
+    }
     return;
-
   }
 
   
