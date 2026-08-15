@@ -159,12 +159,12 @@ function initNotigasMap() {
 
   L.control.zoom({ position: 'topright' }).addTo(map);
 
-  // CARTO Dark Matter separado en base y etiquetas para aplicar filtros solo al fondo
+  // CARTO Voyager separado en base y etiquetas para apariencia estilo Google Maps
   map.createPane('labels');
   map.getPane('labels').style.zIndex = 650;
   map.getPane('labels').style.pointerEvents = 'none';
 
-  mapTileLayers['osm_base'] = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
+  mapTileLayers['osm_base'] = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png', {
     maxZoom: 20,
     attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
     className: 'map-base-layer',
@@ -172,7 +172,7 @@ function initNotigasMap() {
     detectRetina: true
   });
   
-  mapTileLayers['osm_labels'] = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', {
+  mapTileLayers['osm_labels'] = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', {
     maxZoom: 20,
     pane: 'labels',
     className: 'map-labels-layer',
