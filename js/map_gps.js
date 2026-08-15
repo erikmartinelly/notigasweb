@@ -20,10 +20,11 @@ function detenerGPSComprador() {
         navigator.geolocation?.clearWatch
     ) {
         navigator.geolocation.clearWatch(activeGpsWatchId);
-    }
-
-    if (typeof activeGpsWatchId !== 'undefined') {
         activeGpsWatchId = null;
+    }
+    if (typeof window.activeGpsIpInterval !== 'undefined' && window.activeGpsIpInterval !== null) {
+        clearInterval(window.activeGpsIpInterval);
+        window.activeGpsIpInterval = null;
     }
 }
 
@@ -248,8 +249,8 @@ function conectarGPSAuto(forceReset = false) {
                 
                 // Como la IP es estática, usamos setInterval para transmitirla periódicamente
                 // y mantener al repartidor "en vivo" en la base de datos sin simular movimiento.
-                if (window.activeGpsWatchId) clearInterval(window.activeGpsWatchId);
-                window.activeGpsWatchId = setInterval(() => {
+                if (window.activeGpsIpInterval) clearInterval(window.activeGpsIpInterval);
+                window.activeGpsIpInterval = setInterval(() => {
                     if (typeof transmitirUbicacionRepartidorServidorDB === 'function') {
                         transmitirUbicacionRepartidorServidorDB(coords.lat, coords.lng);
                     }

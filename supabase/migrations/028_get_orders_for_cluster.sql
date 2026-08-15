@@ -1,6 +1,11 @@
+-- ==========================================
 -- 028_get_orders_for_cluster.sql
 -- RPC para obtener las órdenes pendientes de un clúster de demanda sin asignarlas,
 -- permitiendo calcular rutas dinámicamente basadas en los pedidos de la zona.
+-- ==========================================
+
+-- Eliminar versión anterior con tipos de retorno incompatibles si existía
+DROP FUNCTION IF EXISTS rpc_get_orders_for_cluster_v2(text, text, text, double precision, integer);
 
 CREATE OR REPLACE FUNCTION rpc_get_orders_for_cluster_v2(
     p_cluster_id text,
@@ -10,23 +15,24 @@ CREATE OR REPLACE FUNCTION rpc_get_orders_for_cluster_v2(
     p_min_pedidos integer DEFAULT 2
 )
 RETURNS TABLE (
-    id bigint,
-    user_id uuid,
-    telefono_whatsapp text,
-    ubicacion_referencia text,
+    id uuid,
+    user_id text,
+    categoria text,
+    titulo text,
+    descripcion text,
+    cantidad text,
     direccion text,
+    telefono text,
+    estado text,
+    driver_id text,
+    ciudad text,
+    barrio_otb text,
     latitude double precision,
     longitude double precision,
-    estado text,
-    driver_id uuid,
-    ciudad text,
-    categoria text,
-    visto boolean,
-    created_at timestamp with time zone,
-    updated_at timestamp with time zone
+    created_at timestamp with time zone
 )
 LANGUAGE plpgsql
-SECURITY DEFINER
+SECURITY DEFINER SET search_path = public
 AS $$
 BEGIN
     RETURN QUERY
@@ -49,8 +55,8 @@ BEGIN
     ),
     valid_clusters AS (
         SELECT 
-            cluster_id_raw,
-            md5(string_agg(co.id::text, ',' ORDER BY co.id)) AS gen_cluster_id,
+            co.cluster_id_raw,
+            md5(MIN(co.id::text) || co.cluster_id_raw::text) AS gen_cluster_id,
             COUNT(co.id) AS cluster_count
         FROM clustered_orders co
         WHERE co.cluster_id_raw IS NOT NULL
@@ -59,18 +65,19 @@ BEGIN
     SELECT 
         co.id,
         co.user_id,
-        co.telefono_whatsapp,
-        co.ubicacion_referencia,
+        co.categoria,
+        co.titulo,
+        co.descripcion,
+        co.cantidad,
         co.direccion,
-        co.latitude,
-        co.longitude,
+        co.telefono,
         co.estado,
         co.driver_id,
         co.ciudad,
-        co.categoria,
-        co.visto,
-        co.created_at,
-        co.updated_at
+        co.barrio_otb,
+        co.latitude,
+        co.longitude,
+        co.created_at
     FROM clustered_orders co
     JOIN valid_clusters vc ON co.cluster_id_raw = vc.cluster_id_raw
     WHERE vc.gen_cluster_id = p_cluster_id
@@ -78,4 +85,4 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION rpc_get_orders_for_cluster_v2(text, text, text, double precision, integer) TO authenticated;
+GRANT EXECUTE ON FUNCTION rpc_get_orders_for_cluster_v2(text, text, text, double precision, integer) TO anon, authenticated;

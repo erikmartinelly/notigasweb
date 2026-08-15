@@ -141,34 +141,39 @@ window.aceptarGrupoDemanda = async function(clusterId, ciudad, categoria) {
   if (typeof closeDriverOrdersModal === 'function') closeDriverOrdersModal();
   if (!window.supabaseClient) {
     if (typeof showToast === 'function') showToast('Error', 'Sin conexión a la base de datos.', 'error');
-    else if (typeof showToast === 'function') { showToast('Notificación', '❌ Error: Sin conexión a la base de datos.', 'info', 4000); } else { alert('❌ Error: Sin conexión a la base de datos.'); };
+    else alert('❌ Error: Sin conexión a la base de datos.');
     return;
   }
   showConfirmModal('🚚', 'Aceptar Grupo', '¿Deseas asignarte este grupo de pedidos?', 'Sí, aceptar pedidos', async () => {
+    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Asignando pedidos...');
     
+    // Call RPC to officially assign the orders in backend
+    const { error } = await window.supabaseClient.rpc('rpc_accept_demand_cluster_v2', {
+        p_cluster_id: clusterId,
+        p_ciudad: ciudad,
+        p_categoria: categoria
+    });
+
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+
+    if (error) {
+      console.error("Error asignando cluster:", error);
+      if (typeof showToast === 'function') showToast('Error', error.message || 'No se pudo asignar el grupo de pedidos.', 'error');
+      else alert('❌ No se pudo asignar el grupo de pedidos.');
+      return;
+    }
+
     AppState.set('activeClusterId', clusterId);
     AppState.set('activeClusterCity', ciudad);
     AppState.set('activeClusterCategoria', categoria);
     
     if (typeof showToast === 'function') {
       showToast('¡Pedidos Asignados!', 'Los pedidos de la zona han sido asignados a ti.', 'success', 5000);
-    } else {
-      if (typeof showToast === 'function') { showToast('Notificación', '✅ ¡PEDIDOS ASIGNADOS!\nLos pedidos de la zona han sido asignados a ti.', 'info', 4000); } else { alert('✅ ¡PEDIDOS ASIGNADOS!\nLos pedidos de la zona han sido asignados a ti.'); };
     }
-    
+
     if (window.demandClusterMarkers && window.demandClusterMarkers[clusterId]) {
       if (typeof map !== 'undefined' && map) map.removeLayer(window.demandClusterMarkers[clusterId]);
       delete window.demandClusterMarkers[clusterId];
-    }
-    
-    // Call RPC to officially assign the orders
-    const localUserId = typeof getCurrentUserId === 'function' ? getCurrentUserId() : (AppState.get('userData') ? AppState.get('userData').id : null);
-    if (localUserId) {
-        await window.supabaseClient.rpc('rpc_accept_demand_cluster_v2', {
-            p_cluster_id: clusterId,
-            p_ciudad: ciudad,
-            p_categoria: categoria
-        });
     }
 
     if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
@@ -179,13 +184,16 @@ window.abrirRutaGoogleMaps = async function(lat, lng, orderId) {
   if (typeof closeDriverOrdersModal === 'function') closeDriverOrdersModal();
   
   if (window.supabaseClient && orderId) {
-    const localUserId = typeof getCurrentUserId === 'function' ? getCurrentUserId() : (AppState.get('userData') ? AppState.get('userData').id : null);
-    if (localUserId) {
-      // Intentar asignar el pedido al repartidor si aún no está asignado
-      await window.supabaseClient.from('pedidos')
-        .update({ estado: 'asignado', repartidor_asignado: localUserId })
-        .eq('id', orderId)
-        .eq('estado', 'pendiente');
+    try {
+      // Asignar el pedido al repartidor de forma atómica y segura mediante RPC
+      const { error } = await window.supabaseClient.rpc('rpc_assign_order', {
+        p_order_id: orderId
+      });
+      if (error) {
+        console.warn("Aviso asignando pedido vía RPC:", error.message);
+      }
+    } catch(err) {
+      console.warn("Error asignando pedido:", err);
     }
   }
 
@@ -311,12 +319,13 @@ function checkActiveOrderStatus() {
       const timeEst = document.getElementById('tripCardTime');
       const statusIndicator = document.getElementById('tripCardStatusIndicator');
       
+      const isDriverAssigned = Boolean(order.driver_id || order.repartidor_asignado);
       if (statusText) statusText.innerText = (order.estado || 'ESPERA').toUpperCase();
-      if (driverName) driverName.innerText = order.repartidor_asignado ? 'EN CAMINO' : 'BUSCANDO...';
-      if (timeEst) timeEst.innerText = order.repartidor_asignado ? 'Aproximadamente 8-15 min.' : 'Asignando repartidor...';
+      if (driverName) driverName.innerText = isDriverAssigned ? 'EN CAMINO' : 'BUSCANDO...';
+      if (timeEst) timeEst.innerText = isDriverAssigned ? 'Aproximadamente 8-15 min.' : 'Asignando repartidor...';
       if (statusIndicator) {
-         statusIndicator.style.background = order.repartidor_asignado ? '#27d17f' : '#FF9800';
-         statusIndicator.style.boxShadow = order.repartidor_asignado ? '0 0 7px rgba(39,209,127,.55)' : '0 0 7px rgba(255,152,0,.55)';
+         statusIndicator.style.background = isDriverAssigned ? '#27d17f' : '#FF9800';
+         statusIndicator.style.boxShadow = isDriverAssigned ? '0 0 7px rgba(39,209,127,.55)' : '0 0 7px rgba(255,152,0,.55)';
       }
 
 

@@ -69,7 +69,7 @@ async function ejecutarLimpiezaBaneos() {
   } catch(e){}
 
   if (window.supabaseClient) {
-    const { error } = await window.supabaseClient.from('usuarios_baneados').delete().neq('id', 0);
+    const { error } = await window.supabaseClient.from('usuarios_baneados').delete().not('id', 'is', null);
     if (error) console.error("Error limpiando baneos en Supabase:", error);
     await descargarBaneadosDeSupabase();
   }

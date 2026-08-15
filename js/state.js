@@ -117,7 +117,7 @@ window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño m
              .from('pedidos')
              .select('*')
              .eq('user_id', data.session.user.id)
-             .in('estado', ['pendiente', 'aceptado'])
+             .in('estado', ['pendiente', 'visto', 'asignado'])
              .order('created_at', { ascending: false })
              .limit(1);
              
