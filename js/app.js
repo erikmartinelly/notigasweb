@@ -232,16 +232,9 @@ window.pausarRecorridoRepartidor = function() {
     window.stopDriverLocationBroadcast();
   }
   
-  // Detener el watchPosition y OSRM si existen
+  // Detener el watchPosition si existe
   if (typeof activeGpsWatchId !== 'undefined' && activeGpsWatchId !== null && navigator.geolocation) {
     navigator.geolocation.clearWatch(activeGpsWatchId);
-  }
-  if (typeof window.activeRouteInterval !== 'undefined' && window.activeRouteInterval !== null) {
-    clearInterval(window.activeRouteInterval);
-    if (typeof map !== 'undefined' && window.activeRouteLayer) {
-      map.removeLayer(window.activeRouteLayer);
-    }
-    window.activeRouteDest = null;
   }
   
   // Desactivar UI

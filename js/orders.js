@@ -246,20 +246,13 @@ function ejecutarPurgaBaseDeDatosAuto() {
 
 
   try {
-
-    const rawOrder = JSON.stringify(AppState.get('activeOrder'));
-
-    if (rawOrder) {
-
-      const order = JSON.parse(rawOrder);
-
+    const order = AppState.get('activeOrder');
+    if (order) {
       if (order.timestamp && (now - order.timestamp) > expirationMs) {
-
         AppState.set('activeOrder', null);
-
       }
-
     }
+  } catch(e) {}
 
   } catch(e){}
 
