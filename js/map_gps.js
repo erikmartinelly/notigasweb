@@ -198,7 +198,8 @@ function iniciarWatchGPSRepartidor() {
                     true // isExact
                 );
 
-                if (moved >= 30) {
+                const minMovement = (window.NOTIGAS && window.NOTIGAS.MIN_MOVEMENT_METERS) ? window.NOTIGAS.MIN_MOVEMENT_METERS : 30;
+                if (moved >= minMovement) {
                     stationarySince = null;
                 } else if (stationarySince === null) {
                     stationarySince = now;

@@ -2401,10 +2401,12 @@ button:active, .tab-btn:active, .cat-chip:active {
 }
 
 
-/* MAPA NOTIGAS: Fondo azul marino real (Tintado sobre escala de grises) */
+/* MAPA NOTIGAS: Google Maps Light Theme (Voyager) */
 .map-base-layer { 
-  /* Sepia lo colorea, hue-rotate lo vuelve azul marino, saturate lo intensifica y brightness lo mantiene oscuro */
-  filter: sepia(100%) hue-rotate(185deg) saturate(300%) brightness(0.6) contrast(1.1); 
+  filter: none;
+}
+.map-labels-layer {
+  filter: none;
 }
 
 /* Controles de Zoom Discretos */
