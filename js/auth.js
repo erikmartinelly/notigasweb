@@ -134,13 +134,15 @@ function getCurrentUserId() {
     const saved = JSON.stringify(AppState.get('userData') || {});
     if (saved) {
       const u = JSON.parse(saved);
-      if (u && u.user_id) {
-        userId = u.user_id;
+      if (u) {
+        if (u.user_id) userId = u.user_id;
+        else if (u.id) userId = u.id;
       }
     }
   } catch(e){}
   return userId;
 }
+window.getCurrentUserId = getCurrentUserId;
 
 async function getAuthenticatedUserId() {
   if (!window.supabaseClient) return null;
@@ -148,6 +150,7 @@ async function getAuthenticatedUserId() {
   if (error || !data?.user) return null;
   return data.user.id;
 }
+window.getAuthenticatedUserId = getAuthenticatedUserId;
 
 async function guardarPerfilSupabase(user, changes = {}) {
     if (!window.supabaseClient || !user?.id) {

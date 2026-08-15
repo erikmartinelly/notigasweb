@@ -1,22 +1,24 @@
 /* ORDERS LOGIC */
 
 function abrirModalDriverOrders() {
-
-  renderDriverOrdersList();
-
   const modal = document.getElementById('modalDriverOrders');
-
   if (modal) modal.style.display = 'flex';
 
+  const selectCity = document.getElementById('selectDriverModalCity');
+  if (selectCity) {
+    const currentCity = (typeof AppState !== 'undefined') ? AppState.get('city') : 'cochabamba';
+    if (currentCity) selectCity.value = currentCity;
+  }
+
+  renderDriverOrdersList();
 }
+window.abrirModalDriverOrders = abrirModalDriverOrders;
 
 function closeDriverOrdersModal() {
-
   const modal = document.getElementById('modalDriverOrders');
-
   if (modal) modal.style.display = 'none';
-
 }
+window.closeDriverOrdersModal = closeDriverOrdersModal;
 
 async function renderDriverOrdersList() {
   const container = document.getElementById('driverOrdersContainer');
@@ -275,46 +277,33 @@ window.abrirRutaGoogleMaps = async function (a, b, c) {
 };
 
 async function confirmarEntregaPedido(id) {
-
   if (!window.supabaseClient) return;
 
   showConfirmModal('🏁', 'Confirmar Entrega', '¿El vecino ya recibió su pedido y se realizó el pago?', 'Sí, ya entregué el pedido', async () => {
-
     showLoadingOverlay('Confirmando entrega...');
 
-    const localUserId = await getAuthenticatedUserId();
+    const localUserId = (typeof getAuthenticatedUserId === 'function') ? await getAuthenticatedUserId() : ((typeof getCurrentUserId === 'function') ? getCurrentUserId() : null);
 
     const { error } = await window.supabaseClient.from('pedidos')
-
       .update({ estado: 'entregado' })
-
       .eq('id', id)
-
       .eq('driver_id', localUserId)
-      
-      .eq('estado', 'asignado');
+      .in('estado', ['asignado', 'en_ruta', 'en_camino']);
 
     hideLoadingOverlay();
 
-    
-
     if (error) {
-
       console.error("Error confirmando entrega:", error);
-
       showToast('Error', 'No se pudo confirmar la entrega.', 'error');
-
     } else {
-
       closeDriverOrdersModal();
-
       showToast('¡Buen trabajo!', 'Pedido entregado. El pedido fue archivado en tus estadísticas.', 'success', 5000);
-
+      if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
+      if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
     }
-
   });
-
 }
+window.confirmarEntregaPedido = confirmarEntregaPedido;
 
 // Purga automática de caché local (elimina pedidos locales expirados, no la base de datos)
 function ejecutarPurgaBaseDeDatosAuto() {
@@ -691,26 +680,15 @@ function confirmarPedido() {
 
         if (typeof notigasTrack === 'function') notigasTrack('pedido_creado', { categoria: cat });
 
-        
-
         showToast('✅ Pedido Recibido', 'Tu solicitud fue enviada a los repartidores disponibles de tu zona. La atención depende de la disponibilidad de un repartidor.', 'success', 5000);
 
         closePedidoModal();
 
         checkActiveOrderStatus();
 
-
-
         if (typeof renderActiveOrdersMap === 'function') {
-
           renderActiveOrdersMap();
-
         }
-
-
-
-        showToast('Pedido Publicado en Mapa', `🚀 ${cat}\n📍 ${direccion}${telefono ? '\n📞 Tel: ' + telefono : ''}`, 'order', 3000);
-
       }
 
     }).catch(e => {
@@ -732,7 +710,6 @@ function confirmarPedido() {
 }
 
 function cancelarPedidoActivo() {
-
   showConfirmModal('❌', '¿Cancelar tu pedido?', 'Tu pedido activo será eliminado del mapa y los repartidores dejarán de verlo.', 'Sí, cancelar', async () => {
 
     const rawOrder = JSON.stringify(AppState.get('activeOrder'));
@@ -782,11 +759,10 @@ function cancelarPedidoActivo() {
     }
 
   });
-
 }
+window.cancelarPedidoActivo = cancelarPedidoActivo;
 
 async function confirmarRecepcionComprador() {
-
   showConfirmModal('🏁', 'Confirmar Recepción', '¿Confirmas que el repartidor llegó y recibiste tu pedido de forma exitosa?', 'Sí, lo recibí', async () => {
 
      const rawOrder = JSON.stringify(AppState.get('activeOrder'));
