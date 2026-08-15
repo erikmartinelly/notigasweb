@@ -43,27 +43,17 @@ function solicitarGeolocalizacionNativaNavegador(
         const options = isMobile
             ? {
                 enableHighAccuracy: true,
-                timeout: 15000,
+                timeout: 8000,
                 maximumAge: 10000
             }
             : {
                 enableHighAccuracy: false,
-                timeout: (window.NOTIGAS && window.NOTIGAS.GPS_TIMEOUT_MS) ? window.NOTIGAS.GPS_TIMEOUT_MS : 12000,
-                maximumAge: 5000
+                timeout: 3500, // Timeout corto en PC para evitar congelamientos
+                maximumAge: 30000
             };
-
-        console.log(`
-NOTIGAS GEOLOCATION -------------------
-Secure Context: ${window.isSecureContext ? 'YES' : 'NO'}
-Native GPS: Attempting...`);
 
         navigator.geolocation.getCurrentPosition(
             position => {
-                console.log(`
-NOTIGAS GEOLOCATION -------------------
-Secure Context: ${window.isSecureContext ? 'YES' : 'NO'}
-Native GPS: SUCCESS
-Accuracy: EXACT (${position.coords.accuracy}m)`);
                 applyGpsPosition(
                     position.coords.latitude,
                     position.coords.longitude,
@@ -74,35 +64,8 @@ Accuracy: EXACT (${position.coords.accuracy}m)`);
                 resolve(position);
             },
             error => {
-                console.log(`
-NOTIGAS GEOLOCATION -------------------
-Secure Context: ${window.isSecureContext ? 'YES' : 'NO'}
-Native GPS: FAILED
-Error code: ${error.code}
-Error message: ${error.message}`);
-                console.warn(
-                    'GPS inicial falló:',
-                    error.message
-                );
-
-                navigator.geolocation.getCurrentPosition(
-                    position => {
-                        applyGpsPosition(
-                            position.coords.latitude,
-                            position.coords.longitude,
-                            'Ubicación GPS de respaldo',
-                            forceReset,
-                            true // isExact
-                        );
-                        resolve(position);
-                    },
-                    error2 => reject(error2),
-                    {
-                        enableHighAccuracy: true,
-                        timeout: 15000,
-                        maximumAge: 60000
-                    }
-                );
+                console.warn('GPS nativo falló o tardó demasiado:', error.message);
+                reject(error);
             },
             options
         );
@@ -110,38 +73,102 @@ Error message: ${error.message}`);
 }
 
 async function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
-    const fetchIP = (url, parser) =>
-        fetch(url)
-            .then(response => response.ok ? response.json() : Promise.reject(new Error('HTTP ' + response.status)))
-            .then(parser);
+    const fetchIP = (url, parser) => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3500);
+        return fetch(url, { signal: controller.signal })
+            .then(response => {
+                clearTimeout(timeoutId);
+                return response.ok ? response.json() : Promise.reject(new Error('HTTP ' + response.status));
+            })
+            .then(parser)
+            .catch(err => {
+                clearTimeout(timeoutId);
+                throw err;
+            });
+    };
 
     const apis = [
-        fetchIP('https://ipapi.co/json/', data => data?.latitude != null && data?.longitude != null ? { lat: data.latitude, lng: data.longitude } : Promise.reject(new Error('no lat/lng'))),
-        fetchIP('https://ipinfo.io/json', data => data?.loc ? { lat: parseFloat(data.loc.split(',')[0]), lng: parseFloat(data.loc.split(',')[1]) } : Promise.reject(new Error('no loc'))),
-        fetchIP('https://freeipapi.com/api/json', data => data?.latitude != null && data?.longitude != null ? { lat: data.latitude, lng: data.longitude } : Promise.reject(new Error('no lat/lng'))),
-        fetchIP('https://ipwho.is/', data => data?.success && data?.latitude != null && data?.longitude != null ? { lat: data.latitude, lng: data.longitude } : Promise.reject(new Error('no success')))
+        fetchIP('https://ipapi.co/json/', data => {
+            if (data?.latitude != null && data?.longitude != null) {
+                return { lat: parseFloat(data.latitude), lng: parseFloat(data.longitude), city: data.city, region: data.region };
+            }
+            throw new Error('no lat/lng');
+        }),
+        fetchIP('https://ipinfo.io/json', data => {
+            if (data?.loc) {
+                const parts = data.loc.split(',');
+                return { lat: parseFloat(parts[0]), lng: parseFloat(parts[1]), city: data.city, region: data.region };
+            }
+            throw new Error('no loc');
+        }),
+        fetchIP('https://freeipapi.com/api/json', data => {
+            if (data?.latitude != null && data?.longitude != null) {
+                return { lat: parseFloat(data.latitude), lng: parseFloat(data.longitude), city: data.cityName, region: data.regionName };
+            }
+            throw new Error('no lat/lng');
+        }),
+        fetchIP('https://ipwho.is/', data => {
+            if (data?.success && data?.latitude != null && data?.longitude != null) {
+                return { lat: parseFloat(data.latitude), lng: parseFloat(data.longitude), city: data.city, region: data.region };
+            }
+            throw new Error('no success');
+        })
     ];
 
-    return Promise.any(apis)
-        .then(coords => {
-            console.log(`
-NOTIGAS GEOLOCATION -------------------
-IP fallback: SUCCESS
-Accuracy: APPROXIMATE`);
-            if (forceReset || typeof window.currentGpsLat === 'undefined' || window.currentGpsLat === null) {
-                if (typeof window.applyGpsPosition === 'function') {
-                    window.applyGpsPosition(coords.lat, coords.lng, 'Ubicación aproximada por IP', forceReset, false); // isExact = false
-                }
+    try {
+        const coords = await Promise.any(apis);
+        console.log('📍 NOTIGAS IP Geolocation detectada:', coords);
+
+        let detectedCity = 'cochabamba';
+        if (typeof window.inferMainCityFromCoords === 'function') {
+            detectedCity = window.inferMainCityFromCoords(coords.lat, coords.lng);
+        }
+        if (!detectedCity || detectedCity === 'fuera_de_cobertura') {
+            if (typeof window.matchCityByNameOrRegion === 'function') {
+                detectedCity = window.matchCityByNameOrRegion(coords.city, coords.region) || 'cochabamba';
+            } else {
+                detectedCity = 'cochabamba';
             }
-            return coords;
-        })
-        .catch(() => {
-            console.log(`
-NOTIGAS GEOLOCATION -------------------
-IP fallback: FAILED
-No location found. User must select manually.`);
-            return null;
-        });
+        }
+
+        const cityDefs = (typeof window.BOLIVIA_CITIES !== 'undefined') ? window.BOLIVIA_CITIES : null;
+        const cityData = (cityDefs && cityDefs[detectedCity]) ? cityDefs[detectedCity] : { key: 'cochabamba', nombre: 'Cochabamba', lat: -17.3895, lon: -66.1568 };
+
+        // Si la IP está dentro de los límites generales de Bolivia, usar coords IP; sino usar las de la capital detectada
+        const inBolivia = (coords.lat >= -23.5 && coords.lat <= -9.5 && coords.lng >= -70.0 && coords.lng <= -57.0);
+        const finalLat = inBolivia ? coords.lat : cityData.lat;
+        const finalLng = inBolivia ? coords.lng : (cityData.lon || cityData.lng);
+
+        if (typeof window.applyGpsPosition === 'function') {
+            window.applyGpsPosition(finalLat, finalLng, `Ubicación por IP (${cityData.nombre})`, forceReset, false);
+        }
+
+        if (typeof window.cambiarCiudad === 'function') {
+            window.cambiarCiudad(detectedCity);
+        } else if (typeof AppState !== 'undefined') {
+            AppState.set('city', detectedCity);
+        }
+
+        return { lat: finalLat, lng: finalLng, city: detectedCity };
+    } catch(err) {
+        console.warn('⚠️ Fallback a ciudad predeterminada (Cochabamba):', err);
+        const fallback = (typeof window.BOLIVIA_CITIES !== 'undefined' && window.BOLIVIA_CITIES['cochabamba'])
+            ? window.BOLIVIA_CITIES['cochabamba']
+            : { key: 'cochabamba', nombre: 'Cochabamba', lat: -17.3895, lon: -66.1568 };
+
+        if (typeof window.applyGpsPosition === 'function') {
+            window.applyGpsPosition(fallback.lat, fallback.lon || fallback.lng, 'Cochabamba (Ubicación Base)', forceReset, false);
+        }
+
+        if (typeof window.cambiarCiudad === 'function') {
+            window.cambiarCiudad('cochabamba');
+        } else if (typeof AppState !== 'undefined') {
+            AppState.set('city', 'cochabamba');
+        }
+
+        return { lat: fallback.lat, lng: fallback.lon || fallback.lng, city: 'cochabamba' };
+    }
 }
 
 function iniciarWatchGPSRepartidor() {
@@ -267,12 +294,18 @@ function conectarGPSAuto(forceReset = false) {
 
     // =====================================================
     // COMPRADOR
-    //
-    // NUNCA watchPosition()
     // =====================================================
     detenerGPSComprador();
 
     const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    if (!isMobile) {
+        // En PC: fijar ubicación por IP de inmediato para que la app cargue en 0ms sin colgarse
+        obtenerUbicacionIPFallbackDesktop(forceReset);
+        // Intentar refinar con GPS nativo en segundo plano sin bloquear
+        solicitarGeolocalizacionNativaNavegador(false, false).catch(() => {});
+        return;
+    }
 
     solicitarGeolocalizacionNativaNavegador(
         isMobile,
@@ -282,27 +315,13 @@ function conectarGPSAuto(forceReset = false) {
         if (typeof showToast === 'function') {
             showToast(
                 '📍 Ubicación guardada',
-                'Ya registramos tu ubicación. Puedes apagar el GPS; NOTIGAS no lo necesita mientras seas comprador.',
+                'Ubicación detectada con éxito.',
                 'success',
-                7000
+                4000
             );
         }
     })
     .catch(() => {
-        // En PC usamos IP solamente como respaldo
-        if (!isMobile) {
-            obtenerUbicacionIPFallbackDesktop(
-                forceReset
-            );
-        } else {
-            if (typeof showToast === 'function') {
-                showToast(
-                    '⚠️ Necesitamos tu ubicación',
-                    'Activa la ubicación para registrar tu dirección habitual.',
-                    'warning',
-                    6000
-                );
-            }
-        }
+        obtenerUbicacionIPFallbackDesktop(forceReset);
     });
 }

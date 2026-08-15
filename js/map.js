@@ -569,30 +569,43 @@ function moverMarcadorUbicacionManual(lat, lng) {
   verificarYMostrarRepartidorGPS();
 }
 
+window.BOLIVIA_CITIES = {
+  santacruz:  { key: 'santacruz',  nombre: 'Santa Cruz de la Sierra', lat: -17.7833, lon: -63.1821, keywords: ['santa cruz', 'santacruz', 'montero', 'warnes'] },
+  lapaz:      { key: 'lapaz',      nombre: 'La Paz',                  lat: -16.5000, lon: -68.1500, keywords: ['la paz', 'lapaz', 'murillo'] },
+  elalto:     { key: 'elalto',     nombre: 'El Alto',                 lat: -16.5000, lon: -68.1900, keywords: ['el alto', 'elalto', 'viacha'] },
+  cochabamba: { key: 'cochabamba', nombre: 'Cochabamba',              lat: -17.3895, lon: -66.1568, keywords: ['cochabamba', 'quillacollo', 'sacaba', 'tiquipaya'] },
+  sucre:      { key: 'sucre',      nombre: 'Sucre',                   lat: -19.0333, lon: -65.2627, keywords: ['sucre', 'chuquisaca'] },
+  tarija:     { key: 'tarija',     nombre: 'Tarija',                  lat: -21.5355, lon: -64.7296, keywords: ['tarija', 'yacuiba', 'bermejo'] },
+  oruro:      { key: 'oruro',      nombre: 'Oruro',                   lat: -17.9833, lon: -67.1500, keywords: ['oruro', 'huanuni'] },
+  potosi:     { key: 'potosi',     nombre: 'Potosí',                  lat: -19.5836, lon: -65.7531, keywords: ['potosi', 'potosí', 'uyuni'] },
+  trinidad:   { key: 'trinidad',   nombre: 'Trinidad',                lat: -14.8333, lon: -64.9000, keywords: ['trinidad', 'beni', 'riberalta'] },
+  cobija:     { key: 'cobija',     nombre: 'Cobija',                  lat: -11.0267, lon: -68.7692, keywords: ['cobija', 'pando'] }
+};
+
+window.matchCityByNameOrRegion = function(cityName, regionName) {
+  const text = `${cityName || ''} ${regionName || ''}`.toLowerCase();
+  for (const key of Object.keys(window.BOLIVIA_CITIES)) {
+    const c = window.BOLIVIA_CITIES[key];
+    if (c.keywords && c.keywords.some(k => text.includes(k))) {
+      return c.key;
+    }
+  }
+  return null;
+};
+
 window.inferMainCityFromCoords = function(lat, lng) {
-  const mainCities = [
-    { key: "santacruz", lat: -17.7833, lon: -63.1821 },
-    { key: "cochabamba", lat: -17.3895, lon: -66.1568 },
-    { key: "lapaz", lat: -16.5000, lon: -68.1500 },
-    { key: "sucre", lat: -19.0333, lon: -65.2627 },
-    { key: "tarija", lat: -21.5355, lon: -64.7296 },
-    { key: "oruro", lat: -17.9833, lon: -67.1500 },
-    { key: "potosi", lat: -19.5836, lon: -65.7531 },
-    { key: "trinidad", lat: -14.8333, lon: -64.9000 },
-    { key: "cobija", lat: -11.0333, lon: -68.7333 }
-  ];
-  let closest = "santacruz";
+  if (lat == null || lng == null || isNaN(lat) || isNaN(lng)) return 'cochabamba';
+  const cities = Object.values(window.BOLIVIA_CITIES);
+  let closest = 'cochabamba';
   let minDist = Infinity;
-  for (const c of mainCities) {
-    const d = calcularDistanciaMetros(lat, lng, c.lat, c.lon);
+  for (const c of cities) {
+    const d = (typeof calcularDistanciaMetros === 'function')
+      ? calcularDistanciaMetros(lat, lng, c.lat, c.lon)
+      : Math.hypot(lat - c.lat, lng - c.lon);
     if (d !== null && d < minDist) {
       minDist = d;
       closest = c.key;
     }
-  }
-  // Si la distancia a la ciudad más cercana es mayor a 15km, retorna fuera de cobertura
-  if (minDist > 15000) {
-    return "fuera_de_cobertura";
   }
   return closest;
 };

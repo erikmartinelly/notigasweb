@@ -230,64 +230,62 @@ async function guardarUbicacionHabitualUsuario(
 }
 
 async function solicitarYGuardarUbicacionHabitual(user) {
-    if (!navigator.geolocation) {
-        if (typeof showToast === 'function') {
-            showToast(
-                'GPS no disponible',
-                'Este dispositivo no permite obtener tu ubicación.',
-                'error',
-                6000
-            );
-        }
-        return false;
-    }
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
     try {
-        if (typeof showLoadingOverlay === 'function') {
-            showLoadingOverlay(
-                'Obteniendo tu ubicación habitual...'
-            );
+        let lat = window.currentGpsLat;
+        let lng = window.currentGpsLng;
+
+        if (lat == null || lng == null) {
+            if (isMobile) {
+                if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Obteniendo ubicación...');
+                if (typeof solicitarGeolocalizacionNativaNavegador === 'function') {
+                    const pos = await solicitarGeolocalizacionNativaNavegador(true, true);
+                    lat = pos.coords.latitude;
+                    lng = pos.coords.longitude;
+                }
+            } else {
+                // En PC: usar IP de inmediato para no congelar la pantalla
+                if (typeof obtenerUbicacionIPFallbackDesktop === 'function') {
+                    const ipCoords = await obtenerUbicacionIPFallbackDesktop(true);
+                    if (ipCoords) {
+                        lat = ipCoords.lat;
+                        lng = ipCoords.lng;
+                    }
+                }
+            }
         }
 
-        let position;
-        if (typeof solicitarGeolocalizacionNativaNavegador === 'function') {
-            position = await solicitarGeolocalizacionNativaNavegador(
-                /Mobi|Android|iPhone|iPad|iPod/i.test(
-                    navigator.userAgent
-                ),
-                true
-            );
-        } else {
-            throw new Error('solicitarGeolocalizacionNativaNavegador no es una función');
+        // Si todavía no hay coords, usar la capital actual de BOLIVIA_CITIES
+        if (lat == null || lng == null) {
+            const currentCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || 'cochabamba') : 'cochabamba';
+            const cityDef = (window.BOLIVIA_CITIES && window.BOLIVIA_CITIES[currentCity])
+                ? window.BOLIVIA_CITIES[currentCity]
+                : { lat: -17.3895, lon: -66.1568 };
+            lat = cityDef.lat;
+            lng = cityDef.lon || cityDef.lng;
         }
 
-        await guardarUbicacionHabitualUsuario(
-            user,
-            position.coords.latitude,
-            position.coords.longitude
-        );
+        await guardarUbicacionHabitualUsuario(user, lat, lng);
 
         if (typeof detenerGPSComprador === 'function') {
             detenerGPSComprador();
         }
 
         if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-
         return true;
 
     } catch (error) {
         if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+        console.warn('Ubicación base asignada:', error);
 
-        if (typeof showToast === 'function') {
-            showToast(
-                '⚠️ Ubicación necesaria',
-                'Debemos registrar tu ubicación habitual para completar el registro.',
-                'warning',
-                7000
-            );
-        }
+        const currentCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || 'cochabamba') : 'cochabamba';
+        const cityDef = (window.BOLIVIA_CITIES && window.BOLIVIA_CITIES[currentCity])
+            ? window.BOLIVIA_CITIES[currentCity]
+            : { lat: -17.3895, lon: -66.1568 };
 
-        return false;
+        await guardarUbicacionHabitualUsuario(user, cityDef.lat, cityDef.lon || cityDef.lng);
+        return true;
     }
 }
 
