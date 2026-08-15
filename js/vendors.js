@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    NOTIGAS - MÓDULO DE MINI PÁGINAS DE NEGOCIO ESTILO FACEBOOK POR CATEGORÍA
    ========================================================================== */
 
@@ -20,7 +20,7 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
     const cityNormalized = city.trim().toLowerCase();
     // Consultar de la vista pública que ya filtra por estado=aprobado
     const { data, error } = await window.supabaseClient
-      .from('choferes_publicos')
+      .from('choferes_habilitados')
       .select('*')
       .eq('ciudad', cityNormalized);
 
@@ -30,17 +30,19 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
     } else if (data && data.length > 0) {
       let list = [];
       data.forEach(d => {
-        list.push({
-          id: `driver_${d.id}`,
-          name: d.nombre_completo,
-          category: d.categoria || 'Gas GLP',
-          icon: typeof getIconForCategory === 'function' ? getIconForCategory(d.categoria) : '🚛',
-          plate: d.placa || 'Placa registrada',
-          products: d.productos || 'Servicios de reparto a domicilio',
-          zones: d.zonas || 'OTB local',
-          schedule: d.schedule || 'Lunes a Sábado',
-          active: true // Fichas publicadas automáticamente
-        });
+        if (d.estado_verificacion === 'aprobado') {
+          list.push({
+            id: `driver_${d.id}`,
+            name: d.nombre_completo,
+            category: d.categoria || 'Gas GLP',
+            icon: typeof getIconForCategory === 'function' ? getIconForCategory(d.categoria) : '🚛',
+            plate: d.placa || 'Placa registrada',
+            products: d.productos || 'Servicios de reparto a domicilio',
+            zones: d.zonas || 'OTB local',
+            schedule: d.schedule || 'Lunes a Sábado',
+            active: true // Fichas publicadas automáticamente
+          });
+        }
       });
       AppState.set('notigas_vendors_directory', list);
     } else {

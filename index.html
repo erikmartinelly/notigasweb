@@ -626,6 +626,10 @@
         
 
         <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 10px;">
+          
+          <button onclick="if(typeof openCitySelector === 'function') { document.getElementById('modalSettings').style.display='none'; openCitySelector(); }" style="width:100%; background: linear-gradient(135deg, #0288D1, #0277BD); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 800; cursor: pointer; font-size: 11.5px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(2,136,209,0.5);">
+            <i class="fa-solid fa-map-location-dot"></i> Cambiar Mi Ciudad de Preferencia
+          </button>
 
           <button style="width:100%; background: linear-gradient(135deg, #B71C1C, #880E0E); color: #FF8A80; border: 1px solid #D32F2F; padding: 10px; border-radius: 10px; font-weight: 800; cursor: pointer; font-size: 11.5px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(183,28,28,0.5);"  id="auto-event-28" >
 
