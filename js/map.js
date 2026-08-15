@@ -746,7 +746,7 @@ async function transmitirUbicacionRepartidorServidorDB(lat, lng) {
                       'nombre_completo, telefono_whatsapp, placa, categoria, ciudad'
                   )
                   .eq('user_id', localUserId)
-                  .single();
+                  .maybeSingle();
 
           if (!driver) {
               return;
