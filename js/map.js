@@ -396,7 +396,7 @@ function agregarPedidoVecinoEnMapa(order) {
          <span style="font-size:11px; color:#64748B;">${escapeHtmlStr(order.categoria)}</span><br>
          ${dirStr}
          ${telStr}
-         <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank" style="margin-top:6px; display:inline-block; background:#10B981; color:white; border:none; padding:6px 12px; border-radius:8px; font-weight:bold; cursor:pointer; width:100%; text-decoration:none; box-sizing:border-box;"><i class="fa-solid fa-map-location-dot"></i> ABRIR EN GOOGLE MAPS</a>
+         <button onclick="abrirRutaGoogleMaps(${lat}, ${lng}, '${order.id}')" style="margin-top:6px; display:inline-block; background:#10B981; color:white; border:none; padding:6px 12px; border-radius:8px; font-weight:bold; cursor:pointer; width:100%; text-decoration:none; box-sizing:border-box;"><i class="fa-solid fa-map-location-dot"></i> IR AL PEDIDO Y ABRIR MAPS</button>
        </div>`
     : `<div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
          <strong style="color:#FF6D00; font-size:13px;">🛒 Pedido de un Vecino</strong><br>
