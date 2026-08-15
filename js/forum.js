@@ -1,4 +1,4 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    NOTIGAS - MÓDULO DE NOTICIAS VECINALES (AVISOS, VOTOS, COMENTARIOS EN SUPABASE)
    ========================================================================== */
 
@@ -136,7 +136,7 @@ async function borrarPostForumAdmin(postId) {
   if (confirm("🗑️ ¿Deseas eliminar permanentemente esta publicación del Tablón Vecinal?")) {
       const { error } = await window.supabaseClient.from('avisos').delete().eq('id', postId);
       if (error) {
-          alert('Error borrando el post');
+          if (typeof showToast === 'function') { showToast('Notificación', 'Error borrando el post', 'info', 4000); } else { alert('Error borrando el post'); };
           return;
       }
       if (typeof showToast === 'function') {
@@ -197,7 +197,7 @@ async function crearNuevoPost() {
   const cat = (catEl ? catEl.value : 'AVISO VECINAL');
 
   if (!title || !desc) {
-    alert('Por favor ingresa un título y una descripción para tu publicación vecinal.');
+    if (typeof showToast === 'function') { showToast('Notificación', 'Por favor ingresa un título y una descripción para tu publicación vecinal.', 'info', 4000); } else { alert('Por favor ingresa un título y una descripción para tu publicación vecinal.'); };
     return;
   }
 
@@ -215,7 +215,7 @@ async function crearNuevoPost() {
 
   // Bloquear si hay coincidencias claras de spam independientemente del idioma
   if (spamMatches && spamMatches.length >= 1) {
-    alert('⛔ ALERTA DE SEGURIDAD: Tu publicación ha sido bloqueada por el filtro Anti-Spam.\n\nNOTIGAS es una plataforma exclusiva para vecinos hispanohablantes.');
+    if (typeof showToast === 'function') { showToast('Notificación', '⛔ ALERTA DE SEGURIDAD: Tu publicación ha sido bloqueada por el filtro Anti-Spam.\n\nNOTIGAS es una plataforma exclusiva para vecinos hispanohablantes.', 'info', 4000); } else { alert('⛔ ALERTA DE SEGURIDAD: Tu publicación ha sido bloqueada por el filtro Anti-Spam.\n\nNOTIGAS es una plataforma exclusiva para vecinos hispanohablantes.'); };
     if (window.supabaseClient) {
       window.supabaseClient.from('reportes_spam').insert([{ texto: textoCompleto, motivo: 'Filtro Anti-Spam mejorado' }]);
     }
@@ -236,7 +236,7 @@ async function crearNuevoPost() {
 
   // FIX: Bloquear la inserción si el usuario no tiene sesión
   if (!userId) {
-     alert('Debes iniciar sesión con Google o Email para poder publicar un aviso vecinal.');
+     if (typeof showToast === 'function') { showToast('Notificación', 'Debes iniciar sesión con Google o Email para poder publicar un aviso vecinal.', 'info', 4000); } else { alert('Debes iniciar sesión con Google o Email para poder publicar un aviso vecinal.'); };
      closeNewPostModal();
      return;
   }
@@ -256,7 +256,7 @@ async function crearNuevoPost() {
 
   if (error) {
       console.error(error);
-      alert('Hubo un error publicando el aviso.');
+      if (typeof showToast === 'function') { showToast('Notificación', 'Hubo un error publicando el aviso.', 'info', 4000); } else { alert('Hubo un error publicando el aviso.'); };
       return;
   }
 
@@ -265,7 +265,7 @@ async function crearNuevoPost() {
   if (document.getElementById('inputPostTitle')) document.getElementById('inputPostTitle').value = '';
   if (document.getElementById('inputPostDesc')) document.getElementById('inputPostDesc').value = '';
 
-  alert('📌 ¡Aviso publicado exitosamente! Todos los vecinos podrán verlo en tiempo real.');
+  if (typeof showToast === 'function') { showToast('Notificación', '📌 ¡Aviso publicado exitosamente! Todos los vecinos podrán verlo en tiempo real.', 'info', 4000); } else { alert('📌 ¡Aviso publicado exitosamente! Todos los vecinos podrán verlo en tiempo real.'); };
   } catch (err) {
     alert("Error interno al publicar: " + err.message);
   }
@@ -406,7 +406,7 @@ async function agregarComentarioPost() {
   } catch(e) {}
 
   if (!window.supabaseClient) {
-    alert('Error: El servidor no está disponible. Intenta de nuevo en un momento.');
+    if (typeof showToast === 'function') { showToast('Notificación', 'Error: El servidor no está disponible. Intenta de nuevo en un momento.', 'info', 4000); } else { alert('Error: El servidor no está disponible. Intenta de nuevo en un momento.'); };
     return;
   }
 
@@ -444,6 +444,6 @@ async function agregarComentarioPost() {
     }
   } else if (error) {
     console.error('Error publicando comentario:', error);
-    alert('Error publicando comentario. Verifica que estés logueado.');
+    if (typeof showToast === 'function') { showToast('Notificación', 'Error publicando comentario. Verifica que estés logueado.', 'info', 4000); } else { alert('Error publicando comentario. Verifica que estés logueado.'); };
   }
 }

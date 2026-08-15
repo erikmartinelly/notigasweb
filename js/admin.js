@@ -1,4 +1,4 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    NOTIGAS - MÓDULO DE ADMINISTRACIÓN, ADSENSE, MODERACIÓN & BANEOS
    ========================================================================== */
 
@@ -43,7 +43,7 @@ window.abrirModalAdminDashboard = async function() {
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
     
     if (error || !adminData) {
-      alert("âŒ Acceso Denegado. Solo administradores autorizados.");
+      if (typeof showToast === 'function') { showToast('Notificación', "âŒ Acceso Denegado. Solo administradores autorizados.", 'info', 4000); } else { alert("âŒ Acceso Denegado. Solo administradores autorizados."); };
       return;
     }
     
@@ -52,7 +52,7 @@ window.abrirModalAdminDashboard = async function() {
     
   } catch (e) {
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-    alert("âŒ Acceso Denegado. Solo administradores autorizados.");
+    if (typeof showToast === 'function') { showToast('Notificación', "âŒ Acceso Denegado. Solo administradores autorizados.", 'info', 4000); } else { alert("âŒ Acceso Denegado. Solo administradores autorizados."); };
     return;
   }
   
@@ -623,7 +623,7 @@ async function ejecutarLimpiezaTotalPedidos() {
 async function guardarSubmenuAnuncios() {
   const currentAdmin = getVerifiedAdminEmail();
   if (!currentAdmin) {
-    alert("⛔ ACCESO RESTRINGIDO\nDebes ingresar tus credenciales de Administrador para modificar anuncios.");
+    if (typeof showToast === 'function') { showToast('Notificación', "⛔ ACCESO RESTRINGIDO\nDebes ingresar tus credenciales de Administrador para modificar anuncios.", 'info', 4000); } else { alert("⛔ ACCESO RESTRINGIDO\nDebes ingresar tus credenciales de Administrador para modificar anuncios."); };
     if (typeof showToast === 'function') showToast('Acceso Denegado', 'Inicia sesión con tu cuenta de administrador Google para realizar esta acción.', 'error');
     return;
   }
@@ -674,14 +674,14 @@ async function guardarSubmenuAnuncios() {
       }
       
       closeAdminModal();
-      alert('📢 CONFIGURACIÓN DE PUBLICIDAD GUARDADA\n\nLos cambios en anuncios locales para esta ciudad ya están activos.');
+      if (typeof showToast === 'function') { showToast('Notificación', '📢 CONFIGURACIÓN DE PUBLICIDAD GUARDADA\n\nLos cambios en anuncios locales para esta ciudad ya están activos.', 'info', 4000); } else { alert('📢 CONFIGURACIÓN DE PUBLICIDAD GUARDADA\n\nLos cambios en anuncios locales para esta ciudad ya están activos.'); };
     } catch (e) {
       console.error("Error al guardar anuncio:", e);
       if (typeof showToast === 'function') showToast('âŒ Error', 'No se pudo guardar la configuración de anuncios.', 'error');
     }
   } else {
       closeAdminModal();
-      alert('📢 CONFIGURACIÓN DE PUBLICIDAD GUARDADA\n\nLos cambios en anuncios locales para esta ciudad ya están activos (Solo caché).');
+      if (typeof showToast === 'function') { showToast('Notificación', '📢 CONFIGURACIÓN DE PUBLICIDAD GUARDADA\n\nLos cambios en anuncios locales para esta ciudad ya están activos (Solo caché).', 'info', 4000); } else { alert('📢 CONFIGURACIÓN DE PUBLICIDAD GUARDADA\n\nLos cambios en anuncios locales para esta ciudad ya están activos (Solo caché).'); };
   }
 }
 
@@ -754,7 +754,7 @@ function cerrarSesionAdminControl() {
   const dashboardScreen = document.getElementById('adminDashboardScreen');
   if (loginScreen) loginScreen.style.display = 'block';
   if (dashboardScreen) dashboardScreen.style.display = 'none';
-  alert('🔒 Sesión de Administrador cerrada correctamente.');
+  if (typeof showToast === 'function') { showToast('Notificación', '🔒 Sesión de Administrador cerrada correctamente.', 'info', 4000); } else { alert('🔒 Sesión de Administrador cerrada correctamente.'); };
 }
 
 /* DESCARGA COMPLETA DE CORREOS ELECTRONICOS REGISTRADOS (.CSV DE USUARIOS) */
@@ -762,7 +762,7 @@ function descargarListaCorreosCSV() {
   let currentAdmin = getVerifiedAdminEmail();
   
   if (!currentAdmin) {
-    alert("⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña.");
+    if (typeof showToast === 'function') { showToast('Notificación', "⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña.", 'info', 4000); } else { alert("⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña."); };
     if (typeof showToast === 'function') showToast('Acceso Denegado', 'Inicia sesión con tu cuenta de administrador Google para realizar esta acción.', 'error');
     return;
   }
@@ -798,7 +798,7 @@ function descargarListaCorreosCSV() {
   const finalEmails = Array.from(uniqueEmailsMap.values());
 
   if (finalEmails.length === 0) {
-    alert('No hay correos electrónicos de usuarios registrados aún.');
+    if (typeof showToast === 'function') { showToast('Notificación', 'No hay correos electrónicos de usuarios registrados aún.', 'info', 4000); } else { alert('No hay correos electrónicos de usuarios registrados aún.'); };
     return;
   }
 
@@ -826,7 +826,7 @@ async function descargarFichasRepartidoresCSV() {
   let currentAdmin = getVerifiedAdminEmail();
   
   if (!currentAdmin) {
-    alert("⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña.");
+    if (typeof showToast === 'function') { showToast('Notificación', "⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña.", 'info', 4000); } else { alert("⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña."); };
     if (typeof showToast === 'function') showToast('Acceso Denegado', 'Inicia sesión con tu cuenta de administrador Google para realizar esta acción.', 'error');
     return;
   }
@@ -868,7 +868,7 @@ function descargarEstadisticasGeneralesCSV() {
   let currentAdmin = getVerifiedAdminEmail();
   
   if (!currentAdmin) {
-    alert("⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña.");
+    if (typeof showToast === 'function') { showToast('Notificación', "⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña.", 'info', 4000); } else { alert("⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña."); };
     if (typeof showToast === 'function') showToast('Acceso Denegado', 'Inicia sesión con tu cuenta de administrador Google para realizar esta acción.', 'error');
     return;
   }
@@ -1030,7 +1030,7 @@ async function enviarDenuncia() {
   const inputDetalle = document.getElementById('inputReportDetalle');
   if (inputDetalle) inputDetalle.value = '';
 
-  alert('ðŸ›¡ï¸ Denuncia registrada de forma segura. El equipo de moderación revisará el elemento reportado.');
+  if (typeof showToast === 'function') { showToast('Notificación', 'ðŸ›¡ï¸ Denuncia registrada de forma segura. El equipo de moderación revisará el elemento reportado.', 'info', 4000); } else { alert('ðŸ›¡ï¸ Denuncia registrada de forma segura. El equipo de moderación revisará el elemento reportado.'); };
 }
 
 window.borrarAnuncioLocalAdmin = async function(adId) {

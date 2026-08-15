@@ -1,4 +1,4 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    NOTIGAS - MÓDULO DE AUTENTICACIÓN & GOOGLE IDENTITY SERVICES (1-TAP SIGN-IN)
    ========================================================================== */
 // FIX #16: escapeHtmlStr centralizada en state.js — eliminada aquí para evitar conflictos.
@@ -534,7 +534,7 @@ async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
 
 async function guardarRegistroUnico() {
   if (!window.supabaseClient) {
-    alert('Error: El servidor no está disponible. Recarga la página.');
+    if (typeof showToast === 'function') { showToast('Notificación', 'Error: El servidor no está disponible. Recarga la página.', 'info', 4000); } else { alert('Error: El servidor no está disponible. Recarga la página.'); };
     return;
   }
   if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Asegurando conexión...');
@@ -544,7 +544,7 @@ async function guardarRegistroUnico() {
   const session = sessionData?.session;
   if (!session || authError) {
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-    alert("❌ Error de seguridad: Debes iniciar sesión con Google o Email antes de continuar.");
+    if (typeof showToast === 'function') { showToast('Notificación', "❌ Error de seguridad: Debes iniciar sesión con Google o Email antes de continuar.", 'info', 4000); } else { alert("❌ Error de seguridad: Debes iniciar sesión con Google o Email antes de continuar."); };
     console.error(authError);
     return;
   }
@@ -672,14 +672,14 @@ async function iniciarSesionRepartidor() {
   if (!existingUserId) {
     if (!window.supabaseClient) {
       if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-      alert("Error: El servidor no está disponible. Recarga la página.");
+      if (typeof showToast === 'function') { showToast('Notificación', "Error: El servidor no está disponible. Recarga la página.", 'info', 4000); } else { alert("Error: El servidor no está disponible. Recarga la página."); };
       return;
     }
     const { data: sessionData, error: authError } = await window.supabaseClient.auth.getSession();
     const session = sessionData?.session;
     if (!session || authError) {
       if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-      alert("Error: Debes iniciar sesión primero.");
+      if (typeof showToast === 'function') { showToast('Notificación', "Error: Debes iniciar sesión primero.", 'info', 4000); } else { alert("Error: Debes iniciar sesión primero."); };
       return;
     }
     existingUserId = session.user.id;
@@ -699,7 +699,7 @@ async function iniciarSesionRepartidor() {
   const validCities = ['santacruz', 'cochabamba', 'lapaz', 'elalto', 'sucre', 'tarija', 'oruro', 'potosi', 'trinidad', 'cobija'];
   if (!ciudad || !validCities.includes(ciudad.toLowerCase())) {
     if (typeof showToast === 'function') showToast('Error', 'Debes seleccionar una ciudad válida', 'error', 3000);
-    else alert('❌ Error: Debes seleccionar una ciudad válida');
+    else if (typeof showToast === 'function') { showToast('Notificación', '❌ Error: Debes seleccionar una ciudad válida', 'info', 4000); } else { alert('❌ Error: Debes seleccionar una ciudad válida'); };
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
     return;
   }

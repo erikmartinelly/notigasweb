@@ -1,4 +1,4 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    NOTIGAS - MÓDULO DE MAPA EN VIVO, POSICIONAMIENTO GPS OBLIGATORIO,
    ANIMACIONES Y MAPA DE CALOR DE PEDIDOS PARA MODO REPARTIDOR
    ==========================================================================
@@ -1112,7 +1112,7 @@ function TrazarRutaCuadriculaManzana(waypoints) {
 async function calcularYTrazarRutaEficiente() {
   if (!map) return;
   if (currentGpsLat === null || currentGpsLng === null) {
-    alert("⏳ Esperando señal GPS. No se puede calcular la ruta sin tu ubicación actual.");
+    if (typeof showToast === 'function') { showToast('Notificación', "⏳ Esperando señal GPS. No se puede calcular la ruta sin tu ubicación actual.", 'info', 4000); } else { alert("⏳ Esperando señal GPS. No se puede calcular la ruta sin tu ubicación actual."); };
     return;
   }
 
@@ -1189,7 +1189,7 @@ async function calcularYTrazarRutaEficiente() {
   }
 
   if (pointsToVisit.length === 0) {
-    alert("ℹ️ No hay pedidos pendientes activos de tu categoría para trazar ruta en este momento.");
+    if (typeof showToast === 'function') { showToast('Notificación', "ℹ️ No hay pedidos pendientes activos de tu categoría para trazar ruta en este momento.", 'info', 4000); } else { alert("ℹ️ No hay pedidos pendientes activos de tu categoría para trazar ruta en este momento."); };
     return;
   }
 

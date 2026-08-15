@@ -1,4 +1,4 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    NOTIGAS - MÓDULO DE MINI PÁGINAS DE NEGOCIO ESTILO FACEBOOK POR CATEGORÍA
    ========================================================================== */
 
@@ -184,7 +184,7 @@ function eliminarFichaAdmin(vendorId) {
     AppState.set('notigas_vendors_directory', list);
 
     renderVendorCards('TODOS');
-    alert("🗑️ Ficha de Repartidor eliminada con éxito.");
+    if (typeof showToast === 'function') { showToast('Notificación', "🗑️ Ficha de Repartidor eliminada con éxito.", 'info', 4000); } else { alert("🗑️ Ficha de Repartidor eliminada con éxito."); };
   }
 }
 

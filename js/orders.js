@@ -1,4 +1,4 @@
-/* ORDERS LOGIC */
+﻿/* ORDERS LOGIC */
 
 function abrirModalDriverOrders() {
 
@@ -133,7 +133,7 @@ window.aceptarGrupoDemanda = async function(clusterId, ciudad, categoria) {
   if (typeof closeDriverOrdersModal === 'function') closeDriverOrdersModal();
   if (!window.supabaseClient) {
     if (typeof showToast === 'function') showToast('Error', 'Sin conexión a la base de datos.', 'error');
-    else alert('❌ Error: Sin conexión a la base de datos.');
+    else if (typeof showToast === 'function') { showToast('Notificación', '❌ Error: Sin conexión a la base de datos.', 'info', 4000); } else { alert('❌ Error: Sin conexión a la base de datos.'); };
     return;
   }
   showConfirmModal('🚚', 'Trazar Ruta', '¿Deseas trazar una ruta hacia este grupo de pedidos?', 'Sí, trazar ruta', async () => {
@@ -145,7 +145,7 @@ window.aceptarGrupoDemanda = async function(clusterId, ciudad, categoria) {
     if (typeof showToast === 'function') {
       showToast('¡Ruta Trazada!', 'Calculando la ruta óptima hacia los pedidos de la zona.', 'success', 5000);
     } else {
-      alert('✅ ¡RUTA TRAZADA!\nCalculando la ruta óptima hacia los pedidos de la zona.');
+      if (typeof showToast === 'function') { showToast('Notificación', '✅ ¡RUTA TRAZADA!\nCalculando la ruta óptima hacia los pedidos de la zona.', 'info', 4000); } else { alert('✅ ¡RUTA TRAZADA!\nCalculando la ruta óptima hacia los pedidos de la zona.'); };
     }
     
     if (window.demandClusterMarkers && window.demandClusterMarkers[clusterId]) {
@@ -515,7 +515,7 @@ function confirmarPedido() {
 
          if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
 
-         alert("❌ Error de seguridad: Debes iniciar sesión con Google o Email para pedir.");
+         if (typeof showToast === 'function') { showToast('Notificación', "❌ Error de seguridad: Debes iniciar sesión con Google o Email para pedir.", 'info', 4000); } else { alert("❌ Error de seguridad: Debes iniciar sesión con Google o Email para pedir."); };
 
          return;
 
