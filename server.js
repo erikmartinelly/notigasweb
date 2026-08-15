@@ -72,8 +72,14 @@ app.use(express.static(__dirname, {
   }
 }));
 
-// Para cualquier ruta que no sea un archivo, devolver index.html (SPA/PWA routing fallback)
+// Para cualquier ruta que no sea un archivo estático, devolver index.html (SPA/PWA routing fallback)
+// Evita servir HTML con status 200 para recursos faltantes (.js, .css, .png, etc.)
 app.get('*', (req, res) => {
+    const ext = path.extname(req.path);
+    if (ext && ext !== '.html') {
+        // Recurso estático no encontrado → 404 real
+        return res.status(404).send('Not Found');
+    }
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 

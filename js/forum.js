@@ -214,7 +214,7 @@ async function crearNuevoPost() {
   const hasSpanishChars = /[à-ÿñÑ¡¿]/i.test(textoCompleto);
 
   // Bloquear si hay coincidencias claras de spam independientemente del idioma
-  if (spamMatches && spamMatches.length >= 1) {
+  if (spamMatches && spamMatches.length >= 1 && !hasSpanishChars) {
     if (typeof showToast === 'function') { showToast('Notificación', '⛔ ALERTA DE SEGURIDAD: Tu publicación ha sido bloqueada por el filtro Anti-Spam.\n\nNOTIGAS es una plataforma exclusiva para vecinos hispanohablantes.', 'info', 4000); } else { alert('⛔ ALERTA DE SEGURIDAD: Tu publicación ha sido bloqueada por el filtro Anti-Spam.\n\nNOTIGAS es una plataforma exclusiva para vecinos hispanohablantes.'); };
     if (window.supabaseClient) {
       window.supabaseClient.from('reportes_spam').insert([{ texto: textoCompleto, motivo: 'Filtro Anti-Spam mejorado' }]);
@@ -382,10 +382,16 @@ async function votarComentario(comentarioId, delta) {
 
   // FIX W-05: UPDATE directo por id en tabla propia — sin leer+modificar+escribir el JSON array
   try {
-    await window.supabaseClient.rpc('incrementar_votos_comentario', {
+    const { error } = await window.supabaseClient.rpc('incrementar_votos_comentario', {
       comentario_id: comentarioId,
       incremento: delta
     });
+    
+    if (error) {
+      if (span) span.innerText = val; // revert
+      sessionStorage.removeItem(voteKey);
+      if (typeof showToast === 'function') showToast('⚠️ Error', 'No se pudo registrar tu voto.', 'warning', 3000);
+    }
   } catch (e) {
     console.error('Error votando comentario:', e);
   }

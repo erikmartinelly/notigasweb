@@ -19,6 +19,8 @@ let animationTimer = null;
 let lastGpsBroadcastTime = 0;
 let currentGpsLat = null;
 let currentGpsLng = null;
+window.currentGpsLat = currentGpsLat;
+window.currentGpsLng = currentGpsLng;
 let heatmapLayerGroup = null;
 let activeGpsWatchId = null;
 let truckTargetLat = null;
@@ -26,6 +28,7 @@ let truckTargetLng = null;
 let truckCurrentLat = null;
 let truckCurrentLng = null;
 let neighborOrderMarkers = {};
+window.neighborOrderMarkers = neighborOrderMarkers;
 let activeTruckMarkers = {};
 window.isHeatmapActive = window.isHeatmapActive || false;
 
@@ -510,7 +513,9 @@ function verPedidosEnMapa() {
 function moverMarcadorUbicacionManual(lat, lng) {
   isUserMarkerDraggedManually = true;
   currentGpsLat = lat;
+  window.currentGpsLat = currentGpsLat;
   currentGpsLng = lng;
+  window.currentGpsLng = currentGpsLng;
 
   if (!userMarker) {
     applyGpsPosition(lat, lng, "Ajuste Manual", false);
@@ -574,7 +579,9 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
   }
 
   currentGpsLat = lat;
+  window.currentGpsLat = currentGpsLat;
   currentGpsLng = lng;
+  window.currentGpsLng = currentGpsLng;
   
   // Auto-detectar ciudad al obtener GPS inicial
   if (forceReset && typeof window.inferMainCityFromCoords === 'function') {
@@ -630,7 +637,9 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
       const newPos = e.target.getLatLng();
       isUserMarkerDraggedManually = true;
       currentGpsLat = newPos.lat;
+      window.currentGpsLat = currentGpsLat;
       currentGpsLng = newPos.lng;
+      window.currentGpsLng = currentGpsLng;
 
       actualizarCoordenadasPedidoActivo(newPos.lat, newPos.lng);
 
@@ -1012,7 +1021,9 @@ function renderActiveOrdersMap() {
         const newPos = e.target.getLatLng();
         isUserMarkerDraggedManually = true;
         currentGpsLat = newPos.lat;
+        window.currentGpsLat = currentGpsLat;
         currentGpsLng = newPos.lng;
+        window.currentGpsLng = currentGpsLng;
         actualizarCoordenadasPedidoActivo(newPos.lat, newPos.lng, true);
       });
 
@@ -1106,7 +1117,9 @@ function cambiarCiudadCapital(cityKey) {
 
   const mun = GEOBOLIVIA_MUNICIPIOS.find(m => m.key === cityKey) || GEOBOLIVIA_MUNICIPIOS[0];
   currentGpsLat = mun.lat;
+  window.currentGpsLat = currentGpsLat;
   currentGpsLng = mun.lon;
+  window.currentGpsLng = currentGpsLng;
 
   if (map) {
     map.flyTo([mun.lat, mun.lon], 14, { duration: 1.0 });
@@ -1127,6 +1140,13 @@ function cambiarCiudadCapital(cityKey) {
     }
   }
   Object.keys(neighborOrderMarkers).forEach(k => delete neighborOrderMarkers[k]);
+
+  for (let id in activeTruckMarkers) {
+    if (map && activeTruckMarkers[id]) {
+      map.removeLayer(activeTruckMarkers[id]);
+    }
+  }
+  Object.keys(activeTruckMarkers).forEach(k => delete activeTruckMarkers[k]);
   
   if (typeof renderActiveOrdersMap === 'function') renderActiveOrdersMap();
   
@@ -1148,7 +1168,9 @@ function procesarResultadoBusqueda(item, queryOriginal) {
   if (inputRef) inputRef.value = calleReferencia;
 
   currentGpsLat = lat;
+  window.currentGpsLat = currentGpsLat;
   currentGpsLng = lon;
+  window.currentGpsLng = currentGpsLng;
 
   if (map) {
     map.flyTo([lat, lon], 17, { duration: 1.0 });

@@ -9,7 +9,7 @@ async function descargarBaneadosDeSupabase() {
       if (!error && data) {
         window.globalBannedList = [];
         data.forEach(d => {
-          if (d.motivo) window.globalBannedList.push(String(d.motivo).toLowerCase().trim());
+          if (d.user_id) window.globalBannedList.push(String(d.user_id).toLowerCase().trim());
           if (d.email) window.globalBannedList.push(String(d.email).toLowerCase().trim());
           if (d.nombre) window.globalBannedList.push(String(d.nombre).toLowerCase().trim());
           if (d.placa) window.globalBannedList.push(String(d.placa).toLowerCase().trim());
@@ -34,13 +34,14 @@ function esRepartidorBaneado(nombre, placa, whatsapp, gmail) {
 }
 async function banearRepartidorAdmin(vendorId, vendorName, plate = '', whatsapp = '') {
   if (window.supabaseClient) {
-    await window.supabaseClient.from('usuarios_baneados').insert([{
+    const { error } = await window.supabaseClient.from('usuarios_baneados').insert([{
       user_id: vendorId,
       nombre: vendorName,
       placa: plate,
       telefono: whatsapp,
       motivo: 'Baneado por Administrador'
     }]);
+    if (error) { console.error('Error', error); if (typeof showToast === 'function') showToast('Error', error.message, 'error'); return; }
     await descargarBaneadosDeSupabase();
   }
 
@@ -87,7 +88,8 @@ async function ejecutarLimpiezaBaneos() {
 }
 async function desbanearRepartidorAdmin(vendorId, vendorName) {
   if (window.supabaseClient) {
-    await window.supabaseClient.from('usuarios_baneados').delete().eq('user_id', vendorId);
+    const { error } = await window.supabaseClient.from('usuarios_baneados').delete().eq('user_id', vendorId);
+    if (error) { console.error('Error', error); if (typeof showToast === 'function') showToast('Error', error.message, 'error'); return; }
     await descargarBaneadosDeSupabase();
   }
 
@@ -103,6 +105,10 @@ async function desbanearRepartidorAdmin(vendorId, vendorName) {
 async function aprobarRepartidorAdmin(idStr) {
   if (!window.supabaseClient) return;
   const dbId = idStr.replace('driver_', '');
+  if (!dbId || dbId === 'undefined' || dbId === 'null') {
+    console.warn('ID de repartidor inválido:', idStr);
+    return;
+  }
   const { error } = await window.supabaseClient
     .from('choferes_habilitados')
     .update({ estado_verificacion: 'aprobado' })
@@ -181,11 +187,12 @@ window.borrarCompradorPermanente = function(gmail, nombre) {
 }
 async function ejecutarBloqueoComprador(gmail, nombre) {
   if (window.supabaseClient) {
-    await window.supabaseClient.from('usuarios_baneados').insert([{
+    const { error } = await window.supabaseClient.from('usuarios_baneados').insert([{
       email: gmail,
       nombre: nombre,
       motivo: 'Bloqueado Permanentemente'
     }]);
+    if (error) { console.error('Error', error); if (typeof showToast === 'function') showToast('Error', error.message, 'error'); return; }
     await descargarBaneadosDeSupabase();
   }
   

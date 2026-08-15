@@ -214,19 +214,19 @@ document.addEventListener('click', (e) => {
     if (typeof window.abrirModalNuevoPost === 'function') window.abrirModalNuevoPost();
   }
   else if (action === 'votarPost') {
-    const val = parseInt(btn.getAttribute('data-val'));
+    const val = parseInt(btn.getAttribute('data-val') || '0', 10);
     const id = btn.getAttribute('data-id');
     if (typeof window.votarPost === 'function') window.votarPost(btn, val, id);
   }
   else if (action === 'abrirComentariosPost') {
     const id = btn.getAttribute('data-id');
-    const title = decodeURIComponent(btn.getAttribute('data-title'));
-    const desc = decodeURIComponent(btn.getAttribute('data-desc'));
-    const cat = decodeURIComponent(btn.getAttribute('data-cat'));
+    const title = decodeURIComponent(btn.getAttribute('data-title') || '');
+    const desc = decodeURIComponent(btn.getAttribute('data-desc') || '');
+    const cat = decodeURIComponent(btn.getAttribute('data-cat') || '');
     if (typeof window.abrirComentariosPost === 'function') window.abrirComentariosPost(id, title, desc, cat, btn);
   }
   else if (action === 'abrirModalDenuncia') {
-    const title = decodeURIComponent(btn.getAttribute('data-title'));
+    const title = decodeURIComponent(btn.getAttribute('data-title') || '');
     if (typeof window.abrirModalDenuncia === 'function') window.abrirModalDenuncia('Aviso Noticias Vecinales', title);
   }
   else if (action === 'borrarPostForumAdmin') {
@@ -238,7 +238,7 @@ document.addEventListener('click', (e) => {
   }
   else if (action === 'votarComentario') {
     const id = btn.getAttribute('data-id');
-    const val = parseInt(btn.getAttribute('data-val'));
+    const val = parseInt(btn.getAttribute('data-val') || '0', 10);
     if (typeof window.votarComentario === 'function') window.votarComentario(id, val);
   }
   else if (action === 'abrirModalDriver') {
@@ -250,18 +250,22 @@ document.addEventListener('click', (e) => {
     if (typeof window.eliminarFichaAdmin === 'function') window.eliminarFichaAdmin(id);
   }
   else if (action === 'seleccionarYPedirDirecto') {
-    const cat = decodeURIComponent(btn.getAttribute('data-cat'));
+    const cat = decodeURIComponent(btn.getAttribute('data-cat') || '');
     if (typeof window.seleccionarYPedirDirecto === 'function') window.seleccionarYPedirDirecto(cat);
   }
-});
-
-
-document.addEventListener('click', (e) => {
-  const btn = e.target.closest('[data-action]');
-  if (!btn) return;
-  const action = btn.getAttribute('data-action');
-  
-  if (action === 'borrarAnuncioLocalAdmin') {
+  else if (action === 'centrarPedidoEnMapa') {
+    const lat = parseFloat(btn.getAttribute('data-lat'));
+    const lng = parseFloat(btn.getAttribute('data-lng'));
+    const id = btn.getAttribute('data-id');
+    if (typeof window.centrarPedidoEnMapa === 'function') window.centrarPedidoEnMapa(lat, lng, id);
+  }
+  else if (action === 'abrirRutaGoogleMaps') {
+    const lat = parseFloat(btn.getAttribute('data-lat'));
+    const lng = parseFloat(btn.getAttribute('data-lng'));
+    const id = btn.getAttribute('data-id');
+    if (typeof window.abrirRutaGoogleMaps === 'function') window.abrirRutaGoogleMaps(lat, lng, id);
+  }
+  else if (action === 'borrarAnuncioLocalAdmin') {
     const id = btn.getAttribute('data-id');
     if (typeof window.borrarAnuncioLocalAdmin === 'function') window.borrarAnuncioLocalAdmin(id);
   }
@@ -271,18 +275,18 @@ document.addEventListener('click', (e) => {
   }
   else if (action === 'desbanearRepartidorAdmin') {
     const id = btn.getAttribute('data-id');
-    const name = decodeURIComponent(btn.getAttribute('data-name'));
+    const name = decodeURIComponent(btn.getAttribute('data-name') || '');
     if (typeof window.desbanearRepartidorAdmin === 'function') window.desbanearRepartidorAdmin(id, name);
   }
   else if (action === 'banearRepartidorAdmin') {
     const id = btn.getAttribute('data-id');
-    const name = decodeURIComponent(btn.getAttribute('data-name'));
-    const plate = decodeURIComponent(btn.getAttribute('data-plate'));
+    const name = decodeURIComponent(btn.getAttribute('data-name') || '');
+    const plate = decodeURIComponent(btn.getAttribute('data-plate') || '');
     if (typeof window.banearRepartidorAdmin === 'function') window.banearRepartidorAdmin(id, name, plate);
   }
   else if (action === 'borrarRepartidorPermanente') {
     const id = btn.getAttribute('data-id');
-    const name = decodeURIComponent(btn.getAttribute('data-name'));
+    const name = decodeURIComponent(btn.getAttribute('data-name') || '');
     if (typeof window.borrarRepartidorPermanente === 'function') window.borrarRepartidorPermanente(id, name);
   }
   else if (action === 'banearUsuarioAdmin') {
@@ -303,7 +307,7 @@ document.addEventListener('click', (e) => {
     const idx = btn.getAttribute('data-idx');
     if (typeof window.borrarPedidoFantasmaAdmin === 'function') {
       if (type === 'supabase') borrarPedidoFantasmaAdmin(type, id);
-      else if (type === 'truck_report') borrarPedidoFantasmaAdmin(type, parseInt(idx));
+      else if (type === 'truck_report') borrarPedidoFantasmaAdmin(type, parseInt(idx || '0', 10));
       else borrarPedidoFantasmaAdmin(type);
     }
   }

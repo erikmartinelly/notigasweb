@@ -77,7 +77,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(
-    caches.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
+    caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
         // Stale-While-Revalidate: servir caché y actualizar en segundo plano
         fetch(event.request).then((networkResponse) => {

@@ -103,10 +103,10 @@ async function renderDriverOrdersList() {
           ${ord.telefono ? `<div style="font-size:12px; margin-bottom:8px; color:#475569;">📞 <strong>Tel:</strong> ${window.escapeHtmlStr(ord.telefono)}</div>` : ''}
 
           <div style="display:flex; gap:8px; margin-top:10px;">
-            <button onclick="window.centrarPedidoEnMapa(${ord.latitude || ord.lat}, ${ord.longitude || ord.lng}, '${ord.id}')" style="flex:1; background:#E2E8F0; color:#1E293B; border:none; padding:8px; border-radius:6px; font-weight:700; font-size:12px; cursor:pointer;">
+            <button data-action="centrarPedidoEnMapa" data-lat="${ord.latitude || ord.lat}" data-lng="${ord.longitude || ord.lng}" data-id="${ord.id}" onclick="window.centrarPedidoEnMapa(${ord.latitude || ord.lat}, ${ord.longitude || ord.lng}, '${ord.id}')" style="flex:1; background:#E2E8F0; color:#1E293B; border:none; padding:8px; border-radius:6px; font-weight:700; font-size:12px; cursor:pointer;">
               📍 Ver mapa
             </button>
-            <button onclick="window.abrirRutaGoogleMaps(${ord.latitude || ord.lat}, ${ord.longitude || ord.lng}, '${ord.id}')" style="flex:1; background:#2494e8; color:white; border:none; padding:8px; border-radius:6px; font-weight:700; font-size:12px; cursor:pointer;">
+            <button data-action="abrirRutaGoogleMaps" data-lat="${ord.latitude || ord.lat}" data-lng="${ord.longitude || ord.lng}" data-id="${ord.id}" onclick="window.abrirRutaGoogleMaps(${ord.latitude || ord.lat}, ${ord.longitude || ord.lng}, '${ord.id}')" style="flex:1; background:#2494e8; color:white; border:none; padding:8px; border-radius:6px; font-weight:700; font-size:12px; cursor:pointer;">
               🚀 Ir al pedido
             </button>
           </div>
@@ -182,6 +182,10 @@ window.aceptarGrupoDemanda = async function(clusterId, ciudad, categoria) {
 window.abrirRutaGoogleMaps = async function(lat, lng, orderId) {
   if (typeof closeDriverOrdersModal === 'function') closeDriverOrdersModal();
   
+  // Abrir Google Maps con las coordenadas (síncrono, no bloqueado por navegador)
+  const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+  window.open(url, '_blank');
+
   if (window.supabaseClient && orderId) {
     try {
       // Asignar el pedido al repartidor de forma atómica y segura mediante RPC
@@ -195,10 +199,6 @@ window.abrirRutaGoogleMaps = async function(lat, lng, orderId) {
       console.warn("Error asignando pedido:", err);
     }
   }
-
-  // Abrir Google Maps con las coordenadas
-  const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-  window.open(url, '_blank');
 }
 
 async function confirmarEntregaPedido(id) {
@@ -265,10 +265,6 @@ function ejecutarPurgaBaseDeDatosAuto() {
       localStorage.setItem('notigas_forum_posts', JSON.stringify(cleanPosts));
     }
   } catch(e){}
-}
-
-
-
 }
 
 function checkActiveOrderStatus() {
@@ -354,14 +350,6 @@ function checkActiveOrderStatus() {
            }).catch(err => {
               console.warn("Verificación de estado de pedido:", err);
            });
-         }
-
-                 }
-
-              }
-
-           });
-
          }
 
       }
@@ -666,17 +654,18 @@ function cancelarPedidoActivo() {
              if (error) {
                  console.error("Error cancelando pedido en Supabase:", error);
                  showToast('Error', 'No se pudo cancelar el pedido.', 'error', 3000);
-                 return;
              }
           }
         }
 
-      } catch(e) {}
+      } catch(e) {
+          console.error("Error al cancelar pedido local:", e);
+      }
 
     }
     
-    if (typeof userMarker !== 'undefined' && userMarker && typeof garrafaGreenIcon !== 'undefined') {
-        userMarker.setIcon(garrafaGreenIcon);
+    if (typeof userMarker !== 'undefined' && userMarker && typeof userLocationIcon !== 'undefined') {
+        userMarker.setIcon(userLocationIcon);
         await new Promise(r => setTimeout(r, 1500));
     }
     

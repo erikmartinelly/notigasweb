@@ -21,7 +21,7 @@ window.isHeatmapActive = window.isHeatmapActive || false;
 /* =====================================================
    SISTEMA DE LOADING GLOBAL (ANTI-FREEZE)
    ===================================================== */
-let globalLoadingTimeout;
+window.globalLoadingTimeout = null;
 
 
 
@@ -39,11 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(regs => {
-      for (let r of regs) r.update();
-    }).catch(() => {});
-  }
+
 
   const btnUserSettings = document.getElementById('btnOpenUserSettings');
   const modalUserSettings = document.getElementById('modalUserSettings');
@@ -56,8 +52,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // PURGA AUTOMÁTICA DE CACHÉ LOCAL (Limpia pedidos antiguos del localStorage, no de la BD)
   // verificarGPSObligatorio() eliminada para no causar doble petición y bloquear PC
-  ejecutarPurgaBaseDeDatosAuto();
-  checkActiveOrderStatus();
+  if (typeof ejecutarPurgaBaseDeDatosAuto === 'function') ejecutarPurgaBaseDeDatosAuto();
+  if (typeof checkActiveOrderStatus === 'function') checkActiveOrderStatus();
 
   // Service Worker registrado al final del archivo para evitar duplicado
 
@@ -389,7 +385,7 @@ window.notigasTrack = window.notigasTrack || function(event, params) {
 // 1. Registro del Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=66')
+    navigator.serviceWorker.register('./sw.js?v=68')
       .then((reg) => console.log('✅ Service Worker registrado', reg.scope))
       .catch((err) => console.error('❌ Error Service Worker:', err));
   });

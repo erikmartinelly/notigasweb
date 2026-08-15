@@ -55,14 +55,19 @@ window.driverLocationInterval = null;
           window.driverLocationInterval = null;
       }
       if (window.supabaseClient) {
-          const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : null;
-          if (localUserId) {
-            await window.supabaseClient.from('rutas_repartidores')
-                .delete()
-                .eq('user_id', localUserId);
-            console.log("Ruta de repartidor eliminada de Supabase.");
+          try {
+              const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : null;
+              if (localUserId) {
+                await window.supabaseClient.from('rutas_repartidores')
+                    .delete()
+                    .eq('user_id', localUserId);
+                console.log("Ruta de repartidor eliminada de Supabase.");
+              }
+          } catch (error) {
+              console.error("Error al eliminar ruta:", error);
+          } finally {
+              window.currentDriverPublicationId = null;
           }
-          window.currentDriverPublicationId = null;
       }
   };
 

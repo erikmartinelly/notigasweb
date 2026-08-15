@@ -25,6 +25,7 @@ function abrirAnuncioWhatsApp() {
 async function cargarAnunciosGuardados() {
   if (!window.supabaseClient) return;
   const activeCity = AppState.get('city');
+  if (!activeCity) return;
 
   try {
     const { data, error } = await window.supabaseClient

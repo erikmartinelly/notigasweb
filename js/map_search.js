@@ -30,7 +30,7 @@ function buscarCalle() {
   fetch(searchUrlNominatim)
     .then(res => res.json())
     .then(data => {
-      let validItems = (data || []).filter(item => {
+      let validItems = (Array.isArray(data) ? data : []).filter(item => {
         const itemLat = parseFloat(item.lat);
         const itemLon = parseFloat(item.lon);
         const dist = calcularDistanciaMetros(munObj.lat, munObj.lon, itemLat, itemLon);
@@ -80,7 +80,7 @@ function buscarCalle() {
             fetch(searchUrlFallback)
               .then(r => r.json())
               .then(fallbackData => {
-                let fbValidItems = (fallbackData || []).filter(item => {
+                let fbValidItems = (Array.isArray(fallbackData) ? fallbackData : []).filter(item => {
                   const itemLat = parseFloat(item.lat);
                   const itemLon = parseFloat(item.lon);
                   const dist = calcularDistanciaMetros(munObj.lat, munObj.lon, itemLat, itemLon);

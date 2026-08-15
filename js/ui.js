@@ -28,8 +28,8 @@ window.showLoadingOverlay = function(message = "Procesando...") {
     btn.style.display = 'none';
     overlay.style.display = 'flex';
 
-    clearTimeout(globalLoadingTimeout);
-    globalLoadingTimeout = setTimeout(() => {
+    clearTimeout(window.globalLoadingTimeout);
+    window.globalLoadingTimeout = setTimeout(() => {
       msgEl.innerText = "La conexión está tardando más de lo normal...";
       btn.style.display = 'block';
     }, 10000); // 10 segundos
@@ -39,7 +39,7 @@ window.hideLoadingOverlay = function() {
   const overlay = document.getElementById('globalLoadingOverlay');
   if (overlay) {
     overlay.style.display = 'none';
-    clearTimeout(globalLoadingTimeout);
+    clearTimeout(window.globalLoadingTimeout);
   }
 };
 function showToast(title, message, type = 'info', durationMs = 1000) {

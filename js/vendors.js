@@ -179,7 +179,7 @@ function renderVendorCards(filterCat) {
 }
 
 function abrirChatSoporteOficial() {
-
+  showToast('Próximamente', 'El chat de soporte estará disponible pronto.', 'info');
 }
 
 function eliminarFichaAdmin(vendorId) {

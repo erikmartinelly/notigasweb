@@ -88,7 +88,7 @@ window.abrirModalAdminDashboard = async function() {
 
     if (error || !adminData) {
 
-      if (typeof showToast === 'function') { showToast('Notificación', "âŒ Acceso Denegado. Solo administradores autorizados.", 'info', 4000); } else { alert("âŒ Acceso Denegado. Solo administradores autorizados."); };
+      if (typeof showToast === 'function') { showToast('Notificación', "❌ Acceso Denegado. Solo administradores autorizados.", 'info', 4000); } else { alert("❌ Acceso Denegado. Solo administradores autorizados."); };
 
       return;
 
@@ -106,7 +106,7 @@ window.abrirModalAdminDashboard = async function() {
 
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
 
-    if (typeof showToast === 'function') { showToast('Notificación', "âŒ Acceso Denegado. Solo administradores autorizados.", 'info', 4000); } else { alert("âŒ Acceso Denegado. Solo administradores autorizados."); };
+    if (typeof showToast === 'function') { showToast('Notificación', "❌ Acceso Denegado. Solo administradores autorizados.", 'info', 4000); } else { alert("❌ Acceso Denegado. Solo administradores autorizados."); };
 
     return;
 
@@ -236,7 +236,7 @@ function activarMapaCalorAdminLive() {
 
   if (btn) {
 
-    btn.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> âŒ SALIR MAPA DE CALOR';
+    btn.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> ❌ SALIR MAPA DE CALOR';
 
     btn.style.background = 'linear-gradient(135deg, #D32F2F, #B71C1C)';
 
@@ -292,7 +292,8 @@ async function renderAdminAdsAndPostsList() {
 
   // 1. Anuncio Local Personalizado
 
-  const { data: adData } = await window.supabaseClient.from('anuncios_globales').select('*').order('created_at', { ascending: false });
+  const { data: adData, error } = await window.supabaseClient.from('anuncios_globales').select('*').order('created_at', { ascending: false });
+  if (error) { console.error('Error cargando anuncios_globales:', error); return; }
 
   if (adData && adData.length > 0) {
 
@@ -332,7 +333,8 @@ async function renderAdminAdsAndPostsList() {
 
   // 2. Avisos y Noticias de la OTB
 
-  const { data: localPosts } = await window.supabaseClient.from('avisos').select('*');
+  const { data: localPosts, error } = await window.supabaseClient.from('avisos').select('*');
+  if (error) { console.error('Error cargando avisos:', error); return; }
 
   
 
@@ -416,7 +418,8 @@ async function renderAdminDashboardKPIs() {
 
       // Unique users from orders + localStorage/databaseEmails as a proxy for users count
 
-      const { data: pedidosData } = await window.supabaseClient.from('pedidos').select('user_id');
+      const { data: pedidosData, error } = await window.supabaseClient.from('pedidos').select('user_id');
+      if (error) { console.error('Error cargando pedidos:', error); return; }
 
       const uniqueUsers = new Set();
 
@@ -450,7 +453,8 @@ async function renderAdminDashboardKPIs() {
 
 
 
-      const { data } = await window.supabaseClient.from('pedidos').select('estado, created_at');
+      const { data, error } = await window.supabaseClient.from('pedidos').select('estado, created_at');
+      if (error) { console.error('Error cargando pedidos:', error); return; }
 
       if (data) {
 
@@ -512,7 +516,7 @@ function emitirAlertaOficialAdmin() {
 
   if (!text) {
 
-    if (typeof showToast === 'function') showToast('⚠ ï¸ Texto Requerido', 'Ingresa el texto de la Alerta Oficial OTB.', 'warning', 2000);
+    if (typeof showToast === 'function') showToast('⚠️ Texto Requerido', 'Ingresa el texto de la Alerta Oficial OTB.', 'warning', 2000);
 
     return;
 
@@ -636,7 +640,8 @@ function renderAdminVendorsList() {
 
   if (window.supabaseClient) {
 
-      window.supabaseClient.from('choferes_habilitados').select('*').then(({ data }) => {
+      window.supabaseClient.from('choferes_habilitados').select('*').then(({ data, error }) => {
+          if (error) { console.error('Error cargando choferes_habilitados:', error); return; }
 
           if (data && data.length > 0) {
 
@@ -742,7 +747,7 @@ function renderFinalVendors(defaultVendors, deletedIds) {
 
   // SECCIÓN COMPRADORES REGISTRADOS
 
-  html += `<div style="font-weight:900; color:#38BDF8; margin:12px 0 6px; font-size:11.5px;"><i class="fa-solid fa-users"></i> ï¸ COMPRADORES Y USUARIOS VECINALES:</div>`;
+  html += `<div style="font-weight:900; color:#38BDF8; margin:12px 0 6px; font-size:11.5px;"><i class="fa-solid fa-users"></i> 👤 COMPRADORES Y USUARIOS VECINALES:</div>`;
 
 
 
@@ -880,7 +885,7 @@ async function renderAdminOrdersList() {
 
       .from('pedidos')
 
-      .select('*');
+      .select('*').order('created_at', { ascending: false }).limit(500);
 
 
 
@@ -912,7 +917,7 @@ async function renderAdminOrdersList() {
 
         } else {
 
-           estadoBadge = `<span style="font-size:10px; background:rgba(86,188,55,0.2); color:#56BC37; padding:2px 6px; border-radius:4px; font-weight:700;">â± Hace ${mins} min</span>`;
+           estadoBadge = `<span style="font-size:10px; background:rgba(86,188,55,0.2); color:#56BC37; padding:2px 6px; border-radius:4px; font-weight:700;">⏱ Hace ${mins} min</span>`;
 
         }
 
@@ -952,7 +957,7 @@ async function renderAdminOrdersList() {
 
             <button data-action="borrarPedidoFantasmaAdmin" data-type="supabase" data-id="${order.id}" style="margin-top:8px; width:100%; background:linear-gradient(135deg, #D32F2F, #B71C1C); color:white; border:none; padding:6px 12px; border-radius:8px; font-weight:800; font-size:11px; cursor:pointer;">
 
-              <i class="fa-solid fa-trash-can"></i> 🗑‘ï¸ Borrar Pedido Corrupto/Expirado
+              <i class="fa-solid fa-trash-can"></i> 🗑️ Borrar Pedido Corrupto/Expirado
 
             </button>
 
@@ -992,7 +997,7 @@ async function renderAdminOrdersList() {
 
             <span style="font-size:12.5px; font-weight:900; color:#56BC37;"><i class="fa-solid fa-box"></i> Pedido Local (Caché)</span>
 
-            <span style="font-size:10px; background:rgba(86,188,55,0.2); color:#56BC37; padding:2px 6px; border-radius:4px; font-weight:700;">â± Hace ${mins} min</span>
+            <span style="font-size:10px; background:rgba(86,188,55,0.2); color:#56BC37; padding:2px 6px; border-radius:4px; font-weight:700;">⏱ Hace ${mins} min</span>
 
           </div>
 
@@ -1010,7 +1015,7 @@ async function renderAdminOrdersList() {
 
           <button data-action="borrarPedidoFantasmaAdmin" data-type="active_order" style="margin-top:8px; width:100%; background:linear-gradient(135deg, #D32F2F, #B71C1C); color:white; border:none; padding:6px 12px; border-radius:8px; font-weight:800; font-size:11px; cursor:pointer;">
 
-            <i class="fa-solid fa-trash-can"></i> 🗑‘ï¸ Borrar Pedido (Local)
+            <i class="fa-solid fa-trash-can"></i> 🗑️ Borrar Pedido (Local)
 
           </button>
 
@@ -1066,7 +1071,7 @@ async function renderAdminOrdersList() {
 
         <button data-action="borrarPedidoFantasmaAdmin" data-type="truck_report" data-idx="${idx}" style="margin-top:8px; width:100%; background:rgba(211,47,47,0.8); color:white; border:none; padding:6px 12px; border-radius:8px; font-weight:800; font-size:10px; cursor:pointer;">
 
-          <i class="fa-solid fa-trash-can"></i> 🗑‘ï¸ Borrar Alerta Fantasma
+          <i class="fa-solid fa-trash-can"></i> 🗑️ Borrar Alerta Fantasma
 
         </button>
 
@@ -1116,7 +1121,7 @@ async function borrarPedidoFantasmaAdmin(tipo, param = null) {
 
       console.error("Error borrando pedido supabase:", error);
 
-      if (typeof showToast === 'function') showToast('âŒ Error', 'No se pudo borrar de Supabase.', 'error', 3000);
+      if (typeof showToast === 'function') showToast('❌ Error', 'No se pudo borrar de Supabase.', 'error', 3000);
 
       return;
 
@@ -1164,7 +1169,7 @@ async function borrarPedidoFantasmaAdmin(tipo, param = null) {
 
   if (typeof showToast === 'function') {
 
-    showToast('🗑‘ï¸ Pedido/Alerta Removido', 'Eliminado correctamente del sistema.', 'info', 4000);
+    showToast('🗑️ Pedido/Alerta Removido', 'Eliminado correctamente del sistema.', 'info', 4000);
 
   }
 
@@ -1356,7 +1361,7 @@ async function guardarSubmenuAnuncios() {
 
       console.error("Error al guardar anuncio:", e);
 
-      if (typeof showToast === 'function') showToast('âŒ Error', 'No se pudo guardar la configuración de anuncios.', 'error');
+      if (typeof showToast === 'function') showToast('❌ Error', 'No se pudo guardar la configuración de anuncios.', 'error');
 
     }
 
@@ -1394,7 +1399,7 @@ window.previewUploadAdImage = async function(event) {
 
   if (file.size > 2 * 1024 * 1024) {
 
-    if (typeof showToast === 'function') showToast('⚠ ï¸ Imagen Pesada', 'La imagen supera los 2 MB. Elige una más ligera.', 'warning', 3000);
+    if (typeof showToast === 'function') showToast('⚠️ Imagen Pesada', 'La imagen supera los 2 MB. Elige una más ligera.', 'warning', 3000);
 
     return;
 
@@ -1664,7 +1669,8 @@ async function descargarFichasRepartidoresCSV() {
 
   if (window.supabaseClient) {
 
-      const { data } = await window.supabaseClient.from('choferes_habilitados').select('*');
+      const { data, error } = await window.supabaseClient.from('choferes_habilitados').select('*');
+      if (error) { console.error('Error cargando choferes_habilitados:', error); return; }
 
       if (data) driversList = data;
 
@@ -1818,7 +1824,8 @@ async function renderAdminReports() {
 
   // 1. Fetch Denuncias
 
-  const { data: reports } = await window.supabaseClient.from('denuncias').select('*').order('created_at', { ascending: false });
+  const { data: reports, error: reportsError } = await window.supabaseClient.from('denuncias').select('*').order('created_at', { ascending: false });
+  if (reportsError) { console.error('Error cargando denuncias:', reportsError); return; }
 
   
 
@@ -1866,7 +1873,8 @@ async function renderAdminReports() {
 
   // 2. Fetch Baneados
 
-  const { data: banned } = await window.supabaseClient.from('usuarios_baneados').select('*');
+  const { data: banned, error: bannedError } = await window.supabaseClient.from('usuarios_baneados').select('*');
+  if (bannedError) { console.error('Error cargando usuarios_baneados:', bannedError); return; }
 
 
 
@@ -2058,7 +2066,7 @@ async function enviarDenuncia() {
 
 
 
-  if (typeof showToast === 'function') { showToast('Notificación', 'ï¸ Denuncia registrada de forma segura. El equipo de moderación revisará el elemento reportado.', 'info', 4000); } else { alert('ï¸ Denuncia registrada de forma segura. El equipo de moderación revisará el elemento reportado.'); };
+  if (typeof showToast === 'function') { showToast('Notificación', '⚠️ Denuncia registrada de forma segura. El equipo de moderación revisará el elemento reportado.', 'info', 4000); } else { alert('⚠️ Denuncia registrada de forma segura. El equipo de moderación revisará el elemento reportado.'); };
 
 }
 

@@ -9,8 +9,6 @@ const GOOGLE_CLIENT_ID = "994996215118-d8vhi4qjtbosvak58mm1c6ritq65hnc9.apps.goo
 let currentSelectedRole = 'buyer'; // 'buyer' o 'driver'
 let currentSelectedMethod = 'google'; // 'google' o 'email'
 
-let databaseEmails = [];
-
 document.addEventListener('DOMContentLoaded', () => {
   // 1. Iniciar One Tap en segundo plano
   initGoogleOneTap();
@@ -67,11 +65,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const u = JSON.parse(savedUser);
       // Solo configurar adminEmails y databaseEmails, SIN entrar a la app automaticamente
       if (u.gmail) {
-        databaseEmails.push({ 
-          gmail: u.gmail, 
-          role: u.role || "Cliente", 
-          fecha: new Date().toISOString().split('T')[0] 
-        });
 
         async function checkAdminAsync() {
           try {
@@ -229,13 +222,17 @@ async function solicitarYGuardarUbicacionHabitual(user) {
             );
         }
 
-        const position =
-            await solicitarGeolocalizacionNativaNavegador(
+        let position;
+        if (typeof solicitarGeolocalizacionNativaNavegador === 'function') {
+            position = await solicitarGeolocalizacionNativaNavegador(
                 /Mobi|Android|iPhone|iPad|iPod/i.test(
                     navigator.userAgent
                 ),
                 true
             );
+        } else {
+            throw new Error('solicitarGeolocalizacionNativaNavegador no es una función');
+        }
 
         await guardarUbicacionHabitualUsuario(
             user,
