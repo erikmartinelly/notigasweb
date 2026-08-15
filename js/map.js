@@ -425,7 +425,9 @@ function agregarPedidoVecinoEnMapa(order) {
          <span style="font-size:11px; color:#64748B;">${escapeHtmlStr(order.categoria)}</span><br>
          ${dirStr}
          ${telStr}
-         <button data-action="abrirRutaGoogleMaps" data-lat="${lat}" data-lng="${lng}" data-id="${order.id}" style="margin-top:6px; display:inline-block; background:#10B981; color:white; border:none; padding:6px 12px; border-radius:8px; font-weight:bold; cursor:pointer; width:100%; text-decoration:none; box-sizing:border-box;"><i class="fa-solid fa-map-location-dot"></i> IR AL PEDIDO Y ABRIR MAPS</button>
+         <button data-action="abrirRutaGoogleMaps" data-lat="${lat}" data-lng="${lng}" data-id="${order.id}" class="btn-driver-route" style="margin-top:8px; display:inline-flex; align-items:center; justify-content:center; gap:6px; background:linear-gradient(135deg, #FF6D00, #E65100); color:white; border:none; padding:10px 14px; border-radius:10px; font-weight:900; font-size:12px; cursor:pointer; width:100%; text-decoration:none; box-sizing:border-box; box-shadow:0 4px 12px rgba(255,109,0,0.4);">
+           <i class="fa-solid fa-diamond-turn-right"></i> 🚀 IR CON GOOGLE MAPS
+         </button>
        </div>`
     : `<div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
          <strong style="color:#FF6D00; font-size:13px;">🛒 Pedido de un Vecino</strong><br>
@@ -1164,29 +1166,23 @@ const GEOBOLIVIA_MUNICIPIOS = [
 ];
 
 async function cambiarCiudadCapital(cityKey) {
-  if (AppState.get('appMode') === 'driver') {
-    if (typeof showToast === 'function') {
-      showToast('Acción no permitida', 'Como repartidor, solo puedes operar en tu ciudad de registro.', 'error', 4000);
-    }
-    const select = document.getElementById('selectCiudadCapital');
-    if (select) select.value = AppState.get('city');
-    return;
-  }
+  const mun = GEOBOLIVIA_MUNICIPIOS.find(m => m.key === cityKey) 
+    || (window.BOLIVIA_CITIES && window.BOLIVIA_CITIES[cityKey]) 
+    || GEOBOLIVIA_MUNICIPIOS[0];
 
-  const mun = GEOBOLIVIA_MUNICIPIOS.find(m => m.key === cityKey) || GEOBOLIVIA_MUNICIPIOS[0];
   currentGpsLat = mun.lat;
   window.currentGpsLat = currentGpsLat;
-  currentGpsLng = mun.lon;
+  currentGpsLng = mun.lon || mun.lng;
   window.currentGpsLng = currentGpsLng;
 
   if (map) {
-    map.flyTo([mun.lat, mun.lon], 14, { duration: 1.0 });
+    map.flyTo([mun.lat, mun.lon || mun.lng], 14, { duration: 1.0 });
   }
 
-  applyGpsPosition(mun.lat, mun.lon, '', false);
-  localStorage.setItem('notigas_active_city', mun.nombre);
+  applyGpsPosition(mun.lat, mun.lon || mun.lng, mun.nombre || cityKey, false);
+  localStorage.setItem('notigas_active_city', mun.nombre || cityKey);
 
-  // P1: Limpiar pedidos antiguos de la ciudad anterior
+  // Limpiar pedidos antiguos de la ciudad anterior
   for (let id in neighborOrderMarkers) {
     if (map && neighborOrderMarkers[id]) {
       map.removeLayer(neighborOrderMarkers[id]);
@@ -1211,8 +1207,25 @@ async function cambiarCiudadCapital(cityKey) {
     if (typeof renderForumFeed === 'function') renderForumFeed();
     if (typeof cargarAnunciosGuardados === 'function') cargarAnunciosGuardados();
   }
-  
+
+  // Actualizar selectores visibles de ciudad
+  const select = document.getElementById('selectCiudadCapital');
+  if (select) select.value = mun.key;
+  const selectDriverModal = document.getElementById('selectDriverModalCity');
+  if (selectDriverModal) selectDriverModal.value = mun.key;
+
   if (typeof renderActiveOrdersMap === 'function') renderActiveOrdersMap();
+
+  // Si es repartidor, refrescar lista de pedidos para la nueva ciudad
+  if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
+  const modalDriverOrders = document.getElementById('modalDriverOrders');
+  if (modalDriverOrders && modalDriverOrders.style.display !== 'none' && typeof renderDriverOrdersList === 'function') {
+    renderDriverOrdersList();
+  }
+
+  if (typeof showToast === 'function') {
+    showToast('📍 Ciudad Actualizada', `Operando en ${mun.nombre || mun.key}`, 'info', 2500);
+  }
 }
 
 function procesarResultadoBusqueda(item, queryOriginal) {

@@ -174,15 +174,15 @@
       
       <!-- NOTIGAS TRIP CARD (Oculto por defecto, se muestra al tener pedido activo) -->
       <div class="notigas-trip-card" id="notigasTripCard">
-        <div class="trip-title">Tu Pedido en Camino</div>
-        <div class="trip-info"><strong>Camión GLP</strong> en camino hacia tu ubicación</div>
+        <div class="trip-title" id="tripCardTitle">Estado del Pedido</div>
+        <div class="trip-info" id="tripCardInfo"><strong>Solicitud registrada</strong> en tu zona</div>
         <div class="trip-driver">
           <span class="trip-status" id="tripCardStatusIndicator"></span>
-          <span id="tripCardDriverName">GR-1234</span>
-          <span class="trip-status-text" id="tripCardStatusText">DETENIDO</span>
+          <span id="tripCardDriverName">BUSCANDO...</span>
+          <span class="trip-status-text" id="tripCardStatusText">PENDIENTE</span>
         </div>
-        <div class="trip-time" id="tripCardTime">Aproximadamente -- min.</div>
-        <button id="btnVerMiPedidoTrip" style="margin-top: 12px; width: 100%; background: linear-gradient(135deg, #0288D1 0%, #0277BD 100%); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 800; font-size: 13px; cursor: pointer; box-shadow: 0 4px 10px rgba(2, 136, 209, 0.3); display: flex; justify-content: center; align-items: center; gap: 8px;">
+        <div class="trip-time" id="tripCardTime">Esperando disponibilidad de un repartidor...</div>
+        <button id="btnVerMiPedidoTrip" class="btn-primary" style="margin-top: 12px; width: 100%; border: none; padding: 10px; border-radius: 10px; font-weight: 800; font-size: 13px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px;">
           <i class="fa-solid fa-crosshairs"></i> VER MI PEDIDO
         </button>
       </div>
@@ -315,9 +315,13 @@
 
         <div class="action-row" style="display:flex; gap:8px; margin-bottom:8px;">
 
-          <button class="btn-driver-follow-me" id="btnDriverFollowMe" style="background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); color:white; border:none; padding:10px; border-radius:10px; font-weight:900; font-size:11px; cursor:pointer; flex:1; box-shadow: 0 4px 10px rgba(255, 152, 0, 0.3);">🎯 INICIAR RECORRIDO</button>
+          <button class="btn-driver-follow-me" id="btnDriverFollowMe">
+            <i class="fa-solid fa-route"></i> 🎯 INICIAR RECORRIDO
+          </button>
 
-          <button class="btn-driver-pause" id="btnDriverPause" style="background:#D32F2F; color:white; border:none; padding:10px; border-radius:10px; font-weight:800; font-size:11px; cursor:pointer; flex:1;">🔴 PAUSAR RECORRIDO</button>
+          <button class="btn-driver-pause" id="btnDriverPause">
+            <i class="fa-solid fa-circle-pause"></i> 🔴 PAUSAR RECORRIDO
+          </button>
 
         </div>
 
@@ -327,13 +331,13 @@
 
         <div class="action-row" style="display:flex; gap:8px;">
 
-          <button class="btn-driver-orders-list" id="auto-event-10" style="background: linear-gradient(135deg, #0288D1 0%, #0277BD 100%); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 800; font-size: 11px; cursor: pointer; flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px;">
-
+          <button class="btn-driver-orders-list" id="auto-event-10">
             <i class="fa-solid fa-list-check"></i> VER PEDIDOS
-
           </button>
 
-          <button class="btn-driver-my-location" id="btnDriverMyLocation" style="background: linear-gradient(135deg, #FFB74D 0%, #F57C00 100%); color:white; border:none; padding:10px; border-radius:10px; font-weight:900; font-size:11px; cursor:pointer; flex:1; box-shadow: 0 4px 10px rgba(245, 124, 0, 0.3);">📍 VER MI UBICACIÓN</button>
+          <button class="btn-driver-my-location" id="btnDriverMyLocation">
+            <i class="fa-solid fa-crosshairs"></i> 📍 VER MI UBICACIÓN
+          </button>
 
         </div>
 
@@ -1201,9 +1205,27 @@
 
       </div>
 
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; background: #0F172A; padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(245, 158, 11, 0.3);">
+        <span style="font-size: 11px; font-weight: 700; color: #F59E0B; display: flex; align-items: center; gap: 6px;">
+          <i class="fa-solid fa-map-location-dot"></i> Ciudad:
+        </span>
+        <select id="selectDriverModalCity" onchange="cambiarCiudadCapital(this.value)" style="flex: 1; max-width: 220px; background: #1E293B; color: #F8FAFC; border: 1px solid #334155; border-radius: 6px; padding: 5px 8px; font-size: 11px; font-weight: 700; outline: none; cursor: pointer;">
+          <option value="cochabamba">📍 Cochabamba</option>
+          <option value="santacruz">📍 Santa Cruz</option>
+          <option value="lapaz">📍 La Paz</option>
+          <option value="elalto">📍 El Alto</option>
+          <option value="sucre">📍 Sucre</option>
+          <option value="tarija">📍 Tarija</option>
+          <option value="oruro">📍 Oruro</option>
+          <option value="potosi">📍 Potosí</option>
+          <option value="trinidad">📍 Trinidad</option>
+          <option value="cobija">📍 Cobija</option>
+        </select>
+      </div>
+
       <p style="font-size: 11px; color: #94A3B8; margin-bottom: 10px;">
 
-        Lista en tiempo real de vecinos que solicitaron Garrafas GLP, Agua u otros productos cerca de tu ubicación:
+        Lista en tiempo real de vecinos que solicitaron productos cerca de tu ubicación:
 
       </p>
 

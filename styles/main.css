@@ -1539,6 +1539,86 @@ button:active, .tab-btn:active, .cat-chip:active {
   border-color: #F59E0B;
 }
 
+.btn-driver-follow-me {
+  flex: 1;
+  background: linear-gradient(135deg, #FF6D00 0%, #EA580C 100%);
+  color: #FFFFFF;
+  border: 1px solid rgba(254, 215, 170, 0.4);
+  padding: 11px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(255, 109, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-driver-follow-me:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(234, 88, 12, 0.75);
+  background: linear-gradient(135deg, #E65100 0%, #C2410C 100%);
+}
+
+.btn-driver-pause {
+  flex: 1;
+  background: rgba(220, 38, 38, 0.15);
+  color: #F87171;
+  border: 1.5px solid rgba(239, 68, 68, 0.5);
+  padding: 11px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-driver-pause:hover {
+  transform: translateY(-2px);
+  background: rgba(239, 68, 68, 0.3);
+  border-color: #EF4444;
+  color: #FFFFFF;
+}
+
+.btn-driver-my-location {
+  flex: 1;
+  background: rgba(30, 41, 59, 0.95);
+  color: #F8FAFC;
+  border: 1.5px solid rgba(255, 109, 0, 0.5);
+  padding: 11px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(255, 109, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-driver-my-location:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 109, 0, 0.15);
+  border-color: #FF6D00;
+  color: #FF9800;
+}
+
 .btn-driver-route {
   width: 100%;
   background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);

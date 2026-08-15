@@ -134,11 +134,6 @@ async function renderDriverOrdersList() {
   container.innerHTML = html;
 }
 
-
-
-  container.innerHTML = html;
-}
-
 window.centrarPedidoEnMapa = function(lat, lng, id) {
   if (typeof map !== 'undefined' && lat && lng) {
      const m = document.getElementById('modalDriverOrders');
