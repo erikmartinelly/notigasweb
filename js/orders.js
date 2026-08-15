@@ -38,31 +38,38 @@ async function renderDriverOrdersList() {
     const categoria = userData.categoria || userData.category;
     const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : (userData ? userData.id : null);
 
-    if (!ciudad || !categoria) {
-      console.error('Falta ciudad o categoría del repartidor:', { ciudad, categoria });
-      container.innerHTML = `<div style="padding:24px; text-align:center; color:#94A3B8; font-size:13px;"><i class="fa-solid fa-triangle-exclamation" style="font-size:28px; color:#F59E0B; margin-bottom:10px;"></i><br><strong style="color:white;">No se pudo determinar la ciudad o categoría del repartidor.</strong><br><span style="font-size:11px; color:#64748B;">Revisa tu perfil de repartidor o selecciona tu ciudad.</span></div>`;
+    if (!ciudad) {
+      console.warn('Falta ciudad del repartidor:', { ciudad, categoria });
+      container.innerHTML = `<div style="padding:24px; text-align:center; color:#94A3B8; font-size:13px;"><i class="fa-solid fa-triangle-exclamation" style="font-size:28px; color:#F59E0B; margin-bottom:10px;"></i><br><strong style="color:white;">No se pudo determinar la ciudad activa.</strong><br><span style="font-size:11px; color:#64748B;">Selecciona tu ciudad en el mapa o perfil para ver pedidos.</span></div>`;
       return;
     }
 
     const activeWindow = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+    const normCity = String(ciudad).toLowerCase().trim();
 
     const { data, error } = await window.supabaseClient
       .from('pedidos')
       .select('*')
-      .eq('ciudad', ciudad)
-      .eq('categoria', categoria)
+      .ilike('ciudad', normCity)
+      .in('estado', ['pendiente', 'visto', 'asignado'])
       .gte('created_at', activeWindow)
       .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error cargando pedidos:', error);
-      container.innerHTML = `<div style="padding:24px; text-align:center; color:#EF4444; font-size:13px;"><i class="fa-solid fa-circle-exclamation" style="font-size:28px; margin-bottom:10px;"></i><br><strong>Error cargando pedidos.</strong></div>`;
+      container.innerHTML = `<div style="padding:24px; text-align:center; color:#EF4444; font-size:13px;"><i class="fa-solid fa-circle-exclamation" style="font-size:28px; margin-bottom:10px;"></i><br><strong>Error cargando pedidos: ${window.escapeHtmlStr(error.message || '')}</strong></div>`;
       return;
     }
 
     if (data) {
-      // Filtramos por pedidos pendientes, vistos o asignados a este repartidor
-      orders = data.filter(o => o.estado === 'pendiente' || o.estado === 'visto' || (o.estado === 'asignado' && o.driver_id === localUserId));
+      // Filtramos con normalización de categoría flexible y por disponibilidad de pedido
+      orders = data.filter(o => {
+        const matchesCategory = (typeof window.isOrderCategoryMatchingDriver === 'function')
+          ? window.isOrderCategoryMatchingDriver(o.categoria, categoria)
+          : true;
+        const isAvailable = o.estado === 'pendiente' || o.estado === 'visto' || (o.estado === 'asignado' && o.driver_id === localUserId);
+        return matchesCategory && isAvailable;
+      });
     }
   }
 

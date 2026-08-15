@@ -165,6 +165,8 @@ function setAppMode(mode) {
 
     AppState.set('driverGpsLive', 'on');
     if (typeof verificarYMostrarRepartidorGPS === 'function') verificarYMostrarRepartidorGPS();
+    if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
+    if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
   } else {
     if (buyerActions) buyerActions.style.display = 'flex';
     if (driverActions) driverActions.style.display = 'none';

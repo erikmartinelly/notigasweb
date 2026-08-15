@@ -153,22 +153,16 @@ window.iniciarSuscripcionesRealtime = function() {
     window.notigasGlobalChannel = window.supabaseClient.channel('global_changes_' + activeCity)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos', filter: `ciudad=eq.${activeCity}` }, payload => {
             const data = payload.new;
-            let isDriver = false;
-            try { if (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver') isDriver = true; } catch(e){}
             
             if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-                if (isDriver) {
-                    if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
-                    if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
-                } else {
-                    if (typeof agregarPedidoVecinoEnMapa === 'function') agregarPedidoVecinoEnMapa(data);
-                }
+                if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
+                if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
+                if (data && typeof agregarPedidoVecinoEnMapa === 'function') agregarPedidoVecinoEnMapa(data);
             } else if (payload.eventType === 'DELETE') {
-                if (isDriver) {
-                    if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
-                    if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
-                } else {
-                    if (typeof removerPublicacionDeMapa === 'function') removerPublicacionDeMapa(payload.old.id);
+                if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
+                if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
+                if (payload.old && payload.old.id && typeof removerPublicacionDeMapa === 'function') {
+                    removerPublicacionDeMapa(payload.old.id);
                 }
             }
         })

@@ -243,32 +243,53 @@ async function cargarPedidosVecinalesEnVivo() {
   const activeWindow = new Date(Date.now() - expirationMs).toISOString();
   console.log("🔍 Consultando pedidos en Supabase desde:", activeWindow);
 
-  const activeCity = AppState.get('city');
+  const activeCity = (typeof AppState !== 'undefined') ? AppState.get('city') : null;
 
   try {
     let isDriverUser = false;
-    let driverCategoria = 'Gas GLP';
-    const saved = JSON.stringify(AppState.get('userData') || {});
+    let driverCategoria = 'gas';
+    const saved = JSON.stringify((typeof AppState !== 'undefined') ? (AppState.get('userData') || {}) : {});
     if (saved) {
       const u = JSON.parse(saved);
       if (u.role === 'repartidor') isDriverUser = true;
       if (u.categoria) driverCategoria = u.categoria;
     }
+    if (typeof AppState !== 'undefined' && (AppState.get('appMode') === 'driver' || AppState.get('userRole') === 'repartidor')) {
+      isDriverUser = true;
+    }
 
     // 1. Siempre cargar pedidos individuales para dibujar los pines (vecinos y choferes)
     const tableToQuery = isDriverUser ? 'pedidos' : 'pedidos_publicos';
-    const { data: pedidosData, error: pedidosError } = await window.supabaseClient
+    const normCity = String(activeCity || '').toLowerCase().trim();
+
+    let query = window.supabaseClient
       .from(tableToQuery)
       .select('*')
-      .eq('ciudad', activeCity)
-      .eq('estado', 'pendiente')
       .gte('created_at', activeWindow);
+
+    if (normCity) {
+      query = query.ilike('ciudad', normCity);
+    }
+
+    if (isDriverUser) {
+      query = query.in('estado', ['pendiente', 'visto', 'asignado']);
+    } else {
+      query = query.in('estado', ['pendiente', 'visto']);
+    }
+
+    const { data: pedidosData, error: pedidosError } = await query;
 
     if (pedidosError) {
       console.error("❌ Error de Supabase al cargar pedidos:", pedidosError.message, pedidosError.details);
     } else if (pedidosData) {
       console.log(`✅ Supabase devolvió ${pedidosData.length} pedidos.`);
-      pedidosData.forEach(order => agregarPedidoVecinoEnMapa(order));
+      pedidosData.forEach(order => {
+        try {
+          agregarPedidoVecinoEnMapa(order);
+        } catch(errOrder) {
+          console.warn("Error renderizando pedido en mapa:", order, errOrder);
+        }
+      });
     }
 
 
@@ -372,7 +393,7 @@ function agregarPedidoVecinoEnMapa(order) {
 
   // Si el usuario actual es REPARTIDOR, solo ver pedidos de SU MISMA CATEGORÍA
   let userRole = 'vecino';
-  let driverCategoria = 'Gas GLP';
+  let driverCategoria = 'gas';
   try {
     const saved = JSON.stringify(AppState.get('userData') || {});
     if (saved) {
@@ -381,13 +402,18 @@ function agregarPedidoVecinoEnMapa(order) {
       if (u.categoria) driverCategoria = u.categoria;
     }
   } catch(e){}
+  if (AppState.get('appMode') === 'driver' || AppState.get('userRole') === 'repartidor') {
+    userRole = 'repartidor';
+  }
 
-  if (userRole === 'repartidor' && typeof isOrderCategoryMatchingDriver === 'function' && !isOrderCategoryMatchingDriver(order.categoria)) {
+  if (userRole === 'repartidor' && typeof isOrderCategoryMatchingDriver === 'function' && !isOrderCategoryMatchingDriver(order.categoria, driverCategoria)) {
      return; // Ignore orders outside of their category
   }
 
-  const lat = order.latitude || order.lat;
-  const lng = order.longitude || order.lng;
+  const lat = parseFloat(order.latitude || order.lat);
+  const lng = parseFloat(order.longitude || order.lng);
+  if (isNaN(lat) || isNaN(lng)) return; // Evita que Leaflet falle si un pedido no tiene coordenadas
+
   const marker = L.marker([lat, lng], { icon: currentIcon, zIndexOffset: 8000 }).addTo(map);
   const telStr = order.telefono ? `<span style="font-size:11px; color:#00E676; font-weight:800;">📞 ${escapeHtmlStr(order.telefono)}</span><br>` : '';
   const dirStr = order.direccion ? `<span style="font-size:11px; color:#94A3B8;">📍 ${escapeHtmlStr(order.direccion)}</span><br>` : '';
@@ -881,23 +907,38 @@ function formatearDistanciaTriangulada(distMetros) {
   return `${(distMetros / 1000).toFixed(1)} km de distancia`;
 }
 
-function isOrderCategoryMatchingDriver(orderCategory) {
-  let driverCategory = '';
-  try {
-    const saved = JSON.stringify(AppState.get('userData') || {});
-    if (saved) {
-      const u = JSON.parse(saved);
-      if (u.role === 'repartidor' && u.categoria) {
-        driverCategory = u.categoria.toLowerCase().trim();
+window.normalizeCategoryCode = function(cat) {
+  const c = String(cat || '').toLowerCase().trim();
+  if (c.includes('gas') || c.includes('glp') || c.includes('garrafa')) return 'gas';
+  if (c.includes('agua') || c.includes('botell')) return 'agua';
+  if (c.includes('deterg') || c.includes('limpieza')) return 'detergentes';
+  if (c.includes('chatarra')) return 'chatarra';
+  if (c.includes('papel') || c.includes('carton') || c.includes('cartón')) return 'papel';
+  if (c.includes('fruta') || c.includes('verdur')) return 'frutas';
+  return c || 'gas';
+};
+
+window.isOrderCategoryMatchingDriver = function(orderCategory, driverCatInput) {
+  let driverCat = driverCatInput;
+  if (!driverCat) {
+    try {
+      const saved = JSON.stringify((typeof AppState !== 'undefined') ? (AppState.get('userData') || {}) : {});
+      if (saved) {
+        const u = JSON.parse(saved);
+        if (u.categoria) driverCat = u.categoria;
       }
-    }
-  } catch(e){}
+    } catch(e){}
+  }
+  if (!driverCat) return true; // Si no tiene categoría configurada, ve todo
 
-  if (!driverCategory) return true; // Si es comprador (vecino), coincide con todas las categorías
+  const normDriver = window.normalizeCategoryCode(driverCat);
+  const normOrder = window.normalizeCategoryCode(orderCategory);
 
-  const catCode = (orderCategory || '').toLowerCase().trim();
+  return normDriver === normOrder || normDriver === 'otros' || normOrder === 'otros';
+};
 
-  return driverCategory === catCode;
+function isOrderCategoryMatchingDriver(orderCategory, driverCatInput) {
+  return window.isOrderCategoryMatchingDriver(orderCategory, driverCatInput);
 }
 
 let activeOrderLayerGroup = null;
