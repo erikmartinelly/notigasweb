@@ -307,7 +307,11 @@ async function renderAdminDashboardKPIs() {
       // Unique users from orders + localStorage/databaseEmails as a proxy for users count
 
       const { data: pedidosUsersData, error: pedidosUsersErr } = await window.supabaseClient.from('pedidos').select('user_id');
-      if (pedidosUsersErr) { console.error('Error cargando usuarios de pedidos:', pedidosUsersErr); return; }
+      if (pedidosUsersErr) {
+        console.error('Error cargando usuarios de pedidos:', pedidosUsersErr);
+      } else if (pedidosUsersData) {
+        pedidosUsersData.forEach(p => { if (p.user_id) uniqueUsers.add(p.user_id); });
+      }
 
       const uniqueUsers = new Set();
 
@@ -330,32 +334,32 @@ async function renderAdminDashboardKPIs() {
       usersCount = uniqueUsers.size;
 
       const { data: ordersData, error: ordersErr } = await window.supabaseClient.from('pedidos').select('estado, created_at');
-      if (ordersErr) { console.error('Error cargando estados de pedidos:', ordersErr); return; }
-
-      if (ordersData) {
+      if (ordersErr) {
+        console.error('Error cargando estados de pedidos:', ordersErr);
+      } else if (ordersData) {
         const activos = ordersData.filter(p => p.estado === 'pendiente' || p.estado === 'asignado').length;
         ordersCount = activos;
 
         const hoyStr = new Date().toISOString().split('T')[0];
 
-        const creadosHoy = data.filter(p => p.created_at && p.created_at.startsWith(hoyStr)).length;
+        const creadosHoy = ordersData.filter(p => p.created_at && p.created_at.startsWith(hoyStr)).length;
 
-        const entregadosHoy = data.filter(p => p.estado === 'entregado' && p.created_at && p.created_at.startsWith(hoyStr)).length;
+        const entregadosHoy = ordersData.filter(p => p.estado === 'entregado' && p.created_at && p.created_at.startsWith(hoyStr)).length;
 
         const elOrdersTitle = document.getElementById('adminKpiOrders')?.parentElement?.firstElementChild;
 
         if (elOrdersTitle) {
            elOrdersTitle.innerHTML = `📦 PEDIDOS ACTIVOS <span style="display:block; font-size:9px; color:#56BC37; font-weight:700; margin-top:2px;">${creadosHoy} Hoy • ${entregadosHoy} Entregados</span>`;
-
         }
-
       }
 
       const { count: cReports } = await window.supabaseClient.from('denuncias').select('*', { count: 'exact', head: true });
 
       reportsCount = cReports || 0;
 
-    } catch(e) {}
+    } catch(e) {
+      console.error('Error cargando KPIs del dashboard de administración:', e);
+    }
 
   }
 
