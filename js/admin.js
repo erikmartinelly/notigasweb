@@ -215,8 +215,8 @@ async function renderAdminAdsAndPostsList() {
 
   // 1. Anuncio Local Personalizado
 
-  const { data: adData, error } = await window.supabaseClient.from('anuncios_globales').select('*').order('created_at', { ascending: false });
-  if (error) { console.error('Error cargando anuncios_globales:', error); return; }
+  const { data: adData, error: adsError } = await window.supabaseClient.from('anuncios_globales').select('*').order('created_at', { ascending: false });
+  if (adsError) { console.error('Error cargando anuncios_globales:', adsError); return; }
 
   if (adData && adData.length > 0) {
     adData.forEach(ad => {
@@ -252,8 +252,8 @@ async function renderAdminAdsAndPostsList() {
 
   // 2. Avisos y Noticias de la OTB
 
-  const { data: localPosts, error } = await window.supabaseClient.from('avisos').select('*');
-  if (error) { console.error('Error cargando avisos:', error); return; }
+  const { data: localPosts, error: postsError } = await window.supabaseClient.from('avisos').select('*');
+  if (postsError) { console.error('Error cargando avisos:', postsError); return; }
 
   if (localPosts && localPosts.length > 0) {
     localPosts.forEach(p => {
