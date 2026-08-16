@@ -147,33 +147,43 @@
 
       <div id="map"></div>
 
-      <!-- NOTIGAS TRIP CARD (Oculto por defecto, se muestra al tener pedido activo) -->
+      <!-- Aviso lateral del pedido activo, sincronizado con Supabase -->
 
-      <div class="notigas-trip-card" id="notigasTripCard">
+      <aside class="notigas-trip-card" id="notigasTripCard" role="status" aria-live="polite" aria-atomic="true">
 
-        <div class="trip-title" id="tripCardTitle">Estado del Pedido</div>
+        <button id="btnVerMiPedidoTrip" class="trip-locate-button" type="button" title="Ver mi pedido en el mapa" aria-label="Ver mi pedido en el mapa">
 
-        <div class="trip-info" id="tripCardInfo"><strong>Solicitud registrada</strong> en tu zona</div>
-
-        <div class="trip-driver">
-
-          <span class="trip-status" id="tripCardStatusIndicator"></span>
-
-          <span id="tripCardDriverName">BUSCANDO...</span>
-
-          <span class="trip-status-text" id="tripCardStatusText">PENDIENTE</span>
-
-        </div>
-
-        <div class="trip-time" id="tripCardTime">Esperando disponibilidad de un repartidor...</div>
-
-        <button id="btnVerMiPedidoTrip" class="btn-primary" style="margin-top: 12px; width: 100%; border: none; padding: 10px; border-radius: 10px; font-weight: 800; font-size: 13px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px;">
-
-          <i class="fa-solid fa-crosshairs"></i> VER MI PEDIDO
+          <i class="fa-solid fa-crosshairs"></i>
 
         </button>
 
-      </div>
+        <div class="trip-heading">
+
+          <span class="trip-status" id="tripCardStatusIndicator" aria-hidden="true"></span>
+
+          <div>
+
+            <div class="trip-eyebrow">ESTADO EN BASE DE DATOS</div>
+
+            <div class="trip-title" id="tripCardTitle">Esperando grupo</div>
+
+          </div>
+
+        </div>
+
+        <div class="trip-info" id="tripCardInfo">Tu pedido está sumando demanda con vecinos cercanos.</div>
+
+        <div class="trip-meta">
+
+          <span class="trip-status-text" id="tripCardStatusText">PENDIENTE</span>
+
+          <span id="tripCardDriverName">DEMANDA VECINAL</span>
+
+        </div>
+
+        <div class="trip-time" id="tripCardTime">Esperando que un repartidor acepte el grupo de tu zona.</div>
+
+      </aside>
 
       <!-- BANNER DE ACTIVACIÓN OBLIGATORIA DE GPS EN MÓVILES/ANDROID -->
 
@@ -1124,7 +1134,7 @@
 
   </div>
 
-  <!-- MODAL DE PEDIDOS RECIENTES EN VIVO PARA REPARTIDORES -->
+  <!-- MODAL DE GRUPOS DE DEMANDA PARA REPARTIDORES -->
 
   <div class="modal" id="modalDriverOrders">
 
@@ -1132,7 +1142,7 @@
 
       <div class="modal-title">
 
-        <span><i class="fa-solid fa-list-check"></i> Pedidos Recientes en Tu Zona (Repartidor)</span>
+        <span><i class="fa-solid fa-people-group"></i> Grupos de Demanda en Tu Zona</span>
 
         <button class="btn-close"  id="auto-event-49" >✖</button>
 
@@ -1174,13 +1184,13 @@
 
       <p style="font-size: 11px; color: #94A3B8; margin-bottom: 10px;">
 
-        Lista en tiempo real de vecinos que solicitaron productos cerca de tu ubicación:
+        Los pedidos cercanos se agrupan para dirigir al repartidor hacia la zona con demanda real.
 
       </p>
 
       <div id="driverOrdersContainer" style="max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
 
-        <!-- Renderizado dinámico de pedidos vecinos -->
+        <!-- Renderizado dinámico de grupos y entregas ya asignadas -->
 
       </div>
 
