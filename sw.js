@@ -1,24 +1,24 @@
-/* NOTIGAS SERVICE WORKER v74.0 - CACHÉ PROGRESIVO Y MODO OFFLINE */
-const CACHE_NAME = 'notigas-cache-v74';
+﻿/* NOTIGAS SERVICE WORKER v75.0 - CACHÃ‰ PROGRESIVO Y MODO OFFLINE */
+const CACHE_NAME = 'notigas-cache-v75';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './styles/main.css?v=74',
-  './js/state.js?v=74',
-  './js/ui.js?v=74',
-  './js/supabase-config.js?v=74',
-  './js/auth.js?v=74',
-  './js/vendors.js?v=74',
-  './js/map.js?v=74',
-  './js/map_search.js?v=74',
-  './js/map_gps.js?v=74',
-  './js/forum.js?v=74',
-  './js/ads.js?v=74',
-  './js/orders.js?v=74',
-  './js/admin.js?v=74',
-  './js/admin_users.js?v=74',
-  './js/app.js?v=74',
-  './js/events.js?v=74',
+  './styles/main.css?v=75',
+  './js/state.js?v=75',
+  './js/ui.js?v=75',
+  './js/supabase-config.js?v=75',
+  './js/auth.js?v=75',
+  './js/vendors.js?v=75',
+  './js/map.js?v=75',
+  './js/map_search.js?v=75',
+  './js/map_gps.js?v=75',
+  './js/forum.js?v=75',
+  './js/ads.js?v=75',
+  './js/orders.js?v=75',
+  './js/admin.js?v=75',
+  './js/admin_users.js?v=75',
+  './js/app.js?v=75',
+  './js/events.js?v=75',
   './icons/garrafa_red_clean.svg',
   './icons/camion_red.svg',
   './manifest.json'
@@ -57,7 +57,7 @@ self.addEventListener('fetch', (event) => {
   if (!event.request.url.startsWith('http')) return; // Prevenir errores con extensiones de Chrome (chrome-extension://)
   
   const url = event.request.url;
-  // Bypass: peticiones externas, mapas y Supabase (autenticación/realtime nunca deben cachearse)
+  // Bypass: peticiones externas, mapas y Supabase (autenticaciÃ³n/realtime nunca deben cachearse)
   if (
     url.includes('google.com') ||
     url.includes('googleusercontent.com') ||
@@ -80,7 +80,7 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
-        // Stale-While-Revalidate: servir caché y actualizar en segundo plano
+        // Stale-While-Revalidate: servir cachÃ© y actualizar en segundo plano
         fetch(event.request).then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
             const responseClone = networkResponse.clone();
@@ -97,7 +97,7 @@ self.addEventListener('fetch', (event) => {
         }
         return networkResponse;
       }).catch(() => {
-        // Fallback offline para páginas HTML
+        // Fallback offline para pÃ¡ginas HTML
         if (event.request.headers.get('accept')?.includes('text/html')) {
           return caches.match('./index.html', { ignoreSearch: true });
         }
@@ -105,3 +105,4 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
