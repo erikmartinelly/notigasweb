@@ -431,7 +431,7 @@ function agregarPedidoVecinoEnMapa(order) {
       <span style="font-size:11px; color:#64748B; font-weight:700;">${escapeHtmlStr(order.categoria)}</span><br>
       ${dirStr}
       ${telStr}
-      <a href="${mapsNavUrl}" target="_blank" rel="noopener noreferrer" data-action="abrirRutaGoogleMaps" data-lat="${lat}" data-lng="${lng}" data-id="${order.id}" class="btn-driver-route" style="margin-top:8px; display:inline-flex; align-items:center; justify-content:center; gap:6px; background:linear-gradient(135deg, #FF6D00, #E65100); color:white; border:none; padding:10px 14px; border-radius:10px; font-weight:900; font-size:12px; cursor:pointer; width:100%; text-decoration:none; box-sizing:border-box; box-shadow:0 4px 12px rgba(255,109,0,0.4);">
+      <a href="${mapsNavUrl}" target="_blank" rel="noopener noreferrer" data-action="abrirRutaGoogleMaps" data-lat="${lat}" data-lng="${lng}" data-id="${order.id}" data-address="${escapeHtmlStr(order.direccion || '')}" class="btn-driver-route" style="margin-top:8px; display:inline-flex; align-items:center; justify-content:center; gap:6px; background:linear-gradient(135deg, #FF6D00, #E65100); color:white; border:none; padding:10px 14px; border-radius:10px; font-weight:900; font-size:12px; cursor:pointer; width:100%; text-decoration:none; box-sizing:border-box; box-shadow:0 4px 12px rgba(255,109,0,0.4);">
         <i class="fa-solid fa-diamond-turn-right"></i> 🚀 IR CON GOOGLE MAPS
       </a>
     </div>

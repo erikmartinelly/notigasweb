@@ -265,10 +265,15 @@ document.addEventListener('click', (e) => {
     if (typeof window.centrarPedidoEnMapa === 'function') window.centrarPedidoEnMapa(lat, lng, id);
   }
   else if (action === 'abrirRutaGoogleMaps') {
+    e.preventDefault();
+    e.stopPropagation();
     const lat = parseFloat(btn.getAttribute('data-lat'));
     const lng = parseFloat(btn.getAttribute('data-lng'));
     const id = btn.getAttribute('data-id');
-    if (typeof window.abrirRutaGoogleMaps === 'function') window.abrirRutaGoogleMaps(lat, lng, id);
+    const address = btn.getAttribute('data-address') || '';
+    if (typeof window.abrirRutaGoogleMaps === 'function') {
+      window.abrirRutaGoogleMaps(lat, lng, id, address);
+    }
   }
   else if (action === 'borrarAnuncioLocalAdmin') {
     const id = btn.getAttribute('data-id');

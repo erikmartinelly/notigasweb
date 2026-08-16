@@ -112,20 +112,25 @@ async function renderDriverOrdersList() {
   let html = '';
   orders.forEach(ord => {
     const mins = Math.floor((Date.now() - new Date(ord.created_at).getTime()) / 60000);
+    const ordLat = ord.latitude ?? ord.lat ?? '';
+    const ordLng = ord.longitude ?? ord.lng ?? '';
+    const ordId = ord.id || '';
+    const ordDir = ord.direccion || '';
+
     html += `
-        <div class="order-card-pressable" data-action="centrarPedidoEnMapa" data-lat="${ord.latitude || ord.lat}" data-lng="${ord.longitude || ord.lng}" data-order-id="${window.escapeHtmlStr(String(ord.id || ''))}" style="background:#1E293B; padding:12px; margin-bottom:10px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.25); border:1px solid rgba(245, 158, 11, 0.2); cursor:pointer;">
+        <div class="order-card-pressable" data-action="centrarPedidoEnMapa" data-lat="${ordLat}" data-lng="${ordLng}" data-id="${ordId}" data-order-id="${ordId}" style="background:#1E293B; padding:12px; margin-bottom:10px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.25); border:1px solid rgba(245, 158, 11, 0.2); cursor:pointer;">
           <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
             <span style="font-weight:900; font-size:13px; color:#F8FAFC;">🛒 Pedido #${ord.id ? String(ord.id).slice(0, 8) : '?'}</span>
             <span style="font-size:10px; color:#F59E0B; font-weight:700;">⏱ ${mins} min</span>
           </div>
-          <div style="font-size:12px; margin-bottom:4px; color:#CBD5E1;">📍 <strong>Dir:</strong> ${window.escapeHtmlStr(ord.direccion || '')}</div>
-          <div style="font-size:12px; margin-bottom:4px; color:#CBD5E1;">📦 <strong>Prod:</strong> ${window.escapeHtmlStr(ord.categoria || '')} (${window.escapeHtmlStr(ord.cantidad || '')} un)</div>
+          <div style="font-size:12px; margin-bottom:4px; color:#CBD5E1;">📍 <strong>Dir:</strong> ${window.escapeHtmlStr(ordDir || 'Ubicación fijada por GPS')}</div>
+          <div style="font-size:12px; margin-bottom:4px; color:#CBD5E1;">📦 <strong>Prod:</strong> ${window.escapeHtmlStr(ord.categoria || '')} (${window.escapeHtmlStr(ord.cantidad || '1')} un)</div>
           ${ord.telefono ? `<div style="font-size:12px; margin-bottom:8px; color:#00E676;">📞 <strong>Tel:</strong> ${window.escapeHtmlStr(ord.telefono)}</div>` : ''}
           <div style="display:flex; gap:8px; margin-top:10px;">
-            <button data-action="centrarPedidoEnMapa" data-lat="${ord.latitude || ord.lat}" data-lng="${ord.longitude || ord.lng}" data-id="${ord.id}" data-order-id="${ord.id}" class="btn-secondary" style="flex:1; padding:8px; border-radius:8px; font-weight:700; font-size:12px; cursor:pointer;">
+            <button type="button" data-action="centrarPedidoEnMapa" data-lat="${ordLat}" data-lng="${ordLng}" data-id="${ordId}" data-order-id="${ordId}" class="btn-secondary" style="flex:1; padding:8px; border-radius:8px; font-weight:700; font-size:12px; cursor:pointer;">
               📍 Ver mapa
             </button>
-            <button data-action="abrirRutaGoogleMaps" data-lat="${ord.latitude || ord.lat}" data-lng="${ord.longitude || ord.lng}" data-id="${ord.id}" class="btn-driver-route" style="flex:1; padding:8px; border-radius:8px; font-weight:800; font-size:12px; cursor:pointer;">
+            <button type="button" data-action="abrirRutaGoogleMaps" data-lat="${ordLat}" data-lng="${ordLng}" data-id="${ordId}" data-address="${window.escapeHtmlStr(ordDir)}" class="btn-driver-route" style="flex:1; padding:8px; border-radius:8px; font-weight:800; font-size:12px; cursor:pointer;">
               🚀 Ir al pedido
             </button>
           </div>
@@ -137,16 +142,25 @@ async function renderDriverOrdersList() {
 }
 
 window.centrarPedidoEnMapa = function(lat, lng, id) {
-  if (typeof map !== 'undefined' && lat && lng) {
+  const nLat = Number(lat);
+  const nLng = Number(lng);
+  if (typeof map !== 'undefined' && map && !isNaN(nLat) && !isNaN(nLng) && nLat !== 0 && nLng !== 0) {
      const m = document.getElementById('modalDriverOrders');
      if (m) m.style.display = 'none';
-     map.flyTo([lat, lng], 18, { duration: 1.5 });
-     // Abrir el popup si el marcador existe en la vista del mapa
-     if (window.neighborOrderMarkers && window.neighborOrderMarkers[id]) {
-        setTimeout(() => window.neighborOrderMarkers[id].openPopup(), 1500);
+     map.flyTo([nLat, nLng], 18, { duration: 1.5 });
+     if (window.neighborOrderMarkers && id && window.neighborOrderMarkers[id]) {
+        setTimeout(() => {
+          if (window.neighborOrderMarkers && window.neighborOrderMarkers[id]) {
+            window.neighborOrderMarkers[id].openPopup();
+          }
+        }, 1500);
      }
+  } else {
+    if (typeof showToast === 'function') {
+      showToast('Ubicación No Disponible', 'El pedido no tiene coordenadas válidas en el mapa.', 'warning', 3000);
+    }
   }
-}
+};
 
 // window.aceptarPedidoRepartidor removido intencionalmente (Fase 3: Sólo grupos)
 
@@ -178,10 +192,10 @@ window.aceptarGrupoDemanda = async function(clusterId, ciudad, categoria) {
 
     AppState.set('activeClusterId', clusterId);
     AppState.set('activeClusterCity', ciudad);
-    AppState.set('activeClusterCategoria', categoria);
+    AppState.set('activeClusterCat', categoria);
 
     if (typeof showToast === 'function') {
-      showToast('¡Pedidos Asignados!', 'Los pedidos de la zona han sido asignados a ti.', 'success', 5000);
+      showToast('Grupo Aceptado', 'Has tomado este grupo de pedidos con éxito.', 'success');
     }
 
     if (window.demandClusterMarkers && window.demandClusterMarkers[clusterId]) {
@@ -193,56 +207,88 @@ window.aceptarGrupoDemanda = async function(clusterId, ciudad, categoria) {
   });
 }
 
-window.abrirRutaGoogleMaps = async function (a, b, c) {
-  let orderId, lat, lng;
+window.abrirRutaGoogleMaps = function (a, b, c, d) {
+  let lat = null;
+  let lng = null;
+  let orderId = null;
+  let address = '';
 
-  // Soportar ambas firmas: (orderId, lat, lng) y (lat, lng, orderId)
-  if (typeof a === 'string' && (typeof b === 'number' || typeof b === 'string') && (typeof c === 'number' || typeof c === 'string') && isNaN(Number(a))) {
+  // Determinar argumentos de manera flexible (múltiples firmas)
+  if (typeof a === 'object' && a !== null) {
+    lat = Number(a.latitude ?? a.lat);
+    lng = Number(a.longitude ?? a.lng);
+    orderId = a.id || a.order_id || null;
+    address = a.direccion || a.address || '';
+  } else if (typeof a === 'string' && isNaN(Number(a)) && (a.includes('-') || a.length > 15)) {
+    // a es UUID orderId
     orderId = a;
     lat = Number(b);
     lng = Number(c);
+    address = d || '';
   } else {
+    // a es lat, b es lng, c es orderId
     lat = Number(a);
     lng = Number(b);
-    orderId = c;
+    orderId = c || null;
+    address = d || '';
   }
 
-  if (typeof closeDriverOrdersModal === 'function') closeDriverOrdersModal();
+  if (typeof closeDriverOrdersModal === 'function') {
+    closeDriverOrdersModal();
+  }
 
-  if (lat == null || lng == null || isNaN(lat) || isNaN(lng)) {
-    console.error('Coordenadas no válidas para Google Maps:', { orderId, lat, lng });
+  let destination = '';
+  if (lat != null && lng != null && !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+    destination = `${lat},${lng}`;
+  } else if (address && String(address).trim() !== '') {
+    const activeCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || '') : '';
+    destination = `${String(address).trim()}, ${activeCity}, Bolivia`;
+  } else {
+    console.error('Coordenadas o dirección no válidas para Google Maps:', { orderId, lat, lng, address });
     if (typeof showToast === 'function') {
-      showToast('Error', 'Coordenadas del pedido no disponibles.', 'error', 3000);
+      showToast('Ubicación No Disponible', 'El pedido no cuenta con coordenadas válidas.', 'warning', 3500);
     }
     return;
   }
 
-  const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${lat},${lng}`)}`;
+  const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
 
-  // Abrir de inmediato para evitar que el navegador bloquee la acción por timeout o popup blocker
+  // Abrir Google Maps de forma nativa e inmediata
   try {
-    const navWin = window.open(mapsUrl, '_blank', 'noopener,noreferrer');
-    if (!navWin || navWin.closed || typeof navWin.closed === 'undefined') {
-      window.location.href = mapsUrl;
+    const newWin = window.open(mapsUrl, '_blank');
+    if (!newWin) {
+      const link = document.createElement('a');
+      link.href = mapsUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
-  } catch(e) {
+  } catch (e) {
     window.location.href = mapsUrl;
   }
 
-  // Asignar en Supabase en segundo plano si hay un orderId válido y el usuario es repartidor
+  if (typeof showToast === 'function') {
+    showToast('🚀 En Ruta', 'Abriendo navegación en Google Maps...', 'success', 2500);
+  }
+
+  // Asignar en Supabase en segundo plano si hay un orderId válido
   if (window.supabaseClient && orderId && String(orderId).trim() !== '' && orderId !== 'undefined' && orderId !== 'null') {
-    try {
-      const { data, error } = await window.supabaseClient.rpc('rpc_assign_order', { p_order_id: orderId });
-      if (error) {
-        console.warn('Aviso asignando pedido:', error.message);
-      } else if (data?.ok) {
-        if (typeof showToast === 'function') {
-          showToast('🚀 En Ruta', 'Pedido asignado y navegando en Google Maps.', 'success', 3000);
+    window.supabaseClient.rpc('rpc_assign_order', { p_order_id: orderId })
+      .then(({ data, error }) => {
+        if (error) {
+          console.warn('Aviso asignación en backend:', error.message);
+        } else if (data && data.ok) {
+          console.log('✅ Pedido asignado exitosamente en backend:', orderId);
+          if (typeof renderDriverOrdersList === 'function') {
+            renderDriverOrdersList();
+          }
         }
-      }
-    } catch (err) {
-      console.warn('Error en asignación RPC:', err);
-    }
+      })
+      .catch(err => {
+        console.warn('Excepción de red en rpc_assign_order:', err);
+      });
   }
 };
 
