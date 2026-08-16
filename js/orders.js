@@ -741,14 +741,14 @@ async function confirmarRecepcionComprador() {
              const order = JSON.parse(rawOrder);
 
              if (order.id) {
-                const localUserId = await getAuthenticatedUserId();
+                const localUserId = (typeof getAuthenticatedUserId === 'function') ? await getAuthenticatedUserId() : ((typeof getCurrentUserId === 'function') ? getCurrentUserId() : null);
                 const { error } = await window.supabaseClient.from('pedidos')
-                    .delete()
+                    .update({ estado: 'entregado' })
                     .eq('id', order.id)
                     .eq('user_id', localUserId);
 
                 if (error) {
-                    console.error(error);
+                    console.error("Error confirmando entrega:", error);
                     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
                     showToast('Error', 'No se pudo confirmar la entrega.', 'error');
                     return;
@@ -756,9 +756,11 @@ async function confirmarRecepcionComprador() {
 
              }
 
-         } catch(e) {}
-
-         if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+         } catch(e) {
+             console.error("Excepción en confirmarRecepcionComprador:", e);
+         } finally {
+             if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+         }
 
      }
 
