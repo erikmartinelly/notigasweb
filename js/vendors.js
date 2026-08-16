@@ -19,27 +19,16 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
   }
 
   try {
-    // Solo traemos choferes de la ciudad actual que estén pendientes o aprobados.
-    // (Por ahora traemos todos y el admin ya los banea o aprueba).
     const cityNormalized = city.trim().toLowerCase();
-    // Consultar de la vista pública que no está bloqueada por RLS para vecinos
-    let { data, error } = await window.supabaseClient
+    // Consultar exclusivamente de la vista pública autorizada
+    const { data, error } = await window.supabaseClient
       .from('choferes_publicos')
       .select('*')
       .eq('ciudad', cityNormalized);
 
     if (error) {
-      // Fallback a tabla choferes_habilitados si la vista no está creada
-      const res = await window.supabaseClient
-        .from('choferes_habilitados')
-        .select('*')
-        .eq('ciudad', cityNormalized);
-      data = res.data;
-      error = res.error;
-    }
-
-    if (error) {
-      console.warn("Aviso descargando choferes de Supabase:", error.message);
+      console.error("Error descargando choferes desde choferes_publicos:", error);
+      AppState.set('notigas_vendors_directory', []);
     } else if (data && data.length > 0) {
       let list = [];
       data.forEach(d => {
