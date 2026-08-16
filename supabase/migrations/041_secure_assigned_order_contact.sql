@@ -1,5 +1,8 @@
--- Permite que un repartidor autenticado vea el correo solamente de los
--- compradores cuyos pedidos ya fueron asignados a ese repartidor.
+-- ==============================================================================
+-- 041_secure_assigned_order_contact.sql
+-- RPC para acceso seguro a datos de contacto de compradores por parte del repartidor asignado
+-- ==============================================================================
+
 CREATE OR REPLACE FUNCTION public.rpc_get_my_assigned_orders()
 RETURNS TABLE (
     id uuid,
@@ -20,25 +23,22 @@ SET search_path = public
 AS $$
 DECLARE
     v_driver_id text := auth.uid()::text;
-    v_driver_city text;
 BEGIN
     IF v_driver_id IS NULL THEN
         RAISE EXCEPTION 'Usuario no autenticado';
     END IF;
 
-    SELECT lower(trim(ch.ciudad))
-    INTO v_driver_city
-    FROM public.choferes_habilitados ch
-    WHERE ch.user_id = v_driver_id
-      AND NOT EXISTS (
-          SELECT 1
-          FROM public.usuarios_baneados ub
-          WHERE ub.user_id = v_driver_id
-      )
-    LIMIT 1;
-
-    IF v_driver_city IS NULL THEN
-        RAISE EXCEPTION 'Repartidor no habilitado';
+    IF NOT EXISTS (
+        SELECT 1
+        FROM public.choferes_habilitados ch
+        WHERE ch.user_id = v_driver_id
+          AND NOT EXISTS (
+              SELECT 1
+              FROM public.usuarios_baneados ub
+              WHERE ub.user_id = v_driver_id
+          )
+    ) THEN
+        RAISE EXCEPTION 'Repartidor no habilitado o baneado';
     END IF;
 
     RETURN QUERY
@@ -57,7 +57,6 @@ BEGIN
     FROM public.pedidos p
     LEFT JOIN auth.users u ON u.id::text = p.user_id
     WHERE p.driver_id = v_driver_id
-      AND lower(trim(p.ciudad)) = v_driver_city
       AND p.estado = 'asignado'
     ORDER BY p.created_at ASC;
 END;
