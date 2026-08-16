@@ -336,8 +336,13 @@ async function cargarPedidosVecinalesEnVivo() {
 
     if (isDriverUser) {
       clearNeighborOrderMarkers();
-      const clusters = await obtenerGruposDemanda(normCity, driverCategoria);
-      renderDemandClustersOnMap(clusters);
+      try {
+        const clusters = await obtenerGruposDemanda(normCity, driverCategoria);
+        renderDemandClustersOnMap(clusters);
+      } catch (clusterError) {
+        clearDemandClusterMarkers();
+        console.warn('No se pudieron cargar los grupos de demanda:', clusterError);
+      }
 
       // Los destinos individuales solo aparecen después de aceptar el grupo.
       const { data: sessionData } = await window.supabaseClient.auth.getSession();

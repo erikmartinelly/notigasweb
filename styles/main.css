@@ -1437,9 +1437,9 @@ button:active, .tab-btn:active, .cat-chip:active {
 }
 
 .btn-hear-truck:hover {
-  background: rgba(245, 158, 11, 0.15);
+  background: rgba(255, 109, 0, 0.18);
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
+  box-shadow: 0 4px 16px rgba(255, 109, 0, 0.32);
 }
 
 .btn-badge:hover, .btn-driver:hover {
