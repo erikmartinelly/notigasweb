@@ -304,7 +304,7 @@ async function confirmarEntregaPedido(id) {
       .update({ estado: 'entregado' })
       .eq('id', id)
       .eq('driver_id', localUserId)
-      .in('estado', ['asignado', 'en_ruta', 'en_camino']);
+      .in('estado', ['asignado']);
 
     hideLoadingOverlay();
 
@@ -386,20 +386,12 @@ function checkActiveOrderStatus() {
           statusIndicator.style.boxShadow = '0 0 7px rgba(255,152,0,.55)';
         }
       } else if (estado === 'asignado') {
-        if (statusText) statusText.innerText = 'ASIGNADO';
-        if (driverName) driverName.innerText = 'REPARTIDOR ASIGNADO';
-        if (timeEst) timeEst.innerText = 'Un repartidor aceptó tu pedido.';
-        if (statusIndicator) {
-          statusIndicator.style.background = '#3B82F6';
-          statusIndicator.style.boxShadow = '0 0 7px rgba(59,130,246,.55)';
-        }
-      } else if (estado === 'en_ruta' || estado === 'en_camino') {
-        if (statusText) statusText.innerText = 'EN RUTA';
+        if (statusText) statusText.innerText = 'EN CAMINO';
         if (driverName) driverName.innerText = 'REPARTIDOR EN CAMINO';
-        if (timeEst) timeEst.innerText = 'El repartidor está transmitiendo su ruta en vivo.';
+        if (timeEst) timeEst.innerText = 'Un repartidor aceptó tu pedido y está en ruta hacia tu ubicación.';
         if (statusIndicator) {
-          statusIndicator.style.background = '#10B981';
-          statusIndicator.style.boxShadow = '0 0 7px rgba(16,185,129,.55)';
+          statusIndicator.style.background = '#0288D1';
+          statusIndicator.style.boxShadow = '0 0 8px rgba(2,136,209,.6)';
         }
       } else if (estado === 'entregado') {
         if (statusText) statusText.innerText = 'ENTREGADO';

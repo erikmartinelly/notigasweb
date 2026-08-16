@@ -57,7 +57,7 @@ NOTIGAS bridges this gap by democratizing access to Artificial Intelligence and 
 ├── styles/
 │   └── main.css            # Application CSS stylesheet
 └── supabase/
-    └── migrations/         # Database tables, RLS policies, RPC functions, and triggers (001 - 039)
+    └── migrations/         # Database tables, RLS policies, RPC functions, and triggers (001 - 040)
 ```
 
 ## ⚙️ Setup & Installation
@@ -70,7 +70,7 @@ NOTIGAS bridges this gap by democratizing access to Artificial Intelligence and 
 
 2.  **Configure Supabase:**
     *   Create a new project in Supabase.
-    *   Run the SQL scripts located in the `supabase/migrations/` folder in numerical order (from `001_initial_setup.sql` to `039_unify_cluster_id_algorithm.sql`) in the Supabase SQL Editor to create the required tables, RLS policies, storage buckets, and secure RPC functions.
+    *   Run the SQL scripts located in the `supabase/migrations/` folder in numerical order (from `001_initial_setup.sql` to `040_unify_order_state_machine.sql`) in the Supabase SQL Editor to create the required tables, RLS policies, storage buckets, and secure RPC functions.
         * **014_fix_auth_triggers.sql:** Deletes conflicting triggers on `auth.users` and is **mandatory** for all deployments to prevent registration failures.
         * **027_profiles_location_seen_and_account_cleanup.sql:** User profiles, location caching, and cascading `delete_user_account()` RPC.
         * **033_official_notices_and_purge_rpc.sql:** Official admin broadcast notices and automated database cleanup RPCs.
@@ -79,6 +79,7 @@ NOTIGAS bridges this gap by democratizing access to Artificial Intelligence and 
         * **037_harden_rls_policies.sql:** Comprehensive Row-Level Security (RLS) policies for orders, drivers, and moderation.
         * **038_add_updated_at_to_pedidos.sql:** Adds `updated_at` column to `pedidos` with automatic update trigger and index.
         * **039_unify_cluster_id_algorithm.sql:** Unifies deterministic `cluster_id` generation across `rpc_get_demand_clusters_v2`, `rpc_get_orders_for_cluster_v2`, and `rpc_accept_demand_cluster_v2`.
+        * **040_unify_order_state_machine.sql:** Strictly unifies the 5-state machine in PostgreSQL with validation triggers.
     *   Open `js/supabase-config.js` and replace the placeholder `supabaseUrl` and `supabaseAnonKey` with your project's actual credentials.
     *   **⚠️ IMPORTANT - Email Confirmation:** Supabase requires email confirmation by default for new registrations. If you wish to disable this during testing or development, go to your Supabase Dashboard -> **Authentication** -> **Providers** -> **Email** and toggle off **Confirm email**. Ensure your `Site URL` and `Redirect URLs` in Supabase Auth configuration point to your production domain.
 
@@ -115,11 +116,13 @@ NOTIGAS bridges this gap by democratizing access to Artificial Intelligence and 
 *   **PC**: Intenta `navigator.geolocation` primero. Si falla, usa IP solamente como fallback aproximado. La IP nunca se considera domicilio exacto.
 *   **Repartidor**: Usa GPS continuo (`watchPosition`) con precisión adaptativa. Transmite ubicación a Supabase cuando hay movimiento significativo (~15 metros) y usa un heartbeat para indicar que está detenido. *Nota Técnica: Al ser una PWA que corre en el navegador, el tracking en background (pantalla apagada o app minimizada) depende estrictamente de las políticas de ahorro de batería de iOS/Android y podría ser pausado por el sistema operativo.*
 
-### Pedidos
-*   Los pedidos son grupales y un repartidor puede ver los pedidos de su zona/categoría.
-*   **Rojo**: Pedido nuevo o no visto.
-*   **Amarillo**: Pedido "visto" por algún repartidor. 
-*   **Importante**: Que un pedido esté amarillo (`visto = true`) NO significa que esté asignado/tomado. Su estado continúa siendo `pendiente` y sigue formando parte de los grupos en el mapa.
+### Máquina de Estados de Pedidos (5 Estados Oficiales)
+El ciclo de vida en PostgreSQL, RPCs, Realtime y Frontend está estrictamente unificado en 5 estados:
+1. **`pendiente`**: Creado por el comprador, disponible en el mapa para repartidores.
+2. **`visto`**: Inspeccionado por un repartidor (pin amarillo), sigue disponible para ser tomado.
+3. **`asignado`**: Tomado oficialmente por un repartidor con bloqueo `FOR UPDATE` (en camino al domicilio).
+4. **`entregado`**: Entrega completada y confirmada por el comprador o chofer (estado final archivado).
+5. **`cancelado`**: Cancelado por el comprador (estado final).
 
 ### Realtime y Enrutamiento
 *   **Realtime**: Es el mecanismo principal.
