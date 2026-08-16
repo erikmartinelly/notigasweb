@@ -325,3 +325,14 @@ function conectarGPSAuto(forceReset = false) {
         obtenerUbicacionIPFallbackDesktop(forceReset);
     });
 }
+
+// ==========================================
+// EXPOSICIÓN GLOBAL EN WINDOW
+// ==========================================
+window.conectarGPSAuto = conectarGPSAuto;
+window.detenerGPSComprador = detenerGPSComprador;
+window.iniciarWatchGPSRepartidor = iniciarWatchGPSRepartidor;
+window.obtenerUbicacionIPFallbackDesktop = obtenerUbicacionIPFallbackDesktop;
+window.solicitarGeolocalizacionNativaNavegador = solicitarGeolocalizacionNativaNavegador;
+window.esModoRepartidor = esModoRepartidor;
+

@@ -1,24 +1,24 @@
-/* NOTIGAS SERVICE WORKER v69.0 - CACHÉ PROGRESIVO Y MODO OFFLINE */
-const CACHE_NAME = 'notigas-cache-v69';
+/* NOTIGAS SERVICE WORKER v73.0 - CACHÉ PROGRESIVO Y MODO OFFLINE */
+const CACHE_NAME = 'notigas-cache-v73';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './styles/main.css?v=69',
-  './js/state.js?v=69',
-  './js/ui.js?v=69',
-  './js/supabase-config.js?v=69',
-  './js/auth.js?v=69',
-  './js/vendors.js?v=69',
-  './js/map.js?v=69',
-  './js/map_search.js?v=69',
-  './js/map_gps.js?v=69',
-  './js/forum.js?v=69',
-  './js/ads.js?v=69',
-  './js/orders.js?v=69',
-  './js/admin.js?v=69',
-  './js/admin_users.js?v=69',
-  './js/app.js?v=69',
-  './js/events.js?v=69',
+  './styles/main.css?v=73',
+  './js/state.js?v=73',
+  './js/ui.js?v=73',
+  './js/supabase-config.js?v=73',
+  './js/auth.js?v=73',
+  './js/vendors.js?v=73',
+  './js/map.js?v=73',
+  './js/map_search.js?v=73',
+  './js/map_gps.js?v=73',
+  './js/forum.js?v=73',
+  './js/ads.js?v=73',
+  './js/orders.js?v=73',
+  './js/admin.js?v=73',
+  './js/admin_users.js?v=73',
+  './js/app.js?v=73',
+  './js/events.js?v=73',
   './icons/garrafa_red_clean.svg',
   './icons/camion_red.svg',
   './manifest.json'
@@ -57,11 +57,12 @@ self.addEventListener('fetch', (event) => {
   if (!event.request.url.startsWith('http')) return; // Prevenir errores con extensiones de Chrome (chrome-extension://)
   
   const url = event.request.url;
-  // Bypass: peticiones externas y Supabase (autenticación/realtime nunca deben cachearse)
+  // Bypass: peticiones externas, mapas y Supabase (autenticación/realtime nunca deben cachearse)
   if (
     url.includes('google.com') ||
     url.includes('googleusercontent.com') ||
     url.includes('openstreetmap.org') ||
+    url.includes('cartocdn.com') ||
     url.includes('cloudflare.com') ||
     url.includes('supabase.co') ||
     url.includes('ipapi') ||

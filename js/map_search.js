@@ -66,11 +66,16 @@ function buscarCalle() {
                 currentGpsLat = pLat;
                 currentGpsLng = pLon;
 
-                if (map) {
-                  map.flyTo([pLat, pLon], 17, { duration: 1.0 });
+                if (window.map || typeof map !== 'undefined') {
+                  const m = window.map || map;
+                  m.flyTo([pLat, pLon], 17, { duration: 1.0 });
                 }
 
-                applyGpsPosition(pLat, pLon, '', false);
+                if (typeof window.applyGpsPosition === 'function') {
+                  window.applyGpsPosition(pLat, pLon, '', false);
+                } else if (typeof applyGpsPosition === 'function') {
+                  applyGpsPosition(pLat, pLon, '', false);
+                }
                 return;
               }
             }
@@ -83,12 +88,18 @@ function buscarCalle() {
                 let fbValidItems = (Array.isArray(fallbackData) ? fallbackData : []).filter(item => {
                   const itemLat = parseFloat(item.lat);
                   const itemLon = parseFloat(item.lon);
-                  const dist = calcularDistanciaMetros(munObj.lat, munObj.lon, itemLat, itemLon);
+                  const dist = (typeof window.calcularDistanciaMetros === 'function') 
+                    ? window.calcularDistanciaMetros(munObj.lat, munObj.lon, itemLat, itemLon)
+                    : ((typeof calcularDistanciaMetros === 'function') ? calcularDistanciaMetros(munObj.lat, munObj.lon, itemLat, itemLon) : null);
                   return dist !== null && dist <= MAX_METRO_DIST_METROS;
                 });
 
                 if (fbValidItems.length > 0) {
-                  procesarResultadoBusqueda(fbValidItems[0], calleQuery);
+                  if (typeof window.procesarResultadoBusqueda === 'function') {
+                    window.procesarResultadoBusqueda(fbValidItems[0], calleQuery);
+                  } else if (typeof procesarResultadoBusqueda === 'function') {
+                    procesarResultadoBusqueda(fbValidItems[0], calleQuery);
+                  }
                 } else {
                   if(typeof showToast === 'function') {
                     showToast('Calle no encontrada', `No se encontró la calle "${calleQuery}" en ${munObj.nombre}.`, 'warning', 4000);
@@ -104,7 +115,10 @@ function buscarCalle() {
     }).catch(e => {
       console.error("Error en geocoding Nominatim:", e);
       if (typeof showToast === 'function') {
-         showToast('Error de Búsqueda', 'Hubo un problema contactando al servidor de mapas.', 'error', 3000);
+         showToast('Búsqueda no disponible', 'No se pudo contactar el servicio de búsqueda de calles.', 'warning', 3000);
       }
     });
 }
+
+window.buscarCalle = buscarCalle;
+

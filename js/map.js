@@ -82,35 +82,6 @@ let userLocationIcon;
 let garrafaIcon, garrafaYellowIcon, garrafaGreenIcon;
 let truckIcon;
 
-let supabaseWaitRetries = 0;
-function waitForSupabaseAndInit() {
-  if (typeof L === 'undefined') {
-    console.log("⏳ Esperando a Leaflet (L) para cargar el mapa...");
-    setTimeout(waitForSupabaseAndInit, 100);
-    return;
-  }
-
-  if (window.supabaseClient) {
-    console.log("🟢 Supabase detectado, iniciando mapa...");
-    initNotigasMap();
-  } else if (supabaseWaitRetries > 10) {
-    console.log("⚠️ Supabase tardó demasiado. Iniciando mapa en modo local...");
-    initNotigasMap();
-  } else {
-    supabaseWaitRetries++;
-    console.log("⏳ Esperando a Supabase para cargar el mapa...");
-    setTimeout(waitForSupabaseAndInit, 200);
-  }
-}
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    waitForSupabaseAndInit();
-  });
-} else {
-  waitForSupabaseAndInit();
-}
-
 function initNotigasMap() {
   if (typeof L === 'undefined') {
     console.warn("⏳ Leaflet aún no está disponible, reintentando initNotigasMap...");
@@ -121,9 +92,24 @@ function initNotigasMap() {
   const mapElement = document.getElementById('map');
   if (!mapElement) return;
 
+  // Si ya existe instancia en window.map o en mapElement, reutilizarla
   if (window.map) {
-    console.log("ℹ️ El mapa ya está inicializado.");
+    map = window.map;
+    console.log("ℹ️ El mapa ya está inicializado. Actualizando dimensiones...");
+    setTimeout(() => { if (map) map.invalidateSize(); }, 100);
     return;
+  }
+
+  // Prevenir error 'Map container is already initialized' si Leaflet ya se adjuntó al contenedor
+  if (mapElement._leaflet_id) {
+    try {
+      if (typeof map !== 'undefined' && map && map.remove) {
+        map.remove();
+      }
+    } catch(err) {
+      console.warn("Reajustando contenedor de mapa:", err);
+    }
+    mapElement._leaflet_id = null;
   }
 
   userLocationIcon = L.divIcon({
@@ -176,45 +162,69 @@ function initNotigasMap() {
   let startLng = currentGpsLng;
   let isNationalView = false;
   if (!startLat || !startLng) {
-    startLat = -16.290154;
-    startLng = -63.588653;
-    isNationalView = true;
+    const savedCity = (typeof AppState !== 'undefined') ? AppState.get('city') : null;
+    if (savedCity && window.BOLIVIA_CITIES && window.BOLIVIA_CITIES[savedCity]) {
+      startLat = window.BOLIVIA_CITIES[savedCity].lat;
+      startLng = window.BOLIVIA_CITIES[savedCity].lon || window.BOLIVIA_CITIES[savedCity].lng;
+    } else {
+      // Coordenadas predeterminadas de Cochabamba (centro neurálgico de Bolivia)
+      startLat = -17.3895;
+      startLng = -66.1568;
+    }
   }
 
-  map = L.map('map', {
-    center: [startLat, startLng],
-    zoom: isNationalView ? 6 : 16,
-    zoomControl: false
-  });
+  try {
+    map = L.map('map', {
+      center: [startLat, startLng],
+      zoom: isNationalView ? 6 : 16,
+      zoomControl: false,
+      fadeAnimation: true,
+      zoomAnimation: true
+    });
+    window.map = map;
+  } catch(mapErr) {
+    console.error("Error al crear instancia de Leaflet:", mapErr);
+    return;
+  }
 
   L.control.zoom({ position: 'topright' }).addTo(map);
 
-  map.createPane('labels');
-  map.getPane('labels').style.zIndex = 650;
-  map.getPane('labels').style.pointerEvents = 'none';
-
-  mapTileLayers['osm_base'] = L.tileLayer('https://mt0.google.com/vt/lyrs=m&hl=es&x={x}&y={y}&z={z}', {
+  // Capa base de baldosas con alta disponibilidad y fallback automático
+  // Usamos CartoDB Voyager como capa principal (ultra nítida, rápida y no bloqueada)
+  // con fallback automático a OpenStreetMap si alguna baldosa falla.
+  const baseTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
     maxZoom: 20,
-    attribution: '&copy; Google Maps',
-    className: 'map-base-layer',
-    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-    detectRetina: true
+    subdomains: 'abcd',
+    attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    className: 'map-base-layer'
   });
 
-  mapTileLayers['osm_labels'] = L.tileLayer('data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', {
-    maxZoom: 20,
-    pane: 'labels',
-    className: 'map-labels-layer',
+  baseTileLayer.on('tileerror', function(error) {
+    if (error && error.tile && !error.tile._fallbackDone) {
+      error.tile._fallbackDone = true;
+      const c = error.coords;
+      if (c) {
+        error.tile.src = `https://tile.openstreetmap.org/${c.z}/${c.x}/${c.y}.png`;
+      }
+    }
   });
 
-  mapTileLayers['osm_base'].addTo(map);
-  mapTileLayers['osm_labels'].addTo(map);
+  baseTileLayer.addTo(map);
+  mapTileLayers['osm_base'] = baseTileLayer;
 
+  // Ajustes de tamaño inmediatos y periódicos para asegurar renderizado completo
+  setTimeout(() => { if (map) map.invalidateSize(); }, 150);
   setTimeout(() => { if (map) map.invalidateSize(); }, 500);
+  setTimeout(() => { if (map) map.invalidateSize(); }, 1200);
+
+  window.addEventListener('resize', () => { if (map) map.invalidateSize(); });
+  window.addEventListener('orientationchange', () => { if (map) map.invalidateSize(); });
 
   const btnGps = document.getElementById('btnGps');
   if (btnGps) {
-    btnGps.addEventListener('click', () => conectarGPSAuto(true));
+    btnGps.addEventListener('click', () => {
+      if (typeof conectarGPSAuto === 'function') conectarGPSAuto(true);
+    });
   }
 
   map.on('dragstart', () => {
@@ -226,14 +236,6 @@ function initNotigasMap() {
     if (typeof desactivarSeguirme === 'function') desactivarSeguirme();
   });
 
-  if (isNationalView) {
-    setTimeout(() => {
-        if (typeof showToast === 'function') {
-            showToast('Ubicación desconocida', 'Por favor, activa el GPS o busca tu ciudad manualmente.', 'warning', 6000);
-        }
-    }, 1500);
-  }
-
   map.on('click', (e) => {
     moverMarcadorUbicacionManual(e.latlng.lat, e.latlng.lng);
   });
@@ -244,10 +246,32 @@ function initNotigasMap() {
     applyGpsPosition(startLat, startLng, "Ciudad Seleccionada", true, false);
   }
 
-  conectarGPSAuto(true);
+  if (typeof conectarGPSAuto === 'function') {
+    conectarGPSAuto(true);
+  }
   renderReportedTrucksBuffer();
   cargarPedidosVecinalesEnVivo();
 }
+
+function startMapWhenReady() {
+  if (typeof L !== 'undefined' && document.getElementById('map')) {
+    initNotigasMap();
+  } else {
+    setTimeout(startMapWhenReady, 50);
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', startMapWhenReady);
+} else {
+  startMapWhenReady();
+}
+
+document.addEventListener('supabase_ready', () => {
+  if (typeof cargarPedidosVecinalesEnVivo === 'function') {
+    cargarPedidosVecinalesEnVivo();
+  }
+});
 
 let _lastCargarPedidosTime = 0;
 async function cargarPedidosVecinalesEnVivo() {
@@ -1263,6 +1287,26 @@ function procesarResultadoBusqueda(item, queryOriginal) {
 /* Alias eliminado (código muerto) — se usa transmitirUbicacionRepartidorServidorDB directamente */
 
 /* Suscripciones Realtime del mapa se encuentran en supabase-config.js */
+
+// ==========================================
+// EXPOSICIÓN GLOBAL EN WINDOW PARA TODOS LOS MÓDULOS
+// ==========================================
+window.applyGpsPosition = applyGpsPosition;
+window.cambiarCiudadCapital = cambiarCiudadCapital;
+window.moverMarcadorUbicacionManual = moverMarcadorUbicacionManual;
+window.verPedidosEnMapa = verPedidosEnMapa;
+window.actualizarRepartidorEnMapa = actualizarRepartidorEnMapa;
+window.removerPublicacionDeMapa = removerPublicacionDeMapa;
+window.renderActiveOrdersMap = renderActiveOrdersMap;
+window.renderReportedTrucksBuffer = renderReportedTrucksBuffer;
+window.verificarYMostrarRepartidorGPS = verificarYMostrarRepartidorGPS;
+window.transmitirUbicacionRepartidorServidorDB = transmitirUbicacionRepartidorServidorDB;
+window.calcularDistanciaMetros = calcularDistanciaMetros;
+window.formatearDistanciaTriangulada = formatearDistanciaTriangulada;
+window.cargarPedidosVecinalesEnVivo = cargarPedidosVecinalesEnVivo;
+window.agregarPedidoVecinoEnMapa = agregarPedidoVecinoEnMapa;
+window.procesarResultadoBusqueda = procesarResultadoBusqueda;
+window.initNotigasMap = initNotigasMap;
 
 // ==========================================
 // RUTAS OSRM PARA CHOFERES (NIVEL 1) ELIMINADO
