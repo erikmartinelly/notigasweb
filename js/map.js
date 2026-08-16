@@ -765,7 +765,6 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
 
 let lastBroadcastLat = null;
 let lastBroadcastLng = null;
-let lastGpsBroadcastTime = 0;
 
 /* ESTRATEGIA ADAPTATIVA INTELIGENTE DE TRANSMISIÓN GPS */
 async function transmitirUbicacionRepartidorServidorDB(lat, lng) {
