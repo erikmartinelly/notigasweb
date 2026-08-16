@@ -1,0 +1,8 @@
+# robots.txt para NOTIGAS (https://www.notigas.com)
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/
+
+# Ubicación del Sitemap oficial
+Sitemap: https://www.notigas.com/sitemap.xml

@@ -349,17 +349,14 @@ document.addEventListener('click', (e) => {
     else if (action === 'cerrarPanoramicaPedidos') {
       if (typeof window.cerrarPanoramicaPedidos === 'function') window.cerrarPanoramicaPedidos();
     }
-    else if (action === 'aceptarGrupoDemanda') {
-      const cid = btn.getAttribute('data-cluster-id');
-      const city = btn.getAttribute('data-ciudad');
-      const cat = btn.getAttribute('data-categoria');
-      if (typeof window.aceptarGrupoDemanda === 'function') window.aceptarGrupoDemanda(cid, city, cat);
-    }
-    else if (action === 'centrarGrupoDemanda') {
-      const lat = btn.getAttribute('data-lat');
-      const lng = btn.getAttribute('data-lng');
-      const cid = btn.getAttribute('data-cluster-id');
-      if (typeof window.centrarGrupoDemanda === 'function') window.centrarGrupoDemanda(lat, lng, cid);
+    else if (action === 'aceptarPedidoRepartidor') {
+      const id = btn.getAttribute('data-id');
+      const lat = parseFloat(btn.getAttribute('data-lat'));
+      const lng = parseFloat(btn.getAttribute('data-lng'));
+      const address = btn.getAttribute('data-address') || '';
+      if (typeof window.aceptarPedidoRepartidor === 'function') {
+        window.aceptarPedidoRepartidor(id, lat, lng, address);
+      }
     }
     else if (action === 'abrirSubmenuPedidos') {
       if (typeof window.abrirSubmenuPedidos === 'function') window.abrirSubmenuPedidos();

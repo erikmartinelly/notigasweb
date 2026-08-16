@@ -32,21 +32,21 @@ app.use((req, res, next) => {
   // FIX: Content-Security-Policy — Lista blanca explícita de todos los recursos permitidos
   // Dominios autorizados: Supabase, Google (Auth + Fonts + AdSense), OSM, Font Awesome, jsDelivr/unpkg (CDNs)
   const csp = [
-    // Solo scripts del mismo origen + CDNs explícitamente listados. 
+    // Solo scripts del mismo origen + Google AdSense + Google Auth + CDNs explícitamente listados. 
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://apis.google.com https://pagead2.googlesyndication.com https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://apis.google.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://partner.googleadservices.com https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com",
     // Estilos del mismo origen + Google Fonts + Font Awesome
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com",
     // Fuentes tipográficas
     "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net",
-    // Conexiones de datos (Supabase, Google, OSM, GeoIP, OSRM)
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://accounts.google.com https://ipinfo.io https://ipapi.co https://freeipapi.com https://ipwho.is https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://router.project-osrm.org https://nominatim.openstreetmap.org https://photon.komoot.io",
-    // Imágenes (OSM/Carto tiles + Supabase Storage + Google user avatars + CDNs + data URIs para favicons dinámicos)
-    "img-src 'self' data: blob: https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com https://*.supabase.co https://pagead2.googlesyndication.com https://*.google.com https://*.googleusercontent.com https://unpkg.com https://cdnjs.cloudflare.com",
+    // Conexiones de datos (Supabase, Google AdSense, GeoIP, OSRM)
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://accounts.google.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://ep1.adtrafficquality.google https://ep2.adtrafficquality.google https://ipinfo.io https://ipapi.co https://freeipapi.com https://ipwho.is https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://router.project-osrm.org https://nominatim.openstreetmap.org https://photon.komoot.io",
+    // Imágenes (Carto tiles + Supabase Storage + Google user avatars + Google AdSense + CDNs + data URIs)
+    "img-src 'self' data: blob: https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com https://*.supabase.co https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://*.google.com https://*.googleusercontent.com https://*.doubleclick.net https://*.googlesyndication.com https://unpkg.com https://cdnjs.cloudflare.com",
     // Workers (Service Worker)
     "worker-src 'self'",
-    // Frames: solo Google para One-Tap
-    "frame-src https://accounts.google.com",
+    // Frames: Google One-Tap + Google AdSense
+    "frame-src https://accounts.google.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://*.google.com https://pagead2.googlesyndication.com",
     // Formularios solo al mismo origen
     "form-action 'self'",
     // Manifiesto PWA

@@ -24,7 +24,7 @@ async function renderDriverOrdersList() {
   const container = document.getElementById('driverOrdersContainer');
   if (!container) return;
 
-  container.innerHTML = '<div class="driver-demand-empty">Cargando grupos de demanda...</div>';
+  container.innerHTML = '<div class="driver-demand-empty">Cargando pedidos...</div>';
 
   if (!window.supabaseClient) {
     container.innerHTML = '<div class="driver-demand-empty">Sin conexión con la base de datos.</div>';
@@ -60,14 +60,15 @@ async function renderDriverOrdersList() {
   driverCategoria = driverCategoria || userData.categoria || userData.category || 'gas';
 
   if (!driverCiudad) {
-    container.innerHTML = '<div class="driver-demand-empty">Selecciona tu ciudad para ver los grupos de demanda.</div>';
+    container.innerHTML = '<div class="driver-demand-empty">Selecciona tu ciudad para ver los pedidos disponibles.</div>';
     return;
   }
 
   const normCity = String(driverCiudad).toLowerCase().trim();
   let clusters = [];
+  let availableOrders = [];
   let assignedOrders = [];
-  let clusterError = null;
+  let ordersError = null;
 
   try {
     if (typeof window.obtenerGruposDemanda === 'function') {
@@ -85,9 +86,12 @@ async function renderDriverOrdersList() {
           window.isOrderCategoryMatchingDriver(cluster.categoria, driverCategoria);
       });
     }
+    if (typeof window.obtenerPedidosDisponiblesDesdeGrupos === 'function') {
+      availableOrders = await window.obtenerPedidosDisponiblesDesdeGrupos(clusters, normCity, driverCategoria);
+    }
   } catch (error) {
-    clusterError = error;
-    console.error('Error cargando grupos de demanda:', error);
+    ordersError = error;
+    console.error('Error cargando pedidos disponibles:', error);
   }
 
   if (localUserId) {
@@ -129,7 +133,7 @@ async function renderDriverOrdersList() {
   let html = '';
 
   if (assignedOrders.length > 0) {
-    html += '<div class="demand-section-title"><i class="fa-solid fa-route"></i> Mi grupo asignado</div>';
+    html += '<div class="demand-section-title"><i class="fa-solid fa-route"></i> Pedidos asignados</div>';
     assignedOrders.forEach(order => {
       const lat = Number(order.latitude);
       const lng = Number(order.longitude);
@@ -161,40 +165,38 @@ async function renderDriverOrdersList() {
     });
   }
 
-  html += '<div class="demand-section-title"><i class="fa-solid fa-people-group"></i> Grupos disponibles</div>';
+  html += '<div class="demand-section-title"><i class="fa-solid fa-clipboard-list"></i> Pedidos disponibles</div>';
 
-  if (clusterError) {
-    html += `<div class="driver-demand-empty">No se pudieron cargar los grupos: ${window.escapeHtmlStr(clusterError.message || 'error de conexión')}.</div>`;
-  } else if (clusters.length === 0) {
-    html += `<div class="driver-demand-empty">Todavía no hay un grupo de al menos 2 pedidos de ${window.escapeHtmlStr(driverCategoria)} en esta ciudad.</div>`;
+  if (ordersError) {
+    html += `<div class="driver-demand-empty">No se pudieron cargar los pedidos: ${window.escapeHtmlStr(ordersError.message || 'error de conexión')}.</div>`;
+  } else if (availableOrders.length === 0) {
+    html += `<div class="driver-demand-empty">Todavía no hay pedidos disponibles de ${window.escapeHtmlStr(driverCategoria)} en esta ciudad.</div>`;
   } else {
-    clusters
-      .sort((a, b) => Number(b.pedidos_activos || 0) - Number(a.pedidos_activos || 0))
-      .forEach(cluster => {
-        const lat = Number(cluster.centro_lat);
-        const lng = Number(cluster.centro_lng);
-        const count = Number(cluster.pedidos_activos || 0);
-        const safeClusterId = window.escapeHtmlStr(cluster.cluster_id || '');
-        const safeCity = window.escapeHtmlStr(cluster.ciudad || normCity);
-        const safeCategory = window.escapeHtmlStr(cluster.categoria || driverCategoria);
+    availableOrders
+      .sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0))
+      .forEach(order => {
+        const lat = Number(order.latitude);
+        const lng = Number(order.longitude);
+        const safeId = window.escapeHtmlStr(order.id || '');
+        const safeCategory = window.escapeHtmlStr(order.categoria || driverCategoria);
+        const safeQuantity = window.escapeHtmlStr(order.cantidad || '1');
+        const safeZone = window.escapeHtmlStr(order.barrio_otb || 'Zona indicada en el mapa');
         html += `
-          <article class="demand-group-card">
+          <article class="demand-group-card available-order-card">
             <div class="demand-card-header">
               <div>
-                <div class="demand-card-count">${count} pedidos</div>
-                <strong>${safeCategory}</strong>
+                <div class="demand-card-count">${safeCategory}</div>
+                <strong>${safeQuantity} unidad(es)</strong>
               </div>
-              <span class="trip-status-text">DEMANDA ACTIVA</span>
+              <span class="trip-status-text">DISPONIBLE</span>
             </div>
             <div class="demand-card-meta">
-              Zona agrupada en un radio aproximado de 300 m. Último pedido hace ${minutesSince(cluster.created_at_ultimo)} min.
+              <div><i class="fa-solid fa-location-dot"></i> ${safeZone}</div>
+              <div><i class="fa-regular fa-clock"></i> Publicado hace ${minutesSince(order.created_at)} min.</div>
             </div>
             <div class="demand-card-actions">
-              <button type="button" class="btn-driver-my-location" data-action="centrarGrupoDemanda" data-lat="${lat}" data-lng="${lng}" data-cluster-id="${safeClusterId}">
-                <i class="fa-solid fa-location-crosshairs"></i> Ver zona
-              </button>
-              <button type="button" class="btn-driver-accept" data-action="aceptarGrupoDemanda" data-cluster-id="${safeClusterId}" data-ciudad="${safeCity}" data-categoria="${safeCategory}">
-                <i class="fa-solid fa-people-group"></i> Aceptar grupo
+              <button type="button" class="btn-driver-accept" data-action="aceptarPedidoRepartidor" data-id="${safeId}" data-lat="${lat}" data-lng="${lng}">
+                <i class="fa-solid fa-diamond-turn-right"></i> Elegir y navegar
               </button>
             </div>
           </article>`;
@@ -225,51 +227,37 @@ window.centrarPedidoEnMapa = function(lat, lng, id) {
   }
 };
 
-// window.aceptarPedidoRepartidor removido intencionalmente (Fase 3: Sólo grupos)
-
-window.aceptarGrupoDemanda = async function(clusterId, ciudad, categoria) {
-  if (typeof closeDriverOrdersModal === 'function') closeDriverOrdersModal();
+window.aceptarPedidoRepartidor = function(orderId, lat, lng, address) {
   if (!window.supabaseClient) {
     if (typeof showToast === 'function') showToast('Error', 'Sin conexión a la base de datos.', 'error');
     else alert('❌ Error: Sin conexión a la base de datos.');
     return;
   }
-  showConfirmModal('🚚', 'Aceptar Grupo', '¿Deseas asignarte este grupo de pedidos?', 'Sí, aceptar pedidos', async () => {
-    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Asignando pedidos...');
+  showConfirmModal('🚚', 'Elegir Pedido', 'El pedido quedará asignado a tu cuenta y se abrirá la navegación externa.', 'Elegir y navegar', async () => {
+    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Asignando pedido...');
 
-    // Call RPC to officially assign the orders in backend
-    const { error } = await window.supabaseClient.rpc('rpc_accept_demand_cluster_v2', {
-        p_cluster_id: clusterId,
-        p_ciudad: ciudad,
-        p_categoria: categoria
+    const { error } = await window.supabaseClient.rpc('rpc_assign_order', {
+      p_order_id: orderId
     });
 
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
 
     if (error) {
-      console.error("Error asignando cluster:", error);
-      if (typeof showToast === 'function') showToast('Error', error.message || 'No se pudo asignar el grupo de pedidos.', 'error');
-      else alert('❌ No se pudo asignar el grupo de pedidos.');
+      console.error('Error asignando pedido:', error);
+      if (typeof showToast === 'function') showToast('Pedido no disponible', error.message || 'Otro repartidor pudo tomarlo antes.', 'error');
+      else alert('❌ No se pudo asignar el pedido.');
       return;
     }
 
-    AppState.set('activeClusterId', clusterId);
-    AppState.set('activeClusterCity', ciudad);
-    AppState.set('activeClusterCat', categoria);
-
+    if (typeof closeDriverOrdersModal === 'function') closeDriverOrdersModal();
     if (typeof showToast === 'function') {
-      showToast('Grupo Aceptado', 'Has tomado este grupo de pedidos con éxito.', 'success');
+      showToast('Pedido Asignado', 'Abriendo la ruta en Google Maps.', 'success');
     }
-
-    if (window.demandClusterMarkers && window.demandClusterMarkers[clusterId]) {
-      if (typeof map !== 'undefined' && map) map.removeLayer(window.demandClusterMarkers[clusterId]);
-      delete window.demandClusterMarkers[clusterId];
-    }
-
     if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
     if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
+    window.abrirRutaGoogleMaps(lat, lng, orderId, address || '');
   });
-}
+};
 
 window.abrirRutaGoogleMaps = function (a, b, c, d) {
   let lat = null;

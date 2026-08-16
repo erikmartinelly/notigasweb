@@ -1105,6 +1105,36 @@ footer.ad-banner-container {
   color: white; 
 }
 
+/* SLOTS RESPONSIVOS DE GOOGLE ADSENSE */
+#adsenseContent,
+.adsense-slot-wrapper,
+.adsense-map-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.adsense-slot-wrapper {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 8px;
+  margin: 10px 0;
+  text-align: center;
+}
+
+.adsense-map-wrapper {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
 /* MODALES */
 .modal { 
   display: none; 
@@ -2859,31 +2889,6 @@ button:active, .tab-btn:active, .cat-chip:active {
   border: 0 !important;
 }
 
-.demand-cluster-badge {
-  width: 58px;
-  height: 58px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
-  background: #f57c00;
-  border: 4px solid #ffffff;
-  border-radius: 50%;
-  box-shadow: 0 3px 12px rgba(60, 64, 67, 0.45);
-}
-
-.demand-cluster-badge strong {
-  font-size: 20px;
-  line-height: 1;
-}
-
-.demand-cluster-badge span {
-  margin-top: 2px;
-  font-size: 8px;
-  font-weight: 800;
-}
-
 .btn-driver-complete {
   flex: 1;
   min-height: 36px;
@@ -2914,23 +2919,6 @@ button:active, .tab-btn:active, .cat-chip:active {
   text-align: center;
 }
 
-.demand-cluster-popup {
-  min-width: 190px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  color: #1E293B;
-}
-
-.demand-cluster-popup span {
-  font-size: 11px;
-}
-
-.demand-cluster-popup .btn-driver-accept {
-  width: 100%;
-  min-height: 36px;
-}
-
 @media (max-width: 480px) {
   .notigas-trip-card {
     top: 106px;
@@ -2954,4 +2942,174 @@ button:active, .tab-btn:active, .cat-chip:active {
 }
 .order-card-pressable:active {
   transform: scale(0.98);
+}
+
+/* MAPA CLARO: tonos suaves, carreteras legibles y controles blancos. */
+#map,
+.leaflet-container {
+  background: #f2efe9 !important;
+}
+
+.map-base-layer {
+  filter: saturate(88%) contrast(98%) brightness(103%) !important;
+}
+
+/* Crédito cartográfico mínimo obligatorio, sin marca adicional de Leaflet. */
+.leaflet-control-attribution {
+  display: block !important;
+  visibility: visible !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: calc(100vw - 12px) !important;
+  padding: 1px 4px !important;
+  color: #5f6368 !important;
+  background: rgba(255, 255, 255, 0.78) !important;
+  font-size: 8.5px !important;
+  line-height: 1.15 !important;
+  opacity: 0.82 !important;
+  pointer-events: auto !important;
+}
+
+.leaflet-control-attribution a {
+  color: #5f6368 !important;
+}
+
+/* Panel del repartidor alineado con la paleta NOTIGAS. */
+.driver-actions-panel {
+  background: rgba(15, 23, 42, 0.96) !important;
+  border: 1px solid rgba(255, 109, 0, 0.72) !important;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.42) !important;
+}
+
+.driver-actions-panel button,
+.demand-card-actions button,
+.order-popup-action {
+  min-height: 42px;
+  border-radius: 8px !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0 !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.24) !important;
+}
+
+.btn-driver-follow-me,
+.btn-driver-accept,
+.btn-driver-route {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #ff6d00 0%, #e65100 100%) !important;
+  border: 1px solid #ff8f00 !important;
+}
+
+.btn-driver-orders-list,
+.btn-driver-my-location {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #0288d1 0%, #01579b 100%) !important;
+  border: 1px solid #38bdf8 !important;
+}
+
+.btn-driver-pause {
+  color: #f8fafc !important;
+  background: #1e293b !important;
+  border: 1px solid #64748b !important;
+}
+
+.btn-driver-complete {
+  color: #ffffff !important;
+  background: #16833b !important;
+  border: 1px solid #34a853 !important;
+}
+
+.btn-driver-follow-me:hover,
+.btn-driver-accept:hover,
+.btn-driver-route:hover {
+  background: linear-gradient(135deg, #ff8f00 0%, #ff6d00 100%) !important;
+}
+
+.btn-driver-orders-list:hover,
+.btn-driver-my-location:hover {
+  background: linear-gradient(135deg, #039be5 0%, #0277bd 100%) !important;
+}
+
+.available-order-card {
+  border-color: rgba(2, 136, 209, 0.56) !important;
+}
+
+.notigas-order-popup {
+  min-width: 190px;
+  padding: 6px;
+  color: #202124;
+  font-family: Roboto, Arial, sans-serif;
+  text-align: center;
+}
+
+.notigas-order-popup > strong {
+  color: #e65100;
+  font-size: 13px;
+}
+
+.order-popup-category,
+.order-popup-address,
+.order-popup-contact,
+.order-popup-name {
+  color: #5f6368;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.order-popup-action {
+  width: 100%;
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 12px;
+  box-sizing: border-box;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+/* Al alejar el mapa, los grupos solo se representan como ondas de radar. */
+.demand-cluster-icon {
+  background: transparent !important;
+  border: 0 !important;
+  pointer-events: none !important;
+}
+
+.demand-radar {
+  position: relative;
+  width: 72px;
+  height: 72px;
+}
+
+.demand-radar span,
+.demand-radar i {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.demand-radar span {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(255, 109, 0, 0.84);
+  animation: demandRadarWave 2.2s ease-out infinite;
+}
+
+.demand-radar span:nth-child(2) { animation-delay: 0.72s; }
+.demand-radar span:nth-child(3) { animation-delay: 1.44s; }
+
+.demand-radar i {
+  width: 12px;
+  height: 12px;
+  background: #ff6d00;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.4);
+}
+
+@keyframes demandRadarWave {
+  0% { width: 20px; height: 20px; opacity: 0.92; }
+  100% { width: 70px; height: 70px; opacity: 0; }
 }

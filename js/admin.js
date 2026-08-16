@@ -187,9 +187,28 @@ function switchModalTab(idx) {
 
   if (idx === 2) renderAdminOrdersList();
 
-  if (idx === 3) renderAdminAdsAndPostsList();
+  if (idx === 3) {
+    cargarConfiguracionPublicidadEnAdmin();
+    renderAdminAdsAndPostsList();
+  }
 
   if (idx === 4) renderAdminReports();
+}
+
+function cargarConfiguracionPublicidadEnAdmin() {
+  const modeSelect = document.getElementById('selectAdsMode');
+  const pubInput = document.getElementById('inputAdSensePubId');
+  const slotFooterInput = document.getElementById('inputAdSenseSlotFooter');
+  const slotForumInput = document.getElementById('inputAdSenseSlotForum');
+  const slotMapInput = document.getElementById('inputAdSenseSlotMap');
+
+  if (window.ADS_CONFIG) {
+    if (modeSelect) modeSelect.value = window.ADS_CONFIG.mode || 'hybrid';
+    if (pubInput) pubInput.value = window.ADS_CONFIG.publisherId || '';
+    if (slotFooterInput) slotFooterInput.value = window.ADS_CONFIG.slotFooter || '';
+    if (slotForumInput) slotForumInput.value = window.ADS_CONFIG.slotForum || '';
+    if (slotMapInput) slotMapInput.value = window.ADS_CONFIG.slotMap || '';
+  }
 }
 
 async function renderAdminAdsAndPostsList() {
@@ -977,6 +996,23 @@ async function guardarSubmenuAnuncios() {
 
   }
 
+  // 1. Guardar configuración de Google AdSense (Publisher ID, slots y modo)
+  const adsMode = document.getElementById('selectAdsMode')?.value || 'hybrid';
+  const adsensePubId = (document.getElementById('inputAdSensePubId')?.value || '').trim();
+  const adsenseSlotFooter = (document.getElementById('inputAdSenseSlotFooter')?.value || '').trim();
+  const adsenseSlotForum = (document.getElementById('inputAdSenseSlotForum')?.value || '').trim();
+  const adsenseSlotMap = (document.getElementById('inputAdSenseSlotMap')?.value || '').trim();
+
+  if (typeof guardarConfiguracionPublicidad === 'function') {
+    guardarConfiguracionPublicidad({
+      mode: adsMode,
+      publisherId: adsensePubId,
+      slotFooter: adsenseSlotFooter,
+      slotForum: adsenseSlotForum,
+      slotMap: adsenseSlotMap
+    });
+  }
+
   const inputAd = (document.getElementById('inputAdText')?.value || '').trim();
 
   const inputUrl = (document.getElementById('inputAdUrl')?.value || '').trim();
@@ -991,12 +1027,10 @@ async function guardarSubmenuAnuncios() {
 
   if (typeof actualizarAnunciosEnVivo === 'function') {
     actualizarAnunciosEnVivo(inputAd, inputUrl);
-
   }
 
   if (imgUrl && typeof actualizarBannerConImagen === 'function') {
     actualizarBannerConImagen(imgUrl);
-
   }
 
   // Sincronizar con Supabase para la ciudad actual

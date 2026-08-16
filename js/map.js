@@ -195,7 +195,7 @@ function initNotigasMap() {
       center: [startLat, startLng],
       zoom: isNationalView ? 6 : 16,
       zoomControl: false,
-      attributionControl: false,
+      attributionControl: true,
       fadeAnimation: true,
       zoomAnimation: true
     });
@@ -212,13 +212,16 @@ function initNotigasMap() {
     zoomOutTitle: 'Alejar'
   }).addTo(map);
 
-  // Capa base con paleta y estilo visual adaptado a Google Maps
+  // Capa base clara; Google Maps se utiliza para la navegación externa.
+  const mapAttribution =
+    '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors ' +
+    '&copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener noreferrer">CARTO</a>';
   const baseTileLayer = L.tileLayer(
     'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
     {
       maxZoom: 20,
       subdomains: 'abcd',
-      attribution: '',
+      attribution: mapAttribution,
       className: 'map-base-layer'
     }
   );
@@ -236,6 +239,7 @@ function initNotigasMap() {
 
   baseTileLayer.addTo(map);
   mapTileLayers['osm_base'] = baseTileLayer;
+  if (map.attributionControl) map.attributionControl.setPrefix(false);
 
   // Ajustes de tamaño inmediatos y periódicos para asegurar renderizado completo
   setTimeout(() => { if (map) map.invalidateSize(); }, 150);
@@ -259,6 +263,9 @@ function initNotigasMap() {
   map.on('moveend', () => {
     isMapInteractedByUser = true;
     if (typeof desactivarSeguirme === 'function') desactivarSeguirme();
+  });
+  map.on('zoomend', () => {
+    renderDriverDemandByZoom();
   });
 
   map.on('click', (e) => {
@@ -333,15 +340,17 @@ async function cargarPedidosVecinalesEnVivo() {
 
     if (isDriverUser) {
       clearNeighborOrderMarkers();
+      let clusters = [];
+      let availableOrders = [];
       try {
-        const clusters = await obtenerGruposDemanda(normCity, driverCategoria);
-        renderDemandClustersOnMap(clusters);
+        clusters = await obtenerGruposDemanda(normCity, driverCategoria);
+        availableOrders = await obtenerPedidosDisponiblesDesdeGrupos(clusters, normCity, driverCategoria);
       } catch (clusterError) {
         clearDemandClusterMarkers();
-        console.warn('No se pudieron cargar los grupos de demanda:', clusterError);
+        console.warn('No se pudieron cargar los pedidos disponibles:', clusterError);
       }
 
-      // Los destinos individuales solo aparecen después de aceptar el grupo.
+      let assignedOrders = [];
       const { data: sessionData } = await window.supabaseClient.auth.getSession();
       const driverId = sessionData?.session?.user?.id;
       if (driverId) {
@@ -353,9 +362,12 @@ async function cargarPedidosVecinalesEnVivo() {
           .gte('created_at', activeWindow);
         if (normCity) assignedQuery = assignedQuery.ilike('ciudad', normCity);
         const assignedResult = await assignedQuery;
-        pedidosData = assignedResult.data || [];
+        assignedOrders = assignedResult.data || [];
         pedidosError = assignedResult.error;
       }
+      window.driverDemandMapState = { clusters, availableOrders, assignedOrders };
+      renderDriverDemandByZoom();
+      pedidosData = [];
     } else {
       clearDemandClusterMarkers();
       let buyerQuery = window.supabaseClient
@@ -402,6 +414,12 @@ async function cargarPedidosVecinalesEnVivo() {
 }
 
 window.demandClusterMarkers = window.demandClusterMarkers || {};
+window.driverDemandMapState = window.driverDemandMapState || {
+  clusters: [],
+  availableOrders: [],
+  assignedOrders: []
+};
+const DRIVER_RADAR_MAX_ZOOM = 14;
 
 function clearNeighborOrderMarkers() {
   Object.keys(neighborOrderMarkers).forEach(orderId => {
@@ -442,55 +460,88 @@ async function obtenerGruposDemanda(ciudad, categoriaRepartidor) {
   });
 }
 
+async function obtenerPedidosDisponiblesDesdeGrupos(clusters, ciudad, categoriaRepartidor) {
+  if (!window.supabaseClient || !Array.isArray(clusters) || clusters.length === 0) return [];
+
+  const results = await Promise.all(clusters.map(cluster => {
+    return window.supabaseClient.rpc('rpc_get_orders_for_cluster_v2', {
+      p_cluster_id: cluster.cluster_id,
+      p_ciudad: cluster.ciudad || ciudad,
+      p_categoria: cluster.categoria || categoriaRepartidor,
+      p_distancia_metros: 300,
+      p_min_pedidos: 2
+    });
+  }));
+
+  const ordersById = new Map();
+  let firstError = null;
+  results.forEach(result => {
+    if (result.error) {
+      firstError = firstError || result.error;
+      return;
+    }
+    (result.data || []).forEach(order => {
+      if (!order?.id || !['pendiente', 'visto'].includes(order.estado || 'pendiente')) return;
+      if (typeof window.isOrderCategoryMatchingDriver === 'function' &&
+          !window.isOrderCategoryMatchingDriver(order.categoria, categoriaRepartidor)) return;
+      ordersById.set(order.id, order);
+    });
+  });
+
+  if (ordersById.size === 0 && firstError) throw firstError;
+  return Array.from(ordersById.values());
+}
+
+function renderDriverDemandByZoom() {
+  if (!map || typeof L === 'undefined') return;
+  const isDriver = typeof AppState !== 'undefined' &&
+    (AppState.get('appMode') === 'driver' || AppState.get('userRole') === 'repartidor');
+  if (!isDriver) return;
+
+  const state = window.driverDemandMapState || {};
+  if (map.getZoom() <= DRIVER_RADAR_MAX_ZOOM) {
+    clearNeighborOrderMarkers();
+    renderDemandClustersOnMap(state.clusters || []);
+    return;
+  }
+
+  clearDemandClusterMarkers();
+  clearNeighborOrderMarkers();
+  [...(state.availableOrders || []), ...(state.assignedOrders || [])]
+    .forEach(order => agregarPedidoVecinoEnMapa(order));
+}
+
 function renderDemandClustersOnMap(clusters) {
   if (!map || typeof L === 'undefined') return;
   clearDemandClusterMarkers();
+  if (map.getZoom() > DRIVER_RADAR_MAX_ZOOM) return;
 
   (clusters || []).forEach(cluster => {
     const lat = Number(cluster.centro_lat);
     const lng = Number(cluster.centro_lng);
-    const count = Number(cluster.pedidos_activos || 0);
     if (!Number.isFinite(lat) || !Number.isFinite(lng) || !cluster.cluster_id) return;
 
     const icon = L.divIcon({
       className: 'demand-cluster-icon',
-      html: `<div class="demand-cluster-badge"><strong>${count}</strong><span>PEDIDOS</span></div>`,
-      iconSize: [66, 66],
-      iconAnchor: [33, 33],
-      popupAnchor: [0, -30]
+      html: '<div class="demand-radar" aria-hidden="true"><span></span><span></span><span></span><i></i></div>',
+      iconSize: [72, 72],
+      iconAnchor: [36, 36]
     });
 
-    const safeId = escapeHtmlStr(cluster.cluster_id);
-    const safeCity = escapeHtmlStr(cluster.ciudad || '');
-    const safeCategory = escapeHtmlStr(cluster.categoria || '');
-    const marker = L.marker([lat, lng], { icon, zIndexOffset: 8500 }).addTo(map);
-    marker.bindPopup(`
-      <div class="demand-cluster-popup">
-        <strong>${count} pedidos agrupados</strong>
-        <span>${safeCategory} · radio aproximado de 300 m</span>
-        <button type="button" class="btn-driver-accept" data-action="aceptarGrupoDemanda" data-cluster-id="${safeId}" data-ciudad="${safeCity}" data-categoria="${safeCategory}">
-          <i class="fa-solid fa-people-group"></i> Aceptar grupo
-        </button>
-      </div>`);
+    const marker = L.marker([lat, lng], {
+      icon,
+      interactive: false,
+      keyboard: false,
+      zIndexOffset: 7200
+    }).addTo(map);
     window.demandClusterMarkers[cluster.cluster_id] = marker;
   });
 }
 
-window.centrarGrupoDemanda = function(lat, lng, clusterId) {
-  const nLat = Number(lat);
-  const nLng = Number(lng);
-  if (!map || !Number.isFinite(nLat) || !Number.isFinite(nLng)) return;
-  const modal = document.getElementById('modalDriverOrders');
-  if (modal) modal.style.display = 'none';
-  map.flyTo([nLat, nLng], 16, { duration: 1.1 });
-  setTimeout(() => {
-    const marker = window.demandClusterMarkers[clusterId];
-    if (marker) marker.openPopup();
-  }, 1200);
-};
-
 window.obtenerGruposDemanda = obtenerGruposDemanda;
+window.obtenerPedidosDisponiblesDesdeGrupos = obtenerPedidosDisponiblesDesdeGrupos;
 window.renderDemandClustersOnMap = renderDemandClustersOnMap;
+window.renderDriverDemandByZoom = renderDriverDemandByZoom;
 window.clearDemandClusterMarkers = clearDemandClusterMarkers;
 
 function actualizarRepartidorEnMapa(data) {
@@ -603,20 +654,32 @@ function agregarPedidoVecinoEnMapa(order) {
   if (isNaN(lat) || isNaN(lng)) return; // Evita que Leaflet falle si un pedido no tiene coordenadas
 
   const marker = L.marker([lat, lng], { icon: currentIcon, zIndexOffset: 8000 }).addTo(map);
-  const telStr = order.telefono ? `<span style="font-size:11px; color:#00E676; font-weight:800;">📞 ${escapeHtmlStr(order.telefono)}</span><br>` : '';
-  const dirStr = order.direccion ? `<span style="font-size:11px; color:#94A3B8;">📍 ${escapeHtmlStr(order.direccion)}</span><br>` : '';
-  const nombreStr = order.titulo ? `<span style="font-size:12px; color:#F8FAFC; font-weight:900;">👤 ${escapeHtmlStr(order.titulo)}</span><br>` : '';
+  const isAssignedToDriver = userRole === 'repartidor' &&
+    order.estado === 'asignado' && order.driver_id === localUserId;
+  const telStr = isAssignedToDriver && order.telefono ? `<span class="order-popup-contact">📞 ${escapeHtmlStr(order.telefono)}</span><br>` : '';
+  const dirStr = isAssignedToDriver && order.direccion ? `<span class="order-popup-address">📍 ${escapeHtmlStr(order.direccion)}</span><br>` : '';
+  const nombreStr = isAssignedToDriver && order.titulo ? `<span class="order-popup-name">👤 ${escapeHtmlStr(order.titulo)}</span><br>` : '';
   const mapsNavUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${lat},${lng}`)}`;
+  let orderAction = '';
+  if (isAssignedToDriver) {
+    orderAction = `
+      <a href="${mapsNavUrl}" target="_blank" rel="noopener noreferrer" data-action="abrirRutaGoogleMaps" data-lat="${lat}" data-lng="${lng}" data-id="${escapeHtmlStr(order.id)}" data-address="${escapeHtmlStr(order.direccion || '')}" class="btn-driver-route order-popup-action">
+        <i class="fa-solid fa-diamond-turn-right"></i> IR CON GOOGLE MAPS
+      </a>`;
+  } else if (userRole === 'repartidor') {
+    orderAction = `
+      <button type="button" data-action="aceptarPedidoRepartidor" data-lat="${lat}" data-lng="${lng}" data-id="${escapeHtmlStr(order.id)}" class="btn-driver-accept order-popup-action">
+        <i class="fa-solid fa-diamond-turn-right"></i> ELEGIR Y NAVEGAR
+      </button>`;
+  }
   const popupHtml = `
-    <div style="font-family:'Roboto',sans-serif; text-align:center; padding:6px; min-width:180px;">
-      <strong style="color:#FF6D00; font-size:13px;">🛒 Pedido de un Vecino</strong><br>
+    <div class="notigas-order-popup">
+      <strong>Pedido disponible</strong><br>
       ${nombreStr}
-      <span style="font-size:11px; color:#64748B; font-weight:700;">${escapeHtmlStr(order.categoria)}</span><br>
+      <span class="order-popup-category">${escapeHtmlStr(order.categoria)} · ${escapeHtmlStr(order.cantidad || '1')} unidad(es)</span><br>
       ${dirStr}
       ${telStr}
-      <a href="${mapsNavUrl}" target="_blank" rel="noopener noreferrer" data-action="abrirRutaGoogleMaps" data-lat="${lat}" data-lng="${lng}" data-id="${order.id}" data-address="${escapeHtmlStr(order.direccion || '')}" class="btn-driver-route" style="margin-top:8px; display:inline-flex; align-items:center; justify-content:center; gap:6px; background:linear-gradient(135deg, #FF6D00, #E65100); color:white; border:none; padding:10px 14px; border-radius:10px; font-weight:900; font-size:12px; cursor:pointer; width:100%; text-decoration:none; box-sizing:border-box; box-shadow:0 4px 12px rgba(255,109,0,0.4);">
-        <i class="fa-solid fa-diamond-turn-right"></i> 🚀 IR CON GOOGLE MAPS
-      </a>
+      ${orderAction}
     </div>
   `;
 

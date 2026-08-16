@@ -2,30 +2,28 @@
 
 NOTIGAS es una Progressive Web Application (PWA) de logística comunitaria y geolocalización en tiempo real, diseñada para conectar a vecinos compradores con repartidores y distribuidores locales a través de un mapa interactivo en vivo.
 
-Construida con **Vanilla JavaScript** de alto rendimiento, **Supabase PostgreSQL con PostGIS**, y potenciada por el ecosistema de **Google (Google Antigravity, Google Identity Services, Google Maps Platform y Google PWA)**.
+Construida con **Vanilla JavaScript**, **Supabase PostgreSQL con PostGIS** y productos de Google. Aproximadamente el **80% de la aplicación fue desarrollado con Google Antigravity**.
 
 ---
 
 ## 🌟 Identidad del Proyecto y Tecnologías Google
 
-* 🤖 **Desarrollado con Google Antigravity:** La arquitectura avanzada, la lógica de clustering espacial DBSCAN, la seguridad estricta de base de datos (RLS) y las optimizaciones críticas de producción fueron desarrolladas y refinadas utilizando **Google Antigravity**, la plataforma de agentes de desarrollo asistido por IA de Google DeepMind.
+* 🤖 **80% desarrollado con Google Antigravity:** La mayor parte de la construcción, revisión y refinamiento técnico de NOTIGAS se realizó con **Google Antigravity**, junto con decisiones funcionales específicas para su modelo logístico comunitario.
 * 🔑 **Google Identity Services (Google Sign-In & OAuth 2.0):** Autenticación rápida, segura y sin fricción mediante cuentas Google para vecinos y repartidores, integrada con Supabase Auth y validación de tokens JWT.
-* 🗺️ **Integración y Navegación con Google Maps:**
-  * **Navegación en Ruta:** Despacho y apertura automática de rutas giro a giro mediante **Google Maps** para que los repartidores naveguen de forma eficiente hacia los pedidos asignados.
-  * **Estética y Paleta Visual Google Maps:** El motor de mapa interactivo está calibrado con la paleta de colores oficial de Google Maps (tonos cálidos en vías, áreas verdes suaves, cuerpos de agua celestes y tipografía Google Sans/Roboto).
-  * **Geolocalización Adaptativa:** APIs de geolocalización de alta precisión siguiendo los estándares y directrices de Google Maps.
-* 📱 **Estándares Google Chrome & PWA:** Arquitectura Progressive Web App (PWA) con Service Worker para caché inteligente, soporte offline y web app manifest para instalación nativa en Android, iOS y Desktop.
+* 🗺️ **Navegación externa con Google Maps:** Después de elegir y asignarse un pedido, el repartidor abre **Google Maps** para recibir indicaciones de ruta hacia el destino.
+* 🎨 **Referencia visual Google Maps:** El mapa interno adopta una interfaz clara, controles blancos y una paleta cartográfica suave inspirada en la experiencia visual de Google Maps, sin presentarse como un mapa oficial de Google.
+* 📱 **Compatibilidad con Google Chrome y PWA:** Service Worker, caché e instalación como aplicación web en Android y escritorio.
 
 ---
 
 ## 🚀 Key Features
 
 * **Mapa Interactivo en Tiempo Real:** Visualización en vivo tanto para vecinos como para repartidores. Los compradores publican pedidos que generan marcadores geolocalizados y los conductores transmiten su telemetría GPS a medida que recorren el barrio.
-* **Grupos de Demanda Espacial (AI & DBSCAN):** Algoritmo de agrupamiento geoespacial atómico que identifica concentraciones de pedidos pendientes para que los repartidores puedan tomar rutas completas en un solo paso.
+* **Radar de Demanda Espacial:** Al alejar el mapa, las concentraciones de pedidos se muestran únicamente como ondas de radar. Al acercarse, el repartidor ve y elige pedidos individuales.
 * **Sincronización Inmediata (Supabase Realtime):** Actualización instantánea de marcadores, pedidos y repartidores vía WebSockets sin necesidad de recargar la pantalla.
 * **Roles de Usuario Duales:**
   * **Vecino (Comprador):** Solicita suministros esenciales (Gas GLP, Agua embotellada, abarrotes) y visualiza en tiempo real los camiones que se aproximan.
-  * **Repartidor (Conductor):** Registra su ficha de distribuidor, transmite su ubicación GPS y toma pedidos individuales o grupos de demanda.
+  * **Repartidor (Conductor):** Registra su ficha, transmite su ubicación GPS, elige un pedido individual y activa la navegación externa con Google Maps.
 * **Muro Comunitario / Avisos de Barrio:** Tablón vecinal interactivo para alertas, comunicados y avisos con sistema de votación única y purga automática programada.
 * **Panel de Administración Blindado:** Acceso administrativo protegido mediante verificación de credenciales con hashing criptográfico y políticas RLS intransigibles.
 
@@ -47,8 +45,8 @@ NOTIGAS resuelve esta necesidad democratizando el acceso a la tecnología y la l
 | :--- | :--- |
 | **Ingeniería e IA** | **Google Antigravity (AGY)** (Desarrollo y refactorización asistida por agentes) |
 | **Autenticación** | **Google Identity Services** (Google OAuth 2.0 & One-Tap) + Supabase Auth |
-| **Navegación y Mapas** | **Google Maps Platform** (Navegación de conductores) + Motor Leaflet calibrado con paleta visual Google Maps |
-| **Plataforma Web** | **Google PWA Standards**, HTML5, CSS3 Moderno, JavaScript Vanilla (sin frameworks pesados) |
+| **Navegación** | **Google Maps** abierto de forma externa para guiar al repartidor hacia el pedido asignado |
+| **Plataforma Web** | Google Chrome, PWA, HTML5, CSS3 y JavaScript Vanilla |
 | **Base de Datos & Backend** | **Supabase** (PostgreSQL 15+, PostGIS, Realtime WebSockets, Row Level Security) |
 | **Servidor de Producción** | **Node.js / Express** (`server.js`) con cabeceras estrictas de seguridad (CSP, HSTS, Anti-Clickjacking) |
 
@@ -73,7 +71,7 @@ NOTIGAS resuelve esta necesidad democratizando el acceso a la tecnología y la l
 │   ├── map_gps.js          # Seguimiento GPS adaptativo y telemetría en vivo
 │   ├── forum.js            # Foro vecinal, publicaciones comunitarias y comentarios
 │   ├── ads.js              # Anuncios locales y banners dinámicos
-│   ├── orders.js           # Creación de pedidos, asignación individual y grupos de demanda
+│   ├── orders.js           # Creación, selección individual, asignación y entrega de pedidos
 │   ├── admin.js            # Panel de control de administración y métricas operativas
 │   ├── admin_users.js      # Moderación de usuarios y habilitación de repartidores
 │   └── events.js           # Event listeners e interacciones globales de la UI
@@ -127,6 +125,5 @@ Abre `http://localhost:3000` en tu navegador.
 * **Procedimientos RPC Atómicos (`SECURITY DEFINER` con `search_path = public`):**
   * `rpc_assign_order`: Asignación individual con bloqueo de fila `FOR UPDATE`.
   * `rpc_get_demand_clusters_v2`: Agrupación espacial con algoritmo DBSCAN determinista.
-  * `rpc_accept_demand_cluster_v2`: Aceptación atómica por lotes de grupos de demanda.
   * `rpc_get_my_assigned_orders`: Acceso seguro a los datos de contacto únicamente de pedidos asignados al conductor.
   * `delete_user_account`: Eliminación en cascada de la cuenta y registros asociados.
