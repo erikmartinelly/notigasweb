@@ -1314,7 +1314,7 @@ function renderActiveOrdersMap() {
       });
 
       const btnAccion = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver')
-        ? '' // Repartidores deben usar grupos, no aceptación individual
+        ? '' // El repartidor gestiona los pedidos desde su panel.
         : `<button style="margin-top:6px; background:#D32F2F; color:white; border:none; padding:5px 12px; border-radius:6px; font-size:11px; font-weight:900; cursor:pointer;" data-action="cancelarPedidoActivo">⛔ Cancelar Pedido</button>`;
 
       const telInfo = order.telefono ? `<br><span style="font-size:10.5px; color:#00E676; font-weight:800;">📞 Tel: ${escapeHtmlStr(order.telefono)}</span>` : '';
@@ -1337,7 +1337,7 @@ function renderActiveOrdersMap() {
 
 /* ==========================================================================
    ALGORITMO DE OPTIMIZACIÓN DE RUTAS BARRIALES
-   ELIMINADO: La navegación paso a paso se delega oficialmente a Google Maps Navigation
+   ELIMINADO: La navegación paso a paso se abre de forma externa en Google Maps
    para evitar sobrecargar el navegador y mejorar la fiabilidad.
    ========================================================================== */
 
@@ -1510,4 +1510,4 @@ window.initNotigasMap = initNotigasMap;
 
 // ==========================================
 // RUTAS OSRM PARA CHOFERES (NIVEL 1) ELIMINADO
-// Navegación ha sido delegada a Google Maps oficial
+// La navegación se abre de forma externa en Google Maps

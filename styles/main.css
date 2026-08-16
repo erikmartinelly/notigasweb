@@ -2534,21 +2534,15 @@ button:active, .tab-btn:active, .cat-chip:active {
 }
 
 
-/* MAPA NOTIGAS: Estilo e Identidad Visual Inspirada en Google Maps */
+/* MAPA NOTIGAS: interfaz cartográfica clara y de bajo contraste */
 #map,
 .map-container,
 .leaflet-container {
-  background-color: #f2efe9 !important; /* Canvas de fondo cálido idéntico a Google Maps */
+  background-color: #f2efe9 !important;
 }
 
 .map-base-layer {
-  /* Emulación fiel de la paleta oficial Google Maps:
-     - Vegetación y parques en verde menta/salvia suave
-     - Cuerpos de agua en azul celeste limpio
-     - Vías arteriales en amarillo/naranja suave
-     - Vías secundarias en blanco nítido
-     - Fondo base cálido y contrastado */
-  filter: contrast(106%) saturate(126%) brightness(101%) hue-rotate(-4deg);
+  filter: saturate(88%) contrast(98%) brightness(103%);
 }
 
 .leaflet-control-zoom {
@@ -2565,7 +2559,7 @@ button:active, .tab-btn:active, .cat-chip:active {
   background: #ffffff !important;
   border: 0 !important;
   border-bottom: 1px solid #e8eaed !important;
-  font-family: 'Google Sans', Roboto, Arial, sans-serif !important;
+  font-family: Roboto, Arial, sans-serif !important;
   font-size: 22px !important;
   font-weight: 400 !important;
 }
@@ -2580,14 +2574,14 @@ button:active, .tab-btn:active, .cat-chip:active {
   color: #1a73e8 !important;
 }
 
-/* Ocultar completamente el letrero y barra de atribución */
+/* Crédito cartográfico compacto. */
 .leaflet-control-attribution {
-  display: none !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
-  height: 0 !important;
-  width: 0 !important;
-  pointer-events: none !important;
+  max-width: calc(100vw - 12px) !important;
+  padding: 1px 4px !important;
+  color: #5f6368 !important;
+  background: rgba(255, 255, 255, 0.78) !important;
+  font-size: 8.5px !important;
+  line-height: 1.15 !important;
 }
 
 .map-selection-hint,

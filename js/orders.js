@@ -325,8 +325,7 @@ window.abrirRutaGoogleMaps = function (a, b, c, d) {
     showToast('🚀 En Ruta', 'Abriendo navegación en Google Maps...', 'success', 2500);
   }
 
-  // Navegar nunca asigna un pedido. La asignación solo ocurre al aceptar
-  // atómicamente un grupo mediante rpc_accept_demand_cluster_v2.
+  // La navegación se habilita después de asignar el pedido individual.
 };
 
 async function confirmarEntregaPedido(id) {
@@ -389,29 +388,29 @@ const ACTIVE_ORDER_STATUS_REFRESH_MS = 15000;
 
 const ORDER_STATUS_PRESENTATION = {
   pendiente: {
-    title: 'Esperando grupo',
+    title: 'Esperando repartidor',
     label: 'PENDIENTE',
     owner: 'DEMANDA VECINAL',
-    info: 'Tu pedido está registrado y suma demanda con vecinos cercanos.',
-    detail: 'Se asignará cuando un repartidor acepte el grupo de tu zona.',
+    info: 'Tu pedido está registrado y visible para los repartidores de tu zona.',
+    detail: 'Se asignará cuando un repartidor elija tu pedido.',
     color: '#FF6D00',
     shadow: 'rgba(255, 109, 0, 0.18)'
   },
   visto: {
-    title: 'Zona revisada',
+    title: 'Pedido revisado',
     label: 'VISTO',
     owner: 'SIGUE DISPONIBLE',
-    info: 'Un repartidor vio la demanda y tu pedido continúa activo dentro del grupo.',
-    detail: 'Esperando que un repartidor acepte el grupo completo.',
+    info: 'Un repartidor vio tu pedido y continúa disponible.',
+    detail: 'Esperando que un repartidor lo elija.',
     color: '#FF8F00',
     shadow: 'rgba(255, 143, 0, 0.18)'
   },
   asignado: {
-    title: 'Grupo en camino',
+    title: 'Pedido en camino',
     label: 'ASIGNADO',
     owner: 'REPARTIDOR ASIGNADO',
-    info: 'Un repartidor aceptó el grupo de pedidos de tu zona.',
-    detail: 'El chofer ya puede ver los destinos asignados y realizar las entregas.',
+    info: 'Un repartidor aceptó tu pedido.',
+    detail: 'El chofer ya puede ver el destino y navegar hacia la entrega.',
     color: '#D32F2F',
     shadow: 'rgba(211, 47, 47, 0.18)'
   },
