@@ -57,7 +57,8 @@ NOTIGAS bridges this gap by democratizing access to Artificial Intelligence and 
 ├── styles/
 │   └── main.css            # Application CSS stylesheet
 └── supabase/
-    └── migrations/         # Database tables, RLS policies, RPC functions, and triggers (001 - 040)
+    ├── full_production_schema.sql # ESQUEMA COMPLETO Y CONSOLIDADO PARA PRODUCCIÓN (1-Click Deploy)
+    └── migrations/         # Migraciones incrementales históricas y fixes (001 - 040)
 ```
 
 ## ⚙️ Setup & Installation
@@ -70,16 +71,17 @@ NOTIGAS bridges this gap by democratizing access to Artificial Intelligence and 
 
 2.  **Configure Supabase:**
     *   Create a new project in Supabase.
-    *   Run the SQL scripts located in the `supabase/migrations/` folder in numerical order (from `001_initial_setup.sql` to `040_unify_order_state_machine.sql`) in the Supabase SQL Editor to create the required tables, RLS policies, storage buckets, and secure RPC functions.
-        * **014_fix_auth_triggers.sql:** Deletes conflicting triggers on `auth.users` and is **mandatory** for all deployments to prevent registration failures.
-        * **027_profiles_location_seen_and_account_cleanup.sql:** User profiles, location caching, and cascading `delete_user_account()` RPC.
-        * **033_official_notices_and_purge_rpc.sql:** Official admin broadcast notices and automated database cleanup RPCs.
-        * **035_refine_rpc_assign_order_and_index.sql:** Atomic order assignment with row locking `FOR UPDATE` and category normalization.
-        * **036_robust_admin_credentials_and_is_admin.sql:** Multi-tenant admin credentials validation and `is_admin_email()` security checks.
-        * **037_harden_rls_policies.sql:** Comprehensive Row-Level Security (RLS) policies for orders, drivers, and moderation.
-        * **038_add_updated_at_to_pedidos.sql:** Adds `updated_at` column to `pedidos` with automatic update trigger and index.
-        * **039_unify_cluster_id_algorithm.sql:** Unifies deterministic `cluster_id` generation across `rpc_get_demand_clusters_v2`, `rpc_get_orders_for_cluster_v2`, and `rpc_accept_demand_cluster_v2`.
-        * **040_unify_order_state_machine.sql:** Strictly unifies the 5-state machine in PostgreSQL with validation triggers.
+    *   **Opción A (Recomendada para Despliegues Nuevos):** Ejecuta el archivo consolidado [`supabase/full_production_schema.sql`](supabase/full_production_schema.sql) en el SQL Editor de Supabase. Este script único e idempotente crea todas las tablas, vistas públicas autorizadas, índices, triggers de validación, funciones RPC atómicas y políticas RLS con los contratos requeridos por el frontend.
+    *   **Opción B (Migraciones Incrementales):** Ejecuta las migraciones en `supabase/migrations/` en orden numérico estricto (desde `001_initial_setup.sql` hasta `040_unify_order_state_machine.sql`).
+        * **014_fix_auth_triggers.sql:** Elimina triggers conflictivos en `auth.users` para prevenir fallos de registro.
+        * **027_profiles_location_seen_and_account_cleanup.sql:** Perfiles de usuario y RPC en cascada `delete_user_account()`.
+        * **033_official_notices_and_purge_rpc.sql:** Avisos oficiales y purga programada `rpc_purge_old_records()`.
+        * **035_refine_rpc_assign_order_and_index.sql:** Asignación atómica de pedidos con bloqueo `FOR UPDATE` y normalización de categorías.
+        * **036_robust_admin_credentials_and_is_admin.sql:** Validación de credenciales de administración y función de seguridad `is_admin_email()`.
+        * **037_harden_rls_policies.sql:** Políticas de seguridad RLS blindadas para compradores, choferes y moderación.
+        * **038_add_updated_at_to_pedidos.sql:** Agrega `updated_at` a `pedidos` con trigger automático e indexación.
+        * **039_unify_cluster_id_algorithm.sql:** Unifica el algoritmo determinista de `cluster_id` en las RPCs de grupos de demanda.
+        * **040_unify_order_state_machine.sql:** Unifica la máquina de 5 estados oficiales con triggers de validación.
     *   Open `js/supabase-config.js` and replace the placeholder `supabaseUrl` and `supabaseAnonKey` with your project's actual credentials.
     *   **⚠️ IMPORTANT - Email Confirmation:** Supabase requires email confirmation by default for new registrations. If you wish to disable this during testing or development, go to your Supabase Dashboard -> **Authentication** -> **Providers** -> **Email** and toggle off **Confirm email**. Ensure your `Site URL` and `Redirect URLs` in Supabase Auth configuration point to your production domain.
 

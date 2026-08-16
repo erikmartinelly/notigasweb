@@ -84,6 +84,12 @@ let truckIcon;
 
 let supabaseWaitRetries = 0;
 function waitForSupabaseAndInit() {
+  if (typeof L === 'undefined') {
+    console.log("⏳ Esperando a Leaflet (L) para cargar el mapa...");
+    setTimeout(waitForSupabaseAndInit, 100);
+    return;
+  }
+
   if (window.supabaseClient) {
     console.log("🟢 Supabase detectado, iniciando mapa...");
     initNotigasMap();
@@ -97,13 +103,28 @@ function waitForSupabaseAndInit() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    waitForSupabaseAndInit();
+  });
+} else {
   waitForSupabaseAndInit();
-});
+}
 
 function initNotigasMap() {
+  if (typeof L === 'undefined') {
+    console.warn("⏳ Leaflet aún no está disponible, reintentando initNotigasMap...");
+    setTimeout(initNotigasMap, 100);
+    return;
+  }
+
   const mapElement = document.getElementById('map');
   if (!mapElement) return;
+
+  if (window.map) {
+    console.log("ℹ️ El mapa ya está inicializado.");
+    return;
+  }
 
   userLocationIcon = L.divIcon({
     className: 'user-location-marker',
