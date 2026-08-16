@@ -195,6 +195,7 @@ function initNotigasMap() {
       center: [startLat, startLng],
       zoom: isNationalView ? 6 : 16,
       zoomControl: false,
+      attributionControl: false,
       fadeAnimation: true,
       zoomAnimation: true
     });
@@ -211,18 +212,14 @@ function initNotigasMap() {
     zoomOutTitle: 'Alejar'
   }).addTo(map);
 
-  // OpenStreetMap con un estilo claro de CARTO Voyager. No utiliza tiles,
-  // recursos visuales ni APIs de Google Maps.
-  const osmAttribution =
-    '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors ' +
-    '&copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener noreferrer">CARTO</a>';
+  // Capa base con paleta y estilo visual adaptado a Google Maps
   const baseTileLayer = L.tileLayer(
     'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
     {
-    maxZoom: 20,
-    subdomains: 'abcd',
-    attribution: osmAttribution,
-    className: 'map-base-layer'
+      maxZoom: 20,
+      subdomains: 'abcd',
+      attribution: '',
+      className: 'map-base-layer'
     }
   );
 
