@@ -749,7 +749,16 @@ async function iniciarSesionRepartidor() {
   }
 
   AppState.set('userData', repartidorData);
-  AppState.set('city', ciudad.toLowerCase());
+
+  if (typeof window.cambiarCiudad === 'function') {
+    try {
+      await window.cambiarCiudad(ciudad.toLowerCase());
+    } catch(e) {
+      AppState.set('city', ciudad.toLowerCase());
+    }
+  } else {
+    AppState.set('city', ciudad.toLowerCase());
+  }
 
   sessionStorage.removeItem('notigas_temp_gmail');
 
@@ -1139,8 +1148,16 @@ async function procesarSesionExitosa(user) {
     if (currentSelectedRole === 'driver') {
       if (esRepartidorDB && choferData) {
         if (choferData.ciudad) {
-          clienteData.ciudad = choferData.ciudad.toLowerCase();
-          AppState.set('city', choferData.ciudad.toLowerCase());
+          clienteData.ciudad = choferData.ciudad.toLowerCase().trim();
+          if (typeof window.cambiarCiudad === 'function') {
+            try {
+              await window.cambiarCiudad(choferData.ciudad.toLowerCase().trim());
+            } catch(e) {
+              AppState.set('city', choferData.ciudad.toLowerCase().trim());
+            }
+          } else {
+            AppState.set('city', choferData.ciudad.toLowerCase().trim());
+          }
         }
         if (choferData.categoria) clienteData.categoria = choferData.categoria;
         if (choferData.productos) clienteData.productos = choferData.productos;
@@ -1185,6 +1202,17 @@ async function procesarSesionExitosa(user) {
             ciudad: AppState.get('city') || null
         });
 
+        if (profile && profile.ciudad) {
+          clienteData.ciudad = profile.ciudad.toLowerCase().trim();
+          if (typeof window.cambiarCiudad === 'function') {
+            try {
+              await window.cambiarCiudad(profile.ciudad.toLowerCase().trim());
+            } catch(e) {
+              AppState.set('city', profile.ciudad.toLowerCase().trim());
+            }
+          }
+        }
+
         const tieneUbicacion = profile && profile.latitude != null && profile.longitude != null;
 
         if (!tieneUbicacion) {
@@ -1206,14 +1234,29 @@ async function procesarSesionExitosa(user) {
   }
 }
 
-window.finalizeRoleSelection = function(role) {
+window.finalizeRoleSelection = async function(role) {
   const modalRole = document.getElementById('modalRoleSelection');
   if (modalRole) modalRole.style.display = 'none';
 
   const citySelect = document.getElementById('newUserCity');
+  let selectedCity = null;
   if (citySelect && citySelect.value) {
-    const selectedCity = citySelect.value.toLowerCase();
-    AppState.set('city', selectedCity);
+    selectedCity = citySelect.value.toLowerCase().trim();
+  }
+
+  currentSelectedRole = role === 'repartidor' ? 'driver' : 'buyer';
+  window._roleSelectedNow = true;
+
+  if (selectedCity) {
+    if (typeof window.cambiarCiudad === 'function') {
+      try {
+        await window.cambiarCiudad(selectedCity);
+      } catch(e) {
+        AppState.set('city', selectedCity);
+      }
+    } else {
+      AppState.set('city', selectedCity);
+    }
 
     // Si ya hay user_data local válido, actualizarlo con la ciudad
     const u = AppState.get('userData');
@@ -1223,11 +1266,8 @@ window.finalizeRoleSelection = function(role) {
     }
   }
 
-  currentSelectedRole = role === 'repartidor' ? 'driver' : 'buyer';
-  window._roleSelectedNow = true;
-
   if (window._tempAuthUser) {
-    procesarSesionExitosa(window._tempAuthUser);
+    await procesarSesionExitosa(window._tempAuthUser);
   }
 };
 
