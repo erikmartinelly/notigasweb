@@ -204,7 +204,7 @@ function cargarConfiguracionPublicidadEnAdmin() {
 
   if (window.ADS_CONFIG) {
     if (modeSelect) modeSelect.value = window.ADS_CONFIG.mode || 'hybrid';
-    if (pubInput) pubInput.value = window.ADS_CONFIG.publisherId || '';
+    if (pubInput) pubInput.value = window.ADS_CONFIG.publisherId || 'ca-pub-2502415561017945';
     if (slotFooterInput) slotFooterInput.value = window.ADS_CONFIG.slotFooter || '';
     if (slotForumInput) slotForumInput.value = window.ADS_CONFIG.slotForum || '';
     if (slotMapInput) slotMapInput.value = window.ADS_CONFIG.slotMap || '';

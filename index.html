@@ -40,7 +40,7 @@
 
   <meta property="og:description" content="Sigue en tiempo real el camión de gas GLP, agua y servicios en tu barrio con mapa interactivo.">
 
-  <meta property="og:image" content="https://www.notigas.com/icons/Icon-512.png">
+  <meta property="og:image" content="https://www.notigas.com/icons/garrafa_red-512.png">
 
   <meta property="twitter:card" content="summary_large_image">
 
@@ -48,7 +48,7 @@
 
   <meta property="twitter:description" content="Sigue en tiempo real el camión de gas GLP y agua en tu barrio.">
 
-  <meta property="twitter:image" content="https://www.notigas.com/icons/Icon-512.png">
+  <meta property="twitter:image" content="https://www.notigas.com/icons/garrafa_red-512.png">
 
   <!-- DATOS ESTRUCTURADOS SCHEMA.ORG (JSON-LD) PARA GOOGLE SEARCH -->
   <script type="application/ld+json">
@@ -78,13 +78,13 @@
 
   <link rel="manifest" href="manifest.json">
 
-  <link id="dynamicFavicon" rel="icon" type="image/svg+xml" href="icons/garrafa_red_clean.svg"/>
+  <link id="dynamicFavicon" rel="icon" type="image/png" href="icons/garrafa_red-192.png"/>
 
-  <link rel="icon" type="image/svg+xml" href="icons/garrafa_red_clean.svg"/>
+  <link rel="icon" type="image/png" href="icons/garrafa_red-192.png"/>
 
-  <link rel="shortcut icon" href="icons/garrafa_red_clean.svg"/>
+  <link rel="shortcut icon" href="icons/garrafa_red-192.png"/>
 
-  <link rel="apple-touch-icon" href="icons/garrafa_red_clean.svg">
+  <link rel="apple-touch-icon" href="icons/garrafa_red-192.png">
 
   <!-- PRELOAD DE RECURSOS CRÍTICOS -->
 
@@ -104,7 +104,10 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="styles/main.css?v=81">
+  <link rel="stylesheet" href="styles/main.css?v=82">
+
+  <!-- GOOGLE ADSENSE OFICIAL -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2502415561017945" crossorigin="anonymous"></script>
 
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
@@ -149,7 +152,7 @@
 
     <div class="brand">
 
-      <img src="icons/garrafa_red_clean.svg" class="brand-img" alt="NOTIGAS Logo"> NOTIGAS
+      <img src="icons/garrafa_red_clean.svg" class="brand-img" alt="Logo oficial rojo de NOTIGAS"> NOTIGAS
 
     </div>
 
@@ -1048,7 +1051,7 @@
 
         <div class="submenu-card"  id="auto-event-39" >
 
-          <img src="icons/garrafa_red_clean.svg" style="width: 38px; height: 42px; object-fit: contain; filter: drop-shadow(0 0 6px #FF1744); margin-bottom: 4px;" alt="Garrafa GLP 10Kg Roja">
+          <img src="icons/garrafa_red_clean.svg" style="width: 38px; height: 42px; object-fit: contain; filter: drop-shadow(0 0 6px rgba(255, 23, 68, 0.7)); margin-bottom: 4px;" alt="Garrafa GLP roja de NOTIGAS">
 
           <span class="submenu-title">🔥 Garrafa GLP</span>
 
@@ -1178,7 +1181,7 @@
 
       </div>
 
-      <button class="btn-submit"  id="auto-event-48" ><i class="fa-solid fa-truck-fast" style="color:#F59E0B;"></i> <img src="icons/garrafa_red_clean.svg" style="width:22px; height:22px; vertical-align:middle; filter:drop-shadow(0 0 4px #FF1744);" alt="Gas"> Confirmar y Solicitar en Mapa Vivo</button>
+      <button class="btn-submit"  id="auto-event-48" ><i class="fa-solid fa-truck-fast" style="color:#F59E0B;"></i> <img src="icons/garrafa_red_clean.svg" style="width:22px; height:22px; vertical-align:middle; filter:drop-shadow(0 0 4px rgba(255, 23, 68, 0.7));" alt="Gas NOTIGAS"> Confirmar y Solicitar en Mapa Vivo</button>
 
     </div>
 
@@ -1559,15 +1562,16 @@
               <div class="form-group" style="margin-bottom: 8px;">
                 <label style="font-size: 11px;">Modo de Publicidad:</label>
                 <select id="selectAdsMode" style="font-size: 11px; background: #1E293B; color: white; border: 1px solid #334155; padding: 6px; border-radius: 6px; width: 100%;">
-                  <option value="hybrid">🌐 Híbrido (Google AdSense con Fallback a Anuncio Local)</option>
-                  <option value="adsense">⚡ Solo Google AdSense</option>
-                  <option value="local">📍 Solo Anuncios Locales de Barrio</option>
+                  <option value="adsense">⚡ Solo Google AdSense (ca-pub-2502415561017945)</option>
+                  <option value="local">📍 Solo Anuncios Locales de Barrio (Banners Notigas)</option>
+                  <option value="hybrid">🌐 Híbrido (Google AdSense con Fallback a Anuncios Locales)</option>
+                  <option value="disabled">🚫 Desactivar Toda la Publicidad</option>
                 </select>
               </div>
 
               <div class="form-group" style="margin-bottom: 8px;">
                 <label style="font-size: 11px;">Google AdSense Publisher ID (ca-pub-XXXXXXXXXXXX):</label>
-                <input type="text" id="inputAdSensePubId" placeholder="ca-pub-1234567890123456" style="font-size: 11px; background: #0F172A; border: 1px solid #334155; color: white;">
+                <input type="text" id="inputAdSensePubId" placeholder="ca-pub-2502415561017945" style="font-size: 11px; background: #0F172A; border: 1px solid #334155; color: white;">
               </div>
 
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">

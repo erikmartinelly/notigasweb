@@ -4,8 +4,8 @@
 
 // Configuración global de Publicidad y Google AdSense
 window.ADS_CONFIG = {
-  mode: localStorage.getItem('notigas_ads_mode') || 'hybrid', // 'hybrid' | 'adsense' | 'local'
-  publisherId: localStorage.getItem('notigas_adsense_pub_id') || '', // ej: 'ca-pub-XXXXXXXXXXXXXXXX'
+  mode: localStorage.getItem('notigas_ads_mode') || 'hybrid', // 'adsense' | 'local' | 'hybrid' | 'disabled'
+  publisherId: localStorage.getItem('notigas_adsense_pub_id') || 'ca-pub-2502415561017945',
   slotFooter: localStorage.getItem('notigas_adsense_slot_footer') || '',
   slotForum: localStorage.getItem('notigas_adsense_slot_forum') || '',
   slotMap: localStorage.getItem('notigas_adsense_slot_map') || '',
@@ -48,6 +48,14 @@ function abrirAnuncioWhatsApp() {
  * Cargar anuncios locales desde Supabase
  */
 async function cargarAnunciosGuardados() {
+  if (window.ADS_CONFIG.mode === 'disabled') {
+    const localAdContent = document.getElementById('localAdContent');
+    if (localAdContent) localAdContent.style.display = 'none';
+    const mapAd = document.getElementById('mapLocalAdBanner');
+    if (mapAd) mapAd.style.display = 'none';
+    return;
+  }
+
   if (!window.supabaseClient) return;
   const activeCity = (typeof AppState !== 'undefined') ? AppState.get('city') : null;
   if (!activeCity) return;
@@ -67,10 +75,10 @@ async function cargarAnunciosGuardados() {
       actualizarBannerConImagen(data.image_url);
       currentAdUrl = data.url || currentAdUrl;
     } else {
-      // Si no hay anuncio local activo, ocultar si el modo es estrictamente local
+      // Si no hay anuncio local activo y estamos en modo solo local
       if (window.ADS_CONFIG.mode === 'local') {
         const adContent = document.getElementById('localAdContent');
-        if (adContent) adContent.style.display = 'none';
+        if (adContent) adContent.style.display = 'flex';
         const mapAd = document.getElementById('mapLocalAdBanner');
         if (mapAd) mapAd.style.display = 'none';
       }
@@ -102,14 +110,18 @@ function actualizarBannerConImagen(imageUrl) {
   const localAdContent = document.getElementById('localAdContent');
   const mapLocalAdBanner = document.getElementById('mapLocalAdBanner');
 
+  if (window.ADS_CONFIG.mode === 'disabled' || window.ADS_CONFIG.mode === 'adsense') {
+    if (localAdContent) localAdContent.style.display = 'none';
+    if (mapLocalAdBanner) mapLocalAdBanner.style.display = 'none';
+    return;
+  }
+
   if (imageUrl) {
     if (localAdContent) {
       localAdContent.style.backgroundImage = `url('${imageUrl}')`;
       localAdContent.style.backgroundSize = 'cover';
       localAdContent.style.backgroundPosition = 'center';
-      if (window.ADS_CONFIG.mode !== 'adsense') {
-        localAdContent.style.display = 'flex';
-      }
+      localAdContent.style.display = 'flex';
       const sub = localAdContent.querySelector('.ad-subtext');
       if (sub) {
         sub.style.background = 'rgba(0,0,0,0.6)';
@@ -136,14 +148,36 @@ function actualizarBannerConImagen(imageUrl) {
  * Inicializar y renderizar Google AdSense en los slots designados
  */
 function inicializarGoogleAdSense() {
-  const pubId = (window.ADS_CONFIG.publisherId || '').trim();
-  const isAdSenseActive = (window.ADS_CONFIG.mode === 'adsense' || window.ADS_CONFIG.mode === 'hybrid') && pubId !== '';
+  const pubId = (window.ADS_CONFIG.publisherId || 'ca-pub-2502415561017945').trim();
+  const mode = window.ADS_CONFIG.mode || 'hybrid';
 
   const localAdContent = document.getElementById('localAdContent');
   const adsenseContent = document.getElementById('adsenseContent');
+  const forumSlotContainer = document.getElementById('adsenseForumSlot');
+  const mapSlotContainer = document.getElementById('adsenseMapSlot');
+
+  // Modo Desactivado
+  if (mode === 'disabled') {
+    if (adsenseContent) adsenseContent.style.display = 'none';
+    if (localAdContent) localAdContent.style.display = 'none';
+    if (forumSlotContainer) forumSlotContainer.style.display = 'none';
+    if (mapSlotContainer) mapSlotContainer.style.display = 'none';
+    return;
+  }
+
+  // Modo Solo Anuncios Locales
+  if (mode === 'local') {
+    if (adsenseContent) adsenseContent.style.display = 'none';
+    if (localAdContent) localAdContent.style.display = 'flex';
+    if (forumSlotContainer) forumSlotContainer.style.display = 'none';
+    if (mapSlotContainer) mapSlotContainer.style.display = 'none';
+    return;
+  }
+
+  // Modo Google AdSense o Híbrido
+  const isAdSenseActive = (mode === 'adsense' || mode === 'hybrid') && pubId !== '';
 
   if (!isAdSenseActive) {
-    // Modo solo local o sin Publisher ID configurado: mostrar banner local
     if (adsenseContent) adsenseContent.style.display = 'none';
     if (localAdContent) localAdContent.style.display = 'flex';
     return;

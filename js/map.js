@@ -51,29 +51,30 @@ function getLeafletMapInstance() {
   return null;
 }
 
-// ICONO DE GARRAFA GLP ROJA LIMPIA
+// El icono oficial rojo se mantiene igual; el estado se comunica con un indicador de color.
 const garrafaSvgMarkerHtml = `
-  <div class="radar-marker-wrapper" style="width: 44px; height: 54px; cursor: grab;">
+  <div class="radar-marker-wrapper notigas-order-marker notigas-order-marker--pending">
     <div class="radar-pulse-ring"></div>
-    <img src="icons/garrafa_red_clean.svg" class="garrafa-red-flashing-img" alt="Garrafa GLP Roja">
+    <img src="icons/garrafa_red_clean.svg" class="notigas-order-icon-img" alt="Pedido NOTIGAS pendiente">
+    <span class="notigas-order-state-dot" aria-hidden="true"></span>
   </div>
 `;
 
-// ICONO DE GARRAFA GLP AMARILLA (VISTO)
 const garrafaYellowSvgMarkerHtml = `
-  <div style="position: relative; width: 44px; height: 54px; display: flex; align-items: center; justify-content: center; cursor: grab;">
-    <img src="icons/garrafa_red_clean.svg" class="garrafa-red-flashing-img" style="filter: hue-rotate(60deg) brightness(1.2);" alt="Garrafa GLP Amarilla">
+  <div class="notigas-order-marker notigas-order-marker--seen">
+    <img src="icons/garrafa_red_clean.svg" class="notigas-order-icon-img" alt="Pedido NOTIGAS visto">
+    <span class="notigas-order-state-dot" aria-hidden="true"></span>
   </div>
 `;
 
-// ICONO DE GARRAFA GLP VERDE (ENTREGADO)
 const garrafaGreenSvgMarkerHtml = `
-  <div style="position: relative; width: 44px; height: 54px; display: flex; align-items: center; justify-content: center; cursor: grab;">
-    <img src="icons/garrafa_red_clean.svg" class="garrafa-red-flashing-img" style="filter: hue-rotate(120deg) brightness(1.2);" alt="Garrafa GLP Verde">
+  <div class="notigas-order-marker notigas-order-marker--delivered">
+    <img src="icons/garrafa_red_clean.svg" class="notigas-order-icon-img" alt="Pedido NOTIGAS entregado">
+    <span class="notigas-order-state-dot" aria-hidden="true"></span>
   </div>
 `;
 
-// Marcador único de repartidor: camión moderno + insignia R.
+// Marcador único de repartidor: camión moderno + insignia R (Estilo Google Maps)
 const truckSvgMarkerHtml = `
   <div class="driver-map-marker" title="Repartidor NOTIGAS">
     <div class="driver-marker-truck" aria-hidden="true">
@@ -84,16 +85,31 @@ const truckSvgMarkerHtml = `
   </div>
 `;
 
+// PUNTO AZUL DE UBICACIÓN GPS AUTÉNTICO DE GOOGLE MAPS
 const userLocationSvgHtml = `
-  <div style="position: relative; width: 40px; height: 48px; display: flex; align-items: center; justify-content: center; pointer-events: none; user-select: none;">
-    <div style="position: absolute; width: 40px; height: 40px; border-radius: 50%; background: rgba(0, 176, 255, 0.25); animation: radarPing 2s infinite ease-out; pointer-events: none;"></div>
-    <div style="position: relative; background: linear-gradient(135deg, #00B0FF, #0288D1); width: 36px; height: 36px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); display: flex; align-items: center; justify-content: center; border: 2.5px solid #FFFFFF; box-shadow: 0 4px 16px rgba(0,176,255,0.7); pointer-events: none;">
-      <i class="fa-solid fa-house-user" style="color: #FFFFFF; font-size: 16px; transform: rotate(45deg); pointer-events: none;"></i>
-    </div>
+  <div class="google-blue-dot-marker" title="Tu Ubicación GPS en Vivo">
+    <div class="google-blue-dot-pulse"></div>
+    <div class="google-blue-dot-core"></div>
   </div>
 `;
 
-let userLocationIcon;
+// PIN ROJO CLÁSICO DE GOOGLE MAPS PARA ENTREGA
+const deliveryPinSvgHtml = `
+  <div class="google-red-pin-marker" title="Ubicación de Entrega (Arrastra a tu puerta)">
+    <svg viewBox="0 0 384 512" width="36" height="48" class="google-red-pin-svg">
+      <defs>
+        <filter id="gmapPinShadow" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="rgba(0,0,0,0.38)"/>
+        </filter>
+      </defs>
+      <path fill="#EA4335" filter="url(#gmapPinShadow)" d="M172.268 501.67C26.97 291.031 0 269.413 0 192 0 85.961 85.961 0 192 0s192 85.961 192 192c0 77.413-26.97 99.031-172.268 309.67-9.535 13.774-29.93 13.773-39.464 0z"/>
+      <circle cx="192" cy="192" r="70" fill="#FFFFFF"/>
+      <circle cx="192" cy="192" r="40" fill="#C5221F"/>
+    </svg>
+  </div>
+`;
+
+let userLocationIcon, deliveryPinIcon;
 let garrafaIcon, garrafaYellowIcon, garrafaGreenIcon;
 let truckIcon;
 
@@ -107,8 +123,6 @@ function initNotigasMap() {
   const mapElement = document.getElementById('map');
   if (!mapElement) return;
 
-  // Si ya existe una instancia real de Leaflet, reutilizarla.
-  // El <div id="map"> tambien crea window.map en algunos navegadores.
   const existingMap = getLeafletMapInstance();
   if (existingMap) {
     map = existingMap;
@@ -117,7 +131,6 @@ function initNotigasMap() {
     return;
   }
 
-  // Prevenir error 'Map container is already initialized' si Leaflet ya se adjuntó al contenedor
   if (mapElement._leaflet_id) {
     try {
       if (isLeafletMapInstance(map) && map.remove) {
@@ -129,11 +142,19 @@ function initNotigasMap() {
     mapElement._leaflet_id = null;
   }
 
+  // Iconos oficiales estilo Google Maps
   userLocationIcon = L.divIcon({
-    className: 'user-location-marker',
+    className: 'user-location-marker-container',
     html: userLocationSvgHtml,
-    iconSize: [40, 48],
-    iconAnchor: [20, 48]
+    iconSize: [36, 36],
+    iconAnchor: [18, 18]
+  });
+
+  deliveryPinIcon = L.divIcon({
+    className: 'delivery-pin-marker-container',
+    html: deliveryPinSvgHtml,
+    iconSize: [36, 48],
+    iconAnchor: [18, 48]
   });
 
   garrafaIcon = L.divIcon({
@@ -165,12 +186,18 @@ function initNotigasMap() {
   });
 
   window.actualizarIconoMarcadorUsuario = function(forcedMode) {
-    if (!userMarker || !truckIcon || !userLocationIcon) return;
+    if (!userMarker || !truckIcon || !userLocationIcon || !deliveryPinIcon) return;
     const isDriver = (forcedMode === 'driver') || 
                      (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver') || 
                      (typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver') ||
                      (AppState.get('userData') && AppState.get('userData').role === 'repartidor');
-    userMarker.setIcon(isDriver ? truckIcon : userLocationIcon);
+    if (isDriver) {
+      userMarker.setIcon(truckIcon);
+    } else if (isUserMarkerDraggedManually) {
+      userMarker.setIcon(deliveryPinIcon);
+    } else {
+      userMarker.setIcon(userLocationIcon);
+    }
   };
 
   window.actualizarIconoMarcadorUsuario();
@@ -184,7 +211,6 @@ function initNotigasMap() {
       startLat = window.BOLIVIA_CITIES[savedCity].lat;
       startLng = window.BOLIVIA_CITIES[savedCity].lon || window.BOLIVIA_CITIES[savedCity].lng;
     } else {
-      // Coordenadas predeterminadas de Cochabamba (centro neurálgico de Bolivia)
       startLat = -17.3895;
       startLng = -66.1568;
     }
@@ -206,13 +232,15 @@ function initNotigasMap() {
     return;
   }
 
+  // Control de zoom compacto, coherente con la interfaz de navegación.
   L.control.zoom({
     position: 'topright',
     zoomInTitle: 'Acercar',
     zoomOutTitle: 'Alejar'
   }).addTo(map);
 
-  // Capa base clara; Google Maps se utiliza para la navegación externa.
+  // Mapa base legal de OSM/CARTO con una presentación clara tipo navegación.
+  // Google Maps se abre externamente cuando el repartidor elige un pedido.
   const mapAttribution =
     '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors ' +
     '&copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener noreferrer">CARTO</a>';
@@ -226,7 +254,6 @@ function initNotigasMap() {
     }
   );
 
-  // La capa estándar de OSM se usa solo como respaldo de la baldosa visible.
   baseTileLayer.on('tileerror', function(error) {
     if (error && error.tile && !error.tile._fallbackDone) {
       error.tile._fallbackDone = true;
@@ -778,6 +805,10 @@ function moverMarcadorUbicacionManual(lat, lng) {
     applyGpsPosition(lat, lng, "Ajuste Manual", false);
   } else {
     userMarker.setLatLng([lat, lng]);
+    const isDriver = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver') || (typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver');
+    if (!isDriver && deliveryPinIcon) {
+      userMarker.setIcon(deliveryPinIcon);
+    }
   }
 
   if (typeof map !== 'undefined' && map) {
@@ -788,10 +819,10 @@ function moverMarcadorUbicacionManual(lat, lng) {
 
   if (userMarker) {
     userMarker.getPopup().setContent(`
-      <div style="font-family:'Roboto',sans-serif; text-align:center;">
-        <strong style="color:#FF6D00; font-size:13px;">📍 Ubicación de Entrega Ajustada</strong><br>
-        <span style="font-size:11px; color:#00E676; font-weight:700;">Punto fijado manualmente</span><br>
-        <span style="font-size:9.5px; color:#94A3B8;">(Arrastra el marcador a la puerta exacta de tu casa)</span>
+      <div class="google-infowindow-content">
+        <strong style="color:#EA4335; font-size:13px;">📍 Ubicación de Entrega</strong><br>
+        <span style="font-size:11px; color:#1A73E8; font-weight:700;">Punto fijado en el mapa</span><br>
+        <span style="font-size:9.5px; color:#5F6368;">(Arrastra el marcador a la puerta exacta de tu casa)</span>
       </div>
     `);
     userMarker.openPopup();
@@ -857,7 +888,6 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
   if (forceReset && typeof window.inferMainCityFromCoords === 'function') {
       const inferred = window.inferMainCityFromCoords(lat, lng);
       const currentCity = AppState.get('city');
-      // Solo cambiar si es diferente para evitar refrescos innecesarios
       if (inferred && inferred !== currentCity) {
           if (typeof window.cambiarCiudad === 'function') {
               window.cambiarCiudad(inferred);
@@ -877,7 +907,6 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
 
   if (map) {
     map.invalidateSize();
-    // Solo re-centrar el mapa si forceReset es explícito o si el usuario NO ha tocado/hecho zoom
     if (forceReset || !isMapInteractedByUser) {
       const currentZoom = map.getZoom();
       const targetZoom = (!currentZoom || currentZoom <= 10 || forceReset) ? 16 : currentZoom;
@@ -885,9 +914,10 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
     }
   }
 
+  const isDriver = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver') || (typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver');
+  const activeIcon = isDriver ? truckIcon : (isUserMarkerDraggedManually ? deliveryPinIcon : userLocationIcon);
+
   if (!userMarker && map) {
-    const isDriver = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver') || (typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver');
-    const activeIcon = isDriver ? truckIcon : userLocationIcon;
     userMarker = L.marker([activeLat, activeLng], {
       icon: activeIcon,
       draggable: true,
@@ -899,14 +929,17 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
     }
 
     userMarker.bindPopup(`
-      <div style="font-family:'Roboto',sans-serif; text-align:center;">
-        <strong style="color:#FF6D00; font-size:13px;">📍 Ubicación de Entrega</strong><br>
-        <span style="font-size:11px; color:#64748B;">Arrastra el marcador a la puerta exacta de tu casa</span>
+      <div class="google-infowindow-content">
+        <strong style="color:#EA4335; font-size:13px;">📍 Ubicación de Entrega</strong><br>
+        <span style="font-size:11px; color:#5F6368;">Arrastra el marcador a la puerta exacta de tu casa</span>
       </div>
     `);
 
     userMarker.on('dragstart', function() {
       isUserMarkerDraggedManually = true;
+      if (!isDriver && deliveryPinIcon) {
+        userMarker.setIcon(deliveryPinIcon);
+      }
     });
 
     userMarker.on('dragend', function(e) {
@@ -917,13 +950,17 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
       currentGpsLng = newPos.lng;
       window.currentGpsLng = currentGpsLng;
 
+      if (!isDriver && deliveryPinIcon) {
+        userMarker.setIcon(deliveryPinIcon);
+      }
+
       actualizarCoordenadasPedidoActivo(newPos.lat, newPos.lng);
 
       userMarker.getPopup().setContent(`
-        <div style="font-family:'Roboto',sans-serif; text-align:center;">
-          <strong style="color:#FF6D00; font-size:13px;">📍 Ubicación de Entrega Ajustada</strong><br>
-          <span style="font-size:11px; color:#38BDF8; font-weight:700;">Ajustada manualmente en mapa</span><br>
-          <span style="font-size:9.5px; color:#94A3B8;">(Arrastra el marcador a la puerta exacta de tu casa)</span>
+        <div class="google-infowindow-content">
+          <strong style="color:#EA4335; font-size:13px;">📍 Ubicación de Entrega Ajustada</strong><br>
+          <span style="font-size:11px; color:#1A73E8; font-weight:700;">Fijada en el mapa</span><br>
+          <span style="font-size:9.5px; color:#5F6368;">(Arrastra el marcador a la puerta exacta de tu casa)</span>
         </div>
       `);
       userMarker.openPopup();
@@ -931,8 +968,7 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
     });
   } else if (userMarker) {
     userMarker.setLatLng([activeLat, activeLng]);
-    const isDriver = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver') || (typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver');
-    userMarker.setIcon(isDriver ? truckIcon : userLocationIcon);
+    userMarker.setIcon(activeIcon);
   }
 
   const banner = document.getElementById('gpsMandatoryBanner');
