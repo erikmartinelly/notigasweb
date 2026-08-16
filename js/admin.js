@@ -305,17 +305,12 @@ async function renderAdminDashboardKPIs() {
       vendorsCount = cVendors || 0;
 
       // Unique users from orders + localStorage/databaseEmails as a proxy for users count
+      const uniqueUsers = new Set();
 
       const { data: pedidosUsersData, error: pedidosUsersErr } = await window.supabaseClient.from('pedidos').select('user_id');
       if (pedidosUsersErr) {
         console.error('Error cargando usuarios de pedidos:', pedidosUsersErr);
       } else if (pedidosUsersData) {
-        pedidosUsersData.forEach(p => { if (p.user_id) uniqueUsers.add(p.user_id); });
-      }
-
-      const uniqueUsers = new Set();
-
-      if (pedidosUsersData) {
         pedidosUsersData.forEach(p => { if (p.user_id) uniqueUsers.add(p.user_id); });
       }
 
