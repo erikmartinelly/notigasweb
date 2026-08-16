@@ -1,143 +1,132 @@
-# NOTIGAS - Live Neighborhood Delivery & Map Application
+# NOTIGAS - Live Neighborhood Delivery & Geospatial Platform
 
-NOTIGAS is a real-time Progressive Web Application (PWA) designed to connect neighborhood residents ("Vecinos"/Buyers) with local distributors and delivery drivers ("Repartidores"/Vendors) via an interactive live map. 
+NOTIGAS es una Progressive Web Application (PWA) de logística comunitaria y geolocalización en tiempo real, diseñada para conectar a vecinos compradores con repartidores y distribuidores locales a través de un mapa interactivo en vivo.
 
-Built entirely with **Vanilla JavaScript** and powered by **Supabase**, NOTIGAS requires no complex frontend framework, making it extremely fast, lightweight, and easy to deploy.
+Construida con **Vanilla JavaScript** de alto rendimiento, **Supabase PostgreSQL con PostGIS**, y potenciada por el ecosistema de **Google (Google Antigravity, Google Identity Services, Google Maps Platform y Google PWA)**.
 
-## Identidad del Proyecto e Integraciones Principales
+---
 
-* **Desarrollo con Antigravity:** Aproximadamente el **80% de la aplicación fue desarrollada con Antigravity**, junto con revisión, ajustes y decisiones funcionales específicas para el modelo logístico de NOTIGAS.
-* **Ingreso con cuenta Google:** El acceso principal de compradores y repartidores utiliza una **cuenta Google**, integrada con Supabase Auth para administrar la sesión y la identidad del usuario.
-* **Mapa interno OpenStreetMap:** La visualización dentro de NOTIGAS utiliza **Leaflet con datos de OpenStreetMap** y un estilo cartográfico claro de CARTO Voyager.
-* **Navegación externa con Google Maps:** Cuando un repartidor inicia la navegación hacia una entrega que ya le fue asignada, NOTIGAS abre **Google Maps de forma externa** para proporcionar las indicaciones de ruta. NOTIGAS no utiliza tiles de Google Maps en su mapa interno.
+## 🌟 Identidad del Proyecto y Tecnologías Google
+
+* 🤖 **Desarrollado con Google Antigravity:** La arquitectura avanzada, la lógica de clustering espacial DBSCAN, la seguridad estricta de base de datos (RLS) y las optimizaciones críticas de producción fueron desarrolladas y refinadas utilizando **Google Antigravity**, la plataforma de agentes de desarrollo asistido por IA de Google DeepMind.
+* 🔑 **Google Identity Services (Google Sign-In & OAuth 2.0):** Autenticación rápida, segura y sin fricción mediante cuentas Google para vecinos y repartidores, integrada con Supabase Auth y validación de tokens JWT.
+* 🗺️ **Integración y Navegación con Google Maps:**
+  * **Navegación en Ruta:** Despacho y apertura automática de rutas giro a giro mediante **Google Maps** para que los repartidores naveguen de forma eficiente hacia los pedidos asignados.
+  * **Estética y Paleta Visual Google Maps:** El motor de mapa interactivo está calibrado con la paleta de colores oficial de Google Maps (tonos cálidos en vías, áreas verdes suaves, cuerpos de agua celestes y tipografía Google Sans/Roboto).
+  * **Geolocalización Adaptativa:** APIs de geolocalización de alta precisión siguiendo los estándares y directrices de Google Maps.
+* 📱 **Estándares Google Chrome & PWA:** Arquitectura Progressive Web App (PWA) con Service Worker para caché inteligente, soporte offline y web app manifest para instalación nativa en Android, iOS y Desktop.
+
+---
 
 ## 🚀 Key Features
 
-*   **Live Interactive Map (Leaflet):** Both buyers and vendors can see each other in real-time. Buyers place orders that drop pins on the map, and vendors broadcast their live GPS location as they drive through the neighborhood.
-*   **Real-Time Synchronization:** Powered by Supabase Realtime (WebSockets). Map markers, orders, and driver locations are updated instantly across all connected clients without needing to refresh the page.
-*   **Dual User Roles:**
-    *   **Vecino (Buyer):** Can request delivery services (e.g., Gas GLP, groceries, water) and track approaching trucks on the map.
-    *   **Repartidor (Vendor):** Creates a "Business Profile", broadcasts their real-time route, and accepts nearby orders.
-*   **Neighborhood Forum:** A community bulletin board for alerts, sales, and announcements. Posts automatically expire and are purged from the database after 72 hours (via Supabase `pg_cron`) to maintain app performance.
-*   **Offline-Ready (PWA):** Includes a Service Worker (`sw.js`) with progressive caching, allowing the app to load quickly and gracefully handle poor network conditions.
-*   **Secret Admin Dashboard:** A hidden administration modal protected by strict validation against the Supabase database and RLS policies, preventing unauthorized access to business metrics and user moderation.
+* **Mapa Interactivo en Tiempo Real:** Visualización en vivo tanto para vecinos como para repartidores. Los compradores publican pedidos que generan marcadores geolocalizados y los conductores transmiten su telemetría GPS a medida que recorren el barrio.
+* **Grupos de Demanda Espacial (AI & DBSCAN):** Algoritmo de agrupamiento geoespacial atómico que identifica concentraciones de pedidos pendientes para que los repartidores puedan tomar rutas completas en un solo paso.
+* **Sincronización Inmediata (Supabase Realtime):** Actualización instantánea de marcadores, pedidos y repartidores vía WebSockets sin necesidad de recargar la pantalla.
+* **Roles de Usuario Duales:**
+  * **Vecino (Comprador):** Solicita suministros esenciales (Gas GLP, Agua embotellada, abarrotes) y visualiza en tiempo real los camiones que se aproximan.
+  * **Repartidor (Conductor):** Registra su ficha de distribuidor, transmite su ubicación GPS y toma pedidos individuales o grupos de demanda.
+* **Muro Comunitario / Avisos de Barrio:** Tablón vecinal interactivo para alertas, comunicados y avisos con sistema de votación única y purga automática programada.
+* **Panel de Administración Blindado:** Acceso administrativo protegido mediante verificación de credenciales con hashing criptográfico y políticas RLS intransigibles.
+
+---
 
 ## 🌍 Social Impact & Purpose (The "Why")
 
-NOTIGAS is not just a technological tool; it is a project driven by a deep social purpose aimed at the most vulnerable sectors in Bolivia. 
+NOTIGAS nace con un profundo propósito social enfocado en los sectores más vulnerables de Bolivia.
 
-In Bolivia, it is predominantly the poorest families who rely on propane gas cylinders (*garrafas*) for their daily survival (cooking and heating). When a family runs out of gas, the traditional alternative is to take a taxi to a distant distribution plant, which costs money they simply cannot afford to spend. Buying directly from the neighborhood delivery trucks is significantly cheaper, but finding a passing truck is currently a matter of luck, leading to anxiety, wasted time, and sometimes being unable to cook.
+En Bolivia, miles de familias dependen del gas licuado de petróleo en garrafas para cocinar y subsistir. Cuando se agota el gas, trasladarse a una planta distribuidora lejana implica costos de transporte elevados que muchas familias no pueden afrontar. Comprar directamente a los camiones repartidores del barrio es mucho más económico, pero tradicionalmente dependía del azar de escuchar la campana del camión al pasar.
 
-NOTIGAS bridges this gap by democratizing access to Artificial Intelligence and real-time logistics. By providing grassroots vendors with AI-driven Predictive Heatmaps and algorithmic route optimization, we ensure that delivery trucks reach the neighborhoods that need them most, faster and more efficiently. Our mission goes beyond making money; we are using advanced tech to lower the cost of living for those at the bottom of the economic pyramid, proving that AI can be a powerful catalyst for social equity.
+NOTIGAS resuelve esta necesidad democratizando el acceso a la tecnología y la logística en tiempo real. Al conectar directamente a los vecinos con los distribuidores locales a través de mapas inteligentes y optimización de rutas, garantizamos que los camiones lleguen de manera rápida y predecible a quienes más lo necesitan, reduciendo el costo de vida y convirtiendo la tecnología en un catalizador de equidad social.
+
+---
 
 ## 🛠️ Technology Stack
 
-*   **Frontend:** HTML5, CSS3, Vanilla JavaScript (No React/Vue/Angular).
-*   **Backend & Database:** [Supabase](https://supabase.com/) (PostgreSQL).
-*   **Mapping Provider:** [Leaflet.js](https://leafletjs.com/) con datos de OpenStreetMap, estilo CARTO Voyager y fallback de tiles OSM.
-*   **Authentication:** Google OAuth & Custom Auth for Admins.
-*   **Hosting:** Deployable on standard Node.js environments (like Hostinger, Heroku, or Render) using the provided Express server (`server.js`) which enforces strict security headers (CSP, HSTS).
+| Capa | Tecnología |
+| :--- | :--- |
+| **Ingeniería e IA** | **Google Antigravity (AGY)** (Desarrollo y refactorización asistida por agentes) |
+| **Autenticación** | **Google Identity Services** (Google OAuth 2.0 & One-Tap) + Supabase Auth |
+| **Navegación y Mapas** | **Google Maps Platform** (Navegación de conductores) + Motor Leaflet calibrado con paleta visual Google Maps |
+| **Plataforma Web** | **Google PWA Standards**, HTML5, CSS3 Moderno, JavaScript Vanilla (sin frameworks pesados) |
+| **Base de Datos & Backend** | **Supabase** (PostgreSQL 15+, PostGIS, Realtime WebSockets, Row Level Security) |
+| **Servidor de Producción** | **Node.js / Express** (`server.js`) con cabeceras estrictas de seguridad (CSP, HSTS, Anti-Clickjacking) |
+
+---
 
 ## 📂 Project Structure
 
 ```text
-├── index.html              # Main application entry point (Buyer/Vendor/Admin views)
-├── server.js               # Express server for production (Security headers & PWA routing)
-├── package.json            # Node.js dependencies for the server
-├── sw.js                   # Service Worker for PWA caching & offline support
-├── manifest.json           # PWA web manifest
-├── js/                     # Application JavaScript modules
-│   ├── state.js            # Centralized reactive application state management (Pub/Sub)
-│   ├── ui.js               # Common UI helpers, loading overlays, modals and toasts
-│   ├── supabase-config.js  # Supabase initialization, connection and Realtime subscriptions
-│   ├── auth.js             # User roles, Google OAuth (One-Tap), email auth, and session management
-│   ├── vendors.js          # Vendor business profiles & category filtering
-│   ├── map.js              # Leaflet map initialization, live markers, and clustering
-│   ├── map_search.js       # Street & city geocoding with multi-engine fallback (Nominatim/Photon)
-│   ├── map_gps.js          # Adaptive GPS tracking and fallback geolocation
-│   ├── forum.js            # Neighborhood community forum & live comment threads
-│   ├── ads.js              # Live local ads & dynamic banners
-│   ├── orders.js           # Order creation, individual & cluster assignment, delivery flows
-│   ├── admin.js            # Admin dashboard logic, metrics, and security authentication
-│   ├── admin_users.js      # User & driver moderation, banning, and approval workflows
-│   └── events.js           # Event listeners and UI interactions
+├── index.html              # Punto de entrada principal (Vistas Comprador, Repartidor y Admin)
+├── server.js               # Servidor Express de producción (Cabeceras de seguridad CSP y enrutamiento PWA)
+├── package.json            # Dependencias del servidor Node.js
+├── sw.js                   # Service Worker (Caché progresivo y soporte offline PWA)
+├── manifest.json           # Manifiesto Web PWA
+├── js/                     # Módulos JavaScript de la aplicación
+│   ├── state.js            # Estado reactivo centralizado (Pub/Sub)
+│   ├── ui.js               # Helpers visuales, overlays, modales y notificaciones toast
+│   ├── supabase-config.js  # Inicialización de Supabase, canales y suscripciones Realtime
+│   ├── auth.js             # Autenticación con cuenta Google, sesiones y roles de usuario
+│   ├── vendors.js          # Perfiles de negocio de repartidores y filtros por categoría
+│   ├── map.js              # Inicialización de mapa, marcadores en vivo y clustering
+│   ├── map_search.js       # Búsqueda y geocodificación de calles/municipios con fallback multi-motor
+│   ├── map_gps.js          # Seguimiento GPS adaptativo y telemetría en vivo
+│   ├── forum.js            # Foro vecinal, publicaciones comunitarias y comentarios
+│   ├── ads.js              # Anuncios locales y banners dinámicos
+│   ├── orders.js           # Creación de pedidos, asignación individual y grupos de demanda
+│   ├── admin.js            # Panel de control de administración y métricas operativas
+│   ├── admin_users.js      # Moderación de usuarios y habilitación de repartidores
+│   └── events.js           # Event listeners e interacciones globales de la UI
 ├── styles/
-│   └── main.css            # Application CSS stylesheet
+│   └── main.css            # Hoja de estilos de la aplicación (Tokens de diseño y paleta Google Maps)
 └── supabase/
     ├── full_production_schema.sql # ESQUEMA COMPLETO Y CONSOLIDADO PARA PRODUCCIÓN (1-Click Deploy)
-    └── migrations/         # Migraciones incrementales históricas y fixes (001 - 041)
+    └── migrations/         # Migraciones incrementales históricas (001 a 042)
 ```
+
+---
 
 ## ⚙️ Setup & Installation
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/erikmartinelly/notigasweb.git
-    cd notigasweb
-    ```
+### 1. Clonar el Repositorio
+```bash
+git clone https://github.com/erikmartinelly/notigasweb.git
+cd notigasweb
+```
 
-2.  **Configure Supabase:**
-    *   Create a new project in Supabase.
-    *   **Opción A (Recomendada para Despliegues Nuevos):** Ejecuta el archivo consolidado [`supabase/full_production_schema.sql`](supabase/full_production_schema.sql) en el SQL Editor de Supabase. Este script único e idempotente crea todas las tablas, vistas públicas autorizadas, índices, triggers de validación, funciones RPC atómicas y políticas RLS con los contratos requeridos por el frontend.
-    *   **Opción B (Migraciones Incrementales):** Ejecuta las migraciones en `supabase/migrations/` en orden numérico estricto (desde `001_initial_setup.sql` hasta `041_secure_assigned_order_contact.sql`). Pega únicamente el contenido SQL de cada archivo, sin encabezados de Git, líneas `@@` ni signos `+`.
-        * **014_fix_auth_triggers.sql:** Elimina triggers conflictivos en `auth.users` para prevenir fallos de registro.
-        * **027_profiles_location_seen_and_account_cleanup.sql:** Perfiles de usuario y RPC en cascada `delete_user_account()`.
-        * **033_official_notices_and_purge_rpc.sql:** Avisos oficiales y purga programada `rpc_purge_old_records()`.
-        * **035_refine_rpc_assign_order_and_index.sql:** Asignación atómica de pedidos con bloqueo `FOR UPDATE` y normalización de categorías.
-        * **036_robust_admin_credentials_and_is_admin.sql:** Validación de credenciales de administración y función de seguridad `is_admin_email()`.
-        * **037_harden_rls_policies.sql:** Políticas de seguridad RLS blindadas para compradores, choferes y moderación.
-        * **038_add_updated_at_to_pedidos.sql:** Agrega `updated_at` a `pedidos` con trigger automático e indexación.
-        * **039_unify_cluster_id_algorithm.sql:** Unifica el algoritmo determinista de `cluster_id` en las RPCs de grupos de demanda.
-        * **040_unify_order_state_machine.sql:** Unifica la máquina de 5 estados oficiales con triggers de validación.
-        * **041_secure_assigned_order_contact.sql:** Permite que cada repartidor autenticado vea el correo únicamente de compradores cuyos pedidos ya le fueron asignados y pertenecen a su ciudad.
-    *   Open `js/supabase-config.js` and replace the placeholder `supabaseUrl` and `supabaseAnonKey` with your project's actual credentials.
-    *   **⚠️ IMPORTANT - Email Confirmation:** Supabase requires email confirmation by default for new registrations. If you wish to disable this during testing or development, go to your Supabase Dashboard -> **Authentication** -> **Providers** -> **Email** and toggle off **Confirm email**. Ensure your `Site URL` and `Redirect URLs` in Supabase Auth configuration point to your production domain.
+### 2. Configurar la Base de Datos (Supabase)
+* Crea un nuevo proyecto en [Supabase](https://supabase.com/).
+* **Opción A (Recomendada - Despliegue en 1 Clic):** Ejecuta el archivo consolidado [`supabase/full_production_schema.sql`](supabase/full_production_schema.sql) en el SQL Editor de Supabase. Este script único crea todas las tablas, extensiones (PostGIS), vistas públicas autorizadas, índices de alto rendimiento, triggers automáticos, procedimientos RPC atómicos y políticas de seguridad RLS.
+* **Opción B (Migraciones Incrementales):** Ejecuta los scripts en `supabase/migrations/` en orden numérico estricto (`001` a `042`).
+* Abre `js/supabase-config.js` y coloca tu `supabaseUrl` y tu `supabaseAnonKey`.
 
-3.  **Run Locally (Development):**
-    For quick development, you can use any static server:
-    ```bash
-    npx serve .
-    ```
+### 3. Configurar Google Identity Services & Auth
+* En tu consola de Google Cloud, habilita **OAuth 2.0 Client ID** para aplicaciones web.
+* En Supabase Dashboard -> **Authentication** -> **Providers** -> activa **Google** y añade tus credenciales (`Client ID` y `Client Secret`).
 
-4.  **Run in Production:**
-    The application includes a Node.js Express server (`server.js`) designed to serve the static frontend while injecting critical security headers (CSP, HSTS, Anti-Clickjacking).
-    ```bash
-    npm install
-    npm start
-    ```
-    Navigate to `http://localhost:3000` in your browser.
+### 4. Ejecución en Desarrollo
+```bash
+npx serve .
+```
 
-## 🛡️ Security Notes
-*   **Row Level Security (RLS):** Ensure RLS is enabled on all Supabase tables so users can only insert/delete their own orders, while still being able to read the public map data.
-*   **Admin Panel:** The admin panel is integrated into the main application via a hidden modal, but real protection of sensitive operations depends exclusively on Supabase RLS and `is_admin_email()` policies validating the JWT.
+### 5. Ejecución en Producción
+```bash
+npm install
+npm start
+```
+Abre `http://localhost:3000` en tu navegador.
 
-## 🏗️ ARQUITECTURA DE PRODUCCIÓN
+---
 
-### Base de Datos
-*   **Supabase Auth**: Maneja la identidad.
-*   **profiles**: Perfil persistente del usuario y ubicación habitual del comprador.
-*   **choferes_habilitados**: Ficha del repartidor, ciudad operativa y categoría.
-*   **pedidos**: Fuente única de verdad de los pedidos.
-*   **rutas_repartidores**: Posición temporal de los repartidores.
-*   **AppState**: Solamente estado de interfaz (no debe escribir persistentemente en Auth).
+## 🏗️ Arquitectura de Producción y Seguridad
 
-### Ubicación y GPS
-*   **Comprador**: Usa GPS (getCurrentPosition) una sola vez durante el registro para guardar su ubicación habitual en `profiles`. Se informa al usuario que puede apagar el GPS. NUNCA usa `watchPosition`.
-*   **PC**: Intenta `navigator.geolocation` primero. Si falla, usa IP solamente como fallback aproximado. La IP nunca se considera domicilio exacto.
-*   **Repartidor**: Usa GPS continuo (`watchPosition`) con precisión adaptativa. Transmite ubicación a Supabase cuando hay movimiento significativo (~15 metros) y usa un heartbeat para indicar que está detenido. *Nota Técnica: Al ser una PWA que corre en el navegador, el tracking en background (pantalla apagada o app minimizada) depende estrictamente de las políticas de ahorro de batería de iOS/Android y podría ser pausado por el sistema operativo.*
-
-### Máquina de Estados de Pedidos (5 Estados Oficiales)
-El ciclo de vida en PostgreSQL, RPCs, Realtime y Frontend está estrictamente unificado en 5 estados:
-1. **`pendiente`**: Creado por el comprador, disponible en el mapa para repartidores.
-2. **`visto`**: Inspeccionado por un repartidor (pin amarillo), sigue disponible para ser tomado.
-3. **`asignado`**: Tomado oficialmente por un repartidor con bloqueo `FOR UPDATE` (en camino al domicilio).
-4. **`entregado`**: Entrega completada y confirmada por el comprador o chofer (estado final archivado).
-5. **`cancelado`**: Cancelado por el comprador (estado final).
-
-### Realtime y Enrutamiento
-*   **Realtime**: Es el mecanismo principal.
-*   **Polling**: Se utiliza como fallback solamente cuando Realtime está desconectado.
-*   **Rutas OSRM**: No se recalculan por tiempo fijo, sino cuando el repartidor se ha desplazado aproximadamente 30 metros.
-
-### Eliminación de Cuentas
-*   La función RPC `delete_user_account()` es la autoridad única en la base de datos para eliminar la cuenta y todos los datos asociados de forma segura, garantizando la limpieza en cascada.
+### Base de Datos & RLS
+* **Row Level Security (RLS):** RLS activo y riguroso en todas las tablas del esquema `public`. Los compradores solo pueden gestionar sus propios pedidos, y los choferes solo pueden interactuar con pedidos disponibles o asignados a su cuenta.
+* **Máquina de 5 Estados Oficiales:** `pendiente` → `visto` → `asignado` → `entregado` / `cancelado`, protegida mediante triggers a nivel de base de datos (`trg_check_pedido_transition`).
+* **Telemetría GPS en Vivo (`rutas_repartidores`):** Registro atómico por repartidor (`user_id`, `last_active`) con purga automática de posiciones inactivas por más de 12 horas.
+* **Procedimientos RPC Atómicos (`SECURITY DEFINER` con `search_path = public`):**
+  * `rpc_assign_order`: Asignación individual con bloqueo de fila `FOR UPDATE`.
+  * `rpc_get_demand_clusters_v2`: Agrupación espacial con algoritmo DBSCAN determinista.
+  * `rpc_accept_demand_cluster_v2`: Aceptación atómica por lotes de grupos de demanda.
+  * `rpc_get_my_assigned_orders`: Acceso seguro a los datos de contacto únicamente de pedidos asignados al conductor.
+  * `delete_user_account`: Eliminación en cascada de la cuenta y registros asociados.

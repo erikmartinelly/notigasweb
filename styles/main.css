@@ -2504,9 +2504,21 @@ button:active, .tab-btn:active, .cat-chip:active {
 }
 
 
-/* MAPA NOTIGAS: OpenStreetMap con estilo claro CARTO Voyager */
+/* MAPA NOTIGAS: Estilo e Identidad Visual Inspirada en Google Maps */
+#map,
+.map-container,
+.leaflet-container {
+  background-color: #f2efe9 !important; /* Canvas de fondo cálido idéntico a Google Maps */
+}
+
 .map-base-layer {
-  filter: none;
+  /* Emulación fiel de la paleta oficial Google Maps:
+     - Vegetación y parques en verde menta/salvia suave
+     - Cuerpos de agua en azul celeste limpio
+     - Vías arteriales en amarillo/naranja suave
+     - Vías secundarias en blanco nítido
+     - Fondo base cálido y contrastado */
+  filter: contrast(106%) saturate(126%) brightness(101%) hue-rotate(-4deg);
 }
 
 .leaflet-control-zoom {
@@ -2523,7 +2535,7 @@ button:active, .tab-btn:active, .cat-chip:active {
   background: #ffffff !important;
   border: 0 !important;
   border-bottom: 1px solid #e8eaed !important;
-  font-family: Arial, sans-serif !important;
+  font-family: 'Google Sans', Roboto, Arial, sans-serif !important;
   font-size: 22px !important;
   font-weight: 400 !important;
 }
@@ -2538,17 +2550,14 @@ button:active, .tab-btn:active, .cat-chip:active {
   color: #1a73e8 !important;
 }
 
+/* Ocultar completamente el letrero y barra de atribución */
 .leaflet-control-attribution {
-  max-width: calc(100vw - 16px);
-  padding: 2px 5px !important;
-  background: rgba(255, 255, 255, 0.92) !important;
-  color: #5f6368 !important;
-  font-size: 10px !important;
-  line-height: 1.25 !important;
-}
-
-.leaflet-control-attribution a {
-  color: #1a73e8 !important;
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  width: 0 !important;
+  pointer-events: none !important;
 }
 
 .map-selection-hint,
