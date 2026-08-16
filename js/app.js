@@ -144,6 +144,10 @@ function setAppMode(mode) {
   const driverActions = document.getElementById('driverFloatingActions');
   const badgeContainer = document.getElementById('headerRoleBadge');
 
+  if (typeof window.actualizarIconoMarcadorUsuario === 'function') {
+    window.actualizarIconoMarcadorUsuario(mode);
+  }
+
   if (mode === 'driver') {
     if (buyerActions) buyerActions.style.display = 'none';
     if (driverActions) driverActions.style.display = 'flex';

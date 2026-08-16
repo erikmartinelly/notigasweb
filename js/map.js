@@ -425,54 +425,35 @@ function agregarPedidoVecinoEnMapa(order) {
   const telStr = order.telefono ? `<span style="font-size:11px; color:#00E676; font-weight:800;">📞 ${escapeHtmlStr(order.telefono)}</span><br>` : '';
   const dirStr = order.direccion ? `<span style="font-size:11px; color:#94A3B8;">📍 ${escapeHtmlStr(order.direccion)}</span><br>` : '';
   const nombreStr = order.titulo ? `<span style="font-size:12px; color:#F8FAFC; font-weight:900;">👤 ${escapeHtmlStr(order.titulo)}</span><br>` : '';
-  const popupHtml = userRole === 'repartidor'
-    ? `<div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
-         <strong style="color:#FF6D00; font-size:13px;">🛒 Pedido de un Vecino</strong><br>
-         ${nombreStr}
-         <span style="font-size:11px; color:#64748B;">${escapeHtmlStr(order.categoria)}</span><br>
-         ${dirStr}
-         ${telStr}
-         <button data-action="abrirRutaGoogleMaps" data-lat="${lat}" data-lng="${lng}" data-id="${order.id}" class="btn-driver-route" style="margin-top:8px; display:inline-flex; align-items:center; justify-content:center; gap:6px; background:linear-gradient(135deg, #FF6D00, #E65100); color:white; border:none; padding:10px 14px; border-radius:10px; font-weight:900; font-size:12px; cursor:pointer; width:100%; text-decoration:none; box-sizing:border-box; box-shadow:0 4px 12px rgba(255,109,0,0.4);">
-           <i class="fa-solid fa-diamond-turn-right"></i> 🚀 IR CON GOOGLE MAPS
-         </button>
-       </div>`
-    : `<div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
-         <strong style="color:#FF6D00; font-size:13px;">🛒 Pedido de un Vecino</strong><br>
-         <span style="font-size:11px; color:#64748B;">${escapeHtmlStr(order.categoria)}</span>
-       </div>`;
+  const mapsNavUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${lat},${lng}`)}`;
+  const popupHtml = `
+    <div style="font-family:'Roboto',sans-serif; text-align:center; padding:6px; min-width:180px;">
+      <strong style="color:#FF6D00; font-size:13px;">🛒 Pedido de un Vecino</strong><br>
+      ${nombreStr}
+      <span style="font-size:11px; color:#64748B; font-weight:700;">${escapeHtmlStr(order.categoria)}</span><br>
+      ${dirStr}
+      ${telStr}
+      <a href="${mapsNavUrl}" target="_blank" rel="noopener noreferrer" data-action="abrirRutaGoogleMaps" data-lat="${lat}" data-lng="${lng}" data-id="${order.id}" class="btn-driver-route" style="margin-top:8px; display:inline-flex; align-items:center; justify-content:center; gap:6px; background:linear-gradient(135deg, #FF6D00, #E65100); color:white; border:none; padding:10px 14px; border-radius:10px; font-weight:900; font-size:12px; cursor:pointer; width:100%; text-decoration:none; box-sizing:border-box; box-shadow:0 4px 12px rgba(255,109,0,0.4);">
+        <i class="fa-solid fa-diamond-turn-right"></i> 🚀 IR CON GOOGLE MAPS
+      </a>
+    </div>
+  `;
 
   marker.bindPopup(popupHtml);
 
   marker.on('popupopen', () => {
-      if (
-          userRole === 'repartidor' &&
-          order.estado === 'pendiente' &&
-          !order.visto
-      ) {
-          if (window.supabaseClient) {
-              window.supabaseClient
-                  .rpc(
-                      'rpc_mark_order_seen',
-                      {
-                          p_order_id: orderId
-                      }
-                  )
-                  .then(({ error }) => {
-                      if (error) {
-                          console.warn(
-                              'No se pudo marcar pedido como visto:',
-                              error
-                          );
-                          return;
-                      }
-                      order.visto = true;
-                      if (neighborOrderMarkers[orderId]) {
-                          neighborOrderMarkers[orderId]
-                              .setIcon(garrafaYellowIcon);
-                      }
-                  });
+    try {
+      if (userRole === 'repartidor' && order.estado === 'pendiente' && !order.visto && window.supabaseClient && order.id) {
+        window.supabaseClient.rpc('rpc_mark_order_seen', { p_order_id: order.id }).then(({ error }) => {
+          if (!error) {
+            order.visto = true;
+            if (neighborOrderMarkers[order.id]) {
+              neighborOrderMarkers[order.id].setIcon(garrafaYellowIcon);
+            }
           }
+        }).catch(e => console.warn(e));
       }
+    } catch(e){}
   });
 
   neighborOrderMarkers[orderId] = marker;
@@ -1124,6 +1105,10 @@ function renderActiveOrdersMap() {
 
 function verificarYMostrarRepartidorGPS() {
   if (!map) return;
+
+  if (typeof window.actualizarIconoMarcadorUsuario === 'function') {
+    window.actualizarIconoMarcadorUsuario();
+  }
 
   renderReportedTrucksBuffer();
   renderActiveOrdersMap();

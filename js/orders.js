@@ -209,70 +209,40 @@ window.abrirRutaGoogleMaps = async function (a, b, c) {
 
   if (typeof closeDriverOrdersModal === 'function') closeDriverOrdersModal();
 
-  if (!orderId || lat == null || lng == null || isNaN(lat) || isNaN(lng)) {
-    console.error('Datos incompletos del pedido:', {
-      orderId,
-      lat,
-      lng
-    });
-
+  if (lat == null || lng == null || isNaN(lat) || isNaN(lng)) {
+    console.error('Coordenadas no válidas para Google Maps:', { orderId, lat, lng });
     if (typeof showToast === 'function') {
-      showToast('Error', 'No se puede abrir la ruta: faltan datos del pedido.', 'error', 4000);
-    } else {
-      alert('No se puede abrir la ruta: faltan datos del pedido.');
+      showToast('Error', 'Coordenadas del pedido no disponibles.', 'error', 3000);
     }
     return;
   }
 
+  const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${lat},${lng}`)}`;
+
+  // Abrir de inmediato para evitar que el navegador bloquee la acción por timeout o popup blocker
   try {
-    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Asignando pedido...');
-
-    const { data, error } = await window.supabaseClient.rpc(
-      'rpc_assign_order',
-      {
-        p_order_id: orderId
-      }
-    );
-
-    if (error) {
-      console.error('Error asignando pedido:', error);
-      const msg = error.message || 'El pedido ya no está disponible.';
-      if (typeof showToast === 'function') {
-        showToast('No disponible', msg, 'error', 5000);
-      } else {
-        alert('❌ ' + msg);
-      }
-      return;
+    const navWin = window.open(mapsUrl, '_blank', 'noopener,noreferrer');
+    if (!navWin || navWin.closed || typeof navWin.closed === 'undefined') {
+      window.location.href = mapsUrl;
     }
+  } catch(e) {
+    window.location.href = mapsUrl;
+  }
 
-    if (!data?.ok) {
-      if (typeof showToast === 'function') {
-        showToast('Error', 'No se pudo asignar el pedido.', 'error', 4000);
-      } else {
-        alert('No se pudo asignar el pedido.');
+  // Asignar en Supabase en segundo plano si hay un orderId válido y el usuario es repartidor
+  if (window.supabaseClient && orderId && String(orderId).trim() !== '' && orderId !== 'undefined' && orderId !== 'null') {
+    try {
+      const { data, error } = await window.supabaseClient.rpc('rpc_assign_order', { p_order_id: orderId });
+      if (error) {
+        console.warn('Aviso asignando pedido:', error.message);
+      } else if (data?.ok) {
+        if (typeof showToast === 'function') {
+          showToast('🚀 En Ruta', 'Pedido asignado y navegando en Google Maps.', 'success', 3000);
+        }
       }
-      return;
+    } catch (err) {
+      console.warn('Error en asignación RPC:', err);
     }
-
-    const url =
-      `https://www.google.com/maps/dir/?api=1` +
-      `&destination=${encodeURIComponent(`${lat},${lng}`)}`;
-
-    window.open(
-      url,
-      '_blank',
-      'noopener,noreferrer'
-    );
-
-  } catch (err) {
-    console.error('Error inesperado asignando pedido:', err);
-    if (typeof showToast === 'function') {
-      showToast('Error', 'No se pudo asignar el pedido. Intenta nuevamente.', 'error', 4000);
-    } else {
-      alert('No se pudo asignar el pedido. Intenta nuevamente.');
-    }
-  } finally {
-    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
   }
 };
 
