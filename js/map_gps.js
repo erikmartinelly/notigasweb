@@ -64,7 +64,7 @@ function solicitarGeolocalizacionNativaNavegador(
                 resolve(position);
             },
             error => {
-                console.warn('GPS nativo falló o tardó demasiado:', error.message);
+                console.log('GPS nativo no disponible; usando ubicación aproximada por IP:', error.message);
                 reject(error);
             },
             options
@@ -152,7 +152,7 @@ async function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
 
         return { lat: finalLat, lng: finalLng, city: detectedCity };
     } catch(err) {
-        console.warn('⚠️ Fallback a ciudad predeterminada (Cochabamba):', err);
+        console.log('Ubicación por IP no disponible; usando ciudad base Cochabamba:', err);
         const fallback = (typeof window.BOLIVIA_CITIES !== 'undefined' && window.BOLIVIA_CITIES['cochabamba'])
             ? window.BOLIVIA_CITIES['cochabamba']
             : { key: 'cochabamba', nombre: 'Cochabamba', lat: -17.3895, lon: -66.1568 };
@@ -335,4 +335,3 @@ window.iniciarWatchGPSRepartidor = iniciarWatchGPSRepartidor;
 window.obtenerUbicacionIPFallbackDesktop = obtenerUbicacionIPFallbackDesktop;
 window.solicitarGeolocalizacionNativaNavegador = solicitarGeolocalizacionNativaNavegador;
 window.esModoRepartidor = esModoRepartidor;
-

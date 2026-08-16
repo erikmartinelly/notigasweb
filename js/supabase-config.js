@@ -75,7 +75,23 @@ window.notigasGlobalChannel = null;
 window.notigasAvisosChannel = null;
 let _realtimeRetryCount = 0;
 let _realtimeRetryTimeout = null;
+let _realtimeGeneration = 0;
+let _activeRealtimeCity = null;
+let _activeAvisosCity = null;
 const MAX_REALTIME_RETRIES = 8;
+
+function _isRealtimeChannelActive(channel) {
+    if (!channel) return false;
+    const state = String(channel?.state || '').toLowerCase();
+    return !['closed', 'errored', 'leaving'].includes(state);
+}
+
+function _clearRealtimeRetryTimer() {
+    if (_realtimeRetryTimeout) {
+        clearTimeout(_realtimeRetryTimeout);
+        _realtimeRetryTimeout = null;
+    }
+}
 
 // 1. Suscripción a Avisos Oficiales en tiempo real
 window.iniciarSuscripcionAvisos = function() {
@@ -83,12 +99,19 @@ window.iniciarSuscripcionAvisos = function() {
     const ciudad = (typeof AppState !== 'undefined') ? AppState.get('city') : null;
     if (!ciudad) return;
 
+    if (_activeAvisosCity === ciudad && _isRealtimeChannelActive(window.notigasAvisosChannel)) {
+        return;
+    }
+
     if (window.notigasAvisosChannel) {
-        try { window.supabaseClient.removeChannel(window.notigasAvisosChannel); } catch(e) {}
+        const oldAvisosChannel = window.notigasAvisosChannel;
         window.notigasAvisosChannel = null;
+        _activeAvisosCity = null;
+        try { window.supabaseClient.removeChannel(oldAvisosChannel); } catch(e) {}
     }
 
     console.log(`📢 Suscribiendo a canal avisos-${ciudad}...`);
+    _activeAvisosCity = ciudad;
 
     window.notigasAvisosChannel = window.supabaseClient
         .channel(`avisos-${ciudad}`)
@@ -131,16 +154,23 @@ window.iniciarSuscripcionAvisos = function() {
 window.iniciarSuscripcionesRealtime = function() {
     if (!window.supabaseClient) return;
 
-    // Evitar canales duplicados
-    if (window.notigasGlobalChannel) {
-        try { window.supabaseClient.removeChannel(window.notigasGlobalChannel); } catch(e) {}
-        window.notigasGlobalChannel = null;
-    }
-
     const activeCity = (typeof AppState !== 'undefined') ? AppState.get('city') : null;
     if (!activeCity) {
         console.warn('⚠️ No hay ciudad activa definida para suscripción Realtime.');
         return;
+    }
+
+    if (_activeRealtimeCity === activeCity && _isRealtimeChannelActive(window.notigasGlobalChannel)) {
+        return;
+    }
+
+    // Evitar canales duplicados. Incrementar generación invalida callbacks de canales viejos.
+    _realtimeGeneration++;
+    if (window.notigasGlobalChannel) {
+        const oldGlobalChannel = window.notigasGlobalChannel;
+        window.notigasGlobalChannel = null;
+        _activeRealtimeCity = null;
+        try { window.supabaseClient.removeChannel(oldGlobalChannel); } catch(e) {}
     }
 
     console.log(`📡 Suscripción Realtime global iniciando para ${activeCity}... (intento ${_realtimeRetryCount + 1})`);
@@ -172,7 +202,12 @@ window.iniciarSuscripcionesRealtime = function() {
         }, 400);
     };
 
-    window.notigasGlobalChannel = window.supabaseClient.channel('global_changes_' + activeCity)
+    const channelGeneration = _realtimeGeneration;
+    const globalChannel = window.supabaseClient.channel('global_changes_' + activeCity);
+    window.notigasGlobalChannel = globalChannel;
+    _activeRealtimeCity = activeCity;
+
+    globalChannel
         .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos', filter: `ciudad=eq.${activeCity}` }, payload => {
             debouncedRefreshOrders();
         })
@@ -205,12 +240,18 @@ window.iniciarSuscripcionesRealtime = function() {
             }
         })
         .subscribe((status, err) => {
+            if (globalChannel !== window.notigasGlobalChannel || channelGeneration !== _realtimeGeneration) {
+                return;
+            }
             if (status === 'SUBSCRIBED') {
                 console.log(`✅ Realtime global conectado correctamente para ${activeCity}.`);
+                _clearRealtimeRetryTimer();
                 _realtimeRetryCount = 0; // Resetear contador en conexión exitosa
                 if (window.AppState) window.AppState.set('realtimeConnected', true);
             } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
                 console.warn(`⚠️ Realtime desconectado (${status}). Intentando reconectar...`);
+                window.notigasGlobalChannel = null;
+                _activeRealtimeCity = null;
                 if (window.AppState) window.AppState.set('realtimeConnected', false);
                 _programarReconexionRealtime();
             }
@@ -218,13 +259,14 @@ window.iniciarSuscripcionesRealtime = function() {
 };
 
 function _programarReconexionRealtime() {
-    if (_realtimeRetryTimeout) clearTimeout(_realtimeRetryTimeout);
+    _clearRealtimeRetryTimer();
     if (_realtimeRetryCount >= MAX_REALTIME_RETRIES) {
         console.error('❌ Realtime: se agotaron los reintentos de reconexión.');
         if (window.notigasGlobalChannel) {
             window.notigasGlobalChannel.unsubscribe();
             window.notigasGlobalChannel = null;
         }
+        _activeRealtimeCity = null;
         if (typeof showToast === 'function') {
             showToast('⚠️ Sin conexión en vivo', 'No se pudo reconectar al servidor. Usa el botón 🔄 para recargar datos.', 'warning', 6000);
         }
@@ -247,19 +289,25 @@ function _programarReconexionRealtime() {
 // 3. Función central para reiniciar todas las suscripciones Realtime limpiamente
 window.reiniciarSuscripcionesRealtime = async function() {
     if (!window.supabaseClient) return;
+    _clearRealtimeRetryTimer();
+    _realtimeGeneration++;
 
     if (window.notigasAvisosChannel) {
-        try {
-            await window.supabaseClient.removeChannel(window.notigasAvisosChannel);
-        } catch(e) {}
+        const oldAvisosChannel = window.notigasAvisosChannel;
         window.notigasAvisosChannel = null;
+        _activeAvisosCity = null;
+        try {
+            await window.supabaseClient.removeChannel(oldAvisosChannel);
+        } catch(e) {}
     }
 
     if (window.notigasGlobalChannel) {
-        try {
-            await window.supabaseClient.removeChannel(window.notigasGlobalChannel);
-        } catch(e) {}
+        const oldGlobalChannel = window.notigasGlobalChannel;
         window.notigasGlobalChannel = null;
+        _activeRealtimeCity = null;
+        try {
+            await window.supabaseClient.removeChannel(oldGlobalChannel);
+        } catch(e) {}
     }
 
     if (window.adsSubscriptionChannel) {
@@ -281,6 +329,18 @@ window.cambiarCiudad = async function(nuevaCiudad) {
     if (!nuevaCiudad) {
         console.error('Ciudad inválida para cambiarCiudad.');
         throw new Error('Ciudad inválida.');
+    }
+
+    nuevaCiudad = String(nuevaCiudad).toLowerCase().trim();
+    const ciudadActual = (typeof AppState !== 'undefined') ? AppState.get('city') : null;
+
+    if (ciudadActual === nuevaCiudad) {
+        window.iniciarSuscripcionAvisos();
+        window.iniciarSuscripcionesRealtime();
+        if (typeof iniciarSuscripcionAnuncios === 'function') {
+            iniciarSuscripcionAnuncios();
+        }
+        return;
     }
 
     if (typeof AppState !== 'undefined') {

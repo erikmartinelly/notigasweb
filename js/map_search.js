@@ -66,8 +66,17 @@ function buscarCalle() {
                 currentGpsLat = pLat;
                 currentGpsLng = pLon;
 
-                if (window.map || typeof map !== 'undefined') {
-                  const m = window.map || map;
+                const mapCandidates = [
+                  window.notigasMap,
+                  window.map,
+                  (typeof map !== 'undefined' ? map : null)
+                ];
+                const m = mapCandidates.find(candidate =>
+                  candidate &&
+                  typeof candidate.flyTo === 'function' &&
+                  typeof candidate.getZoom === 'function'
+                );
+                if (m) {
                   m.flyTo([pLat, pLon], 17, { duration: 1.0 });
                 }
 
@@ -121,4 +130,3 @@ function buscarCalle() {
 }
 
 window.buscarCalle = buscarCalle;
-

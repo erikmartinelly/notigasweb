@@ -37,6 +37,20 @@ let isUserMarkerDraggedManually = false;
 let isMapInteractedByUser = false;
 let currentActiveOrderMarker = null;
 
+function isLeafletMapInstance(candidate) {
+  return !!candidate &&
+    typeof candidate.addLayer === 'function' &&
+    typeof candidate.removeLayer === 'function' &&
+    typeof candidate.invalidateSize === 'function' &&
+    typeof candidate.getCenter === 'function';
+}
+
+function getLeafletMapInstance() {
+  if (isLeafletMapInstance(window.notigasMap)) return window.notigasMap;
+  if (isLeafletMapInstance(window.map)) return window.map;
+  return null;
+}
+
 // ICONO DE GARRAFA GLP ROJA LIMPIA
 const garrafaSvgMarkerHtml = `
   <div class="radar-marker-wrapper" style="width: 44px; height: 54px; cursor: grab;">
@@ -92,9 +106,11 @@ function initNotigasMap() {
   const mapElement = document.getElementById('map');
   if (!mapElement) return;
 
-  // Si ya existe instancia en window.map o en mapElement, reutilizarla
-  if (window.map) {
-    map = window.map;
+  // Si ya existe una instancia real de Leaflet, reutilizarla.
+  // El <div id="map"> tambien crea window.map en algunos navegadores.
+  const existingMap = getLeafletMapInstance();
+  if (existingMap) {
+    map = existingMap;
     console.log("ℹ️ El mapa ya está inicializado. Actualizando dimensiones...");
     setTimeout(() => { if (map) map.invalidateSize(); }, 100);
     return;
@@ -103,7 +119,7 @@ function initNotigasMap() {
   // Prevenir error 'Map container is already initialized' si Leaflet ya se adjuntó al contenedor
   if (mapElement._leaflet_id) {
     try {
-      if (typeof map !== 'undefined' && map && map.remove) {
+      if (isLeafletMapInstance(map) && map.remove) {
         map.remove();
       }
     } catch(err) {
@@ -181,6 +197,7 @@ function initNotigasMap() {
       fadeAnimation: true,
       zoomAnimation: true
     });
+    window.notigasMap = map;
     window.map = map;
   } catch(mapErr) {
     console.error("Error al crear instancia de Leaflet:", mapErr);
