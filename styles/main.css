@@ -65,13 +65,48 @@ body {
   }
 }
 
-.garrafa-red-flashing-img {
+.notigas-order-marker {
+  position: relative;
+  width: 44px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+}
+
+.notigas-order-icon-img {
   width: 42px;
   height: 52px;
   object-fit: contain;
-  animation: redCylinderGlowPulse 1.2s infinite ease-in-out;
-  cursor: grab;
   user-select: none;
+  position: relative;
+  z-index: 2;
+}
+
+.notigas-order-marker--pending .notigas-order-icon-img {
+  animation: redCylinderGlowPulse 1.2s infinite ease-in-out;
+}
+
+.notigas-order-state-dot {
+  position: absolute;
+  right: -2px;
+  bottom: 4px;
+  z-index: 3;
+  width: 13px;
+  height: 13px;
+  border: 2px solid #FFFFFF;
+  border-radius: 50%;
+  background: #EF4444;
+  box-shadow: 0 2px 7px rgba(15, 23, 42, 0.55);
+}
+
+.notigas-order-marker--seen .notigas-order-state-dot {
+  background: #F59E0B;
+}
+
+.notigas-order-marker--delivered .notigas-order-state-dot {
+  background: #16A34A;
 }
 
 @keyframes redPulseRing {
@@ -2025,7 +2060,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 /* PAUSAR ANIMACIONES EN MOVIMIENTO REDUCIDO */
 @media (prefers-reduced-motion: reduce) {
-  .garrafa-red-flashing-img,
+  .notigas-order-icon-img,
   [style*="animation"] {
     animation: none !important;
   }
@@ -2558,7 +2593,7 @@ button:active, .tab-btn:active, .cat-chip:active {
   font-family: 'Roboto', -apple-system, BlinkMacSystemFont, Arial, sans-serif !important;
 }
 
-.google-map-layer {
+.map-base-layer {
   image-rendering: -webkit-optimize-contrast;
 }
 
@@ -3216,7 +3251,7 @@ button:active, .tab-btn:active, .cat-chip:active {
   transform: scale(0.98);
 }
 
-/* Crédito cartográfico oficial Google Maps */
+/* Crédito cartográfico obligatorio del proveedor del mapa base. */
 .leaflet-control-attribution {
   display: block !important;
   visibility: visible !important;
