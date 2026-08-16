@@ -73,13 +73,14 @@ const garrafaGreenSvgMarkerHtml = `
   </div>
 `;
 
-// ICONO DE CAMIÓN REPARTIDOR (MODERNO / FLOTA COMERCIAL)
+// Marcador único de repartidor: camión moderno + insignia R.
 const truckSvgMarkerHtml = `
-  <div style="position: relative; width: 52px; height: 58px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
-    <div style="background: linear-gradient(135deg, #1E293B, #0F172A); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #FF334B; box-shadow: 0 4px 14px rgba(255, 51, 75, 0.45);">
-      <img src="icons/camion_red.svg" style="width: 30px; height: 30px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));" alt="Camión Repartidor">
+  <div class="driver-map-marker" title="Repartidor NOTIGAS">
+    <div class="driver-marker-truck" aria-hidden="true">
+      <i class="fa-solid fa-truck-fast"></i>
     </div>
-    <span style="position: absolute; top: 1px; right: 3px; background: #00E676; width: 11px; height: 11px; border-radius: 50%; border: 2px solid #0F172A; box-shadow: 0 0 8px #00E676;" title="GPS Activo en Vivo"></span>
+    <span class="driver-marker-badge" aria-hidden="true">R</span>
+    <span class="driver-marker-online" title="GPS activo"></span>
   </div>
 `;
 
@@ -328,25 +329,43 @@ async function cargarPedidosVecinalesEnVivo() {
       isDriverUser = true;
     }
 
-    const tableToQuery = isDriverUser ? 'pedidos' : 'pedidos_publicos';
     const normCity = String(activeCity || '').toLowerCase().trim();
 
-    let query = window.supabaseClient
-      .from(tableToQuery)
-      .select('*')
-      .gte('created_at', activeWindow);
-
-    if (normCity) {
-      query = query.ilike('ciudad', normCity);
-    }
+    let pedidosData = [];
+    let pedidosError = null;
 
     if (isDriverUser) {
-      query = query.in('estado', ['pendiente', 'visto', 'asignado']);
-    } else {
-      query = query.in('estado', ['pendiente', 'visto']);
-    }
+      clearNeighborOrderMarkers();
+      const clusters = await obtenerGruposDemanda(normCity, driverCategoria);
+      renderDemandClustersOnMap(clusters);
 
-    const { data: pedidosData, error: pedidosError } = await query;
+      // Los destinos individuales solo aparecen después de aceptar el grupo.
+      const { data: sessionData } = await window.supabaseClient.auth.getSession();
+      const driverId = sessionData?.session?.user?.id;
+      if (driverId) {
+        let assignedQuery = window.supabaseClient
+          .from('pedidos')
+          .select('*')
+          .eq('driver_id', driverId)
+          .eq('estado', 'asignado')
+          .gte('created_at', activeWindow);
+        if (normCity) assignedQuery = assignedQuery.ilike('ciudad', normCity);
+        const assignedResult = await assignedQuery;
+        pedidosData = assignedResult.data || [];
+        pedidosError = assignedResult.error;
+      }
+    } else {
+      clearDemandClusterMarkers();
+      let buyerQuery = window.supabaseClient
+        .from('pedidos_publicos')
+        .select('*')
+        .gte('created_at', activeWindow)
+        .in('estado', ['pendiente', 'visto']);
+      if (normCity) buyerQuery = buyerQuery.ilike('ciudad', normCity);
+      const buyerResult = await buyerQuery;
+      pedidosData = buyerResult.data || [];
+      pedidosError = buyerResult.error;
+    }
 
     if (pedidosError) {
       console.error("❌ Error de Supabase al cargar pedidos:", pedidosError.message, pedidosError.details);
@@ -381,6 +400,96 @@ async function cargarPedidosVecinalesEnVivo() {
 }
 
 window.demandClusterMarkers = window.demandClusterMarkers || {};
+
+function clearNeighborOrderMarkers() {
+  Object.keys(neighborOrderMarkers).forEach(orderId => {
+    if (map && neighborOrderMarkers[orderId]) {
+      map.removeLayer(neighborOrderMarkers[orderId]);
+    }
+    delete neighborOrderMarkers[orderId];
+    if (window.neighborOrderTimers[orderId]) {
+      clearTimeout(window.neighborOrderTimers[orderId]);
+      delete window.neighborOrderTimers[orderId];
+    }
+  });
+}
+
+function clearDemandClusterMarkers() {
+  Object.keys(window.demandClusterMarkers).forEach(clusterId => {
+    const marker = window.demandClusterMarkers[clusterId];
+    if (map && marker) map.removeLayer(marker);
+    delete window.demandClusterMarkers[clusterId];
+  });
+}
+
+async function obtenerGruposDemanda(ciudad, categoriaRepartidor) {
+  if (!window.supabaseClient || !ciudad) return [];
+
+  const { data, error } = await window.supabaseClient.rpc('rpc_get_demand_clusters_v2', {
+    p_ciudad: String(ciudad).toLowerCase().trim(),
+    p_categoria: null,
+    p_distancia_metros: 300,
+    p_min_pedidos: 2
+  });
+
+  if (error) throw error;
+
+  return (data || []).filter(cluster => {
+    return typeof window.isOrderCategoryMatchingDriver !== 'function' ||
+      window.isOrderCategoryMatchingDriver(cluster.categoria, categoriaRepartidor);
+  });
+}
+
+function renderDemandClustersOnMap(clusters) {
+  if (!map || typeof L === 'undefined') return;
+  clearDemandClusterMarkers();
+
+  (clusters || []).forEach(cluster => {
+    const lat = Number(cluster.centro_lat);
+    const lng = Number(cluster.centro_lng);
+    const count = Number(cluster.pedidos_activos || 0);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || !cluster.cluster_id) return;
+
+    const icon = L.divIcon({
+      className: 'demand-cluster-icon',
+      html: `<div class="demand-cluster-badge"><strong>${count}</strong><span>PEDIDOS</span></div>`,
+      iconSize: [66, 66],
+      iconAnchor: [33, 33],
+      popupAnchor: [0, -30]
+    });
+
+    const safeId = escapeHtmlStr(cluster.cluster_id);
+    const safeCity = escapeHtmlStr(cluster.ciudad || '');
+    const safeCategory = escapeHtmlStr(cluster.categoria || '');
+    const marker = L.marker([lat, lng], { icon, zIndexOffset: 8500 }).addTo(map);
+    marker.bindPopup(`
+      <div class="demand-cluster-popup">
+        <strong>${count} pedidos agrupados</strong>
+        <span>${safeCategory} · radio aproximado de 300 m</span>
+        <button type="button" class="btn-driver-accept" data-action="aceptarGrupoDemanda" data-cluster-id="${safeId}" data-ciudad="${safeCity}" data-categoria="${safeCategory}">
+          <i class="fa-solid fa-people-group"></i> Aceptar grupo
+        </button>
+      </div>`);
+    window.demandClusterMarkers[cluster.cluster_id] = marker;
+  });
+}
+
+window.centrarGrupoDemanda = function(lat, lng, clusterId) {
+  const nLat = Number(lat);
+  const nLng = Number(lng);
+  if (!map || !Number.isFinite(nLat) || !Number.isFinite(nLng)) return;
+  const modal = document.getElementById('modalDriverOrders');
+  if (modal) modal.style.display = 'none';
+  map.flyTo([nLat, nLng], 16, { duration: 1.1 });
+  setTimeout(() => {
+    const marker = window.demandClusterMarkers[clusterId];
+    if (marker) marker.openPopup();
+  }, 1200);
+};
+
+window.obtenerGruposDemanda = obtenerGruposDemanda;
+window.renderDemandClustersOnMap = renderDemandClustersOnMap;
+window.clearDemandClusterMarkers = clearDemandClusterMarkers;
 
 function actualizarRepartidorEnMapa(data) {
   if (!map || !data) return;

@@ -24,119 +24,182 @@ async function renderDriverOrdersList() {
   const container = document.getElementById('driverOrdersContainer');
   if (!container) return;
 
-  container.innerHTML = '<div style="color:white;text-align:center;padding:20px;">Cargando pedidos...</div>';
+  container.innerHTML = '<div class="driver-demand-empty">Cargando grupos de demanda...</div>';
 
-  let orders = [];
-
-  if (window.supabaseClient) {
-    let driverCiudad = '';
-    let driverCategoria = '';
-    let localUserId = null;
-
-    try {
-      const { data: sessionData } = await window.supabaseClient.auth.getSession();
-      const user = sessionData?.session?.user;
-      if (user) {
-        localUserId = user.id;
-        const { data: driverRow } = await window.supabaseClient
-          .from('choferes_habilitados')
-          .select('ciudad, categoria')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (driverRow) {
-          driverCiudad = driverRow.ciudad || '';
-          driverCategoria = driverRow.categoria || '';
-        }
-      }
-    } catch (e) {
-      console.warn('Error obteniendo perfil de chofer desde base de datos:', e);
-    }
-
-    // Fallback secundario a AppState
-    if (!driverCiudad || !driverCategoria) {
-      const userData = (typeof AppState !== 'undefined') ? (AppState.get('userData') || {}) : {};
-      driverCiudad = driverCiudad || userData.ciudad || userData.city || ((typeof AppState !== 'undefined') ? AppState.get('city') : '');
-      driverCategoria = driverCategoria || userData.categoria || userData.category || 'gas';
-    }
-
-    if (!localUserId && typeof getCurrentUserId === 'function') {
-      localUserId = getCurrentUserId();
-    }
-
-    if (!driverCiudad) {
-      container.innerHTML = `<div style="padding:24px; text-align:center; color:#94A3B8; font-size:13px;"><i class="fa-solid fa-triangle-exclamation" style="font-size:28px; color:#F59E0B; margin-bottom:10px;"></i><br><strong style="color:white;">No se pudo determinar la ciudad activa.</strong><br><span style="font-size:11px; color:#64748B;">Selecciona tu ciudad en el mapa o perfil para ver pedidos.</span></div>`;
-      return;
-    }
-
-    const activeWindow = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
-    const normCity = String(driverCiudad).toLowerCase().trim();
-
-    const { data, error } = await window.supabaseClient
-      .from('pedidos')
-      .select('*')
-      .ilike('ciudad', normCity)
-      .in('estado', ['pendiente', 'visto', 'asignado'])
-      .gte('created_at', activeWindow)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error cargando pedidos:', error);
-      container.innerHTML = `<div style="padding:24px; text-align:center; color:#EF4444; font-size:13px;"><i class="fa-solid fa-circle-exclamation" style="font-size:28px; margin-bottom:10px;"></i><br><strong>Error cargando pedidos: ${window.escapeHtmlStr(error.message || '')}</strong></div>`;
-      return;
-    }
-
-    if (data) {
-      // Filtramos con normalización de categoría flexible y por disponibilidad de pedido
-      orders = data.filter(o => {
-        const matchesCategory = (typeof window.isOrderCategoryMatchingDriver === 'function')
-          ? window.isOrderCategoryMatchingDriver(o.categoria, driverCategoria)
-          : true;
-        const isAvailable = o.estado === 'pendiente' || o.estado === 'visto' || (o.estado === 'asignado' && o.driver_id === localUserId);
-        return matchesCategory && isAvailable;
-      });
-    }
-  }
-
-  if (orders.length === 0) {
-    let driverCategoryName = "tu categoría";
-    try {
-      const u = JSON.parse(JSON.stringify(AppState.get('userData') || {}) || '{}');
-      if (u.categoria) driverCategoryName = u.categoria;
-    } catch(e){}
-
-    container.innerHTML = `<div style="padding:24px; text-align:center; color:#94A3B8; font-size:13px;"><i class="fa-solid fa-filter-circle-xmark" style="font-size:28px; color:#F59E0B; margin-bottom:10px;"></i><br><strong style="color:white;">No hay pedidos activos de ${driverCategoryName}</strong><br><span style="font-size:11px; color:#64748B;">Solo recibes pedidos de tu rubro exclusivo en este momento.</span></div>`;
+  if (!window.supabaseClient) {
+    container.innerHTML = '<div class="driver-demand-empty">Sin conexión con la base de datos.</div>';
     return;
   }
 
-  let html = '';
-  orders.forEach(ord => {
-    const mins = Math.floor((Date.now() - new Date(ord.created_at).getTime()) / 60000);
-    const ordLat = ord.latitude ?? ord.lat ?? '';
-    const ordLng = ord.longitude ?? ord.lng ?? '';
-    const ordId = ord.id || '';
-    const ordDir = ord.direccion || '';
+  let driverCiudad = '';
+  let driverCategoria = '';
+  let localUserId = null;
 
-    html += `
-        <div class="order-card-pressable" data-action="centrarPedidoEnMapa" data-lat="${ordLat}" data-lng="${ordLng}" data-id="${ordId}" data-order-id="${ordId}" style="background:#1E293B; padding:12px; margin-bottom:10px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.25); border:1px solid rgba(245, 158, 11, 0.2); cursor:pointer;">
-          <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-            <span style="font-weight:900; font-size:13px; color:#F8FAFC;">🛒 Pedido #${ord.id ? String(ord.id).slice(0, 8) : '?'}</span>
-            <span style="font-size:10px; color:#F59E0B; font-weight:700;">⏱ ${mins} min</span>
+  try {
+    const { data: sessionData } = await window.supabaseClient.auth.getSession();
+    const user = sessionData?.session?.user;
+    if (user) {
+      localUserId = user.id;
+      const { data: driverRow } = await window.supabaseClient
+        .from('choferes_habilitados')
+        .select('ciudad, categoria')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (driverRow) {
+        driverCiudad = driverRow.ciudad || '';
+        driverCategoria = driverRow.categoria || '';
+      }
+    }
+  } catch (error) {
+    console.warn('Error obteniendo perfil de repartidor:', error);
+  }
+
+  const userData = (typeof AppState !== 'undefined') ? (AppState.get('userData') || {}) : {};
+  driverCiudad = driverCiudad || userData.ciudad || userData.city || ((typeof AppState !== 'undefined') ? AppState.get('city') : '');
+  driverCategoria = driverCategoria || userData.categoria || userData.category || 'gas';
+
+  if (!driverCiudad) {
+    container.innerHTML = '<div class="driver-demand-empty">Selecciona tu ciudad para ver los grupos de demanda.</div>';
+    return;
+  }
+
+  const normCity = String(driverCiudad).toLowerCase().trim();
+  let clusters = [];
+  let assignedOrders = [];
+  let clusterError = null;
+
+  try {
+    if (typeof window.obtenerGruposDemanda === 'function') {
+      clusters = await window.obtenerGruposDemanda(normCity, driverCategoria);
+    } else {
+      const result = await window.supabaseClient.rpc('rpc_get_demand_clusters_v2', {
+        p_ciudad: normCity,
+        p_categoria: null,
+        p_distancia_metros: 300,
+        p_min_pedidos: 2
+      });
+      if (result.error) throw result.error;
+      clusters = (result.data || []).filter(cluster => {
+        return typeof window.isOrderCategoryMatchingDriver !== 'function' ||
+          window.isOrderCategoryMatchingDriver(cluster.categoria, driverCategoria);
+      });
+    }
+  } catch (error) {
+    clusterError = error;
+    console.error('Error cargando grupos de demanda:', error);
+  }
+
+  if (localUserId) {
+    const assignedResult = await window.supabaseClient.rpc('rpc_get_my_assigned_orders');
+
+    if (!assignedResult.error) {
+      assignedOrders = (assignedResult.data || []).filter(order => {
+        return typeof window.isOrderCategoryMatchingDriver !== 'function' ||
+          window.isOrderCategoryMatchingDriver(order.categoria, driverCategoria);
+      });
+    } else {
+      // Compatibilidad temporal hasta aplicar la migración 041 en Supabase.
+      console.warn('RPC de contacto seguro pendiente; cargando pedidos sin correo:', assignedResult.error.message);
+      const fallbackResult = await window.supabaseClient
+        .from('pedidos')
+        .select('id, titulo, categoria, cantidad, direccion, telefono, latitude, longitude, created_at, estado')
+        .eq('driver_id', localUserId)
+        .ilike('ciudad', normCity)
+        .eq('estado', 'asignado')
+        .order('created_at', { ascending: true });
+
+      if (fallbackResult.error) {
+        console.warn('Error cargando entregas asignadas:', fallbackResult.error);
+      } else {
+        assignedOrders = fallbackResult.data || [];
+      }
+    }
+  }
+
+  if (typeof window.renderDemandClustersOnMap === 'function') {
+    window.renderDemandClustersOnMap(clusters);
+  }
+
+  const minutesSince = value => {
+    const timestamp = new Date(value || Date.now()).getTime();
+    return Math.max(0, Math.floor((Date.now() - timestamp) / 60000));
+  };
+
+  let html = '';
+
+  if (assignedOrders.length > 0) {
+    html += '<div class="demand-section-title"><i class="fa-solid fa-route"></i> Mi grupo asignado</div>';
+    assignedOrders.forEach(order => {
+      const lat = Number(order.latitude);
+      const lng = Number(order.longitude);
+      const safeAddress = window.escapeHtmlStr(order.direccion || 'Ubicación fijada en el mapa');
+      const safeBuyerName = window.escapeHtmlStr(order.titulo || 'Comprador vecinal');
+      const safeBuyerEmail = window.escapeHtmlStr(order.buyer_email || 'Correo disponible al aplicar migración 041');
+      const emailHref = order.buyer_email ? `mailto:${encodeURIComponent(order.buyer_email)}` : '';
+      html += `
+        <article class="assigned-order-card">
+          <div class="demand-card-header">
+            <strong>Entrega #${window.escapeHtmlStr(String(order.id).slice(0, 8))}</strong>
+            <span class="trip-status-text">ASIGNADO</span>
           </div>
-          <div style="font-size:12px; margin-bottom:4px; color:#CBD5E1;">📍 <strong>Dir:</strong> ${window.escapeHtmlStr(ordDir || 'Ubicación fijada por GPS')}</div>
-          <div style="font-size:12px; margin-bottom:4px; color:#CBD5E1;">📦 <strong>Prod:</strong> ${window.escapeHtmlStr(ord.categoria || '')} (${window.escapeHtmlStr(ord.cantidad || '1')} un)</div>
-          ${ord.telefono ? `<div style="font-size:12px; margin-bottom:8px; color:#00E676;">📞 <strong>Tel:</strong> ${window.escapeHtmlStr(ord.telefono)}</div>` : ''}
-          <div style="display:flex; gap:8px; margin-top:10px;">
-            <button type="button" data-action="centrarPedidoEnMapa" data-lat="${ordLat}" data-lng="${ordLng}" data-id="${ordId}" data-order-id="${ordId}" class="btn-secondary" style="flex:1; padding:8px; border-radius:8px; font-weight:700; font-size:12px; cursor:pointer;">
-              📍 Ver mapa
+          <div class="demand-card-meta">
+            <div><i class="fa-solid fa-user"></i> ${safeBuyerName}</div>
+            <div><i class="fa-solid fa-envelope"></i> ${emailHref ? `<a class="assigned-buyer-email" href="${emailHref}">${safeBuyerEmail}</a>` : safeBuyerEmail}</div>
+            <div><i class="fa-solid fa-box"></i> ${window.escapeHtmlStr(order.categoria || '')} (${window.escapeHtmlStr(order.cantidad || '1')})</div>
+            <div><i class="fa-solid fa-location-dot"></i> ${safeAddress}</div>
+          </div>
+          <div class="demand-card-actions">
+            <button type="button" class="btn-driver-route" data-action="abrirRutaGoogleMaps" data-lat="${lat}" data-lng="${lng}" data-id="${window.escapeHtmlStr(order.id)}" data-address="${safeAddress}">
+              <i class="fa-solid fa-diamond-turn-right"></i> Navegar
             </button>
-            <button type="button" data-action="abrirRutaGoogleMaps" data-lat="${ordLat}" data-lng="${ordLng}" data-id="${ordId}" data-address="${window.escapeHtmlStr(ordDir)}" class="btn-driver-route" style="flex:1; padding:8px; border-radius:8px; font-weight:800; font-size:12px; cursor:pointer;">
-              🚀 Ir al pedido
+            <button type="button" class="btn-driver-complete" data-action="confirmarEntregaPedido" data-id="${window.escapeHtmlStr(order.id)}">
+              <i class="fa-solid fa-check"></i> Entregado
             </button>
           </div>
-        </div>
-      `;
-  });
+        </article>`;
+    });
+  }
+
+  html += '<div class="demand-section-title"><i class="fa-solid fa-people-group"></i> Grupos disponibles</div>';
+
+  if (clusterError) {
+    html += `<div class="driver-demand-empty">No se pudieron cargar los grupos: ${window.escapeHtmlStr(clusterError.message || 'error de conexión')}.</div>`;
+  } else if (clusters.length === 0) {
+    html += `<div class="driver-demand-empty">Todavía no hay un grupo de al menos 2 pedidos de ${window.escapeHtmlStr(driverCategoria)} en esta ciudad.</div>`;
+  } else {
+    clusters
+      .sort((a, b) => Number(b.pedidos_activos || 0) - Number(a.pedidos_activos || 0))
+      .forEach(cluster => {
+        const lat = Number(cluster.centro_lat);
+        const lng = Number(cluster.centro_lng);
+        const count = Number(cluster.pedidos_activos || 0);
+        const safeClusterId = window.escapeHtmlStr(cluster.cluster_id || '');
+        const safeCity = window.escapeHtmlStr(cluster.ciudad || normCity);
+        const safeCategory = window.escapeHtmlStr(cluster.categoria || driverCategoria);
+        html += `
+          <article class="demand-group-card">
+            <div class="demand-card-header">
+              <div>
+                <div class="demand-card-count">${count} pedidos</div>
+                <strong>${safeCategory}</strong>
+              </div>
+              <span class="trip-status-text">DEMANDA ACTIVA</span>
+            </div>
+            <div class="demand-card-meta">
+              Zona agrupada en un radio aproximado de 300 m. Último pedido hace ${minutesSince(cluster.created_at_ultimo)} min.
+            </div>
+            <div class="demand-card-actions">
+              <button type="button" class="btn-driver-my-location" data-action="centrarGrupoDemanda" data-lat="${lat}" data-lng="${lng}" data-cluster-id="${safeClusterId}">
+                <i class="fa-solid fa-location-crosshairs"></i> Ver zona
+              </button>
+              <button type="button" class="btn-driver-accept" data-action="aceptarGrupoDemanda" data-cluster-id="${safeClusterId}" data-ciudad="${safeCity}" data-categoria="${safeCategory}">
+                <i class="fa-solid fa-people-group"></i> Aceptar grupo
+              </button>
+            </div>
+          </article>`;
+      });
+  }
 
   container.innerHTML = html;
 }
@@ -203,6 +266,7 @@ window.aceptarGrupoDemanda = async function(clusterId, ciudad, categoria) {
       delete window.demandClusterMarkers[clusterId];
     }
 
+    if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
     if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
   });
 }
@@ -273,23 +337,8 @@ window.abrirRutaGoogleMaps = function (a, b, c, d) {
     showToast('🚀 En Ruta', 'Abriendo navegación en Google Maps...', 'success', 2500);
   }
 
-  // Asignar en Supabase en segundo plano si hay un orderId válido
-  if (window.supabaseClient && orderId && String(orderId).trim() !== '' && orderId !== 'undefined' && orderId !== 'null') {
-    window.supabaseClient.rpc('rpc_assign_order', { p_order_id: orderId })
-      .then(({ data, error }) => {
-        if (error) {
-          console.warn('Aviso asignación en backend:', error.message);
-        } else if (data && data.ok) {
-          console.log('✅ Pedido asignado exitosamente en backend:', orderId);
-          if (typeof renderDriverOrdersList === 'function') {
-            renderDriverOrdersList();
-          }
-        }
-      })
-      .catch(err => {
-        console.warn('Excepción de red en rpc_assign_order:', err);
-      });
-  }
+  // Navegar nunca asigna un pedido. La asignación solo ocurre al aceptar
+  // atómicamente un grupo mediante rpc_accept_demand_cluster_v2.
 };
 
 async function confirmarEntregaPedido(id) {
@@ -345,6 +394,128 @@ function ejecutarPurgaBaseDeDatosAuto() {
   } catch(e){}
 }
 
+let _activeOrderStatusRequest = null;
+let _activeOrderStatusCheckedAt = 0;
+let _activeOrderFinalTimer = null;
+const ACTIVE_ORDER_STATUS_REFRESH_MS = 15000;
+
+const ORDER_STATUS_PRESENTATION = {
+  pendiente: {
+    title: 'Esperando grupo',
+    label: 'PENDIENTE',
+    owner: 'DEMANDA VECINAL',
+    info: 'Tu pedido está registrado y suma demanda con vecinos cercanos.',
+    detail: 'Se asignará cuando un repartidor acepte el grupo de tu zona.',
+    color: '#FF6D00',
+    shadow: 'rgba(255, 109, 0, 0.18)'
+  },
+  visto: {
+    title: 'Zona revisada',
+    label: 'VISTO',
+    owner: 'SIGUE DISPONIBLE',
+    info: 'Un repartidor vio la demanda y tu pedido continúa activo dentro del grupo.',
+    detail: 'Esperando que un repartidor acepte el grupo completo.',
+    color: '#FF8F00',
+    shadow: 'rgba(255, 143, 0, 0.18)'
+  },
+  asignado: {
+    title: 'Grupo en camino',
+    label: 'ASIGNADO',
+    owner: 'REPARTIDOR ASIGNADO',
+    info: 'Un repartidor aceptó el grupo de pedidos de tu zona.',
+    detail: 'El chofer ya puede ver los destinos asignados y realizar las entregas.',
+    color: '#D32F2F',
+    shadow: 'rgba(211, 47, 47, 0.18)'
+  },
+  entregado: {
+    title: 'Pedido entregado',
+    label: 'ENTREGADO',
+    owner: 'PEDIDO COMPLETADO',
+    info: 'La entrega fue confirmada correctamente.',
+    detail: 'Gracias por usar la red vecinal NOTIGAS.',
+    color: '#15803D',
+    shadow: 'rgba(21, 128, 61, 0.18)'
+  },
+  cancelado: {
+    title: 'Pedido cancelado',
+    label: 'CANCELADO',
+    owner: 'PEDIDO CERRADO',
+    info: 'El pedido ya no forma parte de la demanda vecinal.',
+    detail: 'Puedes crear una nueva solicitud cuando la necesites.',
+    color: '#B71C1C',
+    shadow: 'rgba(183, 28, 28, 0.18)'
+  }
+};
+
+function renderActiveOrderNotice(order) {
+  const tripCard = document.getElementById('notigasTripCard');
+  if (!tripCard || !order) return;
+
+  const estado = String(order.estado || 'pendiente').toLowerCase();
+  const view = ORDER_STATUS_PRESENTATION[estado] || ORDER_STATUS_PRESENTATION.pendiente;
+  const title = document.getElementById('tripCardTitle');
+  const info = document.getElementById('tripCardInfo');
+  const statusText = document.getElementById('tripCardStatusText');
+  const driverName = document.getElementById('tripCardDriverName');
+  const timeEst = document.getElementById('tripCardTime');
+  const statusIndicator = document.getElementById('tripCardStatusIndicator');
+
+  tripCard.dataset.orderState = estado;
+  tripCard.style.display = 'block';
+  tripCard.setAttribute('aria-label', `${view.title}. ${view.info}`);
+  if (title) title.textContent = view.title;
+  if (info) info.textContent = view.info;
+  if (statusText) {
+    statusText.textContent = view.label;
+    statusText.style.color = view.color;
+  }
+  if (driverName) driverName.textContent = view.owner;
+  if (timeEst) timeEst.textContent = view.detail;
+  if (statusIndicator) {
+    statusIndicator.style.background = view.color;
+    statusIndicator.style.boxShadow = `0 0 0 4px ${view.shadow}`;
+  }
+}
+
+async function syncActiveOrderStatusFromDatabase(order) {
+  if (!window.supabaseClient || !order?.id || _activeOrderStatusRequest) return;
+  const now = Date.now();
+  if (now - _activeOrderStatusCheckedAt < ACTIVE_ORDER_STATUS_REFRESH_MS) return;
+  _activeOrderStatusCheckedAt = now;
+
+  _activeOrderStatusRequest = window.supabaseClient
+    .from('pedidos')
+    .select('estado, driver_id, updated_at')
+    .eq('id', order.id)
+    .maybeSingle();
+
+  try {
+    const { data, error } = await _activeOrderStatusRequest;
+    if (error || !data) return;
+
+    const changed = data.estado !== order.estado ||
+      data.driver_id !== order.driver_id ||
+      data.updated_at !== order.updated_at;
+    if (!changed) return;
+
+    const updatedOrder = { ...order, ...data };
+    AppState.set('activeOrder', updatedOrder);
+    renderActiveOrderNotice(updatedOrder);
+
+    if (data.estado === 'entregado' || data.estado === 'cancelado') {
+      clearTimeout(_activeOrderFinalTimer);
+      _activeOrderFinalTimer = setTimeout(() => {
+        AppState.set('activeOrder', null);
+        checkActiveOrderStatus();
+      }, 5000);
+    }
+  } catch (error) {
+    console.warn('Verificación de estado de pedido:', error);
+  } finally {
+    _activeOrderStatusRequest = null;
+  }
+}
+
 function checkActiveOrderStatus() {
   ejecutarPurgaBaseDeDatosAuto();
 
@@ -363,67 +534,11 @@ function checkActiveOrderStatus() {
       if (btnCancel) btnCancel.style.display = 'flex';
       if (btnMain) btnMain.style.display = 'none';
 
-      if (tripCard) {
-        tripCard.style.display = 'block';
-        // Mostrar buyerActions pero ocultar btnMain y botones irrelevantes
-        if (buyerActions) buyerActions.style.display = 'flex';
-      }
-
-      const statusText = document.getElementById('tripCardStatusText');
-      const driverName = document.getElementById('tripCardDriverName');
-      const timeEst = document.getElementById('tripCardTime');
-      const statusIndicator = document.getElementById('tripCardStatusIndicator');
-
-      const estado = String(order.estado || 'pendiente').toLowerCase();
-
-      if (estado === 'pendiente' || estado === 'visto') {
-        if (statusText) statusText.innerText = 'BUSCANDO';
-        if (driverName) driverName.innerText = 'SOLICITUD ENVIADA';
-        if (timeEst) timeEst.innerText = 'Esperando disponibilidad de un repartidor en tu zona...';
-        if (statusIndicator) {
-          statusIndicator.style.background = '#FF9800';
-          statusIndicator.style.boxShadow = '0 0 7px rgba(255,152,0,.55)';
-        }
-      } else if (estado === 'asignado') {
-        if (statusText) statusText.innerText = 'EN CAMINO';
-        if (driverName) driverName.innerText = 'REPARTIDOR EN CAMINO';
-        if (timeEst) timeEst.innerText = 'Un repartidor aceptó tu pedido y está en ruta hacia tu ubicación.';
-        if (statusIndicator) {
-          statusIndicator.style.background = '#0288D1';
-          statusIndicator.style.boxShadow = '0 0 8px rgba(2,136,209,.6)';
-        }
-      } else if (estado === 'entregado') {
-        if (statusText) statusText.innerText = 'ENTREGADO';
-        if (driverName) driverName.innerText = 'PEDIDO COMPLETADO';
-        if (timeEst) timeEst.innerText = 'Pedido entregado exitosamente.';
-        if (statusIndicator) {
-          statusIndicator.style.background = '#10B981';
-          statusIndicator.style.boxShadow = '0 0 7px rgba(16,185,129,.55)';
-        }
-      }
+      if (buyerActions) buyerActions.style.display = 'flex';
+      renderActiveOrderNotice(order);
 
       actualizarFaviconSegunPedido(order.categoria, order.estado);
-
-      if (window.supabaseClient && order.id) {
-         window.supabaseClient.from('pedidos').select('estado').eq('id', order.id).maybeSingle()
-         .then(({data, error}) => {
-            if (error || !data) return;
-            if (data.estado && data.estado !== order.estado) {
-               order.estado = data.estado;
-               AppState.set('activeOrder', order);
-               if (data.estado === 'entregado' || data.estado === 'cancelado') {
-                  setTimeout(() => {
-                    AppState.set('activeOrder', null);
-                    checkActiveOrderStatus();
-                  }, 3000);
-               } else {
-                  checkActiveOrderStatus();
-               }
-            }
-         }).catch(err => {
-            console.warn("Verificación de estado de pedido:", err);
-         });
-      }
+      syncActiveOrderStatusFromDatabase(order);
 
       if (typeof renderActiveOrdersMap === 'function') {
         renderActiveOrdersMap();
@@ -445,6 +560,10 @@ function checkActiveOrderStatus() {
   if (typeof renderActiveOrdersMap === 'function') {
     renderActiveOrdersMap();
   }
+}
+
+if (typeof AppState !== 'undefined' && typeof AppState.on === 'function') {
+  AppState.on('activeOrder', () => checkActiveOrderStatus());
 }
 
 function abrirSubmenuPedidos() {

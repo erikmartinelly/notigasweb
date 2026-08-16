@@ -4,6 +4,13 @@ NOTIGAS is a real-time Progressive Web Application (PWA) designed to connect nei
 
 Built entirely with **Vanilla JavaScript** and powered by **Supabase**, NOTIGAS requires no complex frontend framework, making it extremely fast, lightweight, and easy to deploy.
 
+## Identidad del Proyecto e Integraciones Principales
+
+* **Desarrollo con Antigravity:** Aproximadamente el **80% de la aplicación fue desarrollada con Antigravity**, junto con revisión, ajustes y decisiones funcionales específicas para el modelo logístico de NOTIGAS.
+* **Ingreso con cuenta Google:** El acceso principal de compradores y repartidores utiliza una **cuenta Google**, integrada con Supabase Auth para administrar la sesión y la identidad del usuario.
+* **Mapa interno OpenStreetMap:** La visualización dentro de NOTIGAS utiliza **Leaflet con datos de OpenStreetMap** y un estilo cartográfico claro de CARTO Voyager.
+* **Navegación externa con Google Maps:** Cuando un repartidor inicia la navegación hacia una entrega que ya le fue asignada, NOTIGAS abre **Google Maps de forma externa** para proporcionar las indicaciones de ruta. NOTIGAS no utiliza tiles de Google Maps en su mapa interno.
+
 ## 🚀 Key Features
 
 *   **Live Interactive Map (Leaflet):** Both buyers and vendors can see each other in real-time. Buyers place orders that drop pins on the map, and vendors broadcast their live GPS location as they drive through the neighborhood.
@@ -27,7 +34,7 @@ NOTIGAS bridges this gap by democratizing access to Artificial Intelligence and 
 
 *   **Frontend:** HTML5, CSS3, Vanilla JavaScript (No React/Vue/Angular).
 *   **Backend & Database:** [Supabase](https://supabase.com/) (PostgreSQL).
-*   **Mapping Provider:** [Leaflet.js](https://leafletjs.com/) with OpenStreetMap tiles.
+*   **Mapping Provider:** [Leaflet.js](https://leafletjs.com/) con datos de OpenStreetMap, estilo CARTO Voyager y fallback de tiles OSM.
 *   **Authentication:** Google OAuth & Custom Auth for Admins.
 *   **Hosting:** Deployable on standard Node.js environments (like Hostinger, Heroku, or Render) using the provided Express server (`server.js`) which enforces strict security headers (CSP, HSTS).
 
@@ -58,7 +65,7 @@ NOTIGAS bridges this gap by democratizing access to Artificial Intelligence and 
 │   └── main.css            # Application CSS stylesheet
 └── supabase/
     ├── full_production_schema.sql # ESQUEMA COMPLETO Y CONSOLIDADO PARA PRODUCCIÓN (1-Click Deploy)
-    └── migrations/         # Migraciones incrementales históricas y fixes (001 - 040)
+    └── migrations/         # Migraciones incrementales históricas y fixes (001 - 041)
 ```
 
 ## ⚙️ Setup & Installation
@@ -72,7 +79,7 @@ NOTIGAS bridges this gap by democratizing access to Artificial Intelligence and 
 2.  **Configure Supabase:**
     *   Create a new project in Supabase.
     *   **Opción A (Recomendada para Despliegues Nuevos):** Ejecuta el archivo consolidado [`supabase/full_production_schema.sql`](supabase/full_production_schema.sql) en el SQL Editor de Supabase. Este script único e idempotente crea todas las tablas, vistas públicas autorizadas, índices, triggers de validación, funciones RPC atómicas y políticas RLS con los contratos requeridos por el frontend.
-    *   **Opción B (Migraciones Incrementales):** Ejecuta las migraciones en `supabase/migrations/` en orden numérico estricto (desde `001_initial_setup.sql` hasta `040_unify_order_state_machine.sql`).
+    *   **Opción B (Migraciones Incrementales):** Ejecuta las migraciones en `supabase/migrations/` en orden numérico estricto (desde `001_initial_setup.sql` hasta `041_secure_assigned_order_contact.sql`). Pega únicamente el contenido SQL de cada archivo, sin encabezados de Git, líneas `@@` ni signos `+`.
         * **014_fix_auth_triggers.sql:** Elimina triggers conflictivos en `auth.users` para prevenir fallos de registro.
         * **027_profiles_location_seen_and_account_cleanup.sql:** Perfiles de usuario y RPC en cascada `delete_user_account()`.
         * **033_official_notices_and_purge_rpc.sql:** Avisos oficiales y purga programada `rpc_purge_old_records()`.
@@ -82,6 +89,7 @@ NOTIGAS bridges this gap by democratizing access to Artificial Intelligence and 
         * **038_add_updated_at_to_pedidos.sql:** Agrega `updated_at` a `pedidos` con trigger automático e indexación.
         * **039_unify_cluster_id_algorithm.sql:** Unifica el algoritmo determinista de `cluster_id` en las RPCs de grupos de demanda.
         * **040_unify_order_state_machine.sql:** Unifica la máquina de 5 estados oficiales con triggers de validación.
+        * **041_secure_assigned_order_contact.sql:** Permite que cada repartidor autenticado vea el correo únicamente de compradores cuyos pedidos ya le fueron asignados y pertenecen a su ciudad.
     *   Open `js/supabase-config.js` and replace the placeholder `supabaseUrl` and `supabaseAnonKey` with your project's actual credentials.
     *   **⚠️ IMPORTANT - Email Confirmation:** Supabase requires email confirmation by default for new registrations. If you wish to disable this during testing or development, go to your Supabase Dashboard -> **Authentication** -> **Providers** -> **Email** and toggle off **Confirm email**. Ensure your `Site URL` and `Redirect URLs` in Supabase Auth configuration point to your production domain.
 

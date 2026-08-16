@@ -209,6 +209,13 @@ window.iniciarSuscripcionesRealtime = function() {
 
     globalChannel
         .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos', filter: `ciudad=eq.${activeCity}` }, payload => {
+            const activeOrder = (typeof AppState !== 'undefined') ? AppState.get('activeOrder') : null;
+            const changedOrder = payload.new || payload.old;
+            if (activeOrder?.id && changedOrder?.id === activeOrder.id && payload.eventType !== 'DELETE') {
+                AppState.set('activeOrder', { ...activeOrder, ...payload.new });
+            } else if (activeOrder?.id && changedOrder?.id === activeOrder.id && payload.eventType === 'DELETE') {
+                AppState.set('activeOrder', null);
+            }
             debouncedRefreshOrders();
         })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'rutas_repartidores', filter: `ciudad=eq.${activeCity}` }, payload => {

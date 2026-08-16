@@ -439,7 +439,7 @@ main {
   width: 100%; 
   background: linear-gradient(135deg, #FF6D00 0%, #FF8F00 100%); 
   color: #FFFFFF; 
-  border: 1.5px solid #F59E0B; 
+  border: 1.5px solid #FF3D00;
   padding: 14px; 
   border-radius: 14px; 
   font-size: 15px; 
@@ -499,8 +499,8 @@ main {
 .btn-hear-truck { 
   flex: 1; 
   background: rgba(30, 41, 59, 0.95); 
-  color: #F59E0B; 
-  border: 1.5px solid rgba(245, 158, 11, 0.5); 
+  color: #FF8F00;
+  border: 1.5px solid rgba(255, 109, 0, 0.6);
   padding: 10px 6px; 
   border-radius: 12px; 
   font-size: 11px; 
@@ -515,8 +515,22 @@ main {
 }
 
 .btn-hear-truck:hover {
-  background: rgba(245, 158, 11, 0.15);
-  border-color: #F59E0B;
+  background: rgba(255, 109, 0, 0.18);
+  border-color: #FF6D00;
+}
+
+.btn-gps-center {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 6px;
+  color: #FFFFFF;
+  background: linear-gradient(135deg, #FF6D00 0%, #E65100 100%);
+  border: 1px solid #FF8F00;
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(255, 109, 0, 0.35);
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
 }
 
 .btn-panorama {
@@ -1452,11 +1466,11 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 .driver-actions-panel {
   background: rgba(15, 23, 42, 0.95) !important;
-  border: 1.5px solid rgba(245, 158, 11, 0.5) !important;
+  border: 1.5px solid rgba(255, 109, 0, 0.7) !important;
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
-  border-radius: 18px !important;
-  padding: 14px !important;
+  border-radius: 8px !important;
+  padding: 10px !important;
   box-shadow: 0 10px 32px rgba(0, 0, 0, 0.7), 0 0 20px rgba(255, 109, 0, 0.25) !important;
   gap: 10px !important;
 }
@@ -1515,15 +1529,15 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 .btn-driver-orders-list {
   flex: 1;
-  background: rgba(30, 41, 59, 0.95);
-  color: #F59E0B;
-  border: 1.5px solid rgba(245, 158, 11, 0.5);
+  background: #FFFFFF;
+  color: #E65100;
+  border: 1.5px solid #FF6D00;
   padding: 11px 10px;
-  border-radius: 12px;
+  border-radius: 8px;
   font-size: 11px;
   font-weight: 900;
   cursor: pointer;
-  box-shadow: 0 4px 18px rgba(245, 158, 11, 0.35);
+  box-shadow: 0 4px 18px rgba(255, 109, 0, 0.28);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1535,8 +1549,9 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 .btn-driver-orders-list:hover {
   transform: translateY(-2px);
-  background: rgba(245, 158, 11, 0.15);
-  border-color: #F59E0B;
+  color: #FFFFFF;
+  background: #E65100;
+  border-color: #E65100;
 }
 
 .btn-driver-follow-me {
@@ -1545,7 +1560,7 @@ button:active, .tab-btn:active, .cat-chip:active {
   color: #FFFFFF;
   border: 1px solid rgba(254, 215, 170, 0.4);
   padding: 11px 10px;
-  border-radius: 12px;
+  border-radius: 8px;
   font-size: 11px;
   font-weight: 900;
   cursor: pointer;
@@ -1571,7 +1586,7 @@ button:active, .tab-btn:active, .cat-chip:active {
   color: #F87171;
   border: 1.5px solid rgba(239, 68, 68, 0.5);
   padding: 11px 10px;
-  border-radius: 12px;
+  border-radius: 8px;
   font-size: 11px;
   font-weight: 900;
   cursor: pointer;
@@ -1595,10 +1610,10 @@ button:active, .tab-btn:active, .cat-chip:active {
 .btn-driver-my-location {
   flex: 1;
   background: rgba(30, 41, 59, 0.95);
-  color: #F8FAFC;
-  border: 1.5px solid rgba(255, 109, 0, 0.5);
+  color: #FF8F00;
+  border: 1.5px solid rgba(255, 109, 0, 0.75);
   padding: 11px 10px;
-  border-radius: 12px;
+  border-radius: 8px;
   font-size: 11px;
   font-weight: 900;
   cursor: pointer;
@@ -1621,15 +1636,15 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 .btn-driver-route {
   width: 100%;
-  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  background: linear-gradient(135deg, #FF6D00 0%, #E65100 100%);
   color: #FFFFFF;
-  border: 1.5px solid #FCD34D;
+  border: 1.5px solid #FF8F00;
   padding: 13px;
-  border-radius: 14px;
+  border-radius: 8px;
   font-weight: 900;
   font-size: 12px;
   cursor: pointer;
-  box-shadow: 0 6px 24px rgba(245, 158, 11, 0.5), inset 0 1px 0 rgba(255,255,255,0.4);
+  box-shadow: 0 6px 24px rgba(255, 109, 0, 0.42), inset 0 1px 0 rgba(255,255,255,0.3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1641,8 +1656,8 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 .btn-driver-route:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 32px rgba(245, 158, 11, 0.8);
-  background: linear-gradient(135deg, #D97706 0%, #B45309 100%);
+  box-shadow: 0 10px 32px rgba(255, 109, 0, 0.62);
+  background: linear-gradient(135deg, #E65100 0%, #BF360C 100%);
   color: #FFFFFF;
 }
 
@@ -2577,7 +2592,59 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 
 
-/* MARCADOR AZUL DEL REPARTIDOR */
+/* MARCADOR UNICO DEL REPARTIDOR: CAMION NOTIGAS + R */
+.driver-map-marker {
+  position: relative;
+  width: 54px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 4px 7px rgba(15, 23, 42, 0.35));
+}
+
+.driver-marker-truck {
+  width: 46px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  background: linear-gradient(135deg, #FF6D00 0%, #D32F2F 100%);
+  border: 3px solid #FFFFFF;
+  border-radius: 8px;
+  font-size: 20px;
+}
+
+.driver-marker-badge {
+  position: absolute;
+  top: -5px;
+  right: -2px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  background: #0F172A;
+  border: 2px solid #FFFFFF;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.driver-marker-online {
+  position: absolute;
+  right: 3px;
+  bottom: 2px;
+  width: 10px;
+  height: 10px;
+  background: #16A34A;
+  border: 2px solid #FFFFFF;
+  border-radius: 50%;
+}
+
+/* Compatibilidad con marcadores antiguos */
 .notigas-driver-marker { position: relative; }
 .driver-dot {
   position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; transform: translate(-50%, -50%);
@@ -2626,14 +2693,14 @@ button:active, .tab-btn:active, .cat-chip:active {
   color: #202124;
   background: rgba(255, 255, 255, 0.97);
   border: 1px solid #dadce0;
-  border-left: 4px solid #f9ab00;
+  border-left: 4px solid #FF6D00;
   border-radius: 8px;
   box-shadow: 0 3px 10px rgba(60, 64, 67, 0.3);
   display: none;
 }
 
-.notigas-trip-card[data-order-state="visto"] { border-left-color: #f9ab00; }
-.notigas-trip-card[data-order-state="asignado"] { border-left-color: #1a73e8; }
+.notigas-trip-card[data-order-state="visto"] { border-left-color: #FF8F00; }
+.notigas-trip-card[data-order-state="asignado"] { border-left-color: #D32F2F; }
 .notigas-trip-card[data-order-state="entregado"] { border-left-color: #188038; }
 .notigas-trip-card[data-order-state="cancelado"] { border-left-color: #d93025; }
 
@@ -2678,13 +2745,13 @@ button:active, .tab-btn:active, .cat-chip:active {
   flex: 0 0 auto;
   width: 9px;
   height: 9px;
-  background: #f9ab00;
+  background: #FF6D00;
   border-radius: 50%;
-  box-shadow: 0 0 0 4px rgba(249, 171, 0, 0.14);
+  box-shadow: 0 0 0 4px rgba(255, 109, 0, 0.14);
 }
 
 .trip-status-text {
-  color: #b06000;
+  color: #E65100;
   font-size: 8.5px;
   font-weight: 900;
 }
@@ -2706,7 +2773,7 @@ button:active, .tab-btn:active, .cat-chip:active {
   align-items: center;
   justify-content: center;
   padding: 0;
-  color: #1a73e8;
+  color: #E65100;
   background: #f8f9fa;
   border: 1px solid #dadce0;
   border-radius: 50%;
@@ -2715,7 +2782,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 .trip-locate-button:hover,
 .trip-locate-button:focus-visible {
-  background: #e8f0fe;
+  background: #FFF3E0;
   outline: none;
 }
 
@@ -2740,7 +2807,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 }
 
 .assigned-order-card {
-  border-left: 4px solid #0ea5e9;
+  border-left: 4px solid #D32F2F;
 }
 
 .demand-card-header,
@@ -2752,7 +2819,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 }
 
 .demand-card-count {
-  color: #fbbf24;
+  color: #FF8F00;
   font-size: 18px;
   font-weight: 900;
 }
@@ -2769,6 +2836,8 @@ button:active, .tab-btn:active, .cat-chip:active {
 }
 
 .demand-card-actions button {
+  flex: 1;
+  width: auto;
   min-height: 36px;
   border-radius: 6px;
   font-size: 11px;
@@ -2804,6 +2873,53 @@ button:active, .tab-btn:active, .cat-chip:active {
   margin-top: 2px;
   font-size: 8px;
   font-weight: 800;
+}
+
+.btn-driver-complete {
+  flex: 1;
+  min-height: 36px;
+  padding: 10px;
+  color: #FFFFFF;
+  background: linear-gradient(135deg, #16A34A 0%, #15803D 100%);
+  border: 1px solid #22C55E;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.assigned-buyer-email {
+  color: #FFB74D;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.driver-demand-empty {
+  padding: 14px 10px;
+  color: #CBD5E1;
+  background: #1E293B;
+  border: 1px solid rgba(255, 109, 0, 0.35);
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.demand-cluster-popup {
+  min-width: 190px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #1E293B;
+}
+
+.demand-cluster-popup span {
+  font-size: 11px;
+}
+
+.demand-cluster-popup .btn-driver-accept {
+  width: 100%;
+  min-height: 36px;
 }
 
 @media (max-width: 480px) {

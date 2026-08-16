@@ -355,6 +355,12 @@ document.addEventListener('click', (e) => {
       const cat = btn.getAttribute('data-categoria');
       if (typeof window.aceptarGrupoDemanda === 'function') window.aceptarGrupoDemanda(cid, city, cat);
     }
+    else if (action === 'centrarGrupoDemanda') {
+      const lat = btn.getAttribute('data-lat');
+      const lng = btn.getAttribute('data-lng');
+      const cid = btn.getAttribute('data-cluster-id');
+      if (typeof window.centrarGrupoDemanda === 'function') window.centrarGrupoDemanda(lat, lng, cid);
+    }
     else if (action === 'abrirSubmenuPedidos') {
       if (typeof window.abrirSubmenuPedidos === 'function') window.abrirSubmenuPedidos();
     }
