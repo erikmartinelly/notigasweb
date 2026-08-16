@@ -140,6 +140,17 @@ function initNotigasMap() {
     iconAnchor: [25, 29]
   });
 
+  window.actualizarIconoMarcadorUsuario = function(forcedMode) {
+    if (!userMarker || !truckIcon || !userLocationIcon) return;
+    const isDriver = (forcedMode === 'driver') || 
+                     (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver') || 
+                     (typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver') ||
+                     (AppState.get('userData') && AppState.get('userData').role === 'repartidor');
+    userMarker.setIcon(isDriver ? truckIcon : userLocationIcon);
+  };
+
+  window.actualizarIconoMarcadorUsuario();
+
   let startLat = currentGpsLat;
   let startLng = currentGpsLng;
   let isNationalView = false;
