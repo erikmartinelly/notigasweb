@@ -349,8 +349,9 @@ function checkActiveOrderStatus() {
   ejecutarPurgaBaseDeDatosAuto();
 
   const btnCancel = document.getElementById('btnCancelOrder');
-
   const btnMain = document.getElementById('btnMainOrder');
+  const tripCard = document.getElementById('notigasTripCard');
+  const buyerActions = document.getElementById('buyerFloatingActions');
 
   const activeOrder = AppState.get('activeOrder');
   const isAdmin = AppState.get('isAdmin');
@@ -362,8 +363,6 @@ function checkActiveOrderStatus() {
       if (btnCancel) btnCancel.style.display = 'flex';
       if (btnMain) btnMain.style.display = 'none';
 
-      const tripCard = document.getElementById('notigasTripCard');
-      const buyerActions = document.getElementById('buyerFloatingActions');
       if (tripCard) {
         tripCard.style.display = 'block';
         // Mostrar buyerActions pero ocultar btnMain y botones irrelevantes
@@ -428,28 +427,23 @@ function checkActiveOrderStatus() {
 
       if (typeof renderActiveOrdersMap === 'function') {
         renderActiveOrdersMap();
-
       }
 
       return;
 
     } catch(e){}
-
   }
 
   if (btnCancel) btnCancel.style.display = 'none';
   if (btnMain) btnMain.style.display = 'flex'; // Restaurar Hacer Pedido
 
-  const tripCard = document.getElementById('notigasTripCard');
   if (tripCard) tripCard.style.display = 'none';
-  const buyerActions = document.getElementById('buyerFloatingActions');
   if (buyerActions) buyerActions.style.display = 'flex';
 
   actualizarFaviconSegunPedido(null);
 
   if (typeof renderActiveOrdersMap === 'function') {
     renderActiveOrdersMap();
-
   }
 }
 

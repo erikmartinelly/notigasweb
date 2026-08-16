@@ -941,6 +941,8 @@ async function migrarDatosAntiguosARepartidor() {
     closeUserSettingsModal();
   }
 
+  const modalAuth = document.getElementById('modalWelcomeAuth');
+
   // 1. Buscar si ya existe un perfil de repartidor en notigas_user_data
   let driverProfile = null;
   try {
@@ -990,7 +992,6 @@ async function migrarDatosAntiguosARepartidor() {
       setAppMode('driver');
     }
 
-    const modalAuth = document.getElementById('modalWelcomeAuth');
     if (modalAuth) modalAuth.style.display = 'none';
 
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
@@ -1002,7 +1003,6 @@ async function migrarDatosAntiguosARepartidor() {
   }
 
   // 3. Si no existe un perfil previo, desplegar la ventana de registro de Repartidor de inmediato
-  const modalAuth = document.getElementById('modalWelcomeAuth');
   if (modalAuth) {
     modalAuth.style.display = 'flex';
     selectAuthRole('driver');
@@ -1090,6 +1090,7 @@ async function registrarEmail() {
 
 async function procesarSesionExitosa(user) {
   try {
+    const modalAuth = document.getElementById('modalWelcomeAuth');
     const gmail = user.email ? user.email.toLowerCase().trim() : '';
     const nombre = user.user_metadata?.full_name || (gmail ? gmail.split('@')[0] : 'Usuario');
 
@@ -1128,7 +1129,6 @@ async function procesarSesionExitosa(user) {
     // Si no es repartidor en BD y aún no ha seleccionado rol en esta sesión de login
     if (!esRepartidorDB && !window._roleSelectedNow) {
       if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-      const modalAuth = document.getElementById('modalWelcomeAuth');
       if (modalAuth) modalAuth.style.display = 'none';
 
       window._tempAuthUser = user;
@@ -1165,7 +1165,6 @@ async function procesarSesionExitosa(user) {
       } else {
         // Driver NO EXISTE en la DB. Mostrar formulario de registro!
         if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-        const modalAuth = document.getElementById('modalWelcomeAuth');
         if (modalAuth) modalAuth.style.display = 'none';
 
         const inputDriverNombre = document.getElementById('inputDriverNombre');
@@ -1187,7 +1186,6 @@ async function procesarSesionExitosa(user) {
     AppState.set('userData', clienteData);
     window._roleSelectedNow = false; // Reset state for next login
 
-    const modalAuth = document.getElementById('modalWelcomeAuth');
     if (modalAuth) modalAuth.style.display = 'none';
 
     if (currentSelectedRole === 'driver') {
