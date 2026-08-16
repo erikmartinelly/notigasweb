@@ -4,6 +4,7 @@
 
 -- 1. Eliminar versiones anteriores y sobrecargas obsoletas
 DROP FUNCTION IF EXISTS public.rpc_accept_demand_cluster_v2(text, uuid[]);
+DROP FUNCTION IF EXISTS public.rpc_accept_demand_cluster_v2(uuid[], text);
 DROP FUNCTION IF EXISTS public.rpc_accept_demand_cluster_v2(text, text, text, double precision, integer);
 DROP FUNCTION IF EXISTS public.rpc_get_orders_for_cluster_v2(text, text, text, double precision, integer);
 DROP FUNCTION IF EXISTS public.rpc_get_demand_clusters_v2(text, text, double precision, integer);
