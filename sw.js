@@ -1,4 +1,4 @@
-﻿/* NOTIGAS SERVICE WORKER v75.0 - CACHÃ‰ PROGRESIVO Y MODO OFFLINE */
+/* NOTIGAS SERVICE WORKER v75.0 - CACHÉ PROGRESIVO Y MODO OFFLINE */
 const CACHE_NAME = 'notigas-cache-v75';
 const ASSETS_TO_CACHE = [
   './',
@@ -57,7 +57,7 @@ self.addEventListener('fetch', (event) => {
   if (!event.request.url.startsWith('http')) return; // Prevenir errores con extensiones de Chrome (chrome-extension://)
   
   const url = event.request.url;
-  // Bypass: peticiones externas, mapas y Supabase (autenticaciÃ³n/realtime nunca deben cachearse)
+  // Bypass: peticiones externas, mapas y Supabase (autenticación/realtime nunca deben cachearse)
   if (
     url.includes('google.com') ||
     url.includes('googleusercontent.com') ||
@@ -80,7 +80,7 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
-        // Stale-While-Revalidate: servir cachÃ© y actualizar en segundo plano
+        // Stale-While-Revalidate: servir caché y actualizar en segundo plano
         fetch(event.request).then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
             const responseClone = networkResponse.clone();
@@ -97,7 +97,7 @@ self.addEventListener('fetch', (event) => {
         }
         return networkResponse;
       }).catch(() => {
-        // Fallback offline para pÃ¡ginas HTML
+        // Fallback offline para páginas HTML
         if (event.request.headers.get('accept')?.includes('text/html')) {
           return caches.match('./index.html', { ignoreSearch: true });
         }
@@ -105,4 +105,3 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
-
