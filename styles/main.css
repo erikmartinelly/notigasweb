@@ -2489,27 +2489,91 @@ button:active, .tab-btn:active, .cat-chip:active {
 }
 
 
-/* MAPA NOTIGAS: Google Maps Light Theme (Voyager) */
-.map-base-layer { 
-  filter: none;
-}
-.map-labels-layer {
+/* MAPA NOTIGAS: OpenStreetMap con estilo claro CARTO Voyager */
+.map-base-layer {
   filter: none;
 }
 
-/* Controles de Zoom Discretos */
-.leaflet-control-zoom { border: 0 !important; box-shadow: 0 5px 16px rgba(0,0,0,.35) !important; }
-.leaflet-control-zoom a { 
-  width: 36px !important; 
-  height: 36px !important; 
-  line-height: 36px !important; 
-  color: #dce5ef !important; 
-  background: #19283b !important; 
-  border: 1px solid rgba(255,255,255,.07) !important; 
+.leaflet-control-zoom {
+  border: 0 !important;
+  border-radius: 4px !important;
+  box-shadow: 0 2px 8px rgba(60, 64, 67, 0.3) !important;
 }
-.leaflet-control-zoom a:hover { background: #26394f !important; color: #ffffff !important; }
-.leaflet-control-attribution { background: rgba(12,22,36,.70) !important; color: #718096 !important; font-size: 8px !important; }
-.leaflet-control-attribution a { color: #8294a9 !important; }
+
+.leaflet-control-zoom a {
+  width: 40px !important;
+  height: 40px !important;
+  line-height: 40px !important;
+  color: #3c4043 !important;
+  background: #ffffff !important;
+  border: 0 !important;
+  border-bottom: 1px solid #e8eaed !important;
+  font-family: Arial, sans-serif !important;
+  font-size: 22px !important;
+  font-weight: 400 !important;
+}
+
+.leaflet-control-zoom a:last-child {
+  border-bottom: 0 !important;
+}
+
+.leaflet-control-zoom a:hover,
+.leaflet-control-zoom a:focus-visible {
+  background: #f8f9fa !important;
+  color: #1a73e8 !important;
+}
+
+.leaflet-control-attribution {
+  max-width: calc(100vw - 16px);
+  padding: 2px 5px !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  color: #5f6368 !important;
+  font-size: 10px !important;
+  line-height: 1.25 !important;
+}
+
+.leaflet-control-attribution a {
+  color: #1a73e8 !important;
+}
+
+.map-selection-hint,
+.city-selector-bar {
+  background: #ffffff !important;
+  color: #3c4043 !important;
+  border: 1px solid #dadce0 !important;
+  box-shadow: 0 2px 6px rgba(60, 64, 67, 0.24) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+.map-selection-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.city-selector-bar {
+  padding: 5px 8px;
+}
+
+.city-selector-bar select {
+  background: #ffffff;
+  color: #202124;
+  font-family: Arial, sans-serif;
+  font-weight: 600;
+}
+
+@media (max-width: 480px) {
+  .leaflet-control-attribution {
+    font-size: 9px !important;
+  }
+}
 
 
 

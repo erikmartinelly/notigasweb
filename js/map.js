@@ -204,18 +204,28 @@ function initNotigasMap() {
     return;
   }
 
-  L.control.zoom({ position: 'topright' }).addTo(map);
+  L.control.zoom({
+    position: 'topright',
+    zoomInTitle: 'Acercar',
+    zoomOutTitle: 'Alejar'
+  }).addTo(map);
 
-  // Capa base de baldosas con alta disponibilidad y fallback automático
-  // Usamos CartoDB Voyager como capa principal (ultra nítida, rápida y no bloqueada)
-  // con fallback automático a OpenStreetMap si alguna baldosa falla.
-  const baseTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+  // OpenStreetMap con un estilo claro de CARTO Voyager. No utiliza tiles,
+  // recursos visuales ni APIs de Google Maps.
+  const osmAttribution =
+    '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors ' +
+    '&copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener noreferrer">CARTO</a>';
+  const baseTileLayer = L.tileLayer(
+    'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    {
     maxZoom: 20,
     subdomains: 'abcd',
-    attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    attribution: osmAttribution,
     className: 'map-base-layer'
-  });
+    }
+  );
 
+  // La capa estándar de OSM se usa solo como respaldo de la baldosa visible.
   baseTileLayer.on('tileerror', function(error) {
     if (error && error.tile && !error.tile._fallbackDone) {
       error.tile._fallbackDone = true;
