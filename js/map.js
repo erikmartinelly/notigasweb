@@ -135,12 +135,9 @@ function initNotigasMap() {
 
   truckIcon = L.divIcon({
     className: 'notigas-driver-marker',
-    html: `
-      <div class="driver-pulse"></div>
-      <div class="driver-dot"></div>
-    `,
-    iconSize: [32, 32],
-    iconAnchor: [16, 16]
+    html: truckSvgMarkerHtml,
+    iconSize: [50, 58],
+    iconAnchor: [25, 29]
   });
 
   let startLat = currentGpsLat;
