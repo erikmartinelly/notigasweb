@@ -566,15 +566,15 @@
         <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 10px;">
 
           <button id="btnCambiarCiudadPref" style="width:100%; background: linear-gradient(135deg, #0288D1, #0277BD); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 800; cursor: pointer; font-size: 11.5px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(2,136,209,0.5);">
-
             <i class="fa-solid fa-map-location-dot"></i> Cambiar Mi Ciudad de Preferencia
+          </button>
 
+          <button id="btnVerReglasApp" data-action="abrirModalReglasApp" style="width:100%; background: linear-gradient(135deg, #FF6D00, #E65100); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 800; cursor: pointer; font-size: 11.5px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(255,109,0,0.4);">
+            <i class="fa-solid fa-scroll"></i> 📜 Reglas de la App Web y Normas de Uso
           </button>
 
           <button style="width:100%; background: linear-gradient(135deg, #B71C1C, #880E0E); color: #FF8A80; border: 1px solid #D32F2F; padding: 10px; border-radius: 10px; font-weight: 800; cursor: pointer; font-size: 11.5px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(183,28,28,0.5);"  id="auto-event-28" >
-
             <i class="fa-solid fa-trash-can"></i> Eliminar Mi Cuenta y Todos Mis Datos
-
           </button>
 
         </div>
@@ -928,11 +928,59 @@
       <button class="btn-submit" style="background-color: #D32F2F;"  id="auto-event-37" ><i class="fa-solid fa-flag"></i> Enviar Reporte de Denuncia</button>
 
     </div>
+  </div>
 
+  <!-- MODAL DE REGLAS DE LA APP WEB Y NORMAS COMUNITARIAS -->
+  <div class="modal" id="modalAppRules">
+    <div class="modal-content" style="max-width: 620px; max-height: 85vh; overflow-y: auto;">
+      <div class="modal-title">
+        <span>📜 Reglas de la App Web y Normas de Uso</span>
+        <button class="btn-close" id="btnCloseAppRules">✖</button>
+      </div>
+
+      <div style="font-size: 12px; line-height: 1.6; color: #E2E8F0; display: flex; flex-direction: column; gap: 14px; margin-top: 8px;">
+        
+        <div style="background: rgba(255, 109, 0, 0.1); border-left: 4px solid #FF6D00; padding: 10px 14px; border-radius: 6px;">
+          <strong style="color: #FF6D00; font-size: 13px;">1. Acceso Universal y Libre Registro</strong>
+          <p style="margin: 4px 0 0 0; color: #CBD5E1; font-size: 11.5px;">
+            En <strong>NOTIGAS</strong> no se requiere aprobación previa por parte de administradores para empezar. Cualquier persona puede registrarse inmediatamente como <strong>Comprador</strong> o como <strong>Repartidor</strong>.
+          </p>
+        </div>
+
+        <div style="background: rgba(2, 136, 209, 0.1); border-left: 4px solid #0288D1; padding: 10px 14px; border-radius: 6px;">
+          <strong style="color: #38BDF8; font-size: 13px;">2. Normas para Compradores (Vecinos)</strong>
+          <ul style="margin: 6px 0 0 16px; padding: 0; font-size: 11.5px; color: #CBD5E1;">
+            <li><strong>Pedidos Reales y Responsables:</strong> Solo publica pedidos que realmente vayas a comprar (Gas GLP, agua, servicios). Está prohibido emitir pedidos ficticios o duplicados de broma.</li>
+            <li><strong>Ubicación Correcta:</strong> Asegúrate de que el pin del mapa coincida con tu domicilio exacto para facilitar la ruta del repartidor.</li>
+            <li><strong>Respeto Comunitario:</strong> Mantén un trato cordial en el foro barrial y en la comunicación telefónica/WhatsApp.</li>
+          </ul>
+        </div>
+
+        <div style="background: rgba(16, 185, 129, 0.1); border-left: 4px solid #10B981; padding: 10px 14px; border-radius: 6px;">
+          <strong style="color: #34D399; font-size: 13px;">3. Normas para Repartidores</strong>
+          <ul style="margin: 6px 0 0 16px; padding: 0; font-size: 11.5px; color: #CBD5E1;">
+            <li><strong>Transparencia de Tarifas:</strong> Respeta los precios oficiales regulados para la garrafa de gas GLP en Bolivia y tarifas justas en otros insumos.</li>
+            <li><strong>Transmisión GPS Ética:</strong> Activa tu GPS en vivo únicamente cuando estés efectivamente en recorrido o prestando servicio en la zona.</li>
+            <li><strong>Ficha de Datos Fidedigna:</strong> Nombre, teléfono de contacto y placa de vehículo deben ser verídicos.</li>
+          </ul>
+        </div>
+
+        <div style="background: rgba(211, 47, 47, 0.12); border-left: 4px solid #D32F2F; padding: 10px 14px; border-radius: 6px;">
+          <strong style="color: #EF4444; font-size: 13px;">4. Moderación y Sanciones: Baneo Definitivo</strong>
+          <p style="margin: 4px 0 0 0; color: #FCA5A5; font-size: 11.5px;">
+            El Administrador de la plataforma supervisa activamente el cumplimiento y las denuncias comunitarias. <strong>Cualquier usuario (comprador o chofer) que incurra en pedidos falsos, estafas, acoso o falsificación de identidad será BLOQUEADO O ELIMINADO DEFINITIVAMENTE</strong> de la base de datos mediante su correo, teléfono y placa de vehículo, perdiendo todo acceso a la aplicación.
+          </p>
+        </div>
+
+        <button type="button" id="btnEntendidoReglas" style="margin-top: 6px; width: 100%; background: linear-gradient(135deg, #FF6D00, #E65100); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 900; font-size: 13px; cursor: pointer; box-shadow: 0 4px 14px rgba(255,109,0,0.4);">
+          ✅ He leído y acepto las Reglas de la Comunidad
+        </button>
+
+      </div>
+    </div>
   </div>
 
   <!-- MODAL SUBMENÚ PEDIDOS MEJORADO -->
-
   <div class="modal" id="modalSubmenu">
 
     <div class="modal-content" style="max-width: 480px;">
@@ -1335,9 +1383,8 @@
 
   <script src="js/orders.js?v=69" defer></script>
 
-  <script src="js/admin.js?v=69" defer></script>
-
   <script src="js/admin_users.js?v=69" defer></script>
+  <script src="js/admin.js?v=69" defer></script>
 
   <script src="js/app.js?v=69" defer></script>
 

@@ -233,21 +233,23 @@ async function solicitarYGuardarUbicacionHabitual(user) {
         let lng = window.currentGpsLng;
 
         if (lat == null || lng == null) {
-            if (isMobile) {
-                if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Obteniendo ubicación...');
-                if (typeof solicitarGeolocalizacionNativaNavegador === 'function') {
-                    const pos = await solicitarGeolocalizacionNativaNavegador(true, true);
-                    lat = pos.coords.latitude;
-                    lng = pos.coords.longitude;
-                }
-            } else {
-                // En PC: usar IP de inmediato para no congelar la pantalla
-                if (typeof obtenerUbicacionIPFallbackDesktop === 'function') {
-                    const ipCoords = await obtenerUbicacionIPFallbackDesktop(true);
-                    if (ipCoords) {
-                        lat = ipCoords.lat;
-                        lng = ipCoords.lng;
+            const locationPromise = (isMobile && typeof solicitarGeolocalizacionNativaNavegador === 'function')
+                ? solicitarGeolocalizacionNativaNavegador(true, true)
+                : ((typeof obtenerUbicacionIPFallbackDesktop === 'function') ? obtenerUbicacionIPFallbackDesktop(true) : null);
+
+            if (locationPromise) {
+                try {
+                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2500));
+                    const res = await Promise.race([locationPromise, timeoutPromise]);
+                    if (res?.coords) {
+                        lat = res.coords.latitude;
+                        lng = res.coords.longitude;
+                    } else if (res?.lat != null) {
+                        lat = res.lat;
+                        lng = res.lng;
                     }
+                } catch(e) {
+                    console.warn('Geolocalización rápida omitida o con espera larga:', e);
                 }
             }
         }
@@ -268,13 +270,9 @@ async function solicitarYGuardarUbicacionHabitual(user) {
             detenerGPSComprador();
         }
 
-        if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
         return true;
-
     } catch (error) {
-        if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-        console.warn('Ubicación base asignada:', error);
-
+        console.warn('Ubicación base asignada por fallback:', error);
         const currentCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || 'cochabamba') : 'cochabamba';
         const cityDef = (window.BOLIVIA_CITIES && window.BOLIVIA_CITIES[currentCity])
             ? window.BOLIVIA_CITIES[currentCity]
@@ -282,6 +280,8 @@ async function solicitarYGuardarUbicacionHabitual(user) {
 
         await guardarUbicacionHabitualUsuario(user, cityDef.lat, cityDef.lon || cityDef.lng);
         return true;
+    } finally {
+        if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
     }
 }
 
@@ -1080,117 +1080,129 @@ async function registrarEmail() {
 }
 
 async function procesarSesionExitosa(user) {
-  const gmail = user.email.toLowerCase().trim();
-  const nombre = user.user_metadata?.full_name || gmail.split('@')[0];
-
   try {
-    if (window.supabaseClient) {
-      const { data } = await window.supabaseClient.from('admin_credentials').select('email').ilike('email', gmail).maybeSingle();
-      if (data) {
-        const btnAdmin = document.getElementById('btnAdminAccessQuick');
-        if (btnAdmin) btnAdmin.style.display = 'flex';
-        AppState.set('isAdmin', true);
-      }
-    }
-  } catch(e) {}
+    const gmail = user.email ? user.email.toLowerCase().trim() : '';
+    const nombre = user.user_metadata?.full_name || (gmail ? gmail.split('@')[0] : 'Usuario');
 
-  // VERIFICAR SIEMPRE si el usuario ya es repartidor en la BD, sin importar lo que seleccionó
-  let esRepartidorDB = false;
-  let choferData = null;
-
-  if (window.supabaseClient) {
     try {
-      const { data } = await window.supabaseClient
-        .from('choferes_habilitados')
-        .select('ciudad, categoria, productos, schedule')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      if (data) {
-        esRepartidorDB = true;
-        choferData = data;
-        currentSelectedRole = 'driver'; // Forzar rol
+      if (window.supabaseClient && gmail) {
+        const { data } = await window.supabaseClient.from('admin_credentials').select('email').ilike('email', gmail).maybeSingle();
+        if (data) {
+          const btnAdmin = document.getElementById('btnAdminAccessQuick');
+          if (btnAdmin) btnAdmin.style.display = 'flex';
+          AppState.set('isAdmin', true);
+        }
       }
-    } catch(e) {
-      console.error("Error verificando repartidor:", e);
+    } catch(e) {}
+
+    // VERIFICAR SIEMPRE si el usuario ya es repartidor en la BD
+    let esRepartidorDB = false;
+    let choferData = null;
+
+    if (window.supabaseClient && user?.id) {
+      try {
+        const { data } = await window.supabaseClient
+          .from('choferes_habilitados')
+          .select('ciudad, categoria, productos, schedule')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (data) {
+          esRepartidorDB = true;
+          choferData = data;
+          currentSelectedRole = 'driver'; // Forzar rol
+        }
+      } catch(e) {
+        console.error("Error verificando repartidor:", e);
+      }
     }
-  }
 
-  // Si no es repartidor en BD y aún no ha seleccionado rol en esta sesión de login
-  if (!esRepartidorDB && !window._roleSelectedNow) {
-    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-    const modalAuth = document.getElementById('modalWelcomeAuth');
-    if (modalAuth) modalAuth.style.display = 'none';
-
-    window._tempAuthUser = user;
-
-    const modalRole = document.getElementById('modalRoleSelection');
-    if (modalRole) modalRole.style.display = 'flex';
-    return;
-  }
-
-  const clienteData = {
-    role: currentSelectedRole === 'driver' ? 'repartidor' : 'vecino',
-    gmail,
-    nombre,
-    user_id: user.id
-  };
-
-  if (currentSelectedRole === 'driver') {
-    if (esRepartidorDB && choferData) {
-      if (choferData.ciudad) {
-        clienteData.ciudad = choferData.ciudad.toLowerCase();
-        AppState.set('city', choferData.ciudad.toLowerCase());
-      }
-      if (choferData.categoria) clienteData.categoria = choferData.categoria;
-      if (choferData.productos) clienteData.productos = choferData.productos;
-      if (choferData.schedule) clienteData.schedule = choferData.schedule;
-    } else {
-      // Driver NO EXISTE en la DB. Mostrar formulario de registro!
+    // Si no es repartidor en BD y aún no ha seleccionado rol en esta sesión de login
+    if (!esRepartidorDB && !window._roleSelectedNow) {
       if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
       const modalAuth = document.getElementById('modalWelcomeAuth');
       if (modalAuth) modalAuth.style.display = 'none';
 
-      const inputDriverNombre = document.getElementById('inputDriverNombre');
-      if (inputDriverNombre) inputDriverNombre.value = nombre;
+      window._tempAuthUser = user;
 
-      const modalDriver = document.getElementById('modalDriver');
-      if (modalDriver) modalDriver.style.display = 'flex';
-
-      const titleEl = document.getElementById('driverModalTitleText');
-      const subtitleEl = document.getElementById('driverModalSubtitle');
-      if (titleEl) titleEl.textContent = 'Registro de Repartidor';
-      if (subtitleEl) subtitleEl.textContent = 'Completa tu ficha de negocio. Aparecerá en la lista de repartidores de la OTB.';
-
-      sessionStorage.setItem('notigas_temp_gmail', gmail);
-      return; // Detenemos aquí, el form modalDriver completará el registro
-    }
-  }
-
-  AppState.set('userData', clienteData);
-  window._roleSelectedNow = false; // Reset state for next login
-
-  const modalAuth = document.getElementById('modalWelcomeAuth');
-  if (modalAuth) modalAuth.style.display = 'none';
-
-  if (currentSelectedRole === 'driver') {
-    if (typeof setAppMode === 'function') setAppMode('driver');
-    if (typeof showToast === 'function') showToast('✅ Sesión Segura', `Ingresaste como Repartidor (${gmail})`, 'success', 2000);
-  } else {
-    // Comprador
-    const profile = await guardarPerfilSupabase(user, {
-        nombre,
-        role: 'vecino',
-        ciudad: AppState.get('city') || null
-    });
-
-    const tieneUbicacion = profile.latitude != null && profile.longitude != null;
-
-    if (!tieneUbicacion) {
-        await solicitarYGuardarUbicacionHabitual(user);
+      const modalRole = document.getElementById('modalRoleSelection');
+      if (modalRole) modalRole.style.display = 'flex';
+      return;
     }
 
-    if (typeof setAppMode === 'function') setAppMode('buyer');
-    if (typeof showToast === 'function') showToast('✅ Sesión Segura', `Bienvenido a NOTIGAS (${gmail})`, 'success', 2000);
+    const clienteData = {
+      role: currentSelectedRole === 'driver' ? 'repartidor' : 'vecino',
+      gmail,
+      nombre,
+      user_id: user.id
+    };
+
+    if (currentSelectedRole === 'driver') {
+      if (esRepartidorDB && choferData) {
+        if (choferData.ciudad) {
+          clienteData.ciudad = choferData.ciudad.toLowerCase();
+          AppState.set('city', choferData.ciudad.toLowerCase());
+        }
+        if (choferData.categoria) clienteData.categoria = choferData.categoria;
+        if (choferData.productos) clienteData.productos = choferData.productos;
+        if (choferData.schedule) clienteData.schedule = choferData.schedule;
+      } else {
+        // Driver NO EXISTE en la DB. Mostrar formulario de registro!
+        if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+        const modalAuth = document.getElementById('modalWelcomeAuth');
+        if (modalAuth) modalAuth.style.display = 'none';
+
+        const inputDriverNombre = document.getElementById('inputDriverNombre');
+        if (inputDriverNombre) inputDriverNombre.value = nombre;
+
+        const modalDriver = document.getElementById('modalDriver');
+        if (modalDriver) modalDriver.style.display = 'flex';
+
+        const titleEl = document.getElementById('driverModalTitleText');
+        const subtitleEl = document.getElementById('driverModalSubtitle');
+        if (titleEl) titleEl.textContent = 'Registro de Repartidor';
+        if (subtitleEl) subtitleEl.textContent = 'Completa tu ficha de negocio. Aparecerá en la lista de repartidores de la OTB.';
+
+        sessionStorage.setItem('notigas_temp_gmail', gmail);
+        return; // Detenemos aquí, el form modalDriver completará el registro
+      }
+    }
+
+    AppState.set('userData', clienteData);
+    window._roleSelectedNow = false; // Reset state for next login
+
+    const modalAuth = document.getElementById('modalWelcomeAuth');
+    if (modalAuth) modalAuth.style.display = 'none';
+
+    if (currentSelectedRole === 'driver') {
+      if (typeof setAppMode === 'function') setAppMode('driver');
+      if (typeof showToast === 'function') showToast('✅ Sesión Segura', `Ingresaste como Repartidor (${gmail})`, 'success', 2000);
+    } else {
+      // Comprador
+      try {
+        const profile = await guardarPerfilSupabase(user, {
+            nombre,
+            role: 'vecino',
+            ciudad: AppState.get('city') || null
+        });
+
+        const tieneUbicacion = profile && profile.latitude != null && profile.longitude != null;
+
+        if (!tieneUbicacion) {
+            await solicitarYGuardarUbicacionHabitual(user);
+        }
+      } catch(pErr) {
+        console.warn('Aviso guardando perfil comprador:', pErr);
+      }
+
+      if (typeof setAppMode === 'function') setAppMode('buyer');
+      if (typeof showToast === 'function') showToast('✅ Sesión Segura', `Bienvenido a NOTIGAS (${gmail})`, 'success', 2000);
+    }
+  } catch (err) {
+    console.error('Error procesando sesión exitosa:', err);
+  } finally {
+    if (typeof hideLoadingOverlay === 'function') {
+      hideLoadingOverlay();
+    }
   }
 }
 

@@ -139,6 +139,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (el_auto_event_53) el_auto_event_53.addEventListener('click', (event) => { crearNuevoPost() });
     const el_globalLoadingCancelBtn = document.getElementById('globalLoadingCancelBtn');
     if (el_globalLoadingCancelBtn) el_globalLoadingCancelBtn.addEventListener('click', (event) => { hideLoadingOverlay() });
+    const el_btnCloseAppRules = document.getElementById('btnCloseAppRules');
+    if (el_btnCloseAppRules) el_btnCloseAppRules.addEventListener('click', () => { closeRulesModal() });
+    const el_btnEntendidoReglas = document.getElementById('btnEntendidoReglas');
+    if (el_btnEntendidoReglas) el_btnEntendidoReglas.addEventListener('click', () => { closeRulesModal() });
     const el_auto_event_54 = document.getElementById('auto-event-54');
     if (el_auto_event_54) el_auto_event_54.addEventListener('click', (event) => { closeAdminModal() });
     const el_auto_event_55 = document.getElementById('auto-event-55');
@@ -347,4 +351,17 @@ document.addEventListener('click', (e) => {
     const orderId = btn.getAttribute('data-order-id') || btn.getAttribute('data-id');
     if (typeof window.centrarPedidoEnMapa === 'function') window.centrarPedidoEnMapa(lat, lng, orderId);
   }
+  else if (action === 'abrirModalReglasApp') {
+    if (typeof window.abrirModalReglasApp === 'function') window.abrirModalReglasApp();
+  }
 });
+
+window.abrirModalReglasApp = function() {
+  const modal = document.getElementById('modalAppRules');
+  if (modal) modal.style.display = 'flex';
+};
+
+window.closeRulesModal = function() {
+  const modal = document.getElementById('modalAppRules');
+  if (modal) modal.style.display = 'none';
+};

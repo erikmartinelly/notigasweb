@@ -287,6 +287,13 @@ window.cambiarCiudad = async function(nuevaCiudad) {
         AppState.set('city', nuevaCiudad);
     }
 
+    if (typeof map !== 'undefined' && map && window.BOLIVIA_CITIES && window.BOLIVIA_CITIES[nuevaCiudad]) {
+        const c = window.BOLIVIA_CITIES[nuevaCiudad];
+        if (map.getZoom() <= 10) {
+            map.flyTo([c.lat, c.lon || c.lng], 15, { duration: 1.2 });
+        }
+    }
+
     await window.reiniciarSuscripcionesRealtime();
 
     if (typeof renderDriverOrdersList === 'function') {

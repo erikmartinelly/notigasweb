@@ -223,7 +223,7 @@ function initNotigasMap() {
     applyGpsPosition(startLat, startLng, "Ciudad Seleccionada", true, false);
   }
 
-  conectarGPSAuto(false);
+  conectarGPSAuto(true);
   renderReportedTrucksBuffer();
   cargarPedidosVecinalesEnVivo();
 }
@@ -633,7 +633,9 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
     map.invalidateSize();
     // Solo re-centrar el mapa si forceReset es explícito o si el usuario NO ha tocado/hecho zoom
     if (forceReset || !isMapInteractedByUser) {
-      map.setView([activeLat, activeLng], map.getZoom() || 16);
+      const currentZoom = map.getZoom();
+      const targetZoom = (!currentZoom || currentZoom <= 10 || forceReset) ? 16 : currentZoom;
+      map.setView([activeLat, activeLng], targetZoom);
     }
   }
 
@@ -718,13 +720,9 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
 
 let lastBroadcastLat = null;
 let lastBroadcastLng = null;
+let lastGpsBroadcastTime = 0;
 
-/* ESTRATEGIA ADAPTATIVA INTELIGENTE DE TRANSMISIÓN GPS (AHORRO MÁXIMO DE DATOS MÓVILES + EXPERIENCIA DE VECINOS 100% PRECISA)
-   1. Pestaña en Segundo Plano / Bloqueada: Pausa 100% de emisiones (0 KB).
-   2. Camión Detenido (Movimiento < 15 metros): Emisión reducida a 1 vez cada 5 minutos (300,000 ms).
-   3. Camión en Movimiento (Movimiento >= 15 metros): Emisión óptima cada 35 segundos para permitir que vecinos salgan a tiempo.
-   4. Ahorro Total: Menos de 0.2 MB de consumo al día por repartidor.
-*/
+/* ESTRATEGIA ADAPTATIVA INTELIGENTE DE TRANSMISIÓN GPS */
 async function transmitirUbicacionRepartidorServidorDB(lat, lng) {
   const driverGpsLive = (AppState.get('driverGpsLive') || 'on');
   if (driverGpsLive === 'off') return;

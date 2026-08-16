@@ -306,41 +306,34 @@ async function renderAdminDashboardKPIs() {
 
       // Unique users from orders + localStorage/databaseEmails as a proxy for users count
 
-      const { data: pedidosData, error } = await window.supabaseClient.from('pedidos').select('user_id');
-      if (error) { console.error('Error cargando pedidos:', error); return; }
+      const { data: pedidosUsersData, error: pedidosUsersErr } = await window.supabaseClient.from('pedidos').select('user_id');
+      if (pedidosUsersErr) { console.error('Error cargando usuarios de pedidos:', pedidosUsersErr); return; }
 
       const uniqueUsers = new Set();
 
-      if (pedidosData) {
-        pedidosData.forEach(p => { if (p.user_id) uniqueUsers.add(p.user_id); });
-
+      if (pedidosUsersData) {
+        pedidosUsersData.forEach(p => { if (p.user_id) uniqueUsers.add(p.user_id); });
       }
 
       if (typeof databaseEmails !== 'undefined' && Array.isArray(databaseEmails)) {
         databaseEmails.forEach(e => { if (e.gmail) uniqueUsers.add(e.gmail); });
-
       }
 
       try {
         const saved = JSON.stringify(AppState.get('userData') || {});
-
         if (saved) {
           const u = JSON.parse(saved);
-
           if (u.gmail) uniqueUsers.add(u.gmail);
-
         }
-
       } catch(e){}
 
       usersCount = uniqueUsers.size;
 
-      const { data, error } = await window.supabaseClient.from('pedidos').select('estado, created_at');
-      if (error) { console.error('Error cargando pedidos:', error); return; }
+      const { data: ordersData, error: ordersErr } = await window.supabaseClient.from('pedidos').select('estado, created_at');
+      if (ordersErr) { console.error('Error cargando estados de pedidos:', ordersErr); return; }
 
-      if (data) {
-        const activos = data.filter(p => p.estado === 'pendiente' || p.estado === 'asignado').length;
-
+      if (ordersData) {
+        const activos = ordersData.filter(p => p.estado === 'pendiente' || p.estado === 'asignado').length;
         ordersCount = activos;
 
         const hoyStr = new Date().toISOString().split('T')[0];
@@ -626,11 +619,8 @@ function renderFinalVendors(defaultVendors, deletedIds) {
           </div>
 
           <div style="display:flex; gap:4px;">
-
-            <button data-action="banearUsuarioAdmin" data-gmail="${escapeHtmlStr(b.gmail)}" style="background:${isBanned ? '#0288D1' : '#E65100'}; color:white; border:none; padding:4px 8px; border-radius:6px; font-weight:800; font-size:9px; cursor:pointer;">${isBanned ? '🔓 Desbanear' : '🚫 Banear'}</button>
-
+            <button data-action="${isBanned ? 'desbanearUsuarioAdmin' : 'banearUsuarioAdmin'}" data-gmail="${escapeHtmlStr(b.gmail)}" data-id="${escapeHtmlStr(b.gmail)}" style="background:${isBanned ? '#0288D1' : '#E65100'}; color:white; border:none; padding:4px 8px; border-radius:6px; font-weight:800; font-size:9px; cursor:pointer;">${isBanned ? '🔓 Desbanear' : '🚫 Banear'}</button>
             <button data-action="borrarCompradorPermanente" data-gmail="${escapeHtmlStr(b.gmail)}" data-name="${escapeHtmlStr(b.nombre || b.gmail)}" style="background:#D32F2F; color:white; border:none; padding:4px 8px; border-radius:6px; font-weight:800; font-size:9px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Eliminar</button>
-
           </div>
 
         </div>
@@ -1525,17 +1515,37 @@ async function banearUsuarioAdmin(identifier) {
   renderAdminReports();
 }
 
-async function desbanearUsuarioAdmin(id) {
-  if (!id || !window.supabaseClient) return;
+async function desbanearUsuarioAdmin(idOrEmail) {
+  if (!idOrEmail || !window.supabaseClient) return;
 
-  const { error } = await window.supabaseClient.from('usuarios_baneados').delete().eq('id', id);
-
-  if (!error) {
-    alert(`✅ USUARIO DESBANEADO\nSe ha retirado el ban.`);
-
+  const target = String(idOrEmail).trim();
+  const isEmail = target.includes('@');
+  let query = window.supabaseClient.from('usuarios_baneados').delete();
+  if (isEmail) {
+    query = query.ilike('email', target);
+  } else {
+    query = query.or(`id.eq.${target},user_id.eq.${target}`);
   }
 
-  renderAdminReports();
+  const { error } = await query;
+
+  if (typeof descargarBaneadosDeSupabase === 'function') {
+    await descargarBaneadosDeSupabase();
+  }
+
+  if (!error) {
+    if (typeof showToast === 'function') {
+      showToast('🔓 Usuario Desbaneado', 'Se ha retirado el bloqueo correctamente.', 'success', 3500);
+    } else {
+      alert(`✅ USUARIO DESBANEADO\nSe ha retirado el bloqueo.`);
+    }
+  } else {
+    console.error('Error desbaneando usuario:', error);
+    if (typeof showToast === 'function') showToast('Error', 'No se pudo retirar el baneo.', 'error');
+  }
+
+  if (typeof renderAdminReports === 'function') renderAdminReports();
+  if (typeof renderAdminVendorsList === 'function') renderAdminVendorsList();
 }
 
 async function borrarDenunciaAdmin(indexId) {
@@ -1670,29 +1680,29 @@ window.borrarAnuncioLocalAdmin = async function(adId) {
   }
 };
 
-window.banearUsuarioAdmin = banearUsuarioAdmin;
-window.desbanearUsuarioAdmin = desbanearUsuarioAdmin;
-window.borrarDenunciaAdmin = borrarDenunciaAdmin;
-window.limpiarTodosLosPedidosFantasmaAdmin = limpiarTodosLosPedidosFantasmaAdmin;
-window.borrarPedidoFantasmaAdmin = borrarPedidoFantasmaAdmin;
-window.aprobarRepartidorAdmin = aprobarRepartidorAdmin;
-window.desbanearRepartidorAdmin = desbanearRepartidorAdmin;
-window.banearRepartidorAdmin = banearRepartidorAdmin;
-window.borrarPostForumAdmin = borrarPostForumAdmin;
-window.abrirModalAdminDashboard = abrirModalAdminDashboard;
-window.closeAdminModal = closeAdminModal;
-window.activarMapaCalorAdminLive = activarMapaCalorAdminLive;
-window.switchModalTab = switchModalTab;
-window.renderAdminDashboardKPIs = renderAdminDashboardKPIs;
-window.renderAdminVendorsList = renderAdminVendorsList;
-window.renderAdminOrdersList = renderAdminOrdersList;
-window.renderAdminAdsAndPostsList = renderAdminAdsAndPostsList;
-window.renderAdminReports = renderAdminReports;
-window.guardarSubmenuAnuncios = guardarSubmenuAnuncios;
-window.cerrarSesionAdminControl = cerrarSesionAdminControl;
-window.descargarListaCorreosCSV = descargarListaCorreosCSV;
-window.descargarFichasRepartidoresCSV = descargarFichasRepartidoresCSV;
-window.descargarEstadisticasGeneralesCSV = descargarEstadisticasGeneralesCSV;
-window.abrirModalDenuncia = abrirModalDenuncia;
-window.closeReportModal = closeReportModal;
-window.enviarDenuncia = enviarDenuncia;
+window.banearUsuarioAdmin = (typeof banearUsuarioAdmin !== 'undefined') ? banearUsuarioAdmin : (typeof window.banearUsuarioAdmin !== 'undefined' ? window.banearUsuarioAdmin : undefined);
+window.desbanearUsuarioAdmin = (typeof desbanearUsuarioAdmin !== 'undefined') ? desbanearUsuarioAdmin : (typeof window.desbanearUsuarioAdmin !== 'undefined' ? window.desbanearUsuarioAdmin : undefined);
+window.borrarDenunciaAdmin = (typeof borrarDenunciaAdmin !== 'undefined') ? borrarDenunciaAdmin : undefined;
+window.limpiarTodosLosPedidosFantasmaAdmin = (typeof limpiarTodosLosPedidosFantasmaAdmin !== 'undefined') ? limpiarTodosLosPedidosFantasmaAdmin : undefined;
+window.borrarPedidoFantasmaAdmin = (typeof borrarPedidoFantasmaAdmin !== 'undefined') ? borrarPedidoFantasmaAdmin : undefined;
+window.aprobarRepartidorAdmin = (typeof aprobarRepartidorAdmin !== 'undefined') ? aprobarRepartidorAdmin : (typeof window.aprobarRepartidorAdmin !== 'undefined' ? window.aprobarRepartidorAdmin : undefined);
+window.desbanearRepartidorAdmin = (typeof desbanearRepartidorAdmin !== 'undefined') ? desbanearRepartidorAdmin : (typeof window.desbanearRepartidorAdmin !== 'undefined' ? window.desbanearRepartidorAdmin : undefined);
+window.banearRepartidorAdmin = (typeof banearRepartidorAdmin !== 'undefined') ? banearRepartidorAdmin : (typeof window.banearRepartidorAdmin !== 'undefined' ? window.banearRepartidorAdmin : undefined);
+window.borrarPostForumAdmin = (typeof borrarPostForumAdmin !== 'undefined') ? borrarPostForumAdmin : undefined;
+window.abrirModalAdminDashboard = (typeof abrirModalAdminDashboard !== 'undefined') ? abrirModalAdminDashboard : undefined;
+window.closeAdminModal = (typeof closeAdminModal !== 'undefined') ? closeAdminModal : undefined;
+window.activarMapaCalorAdminLive = (typeof activarMapaCalorAdminLive !== 'undefined') ? activarMapaCalorAdminLive : undefined;
+window.switchModalTab = (typeof switchModalTab !== 'undefined') ? switchModalTab : undefined;
+window.renderAdminDashboardKPIs = (typeof renderAdminDashboardKPIs !== 'undefined') ? renderAdminDashboardKPIs : undefined;
+window.renderAdminVendorsList = (typeof renderAdminVendorsList !== 'undefined') ? renderAdminVendorsList : undefined;
+window.renderAdminOrdersList = (typeof renderAdminOrdersList !== 'undefined') ? renderAdminOrdersList : undefined;
+window.renderAdminAdsAndPostsList = (typeof renderAdminAdsAndPostsList !== 'undefined') ? renderAdminAdsAndPostsList : undefined;
+window.renderAdminReports = (typeof renderAdminReports !== 'undefined') ? renderAdminReports : undefined;
+window.guardarSubmenuAnuncios = (typeof guardarSubmenuAnuncios !== 'undefined') ? guardarSubmenuAnuncios : undefined;
+window.cerrarSesionAdminControl = (typeof cerrarSesionAdminControl !== 'undefined') ? cerrarSesionAdminControl : undefined;
+window.descargarListaCorreosCSV = (typeof descargarListaCorreosCSV !== 'undefined') ? descargarListaCorreosCSV : undefined;
+window.descargarFichasRepartidoresCSV = (typeof descargarFichasRepartidoresCSV !== 'undefined') ? descargarFichasRepartidoresCSV : undefined;
+window.descargarEstadisticasGeneralesCSV = (typeof descargarEstadisticasGeneralesCSV !== 'undefined') ? descargarEstadisticasGeneralesCSV : undefined;
+window.abrirModalDenuncia = (typeof abrirModalDenuncia !== 'undefined') ? abrirModalDenuncia : undefined;
+window.closeReportModal = (typeof closeReportModal !== 'undefined') ? closeReportModal : undefined;
+window.enviarDenuncia = (typeof enviarDenuncia !== 'undefined') ? enviarDenuncia : undefined;

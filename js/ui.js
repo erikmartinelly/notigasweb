@@ -29,10 +29,18 @@ window.showLoadingOverlay = function(message = "Procesando...") {
     overlay.style.display = 'flex';
 
     clearTimeout(window.globalLoadingTimeout);
+    clearTimeout(window.globalLoadingAutoDismiss);
+
+    // Botón de escape rápido tras 3.5 segundos
     window.globalLoadingTimeout = setTimeout(() => {
       msgEl.innerText = "La conexión está tardando más de lo normal...";
-      btn.style.display = 'block';
-    }, 10000); // 10 segundos
+      btn.style.display = 'inline-flex';
+    }, 3500);
+
+    // Descarte automático de seguridad a los 6 segundos para NUNCA colgar la app
+    window.globalLoadingAutoDismiss = setTimeout(() => {
+      window.hideLoadingOverlay();
+    }, 6000);
   }
 };
 window.hideLoadingOverlay = function() {
@@ -40,6 +48,7 @@ window.hideLoadingOverlay = function() {
   if (overlay) {
     overlay.style.display = 'none';
     clearTimeout(window.globalLoadingTimeout);
+    clearTimeout(window.globalLoadingAutoDismiss);
   }
 };
 function showToast(title, message, type = 'info', durationMs = 1000) {
