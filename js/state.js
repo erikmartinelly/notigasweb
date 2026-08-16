@@ -13,7 +13,7 @@
    Única fuente de verdad — todos los módulos la usan via window.escapeHtmlStr
    ===================================================== */
 window.escapeHtmlStr = function(str) {
-  if (!str) return '';
+  if (str === null || str === undefined) return '';
   return String(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')

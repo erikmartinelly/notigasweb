@@ -26,9 +26,27 @@ async function descargarBaneadosDeSupabase() {
 document.addEventListener('DOMContentLoaded', descargarBaneadosDeSupabase);
 
 function esRepartidorBaneado(nombre, placa, whatsapp, gmail) {
-  const checkList = [nombre, placa, whatsapp, gmail].filter(Boolean).map(s => String(s).toLowerCase().trim());
+  if (!window.globalBannedList || window.globalBannedList.length === 0) return false;
+
+  const n = nombre ? String(nombre).toLowerCase().trim() : '';
+  const p = placa ? String(placa).toLowerCase().trim().replace(/[^a-z0-9]/g, '') : '';
+  const w = whatsapp ? String(whatsapp).toLowerCase().trim().replace(/[^0-9]/g, '') : '';
+  const g = gmail ? String(gmail).toLowerCase().trim() : '';
+
   for (const b of window.globalBannedList) {
-    if (b && checkList.some(c => c.includes(b) || b.includes(c))) return true;
+    if (!b) continue;
+    const bClean = String(b).toLowerCase().trim();
+    const bDigits = bClean.replace(/[^0-9]/g, '');
+    const bAlphanum = bClean.replace(/[^a-z0-9]/g, '');
+
+    // Coincidencia exacta por correo o ID
+    if (g && bClean === g) return true;
+    // Coincidencia exacta por placa
+    if (p && bAlphanum && p === bAlphanum) return true;
+    // Coincidencia exacta por teléfono (mínimo 7 dígitos)
+    if (w && w.length >= 7 && bDigits && w === bDigits) return true;
+    // Coincidencia por nombre (estricta, mínimo 4 caracteres)
+    if (n && n.length >= 4 && (n === bClean || (bClean.length >= 6 && n.includes(bClean)))) return true;
   }
   return false;
 }

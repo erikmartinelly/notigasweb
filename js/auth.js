@@ -128,18 +128,12 @@ function getCurrentUserId() {
     return window._tempAuthUser.id;
   }
 
-  let userId = 'anonimo_id';
-  try {
-    const saved = JSON.stringify(AppState.get('userData') || {});
-    if (saved) {
-      const u = JSON.parse(saved);
-      if (u) {
-        if (u.user_id) userId = u.user_id;
-        else if (u.id) userId = u.id;
-      }
-    }
-  } catch(e){}
-  return userId;
+  const u = AppState.get('userData');
+  if (u && typeof u === 'object') {
+    if (u.user_id) return u.user_id;
+    if (u.id) return u.id;
+  }
+  return 'anonimo_id';
 }
 window.getCurrentUserId = getCurrentUserId;
 
@@ -1209,14 +1203,11 @@ window.finalizeRoleSelection = function(role) {
     const selectedCity = citySelect.value.toLowerCase();
     AppState.set('city', selectedCity);
 
-    // Si ya hay user_data local (Google OneTap lo crea antes), actualizarlo con la ciudad
-    const saved = JSON.stringify(AppState.get('userData') || {});
-    if (saved) {
-      try {
-        const u = JSON.parse(saved);
-        u.ciudad = selectedCity;
-        AppState.set('userData', u);
-      } catch(e) {}
+    // Si ya hay user_data local válido, actualizarlo con la ciudad
+    const u = AppState.get('userData');
+    if (u && typeof u === 'object' && (u.user_id || u.id || u.gmail || u.email)) {
+      u.ciudad = selectedCity;
+      AppState.set('userData', u);
     }
   }
 

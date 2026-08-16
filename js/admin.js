@@ -112,7 +112,7 @@ window.abrirModalAdminDashboard = async function() {
   modalAdmin.style.display = 'flex';
 
   renderAdminReports();
-}
+};
 
 function cerrarSesionRepartidorActivarComprador() {
   if (typeof showConfirmModal === 'function') {
@@ -136,17 +136,7 @@ function cerrarSesionRepartidorActivarComprador() {
   }
 }
 
-;
-
 let adminLoginAttempts = 0;
-
-;
-
-/* guardarPrefUsuario reside en auth.js — eliminada de admin.js para que la versión con
-
-   detección de rol Repartidor (GPS) no sea sobreescrita. */
-
-/* cerrarSesionUsuario reside en auth.js — eliminada de admin.js para evitar sobreescritura */
 
 /* GESTIÓN DEL MODAL EXCLUSIVO DE ADMINISTRADOR */
 
@@ -174,7 +164,7 @@ function activarMapaCalorAdminLive() {
 
   if (typeof renderActiveOrdersMap === 'function') renderActiveOrdersMap();
 
-  const btn = document.getElementById('btnDriverHeatmap');
+  const btn = document.getElementById('auto-event-64') || document.getElementById('btnDriverHeatmap');
 
   if (btn) {
     btn.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> ❌ SALIR MAPA DE CALOR';
@@ -359,10 +349,10 @@ async function renderAdminDashboardKPIs() {
 
         const entregadosHoy = data.filter(p => p.estado === 'entregado' && p.created_at && p.created_at.startsWith(hoyStr)).length;
 
-        const elOrdersTitle = document.getElementById('adminKpiOrders').parentElement.querySelector('.kpi-title');
+        const elOrdersTitle = document.getElementById('adminKpiOrders')?.parentElement?.firstElementChild;
 
         if (elOrdersTitle) {
-           elOrdersTitle.innerHTML = `Pedidos Activos <span style="display:block; font-size:10px; color:#56BC37;">${creadosHoy} Totales Hoy • ${entregadosHoy} Entregados</span>`;
+           elOrdersTitle.innerHTML = `📦 PEDIDOS ACTIVOS <span style="display:block; font-size:9px; color:#56BC37; font-weight:700; margin-top:2px;">${creadosHoy} Hoy • ${entregadosHoy} Entregados</span>`;
 
         }
 
@@ -1496,16 +1486,22 @@ async function renderAdminReports() {
 }
 
 async function banearUsuarioAdmin(identifier) {
-  if (!identifier || !window.supabaseClient) return;
+  const target = (identifier || document.getElementById('inputBanIdentifier')?.value || '').trim();
+  if (!target || !window.supabaseClient) {
+    if (!target && typeof showToast === 'function') {
+      showToast('⚠️ Campo Requerido', 'Ingresa un correo, nombre o placa a banear.', 'warning', 3000);
+    }
+    return;
+  }
 
-  const isEmail = identifier.includes('@');
+  const isEmail = target.includes('@');
 
   const { error } = await window.supabaseClient.from('usuarios_baneados').insert([{
-    user_id: !isEmail ? identifier : null,
+    user_id: !isEmail ? target : null,
 
-    email: isEmail ? identifier : null,
+    email: isEmail ? target : null,
 
-    nombre: !isEmail ? identifier : null,
+    nombre: !isEmail ? target : null,
 
     motivo: 'Baneado por Administrador'
 
@@ -1514,8 +1510,16 @@ async function banearUsuarioAdmin(identifier) {
   if (typeof descargarBaneadosDeSupabase === 'function') await descargarBaneadosDeSupabase();
 
   if (!error) {
-    alert(`🚫 USUARIO BANEADO\nEl usuario (${identifier}) ha sido restringido de publicar en NOTIGAS.`);
-
+    const inputEl = document.getElementById('inputBanIdentifier');
+    if (inputEl) inputEl.value = '';
+    if (typeof showToast === 'function') {
+      showToast('🚫 Usuario Baneado', `"${target}" ha sido restringido de publicar en NOTIGAS.`, 'error', 4000);
+    } else {
+      alert(`🚫 USUARIO BANEADO\nEl usuario (${target}) ha sido restringido de publicar en NOTIGAS.`);
+    }
+  } else {
+    console.error("Error al banear:", error);
+    if (typeof showToast === 'function') showToast('Error', error.message || 'No se pudo registrar el baneo.', 'error', 4000);
   }
 
   renderAdminReports();
@@ -1665,3 +1669,30 @@ window.borrarAnuncioLocalAdmin = async function(adId) {
 
   }
 };
+
+window.banearUsuarioAdmin = banearUsuarioAdmin;
+window.desbanearUsuarioAdmin = desbanearUsuarioAdmin;
+window.borrarDenunciaAdmin = borrarDenunciaAdmin;
+window.limpiarTodosLosPedidosFantasmaAdmin = limpiarTodosLosPedidosFantasmaAdmin;
+window.borrarPedidoFantasmaAdmin = borrarPedidoFantasmaAdmin;
+window.aprobarRepartidorAdmin = aprobarRepartidorAdmin;
+window.desbanearRepartidorAdmin = desbanearRepartidorAdmin;
+window.banearRepartidorAdmin = banearRepartidorAdmin;
+window.borrarPostForumAdmin = borrarPostForumAdmin;
+window.abrirModalAdminDashboard = abrirModalAdminDashboard;
+window.closeAdminModal = closeAdminModal;
+window.activarMapaCalorAdminLive = activarMapaCalorAdminLive;
+window.switchModalTab = switchModalTab;
+window.renderAdminDashboardKPIs = renderAdminDashboardKPIs;
+window.renderAdminVendorsList = renderAdminVendorsList;
+window.renderAdminOrdersList = renderAdminOrdersList;
+window.renderAdminAdsAndPostsList = renderAdminAdsAndPostsList;
+window.renderAdminReports = renderAdminReports;
+window.guardarSubmenuAnuncios = guardarSubmenuAnuncios;
+window.cerrarSesionAdminControl = cerrarSesionAdminControl;
+window.descargarListaCorreosCSV = descargarListaCorreosCSV;
+window.descargarFichasRepartidoresCSV = descargarFichasRepartidoresCSV;
+window.descargarEstadisticasGeneralesCSV = descargarEstadisticasGeneralesCSV;
+window.abrirModalDenuncia = abrirModalDenuncia;
+window.closeReportModal = closeReportModal;
+window.enviarDenuncia = enviarDenuncia;

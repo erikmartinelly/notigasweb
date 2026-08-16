@@ -164,7 +164,7 @@ window.iniciarSuscripcionesRealtime = function() {
 
     let _debounceForumTimer = null;
     const debouncedRefreshForum = () => {
-        const pane = document.getElementById('tabPane2');
+        const pane = document.getElementById('tab2');
         if (!pane || !pane.classList.contains('active')) return;
         clearTimeout(_debounceForumTimer);
         _debounceForumTimer = setTimeout(() => {

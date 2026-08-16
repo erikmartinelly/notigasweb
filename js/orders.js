@@ -397,38 +397,25 @@ function checkActiveOrderStatus() {
 
       actualizarFaviconSegunPedido(order.categoria, order.estado);
 
-      if (window.supabaseClient) {
-         const estadoEl = document.getElementById('estadoPedidoActivo');
-         if (estadoEl) {
-           window.supabaseClient.from('pedidos').select('estado').eq('id', order.id).maybeSingle()
-           .then(({data, error}) => {
-              if (error || !data) {
-                 AppState.set('activeOrder', null);
-                 checkActiveOrderStatus();
-                 return;
-              }
-              if (data.estado === 'asignado') {
-                 const btnCancel = document.getElementById('btnActiveOrderCancel');
-                 if (btnCancel) {
-                    btnCancel.innerHTML = `<i class="fa-solid fa-check-circle"></i> Ya recibí mi pedido`;
-                 }
-                 const el = document.getElementById('estadoPedidoActivo');
-                 if (el) {
-                   el.innerHTML = `
-                   <div style="background:rgba(59, 130, 246, 0.2); border:1px solid #3B82F6; padding:4px 10px; border-radius:12px; display:inline-block; margin-bottom:5px; color:#60A5FA; font-weight:700; font-size:11px;">
-                     <i class="fa-solid fa-user-check"></i> Repartidor asignado
-                   </div>
-                   `;
-                 }
-                 if (!sessionStorage.getItem('notigas_notified_asignado')) {
-                    showToast('🚚 Repartidor Asignado', 'Un repartidor ha aceptado tu pedido.', 'success', 5000);
-                    sessionStorage.setItem('notigas_notified_asignado', 'true');
-                 }
-              }
-           }).catch(err => {
-              console.warn("Verificación de estado de pedido:", err);
-           });
-         }
+      if (window.supabaseClient && order.id) {
+         window.supabaseClient.from('pedidos').select('estado').eq('id', order.id).maybeSingle()
+         .then(({data, error}) => {
+            if (error || !data) return;
+            if (data.estado && data.estado !== order.estado) {
+               order.estado = data.estado;
+               AppState.set('activeOrder', order);
+               if (data.estado === 'entregado' || data.estado === 'cancelado') {
+                  setTimeout(() => {
+                    AppState.set('activeOrder', null);
+                    checkActiveOrderStatus();
+                  }, 3000);
+               } else {
+                  checkActiveOrderStatus();
+               }
+            }
+         }).catch(err => {
+            console.warn("Verificación de estado de pedido:", err);
+         });
       }
 
       if (typeof renderActiveOrdersMap === 'function') {

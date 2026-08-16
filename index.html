@@ -379,7 +379,7 @@
 
         <div style="font-size: 11px; color: #CBD5E1; margin-top: 4px;">
 
-          ⚠ ï¸  <strong>Aviso Comunitario:</strong> Todas las publicaciones se borran automáticamente en <strong>72 horas</strong> para mantener la velocidad de la aplicación.
+          ⚠️ <strong>Aviso Comunitario:</strong> Todas las publicaciones se borran automáticamente en <strong>72 horas</strong> para mantener la velocidad de la aplicación.
 
         </div>
 
@@ -525,11 +525,11 @@
 
         </button>
 
-        <!-- CERRAR SESIÓN COMO REPARTIDOR ←’ PASAR A COMPRADOR -->
+        <!-- CERRAR SESIÓN COMO REPARTIDOR ➔ PASAR A COMPRADOR -->
 
         <button style="width:100%; background: linear-gradient(135deg, #37474F, #263238); color: #CFD8DC; border: 1px solid rgba(255,255,255,0.15); padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 10px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;"  id="auto-event-26" >
 
-          <i class="fa-solid fa-arrow-right-arrow-left"></i> Cerrar sesión como Repartidor ←’ Activar Comprador
+          <i class="fa-solid fa-arrow-right-arrow-left"></i> Cerrar sesión como Repartidor ➔ Activar Comprador
 
         </button>
 
@@ -654,6 +654,14 @@
         <label>¿Qué Vende / Oferta?:</label>
 
         <input type="text" id="inputDriverProductos" placeholder="Ej: Garrafas GLP 10kg, reguladores, mangueras">
+
+      </div>
+
+      <div class="form-group">
+
+        <label>Horario de Atención / Recorrido:</label>
+
+        <input type="text" id="inputDriverSchedule" placeholder="Ej: Lunes a Sábado: 07:00 a 18:00">
 
       </div>
 
@@ -797,7 +805,7 @@
 
         </div>
 
-        <button  id="auto-event-33"  style="margin-top: 15px; background: none; border: none; color: #94A3B8; cursor: pointer; width: 100%; text-align: center; font-size: 12px;">← Volver</button>
+        <button  id="auto-event-33"  style="margin-top: 15px; background: none; border: none; color: #94A3B8; cursor: pointer; width: 100%; text-align: center; font-size: 12px;">← Volver</button>
 
       </div>
 
@@ -899,9 +907,9 @@
 
           <option value="Acoso o Bullying">🛑 Acoso o Bullying a un vecino</option>
 
-          <option value="Contenido Ofensivo / Inapropiado">⚠ ï¸  Contenido Ofensivo o Lenguaje Inapropiado</option>
+          <option value="Contenido Ofensivo / Inapropiado">⚠️ Contenido Ofensivo o Lenguaje Inapropiado</option>
 
-          <option value="Información Falsa / Spam">âŒ Información Falsa o Spam</option>
+          <option value="Información Falsa / Spam">❌ Información Falsa o Spam</option>
 
           <option value="Conducta Indebida del Repartidor / Cliente">🚨 Conducta Indebida</option>
 
@@ -1101,7 +1109,7 @@
 
         </span>
 
-        <select id="selectDriverModalCity" onchange="cambiarCiudadCapital(this.value)" style="flex: 1; max-width: 220px; background: #1E293B; color: #F8FAFC; border: 1px solid #334155; border-radius: 6px; padding: 5px 8px; font-size: 11px; font-weight: 700; outline: none; cursor: pointer;">
+        <select id="selectDriverModalCity" style="flex: 1; max-width: 220px; background: #1E293B; color: #F8FAFC; border: 1px solid #334155; border-radius: 6px; padding: 5px 8px; font-size: 11px; font-weight: 700; outline: none; cursor: pointer;">
 
           <option value="cochabamba">📍 Cochabamba</option>
 
@@ -1203,7 +1211,7 @@
 
         <select id="selectPostTipo">
 
-          <option value="COMENTARIO">⚠ ï¸  COMENTARIO</option>
+          <option value="COMENTARIO">💬 COMENTARIO</option>
 
           <option value="PIDO AYUDA">🤝 PIDO AYUDA</option>
 
@@ -1247,7 +1255,7 @@
 
     <div class="confirm-modal-box">
 
-      <div class="confirm-modal-icon" id="confirmModalIcon">⚠ ï¸ </div>
+      <div class="confirm-modal-icon" id="confirmModalIcon">⚠️</div>
 
       <div class="confirm-modal-title" id="confirmModalTitle">¿Estás seguro?</div>
 
@@ -1596,8 +1604,6 @@
       </div>
 
     </div>
-
-  </div>
 
 </body>
 
