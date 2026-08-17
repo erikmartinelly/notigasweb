@@ -393,7 +393,7 @@ function initGoogleOneTap() {
           text: 'continue_with',
           shape: 'rectangular',
           logo_alignment: 'left',
-          width: 280
+          width: 320
         });
         _googleGisInitialized = true;
       }

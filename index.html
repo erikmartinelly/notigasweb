@@ -106,7 +106,7 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="styles/main.css?v=88">
+  <link rel="stylesheet" href="styles/main.css?v=89">
 
   <!-- SERVICIOS EXTERNOS -->
 
@@ -794,23 +794,25 @@
 
         </p>
 
-        <div id="authMethodSelector" style="text-align:center; margin-bottom: 20px; display:flex; justify-content:center; gap:10px;">
+        <div id="authMethodSelector" class="auth-login-method-selector">
 
-          <button class="role-select-btn active" id="btnAuthMethodEmail" >
+          <button class="role-select-btn auth-login-method-primary active" id="btnAuthMethodGoogle" >
 
-            <i class="fa-solid fa-envelope"></i> Correo
+            <i class="fa-brands fa-google"></i>
+            <span>Continuar con Google</span>
 
           </button>
 
-          <button class="role-select-btn" id="btnAuthMethodGoogle" >
+          <button class="role-select-btn auth-login-method-secondary" id="btnAuthMethodEmail" >
 
-            <i class="fa-brands fa-google"></i> Google
+            <i class="fa-solid fa-envelope"></i>
+            <span>Usar correo electrónico</span>
 
           </button>
 
         </div>
 
-        <div id="authPaneGoogle" class="auth-method-pane" style="display: none;">
+        <div id="authPaneGoogle" class="auth-method-pane" style="display: block;">
 
           <p style="font-size: 11px; color: #CBD5E1; margin: 14px 0; text-align: center;">
 
@@ -822,7 +824,7 @@
 
         </div>
 
-        <div id="authPaneEmail" class="auth-method-pane" style="display: block;">
+        <div id="authPaneEmail" class="auth-method-pane" style="display: none;">
 
           <div class="form-group">
 
@@ -1690,21 +1692,21 @@
   <!-- SCRIPTS AL FINAL DEL BODY (ORDEN DETERMINISTA SIN CONFLICTOS DE DEFER) -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3/dist/umd/supabase.min.js"></script>
-  <script src="js/state.js?v=88"></script>
-  <script src="js/ui.js?v=88"></script>
-  <script src="js/supabase-config.js?v=88"></script>
-  <script src="js/auth.js?v=88"></script>
-  <script src="js/vendors.js?v=88"></script>
-  <script src="js/map.js?v=88"></script>
-  <script src="js/map_search.js?v=88"></script>
-  <script src="js/map_gps.js?v=88"></script>
-  <script src="js/forum.js?v=88"></script>
-  <script src="js/ads.js?v=88"></script>
-  <script src="js/orders.js?v=88"></script>
-  <script src="js/admin_users.js?v=88"></script>
-  <script src="js/admin.js?v=88"></script>
-  <script src="js/app.js?v=88"></script>
-  <script src="js/events.js?v=88"></script>
+  <script src="js/state.js?v=89"></script>
+  <script src="js/ui.js?v=89"></script>
+  <script src="js/supabase-config.js?v=89"></script>
+  <script src="js/auth.js?v=89"></script>
+  <script src="js/vendors.js?v=89"></script>
+  <script src="js/map.js?v=89"></script>
+  <script src="js/map_search.js?v=89"></script>
+  <script src="js/map_gps.js?v=89"></script>
+  <script src="js/forum.js?v=89"></script>
+  <script src="js/ads.js?v=89"></script>
+  <script src="js/orders.js?v=89"></script>
+  <script src="js/admin_users.js?v=89"></script>
+  <script src="js/admin.js?v=89"></script>
+  <script src="js/app.js?v=89"></script>
+  <script src="js/events.js?v=89"></script>
 
 </body>
 

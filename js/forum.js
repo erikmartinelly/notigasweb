@@ -30,14 +30,13 @@ async function renderForumFeed() {
 
     const userData = AppState.get('userData');
     const ciudadSelector = document.getElementById('selectCiudadCapital')?.value;
-    const ciudadReal = (userData && userData.ciudad)
-      ? userData.ciudad.toLowerCase().trim()
-      : (AppState.get('city') || ciudadSelector || 'cochabamba').toLowerCase().trim();
+    const rawCity = (userData && userData.ciudad) || AppState.get('city') || ciudadSelector || 'cochabamba';
+    const ciudadReal = String(rawCity || 'cochabamba').toLowerCase().trim();
 
-    // Consultar avisos de las últimas 72 horas para la ciudad
+    // Consultar avisos de las últimas 72 horas para la ciudad (insensible a mayúsculas)
     const { data: localPosts, error } = await window.supabaseClient.from('avisos')
       .select('*, comentarios_avisos(count)')
-      .eq('ciudad', ciudadReal)
+      .ilike('ciudad', ciudadReal)
       .gte('created_at', tresDiasAtras)
       .order('created_at', { ascending: false });
 
@@ -241,7 +240,7 @@ function closeNuevoPostModal() {
 
 async function crearNuevoPost() {
   try {
-    const titleEl = document.getElementById('inputPostTitulo');
+    const titleEl = document.getElementById('inputPostTitulo') || document.getElementById('inputPostTitle');
     const descEl = document.getElementById('inputPostDesc');
     const catEl = document.getElementById('selectPostTipo');
 
@@ -274,32 +273,42 @@ async function crearNuevoPost() {
       return;
     }
 
-    // Obtener user_id de la sesión activa
-    let userId = null;
-    if (window.supabaseClient) {
-      try {
-        const { data: authData } = await window.supabaseClient.auth.getUser();
-        if (authData?.user?.id) {
-          userId = authData.user.id;
-        } else {
-          const { data: sessionData } = await window.supabaseClient.auth.getSession();
-          userId = sessionData?.session?.user?.id || null;
-        }
-      } catch(e) {
-        console.warn("Error obteniendo usuario para aviso:", e);
-      }
+    if (!window.supabaseClient) {
+      if (typeof showToast === 'function') showToast('Error', 'No hay conexión con la base de datos.', 'error', 4000);
+      return;
     }
 
-    if (!userId && typeof getCurrentUserId === 'function') {
-      const candidate = getCurrentUserId();
-      if (candidate && candidate !== 'anonimo_id') userId = candidate;
+    // 1. Obtener la sesión activa de Supabase
+    let userId = null;
+    try {
+      const { data: sessionData } = await window.supabaseClient.auth.getSession();
+      if (sessionData?.session?.user?.id) {
+        userId = sessionData.session.user.id;
+        window._tempAuthUser = sessionData.session.user;
+      }
+    } catch(e) {
+      console.warn("Error leyendo sesión:", e);
+    }
+
+    if (!userId && window._tempAuthUser?.id) {
+      userId = window._tempAuthUser.id;
+    }
+
+    if (!userId) {
+      try {
+        const { data: userData } = await window.supabaseClient.auth.getUser();
+        if (userData?.user?.id) {
+          userId = userData.user.id;
+          window._tempAuthUser = userData.user;
+        }
+      } catch(e){}
     }
 
     if (!userId) {
       if (typeof showToast === 'function') {
-        showToast('🔒 Inicia Sesión', 'Debes iniciar sesión para publicar un aviso gratis.', 'warning', 4000);
+        showToast('🔒 Inicia Sesión', 'Debes iniciar sesión con Google o Correo para publicar un aviso gratis.', 'warning', 4000);
       } else {
-        alert('Debes iniciar sesión para poder publicar un aviso vecinal.');
+        alert('Debes iniciar sesión con Google o Correo para poder publicar un aviso vecinal.');
       }
       closeNewPostModal();
       const modalAuth = document.getElementById('modalWelcomeAuth');
@@ -309,40 +318,69 @@ async function crearNuevoPost() {
 
     const userData = AppState.get('userData');
     const ciudadSelector = document.getElementById('selectCiudadCapital')?.value;
-    const ciudadReal = (userData && userData.ciudad)
-      ? userData.ciudad.toLowerCase().trim()
-      : (AppState.get('city') || ciudadSelector || 'cochabamba').toLowerCase().trim();
+    const rawCity = (userData && userData.ciudad) || AppState.get('city') || ciudadSelector || 'cochabamba';
+    const ciudadReal = String(rawCity || 'cochabamba').toLowerCase().trim();
 
     if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Publicando aviso...');
 
-    const { data: newPost, error } = await window.supabaseClient.from('avisos').insert([{
-      categoria: cat,
-      titulo: title,
-      descripcion: desc,
-      ciudad: ciudadReal,
-      barrio_otb: 'Global',
-      user_id: userId,
-      votos: 1,
-      activo: true,
-      tipo: 'aviso'
-    }]).select().single();
+    let pubSuccess = false;
+    let pubError = null;
+
+    // Intento 1: Llamar al RPC seguro rpc_crear_aviso_vecinal
+    try {
+      const { data: rpcData, error: rpcErr } = await window.supabaseClient.rpc('rpc_crear_aviso_vecinal', {
+        p_categoria: cat,
+        p_titulo: title,
+        p_descripcion: desc,
+        p_ciudad: ciudadReal,
+        p_barrio_otb: 'Global'
+      });
+
+      if (!rpcErr && rpcData) {
+        pubSuccess = true;
+      } else {
+        pubError = rpcErr;
+      }
+    } catch(rpcException) {
+      pubError = rpcException;
+    }
+
+    // Intento 2: Inserción directa en tabla avisos como fallback
+    if (!pubSuccess) {
+      const { data: insertData, error: insertErr } = await window.supabaseClient.from('avisos').insert([{
+        categoria: cat,
+        titulo: title,
+        descripcion: desc,
+        ciudad: ciudadReal,
+        barrio_otb: 'Global',
+        user_id: userId,
+        votos: 1,
+        activo: true,
+        tipo: 'aviso'
+      }]).select();
+
+      if (!insertErr) {
+        pubSuccess = true;
+      } else {
+        pubError = insertErr;
+      }
+    }
 
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
 
-    if (error) {
-      console.error('Error insertando aviso:', error);
+    if (!pubSuccess) {
+      console.error('Error insertando aviso:', pubError);
       if (typeof showToast === 'function') {
-        showToast('❌ Error al Publicar', error.message || 'No se pudo guardar la publicación.', 'error', 4500);
+        showToast('❌ Error al Publicar', pubError?.message || 'No se pudo guardar la publicación.', 'error', 5000);
       } else {
-        alert('Hubo un error publicando el aviso: ' + error.message);
+        alert('Hubo un error publicando el aviso: ' + (pubError?.message || 'Error desconocido'));
       }
       return;
     }
 
     closeNewPostModal();
-    if (document.getElementById('inputPostTitulo')) document.getElementById('inputPostTitulo').value = '';
-    if (document.getElementById('inputPostTitle')) document.getElementById('inputPostTitle').value = '';
-    if (document.getElementById('inputPostDesc')) document.getElementById('inputPostDesc').value = '';
+    if (titleEl) titleEl.value = '';
+    if (descEl) descEl.value = '';
 
     if (typeof showToast === 'function') {
       showToast('📌 ¡Aviso Publicado!', 'Tu aviso ya está disponible en el tablón vecinal.', 'success', 4000);

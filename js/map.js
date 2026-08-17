@@ -87,9 +87,10 @@ const truckSvgMarkerHtml = `
 
 // PUNTO AZUL DE UBICACIÓN GPS AUTÉNTICO DE GOOGLE MAPS
 const userLocationSvgHtml = `
-  <div class="google-blue-dot-marker" title="Tu Ubicación GPS en Vivo">
+  <div class="google-blue-dot-marker" title="Tu ubicación. Arrastra para moverla manualmente">
     <div class="google-blue-dot-pulse"></div>
     <div class="google-blue-dot-core"></div>
+    <span class="manual-location-handle" aria-hidden="true"><i class="fa-solid fa-hand-pointer"></i></span>
   </div>
 `;
 
@@ -146,8 +147,8 @@ function initNotigasMap() {
   userLocationIcon = L.divIcon({
     className: 'user-location-marker-container',
     html: userLocationSvgHtml,
-    iconSize: [36, 36],
-    iconAnchor: [18, 18]
+    iconSize: [48, 48],
+    iconAnchor: [24, 24]
   });
 
   deliveryPinIcon = L.divIcon({
@@ -302,7 +303,8 @@ function initNotigasMap() {
   }
 
   if (typeof conectarGPSAuto === 'function') {
-    conectarGPSAuto(true);
+    // La detección inicial no debe deshacer una ubicación que el usuario ya movió.
+    conectarGPSAuto(false);
   }
   renderReportedTrucksBuffer();
   cargarPedidosVecinalesEnVivo();
@@ -854,10 +856,15 @@ function verPedidosEnMapa() {
 
 function moverMarcadorUbicacionManual(lat, lng) {
   isUserMarkerDraggedManually = true;
+  window.isGpsExact = false;
   currentGpsLat = lat;
   window.currentGpsLat = currentGpsLat;
   currentGpsLng = lng;
   window.currentGpsLng = currentGpsLng;
+  if (typeof AppState !== 'undefined') {
+    AppState.set('gpsLat', lat);
+    AppState.set('gpsLng', lng);
+  }
 
   if (!userMarker) {
     applyGpsPosition(lat, lng, "Ajuste Manual", false);
@@ -941,6 +948,10 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
   window.currentGpsLat = currentGpsLat;
   currentGpsLng = lng;
   window.currentGpsLng = currentGpsLng;
+  if (typeof AppState !== 'undefined') {
+    AppState.set('gpsLat', lat);
+    AppState.set('gpsLng', lng);
+  }
 
   // Auto-detectar ciudad al obtener GPS inicial
   if (forceReset && typeof window.inferMainCityFromCoords === 'function') {
@@ -979,7 +990,9 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
     userMarker = L.marker([activeLat, activeLng], {
       icon: activeIcon,
       draggable: true,
-      autoPan: true
+      autoPan: true,
+      riseOnHover: true,
+      zIndexOffset: 1000
     }).addTo(map);
 
     if (userMarker.dragging) {
@@ -992,6 +1005,11 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
         <span style="font-size:11px; color:#5F6368;">Arrastra el marcador a la puerta exacta de tu casa</span>
       </div>
     `);
+    userMarker.bindTooltip('Arrástrame para ajustar tu ubicación', {
+      direction: 'top',
+      offset: [0, -22],
+      className: 'manual-location-tooltip'
+    });
 
     userMarker.on('dragstart', function() {
       isUserMarkerDraggedManually = true;
@@ -1003,10 +1021,15 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
     userMarker.on('dragend', function(e) {
       const newPos = e.target.getLatLng();
       isUserMarkerDraggedManually = true;
+      window.isGpsExact = false;
       currentGpsLat = newPos.lat;
       window.currentGpsLat = currentGpsLat;
       currentGpsLng = newPos.lng;
       window.currentGpsLng = currentGpsLng;
+      if (typeof AppState !== 'undefined') {
+        AppState.set('gpsLat', newPos.lat);
+        AppState.set('gpsLng', newPos.lng);
+      }
 
       if (!isDriver && deliveryPinIcon) {
         userMarker.setIcon(deliveryPinIcon);
