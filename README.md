@@ -1,137 +1,141 @@
 # NOTIGAS - Live Neighborhood Delivery & Geospatial Platform
 
-NOTIGAS es una Progressive Web Application (PWA) dinámica de logística comunitaria y geolocalización en tiempo real, diseñada para conectar a vecinos compradores con repartidores y distribuidores locales a través de un mapa interactivo en vivo. El navegador recibe los archivos web directamente del alojamiento y toda la funcionalidad dinámica usa Supabase (Auth, PostgreSQL, PostGIS y Realtime).
+NOTIGAS is a dynamic, high-performance Progressive Web Application (PWA) for community-driven logistics and real-time geolocation. It is designed to connect neighborhood buyers with local delivery drivers and distributors via a live interactive map. The browser receives web assets directly from hosting, while all dynamic real-time operations are powered by Supabase (Auth, PostgreSQL, PostGIS, and Realtime WebSockets).
 
-Construida con **Vanilla JavaScript**, **Supabase PostgreSQL con PostGIS** y productos de Google. Aproximadamente el **80% de la aplicación fue desarrollado con Google Antigravity**.
+Engineered with **Vanilla JavaScript**, **Supabase PostgreSQL with PostGIS**, and Google developer technologies. Approximately **80% of the application was built and refined using Google Antigravity**.
 
 ---
 
-## 🌟 Identidad del Proyecto y Tecnologías Google
+## 🌟 Project Identity & Google Technologies
 
-* 🤖 **80% desarrollado con Google Antigravity:** La mayor parte de la construcción, revisión y refinamiento técnico de NOTIGAS se realizó con **Google Antigravity**, junto con decisiones funcionales específicas para su modelo logístico comunitario.
-* 🔑 **Google Identity Services (Google Sign-In & OAuth 2.0):** Autenticación rápida, segura y sin fricción mediante cuentas Google para vecinos y repartidores, integrada con Supabase Auth y validación de tokens JWT.
-* 🗺️ **Navegación externa con Google Maps:** Después de elegir y asignarse un pedido, el repartidor abre **Google Maps** para recibir indicaciones de ruta hacia el destino.
-* 🎨 **Referencia visual Google Maps:** El mapa interno adopta una interfaz clara, controles blancos y una paleta cartográfica suave inspirada en la experiencia visual de Google Maps, sin presentarse como un mapa oficial de Google.
-* 📱 **Compatibilidad con Google Chrome y PWA:** Service Worker, caché e instalación como aplicación web en Android y escritorio.
+* 🤖 **80% Developed with Google Antigravity:** The core architecture, iterative refactoring, and technical hardening of NOTIGAS were built with **Google Antigravity**, tailored to a neighborhood-scale real-time logistics model.
+* 🔑 **Google Identity Services (Google Sign-In & OAuth 2.0):** Rapid, secure, frictionless authentication using Google accounts for buyers and drivers, seamlessly integrated with Supabase Auth and JWT verification.
+* 🗺️ **Turn-by-Turn Navigation with Google Maps:** Once a driver selects and is assigned an order, the system launches **Google Maps** with pre-configured coordinates for direct turn-by-turn routing to the destination.
+* 🎨 **Google Maps Visual Aesthetics:** The in-app map interface features a clean, high-contrast visual layout, crisp white floating controls, and a subtle cartographic palette inspired by the Google Maps user experience.
+* 📱 **PWA & Google Chrome Optimization:** Complete Progressive Web App compliance featuring offline caching, instant load times, and installability on Android and desktop Chrome.
 
 ---
 
 ## 🚀 Key Features
 
-* **Mapa Interactivo en Tiempo Real:** Visualización en vivo tanto para vecinos como para repartidores. Los compradores publican pedidos que generan marcadores geolocalizados y los conductores transmiten su telemetría GPS a medida que recorren el barrio.
-* **Radar de Demanda Espacial:** Al alejar el mapa, las concentraciones de pedidos se muestran únicamente como ondas de radar. Al acercarse, el repartidor ve y elige pedidos individuales.
-* **Sincronización Inmediata (Supabase Realtime):** Actualización instantánea de marcadores, pedidos y repartidores vía WebSockets sin necesidad de recargar la pantalla.
-* **Roles de Usuario Duales:**
-  * **Vecino (Comprador):** Solicita suministros esenciales (Gas GLP, Agua embotellada, abarrotes) y visualiza en tiempo real los camiones que se aproximan.
-  * **Repartidor (Conductor):** Registra su ficha, transmite su ubicación GPS, elige un pedido individual y activa la navegación externa con Google Maps.
-* **Muro Comunitario / Avisos de Barrio:** Tablón vecinal interactivo para alertas, comunicados y avisos con sistema de votación única y purga automática programada.
-* **Panel de Administración Blindado:** Acceso administrativo vinculado a cuentas Google autorizadas, con control para renovar o eliminar pedidos y banear o eliminar compradores y repartidores.
-* **Alta Automática de Repartidores:** La ficha se publica sin aprobación previa del administrador; las sanciones se aplican mediante baneo o eliminación.
-* **Publicidad Separada:** Google AdSense se integra en el centro de los feeds de Repartidores y Avisos Gratis. La publicidad comercial local permanece en la franja inferior.
+* **Real-Time Interactive Map:** Live synchronized visualization for buyers and drivers. Buyers publish supply requests that generate geolocated map markers, while delivery trucks transmit live GPS telemetry as they navigate neighborhood streets.
+* **Spatial Demand Radar:** When zoomed out on the map (`zoom <= 14`), orders and density clusters emit radiating sonar radar waves. When zoomed in, drivers can inspect individual orders with precise pins.
+* **Instant WebSocket Sync (Supabase Realtime):** Sub-second updates for order statuses, markers, and active delivery trucks without requiring page refreshes.
+* **Dual User Roles:**
+  * **Neighbor (Buyer):** Request essential supplies (LPG gas cylinders, bottled water, groceries) and track approaching delivery trucks in real time.
+  * **Driver (Delivery Partner):** Register a business profile, stream GPS location telemetry, choose individual orders, and trigger external turn-by-turn routing with Google Maps.
+* **Community Board / Neighborhood News:** Interactive bulletin board for community alerts, official notifications, and local announcements with single-vote reputation scoring and automatic scheduled purging.
+* **Hardened Admin Panel:** Secure administrative controls restricted to verified Google Admin accounts, featuring order renewals/cancellations, user moderation, and driver onboarding controls.
+* **Automated Driver Onboarding:** Driver profiles publish automatically without manual pre-approval, with administrative moderation handled through instant ban and deletion controls.
+* **Separated Advertising Hierarchy:** Google AdSense is integrated centrally within the Drivers and Community News feeds. Local sponsor ads remain fixed in the bottom banner.
 
 ---
 
 ## 🌍 Social Impact & Purpose (The "Why")
 
-NOTIGAS nace con un profundo propósito social enfocado en los sectores más vulnerables de Bolivia.
+NOTIGAS was created with a clear social mission focused on vulnerable communities across Bolivia.
 
-En Bolivia, miles de familias dependen del gas licuado de petróleo en garrafas para cocinar y subsistir. Cuando se agota el gas, trasladarse a una planta distribuidora lejana implica costos de transporte elevados que muchas familias no pueden afrontar. Comprar directamente a los camiones repartidores del barrio es mucho más económico, pero tradicionalmente dependía del azar de escuchar la campana del camión al pasar.
+In Bolivia, thousands of families depend on liquefied petroleum gas (LPG) cylinders for daily cooking and survival. When gas runs out, traveling to distant distribution depots incurs substantial transportation expenses that many households cannot easily afford. Purchasing directly from neighborhood delivery trucks is significantly more affordable, but historically required waiting and hoping to hear the truck's bell as it drove past.
 
-NOTIGAS resuelve esta necesidad democratizando el acceso a la tecnología y la logística en tiempo real. Al conectar directamente a los vecinos con los distribuidores locales a través de mapas inteligentes y optimización de rutas, garantizamos que los camiones lleguen de manera rápida y predecible a quienes más lo necesitan, reduciendo el costo de vida y convirtiendo la tecnología en un catalizador de equidad social.
+NOTIGAS bridges this gap by democratizing access to modern geospatial logistics in real time. By connecting neighbors directly with local distributors through intelligent mapping and demand visualization, delivery trucks reach households quickly and reliably, lowering living costs and transforming everyday technology into a catalyst for social equity.
 
 ---
 
 ## 🛠️ Technology Stack
 
-| Capa | Tecnología |
+| Layer | Technology |
 | :--- | :--- |
-| **Ingeniería e IA** | **Google Antigravity (AGY)** (Desarrollo y refactorización asistida por agentes) |
-| **Autenticación** | **Google Identity Services** (Google OAuth 2.0 & One-Tap) + Supabase Auth |
-| **Navegación** | **Google Maps** abierto de forma externa para guiar al repartidor hacia el pedido asignado |
-| **Plataforma Web** | Google Chrome, PWA, HTML5, CSS3 y JavaScript Vanilla |
-| **Base de Datos & Backend** | **Supabase** (PostgreSQL 15+, PostGIS, Realtime WebSockets, Row Level Security) |
-| **Alojamiento de Producción** | **Hostinger Web App** con un adaptador Express mínimo que entrega la PWA; Supabase continúa siendo el backend funcional |
+| **Engineering & AI** | **Google Antigravity (AGY)** (Agentic software development, refactoring, and code generation) |
+| **Authentication** | **Google Identity Services** (Google OAuth 2.0 & One-Tap) + Supabase Auth |
+| **Navigation** | **Google Maps** (External route guidance for assigned delivery drivers) |
+| **Web Platform** | Google Chrome, PWA, HTML5, CSS3, and Vanilla JavaScript |
+| **Database & Realtime** | **Supabase** (PostgreSQL 15+, PostGIS, Realtime WebSockets, Row Level Security) |
+| **Production Hosting** | **Hostinger Web App** with a lightweight Express static asset adapter; Supabase powers the dynamic backend |
 
 ---
 
 ## 📂 Project Structure
 
 ```text
-├── index.html              # Punto de entrada principal (Vistas Comprador, Repartidor y Admin)
-├── package.json            # Scripts mínimos requeridos por el despliegue Web App de Hostinger
-├── server.js               # Adaptador de entrega de archivos estáticos; no contiene lógica de negocio
-├── .htaccess               # HTTPS, cabeceras de seguridad, caché y enrutamiento PWA en Hostinger
-├── ads.txt                 # Vendedor autorizado de Google AdSense
-├── sw.js                   # Service Worker (Caché progresivo y soporte offline PWA)
-├── manifest.json           # Manifiesto Web PWA
-├── js/                     # Módulos JavaScript de la aplicación
-│   ├── state.js            # Estado reactivo centralizado (Pub/Sub)
-│   ├── ui.js               # Helpers visuales, overlays, modales y notificaciones toast
-│   ├── supabase-config.js  # Inicialización de Supabase, canales y suscripciones Realtime
-│   ├── auth.js             # Autenticación con cuenta Google, sesiones y roles de usuario
-│   ├── vendors.js          # Perfiles de negocio de repartidores y filtros por categoría
-│   ├── map.js              # Inicialización de mapa, marcadores en vivo y clustering
-│   ├── map_search.js       # Búsqueda y geocodificación de calles/municipios con fallback multi-motor
-│   ├── map_gps.js          # Seguimiento GPS adaptativo y telemetría en vivo
-│   ├── forum.js            # Foro vecinal, publicaciones comunitarias y comentarios
-│   ├── ads.js              # Google AdSense dentro de feeds y anuncio local inferior
-│   ├── orders.js           # Creación, selección individual, asignación y entrega de pedidos
-│   ├── admin.js            # Panel de control de administración y métricas operativas
-│   ├── admin_users.js      # Moderación, baneo y eliminación de usuarios
-│   └── events.js           # Event listeners e interacciones globales de la UI
+├── index.html              # Main single-page application entry point (Buyer, Driver, and Admin views)
+├── package.json            # Deployment configuration and build scripts for Hostinger Web App runtime
+├── server.js               # Static asset server adapter; business logic remains in Supabase
+├── .htaccess               # HTTPS enforcement, security headers, cache policies, and SPA routing
+├── ads.txt                 # Authorized Google AdSense digital seller declaration
+├── sw.js                   # Service Worker (Progressive caching, asset versioning, and offline PWA support)
+├── manifest.json           # PWA Web Application Manifest
+├── js/                     # Modular frontend JavaScript architecture
+│   ├── state.js            # Centralized reactive state management (Pub/Sub)
+│   ├── ui.js               # Visual helpers, loading overlays, modals, and toast alerts
+│   ├── supabase-config.js  # Supabase client initialization, Realtime channels, and subscriptions
+│   ├── auth.js             # Google OAuth integration, session persistence, and role management
+│   ├── vendors.js          # Driver business profiles and category filtering
+│   ├── map.js              # Leaflet map engine, live marker rendering, and demand sonar radar
+│   ├── map_search.js       # Address geocoding and street search with multi-engine fallback
+│   ├── map_gps.js          # Adaptive GPS geolocation tracking and live telemetry broadcasting
+│   ├── forum.js            # Community bulletin board, neighborhood posts, and comments
+│   ├── ads.js              # Google AdSense in-feed units and bottom local sponsor banner
+│   ├── orders.js           # Order creation, individual selection, assignment, and delivery lifecycle
+│   ├── admin.js            # Administrative dashboard and operational metrics
+│   ├── admin_users.js      # User management, driver/buyer moderation, ban and deletion controls
+│   └── events.js           # Delegated DOM event handlers and global UI interactions
 ├── styles/
-│   └── main.css            # Hoja de estilos de la aplicación (Tokens de diseño y paleta Google Maps)
+│   └── main.css            # Application design tokens, responsive layouts, and Google Maps-inspired UI
 └── supabase/
-    ├── full_production_schema.sql # ESQUEMA COMPLETO Y CONSOLIDADO PARA PRODUCCIÓN (1-Click Deploy)
-    └── migrations/         # Migraciones incrementales históricas (001 a 045)
+    ├── full_production_schema.sql # CONSOLIDATED PRODUCTION SCHEMA (1-Click Database Deployment)
+    └── migrations/         # Historical incremental migrations (001 through 045)
 ```
 
 ---
 
 ## ⚙️ Setup & Installation
 
-### 1. Clonar el Repositorio
+### 1. Clone the Repository
 ```bash
 git clone https://github.com/erikmartinelly/notigasweb.git
 cd notigasweb
 ```
 
-### 2. Configurar la Base de Datos (Supabase)
-* Crea un nuevo proyecto en [Supabase](https://supabase.com/).
-* **Opción A (Recomendada - Despliegue en 1 Clic):** Ejecuta el archivo consolidado [`supabase/full_production_schema.sql`](supabase/full_production_schema.sql) en el SQL Editor de Supabase. Este script único crea todas las tablas, extensiones (PostGIS), vistas públicas autorizadas, índices de alto rendimiento, triggers automáticos, procedimientos RPC atómicos y políticas de seguridad RLS.
-* **Opción B (Migraciones Incrementales):** Ejecuta los scripts disponibles en `supabase/migrations/` en orden numérico hasta `045`. Después de la versión v84 debe aplicarse `045_fix_self_account_deletion.sql` para corregir la eliminación personal completa.
-* Abre `js/supabase-config.js` y coloca tu `supabaseUrl` y tu `supabaseAnonKey`.
+### 2. Configure Database & Backend (Supabase)
+* Create a new project at [Supabase](https://supabase.com/).
+* **Option A (Recommended - 1-Click Deployment):** Execute [`supabase/full_production_schema.sql`](supabase/full_production_schema.sql) in the Supabase SQL Editor. This single script provisions all tables, PostGIS extensions, public views, performance indexes, automated triggers, atomic RPC functions, and Row Level Security (RLS) policies.
+* **Option B (Incremental Migrations):** Run the migration files inside `supabase/migrations/` in sequential order through `045`.
+* Open `js/supabase-config.js` and input your `supabaseUrl` and `supabaseAnonKey`.
 
-### 3. Configurar Google Identity Services & Auth
-* En tu consola de Google Cloud, habilita **OAuth 2.0 Client ID** para aplicaciones web.
-* En Supabase Dashboard -> **Authentication** -> **Providers** -> activa **Google** y añade tus credenciales (`Client ID` y `Client Secret`).
+### 3. Configure Google Identity Services & Auth
+* In the Google Cloud Console, configure an **OAuth 2.0 Client ID** for Web Applications.
+* In Supabase Dashboard -> **Authentication** -> **Providers** -> enable **Google** and add your credentials (`Client ID` and `Client Secret`).
+* Add your authorized domains and redirect URIs in both Google Cloud Console and Supabase Auth settings.
 
-### 4. Ejecución en Desarrollo
-La PWA no tiene paso de compilación. El `package.json` existe únicamente porque el despliegue Web App de Hostinger exige un proceso de inicio; `server.js` entrega los mismos archivos HTML, CSS y JavaScript sin transformar su contenido. Para una prueba completa, usa HTTPS y registra la URL de redirección en Supabase Auth.
+### 4. Local Development
+The PWA runs natively in modern browsers with zero build step required. The `package.json` and `server.js` files are provided to support standard Node.js hosting environments (such as Hostinger Web Apps). For full local testing with Google Sign-In and Geolocation APIs, serve over HTTPS or `localhost`.
 
-### 5. Publicación en producción (Hostinger)
-1. Activa el certificado SSL del dominio en Hostinger.
-2. En el despliegue Web App usa `npm start`; el comando de build no transforma archivos.
-3. No publiques las carpetas internas `.git`, `.agents`, `scripts` ni `supabase` como contenido navegable.
-4. Comprueba que `https://www.notigas.com/manifest.json`, `https://www.notigas.com/ads.txt` y `https://www.notigas.com/sw.js` respondan correctamente.
-5. En Supabase Auth, registra `https://www.notigas.com` como URL del sitio y como URL de redirección permitida.
+```bash
+# Optional local test server
+node server.js
+```
 
-Express solo mantiene activo el proceso que Hostinger exige y entrega archivos estáticos. No reemplaza a Supabase ni modifica las funciones dinámicas: autenticación, pedidos, usuarios, GPS, anuncios y actualizaciones en vivo siguen dependiendo de Supabase.
+### 5. Production Deployment (Hostinger)
+1. Enable SSL/HTTPS on your custom domain in Hostinger.
+2. In Hostinger Web App deployment settings, specify `npm start` as the startup command.
+3. Verify that hidden directories (`.git`, `.agents`, `scripts`, `supabase`) are restricted from public directory browsing.
+4. Validate that `https://www.notigas.com/manifest.json`, `https://www.notigas.com/ads.txt`, and `https://www.notigas.com/sw.js` serve with appropriate MIME types.
+5. In Supabase Auth, register `https://www.notigas.com` as the primary Site URL and as an authorized redirect URI.
 
 ---
 
-## 🏗️ Arquitectura de Producción y Seguridad
+## 🏗️ Production Architecture & Security
 
-### Base de Datos & RLS
-* **Row Level Security (RLS):** RLS activo y riguroso en todas las tablas del esquema `public`. Los compradores solo pueden gestionar sus propios pedidos, y los choferes solo pueden interactuar con pedidos disponibles o asignados a su cuenta.
-* **Máquina de 5 Estados Oficiales:** `pendiente` → `visto` → `asignado` → `entregado` / `cancelado`, protegida mediante triggers a nivel de base de datos (`trg_check_pedido_transition`).
-* **Telemetría GPS en Vivo (`rutas_repartidores`):** Registro atómico por repartidor (`user_id`, `last_active`) con purga automática de posiciones inactivas por más de 12 horas.
-* **Privacidad por Rol:** El mapa público recibe ubicaciones aproximadas y nunca expone teléfonos o direcciones de terceros; el repartidor activo recibe el contacto completo solo después de asignarse el pedido.
-* **Procedimientos RPC Atómicos (`SECURITY DEFINER` con `search_path = public`):**
-  * `rpc_assign_order`: Asignación individual con bloqueo de fila `FOR UPDATE`.
-  * `rpc_get_demand_clusters_v2`: Agrupación espacial con algoritmo DBSCAN determinista.
-  * `rpc_get_my_assigned_orders`: Acceso seguro a los datos de contacto únicamente de pedidos asignados al conductor.
-  * `rpc_admin_list_users`: Lista administrativa de compradores y repartidores con el ID real de Supabase Auth.
-  * `rpc_admin_delete_user`: Eliminación completa de una cuenta no administradora y sus datos relacionados.
-  * `rpc_admin_renew_order`: Renovación administrativa de un pedido y reapertura en estado `pendiente`.
-  * `delete_user_account`: Eliminación en cascada de la cuenta y registros asociados.
+### Database & Row Level Security (RLS)
+* **Strict Row Level Security:** RLS is enforced across all tables in the `public` schema. Buyers can only modify their own orders, and drivers can only interact with unassigned available orders or orders assigned to them.
+* **5-State Finite State Machine:** Enforces order transitions (`pendiente` → `visto` → `asignado` → `entregado` / `cancelado`) strictly protected by database-level triggers (`trg_check_pedido_transition`).
+* **Live GPS Telemetry (`rutas_repartidores`):** Atomic upserts per driver (`user_id`, `last_active`) with automated pruning of positions inactive for more than 12 hours.
+* **Role-Based Data Privacy:** The public map layer receives privacy-fuzzed coordinates and never exposes buyer phone numbers or street addresses publicly. Drivers only receive complete contact details once an order is officially assigned to their account.
+* **Atomic RPC Functions (`SECURITY DEFINER` with `search_path = public`):**
+  * `rpc_assign_order`: Atomic single-driver order assignment protected with `FOR UPDATE` row locking.
+  * `rpc_get_demand_clusters_v2`: Spatial density grouping utilizing deterministic DBSCAN clustering.
+  * `rpc_get_my_assigned_orders`: Secure retrieval of contact information exclusively for driver-assigned orders.
+  * `rpc_admin_list_users`: Administrative listing of buyers and drivers linked to authentic Supabase Auth UUIDs.
+  * `rpc_admin_delete_user`: Complete administrative purge of non-admin accounts and associated relational records.
+  * `rpc_admin_renew_order`: Administrative order renewal resetting state to `pendiente`.
+  * `delete_user_account`: Secure self-service account deletion cascading across all relational records.
