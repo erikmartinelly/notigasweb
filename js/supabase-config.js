@@ -1,6 +1,53 @@
 // Configuración e Inicialización de Supabase
 const SUPABASE_URL = 'https://yxzzfqyehllogzzhdtmc.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_wWVQ59Rejod5Oc1X4s_eeQ_ONbXzyi2';
+// Esta es una clave publicable del navegador (sb_publishable), nunca una clave
+// service_role. La protección real se aplica con RLS, triggers y permisos SQL.
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_wWVQ59Rejod5Oc1X4s_eeQ_ONbXzyi2';
+const SUPABASE_SESSION_STORAGE_KEY = 'notigas-secure-session-v1';
+
+function createSessionScopedAuthStorage() {
+  const fallback = new Map();
+  const legacyKey = 'sb-yxzzfqyehllogzzhdtmc-auth-token';
+  try {
+    const legacySession = window.localStorage.getItem(legacyKey);
+    if (legacySession && !window.sessionStorage.getItem(SUPABASE_SESSION_STORAGE_KEY)) {
+      window.sessionStorage.setItem(SUPABASE_SESSION_STORAGE_KEY, legacySession);
+    }
+    window.localStorage.removeItem(legacyKey);
+  } catch (_) {}
+
+  return {
+    getItem(key) {
+      try { return window.sessionStorage.getItem(key); } catch (_) { return fallback.get(key) || null; }
+    },
+    setItem(key, value) {
+      try {
+        window.sessionStorage.setItem(key, value);
+        // Evitar que sobrevivan copias de tokens en localStorage.
+        window.localStorage.removeItem(key);
+      } catch (_) { fallback.set(key, value); }
+    },
+    removeItem(key) {
+      try {
+        window.sessionStorage.removeItem(key);
+        window.localStorage.removeItem(key);
+      } catch (_) { fallback.delete(key); }
+    }
+  };
+}
+
+function createNotigasSupabaseClient() {
+  return supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true,
+      flowType: 'pkce',
+      storageKey: SUPABASE_SESSION_STORAGE_KEY,
+      storage: createSessionScopedAuthStorage()
+    }
+  });
+}
 
 // =====================================================================
 // INICIALIZACIÓN DEL CLIENTE SUPABASE (CRÍTICO - FIX AUTENTICACIÓN)
@@ -8,13 +55,7 @@ const SUPABASE_ANON_KEY = 'sb_publishable_wWVQ59Rejod5Oc1X4s_eeQ_ONbXzyi2';
 (function initSupabaseClient() {
   try {
     if (typeof supabase !== 'undefined' && supabase.createClient) {
-      window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-        auth: {
-          autoRefreshToken: true,
-          persistSession: true,
-          detectSessionInUrl: true
-        }
-      });
+      window.supabaseClient = createNotigasSupabaseClient();
       console.log('✅ Supabase Client inicializado correctamente.');
       document.dispatchEvent(new Event('supabase_ready'));
     } else {
@@ -23,13 +64,7 @@ const SUPABASE_ANON_KEY = 'sb_publishable_wWVQ59Rejod5Oc1X4s_eeQ_ONbXzyi2';
       const waitForSdk = setInterval(() => {
         retries++;
         if (typeof supabase !== 'undefined' && supabase.createClient) {
-          window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-            auth: {
-              autoRefreshToken: true,
-              persistSession: true,
-              detectSessionInUrl: true
-            }
-          });
+          window.supabaseClient = createNotigasSupabaseClient();
           console.log('✅ Supabase Client inicializado (reintento ' + retries + ').');
           document.dispatchEvent(new Event('supabase_ready'));
           clearInterval(waitForSdk);
@@ -207,6 +242,7 @@ window.iniciarSuscripcionesRealtime = function() {
     const channelGeneration = _realtimeGeneration;
     const globalChannel = window.supabaseClient.channel('global_changes_' + activeCity);
     window.notigasGlobalChannel = globalChannel;
+    window._realtimeChannel = globalChannel;
     _activeRealtimeCity = activeCity;
 
     globalChannel

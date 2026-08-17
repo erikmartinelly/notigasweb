@@ -1208,24 +1208,34 @@ async function transmitirUbicacionRepartidorServidorDB(lat, lng) {
 
 let reportedTrucksLayerGroup = null;
 
-// SVG E ICONO DE ALTA DEFINICIÓN PARA CAMIONES REPORTADOS EN VIVO POR VECINOS
-const reportedTruckSvgMarkerHtml = `
-  <div style="position: relative; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
-    <div style="position: absolute; width: 48px; height: 48px; border-radius: 50%; background: rgba(255,109,0,0.35); animation: radarPing 1.8s infinite ease-out;"></div>
-    <div style="position: relative; background: linear-gradient(135deg, #FF6D00, #D32F2F); width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2.5px solid #FFFFFF; box-shadow: 0 4px 18px rgba(255,109,0,0.8); cursor: pointer;">
-      <i class="fa-solid fa-bell" style="color: #FFFFFF; font-size: 18px;"></i>
-      <span style="position: absolute; top: -3px; right: -3px; background: #FFD600; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #1E293B;" title="Camión Reportado por Vecino"></span>
-    </div>
-  </div>
-`;
+// SVG E ICONOS PARA AVISOS VECINALES (ESCUCHÉ CAMIÓN Y ESPÉRAME)
+function getReportedTruckIcon(tipo) {
+  const isEsperame = (tipo === 'esperame');
+  const pingColor = isEsperame ? 'rgba(239,68,68,0.45)' : 'rgba(255,109,0,0.45)';
+  const gradColor = isEsperame ? 'linear-gradient(135deg, #DC2626, #991B1B)' : 'linear-gradient(135deg, #FF6D00, #D32F2F)';
+  const iconClass = isEsperame ? 'fa-solid fa-hand' : 'fa-solid fa-bell';
+  const dotColor = isEsperame ? '#FF1744' : '#FFD600';
 
-const reportedTruckIcon = L.divIcon({
-  className: 'reported-truck-marker',
-  html: reportedTruckSvgMarkerHtml,
-  iconSize: [48, 48],
-  iconAnchor: [24, 24],
-  popupAnchor: [0, -24]
-});
+  const html = `
+    <div style="position: relative; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+      <div style="position: absolute; width: 50px; height: 50px; border-radius: 50%; background: ${pingColor}; animation: radarPing 1.8s infinite ease-out;"></div>
+      <div style="position: relative; background: ${gradColor}; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2.5px solid #FFFFFF; box-shadow: 0 4px 18px rgba(0,0,0,0.6); cursor: pointer;">
+        <i class="${iconClass}" style="color: #FFFFFF; font-size: 18px;"></i>
+        <span style="position: absolute; top: -3px; right: -3px; background: ${dotColor}; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #1E293B;" title="${isEsperame ? 'Alerta Espérame' : 'Camión Reportado'}"></span>
+      </div>
+    </div>
+  `;
+
+  return L.divIcon({
+    className: 'reported-truck-marker',
+    html: html,
+    iconSize: [50, 50],
+    iconAnchor: [25, 25],
+    popupAnchor: [0, -25]
+  });
+}
+
+const reportedTruckIcon = getReportedTruckIcon('escuche_camion');
 
 function renderReportedTrucksBuffer() {
   if (!map) return;
@@ -1261,17 +1271,27 @@ function renderReportedTrucksBuffer() {
   validTrucks.forEach(t => {
     const minutesAgo = Math.floor((now - t.timestamp) / 60000);
     const timeText = minutesAgo < 1 ? 'Hace un instante' : `Hace ${minutesAgo} min`;
+    const esEsperame = (t.tipo === 'esperame' || (t.reporter && t.reporter.includes('Espérame')));
 
-    const marker = L.marker([t.lat, t.lng], { icon: reportedTruckIcon });
-    marker.bindPopup(`
+    const marker = L.marker([t.lat, t.lng], { icon: getReportedTruckIcon(esEsperame ? 'esperame' : 'escuche_camion') });
+    
+    const popupHtml = esEsperame ? `
+      <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
+        <strong style="color:#EF4444; font-size:13px;"><i class="fa-solid fa-hand"></i> ¡VECINO SOLICITA ESPERA!</strong><br>
+        <span style="font-size:11px; color:#CBD5E1;">🛑 Alerta "ESPÉRAME" emitida por: <strong>${escapeHtmlStr(t.reporter || 'Un vecino')}</strong></span><br>
+        <span style="font-size:10px; color:#F87171; font-weight:700;">⏱️ ${timeText}</span><br>
+        <button style="margin-top:6px; background:linear-gradient(135deg, #FF6D00, #E65100); color:white; border:none; padding:5px 10px; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer;" data-action="abrirSubmenuPedidos">🛒 Pedir Garrafa / Servicio Aquí</button>
+      </div>
+    ` : `
       <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
         <strong style="color:#FF6D00; font-size:13px;"><i class="fa-solid fa-truck-fast"></i> Camión Oído / Visto en la Zona</strong><br>
         <span style="font-size:11px; color:#CBD5E1;">📢 Reportado por: <strong>${escapeHtmlStr(t.reporter || 'Un vecino')}</strong></span><br>
         <span style="font-size:10px; color:#00E676; font-weight:700;">⏱️ ${timeText}</span><br>
         <button style="margin-top:6px; background:linear-gradient(135deg, #FF6D00, #E65100); color:white; border:none; padding:5px 10px; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer;" data-action="abrirSubmenuPedidos">🛒 Pedir Garrafa / Servicio Aquí</button>
       </div>
-    `);
+    `;
 
+    marker.bindPopup(popupHtml);
     reportedTrucksLayerGroup.addLayer(marker);
   });
 }

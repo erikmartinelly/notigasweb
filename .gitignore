@@ -6,10 +6,16 @@ npm-debug.log*
 
 # Archivos de Entorno y Claves Sensibles
 .env
-.env.local
-.env.production
+.env.*
+!.env.example
 *.pem
 *.key
+*.p12
+*.pfx
+*.jks
+*service-account*.json
+service-account*.json
+.supabase/.temp/
 
 # Archivos de Build y Binarios Pesados
 *.apk

@@ -2,6 +2,18 @@
 
 let driverOrdersRefreshInterval = null;
 
+function formatearAntiguedadPedido(value) {
+  const timestamp = value instanceof Date ? value.getTime() : new Date(value || Date.now()).getTime();
+  const totalMinutos = Math.max(0, Math.floor((Date.now() - timestamp) / 60000));
+  const horas = Math.floor(totalMinutos / 60);
+  const minutos = totalMinutos % 60;
+
+  if (horas < 1) return `${totalMinutos} min`;
+  if (minutos === 0) return `${horas} h`;
+  return `${horas} h ${minutos} min`;
+}
+window.formatearAntiguedadPedido = formatearAntiguedadPedido;
+
 function startDriverOrdersAutoRefresh() {
   if (driverOrdersRefreshInterval) clearInterval(driverOrdersRefreshInterval);
   driverOrdersRefreshInterval = setInterval(() => {
@@ -168,11 +180,6 @@ async function renderDriverOrdersList() {
     }
   }
 
-  const minutesSince = value => {
-    const timestamp = new Date(value || Date.now()).getTime();
-    return Math.max(0, Math.floor((Date.now() - timestamp) / 60000));
-  };
-
   let html = '';
 
   if (assignedOrders.length > 0) {
@@ -238,7 +245,7 @@ async function renderDriverOrdersList() {
             </div>
             <div class="demand-card-meta">
               <div><i class="fa-solid fa-location-dot"></i> ${safeZone}</div>
-              <div><i class="fa-regular fa-clock"></i> Publicado hace ${minutesSince(order.created_at)} min.</div>
+              <div><i class="fa-regular fa-clock"></i> Publicado hace ${formatearAntiguedadPedido(order.created_at)}.</div>
             </div>
             <div class="demand-card-actions">
               <button type="button" class="btn-driver-accept" data-action="aceptarPedidoRepartidor" data-id="${safeId}" data-lat="${lat}" data-lng="${lng}">
@@ -941,7 +948,7 @@ async function abrirPanoramicaPedidos() {
     try {
       const o = JSON.parse(rawPropio);
 
-      const minutos = Math.floor((now - o.timestamp) / 60000);
+      const antiguedad = formatearAntiguedadPedido(o.timestamp);
 
       contenido += `
 
@@ -955,7 +962,7 @@ async function abrirPanoramicaPedidos() {
 
           <div style="font-size: 12px; color: #CBD5E1;"><strong>🚦 Calle:</strong> ${escapeHtmlStr(o.callePrincipal || 'En mapa')}</div>
 
-          <div style="font-size: 11px; color: #64748B; margin-top: 4px;">⏱️ Publicado hace ${minutos} min</div>
+          <div style="font-size: 11px; color: #64748B; margin-top: 4px;">⏱️ Publicado hace ${antiguedad}</div>
 
           <button data-action="cancelarPedidoActivo" style="margin-top:8px; background:#D32F2F; color:white; border:none; padding:6px 12px; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer; width:100%;">❌ Cancelar este Pedido</button>
 
@@ -993,7 +1000,7 @@ async function abrirPanoramicaPedidos() {
 
       if (pedidosReales && pedidosReales.length > 0) {
         pedidosReales.forEach(o => {
-          const min = Math.floor((now - new Date(o.created_at).getTime()) / 60000);
+          const antiguedad = formatearAntiguedadPedido(o.created_at);
 
           const iconHtml = typeof obtenerIconoHtmlPorCategoria === 'function' ? obtenerIconoHtmlPorCategoria(o.categoria) : '📦';
 
@@ -1007,7 +1014,7 @@ async function abrirPanoramicaPedidos() {
 
                 <div style="font-size:12px; font-weight:700; color:white;">${escapeHtmlStr(o.categoria)}</div>
 
-                <div style="font-size:11px; color:#94A3B8;">📍 Vecino cercano • ⏱️ hace ${min} min</div>
+                <div style="font-size:11px; color:#94A3B8;">📍 Vecino cercano • ⏱️ hace ${antiguedad}</div>
 
               </div>
 
@@ -1084,140 +1091,220 @@ function cerrarPanoramicaPedidos() {
   if (modal) modal.style.display = 'none';
 }
 
-function notificarEscucheCamion() {
-  const pos = getActiveUserLocation();
+const ALERTA_VECINAL_COOLDOWN_MS = 20 * 1000;
+const ultimaAlertaVecinalPorTipo = Object.create(null);
 
-  let reporterName = "Un vecino";
-
-  try {
-    const saved = JSON.stringify(AppState.get('userData') || {});
-
-    if (saved) {
-      const u = JSON.parse(saved);
-
-      if (u.nombre) reporterName = u.nombre;
-
-    }
-
-  } catch(e){}
-
-  const alertPayload = {
-    id: Date.now(),
-
-    lat: pos.lat,
-
-    lng: pos.lng,
-
-    timestamp: Date.now(),
-
-    reporter: reporterName,
-
-    ciudad: AppState.get('city')
-
-  };
-
-  // Enviar a Supabase Realtime si está conectado
-
-  if (window.supabaseClient && window._realtimeChannel) {
-     window._realtimeChannel.send({
-       type: 'broadcast',
-
-       event: 'vecinos_alert',
-
-       payload: alertPayload
-
-     });
-
-  }
-
-  // Guardar localmente y mostrar
-
-  recibirAlertaVecinalBroadcast(alertPayload);
-
-  showToast('📢 Alerta Enviada', 'Los vecinos de tu ciudad han sido notificados de que hay un camión cerca.', 'success', 4000);
+function coordenadasValidasAlerta(pos) {
+  const lat = Number(pos?.lat);
+  const lng = Number(pos?.lng);
+  return Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
 }
 
-function lanzarEspecialEsperame() {
+async function transmitirAlertaVecinal(payload) {
+  const activeChannel = window.notigasGlobalChannel || window._realtimeChannel;
+  if (!activeChannel || typeof activeChannel.send !== 'function') {
+    throw new Error('El canal en vivo todavía no está conectado. Intenta nuevamente en unos segundos.');
+  }
+
+  const resultado = await activeChannel.send({
+    type: 'broadcast',
+    event: 'vecinos_alert',
+    payload
+  });
+
+  if (resultado && resultado !== 'ok') {
+    throw new Error('El servidor en vivo no confirmó el aviso.');
+  }
+
+  recibirAlertaVecinalBroadcast(payload);
+}
+
+function puedeEmitirAlertaVecinal(tipo) {
+  const ahora = Date.now();
+  const ultima = Number(ultimaAlertaVecinalPorTipo[tipo] || 0);
+  if (ahora - ultima < ALERTA_VECINAL_COOLDOWN_MS) {
+    const segundos = Math.ceil((ALERTA_VECINAL_COOLDOWN_MS - (ahora - ultima)) / 1000);
+    if (typeof showToast === 'function') {
+      showToast('⏳ Espera un momento', `Podrás volver a enviar este aviso en ${segundos} s.`, 'warning', 3000);
+    }
+    return false;
+  }
+  ultimaAlertaVecinalPorTipo[tipo] = ahora;
+  return true;
+}
+
+async function notificarEscucheCamion() {
   const pos = getActiveUserLocation();
+  if (!coordenadasValidasAlerta(pos)) {
+    if (typeof showToast === 'function') showToast('📍 Falta tu ubicación', 'Activa o ajusta tu ubicación antes de reportar el camión.', 'warning', 4500);
+    return;
+  }
+  if (!puedeEmitirAlertaVecinal('escuche_camion')) return;
 
   let reporterName = "Un vecino";
 
   try {
     const saved = JSON.stringify(AppState.get('userData') || {});
-
     if (saved) {
       const u = JSON.parse(saved);
-
       if (u.nombre) reporterName = u.nombre;
-
     }
-
   } catch(e){}
+
+  const rawCity = AppState.get('city') || document.getElementById('selectCiudadCapital')?.value || 'cochabamba';
+  const miCiudad = String(rawCity).toLowerCase().trim();
 
   const alertPayload = {
     id: Date.now(),
-
     lat: pos.lat,
-
     lng: pos.lng,
-
     timestamp: Date.now(),
-
-    reporter: `${reporterName} (🛑 Alerta Espérame)`,
-
-    ciudad: AppState.get('city')
-
+    reporter: reporterName,
+    tipo: 'escuche_camion',
+    cat: 'gas',
+    ciudad: miCiudad,
+    sender_id: (typeof getCurrentUserId === 'function') ? getCurrentUserId() : null
   };
 
-  if (window.supabaseClient && window._realtimeChannel) {
-     window._realtimeChannel.send({
-       type: 'broadcast',
-
-       event: 'vecinos_alert',
-
-       payload: alertPayload
-
-     });
-
+  try {
+    await transmitirAlertaVecinal(alertPayload);
+    if (typeof showToast === 'function') {
+      showToast('📢 Alerta confirmada', 'El aviso “Escuché camión” ya aparece en el mapa de tu ciudad.', 'success', 4000);
+    }
+  } catch (err) {
+    ultimaAlertaVecinalPorTipo.escuche_camion = 0;
+    console.warn('No se pudo transmitir “Escuché camión”:', err);
+    if (typeof showToast === 'function') showToast('❌ Aviso no enviado', err.message || 'No se pudo confirmar el aviso en vivo.', 'error', 5000);
   }
+}
 
-  recibirAlertaVecinalBroadcast(alertPayload);
+async function lanzarEspecialEsperame() {
+  const pos = getActiveUserLocation();
+  if (!coordenadasValidasAlerta(pos)) {
+    if (typeof showToast === 'function') showToast('📍 Falta tu ubicación', 'Activa o ajusta tu ubicación antes de pedir que te esperen.', 'warning', 4500);
+    return;
+  }
+  if (!puedeEmitirAlertaVecinal('esperame')) return;
 
-  mostrarPopupAlertaRepartidor(
-    'ALERTA VECINAL "ESPÉRAME"',
-    `${reporterName} solicita que el camión detenga su marcha cerca de esta ubicación.`
-  );
+  let reporterName = "Un vecino";
 
-  showToast('Alerta Emitida', `Se ha colocado un punto de alerta en el mapa visible para todos los vecinos y repartidores.`, 'warning', 3000);
+  try {
+    const saved = JSON.stringify(AppState.get('userData') || {});
+    if (saved) {
+      const u = JSON.parse(saved);
+      if (u.nombre) reporterName = u.nombre;
+    }
+  } catch(e){}
+
+  const rawCity = AppState.get('city') || document.getElementById('selectCiudadCapital')?.value || 'cochabamba';
+  const miCiudad = String(rawCity).toLowerCase().trim();
+
+  const alertPayload = {
+    id: Date.now(),
+    lat: pos.lat,
+    lng: pos.lng,
+    timestamp: Date.now(),
+    reporter: `${reporterName} (🛑 Alerta Espérame)`,
+    tipo: 'esperame',
+    cat: 'gas',
+    ciudad: miCiudad,
+    sender_id: (typeof getCurrentUserId === 'function') ? getCurrentUserId() : null,
+    radio_metros: 500
+  };
+
+  try {
+    await transmitirAlertaVecinal(alertPayload);
+    if (typeof showToast === 'function') {
+      showToast('🛑 Alerta confirmada', 'Se avisó a los repartidores que estén a menos de 500 m y se marcó tu punto en el mapa.', 'warning', 4500);
+    }
+  } catch (err) {
+    ultimaAlertaVecinalPorTipo.esperame = 0;
+    console.warn('No se pudo transmitir “Espérame”:', err);
+    if (typeof showToast === 'function') showToast('❌ Alerta no enviada', err.message || 'No se pudo confirmar la alerta en vivo.', 'error', 5000);
+  }
 }
 
 window.recibirAlertaVecinalBroadcast = function(payload) {
-  // Solo procesar alertas de nuestra misma ciudad
+  if (!payload || !payload.lat || !payload.lng) return;
 
-  const miCiudad = AppState.get('city');
-
-  if (payload.ciudad && payload.ciudad !== miCiudad) return;
+  // Solo procesar alertas de la misma ciudad (insensible a mayúsculas)
+  const miCiudad = String(AppState.get('city') || 'cochabamba').toLowerCase().trim();
+  const alertCiudad = String(payload.ciudad || miCiudad).toLowerCase().trim();
+  if (alertCiudad && alertCiudad !== miCiudad) return;
 
   let buffer = [];
-
   try {
     const raw = localStorage.getItem('notigas_reported_trucks_buffer');
-
     if (raw) buffer = JSON.parse(raw);
-
   } catch(e){}
 
-  // Evitar duplicados
-
+  // Evitar alertas duplicadas
   if (buffer.find(a => a.id === payload.id)) return;
 
   const now = Date.now();
-
   buffer = buffer.filter(t => (now - t.timestamp) < (30 * 60 * 1000));
-
   buffer.unshift(payload);
-
   localStorage.setItem('notigas_reported_trucks_buffer', JSON.stringify(buffer));
 
-  if (typeof renderReportedTrucksBuffer === 'function') renderReportedTrucksBuffer();
+  // 1. Refrescar el mapa con el marcador para todos (compradores y repartidores)
+  if (typeof renderReportedTrucksBuffer === 'function') {
+    renderReportedTrucksBuffer();
+  }
+
+  // 2. Notificación especial al repartidor
+  const isDriver = (AppState.get('appMode') === 'driver' || AppState.get('userRole') === 'repartidor');
+  const esEsperame = (payload.tipo === 'esperame' || (payload.reporter && payload.reporter.includes('Espérame')));
+  const miUserId = (typeof getCurrentUserId === 'function') ? String(getCurrentUserId() || '') : '';
+  const esEmisorLocal = Boolean(miUserId && payload.sender_id && String(payload.sender_id) === miUserId);
+
+  if (esEsperame) {
+    let distanciaAlRepartidor = null;
+    if (isDriver) {
+      const posicionRepartidor = (typeof getActiveUserLocation === 'function') ? getActiveUserLocation() : null;
+      if (coordenadasValidasAlerta(posicionRepartidor)) {
+        if (typeof window.calcularDistanciaMetros === 'function') {
+          distanciaAlRepartidor = window.calcularDistanciaMetros(
+            Number(posicionRepartidor.lat), Number(posicionRepartidor.lng), Number(payload.lat), Number(payload.lng)
+          );
+        } else {
+          const rad = grados => grados * Math.PI / 180;
+          const dLat = rad(Number(payload.lat) - Number(posicionRepartidor.lat));
+          const dLng = rad(Number(payload.lng) - Number(posicionRepartidor.lng));
+          const a = Math.sin(dLat / 2) ** 2 + Math.cos(rad(Number(posicionRepartidor.lat))) *
+            Math.cos(rad(Number(payload.lat))) * Math.sin(dLng / 2) ** 2;
+          distanciaAlRepartidor = Math.round(6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+        }
+      }
+    }
+
+    const radioMetros = Math.min(500, Math.max(1, Number(payload.radio_metros) || 500));
+    const repartidorCercano = isDriver && Number.isFinite(distanciaAlRepartidor) && distanciaAlRepartidor <= radioMetros;
+
+    if (repartidorCercano) {
+      if (typeof mostrarPopupAlertaRepartidor === 'function') {
+        mostrarPopupAlertaRepartidor(
+          '🛑 ¡VECINO SOLICITA ESPERA!',
+          `Un vecino a ${Math.max(1, Math.round(distanciaAlRepartidor))} m pide: “¡ESPÉRAME!”. Revisa el punto rojo en el mapa.`
+        );
+      }
+      if (typeof showToast === 'function') {
+        showToast('🛑 ¡Atención Repartidor!', `Un vecino a ${Math.max(1, Math.round(distanciaAlRepartidor))} m activó “ESPÉRAME”.`, 'warning', 7000);
+      }
+    } else if (!isDriver && !esEmisorLocal) {
+      if (typeof showToast === 'function') {
+        showToast('🛑 Alerta Comunitaria', 'Un vecino ha pedido que el camión lo espere en la zona.', 'info', 4000);
+      }
+    }
+  } else {
+    // Alerta "ESCUCHÉ CAMIÓN"
+    if (isDriver) {
+      if (typeof showToast === 'function') {
+        showToast('📢 Aviso Vecinal', `Un vecino reportó haber escuchado el camión en la zona.`, 'info', 5000);
+      }
+    } else if (!esEmisorLocal) {
+      if (typeof showToast === 'function') {
+        showToast('📢 Camión en la Zona', 'Un vecino reportó haber escuchado el camión de gas cerca.', 'info', 4000);
+      }
+    }
+  }
 };
