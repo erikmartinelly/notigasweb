@@ -2595,12 +2595,19 @@ button:active, .tab-btn:active, .cat-chip:active {
 #map,
 .map-container,
 .leaflet-container {
-  background-color: #e5e3df !important;
+  background-color: #dbe4ee !important;
   font-family: 'Roboto', -apple-system, BlinkMacSystemFont, Arial, sans-serif !important;
 }
 
 .map-base-layer {
   image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+.map-base-layer .leaflet-tile {
+  filter: contrast(1.16) saturate(1.42) brightness(1.02);
+  -webkit-filter: contrast(1.16) saturate(1.42) brightness(1.02);
+  transition: opacity 0.2s ease, filter 0.3s ease;
 }
 
 /* BOTÓN MI UBICACIÓN ESTILO GOOGLE MAPS */
@@ -2835,18 +2842,28 @@ button:active, .tab-btn:active, .cat-chip:active {
   cursor: grab !important;
   touch-action: none !important;
   filter: drop-shadow(0 3px 6px rgba(15, 23, 42, 0.4));
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.15s ease;
 }
 
 .delivery-pin-marker-container {
   z-index: 1000 !important;
   cursor: grab !important;
   touch-action: none !important;
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.15s ease;
+}
+
+.user-location-marker-container:hover,
+.delivery-pin-marker-container:hover {
+  transform: scale(1.08);
+  filter: drop-shadow(0 6px 12px rgba(15, 23, 42, 0.5));
 }
 
 .user-location-marker-container:active,
 .delivery-pin-marker-container:active,
 .google-blue-dot-marker:active {
   cursor: grabbing !important;
+  transform: scale(1.2) translateY(-6px) !important;
+  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.6)) !important;
 }
 
 .manual-location-handle {
@@ -2887,6 +2904,26 @@ button:active, .tab-btn:active, .cat-chip:active {
   100% { transform: scale(1.6); opacity: 0; }
 }
 
+/* EFECTO ONDA EXPANSIVA AL CLIC EN MAPA (PC / DESKTOP) */
+.click-drop-ripple-marker {
+  pointer-events: none !important;
+}
+
+.click-drop-pulse {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 3px solid #FF6D00;
+  background: radial-gradient(circle, rgba(255, 109, 0, 0.4) 0%, rgba(255, 109, 0, 0) 75%);
+  box-shadow: 0 0 12px rgba(255, 109, 0, 0.6);
+  animation: clickRippleAnim 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes clickRippleAnim {
+  0% { transform: scale(0.2); opacity: 1; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+
 /* GOOGLE MAPS RED DROP PIN (UBICACIÓN DE ENTREGA) */
 .google-red-pin-marker {
   position: relative;
@@ -2902,7 +2939,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 .google-red-pin-marker:active {
   cursor: grabbing;
-  transform: scale(1.15) translateY(-6px);
+  transform: scale(1.18) translateY(-8px);
 }
 
 .google-red-pin-svg {

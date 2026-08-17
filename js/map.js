@@ -248,6 +248,8 @@ function initNotigasMap() {
     'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
     {
       maxZoom: 20,
+      maxNativeZoom: 19,
+      detectRetina: true,
       subdomains: 'abcd',
       attribution: mapAttribution,
       className: 'map-base-layer'
@@ -292,6 +294,7 @@ function initNotigasMap() {
   });
 
   map.on('click', (e) => {
+    mostrarEfectoPuntoClic(e.latlng.lat, e.latlng.lng);
     moverMarcadorUbicacionManual(e.latlng.lat, e.latlng.lng);
   });
 
@@ -882,6 +885,27 @@ function verPedidosEnMapa() {
   }
 }
 
+function mostrarEfectoPuntoClic(lat, lng) {
+  if (!map) return;
+  try {
+    const rippleIcon = L.divIcon({
+      className: 'click-drop-ripple-marker',
+      html: '<div class="click-drop-pulse"></div>',
+      iconSize: [44, 44],
+      iconAnchor: [22, 22]
+    });
+    const rippleMarker = L.marker([lat, lng], {
+      icon: rippleIcon,
+      interactive: false,
+      keyboard: false,
+      zIndexOffset: 9999
+    }).addTo(map);
+    setTimeout(() => {
+      if (map && rippleMarker) map.removeLayer(rippleMarker);
+    }, 700);
+  } catch(_) {}
+}
+
 function moverMarcadorUbicacionManual(lat, lng) {
   isUserMarkerDraggedManually = true;
   window.isGpsExact = false;
@@ -1035,7 +1059,9 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
         <span style="font-size:11px; color:#5F6368;">Arrastra el marcador a la puerta exacta de tu casa</span>
       </div>
     `);
-    userMarker.bindTooltip('Arrástrame para ajustar tu ubicación', {
+    const isMobileDevice = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const tooltipMsg = isMobileDevice ? 'Arrástrame a tu puerta' : '📍 Clic en el mapa o arrastra a tu puerta';
+    userMarker.bindTooltip(tooltipMsg, {
       direction: 'top',
       offset: [0, -22],
       className: 'manual-location-tooltip'
