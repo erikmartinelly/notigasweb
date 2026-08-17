@@ -63,6 +63,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (sessionData && sessionData.session && sessionData.session.user) {
           hasSession = true;
           window._tempAuthUser = sessionData.session.user;
+          
+          // Ocultar cualquier modal de autenticación inmediatamente para ingreso directo
+          const modalAuth = document.getElementById('modalWelcomeAuth');
+          if (modalAuth) modalAuth.style.display = 'none';
+          const modalRole = document.getElementById('modalRoleSelection');
+          if (modalRole) modalRole.style.display = 'none';
+
           if (typeof AppState !== 'undefined' && AppState.hydrate) {
             await AppState.hydrate();
           }
@@ -73,13 +80,16 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // 2. Si no hay sesión, mostrar el modal de seleccion de ingreso
+    // 2. Si no hay sesión, mostrar el modal de bienvenida/ingreso
     if (!hasSession) {
       const modalAuth = document.getElementById('modalWelcomeAuth');
       if (modalAuth) modalAuth.style.display = 'flex';
+    } else {
+      const modalAuth = document.getElementById('modalWelcomeAuth');
+      if (modalAuth) modalAuth.style.display = 'none';
     }
 
-    // 3. Notificar al resto de la app que Auth terminó su validación inicial (ya sea con o sin sesión)
+    // 3. Notificar al resto de la app que Auth terminó su validación inicial
     document.dispatchEvent(new Event('notigas_auth_ready'));
   };
 

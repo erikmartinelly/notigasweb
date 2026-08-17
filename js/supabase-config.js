@@ -3,35 +3,41 @@ const SUPABASE_URL = 'https://yxzzfqyehllogzzhdtmc.supabase.co';
 // Esta es una clave publicable del navegador (sb_publishable), nunca una clave
 // service_role. La protección real se aplica con RLS, triggers y permisos SQL.
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_wWVQ59Rejod5Oc1X4s_eeQ_ONbXzyi2';
-const SUPABASE_SESSION_STORAGE_KEY = 'notigas-secure-session-v1';
+const SUPABASE_SESSION_STORAGE_KEY = 'notigas-auth-session-v1';
 
-function createSessionScopedAuthStorage() {
+function createPersistentAuthStorage() {
   const fallback = new Map();
-  const legacyKey = 'sb-yxzzfqyehllogzzhdtmc-auth-token';
-  try {
-    const legacySession = window.localStorage.getItem(legacyKey);
-    if (legacySession && !window.sessionStorage.getItem(SUPABASE_SESSION_STORAGE_KEY)) {
-      window.sessionStorage.setItem(SUPABASE_SESSION_STORAGE_KEY, legacySession);
-    }
-    window.localStorage.removeItem(legacyKey);
-  } catch (_) {}
-
   return {
     getItem(key) {
-      try { return window.sessionStorage.getItem(key); } catch (_) { return fallback.get(key) || null; }
+      try {
+        const val = window.localStorage.getItem(key);
+        if (val) return val;
+        // Migración de sesión si existiera en sessionStorage o clave anterior
+        const legacyVal = window.sessionStorage.getItem(key) || window.sessionStorage.getItem('notigas-secure-session-v1');
+        if (legacyVal) {
+          window.localStorage.setItem(key, legacyVal);
+          return legacyVal;
+        }
+        return null;
+      } catch (_) {
+        return fallback.get(key) || null;
+      }
     },
     setItem(key, value) {
       try {
-        window.sessionStorage.setItem(key, value);
-        // Evitar que sobrevivan copias de tokens en localStorage.
-        window.localStorage.removeItem(key);
-      } catch (_) { fallback.set(key, value); }
+        window.localStorage.setItem(key, value);
+      } catch (_) {
+        fallback.set(key, value);
+      }
     },
     removeItem(key) {
       try {
-        window.sessionStorage.removeItem(key);
         window.localStorage.removeItem(key);
-      } catch (_) { fallback.delete(key); }
+        window.sessionStorage.removeItem(key);
+        window.sessionStorage.removeItem('notigas-secure-session-v1');
+      } catch (_) {
+        fallback.delete(key);
+      }
     }
   };
 }
@@ -44,7 +50,7 @@ function createNotigasSupabaseClient() {
       detectSessionInUrl: true,
       flowType: 'pkce',
       storageKey: SUPABASE_SESSION_STORAGE_KEY,
-      storage: createSessionScopedAuthStorage()
+      storage: createPersistentAuthStorage()
     }
   });
 }
