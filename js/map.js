@@ -592,6 +592,8 @@ function renderOrderRadarsOnMap(orders) {
   if (!map || typeof L === 'undefined') return;
   clearDemandClusterMarkers();
   if (map.getZoom() > DRIVER_RADAR_MAX_ZOOM) return;
+  const isDriver = (typeof AppState !== 'undefined') &&
+    (AppState.get('appMode') === 'driver' || AppState.get('userRole') === 'repartidor');
 
   (orders || []).forEach(order => {
     const lat = Number(order.latitude ?? order.lat);
@@ -610,15 +612,17 @@ function renderOrderRadarsOnMap(orders) {
 
     const marker = L.marker([lat, lng], {
       icon,
-      interactive: true,
+      interactive: isDriver,
       bubblingMouseEvents: false,
       keyboard: false,
       zIndexOffset: 7200
     }).addTo(map);
 
-    marker.on('click', () => {
-      map.flyTo([lat, lng], 16, { duration: 0.8 });
-    });
+    if (isDriver) {
+      marker.on('click', () => {
+        map.flyTo([lat, lng], 16, { duration: 0.8 });
+      });
+    }
 
     window.demandClusterMarkers[`order_${order.id}`] = marker;
   });
