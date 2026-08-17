@@ -1127,7 +1127,10 @@ function lanzarEspecialEsperame() {
 
   recibirAlertaVecinalBroadcast(alertPayload);
 
-  mostrarPopupAlertaRepartidor(`🛑 <strong>¡ALERTA VECINAL "ESPÉRAME"!</strong><br>${reporterName} solicita que el camión detenga su marcha cerca de esta ubicación.`);
+  mostrarPopupAlertaRepartidor(
+    'ALERTA VECINAL "ESPÉRAME"',
+    `${reporterName} solicita que el camión detenga su marcha cerca de esta ubicación.`
+  );
 
   showToast('Alerta Emitida', `Se ha colocado un punto de alerta en el mapa visible para todos los vecinos y repartidores.`, 'warning', 3000);
 }

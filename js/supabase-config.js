@@ -130,7 +130,7 @@ window.iniciarSuscripcionAvisos = function() {
                 if (aviso.activo && (aviso.tipo === 'oficial' || aviso.tipo === 'alerta_oficial')) {
                     const mensaje = aviso.mensaje || aviso.descripcion || aviso.titulo || 'Comunicado oficial';
                     if (typeof mostrarPopupAlertaRepartidor === 'function') {
-                        mostrarPopupAlertaRepartidor(`👑 <strong>COMUNICADO OFICIAL ADMINISTRACIÓN OTB:</strong><br>${mensaje}`);
+                        mostrarPopupAlertaRepartidor('COMUNICADO OFICIAL ADMINISTRACIÓN OTB', mensaje);
                     }
                     if (typeof showToast === 'function') {
                         showToast('📢 Comunicado Oficial OTB', mensaje, 'info', 6000);

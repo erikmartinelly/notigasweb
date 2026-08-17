@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS public.choferes_habilitados (
     zonas text,
     schedule text,
     ciudad text NOT NULL DEFAULT 'santacruz',
-    estado_verificacion text DEFAULT 'aprobado',
+    estado_verificacion text DEFAULT 'pendiente',
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -91,6 +91,7 @@ CREATE TABLE IF NOT EXISTS public.avisos (
     barrio_otb text DEFAULT 'Global',
     autor text NOT NULL DEFAULT 'Vecino',
     tipo text NOT NULL DEFAULT 'aviso',
+    categoria text DEFAULT 'AVISO VECINAL',
     titulo text,
     descripcion text,
     mensaje text,
@@ -184,10 +185,11 @@ CREATE TABLE IF NOT EXISTS public.reportes_spam (
 -- 3. VISTAS PÚBLICAS AUTORIZADAS
 -- ==============================================================================
 
-CREATE OR REPLACE VIEW public.choferes_publicos AS
+CREATE OR REPLACE VIEW public.choferes_publicos
+WITH (security_barrier = true)
+AS
 SELECT 
     id,
-    user_id,
     nombre_completo,
     categoria,
     ciudad,
@@ -197,7 +199,8 @@ SELECT
     productos,
     estado_verificacion
 FROM public.choferes_habilitados ch
-WHERE NOT EXISTS (
+WHERE LOWER(TRIM(COALESCE(ch.estado_verificacion, ''))) = 'aprobado'
+  AND NOT EXISTS (
     SELECT 1 FROM public.usuarios_baneados ub 
     WHERE (ub.user_id IS NOT NULL AND ub.user_id = ch.user_id)
        OR (ub.telefono IS NOT NULL AND ub.telefono = ch.telefono_whatsapp)
@@ -206,26 +209,55 @@ WHERE NOT EXISTS (
 
 GRANT SELECT ON public.choferes_publicos TO anon, authenticated;
 
-CREATE OR REPLACE VIEW public.pedidos_publicos AS
+CREATE OR REPLACE VIEW public.pedidos_publicos
+WITH (security_barrier = true)
+AS
 SELECT
-    id,
-    user_id,
-    categoria,
-    titulo,
-    cantidad,
-    direccion,
-    telefono,
-    estado,
-    driver_id,
-    ciudad,
-    barrio_otb,
-    latitude,
-    longitude,
-    descripcion,
-    created_at
-FROM public.pedidos;
+    p.id,
+    CASE WHEN p.user_id = auth.uid()::text THEN p.user_id ELSE NULL::text END AS user_id,
+    p.categoria,
+    CASE WHEN p.user_id = auth.uid()::text THEN p.titulo ELSE NULL::text END AS titulo,
+    p.cantidad,
+    CASE WHEN p.user_id = auth.uid()::text THEN p.direccion ELSE NULL::text END AS direccion,
+    CASE WHEN p.user_id = auth.uid()::text THEN p.telefono ELSE NULL::text END AS telefono,
+    p.estado,
+    CASE WHEN p.user_id = auth.uid()::text OR p.driver_id = auth.uid()::text THEN p.driver_id ELSE NULL::text END AS driver_id,
+    p.ciudad,
+    p.barrio_otb,
+    CASE WHEN p.user_id = auth.uid()::text THEN p.latitude ELSE ROUND(p.latitude::numeric, 3)::double precision END AS latitude,
+    CASE WHEN p.user_id = auth.uid()::text THEN p.longitude ELSE ROUND(p.longitude::numeric, 3)::double precision END AS longitude,
+    CASE WHEN p.user_id = auth.uid()::text THEN p.descripcion ELSE NULL::text END AS descripcion,
+    p.visto,
+    p.created_at
+FROM public.pedidos p
+WHERE p.estado IN ('pendiente', 'visto');
 
 GRANT SELECT ON public.pedidos_publicos TO anon, authenticated;
+
+CREATE OR REPLACE VIEW public.rutas_repartidores_publicas
+WITH (security_barrier = true)
+AS
+SELECT
+    r.id,
+    CASE WHEN r.user_id = auth.uid()::text THEN r.user_id ELSE NULL::text END AS user_id,
+    r.distribuidor_nombre,
+    r.categoria,
+    r.titulo,
+    r.ciudad,
+    r.latitude,
+    r.longitude,
+    r.garrafas_agotadas,
+    r.telefono,
+    r.last_active
+FROM public.rutas_repartidores r
+JOIN public.choferes_habilitados ch ON ch.user_id = r.user_id
+WHERE r.last_active >= now() - interval '10 minutes'
+  AND LOWER(TRIM(COALESCE(ch.estado_verificacion, ''))) = 'aprobado'
+  AND NOT EXISTS (
+      SELECT 1 FROM public.usuarios_baneados ub WHERE ub.user_id = r.user_id
+  );
+
+GRANT SELECT ON public.rutas_repartidores_publicas TO anon, authenticated;
 
 -- ==============================================================================
 -- 4. FUNCIONES DE SEGURIDAD Y ESTADO
@@ -272,27 +304,6 @@ BEGIN
        OR (v_email <> '' AND LOWER(TRIM(email)) = v_email)
        OR (v_email <> '' AND user_id = v_email)
   );
-END;
-$$;
-
-CREATE OR REPLACE FUNCTION public.validar_admin(p_email text, p_password text)
-RETURNS boolean
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  v_hash text;
-BEGIN
-  SELECT password_hash INTO v_hash
-  FROM public.admin_credentials
-  WHERE LOWER(TRIM(email)) = LOWER(TRIM(p_email));
-  
-  IF NOT FOUND THEN
-    RETURN false;
-  END IF;
-  
-  RETURN (v_hash = crypt(p_password, v_hash) OR v_hash = p_password);
 END;
 $$;
 
@@ -363,6 +374,70 @@ BEFORE UPDATE OF estado ON public.pedidos
 FOR EACH ROW
 EXECUTE FUNCTION public.trg_check_pedido_transition();
 
+CREATE OR REPLACE FUNCTION public.guard_pedido_mutation()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_uid text := auth.uid()::text;
+BEGIN
+  IF public.is_admin_email() THEN
+    RETURN NEW;
+  END IF;
+  IF v_uid IS NULL THEN
+    RAISE EXCEPTION 'Usuario no autenticado';
+  END IF;
+
+  IF OLD.user_id = v_uid THEN
+    IF (to_jsonb(NEW) - ARRAY['estado', 'updated_at'])
+       IS DISTINCT FROM (to_jsonb(OLD) - ARRAY['estado', 'updated_at'])
+       OR NEW.estado NOT IN (OLD.estado, 'cancelado', 'entregado') THEN
+      RAISE EXCEPTION 'El comprador solo puede cancelar o confirmar la entrega';
+    END IF;
+    RETURN NEW;
+  END IF;
+
+  IF OLD.driver_id = v_uid THEN
+    IF (to_jsonb(NEW) - ARRAY['estado', 'updated_at'])
+       IS DISTINCT FROM (to_jsonb(OLD) - ARRAY['estado', 'updated_at'])
+       OR NEW.estado NOT IN (OLD.estado, 'entregado') THEN
+      RAISE EXCEPTION 'El repartidor asignado solo puede confirmar la entrega';
+    END IF;
+    RETURN NEW;
+  END IF;
+
+  IF OLD.driver_id IS NULL
+     AND NEW.driver_id = v_uid
+     AND OLD.estado IN ('pendiente', 'visto')
+     AND NEW.estado = 'asignado'
+     AND public.is_current_enabled_driver(OLD.ciudad, OLD.categoria)
+     AND (to_jsonb(NEW) - ARRAY['estado', 'driver_id', 'updated_at'])
+         IS NOT DISTINCT FROM (to_jsonb(OLD) - ARRAY['estado', 'driver_id', 'updated_at']) THEN
+    RETURN NEW;
+  END IF;
+
+  IF OLD.driver_id IS NULL
+     AND NEW.driver_id IS NULL
+     AND OLD.estado = 'pendiente'
+     AND NEW.estado = OLD.estado
+     AND NEW.visto = true
+     AND public.is_current_enabled_driver(OLD.ciudad, OLD.categoria)
+     AND (to_jsonb(NEW) - ARRAY['visto', 'updated_at'])
+         IS NOT DISTINCT FROM (to_jsonb(OLD) - ARRAY['visto', 'updated_at']) THEN
+    RETURN NEW;
+  END IF;
+
+  RAISE EXCEPTION 'Modificacion de pedido no autorizada';
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_guard_pedido_mutation ON public.pedidos;
+CREATE TRIGGER trg_guard_pedido_mutation
+BEFORE UPDATE ON public.pedidos
+FOR EACH ROW EXECUTE FUNCTION public.guard_pedido_mutation();
+
 CREATE OR REPLACE FUNCTION public.handle_new_user_profile()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -408,12 +483,11 @@ SECURITY INVOKER
 SET search_path = public
 AS $$
 BEGIN
-  IF NEW.titulo IS NOT NULL THEN
-    NEW.titulo = REGEXP_REPLACE(NEW.titulo, '<[^>]*>', '', 'g');
-  END IF;
-  IF NEW.descripcion IS NOT NULL THEN
-    NEW.descripcion = REGEXP_REPLACE(NEW.descripcion, '<[^>]*>', '', 'g');
-  END IF;
+  NEW.titulo := LEFT(REGEXP_REPLACE(COALESCE(NEW.titulo, ''), '<[^>]*>', '', 'g'), 160);
+  NEW.descripcion := LEFT(REGEXP_REPLACE(COALESCE(NEW.descripcion, ''), '<[^>]*>', '', 'g'), 2000);
+  NEW.mensaje := LEFT(REGEXP_REPLACE(COALESCE(NEW.mensaje, ''), '<[^>]*>', '', 'g'), 2000);
+  NEW.autor := LEFT(REGEXP_REPLACE(COALESCE(NEW.autor, 'Vecino'), '<[^>]*>', '', 'g'), 120);
+  NEW.categoria := LEFT(REGEXP_REPLACE(COALESCE(NEW.categoria, 'AVISO VECINAL'), '<[^>]*>', '', 'g'), 80);
   RETURN NEW;
 END;
 $$;
@@ -425,12 +499,110 @@ SECURITY INVOKER
 SET search_path = public
 AS $$
 BEGIN
-  IF NEW.texto IS NOT NULL THEN
-    NEW.texto = REGEXP_REPLACE(NEW.texto, '<[^>]*>', '', 'g');
+  NEW.autor := LEFT(REGEXP_REPLACE(COALESCE(NEW.autor, 'Vecino de la OTB'), '<[^>]*>', '', 'g'), 120);
+  NEW.texto := LEFT(REGEXP_REPLACE(COALESCE(NEW.texto, ''), '<[^>]*>', '', 'g'), 2000);
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.enforce_official_notice_admin()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = public
+AS $$
+BEGIN
+  IF LOWER(TRIM(COALESCE(NEW.tipo, ''))) IN ('oficial', 'alerta_oficial')
+     AND NOT public.is_admin_email() THEN
+    RAISE EXCEPTION 'Solo un administrador puede emitir comunicados oficiales';
   END IF;
   RETURN NEW;
 END;
 $$;
+
+DROP TRIGGER IF EXISTS trg_sanitize_avisos ON public.avisos;
+CREATE TRIGGER trg_sanitize_avisos
+BEFORE INSERT OR UPDATE ON public.avisos
+FOR EACH ROW EXECUTE FUNCTION public.sanitize_html();
+
+DROP TRIGGER IF EXISTS trg_official_notice_admin ON public.avisos;
+CREATE TRIGGER trg_official_notice_admin
+BEFORE INSERT OR UPDATE OF tipo ON public.avisos
+FOR EACH ROW EXECUTE FUNCTION public.enforce_official_notice_admin();
+
+DROP TRIGGER IF EXISTS trg_sanitize_comentarios ON public.comentarios_avisos;
+CREATE TRIGGER trg_sanitize_comentarios
+BEFORE INSERT OR UPDATE ON public.comentarios_avisos
+FOR EACH ROW EXECUTE FUNCTION public.sanitize_html_chat();
+
+CREATE OR REPLACE FUNCTION public.normalize_delivery_category(p_value text)
+RETURNS text
+LANGUAGE sql
+IMMUTABLE
+PARALLEL SAFE
+SET search_path = public
+AS $$
+  SELECT CASE
+    WHEN LOWER(TRIM(COALESCE(p_value, ''))) ~ '(gas|glp|garrafa)' THEN 'gas'
+    WHEN LOWER(TRIM(COALESCE(p_value, ''))) ~ '(agua|botell)' THEN 'agua'
+    ELSE LOWER(TRIM(COALESCE(p_value, '')))
+  END
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_current_enabled_driver(
+    p_ciudad text DEFAULT NULL,
+    p_categoria text DEFAULT NULL
+)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT auth.uid() IS NOT NULL
+    AND NOT public.is_banned()
+    AND EXISTS (
+      SELECT 1
+      FROM public.choferes_habilitados ch
+      WHERE ch.user_id = auth.uid()::text
+        AND LOWER(TRIM(COALESCE(ch.estado_verificacion, ''))) = 'aprobado'
+        AND (p_ciudad IS NULL OR LOWER(TRIM(ch.ciudad)) = LOWER(TRIM(p_ciudad)))
+        AND (
+          p_categoria IS NULL
+          OR public.normalize_delivery_category(ch.categoria) = public.normalize_delivery_category(p_categoria)
+          OR public.normalize_delivery_category(ch.categoria) = 'otros'
+          OR public.normalize_delivery_category(p_categoria) = 'otros'
+        )
+    )
+$$;
+
+CREATE OR REPLACE FUNCTION public.guard_driver_verification()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF public.is_admin_email() THEN
+    RETURN NEW;
+  END IF;
+  IF auth.uid() IS NULL OR NEW.user_id IS DISTINCT FROM auth.uid()::text THEN
+    RAISE EXCEPTION 'Ficha de repartidor no autorizada';
+  END IF;
+  IF TG_OP = 'INSERT' THEN
+    NEW.estado_verificacion := 'pendiente';
+  ELSIF NEW.estado_verificacion IS DISTINCT FROM OLD.estado_verificacion
+        OR NEW.user_id IS DISTINCT FROM OLD.user_id THEN
+    RAISE EXCEPTION 'Solo un administrador puede cambiar la verificacion';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_guard_driver_verification ON public.choferes_habilitados;
+CREATE TRIGGER trg_guard_driver_verification
+BEFORE INSERT OR UPDATE ON public.choferes_habilitados
+FOR EACH ROW EXECUTE FUNCTION public.guard_driver_verification();
 
 -- ==============================================================================
 -- 6. PROCEDIMIENTOS RPC OFICIALES
@@ -462,6 +634,7 @@ BEGIN
     SELECT * INTO v_driver
     FROM public.choferes_habilitados
     WHERE user_id = v_driver_id
+      AND LOWER(TRIM(COALESCE(estado_verificacion, ''))) = 'aprobado'
     LIMIT 1;
 
     IF NOT FOUND THEN
@@ -526,9 +699,16 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
+DECLARE
+    v_order public.pedidos%ROWTYPE;
 BEGIN
-    IF auth.uid() IS NULL THEN
-        RAISE EXCEPTION 'No autenticado';
+    SELECT * INTO v_order FROM public.pedidos WHERE id = p_order_id;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Pedido no encontrado';
+    END IF;
+
+    IF NOT public.is_current_enabled_driver(v_order.ciudad, v_order.categoria) THEN
+        RAISE EXCEPTION 'Repartidor no habilitado para este pedido';
     END IF;
 
     UPDATE public.pedidos
@@ -559,6 +739,10 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
+    IF NOT public.is_current_enabled_driver(p_ciudad, NULL) THEN
+        RAISE EXCEPTION 'Repartidor no habilitado para esta ciudad';
+    END IF;
+
     RETURN QUERY
     WITH clustered_orders AS (
         SELECT 
@@ -632,6 +816,10 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
+    IF NOT public.is_current_enabled_driver(p_ciudad, p_categoria) THEN
+        RAISE EXCEPTION 'Repartidor no habilitado para esta ciudad o categoria';
+    END IF;
+
     RETURN QUERY
     WITH clustered_orders AS (
         SELECT 
@@ -661,15 +849,15 @@ BEGIN
     )
     SELECT 
         co.id,
-        co.user_id,
+        NULL::text AS user_id,
         co.categoria,
-        co.titulo,
-        co.descripcion,
+        NULL::text AS titulo,
+        NULL::text AS descripcion,
         co.cantidad,
-        co.direccion,
-        co.telefono,
+        NULL::text AS direccion,
+        NULL::text AS telefono,
         co.estado,
-        co.driver_id,
+        NULL::text AS driver_id,
         co.ciudad,
         co.barrio_otb,
         co.latitude,
@@ -822,6 +1010,7 @@ BEGIN
         SELECT 1
         FROM public.choferes_habilitados ch
         WHERE ch.user_id = v_driver_id
+          AND LOWER(TRIM(COALESCE(ch.estado_verificacion, ''))) = 'aprobado'
           AND NOT EXISTS (
               SELECT 1
               FROM public.usuarios_baneados ub
@@ -1039,20 +1228,24 @@ ALTER TABLE public.reportes_spam ENABLE ROW LEVEL SECURITY;
 
 -- B. Políticas: profiles
 DROP POLICY IF EXISTS "Profiles Public SELECT" ON public.profiles;
-CREATE POLICY "Profiles Public SELECT" ON public.profiles FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Profiles User SELECT" ON public.profiles;
+CREATE POLICY "Profiles User SELECT" ON public.profiles FOR SELECT USING (auth.uid() = id OR is_admin_email());
 
 DROP POLICY IF EXISTS "Profiles User ALL" ON public.profiles;
 CREATE POLICY "Profiles User ALL" ON public.profiles FOR ALL USING (auth.uid() = id OR is_admin_email());
 
 -- C. Políticas: choferes_habilitados
 DROP POLICY IF EXISTS "Choferes Public SELECT" ON public.choferes_habilitados;
-CREATE POLICY "Choferes Public SELECT" ON public.choferes_habilitados FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Choferes Own Admin SELECT" ON public.choferes_habilitados;
+CREATE POLICY "Choferes Own Admin SELECT" ON public.choferes_habilitados FOR SELECT USING (auth.uid()::text = user_id OR is_admin_email());
 
 DROP POLICY IF EXISTS "Choferes Insertar propio" ON public.choferes_habilitados;
 CREATE POLICY "Choferes Insertar propio" ON public.choferes_habilitados FOR INSERT WITH CHECK (auth.uid()::text = user_id AND NOT is_banned());
 
 DROP POLICY IF EXISTS "Choferes Actualizar propio o Admin" ON public.choferes_habilitados;
-CREATE POLICY "Choferes Actualizar propio o Admin" ON public.choferes_habilitados FOR UPDATE USING (auth.uid()::text = user_id OR is_admin_email());
+CREATE POLICY "Choferes Actualizar propio o Admin" ON public.choferes_habilitados FOR UPDATE
+USING (auth.uid()::text = user_id OR is_admin_email())
+WITH CHECK (auth.uid()::text = user_id OR is_admin_email());
 
 DROP POLICY IF EXISTS "Choferes Borrar propio o Admin" ON public.choferes_habilitados;
 CREATE POLICY "Choferes Borrar propio o Admin" ON public.choferes_habilitados FOR DELETE USING (auth.uid()::text = user_id OR is_admin_email());
@@ -1076,6 +1269,11 @@ CREATE POLICY "Pedidos Actualizar propio o asignado" ON public.pedidos FOR UPDAT
     (auth.uid())::text = user_id 
     OR (auth.uid())::text = driver_id 
     OR is_admin_email()
+)
+WITH CHECK (
+    (auth.uid())::text = user_id
+    OR (auth.uid())::text = driver_id
+    OR is_admin_email()
 );
 
 DROP POLICY IF EXISTS "Pedidos Borrar propio o admin" ON public.pedidos;
@@ -1086,7 +1284,8 @@ CREATE POLICY "Pedidos Borrar propio o admin" ON public.pedidos FOR DELETE USING
 
 -- E. Políticas: rutas_repartidores
 DROP POLICY IF EXISTS "Rutas Public SELECT" ON public.rutas_repartidores;
-CREATE POLICY "Rutas Public SELECT" ON public.rutas_repartidores FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Rutas Own Admin SELECT" ON public.rutas_repartidores;
+CREATE POLICY "Rutas Own Admin SELECT" ON public.rutas_repartidores FOR SELECT USING (auth.uid()::text = user_id OR is_admin_email());
 
 DROP POLICY IF EXISTS "Rutas Driver Insertar" ON public.rutas_repartidores;
 CREATE POLICY "Rutas Driver Insertar" ON public.rutas_repartidores FOR INSERT WITH CHECK (auth.uid()::text = user_id AND NOT is_banned());
@@ -1102,10 +1301,19 @@ DROP POLICY IF EXISTS "Avisos Public SELECT" ON public.avisos;
 CREATE POLICY "Avisos Public SELECT" ON public.avisos FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "Avisos User Insert" ON public.avisos;
-CREATE POLICY "Avisos User Insert" ON public.avisos FOR INSERT WITH CHECK (auth.uid()::text = user_id AND NOT is_banned());
+CREATE POLICY "Avisos User Insert" ON public.avisos FOR INSERT WITH CHECK (
+    auth.uid()::text = user_id
+    AND NOT is_banned()
+    AND (LOWER(TRIM(COALESCE(tipo, ''))) NOT IN ('oficial', 'alerta_oficial') OR is_admin_email())
+);
 
 DROP POLICY IF EXISTS "Avisos User Update" ON public.avisos;
-CREATE POLICY "Avisos User Update" ON public.avisos FOR UPDATE USING (auth.uid()::text = user_id OR is_admin_email());
+CREATE POLICY "Avisos User Update" ON public.avisos FOR UPDATE
+USING (auth.uid()::text = user_id OR is_admin_email())
+WITH CHECK (
+    (auth.uid()::text = user_id OR is_admin_email())
+    AND (LOWER(TRIM(COALESCE(tipo, ''))) NOT IN ('oficial', 'alerta_oficial') OR is_admin_email())
+);
 
 DROP POLICY IF EXISTS "Avisos User Delete" ON public.avisos;
 CREATE POLICY "Avisos User Delete" ON public.avisos FOR DELETE USING (auth.uid()::text = user_id OR is_admin_email());
@@ -1173,6 +1381,20 @@ REVOKE EXECUTE ON FUNCTION public.sanitize_html() FROM PUBLIC, anon, authenticat
 REVOKE EXECUTE ON FUNCTION public.sanitize_html_chat() FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.purge_old_records() FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.fn_auto_purga_notigas() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.normalize_delivery_category(text) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.is_current_enabled_driver(text, text) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.enforce_official_notice_admin() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.guard_pedido_mutation() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.guard_driver_verification() FROM PUBLIC, anon, authenticated;
+
+REVOKE SELECT ON public.profiles FROM anon;
+REVOKE SELECT ON public.choferes_habilitados FROM anon;
+REVOKE SELECT ON public.pedidos FROM anon;
+REVOKE SELECT ON public.rutas_repartidores FROM anon;
+GRANT SELECT ON public.profiles TO authenticated;
+GRANT SELECT ON public.choferes_habilitados TO authenticated;
+GRANT SELECT ON public.pedidos TO authenticated;
+GRANT SELECT ON public.rutas_repartidores TO authenticated;
 
 REVOKE ALL ON FUNCTION public.delete_user_account() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.delete_user_account() TO authenticated;
@@ -1184,7 +1406,7 @@ REVOKE ALL ON FUNCTION public.rpc_mark_order_seen(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.rpc_mark_order_seen(uuid) TO authenticated;
 
 REVOKE ALL ON FUNCTION public.rpc_accept_demand_cluster_v2(text, text, text, double precision, integer) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.rpc_accept_demand_cluster_v2(text, text, text, double precision, integer) TO authenticated;
+REVOKE ALL ON FUNCTION public.rpc_accept_demand_cluster_v2(text, text, text, double precision, integer) FROM authenticated;
 
 REVOKE ALL ON FUNCTION public.rpc_get_orders_for_cluster_v2(text, text, text, double precision, integer) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.rpc_get_orders_for_cluster_v2(text, text, text, double precision, integer) TO authenticated;
@@ -1201,10 +1423,10 @@ GRANT EXECUTE ON FUNCTION public.incrementar_votos_aviso(uuid, integer) TO authe
 REVOKE ALL ON FUNCTION public.incrementar_votos_comentario(uuid, integer) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.incrementar_votos_comentario(uuid, integer) TO authenticated;
 
-GRANT EXECUTE ON FUNCTION public.rpc_get_demand_clusters_v2(text, text, double precision, integer) TO anon, authenticated;
+REVOKE ALL ON FUNCTION public.rpc_get_demand_clusters_v2(text, text, double precision, integer) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.rpc_get_demand_clusters_v2(text, text, double precision, integer) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.is_admin_email() TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.is_banned() TO anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.validar_admin(text, text) TO anon, authenticated;
 
 -- ==============================================================================
 -- 9. ÍNDICES DE RENDIMIENTO PARA PRODUCCIÓN

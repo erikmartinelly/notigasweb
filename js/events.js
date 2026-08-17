@@ -17,11 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (typeof window[fnName] === 'function') {
         return window[fnName](...args);
       }
-      try {
-        if (typeof eval(fnName) === 'function') {
-          return eval(fnName)(...args);
-        }
-      } catch (err) {}
+      console.warn(`Acción no disponible: ${fnName}`);
     };
 
     const el_auto_event_1 = document.getElementById('auto-event-1');

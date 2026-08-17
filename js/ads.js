@@ -223,7 +223,6 @@ function inicializarGoogleAdSense() {
   }
 
   // 3. Renderizar Slot en Muro Comunitario / Foro
-  const forumSlotContainer = document.getElementById('adsenseForumSlot');
   if (forumSlotContainer) {
     const forumSlotId = window.ADS_CONFIG.slotForum || '';
     forumSlotContainer.innerHTML = `
@@ -246,7 +245,6 @@ function inicializarGoogleAdSense() {
   }
 
   // 4. Renderizar Slot Superior en Mapa
-  const mapSlotContainer = document.getElementById('adsenseMapSlot');
   if (mapSlotContainer && window.ADS_CONFIG.slotMap) {
     mapSlotContainer.innerHTML = `
       <div class="adsense-map-wrapper" style="width: 100%; max-width: 480px; margin: 0 auto; text-align: center;">

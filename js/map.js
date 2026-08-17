@@ -424,7 +424,7 @@ async function cargarPedidosVecinalesEnVivo() {
     // FETCH LIVE TRUCKS (Last 10 minutes to avoid stale trucks)
     const tenMinsAgo = new Date(Date.now() - 10 * 60000).toISOString();
     const res = await window.supabaseClient
-      .from('rutas_repartidores')
+      .from('rutas_repartidores_publicas')
       .select('*')
       .eq('ciudad', activeCity)
       .gte('last_active', tenMinsAgo);

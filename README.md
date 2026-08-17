@@ -25,7 +25,7 @@ Construida con **Vanilla JavaScript**, **Supabase PostgreSQL con PostGIS** y pro
   * **Vecino (Comprador):** Solicita suministros esenciales (Gas GLP, Agua embotellada, abarrotes) y visualiza en tiempo real los camiones que se aproximan.
   * **Repartidor (Conductor):** Registra su ficha, transmite su ubicación GPS, elige un pedido individual y activa la navegación externa con Google Maps.
 * **Muro Comunitario / Avisos de Barrio:** Tablón vecinal interactivo para alertas, comunicados y avisos con sistema de votación única y purga automática programada.
-* **Panel de Administración Blindado:** Acceso administrativo protegido mediante verificación de credenciales con hashing criptográfico y políticas RLS intransigibles.
+* **Panel de Administración Blindado:** Acceso administrativo vinculado a cuentas Google autorizadas y protegido por políticas RLS en Supabase.
 
 ---
 
@@ -79,7 +79,7 @@ NOTIGAS resuelve esta necesidad democratizando el acceso a la tecnología y la l
 │   └── main.css            # Hoja de estilos de la aplicación (Tokens de diseño y paleta Google Maps)
 └── supabase/
     ├── full_production_schema.sql # ESQUEMA COMPLETO Y CONSOLIDADO PARA PRODUCCIÓN (1-Click Deploy)
-    └── migrations/         # Migraciones incrementales históricas (001 a 042)
+    └── migrations/         # Migraciones incrementales históricas (001 a 043)
 ```
 
 ---
@@ -122,6 +122,7 @@ Abre `http://localhost:3000` en tu navegador.
 * **Row Level Security (RLS):** RLS activo y riguroso en todas las tablas del esquema `public`. Los compradores solo pueden gestionar sus propios pedidos, y los choferes solo pueden interactuar con pedidos disponibles o asignados a su cuenta.
 * **Máquina de 5 Estados Oficiales:** `pendiente` → `visto` → `asignado` → `entregado` / `cancelado`, protegida mediante triggers a nivel de base de datos (`trg_check_pedido_transition`).
 * **Telemetría GPS en Vivo (`rutas_repartidores`):** Registro atómico por repartidor (`user_id`, `last_active`) con purga automática de posiciones inactivas por más de 12 horas.
+* **Privacidad por Rol:** El mapa público recibe ubicaciones aproximadas y nunca expone teléfonos o direcciones de terceros; el repartidor aprobado recibe el contacto completo solo después de asignarse el pedido.
 * **Procedimientos RPC Atómicos (`SECURITY DEFINER` con `search_path = public`):**
   * `rpc_assign_order`: Asignación individual con bloqueo de fila `FOR UPDATE`.
   * `rpc_get_demand_clusters_v2`: Agrupación espacial con algoritmo DBSCAN determinista.

@@ -64,14 +64,17 @@ function showToast(title, message, type = 'info', durationMs = 1000) {
   const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️', order: '📦' };
 
   toast.innerHTML = `
-    <span class="toast-icon">${icons[type] || 'ℹ️'}</span>
+    <span class="toast-icon"></span>
     <div class="toast-body">
-      <span class="toast-title">${title}</span>
-      <span class="toast-msg">${message}</span>
+      <span class="toast-title"></span>
+      <span class="toast-msg"></span>
     </div>
     <button class="toast-close" aria-label="Cerrar">&times;</button>
     <div class="toast-progress"></div>
   `;
+  toast.querySelector('.toast-icon').textContent = icons[type] || 'ℹ️';
+  toast.querySelector('.toast-title').textContent = String(title || 'Notificación');
+  toast.querySelector('.toast-msg').textContent = String(message || '');
 
   const closeBtn = toast.querySelector('.toast-close');
   const dismiss = () => {
@@ -121,11 +124,15 @@ function showConfirmModal(icon, title, text, acceptLabel, acceptCallback) {
     if (e.target === overlay) overlay.style.display = 'none';
   }, { once: true });
 }
-function mostrarPopupAlertaRepartidor(mensajeHtml) {
+function mostrarPopupAlertaRepartidor(titulo, mensaje) {
   const popup = document.getElementById('driverAlertPopup');
   if (!popup) return;
 
-  popup.innerHTML = mensajeHtml;
+  const heading = document.createElement('strong');
+  const detail = document.createElement('span');
+  heading.textContent = String(titulo || 'Alerta NOTIGAS');
+  detail.textContent = String(mensaje || '');
+  popup.replaceChildren(heading, document.createElement('br'), detail);
   popup.style.display = 'block';
 
   setTimeout(() => {

@@ -526,7 +526,7 @@ async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
   // de ficha creaba una fila nueva (duplicado) porque nunca se comprobaba si
   // el chofer ya existía. ci_carnet ya no se usa como llave de unicidad
   // porque el formulario nunca pide ese dato real.
-  const { error } = await window.supabaseClient.from('choferes_habilitados').upsert([{
+  const { data, error } = await window.supabaseClient.from('choferes_habilitados').upsert([{
     user_id: repartidorObj.user_id,
     nombre_completo: repartidorObj.nombre,
     telefono_whatsapp: repartidorObj.whatsapp,
@@ -535,7 +535,9 @@ async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
     productos: repartidorObj.productos,
     schedule: repartidorObj.schedule,
     ciudad: repartidorObj.ciudad || AppState.get('city') || null
-  }], { onConflict: 'user_id' });
+  }], { onConflict: 'user_id' })
+    .select('estado_verificacion')
+    .single();
 
   if (typeof hideLoadingOverlay === 'function') {
     hideLoadingOverlay();
@@ -545,9 +547,12 @@ async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
     console.error("Error registrando chofer en Supabase:", error);
     alert('Error al guardar la ficha: ' + error.message);
     if (typeof showToast === 'function') showToast('Error', 'No se pudo guardar en la nube. ' + error.message, 'error');
-    return false;
+    return { ok: false, status: 'error' };
   }
-  return true;
+  return {
+    ok: true,
+    status: String(data?.estado_verificacion || 'pendiente').toLowerCase()
+  };
 }
 
 async function guardarRegistroUnico() {
@@ -605,9 +610,20 @@ async function guardarRegistroUnico() {
     };
 
     const exito = await guardarRepartidorEnBaseDeDatos(repartidorData);
-    if (!exito) {
+    if (!exito?.ok) {
        // FIX: Si falla la inserción en la nube, no guardar localmente ni activar el modo
        return;
+    }
+
+    if (exito.status !== 'aprobado') {
+      AppState.set('userData', { ...repartidorData, role: 'vecino', estado_verificacion: exito.status });
+      const modalAuth = document.getElementById('modalWelcomeAuth');
+      if (modalAuth) modalAuth.style.display = 'none';
+      if (typeof setAppMode === 'function') setAppMode('buyer');
+      if (typeof showToast === 'function') {
+        showToast('Ficha pendiente', 'Tu registro fue recibido. Podrás ver y elegir pedidos cuando el administrador lo apruebe.', 'info', 6000);
+      }
+      return;
     }
 
     // Solo guardar en local y activar modo si la BD confirmó
@@ -743,8 +759,19 @@ async function iniciarSesionRepartidor() {
 
   const exito = await guardarRepartidorEnBaseDeDatos(repartidorData);
 
-  if (!exito) {
+  if (!exito?.ok) {
     if (typeof showToast === 'function') showToast('❌ Error', 'No se pudo guardar la configuración. Reintenta.', 'error', 3000);
+    return;
+  }
+
+  if (exito.status !== 'aprobado') {
+    AppState.set('userData', { ...repartidorData, role: 'vecino', estado_verificacion: exito.status });
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+    closeDriverModal();
+    if (typeof setAppMode === 'function') setAppMode('buyer');
+    if (typeof showToast === 'function') {
+      showToast('Ficha pendiente', 'Tu registro fue recibido. Podrás ver y elegir pedidos cuando el administrador lo apruebe.', 'info', 6000);
+    }
     return;
   }
 
@@ -1107,19 +1134,24 @@ async function procesarSesionExitosa(user) {
 
     // VERIFICAR SIEMPRE si el usuario ya es repartidor en la BD
     let esRepartidorDB = false;
+    let repartidorPendiente = false;
     let choferData = null;
 
     if (window.supabaseClient && user?.id) {
       try {
         const { data } = await window.supabaseClient
           .from('choferes_habilitados')
-          .select('ciudad, categoria, productos, schedule')
+          .select('ciudad, categoria, productos, schedule, estado_verificacion')
           .eq('user_id', user.id)
           .maybeSingle();
-        if (data) {
+        if (data && String(data.estado_verificacion || '').toLowerCase() === 'aprobado') {
           esRepartidorDB = true;
           choferData = data;
           currentSelectedRole = 'driver'; // Forzar rol
+        } else if (data) {
+          repartidorPendiente = true;
+          choferData = data;
+          currentSelectedRole = 'buyer';
         }
       } catch(e) {
         console.error("Error verificando repartidor:", e);
@@ -1127,7 +1159,7 @@ async function procesarSesionExitosa(user) {
     }
 
     // Si no es repartidor en BD y aún no ha seleccionado rol en esta sesión de login
-    if (!esRepartidorDB && !window._roleSelectedNow) {
+    if (!esRepartidorDB && !repartidorPendiente && !window._roleSelectedNow) {
       if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
       if (modalAuth) modalAuth.style.display = 'none';
 
@@ -1144,6 +1176,13 @@ async function procesarSesionExitosa(user) {
       nombre,
       user_id: user.id
     };
+
+    if (repartidorPendiente) {
+      clienteData.estado_verificacion = choferData?.estado_verificacion || 'pendiente';
+      if (typeof showToast === 'function') {
+        showToast('Ficha pendiente', 'Tu cuenta ingresó como comprador mientras el administrador revisa la ficha de repartidor.', 'info', 6000);
+      }
+    }
 
     if (currentSelectedRole === 'driver') {
       if (esRepartidorDB && choferData) {
