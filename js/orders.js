@@ -289,7 +289,7 @@ window.aceptarPedidoRepartidor = function(orderId, lat, lng, address) {
     else alert('❌ Error: Sin conexión a la base de datos.');
     return;
   }
-  showConfirmModal('🚚', 'Elegir Pedido', 'El pedido quedará asignado a tu cuenta y se abrirá la navegación externa.', 'Elegir y navegar', async () => {
+  showConfirmModal('🚚', 'Elegir Pedido', 'El pedido se te asignará y se abrirá la navegación externa.', 'Elegir y navegar', async () => {
     if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Asignando pedido...');
 
     const { error } = await window.supabaseClient.rpc('rpc_assign_order', {

@@ -136,29 +136,100 @@ async function borrarPostForumAdmin(postId) {
 }
 
 async function votarPost(el, delta, postId) {
-  const voteKey = `notigas_voted_${postId}`;
-  if (sessionStorage.getItem(voteKey)) return;
-  sessionStorage.setItem(voteKey, '1');
+  if (!window.supabaseClient || !postId) return;
 
-  const span = el.parentElement.querySelector('.v-count');
-  if (span) {
-    let val = parseInt(span.innerText) || 1;
-    val += delta;
-    span.innerText = val;
+  // 1. Validar que el usuario tenga sesión activa en Supabase
+  let user = null;
+  try {
+    const sessionData = await window.supabaseClient.auth.getSession();
+    user = sessionData?.data?.session?.user || null;
+  } catch (authErr) {
+    console.warn('Error verificando sesión para votar:', authErr);
+  }
 
-    // FIX #9: Actualización atómica de votos — elimina la race condition.
-    // Usa una expresión SQL directa en lugar de leer+escribir en dos pasos.
-    const { error } = await window.supabaseClient.rpc('incrementar_votos_aviso', { aviso_id: postId, incremento: delta });
-
-    // FIX: Rollback visual si la RPC falla por RLS o error de red
-    if (error) {
-      console.error('Error al votar:', error);
-      span.innerText = val - delta; // revertir
-      sessionStorage.removeItem(voteKey);
-      if (typeof showToast === 'function') {
-        showToast('⚠️ Error', 'No se pudo registrar tu voto.', 'warning', 3000);
-      }
+  if (!user) {
+    if (typeof showToast === 'function') {
+      showToast('🔒 Inicia Sesión', 'Debes iniciar sesión con Google para votar en las noticias vecinales.', 'info', 4000);
+    } else {
+      alert('Debes iniciar sesión con Google para votar.');
     }
+    return;
+  }
+
+  const voteKey = `notigas_voted_p_${postId}`;
+  const previousVote = sessionStorage.getItem(voteKey);
+
+  // Evitar votar dos veces consecutivas la misma opción
+  if (delta > 0 && previousVote === 'up') {
+    if (typeof showToast === 'function') {
+      showToast('ℹ️ Voto ya registrado', 'Ya diste "Me Gusta" a esta publicación.', 'info', 2500);
+    }
+    return;
+  }
+  if (delta < 0 && previousVote === 'down') {
+    if (typeof showToast === 'function') {
+      showToast('ℹ️ Voto ya registrado', 'Ya diste "Me Disgusta" a esta publicación.', 'info', 2500);
+    }
+    return;
+  }
+
+  // Buscar todos los spans de contador asociados a este postId (tarjeta en el feed y cabecera del modal si está abierto)
+  const matchingSpans = [];
+  const feedCards = document.querySelectorAll('.forum-card');
+  feedCards.forEach(card => {
+    const hasPostBtn = card.querySelector(`[data-id="${postId}"]`);
+    if (hasPostBtn) {
+      const sp = card.querySelector('.forum-votes .v-count');
+      if (sp) matchingSpans.push(sp);
+    }
+  });
+
+  const modalVotesSpan = document.getElementById('commentsPostVotes');
+  const modalVoteUp = document.getElementById('modalPostVoteUpBtn');
+  if (modalVotesSpan && modalVoteUp && modalVoteUp.getAttribute('data-id') === String(postId)) {
+    if (!matchingSpans.includes(modalVotesSpan)) matchingSpans.push(modalVotesSpan);
+  }
+
+  const relativeSpan = el?.parentElement?.querySelector('.v-count');
+  if (relativeSpan && !matchingSpans.includes(relativeSpan)) {
+    matchingSpans.push(relativeSpan);
+  }
+
+  const oldVals = matchingSpans.map(s => parseInt(s.innerText) || 0);
+  matchingSpans.forEach(s => {
+    const cur = parseInt(s.innerText) || 0;
+    s.innerText = Math.max(0, cur + delta);
+  });
+
+  try {
+    const { error } = await window.supabaseClient.rpc('incrementar_votos_aviso', {
+      aviso_id: postId,
+      incremento: delta
+    });
+
+    if (error) {
+      console.warn('Error en RPC incrementar_votos_aviso:', error);
+      matchingSpans.forEach((s, idx) => {
+        if (oldVals[idx] !== undefined) s.innerText = oldVals[idx];
+      });
+      const msg = error.message && error.message.includes('Ya has votado')
+        ? 'Ya has votado esta publicación.'
+        : (error.message || 'No se pudo registrar tu voto.');
+      if (typeof showToast === 'function') {
+        showToast('⚠️ Votación', msg, 'warning', 3500);
+      }
+      return;
+    }
+
+    sessionStorage.setItem(voteKey, delta > 0 ? 'up' : 'down');
+    if (typeof showToast === 'function') {
+      showToast('✅ Voto registrado', delta > 0 ? '¡Te gusta este aviso!' : 'Voto registrado.', 'success', 2000);
+    }
+  } catch (err) {
+    console.error('Error al votar publicación:', err);
+    matchingSpans.forEach((s, idx) => {
+      if (oldVals[idx] !== undefined) s.innerText = oldVals[idx];
+    });
   }
 }
 
@@ -287,6 +358,18 @@ async function abrirComentariosPost(postId, title, desc, cat, el) {
   if (elDesc) elDesc.innerText = desc;
   if (elCat) elCat.innerHTML = `<i class="fa-solid fa-comments"></i> ${window.escapeHtmlStr(cat)}`;
 
+  // Sincronizar votos y botones del post dentro del modal de comentarios
+  const feedVotesSpan = el?.closest('.forum-card')?.querySelector('.forum-votes .v-count');
+  const votesCount = feedVotesSpan ? parseInt(feedVotesSpan.innerText) || 1 : 1;
+  const modalVotesSpan = document.getElementById('commentsPostVotes');
+  if (modalVotesSpan) modalVotesSpan.innerText = votesCount;
+
+  const modalVoteUp = document.getElementById('modalPostVoteUpBtn');
+  if (modalVoteUp) modalVoteUp.setAttribute('data-id', String(postId));
+
+  const modalVoteDown = document.getElementById('modalPostVoteDownBtn');
+  if (modalVoteDown) modalVoteDown.setAttribute('data-id', String(postId));
+
   const box = document.getElementById('commentsList') || document.getElementById('commentsContainer');
   if (box) box.innerHTML = '<div style="color:#94A3B8; font-size:11px; text-align:center;">Cargando comentarios...</div>';
 
@@ -365,21 +448,39 @@ window.renderPostComments = async function(ref) {
 /**
  * FIX W-01+W-05: Voto atómico sobre la tabla 'comentarios_avisos'.
  * Usa la RPC 'incrementar_votos_comentario' (UPDATE directo por id).
- * Elimina completamente la race condition anterior que uó Math.random().
  */
 async function votarComentario(comentarioId, delta) {
-  const voteKey = `notigas_voted_c_${comentarioId}`;
-  if (sessionStorage.getItem(voteKey)) return;
-  sessionStorage.setItem(voteKey, '1');
+  if (!window.supabaseClient || !comentarioId) return;
 
-  // Actualizar UI optimistamente
-  const span = document.getElementById(`c_votos_${comentarioId}`);
-  if (span) {
-    let val = parseInt(span.innerText) || 0;
-    span.innerText = val + delta;
+  let user = null;
+  try {
+    const sessionData = await window.supabaseClient.auth.getSession();
+    user = sessionData?.data?.session?.user || null;
+  } catch (authErr) {
+    console.warn('Error verificando sesión para votar comentario:', authErr);
   }
 
-  // FIX W-05: UPDATE directo por id en tabla propia — sin leer+modificar+escribir el JSON array
+  if (!user) {
+    if (typeof showToast === 'function') {
+      showToast('🔒 Inicia Sesión', 'Debes iniciar sesión con Google para votar comentarios.', 'info', 4000);
+    } else {
+      alert('Debes iniciar sesión con Google para votar comentarios.');
+    }
+    return;
+  }
+
+  const voteKey = `notigas_voted_c_${comentarioId}`;
+  const previousVote = sessionStorage.getItem(voteKey);
+
+  if (delta > 0 && previousVote === 'up') return;
+  if (delta < 0 && previousVote === 'down') return;
+
+  const span = document.getElementById(`c_votos_${comentarioId}`);
+  const oldVal = span ? parseInt(span.innerText) || 0 : 0;
+  if (span) {
+    span.innerText = Math.max(0, oldVal + delta);
+  }
+
   try {
     const { error } = await window.supabaseClient.rpc('incrementar_votos_comentario', {
       comentario_id: comentarioId,
@@ -387,12 +488,21 @@ async function votarComentario(comentarioId, delta) {
     });
 
     if (error) {
-      if (span) span.innerText = val; // revert
-      sessionStorage.removeItem(voteKey);
-      if (typeof showToast === 'function') showToast('⚠️ Error', 'No se pudo registrar tu voto.', 'warning', 3000);
+      console.warn('Error en RPC incrementar_votos_comentario:', error);
+      if (span) span.innerText = oldVal;
+      const msg = error.message && error.message.includes('Ya has votado')
+        ? 'Ya has votado este comentario.'
+        : (error.message || 'No se pudo registrar tu voto.');
+      if (typeof showToast === 'function') {
+        showToast('⚠️ Votación', msg, 'warning', 3500);
+      }
+      return;
     }
+
+    sessionStorage.setItem(voteKey, delta > 0 ? 'up' : 'down');
   } catch (e) {
     console.error('Error votando comentario:', e);
+    if (span) span.innerText = oldVal;
   }
 }
 
@@ -404,7 +514,6 @@ function closeCommentsModal() {
 
 /**
  * FIX W-01: Agrega comentario insertando una fila nueva en 'comentarios_avisos'.
- * Elimina la secuencia de leer+modificar array+escribir que causaba race conditions.
  */
 async function agregarComentarioPost() {
   if (!activePostCommentsRef) return;
@@ -432,7 +541,6 @@ async function agregarComentarioPost() {
     return;
   }
 
-  // FIX W-01: INSERT directo en tabla propia — sin race condition de leer+escribir
   const { data: newComment, error } = await window.supabaseClient
     .from('comentarios_avisos')
     .insert([{
@@ -448,7 +556,6 @@ async function agregarComentarioPost() {
   if (!error && newComment) {
     input.value = '';
 
-    // Recargar lista de comentarios desde BD para mostrar el estado actualizado
     const { data: updatedComments } = await window.supabaseClient
       .from('comentarios_avisos')
       .select('*')
@@ -457,7 +564,6 @@ async function agregarComentarioPost() {
 
     renderCommentsListUI(updatedComments || []);
 
-    // Actualizar el contador de comentarios en la tarjeta del foro
     if (activePostCommentsRef.element) {
       const numSpan = activePostCommentsRef.element.querySelector('.comment-count-num');
       if (numSpan && updatedComments) {
@@ -469,3 +575,17 @@ async function agregarComentarioPost() {
     if (typeof showToast === 'function') { showToast('Notificación', 'Error publicando comentario. Verifica que estés logueado.', 'info', 4000); } else { alert('Error publicando comentario. Verifica que estés logueado.'); };
   }
 }
+
+// EXPORTACIONES GLOBALES A WINDOW PARA DISPONIBILIDAD TOTAL
+window.renderForumFeed = renderForumFeed;
+window.votarPost = votarPost;
+window.votarComentario = votarComentario;
+window.abrirComentariosPost = abrirComentariosPost;
+window.renderCommentsListUI = renderCommentsListUI;
+window.closeCommentsModal = closeCommentsModal;
+window.abrirModalNuevoPost = abrirModalNuevoPost;
+window.closeNewPostModal = closeNewPostModal;
+window.closeNuevoPostModal = closeNuevoPostModal;
+window.crearNuevoPost = crearNuevoPost;
+window.agregarComentarioPost = agregarComentarioPost;
+window.borrarPostForumAdmin = borrarPostForumAdmin;
