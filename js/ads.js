@@ -6,14 +6,33 @@
 window.ADS_CONFIG = {
   mode: localStorage.getItem('notigas_ads_mode') || 'hybrid', // 'adsense' | 'local' | 'hybrid' | 'disabled'
   publisherId: localStorage.getItem('notigas_adsense_pub_id') || 'ca-pub-2502415561017945',
-  slotFooter: localStorage.getItem('notigas_adsense_slot_footer') || '',
+  slotVendors: localStorage.getItem('notigas_adsense_slot_vendors') || localStorage.getItem('notigas_adsense_slot_footer') || '',
   slotForum: localStorage.getItem('notigas_adsense_slot_forum') || '',
-  slotMap: localStorage.getItem('notigas_adsense_slot_map') || '',
   adSenseLoaded: false
 };
 
 window.adsSubscriptionChannel = null;
 let currentAdUrl = 'https://wa.me/59170000000?text=Hola';
+
+function getSafeExternalUrl(value) {
+  try {
+    const parsed = new URL(String(value || '').trim(), window.location.origin);
+    return (parsed.protocol === 'https:' || parsed.protocol === 'http:') ? parsed.href : '';
+  } catch (_) {
+    return '';
+  }
+}
+
+function getSafeAdImageUrl(value) {
+  const safe = getSafeExternalUrl(value);
+  if (!safe) return '';
+  try {
+    const parsed = new URL(safe);
+    return parsed.protocol === 'https:' ? parsed.href : '';
+  } catch (_) {
+    return '';
+  }
+}
 
 /**
  * Inicializar suscripción Realtime para anuncios locales por ciudad
@@ -39,8 +58,11 @@ function iniciarSuscripcionAnuncios() {
  * Abrir enlace o WhatsApp del anuncio local
  */
 function abrirAnuncioWhatsApp() {
-  if (currentAdUrl) {
-    window.open(currentAdUrl, '_blank', 'noopener,noreferrer');
+  const safeUrl = getSafeExternalUrl(currentAdUrl);
+  if (safeUrl) {
+    window.open(safeUrl, '_blank', 'noopener,noreferrer');
+  } else if (typeof showToast === 'function') {
+    showToast('Enlace no disponible', 'El anuncio no tiene un enlace web seguro.', 'warning', 3000);
   }
 }
 
@@ -73,7 +95,7 @@ async function cargarAnunciosGuardados() {
     if (!error && data) {
       actualizarAnunciosEnVivo(data.titulo, data.url);
       actualizarBannerConImagen(data.image_url);
-      currentAdUrl = data.url || currentAdUrl;
+      currentAdUrl = getSafeExternalUrl(data.url) || currentAdUrl;
     } else {
       // Si no hay anuncio local activo y estamos en modo solo local
       if (window.ADS_CONFIG.mode === 'local') {
@@ -99,7 +121,7 @@ function actualizarAnunciosEnVivo(texto, url) {
     if (adTextEl2) adTextEl2.innerText = texto;
   }
   if (url) {
-    currentAdUrl = url;
+    currentAdUrl = getSafeExternalUrl(url) || currentAdUrl;
   }
 }
 
@@ -109,6 +131,7 @@ function actualizarAnunciosEnVivo(texto, url) {
 function actualizarBannerConImagen(imageUrl) {
   const localAdContent = document.getElementById('localAdContent');
   const mapLocalAdBanner = document.getElementById('mapLocalAdBanner');
+  const safeImageUrl = getSafeAdImageUrl(imageUrl);
 
   if (window.ADS_CONFIG.mode === 'disabled' || window.ADS_CONFIG.mode === 'adsense') {
     if (localAdContent) localAdContent.style.display = 'none';
@@ -116,9 +139,9 @@ function actualizarBannerConImagen(imageUrl) {
     return;
   }
 
-  if (imageUrl) {
+  if (safeImageUrl) {
     if (localAdContent) {
-      localAdContent.style.backgroundImage = `url('${imageUrl}')`;
+      localAdContent.style.backgroundImage = `url("${safeImageUrl.replace(/"/g, '%22')}")`;
       localAdContent.style.backgroundSize = 'cover';
       localAdContent.style.backgroundPosition = 'center';
       localAdContent.style.display = 'flex';
@@ -130,7 +153,7 @@ function actualizarBannerConImagen(imageUrl) {
       }
     }
     if (mapLocalAdBanner) {
-      mapLocalAdBanner.style.backgroundImage = `url('${imageUrl}')`;
+      mapLocalAdBanner.style.backgroundImage = `url("${safeImageUrl.replace(/"/g, '%22')}")`;
       mapLocalAdBanner.style.backgroundSize = 'cover';
       mapLocalAdBanner.style.backgroundPosition = 'center';
       mapLocalAdBanner.style.display = 'flex';
@@ -144,164 +167,149 @@ function actualizarBannerConImagen(imageUrl) {
   }
 }
 
-/**
- * Inicializar y renderizar Google AdSense en los slots designados
- */
-function inicializarGoogleAdSense() {
-  const pubId = (window.ADS_CONFIG.publisherId || 'ca-pub-2502415561017945').trim();
-  const mode = window.ADS_CONFIG.mode || 'hybrid';
-
-  const localAdContent = document.getElementById('localAdContent');
-  const adsenseContent = document.getElementById('adsenseContent');
-  const forumSlotContainer = document.getElementById('adsenseForumSlot');
-  const mapSlotContainer = document.getElementById('adsenseMapSlot');
-
-  // Modo Desactivado
-  if (mode === 'disabled') {
-    if (adsenseContent) adsenseContent.style.display = 'none';
-    if (localAdContent) localAdContent.style.display = 'none';
-    if (forumSlotContainer) forumSlotContainer.style.display = 'none';
-    if (mapSlotContainer) mapSlotContainer.style.display = 'none';
-    return;
-  }
-
-  // Modo Solo Anuncios Locales
-  if (mode === 'local') {
-    if (adsenseContent) adsenseContent.style.display = 'none';
-    if (localAdContent) localAdContent.style.display = 'flex';
-    if (forumSlotContainer) forumSlotContainer.style.display = 'none';
-    if (mapSlotContainer) mapSlotContainer.style.display = 'none';
-    return;
-  }
-
-  // Modo Google AdSense o Híbrido
-  const isAdSenseActive = (mode === 'adsense' || mode === 'hybrid') && pubId !== '';
-
-  if (!isAdSenseActive) {
-    if (adsenseContent) adsenseContent.style.display = 'none';
-    if (localAdContent) localAdContent.style.display = 'flex';
-    return;
-  }
-
-  // 1. Inyectar script de Google AdSense si aún no existe
-  if (!window.ADS_CONFIG.adSenseLoaded) {
-    const existingScript = document.querySelector('script[src*="pagead2.googlesyndication.com"]');
-    if (!existingScript) {
-      const script = document.createElement('script');
-      script.async = true;
-      script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${encodeURIComponent(pubId)}`;
-      script.crossOrigin = 'anonymous';
-      script.onerror = () => {
-        console.warn('⚠️ Google AdSense no pudo cargar (posible AdBlock). Realizando fallback a anuncios locales.');
-        if (localAdContent) localAdContent.style.display = 'flex';
-        if (adsenseContent) adsenseContent.style.display = 'none';
-      };
-      document.head.appendChild(script);
-    }
-    window.ADS_CONFIG.adSenseLoaded = true;
-  }
-
-  // 2. Renderizar Slot Inferior / Footer
-  if (adsenseContent) {
-    const footerSlotId = window.ADS_CONFIG.slotFooter || '';
-    adsenseContent.innerHTML = `
-      <ins class="adsbygoogle"
-           style="display:block; width:100%; height:60px;"
-           data-ad-client="${pubId}"
-           ${footerSlotId ? `data-ad-slot="${footerSlotId}"` : ''}
-           data-ad-format="horizontal"
-           data-full-width-responsive="true"></ins>
-    `;
-    adsenseContent.style.display = 'block';
-    if (localAdContent) localAdContent.style.display = 'none';
-
-    try {
-      (window.adsbygoogle = window.adsbygoogle || []).push({});
-    } catch(e) {
-      console.warn('Error al activar AdSense en footer:', e);
-    }
-  }
-
-  // 3. Renderizar Slot en Muro Comunitario / Foro
-  if (forumSlotContainer) {
-    const forumSlotId = window.ADS_CONFIG.slotForum || '';
-    forumSlotContainer.innerHTML = `
-      <div class="adsense-slot-wrapper" style="margin: 10px 0; padding: 6px; background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; text-align: center;">
-        <div style="font-size: 9px; color: #64748B; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">Publicidad Patrocinada</div>
-        <ins class="adsbygoogle"
-             style="display:block"
-             data-ad-client="${pubId}"
-             ${forumSlotId ? `data-ad-slot="${forumSlotId}"` : ''}
-             data-ad-format="auto"
-             data-full-width-responsive="true"></ins>
-      </div>
-    `;
-    forumSlotContainer.style.display = 'block';
-    try {
-      (window.adsbygoogle = window.adsbygoogle || []).push({});
-    } catch(e) {
-      console.warn('Error al activar AdSense en foro:', e);
-    }
-  }
-
-  // 4. Renderizar Slot Superior en Mapa
-  if (mapSlotContainer && window.ADS_CONFIG.slotMap) {
-    mapSlotContainer.innerHTML = `
-      <div class="adsense-map-wrapper" style="width: 100%; max-width: 480px; margin: 0 auto; text-align: center;">
-        <ins class="adsbygoogle"
-             style="display:inline-block; width:320px; height:50px"
-             data-ad-client="${pubId}"
-             data-ad-slot="${window.ADS_CONFIG.slotMap}"></ins>
-      </div>
-    `;
-    mapSlotContainer.style.display = 'block';
-    try {
-      (window.adsbygoogle = window.adsbygoogle || []).push({});
-    } catch(e) {
-      console.warn('Error al activar AdSense en mapa:', e);
-    }
-  }
+function isValidPublisherId(value) {
+  return /^ca-pub-\d{10,20}$/.test(String(value || '').trim());
 }
 
-/**
- * Guardar y aplicar configuración de anuncios (AdSense & Local)
- */
-function guardarConfiguracionPublicidad(config) {
-  if (!config) return;
+function isValidAdSlotId(value) {
+  return /^\d{6,20}$/.test(String(value || '').trim());
+}
 
-  if (config.mode) {
-    window.ADS_CONFIG.mode = config.mode;
-    localStorage.setItem('notigas_ads_mode', config.mode);
+function applyAdsConfig(config) {
+  if (!config) return;
+  const allowedModes = ['adsense', 'local', 'hybrid', 'disabled'];
+  const mode = allowedModes.includes(config.mode) ? config.mode : window.ADS_CONFIG.mode;
+  const publisherId = String(config.publisherId || '').trim();
+  const slotVendors = String(config.slotVendors || '').trim();
+  const slotForum = String(config.slotForum || '').trim();
+
+  window.ADS_CONFIG.mode = mode;
+  if (isValidPublisherId(publisherId)) window.ADS_CONFIG.publisherId = publisherId;
+  window.ADS_CONFIG.slotVendors = isValidAdSlotId(slotVendors) ? slotVendors : '';
+  window.ADS_CONFIG.slotForum = isValidAdSlotId(slotForum) ? slotForum : '';
+
+  localStorage.setItem('notigas_ads_mode', window.ADS_CONFIG.mode);
+  localStorage.setItem('notigas_adsense_pub_id', window.ADS_CONFIG.publisherId);
+  localStorage.setItem('notigas_adsense_slot_vendors', window.ADS_CONFIG.slotVendors);
+  localStorage.setItem('notigas_adsense_slot_forum', window.ADS_CONFIG.slotForum);
+}
+
+async function cargarConfiguracionPublicidadGlobal() {
+  if (!window.supabaseClient) return;
+  const { data, error } = await window.supabaseClient
+    .from('configuracion_publicidad')
+    .select('modo, publisher_id, slot_repartidores, slot_avisos')
+    .eq('id', 1)
+    .maybeSingle();
+
+  if (error) {
+    console.warn('Configuración global de publicidad no disponible. Aplica la migración 044.', error.message);
+    return;
   }
-  if (config.publisherId !== undefined) {
-    window.ADS_CONFIG.publisherId = config.publisherId.trim();
-    localStorage.setItem('notigas_adsense_pub_id', window.ADS_CONFIG.publisherId);
+  if (data) {
+    applyAdsConfig({
+      mode: data.modo,
+      publisherId: data.publisher_id,
+      slotVendors: data.slot_repartidores,
+      slotForum: data.slot_avisos
+    });
   }
-  if (config.slotFooter !== undefined) {
-    window.ADS_CONFIG.slotFooter = config.slotFooter.trim();
-    localStorage.setItem('notigas_adsense_slot_footer', window.ADS_CONFIG.slotFooter);
+  inicializarGoogleAdSense();
+  document.dispatchEvent(new Event('notigas_ads_config_ready'));
+}
+
+window.getAdSenseFeedMarkup = function(placement) {
+  const mode = window.ADS_CONFIG.mode || 'hybrid';
+  if (mode === 'disabled' || mode === 'local') return '';
+
+  const publisherId = String(window.ADS_CONFIG.publisherId || '').trim();
+  const slotId = placement === 'vendors'
+    ? String(window.ADS_CONFIG.slotVendors || '').trim()
+    : String(window.ADS_CONFIG.slotForum || '').trim();
+  if (!isValidPublisherId(publisherId) || !isValidAdSlotId(slotId)) return '';
+
+  return `
+    <div class="adsense-feed-slot" data-adsense-placement="${placement}">
+      <div class="adsense-label">Publicidad</div>
+      <ins class="adsbygoogle"
+           style="display:block"
+           data-ad-client="${publisherId}"
+           data-ad-slot="${slotId}"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+    </div>`;
+};
+
+window.activateAdSenseIn = function(container) {
+  if (!container) return;
+  container.querySelectorAll('ins.adsbygoogle:not([data-adsbygoogle-status])').forEach(() => {
+    try {
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+    } catch (error) {
+      console.warn('AdSense no pudo activar una unidad del feed:', error);
+    }
+  });
+};
+
+function inicializarGoogleAdSense() {
+  const localAdContent = document.getElementById('localAdContent');
+  if (localAdContent) {
+    localAdContent.style.display = window.ADS_CONFIG.mode === 'disabled' ? 'none' : 'flex';
   }
-  if (config.slotForum !== undefined) {
-    window.ADS_CONFIG.slotForum = config.slotForum.trim();
-    localStorage.setItem('notigas_adsense_slot_forum', window.ADS_CONFIG.slotForum);
+
+  if (window.ADS_CONFIG.mode === 'disabled' || window.ADS_CONFIG.mode === 'local') return;
+  const pubId = String(window.ADS_CONFIG.publisherId || '').trim();
+  if (!isValidPublisherId(pubId)) return;
+
+  if (!document.querySelector('script[src*="pagead2.googlesyndication.com"]')) {
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${encodeURIComponent(pubId)}`;
+    script.crossOrigin = 'anonymous';
+    document.head.appendChild(script);
   }
-  if (config.slotMap !== undefined) {
-    window.ADS_CONFIG.slotMap = config.slotMap.trim();
-    localStorage.setItem('notigas_adsense_slot_map', window.ADS_CONFIG.slotMap);
+  window.ADS_CONFIG.adSenseLoaded = true;
+}
+
+async function guardarConfiguracionPublicidad(config) {
+  if (!config) return { ok: false, error: 'Configuración ausente' };
+  const publisherId = String(config.publisherId || '').trim();
+  const slotVendors = String(config.slotVendors || '').trim();
+  const slotForum = String(config.slotForum || '').trim();
+
+  if (!isValidPublisherId(publisherId)) {
+    return { ok: false, error: 'El Publisher ID debe tener el formato ca-pub- seguido de números.' };
+  }
+  if (slotVendors && !isValidAdSlotId(slotVendors)) {
+    return { ok: false, error: 'El Slot ID de Repartidores debe contener solo números.' };
+  }
+  if (slotForum && !isValidAdSlotId(slotForum)) {
+    return { ok: false, error: 'El Slot ID de Avisos debe contener solo números.' };
+  }
+
+  applyAdsConfig({ ...config, publisherId, slotVendors, slotForum });
+  if (window.supabaseClient) {
+    const { error } = await window.supabaseClient.from('configuracion_publicidad').upsert({
+      id: 1,
+      modo: window.ADS_CONFIG.mode,
+      publisher_id: window.ADS_CONFIG.publisherId,
+      slot_repartidores: window.ADS_CONFIG.slotVendors,
+      slot_avisos: window.ADS_CONFIG.slotForum,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'id' });
+    if (error) return { ok: false, error: error.message };
   }
 
   inicializarGoogleAdSense();
+  document.dispatchEvent(new Event('notigas_ads_config_ready'));
   cargarAnunciosGuardados();
+  return { ok: true };
 }
 
-// Escuchar inicio de sesión y autenticación
-document.addEventListener('notigas_auth_ready', () => {
+document.addEventListener('notigas_auth_ready', async () => {
+  await cargarConfiguracionPublicidadGlobal();
   cargarAnunciosGuardados();
   iniciarSuscripcionAnuncios();
-  inicializarGoogleAdSense();
 });
 
-// Inicialización temprana al cargar el DOM
-document.addEventListener('DOMContentLoaded', () => {
-  inicializarGoogleAdSense();
-});
+document.addEventListener('DOMContentLoaded', inicializarGoogleAdSense);

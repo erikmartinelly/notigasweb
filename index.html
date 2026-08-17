@@ -306,9 +306,6 @@
 
       </div>
 
-      <!-- BANNER DE ADSENSE FLOTANTE EN EL MAPA -->
-      <div id="adsenseMapSlot" style="display:none; z-index: 500; position: relative; margin: 6px auto; max-width: 480px; width: 95%;"></div>
-
       <!-- PANEL DE ACCIONES FLOTANTES EXCLUSIVO PARA COMPRADOR (CLIENTE / VECINO) -->
 
       <div class="floating-actions-container" id="buyerFloatingActions">
@@ -443,9 +440,6 @@
 
         </div>
 
-        <!-- SLOT DE GOOGLE ADSENSE EN FEED DEL FORO / AVISOS -->
-        <div id="adsenseForumSlot" style="display: none; margin-top: 8px;"></div>
-
       </div>
 
       <div class="forum-container" id="forumFeed" style="flex: 1; overflow-y: auto;">
@@ -462,7 +456,7 @@
 
   <footer class="ad-banner-container">
 
-    <!-- CONTENEDOR 1: PUBLICIDAD LOCAL -->
+    <!-- PUBLICIDAD LOCAL: permanece siempre en la franja inferior -->
 
     <div id="localAdContent" class="ad-banner-content" >
 
@@ -477,14 +471,6 @@
       </div>
 
       <button class="btn-ad-contact"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver</button>
-
-    </div>
-
-    <!-- CONTENEDOR 2: GOOGLE ADSENSE -->
-
-    <div id="adsenseContent" style="display: none; width: 100%; height: 60px; overflow: hidden; border-radius: 10px; text-align: center;">
-
-      <!-- AdSense se inyectará aquí -->
 
     </div>
 
@@ -1283,7 +1269,7 @@
 
         <input type="text" id="inputNewComment" placeholder="Escribe un comentario respetuoso para la OTB..." style="flex:1; padding: 10px; border-radius: 8px; background: #0F172A; border: 1px solid rgba(255,255,255,0.15); color: white; font-size: 12px; outline: none;" >
 
-        <button  id="auto-event-51"  style="background-color: #FF6D00; color: white; border: none; padding: 10px 14px; border-radius: 8px; font-weight: 700; cursor: pointer;"><i class="fa-solid fa-paper-plane"></i></button>
+        <button  id="auto-event-51" aria-label="Enviar comentario" style="background-color: #FF6D00; color: white; border: none; padding: 10px 14px; border-radius: 8px; font-weight: 700; cursor: pointer;"><i class="fa-solid fa-paper-plane"></i></button>
 
       </div>
 
@@ -1562,9 +1548,9 @@
               <div class="form-group" style="margin-bottom: 8px;">
                 <label style="font-size: 11px;">Modo de Publicidad:</label>
                 <select id="selectAdsMode" style="font-size: 11px; background: #1E293B; color: white; border: 1px solid #334155; padding: 6px; border-radius: 6px; width: 100%;">
-                  <option value="adsense">⚡ Solo Google AdSense (ca-pub-2502415561017945)</option>
-                  <option value="local">📍 Solo Anuncios Locales de Barrio (Banners Notigas)</option>
-                  <option value="hybrid">🌐 Híbrido (Google AdSense con Fallback a Anuncios Locales)</option>
+                  <option value="hybrid">🌐 Google en los feeds + anuncio local abajo</option>
+                  <option value="adsense">⚡ Google en los feeds + franja local abajo</option>
+                  <option value="local">📍 Solo anuncio local inferior</option>
                   <option value="disabled">🚫 Desactivar Toda la Publicidad</option>
                 </select>
               </div>
@@ -1576,12 +1562,12 @@
 
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                 <div class="form-group" style="margin-bottom: 6px;">
-                  <label style="font-size: 10px;">Slot ID Footer (Inferior):</label>
-                  <input type="text" id="inputAdSenseSlotFooter" placeholder="Opcional / Slot ID" style="font-size: 10px; background: #0F172A; border: 1px solid #334155; color: white;">
+                  <label style="font-size: 10px;">Slot ID Repartidores (2.ª pestaña):</label>
+                  <input type="text" id="inputAdSenseSlotVendors" inputmode="numeric" placeholder="ID numérico obligatorio" style="font-size: 10px; background: #0F172A; border: 1px solid #334155; color: white;">
                 </div>
                 <div class="form-group" style="margin-bottom: 6px;">
-                  <label style="font-size: 10px;">Slot ID Muro / Avisos:</label>
-                  <input type="text" id="inputAdSenseSlotForum" placeholder="Opcional / Slot ID" style="font-size: 10px; background: #0F172A; border: 1px solid #334155; color: white;">
+                  <label style="font-size: 10px;">Slot ID Avisos gratis (3.ª pestaña):</label>
+                  <input type="text" id="inputAdSenseSlotForum" inputmode="numeric" placeholder="ID numérico obligatorio" style="font-size: 10px; background: #0F172A; border: 1px solid #334155; color: white;">
                 </div>
               </div>
             </div>
@@ -1596,7 +1582,7 @@
                 <label style="font-size: 11px;">📸 Subir Imagen Banner para Anuncio Local (PNG/JPG):</label>
                 <input type="file" id="inputAdImageFile" accept="image/*" style="font-size:11px; background:#1E293B; padding:6px; border-radius:6px; color:white; width:100%;">
                 <div id="adImagePreviewBox" style="margin-top:8px; display:none; align-items:center; gap:10px;">
-                  <img id="adImagePreview" style="max-height:60px; max-width:200px; border-radius:6px; border:1px solid #FF6D00; object-fit:cover;">
+                  <img id="adImagePreview" alt="Vista previa del anuncio local" style="max-height:60px; max-width:200px; border-radius:6px; border:1px solid #FF6D00; object-fit:cover;">
                   <button type="button" id="auto-event-65" style="background:#D32F2F; color:white; border:none; padding:4px 8px; border-radius:4px; font-weight:700; font-size:10px; cursor:pointer;">✖ Eliminar Imagen</button>
                 </div>
               </div>

@@ -110,20 +110,20 @@ function renderVendorCards(filterCat) {
   }
 
   filtered.forEach((vendor, index) => {
-    const escapedName = (vendor.name || '').replace(/'/g, "\\'");
-    const escapedCat = (vendor.category || '').replace(/'/g, "\\'");
+    const safeVendorId = escapeHtmlStr(vendor.id || '');
+    const safeVendorIcon = escapeHtmlStr(vendor.icon || getIconForCategory(vendor.category));
 
     html += `
       <div class="vendor-fb-card">
         <div class="vendor-fb-header">
           <div class="vendor-profile">
-            <div class="vendor-avatar">${vendor.icon || getIconForCategory(vendor.category)}</div>
+            <div class="vendor-avatar">${safeVendorIcon}</div>
             <div class="vendor-meta">
               <span class="vendor-name">${escapeHtmlStr(vendor.name)}</span>
               <span class="vendor-badge-cat"><i class="fa-solid fa-circle-check"></i> ${escapeHtmlStr(vendor.category)}</span>
             </div>
           </div>
-          ${isAdmin ? `<button data-action="eliminarFichaAdmin" data-id="${vendor.id}" style="background:#D32F2F; color:white; border:none; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;" title="Borrar como Admin"><i class="fa-solid fa-trash"></i> Borrar (Admin)</button>` : `<span class="ad-badge" style="background: rgba(0,230,118,0.15); color: #00E676; border-color: rgba(0,230,118,0.4);">REPARTIDOR VERIFICADO</span>`}
+          ${isAdmin ? `<button data-action="eliminarFichaAdmin" data-id="${safeVendorId}" style="background:#D32F2F; color:white; border:none; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;" title="Borrar como Admin"><i class="fa-solid fa-trash"></i> Borrar (Admin)</button>` : `<span class="ad-badge" style="background: rgba(0,230,118,0.15); color: #00E676; border-color: rgba(0,230,118,0.4);">REPARTIDOR ACTIVO</span>`}
         </div>
 
         <div class="vendor-fb-body">
@@ -139,37 +139,17 @@ function renderVendorCards(filterCat) {
       </div>
     `;
 
-    // ANUNCIO PATROCINADO INTERCALADO AL MEDIO DEL FEED
-    if (index === 0) {
-      html += `
-        <div class="ad-facebook-feed-card" data-action="abrirAnuncioWhatsApp" style="cursor:pointer;">
-          <div class="ad-fb-header">
-            <div class="ad-fb-profile">
-              <div class="ad-fb-icon"><i class="fa-solid fa-bullhorn"></i></div>
-              <div class="ad-fb-info">
-                <div class="ad-fb-name" id="adVendorTitle">🏢 Servicios Barriales, Comercio Local & Anuncios OTB</div>
-                <div class="ad-fb-sub"><i class="fa-solid fa-earth-americas"></i> PUBLICIDAD PATROCINADA EN EL FEED REPARTIDORES</div>
-              </div>
-            </div>
-            <span class="ad-badge">AD</span>
-          </div>
-          <div class="ad-fb-body" id="adVendorDesc">
-            ¿Tienes un negocio en el barrio o deseas ofrecer tu servicio profesional? Anúnciate aquí y llega a toda tu OTB.
-          </div>
-          <div class="ad-fb-media">
-            <div>
-              <div class="ad-fb-media-title">Destaca tu Negocio o Servicio</div>
-              <div class="ad-fb-media-desc">Espacio publicitario disponible en NOTIGAS</div>
-            </div>
-            <button class="btn-ad-contact" data-action="abrirAnuncioWhatsApp"><i class="fa-solid fa-arrow-up-right-from-square"></i> Anunciar</button>
-          </div>
-        </div>
-      `;
+    // Google AdSense va dentro del feed, despues de la primera ficha.
+    if (index === 0 && typeof window.getAdSenseFeedMarkup === 'function') {
+      html += window.getAdSenseFeedMarkup('vendors');
     }
   });
 
   container.innerHTML = html;
+  if (typeof window.activateAdSenseIn === 'function') window.activateAdSenseIn(container);
 }
+
+document.addEventListener('notigas_ads_config_ready', () => renderVendorCards('TODOS'));
 
 function abrirChatSoporteOficial() {
   showToast('Próximamente', 'El chat de soporte estará disponible pronto.', 'info');

@@ -53,8 +53,8 @@ async function renderForumFeed() {
         <div style="text-align:center; color:#EF4444; padding:40px 14px; background: #1E293B; border-radius: 14px; border: 1px dashed rgba(239, 68, 68, 0.3);">
           <i class="fa-solid fa-triangle-exclamation" style="font-size:32px; margin-bottom:10px;"></i><br>
           <strong>Error de base de datos</strong><br>
-          <span style="font-size: 12px; color: #FCA5A5;">${error.message || 'Error de conexión.'}</span><br>
-          <span style="font-size: 10px; color: #94A3B8;">Código: ${error.code || 'N/A'} (Detalle: ${error.details || 'Ninguno'})</span>
+          <span style="font-size: 12px; color: #FCA5A5;">${escapeHtmlStr(error.message || 'Error de conexión.')}</span><br>
+          <span style="font-size: 10px; color: #94A3B8;">Código: ${escapeHtmlStr(error.code || 'N/A')} (Detalle: ${escapeHtmlStr(error.details || 'Ninguno')})</span>
         </div>
       `;
       return;
@@ -106,40 +106,20 @@ async function renderForumFeed() {
       </div>
     `;
 
-    // PROPAGANDA FACEBOOK FEED AL MEDIO DEL TABLÓN DE NOTICIAS VECINALES
-    if (index === 0) {
-      html += `
-        <div class="ad-facebook-feed-card" data-action="abrirAnuncioWhatsApp" style="cursor:pointer;">
-          <div class="ad-fb-header">
-            <div class="ad-fb-profile">
-              <div class="ad-fb-icon"><i class="fa-solid fa-bullhorn"></i></div>
-              <div class="ad-fb-info">
-                <div class="ad-fb-name" id="adForumTitle">🏢 Servicios Técnicos, Comercio Local & Anuncios OTB</div>
-                <div class="ad-fb-sub"><i class="fa-solid fa-earth-americas"></i> PUBLICIDAD PATROCINADA EN EL FEED DE NOTICIAS VECINALES</div>
-              </div>
-            </div>
-            <span class="ad-badge">AD</span>
-          </div>
-          <div class="ad-fb-body" id="adForumDesc">
-            ¿Tienes un negocio en el barrio o deseas anunciar tu servicio profesional? Publica gratis tu anuncio o contrata espacio destacado.
-          </div>
-          <div class="ad-fb-media">
-            <div>
-              <div class="ad-fb-media-title">Destaca tu Anuncio Comercial</div>
-              <div class="ad-fb-media-desc">Llega a toda la comunidad de tu OTB</div>
-            </div>
-            <button class="btn-ad-contact" data-action="abrirAnuncioWhatsApp"><i class="fa-solid fa-arrow-up-right-from-square"></i> Anunciar</button>
-          </div>
-        </div>
-      `;
+    // Google AdSense va dentro del feed, despues del primer aviso gratuito.
+    if (index === 0 && typeof window.getAdSenseFeedMarkup === 'function') {
+      html += window.getAdSenseFeedMarkup('forum');
     }
   });
 
   feed.innerHTML = html;
+  if (typeof window.activateAdSenseIn === 'function') window.activateAdSenseIn(feed);
   } catch (err) {
     console.error(err);
   }
 }
+
+document.addEventListener('notigas_ads_config_ready', renderForumFeed);
 
 async function borrarPostForumAdmin(postId) {
   if (confirm("🗑️ ¿Deseas eliminar permanentemente esta publicación del Tablón Vecinal?")) {
