@@ -7,6 +7,49 @@ const GOOGLE_CLIENT_ID = "994996215118-d8vhi4qjtbosvak58mm1c6ritq65hnc9.apps.goo
 
 let currentSelectedRole = 'buyer'; // 'buyer' o 'driver'
 let currentSelectedMethod = 'google'; // 'google' o 'email'
+let emailAuthRequestInFlight = false;
+const AUTH_THROTTLE_WINDOW_MS = 10 * 60 * 1000;
+const AUTH_THROTTLE_LOCK_MS = 5 * 60 * 1000;
+
+function getAuthThrottleState(kind) {
+  const key = `notigas_auth_throttle_${kind}`;
+  try {
+    const state = JSON.parse(sessionStorage.getItem(key) || '{}');
+    return { key, hits: Number(state.hits || 0), startedAt: Number(state.startedAt || 0), lockedUntil: Number(state.lockedUntil || 0) };
+  } catch (_) {
+    return { key, hits: 0, startedAt: 0, lockedUntil: 0 };
+  }
+}
+
+function canRunAuthAction(kind) {
+  const now = Date.now();
+  const state = getAuthThrottleState(kind);
+  if (state.lockedUntil > now) {
+    const minutes = Math.max(1, Math.ceil((state.lockedUntil - now) / 60000));
+    if (typeof showToast === 'function') showToast('⏳ Acceso temporalmente limitado', `Espera ${minutes} min antes de reintentar.`, 'warning', 5000);
+    return false;
+  }
+  if (state.startedAt && now - state.startedAt >= AUTH_THROTTLE_WINDOW_MS) {
+    sessionStorage.removeItem(state.key);
+  }
+  return true;
+}
+
+function recordAuthThrottleHit(kind, maxHits) {
+  const now = Date.now();
+  const state = getAuthThrottleState(kind);
+  const expired = !state.startedAt || now - state.startedAt >= AUTH_THROTTLE_WINDOW_MS;
+  const hits = expired ? 1 : state.hits + 1;
+  sessionStorage.setItem(state.key, JSON.stringify({
+    hits,
+    startedAt: expired ? now : state.startedAt,
+    lockedUntil: hits >= maxHits ? now + AUTH_THROTTLE_LOCK_MS : 0
+  }));
+}
+
+function clearAuthThrottle(kind) {
+  try { sessionStorage.removeItem(`notigas_auth_throttle_${kind}`); } catch (_) {}
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   // 1. Iniciar One Tap en segundo plano
@@ -1191,22 +1234,26 @@ async function iniciarSesionEmail() {
     if (typeof showToast === 'function') showToast('Error', 'Ingresa correo y contraseña', 'error');
     return;
   }
+  if (emailAuthRequestInFlight || !canRunAuthAction('login')) return;
 
+  emailAuthRequestInFlight = true;
   if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Autenticando...');
-
-  const { data, error } = await window.supabaseClient.auth.signInWithPassword({
-    email,
-    password
-  });
-
-  if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-
-  if (error) {
-    if (typeof showToast === 'function') showToast('Error de acceso', error.message, 'error');
-    return;
+  try {
+    const { data, error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
+    if (error) {
+      recordAuthThrottleHit('login', 5);
+      if (typeof showToast === 'function') showToast('Error de acceso', 'No se pudo validar el correo y la contraseña.', 'error');
+      return;
+    }
+    clearAuthThrottle('login');
+    if (data && data.user) await procesarSesionExitosa(data.user);
+  } catch (networkError) {
+    console.warn('Fallo de red durante el inicio de sesión:', networkError);
+    if (typeof showToast === 'function') showToast('Sin conexión', 'No se pudo contactar al servicio de acceso. Intenta nuevamente.', 'error', 5000);
+  } finally {
+    emailAuthRequestInFlight = false;
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
   }
-
-  if (data && data.user) procesarSesionExitosa(data.user);
 }
 
 async function registrarEmail() {
@@ -1224,32 +1271,42 @@ async function registrarEmail() {
     return;
   }
 
-  if (password.length < 6) {
-    if (typeof showToast === 'function') showToast('Error', 'La contraseña debe tener al menos 6 caracteres', 'error');
+  if (password.length < 8) {
+    if (typeof showToast === 'function') showToast('Error', 'La contraseña debe tener al menos 8 caracteres', 'error');
     return;
   }
+  if (emailAuthRequestInFlight || !canRunAuthAction('register')) return;
+  recordAuthThrottleHit('register', 3);
 
+  emailAuthRequestInFlight = true;
   if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Registrando...');
+  try {
+    const { data, error } = await window.supabaseClient.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: window.location.origin }
+    });
 
-  const { data, error } = await window.supabaseClient.auth.signUp({
-    email,
-    password,
-    options: { emailRedirectTo: window.location.origin }
-  });
-
-  if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-
-  if (error) {
-    if (typeof showToast === 'function') showToast('Error de registro', error.message, 'error');
-    return;
-  }
+    if (error) {
+      if (typeof showToast === 'function') showToast('Error de registro', 'No se pudo completar el registro. Revisa los datos o intenta más tarde.', 'error');
+      return;
+    }
 
     if (data && data.session) {
-    if (typeof showToast === 'function') showToast('Éxito', 'Registro completado. Ingresando...', 'success');
-    procesarSesionExitosa(data.user);
-  } else if (data && data.user) {
-    if (typeof showToast === 'function') showToast('Revisa tu correo', 'Te hemos enviado un enlace para confirmar tu cuenta. Confírmala y luego ingresa.', 'info', 8000);
-    setAuthAction('login');
+      clearAuthThrottle('register');
+      if (typeof showToast === 'function') showToast('Éxito', 'Registro completado. Ingresando...', 'success');
+      await procesarSesionExitosa(data.user);
+    } else if (data && data.user) {
+      clearAuthThrottle('register');
+      if (typeof showToast === 'function') showToast('Revisa tu correo', 'Te hemos enviado un enlace para confirmar tu cuenta. Confírmala y luego ingresa.', 'info', 8000);
+      setAuthAction('login');
+    }
+  } catch (networkError) {
+    console.warn('Fallo de red durante el registro:', networkError);
+    if (typeof showToast === 'function') showToast('Sin conexión', 'No se pudo contactar al servicio de registro. Intenta nuevamente.', 'error', 5000);
+  } finally {
+    emailAuthRequestInFlight = false;
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
   }
 }
 
