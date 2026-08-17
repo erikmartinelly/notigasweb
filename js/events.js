@@ -114,6 +114,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_localAdContent = document.getElementById('localAdContent');
     if (el_localAdContent) el_localAdContent.addEventListener('click', () => { safeCall('abrirAnuncioWhatsApp'); });
 
+    const el_btnLocalAdContact = document.getElementById('btnLocalAdContact');
+    if (el_btnLocalAdContact) el_btnLocalAdContact.addEventListener('click', (event) => {
+      event.stopPropagation();
+      safeCall('abrirAnuncioWhatsApp');
+    });
+
     const el_auto_event_22 = document.getElementById('auto-event-22');
     if (el_auto_event_22) el_auto_event_22.addEventListener('click', () => { safeCall('closeUserSettingsModal'); });
 

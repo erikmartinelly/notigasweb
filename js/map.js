@@ -34,6 +34,7 @@ window.isHeatmapActive = window.isHeatmapActive || false;
 
 // Estado de marcador de usuario
 let isUserMarkerDraggedManually = false;
+let manualLocationSyncTimer = null;
 let isMapInteractedByUser = false;
 let currentActiveOrderMarker = null;
 
@@ -147,8 +148,8 @@ function initNotigasMap() {
   userLocationIcon = L.divIcon({
     className: 'user-location-marker-container',
     html: userLocationSvgHtml,
-    iconSize: [48, 48],
-    iconAnchor: [24, 24]
+    iconSize: [56, 56],
+    iconAnchor: [28, 28]
   });
 
   deliveryPinIcon = L.divIcon({
@@ -194,8 +195,6 @@ function initNotigasMap() {
                      (AppState.get('userData') && AppState.get('userData').role === 'repartidor');
     if (isDriver) {
       userMarker.setIcon(truckIcon);
-    } else if (isUserMarkerDraggedManually) {
-      userMarker.setIcon(deliveryPinIcon);
     } else {
       userMarker.setIcon(userLocationIcon);
     }
@@ -579,6 +578,7 @@ function renderOrderRadarsOnMap(orders) {
     const marker = L.marker([lat, lng], {
       icon,
       interactive: isDriver,
+      bubblingMouseEvents: false,
       keyboard: false,
       zIndexOffset: 7200
     }).addTo(map);
@@ -753,6 +753,7 @@ function agregarPedidoVecinoEnMapa(order) {
     icon: currentIcon,
     zIndexOffset: 8000,
     interactive: isDriverView,
+    bubblingMouseEvents: false,
     keyboard: isDriverView
   }).addTo(map);
   const isAssignedToDriver = userRole === 'repartidor' &&
@@ -899,8 +900,8 @@ function moverMarcadorUbicacionManual(lat, lng) {
     applyGpsPosition(lat, lng, "Ajuste Manual", false, false);
   } else if (userMarker) {
     userMarker.setLatLng([lat, lng]);
-    if (!isDriver && deliveryPinIcon) {
-      userMarker.setIcon(deliveryPinIcon);
+    if (!isDriver && userLocationIcon) {
+      userMarker.setIcon(userLocationIcon);
     }
     if (userMarker.dragging && !userMarker.dragging.enabled()) {
       userMarker.dragging.enable();
@@ -908,23 +909,17 @@ function moverMarcadorUbicacionManual(lat, lng) {
     if (userMarker.isPopupOpen && userMarker.isPopupOpen()) {
       userMarker.closePopup();
     }
-    if (userMarker.getPopup()) {
-      userMarker.getPopup().setContent(`
-        <div class="google-infowindow-content">
-          <strong style="color:#EA4335; font-size:13px;">📍 Ubicación de Entrega</strong><br>
-          <span style="font-size:11px; color:#1A73E8; font-weight:700;">Punto fijado en el mapa</span><br>
-          <span style="font-size:9.5px; color:#5F6368;">(Arrastra o toca en el mapa para ajustar a tu puerta)</span>
-        </div>
-      `);
-    }
   }
+  programarSincronizacionUbicacionManual(lat, lng);
+}
 
-  if (typeof map !== 'undefined' && map) {
-    map.panTo([lat, lng], { animate: true, duration: 0.35 });
-  }
-
-  actualizarCoordenadasPedidoActivo(lat, lng);
-  verificarYMostrarRepartidorGPS();
+function programarSincronizacionUbicacionManual(lat, lng) {
+  if (manualLocationSyncTimer) clearTimeout(manualLocationSyncTimer);
+  manualLocationSyncTimer = setTimeout(() => {
+    actualizarCoordenadasPedidoActivo(lat, lng);
+    verificarYMostrarRepartidorGPS();
+    manualLocationSyncTimer = null;
+  }, 80);
 }
 
 window.BOLIVIA_CITIES = {
@@ -1019,13 +1014,13 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
   }
 
   const isDriver = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver') || (typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver');
-  const activeIcon = isDriver ? truckIcon : (isUserMarkerDraggedManually ? deliveryPinIcon : userLocationIcon);
+  const activeIcon = isDriver ? truckIcon : userLocationIcon;
 
   if (!userMarker && map) {
     userMarker = L.marker([activeLat, activeLng], {
       icon: activeIcon,
       draggable: true,
-      autoPan: true,
+      autoPan: false,
       riseOnHover: true,
       zIndexOffset: 1000
     }).addTo(map);
@@ -1048,8 +1043,8 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
 
     userMarker.on('dragstart', function() {
       isUserMarkerDraggedManually = true;
-      if (!isDriver && deliveryPinIcon) {
-        userMarker.setIcon(deliveryPinIcon);
+      if (!isDriver && userLocationIcon) {
+        userMarker.setIcon(userLocationIcon);
       }
     });
 
@@ -1066,22 +1061,10 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
         AppState.set('gpsLng', newPos.lng);
       }
 
-      if (!isDriver && deliveryPinIcon) {
-        userMarker.setIcon(deliveryPinIcon);
+      if (!isDriver && userLocationIcon) {
+        userMarker.setIcon(userLocationIcon);
       }
-
-      actualizarCoordenadasPedidoActivo(newPos.lat, newPos.lng);
-
-      if (userMarker.getPopup()) {
-        userMarker.getPopup().setContent(`
-          <div class="google-infowindow-content">
-            <strong style="color:#EA4335; font-size:13px;">📍 Ubicación de Entrega Ajustada</strong><br>
-            <span style="font-size:11px; color:#1A73E8; font-weight:700;">Fijada en el mapa</span><br>
-            <span style="font-size:9.5px; color:#5F6368;">(Arrastra o toca en el mapa para mover a tu puerta)</span>
-          </div>
-        `);
-      }
-      verificarYMostrarRepartidorGPS();
+      programarSincronizacionUbicacionManual(newPos.lat, newPos.lng);
     });
   } else if (userMarker) {
     userMarker.setLatLng([activeLat, activeLng]);
@@ -1471,7 +1454,7 @@ function renderActiveOrdersMap() {
       const orderMarker = L.marker([lat, lng], {
         icon: categoryIcon,
         draggable: true,
-        autoPan: true
+        autoPan: false
       });
       currentActiveOrderMarker = orderMarker;
 
