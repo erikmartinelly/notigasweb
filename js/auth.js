@@ -880,66 +880,112 @@ function cerrarSesionUsuario() {
 }
 
 function eliminarMiCuentaCompleta() {
+  const confirmarEliminacion = () => {
+    void ejecutarEliminacionTotalCuenta();
+  };
+
   if (typeof showConfirmModal === 'function') {
-    showConfirmModal('🗑️', '¿Eliminar Cuenta Completa?', 'Esta acción borrará permanentemente todos tus datos, pedidos y publicaciones.', 'Sí, eliminar', () => {
-      ejecutarEliminacionTotalCuenta();
-    });
+    showConfirmModal(
+      '🗑️',
+      '¿Eliminar Cuenta Completa?',
+      'Esta acción borrará permanentemente tu acceso, pedidos, publicaciones, comentarios y datos de repartidor. No se puede deshacer.',
+      'Sí, eliminar definitivamente',
+      confirmarEliminacion
+    );
+    return;
+  }
+
+  if (confirm('¿Eliminar permanentemente tu cuenta y todos tus datos? Esta acción no se puede deshacer.')) {
+    confirmarEliminacion();
   }
 }
 
-async function ejecutarEliminacionTotalCuenta() {
-  if (window.supabaseClient) {
-    try {
-      const u = JSON.parse(JSON.stringify(AppState.get('userData') || {}) || '{}');
-      const userId = u.user_id || u.id;
-      if (userId) {
-         // Borrar la entrada de chofer si existe (el backend rechazará si no es suyo gracias a RLS)
-         await window.supabaseClient.from('choferes_habilitados').delete().eq('user_id', userId);
-
-         // Llamar a la función RPC para eliminar el usuario por completo de auth.users
-         await window.supabaseClient.rpc('delete_user_account');
-
-         // Detener el tracker de GPS si estaba activo
-         if (typeof window.stopDriverLocationBroadcast === 'function') {
-           window.stopDriverLocationBroadcast();
-         }
-
-         // Cerrar sesión localmente
-         await window.supabaseClient.auth.signOut();
-      }
-    } catch (e) {
-      console.error('Error limpiando datos de Supabase', e);
-    }
-  }
-
+function limpiarEstadoLocalTrasEliminarCuenta() {
   const keysToRemove = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key && key.startsWith('notigas_')) {
-      keysToRemove.push(key);
-    }
+    if (key && key.startsWith('notigas_')) keysToRemove.push(key);
   }
-  keysToRemove.forEach(k => localStorage.removeItem(k));
+  keysToRemove.forEach(key => localStorage.removeItem(key));
 
-  AppState.set('driverGpsLive', 'on');
   sessionStorage.clear();
+  AppState.set('userData', null);
+  AppState.set('activeOrder', null);
+  AppState.set('isAdmin', false);
+  AppState.set('userRole', 'vecino');
+  AppState.set('appMode', 'buyer');
+  AppState.set('isDriverLive', false);
+  AppState.set('driverGpsLive', 'on');
+}
 
-  closeUserSettingsModal();
-  if (typeof closeDriverModal === 'function') closeDriverModal();
-
-  if (typeof setAppMode === 'function') {
-    setAppMode('buyer');
+async function ejecutarEliminacionTotalCuenta() {
+  if (!window.supabaseClient) {
+    if (typeof showToast === 'function') {
+      showToast('❌ No se pudo eliminar', 'No hay conexión con el servicio de cuentas. Intenta nuevamente.', 'error', 6000);
+    }
+    return false;
   }
 
-  const modalAuth = document.getElementById('modalWelcomeAuth');
-  if (modalAuth) modalAuth.style.display = 'flex';
+  let loadingVisible = false;
+  try {
+    const { data: authData, error: authError } = await window.supabaseClient.auth.getUser();
+    if (authError) throw authError;
+    if (!authData?.user?.id) {
+      throw new Error('Tu sesión venció. Inicia sesión nuevamente antes de eliminar la cuenta.');
+    }
 
-  if (typeof showToast === 'function') showToast('🗑️ Cuenta Eliminada', 'Todos tus datos fueron eliminados de este dispositivo.', 'info', 2000);
+    if (typeof showLoadingOverlay === 'function') {
+      showLoadingOverlay('Eliminando tu cuenta y todos tus datos...');
+      loadingVisible = true;
+    }
 
-  setTimeout(() => {
-    window.location.reload();
-  }, 400);
+    // Detener temporizadores y telemetría antes de que desaparezca la sesión.
+    if (typeof window.stopDriverLocationBroadcast === 'function') {
+      await window.stopDriverLocationBroadcast();
+    }
+
+    const { error: deleteError } = await window.supabaseClient.rpc('delete_user_account');
+    if (deleteError) throw deleteError;
+
+    // La cuenta ya no existe en Auth; solo se invalida la sesión guardada en este navegador.
+    try {
+      await window.supabaseClient.auth.signOut({ scope: 'local' });
+    } catch (signOutError) {
+      console.warn('La cuenta se eliminó, pero no se pudo limpiar la sesión automáticamente:', signOutError);
+    }
+
+    limpiarEstadoLocalTrasEliminarCuenta();
+    closeUserSettingsModal();
+    if (typeof closeDriverModal === 'function') closeDriverModal();
+    if (typeof setAppMode === 'function') setAppMode('buyer');
+
+    const modalAuth = document.getElementById('modalWelcomeAuth');
+    if (modalAuth) modalAuth.style.display = 'flex';
+
+    if (typeof showToast === 'function') {
+      showToast('🗑️ Cuenta eliminada', 'Supabase confirmó la eliminación completa de tu cuenta y tus datos.', 'success', 3500);
+    }
+
+    setTimeout(() => window.location.reload(), 1200);
+    return true;
+  } catch (error) {
+    console.error('No se pudo eliminar completamente la cuenta:', error);
+    if (typeof showToast === 'function') {
+      showToast(
+        '❌ No se pudo eliminar la cuenta',
+        error?.message || 'Supabase rechazó la operación. Tu cuenta y tu sesión se mantienen intactas.',
+        'error',
+        7000
+      );
+    }
+    return false;
+  } finally {
+    if (loadingVisible && typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+  }
 }
+
+window.eliminarMiCuentaCompleta = eliminarMiCuentaCompleta;
+window.ejecutarEliminacionTotalCuenta = ejecutarEliminacionTotalCuenta;
 
 async function migrarDatosAntiguosARepartidor() {
   if (typeof closeUserSettingsModal === 'function') {

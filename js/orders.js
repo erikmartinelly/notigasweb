@@ -50,95 +50,6 @@ async function renderDriverOrdersList() {
         driverCiudad = driverRow.ciudad || '';
         driverCategoria = driverRow.categoria || '';
       }
-    }
-  } catch (error) {
-    console.warn('Error obteniendo perfil de repartidor:', error);
-  }
-
-  const userData = (typeof AppState !== 'undefined') ? (AppState.get('userData') || {}) : {};
-  driverCiudad = driverCiudad || userData.ciudad || userData.city || ((typeof AppState !== 'undefined') ? AppState.get('city') : '');
-  driverCategoria = driverCategoria || userData.categoria || userData.category || 'gas';
-
-  if (!driverCiudad) {
-    container.innerHTML = '<div class="driver-demand-empty">Selecciona tu ciudad para ver los pedidos disponibles.</div>';
-    return;
-  }
-
-  const normCity = String(driverCiudad).toLowerCase().trim();
-  let clusters = [];
-  let availableOrders = [];
-  let assignedOrders = [];
-  let ordersError = null;
-
-  try {
-    if (typeof window.obtenerGruposDemanda === 'function') {
-      clusters = await window.obtenerGruposDemanda(normCity, driverCategoria);
-    } else {
-      const result = await window.supabaseClient.rpc('rpc_get_demand_clusters_v2', {
-        p_ciudad: normCity,
-        p_categoria: null,
-        p_distancia_metros: 300,
-        p_min_pedidos: 2
-      });
-      if (result.error) throw result.error;
-      clusters = (result.data || []).filter(cluster => {
-        return typeof window.isOrderCategoryMatchingDriver !== 'function' ||
-          window.isOrderCategoryMatchingDriver(cluster.categoria, driverCategoria);
-      });
-    }
-    if (typeof window.obtenerPedidosDisponiblesDesdeGrupos === 'function') {
-      availableOrders = await window.obtenerPedidosDisponiblesDesdeGrupos(clusters, normCity, driverCategoria);
-    }
-  } catch (error) {
-    ordersError = error;
-    console.error('Error cargando pedidos disponibles:', error);
-  }
-
-  if (localUserId) {
-    const assignedResult = await window.supabaseClient.rpc('rpc_get_my_assigned_orders');
-
-    if (!assignedResult.error) {
-      assignedOrders = (assignedResult.data || []).filter(order => {
-        return typeof window.isOrderCategoryMatchingDriver !== 'function' ||
-          window.isOrderCategoryMatchingDriver(order.categoria, driverCategoria);
-      });
-    } else {
-      // Compatibilidad temporal hasta aplicar la migración 041 en Supabase.
-      console.warn('RPC de contacto seguro pendiente; cargando pedidos sin correo:', assignedResult.error.message);
-      const fallbackResult = await window.supabaseClient
-        .from('pedidos')
-        .select('id, titulo, categoria, cantidad, direccion, telefono, latitude, longitude, created_at, estado')
-        .eq('driver_id', localUserId)
-        .ilike('ciudad', normCity)
-        .eq('estado', 'asignado')
-        .order('created_at', { ascending: true });
-
-      if (fallbackResult.error) {
-        console.warn('Error cargando entregas asignadas:', fallbackResult.error);
-      } else {
-        assignedOrders = fallbackResult.data || [];
-      }
-    }
-  }
-
-  if (typeof window.renderDemandClustersOnMap === 'function') {
-    window.renderDemandClustersOnMap(clusters);
-  }
-
-  const minutesSince = value => {
-    const timestamp = new Date(value || Date.now()).getTime();
-    return Math.max(0, Math.floor((Date.now() - timestamp) / 60000));
-  };
-
-  let html = '';
-
-  if (assignedOrders.length > 0) {
-    html += '<div class="demand-section-title"><i class="fa-solid fa-route"></i> Pedidos asignados</div>';
-    assignedOrders.forEach(order => {
-      const lat = Number(order.latitude);
-      const lng = Number(order.longitude);
-      const safeAddress = window.escapeHtmlStr(order.direccion || 'Ubicación fijada en el mapa');
-      const safeBuyerName = window.escapeHtmlStr(order.titulo || 'Comprador vecinal');
       const safeBuyerEmail = window.escapeHtmlStr(order.buyer_email || 'Correo disponible al aplicar migración 041');
       const emailHref = order.buyer_email ? `mailto:${encodeURIComponent(order.buyer_email)}` : '';
       html += `
@@ -154,6 +65,9 @@ async function renderDriverOrdersList() {
             <div><i class="fa-solid fa-location-dot"></i> ${safeAddress}</div>
           </div>
           <div class="demand-card-actions">
+            <button type="button" class="btn-driver-view-order" data-action="centrarPedidoEnMapa" data-lat="${lat}" data-lng="${lng}" data-id="${window.escapeHtmlStr(order.id)}">
+              <i class="fa-solid fa-map-location-dot"></i> Ver el pedido en el mapa
+            </button>
             <button type="button" class="btn-driver-route" data-action="abrirRutaGoogleMaps" data-lat="${lat}" data-lng="${lng}" data-id="${window.escapeHtmlStr(order.id)}" data-address="${safeAddress}">
               <i class="fa-solid fa-diamond-turn-right"></i> Navegar
             </button>
@@ -210,16 +124,26 @@ window.centrarPedidoEnMapa = function(lat, lng, id) {
   const nLat = Number(lat);
   const nLng = Number(lng);
   if (typeof map !== 'undefined' && map && !isNaN(nLat) && !isNaN(nLng) && nLat !== 0 && nLng !== 0) {
-     const m = document.getElementById('modalDriverOrders');
-     if (m) m.style.display = 'none';
-     map.flyTo([nLat, nLng], 18, { duration: 1.5 });
-     if (window.neighborOrderMarkers && id && window.neighborOrderMarkers[id]) {
-        setTimeout(() => {
-          if (window.neighborOrderMarkers && window.neighborOrderMarkers[id]) {
-            window.neighborOrderMarkers[id].openPopup();
-          }
-        }, 1500);
-     }
+    if (typeof closeDriverOrdersModal === 'function') closeDriverOrdersModal();
+    if (typeof switchTab === 'function') switchTab(0);
+    if (typeof desactivarSeguirme === 'function') desactivarSeguirme();
+
+    setTimeout(() => {
+      map.invalidateSize();
+      map.flyTo([nLat, nLng], 18, { duration: 1.2 });
+      if (typeof window.renderDriverDemandByZoom === 'function') {
+        window.renderDriverDemandByZoom();
+      }
+    }, 80);
+
+    setTimeout(() => {
+      const marker = window.neighborOrderMarkers?.[id];
+      if (marker) marker.openPopup();
+    }, 1400);
+
+    if (typeof showToast === 'function') {
+      showToast('📍 Pedido localizado', 'Mostrando la ubicación exacta del pedido asignado.', 'success', 2800);
+    }
   } else {
     if (typeof showToast === 'function') {
       showToast('Ubicación No Disponible', 'El pedido no tiene coordenadas válidas en el mapa.', 'warning', 3000);

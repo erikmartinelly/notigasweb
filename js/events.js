@@ -138,8 +138,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_auto_event_27 = document.getElementById('auto-event-27');
     if (el_auto_event_27) el_auto_event_27.addEventListener('click', () => { safeCall('cerrarSesionUsuario'); });
 
-    const el_auto_event_28 = document.getElementById('auto-event-28');
-    if (el_auto_event_28) el_auto_event_28.addEventListener('click', () => { safeCall('eliminarMiCuentaCompleta'); });
+    const el_btnDeleteMyAccount = document.getElementById('btnDeleteMyAccount');
+    if (el_btnDeleteMyAccount) el_btnDeleteMyAccount.addEventListener('click', () => { safeCall('eliminarMiCuentaCompleta'); });
 
     const el_auto_event_29 = document.getElementById('auto-event-29');
     if (el_auto_event_29) el_auto_event_29.addEventListener('click', () => { safeCall('closeDriverModal'); });
@@ -352,6 +352,14 @@ document.addEventListener('click', (e) => {
       const address = btn.getAttribute('data-address') || '';
       if (typeof window.aceptarPedidoRepartidor === 'function') {
         window.aceptarPedidoRepartidor(id, lat, lng, address);
+      }
+    }
+    else if (action === 'centrarPedidoEnMapa') {
+      const id = btn.getAttribute('data-id');
+      const lat = parseFloat(btn.getAttribute('data-lat'));
+      const lng = parseFloat(btn.getAttribute('data-lng'));
+      if (typeof window.centrarPedidoEnMapa === 'function') {
+        window.centrarPedidoEnMapa(lat, lng, id);
       }
     }
     else if (action === 'abrirSubmenuPedidos') {

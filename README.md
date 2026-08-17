@@ -50,7 +50,7 @@ NOTIGAS resuelve esta necesidad democratizando el acceso a la tecnología y la l
 | **Navegación** | **Google Maps** abierto de forma externa para guiar al repartidor hacia el pedido asignado |
 | **Plataforma Web** | Google Chrome, PWA, HTML5, CSS3 y JavaScript Vanilla |
 | **Base de Datos & Backend** | **Supabase** (PostgreSQL 15+, PostGIS, Realtime WebSockets, Row Level Security) |
-| **Alojamiento de Producción** | **Hostinger / Apache-LiteSpeed** como sitio estático, con reglas de seguridad y navegación PWA en `.htaccess` |
+| **Alojamiento de Producción** | **Hostinger Web App** con un adaptador Express mínimo que entrega la PWA; Supabase continúa siendo el backend funcional |
 
 ---
 
@@ -58,6 +58,8 @@ NOTIGAS resuelve esta necesidad democratizando el acceso a la tecnología y la l
 
 ```text
 ├── index.html              # Punto de entrada principal (Vistas Comprador, Repartidor y Admin)
+├── package.json            # Scripts mínimos requeridos por el despliegue Web App de Hostinger
+├── server.js               # Adaptador de entrega de archivos estáticos; no contiene lógica de negocio
 ├── .htaccess               # HTTPS, cabeceras de seguridad, caché y enrutamiento PWA en Hostinger
 ├── ads.txt                 # Vendedor autorizado de Google AdSense
 ├── sw.js                   # Service Worker (Caché progresivo y soporte offline PWA)
@@ -81,7 +83,7 @@ NOTIGAS resuelve esta necesidad democratizando el acceso a la tecnología y la l
 │   └── main.css            # Hoja de estilos de la aplicación (Tokens de diseño y paleta Google Maps)
 └── supabase/
     ├── full_production_schema.sql # ESQUEMA COMPLETO Y CONSOLIDADO PARA PRODUCCIÓN (1-Click Deploy)
-    └── migrations/         # Migraciones incrementales históricas (001 a 044)
+    └── migrations/         # Migraciones incrementales históricas (001 a 045)
 ```
 
 ---
@@ -97,7 +99,7 @@ cd notigasweb
 ### 2. Configurar la Base de Datos (Supabase)
 * Crea un nuevo proyecto en [Supabase](https://supabase.com/).
 * **Opción A (Recomendada - Despliegue en 1 Clic):** Ejecuta el archivo consolidado [`supabase/full_production_schema.sql`](supabase/full_production_schema.sql) en el SQL Editor de Supabase. Este script único crea todas las tablas, extensiones (PostGIS), vistas públicas autorizadas, índices de alto rendimiento, triggers automáticos, procedimientos RPC atómicos y políticas de seguridad RLS.
-* **Opción B (Migraciones Incrementales):** Ejecuta los scripts disponibles en `supabase/migrations/` en orden numérico hasta `044`. En la base actualmente publicada deben aplicarse, en este orden, `043_production_privacy_and_integrity.sql` y `044_admin_control_auto_drivers_and_ads.sql`.
+* **Opción B (Migraciones Incrementales):** Ejecuta los scripts disponibles en `supabase/migrations/` en orden numérico hasta `045`. Después de la versión v84 debe aplicarse `045_fix_self_account_deletion.sql` para corregir la eliminación personal completa.
 * Abre `js/supabase-config.js` y coloca tu `supabaseUrl` y tu `supabaseAnonKey`.
 
 ### 3. Configurar Google Identity Services & Auth
@@ -105,16 +107,16 @@ cd notigasweb
 * En Supabase Dashboard -> **Authentication** -> **Providers** -> activa **Google** y añade tus credenciales (`Client ID` y `Client Secret`).
 
 ### 4. Ejecución en Desarrollo
-No existe un gestor de paquetes ni un paso de compilación. Para una prueba completa, usa un subdominio HTTPS de pruebas en Hostinger o cualquier servidor web HTTPS y registra su URL de redirección en Supabase Auth. Abrir `index.html` con doble clic no permite validar correctamente OAuth, Service Worker ni algunas políticas del navegador.
+La PWA no tiene paso de compilación. El `package.json` existe únicamente porque el despliegue Web App de Hostinger exige un proceso de inicio; `server.js` entrega los mismos archivos HTML, CSS y JavaScript sin transformar su contenido. Para una prueba completa, usa HTTPS y registra la URL de redirección en Supabase Auth.
 
 ### 5. Publicación en producción (Hostinger)
 1. Activa el certificado SSL del dominio en Hostinger.
-2. Sube el contenido de esta carpeta a `public_html`, incluyendo el archivo oculto `.htaccess`.
-3. No subas las carpetas internas `.git`, `.agents`, `scripts` ni `supabase`.
-4. Comprueba que `https://www.notigas.com/manifest.json` y `https://www.notigas.com/sw.js` respondan correctamente.
+2. En el despliegue Web App usa `npm start`; el comando de build no transforma archivos.
+3. No publiques las carpetas internas `.git`, `.agents`, `scripts` ni `supabase` como contenido navegable.
+4. Comprueba que `https://www.notigas.com/manifest.json`, `https://www.notigas.com/ads.txt` y `https://www.notigas.com/sw.js` respondan correctamente.
 5. En Supabase Auth, registra `https://www.notigas.com` como URL del sitio y como URL de redirección permitida.
 
-La aplicación no requiere compilación ni un proceso propio de servidor. Su capa de entrega son archivos HTML, CSS y JavaScript; la aplicación sigue siendo dinámica porque autenticación, pedidos, usuarios, GPS, anuncios y actualizaciones en vivo dependen de Supabase.
+Express solo mantiene activo el proceso que Hostinger exige y entrega archivos estáticos. No reemplaza a Supabase ni modifica las funciones dinámicas: autenticación, pedidos, usuarios, GPS, anuncios y actualizaciones en vivo siguen dependiendo de Supabase.
 
 ---
 

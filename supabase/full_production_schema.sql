@@ -1211,12 +1211,16 @@ BEGIN
         RAISE EXCEPTION 'Usuario no autenticado';
     END IF;
 
-    DELETE FROM public.pedidos WHERE user_id = v_uid OR driver_id = v_uid;
-    DELETE FROM public.choferes_habilitados WHERE user_id = v_uid;
-    DELETE FROM public.rutas_repartidores WHERE user_id = v_uid;
+    DELETE FROM public.votos_registro WHERE user_id = v_uid;
     DELETE FROM public.comentarios_avisos WHERE user_id = v_uid;
     DELETE FROM public.avisos WHERE user_id = v_uid;
+    DELETE FROM public.pedidos WHERE user_id = v_uid OR driver_id = v_uid;
+    DELETE FROM public.rutas_repartidores WHERE user_id = v_uid;
+    DELETE FROM public.choferes_habilitados WHERE user_id = v_uid;
     DELETE FROM public.anuncios_globales WHERE user_id = v_uid;
+    DELETE FROM public.denuncias WHERE user_id = v_uid OR denunciante_id = v_uid OR denunciado_id = v_uid;
+    DELETE FROM public.reportes_spam WHERE user_id = v_uid;
+    DELETE FROM public.usuarios_baneados WHERE user_id = v_uid;
     DELETE FROM public.profiles WHERE id = v_uuid;
     DELETE FROM auth.users WHERE id = v_uuid;
 END;

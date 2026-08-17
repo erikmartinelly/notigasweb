@@ -1,24 +1,24 @@
-/* NOTIGAS SERVICE WORKER v84.0 - CACHÉ PROGRESIVO Y MODO OFFLINE */
-const CACHE_NAME = 'notigas-cache-v84';
+/* NOTIGAS SERVICE WORKER v85.0 - CACHÉ PROGRESIVO Y MODO OFFLINE */
+const CACHE_NAME = 'notigas-cache-v85';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './styles/main.css?v=84',
-  './js/state.js?v=84',
-  './js/ui.js?v=84',
-  './js/supabase-config.js?v=84',
-  './js/auth.js?v=84',
-  './js/vendors.js?v=84',
-  './js/map.js?v=84',
-  './js/map_search.js?v=84',
-  './js/map_gps.js?v=84',
-  './js/forum.js?v=84',
-  './js/ads.js?v=84',
-  './js/orders.js?v=84',
-  './js/admin.js?v=84',
-  './js/admin_users.js?v=84',
-  './js/app.js?v=84',
-  './js/events.js?v=84',
+  './styles/main.css?v=85',
+  './js/state.js?v=85',
+  './js/ui.js?v=85',
+  './js/supabase-config.js?v=85',
+  './js/auth.js?v=85',
+  './js/vendors.js?v=85',
+  './js/map.js?v=85',
+  './js/map_search.js?v=85',
+  './js/map_gps.js?v=85',
+  './js/forum.js?v=85',
+  './js/ads.js?v=85',
+  './js/orders.js?v=85',
+  './js/admin.js?v=85',
+  './js/admin_users.js?v=85',
+  './js/app.js?v=85',
+  './js/events.js?v=85',
   './icons/garrafa_red_clean.svg',
   './icons/garrafa_red-192.png',
   './icons/garrafa_red-512.png',
@@ -63,6 +63,26 @@ self.addEventListener('fetch', (event) => {
   const requestUrl = new URL(event.request.url);
   if (requestUrl.origin !== self.location.origin) return;
 
+  const acceptsHtml = event.request.headers.get('accept')?.includes('text/html');
+  const isNavigation = event.request.mode === 'navigate' || acceptsHtml;
+
+  // La página principal debe ser network-first para no mantener una versión
+  // antigua después de un despliegue. La caché solo actúa como respaldo offline.
+  if (isNavigation) {
+    event.respondWith(
+      fetch(event.request, { cache: 'no-store' })
+        .then(networkResponse => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put('./index.html', responseClone));
+          }
+          return networkResponse;
+        })
+        .catch(() => caches.match('./index.html', { ignoreSearch: true }))
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
@@ -82,11 +102,6 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
         }
         return networkResponse;
-      }).catch(() => {
-        // Fallback offline para páginas HTML
-        if (event.request.headers.get('accept')?.includes('text/html')) {
-          return caches.match('./index.html', { ignoreSearch: true });
-        }
       });
     })
   );

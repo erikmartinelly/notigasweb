@@ -369,12 +369,51 @@ async function cargarPedidosVecinalesEnVivo() {
       clearNeighborOrderMarkers();
       let clusters = [];
       let availableOrders = [];
+
+      // 1. Cargar todos los pedidos públicos disponibles para la ciudad/categoría
+      try {
+        let pubQuery = window.supabaseClient
+          .from('pedidos_publicos')
+          .select('*')
+          .gte('created_at', activeWindow)
+          .in('estado', ['pendiente', 'visto']);
+        if (normCity) pubQuery = pubQuery.ilike('ciudad', normCity);
+        const { data: pubData } = await pubQuery;
+        if (Array.isArray(pubData)) {
+          availableOrders = pubData.filter(order => {
+            return typeof window.isOrderCategoryMatchingDriver !== 'function' ||
+              window.isOrderCategoryMatchingDriver(order.categoria, driverCategoria);
+          });
+        }
+      } catch (pubErr) {
+        console.warn('Error consultando pedidos públicos en vivo:', pubErr);
+      }
+
+      // 2. Intentar obtener grupos densos por RPC si están disponibles
       try {
         clusters = await obtenerGruposDemanda(normCity, driverCategoria);
-        availableOrders = await obtenerPedidosDisponiblesDesdeGrupos(clusters, normCity, driverCategoria);
       } catch (clusterError) {
-        clearDemandClusterMarkers();
-        console.warn('No se pudieron cargar los pedidos disponibles:', clusterError);
+        console.warn('RPC de clusters no disponible o sin grupos densos:', clusterError);
+      }
+
+      // 3. Si no hay clusters de la RPC o hay pedidos individuales,
+      // crear emisores de radar para cada pedido/zona disponible
+      if (!Array.isArray(clusters) || clusters.length === 0) {
+        clusters = [];
+        availableOrders.forEach(order => {
+          const lat = parseFloat(order.latitude || order.lat);
+          const lng = parseFloat(order.longitude || order.lng);
+          if (Number.isFinite(lat) && Number.isFinite(lng)) {
+            clusters.push({
+              cluster_id: `single_order_${order.id}`,
+              ciudad: order.ciudad || normCity,
+              categoria: order.categoria || driverCategoria,
+              centro_lat: lat,
+              centro_lng: lng,
+              pedidos_activos: 1
+            });
+          }
+        });
       }
 
       let assignedOrders = [];
@@ -544,23 +583,31 @@ function renderDemandClustersOnMap(clusters) {
   if (map.getZoom() > DRIVER_RADAR_MAX_ZOOM) return;
 
   (clusters || []).forEach(cluster => {
-    const lat = Number(cluster.centro_lat);
-    const lng = Number(cluster.centro_lng);
+    const lat = Number(cluster.centro_lat || cluster.latitude || cluster.lat);
+    const lng = Number(cluster.centro_lng || cluster.longitude || cluster.lng);
     if (!Number.isFinite(lat) || !Number.isFinite(lng) || !cluster.cluster_id) return;
+
+    const count = Number(cluster.pedidos_activos) || 1;
+    const countBadge = count > 1 ? `<span class="demand-radar-badge">${count}</span>` : '';
 
     const icon = L.divIcon({
       className: 'demand-cluster-icon',
-      html: '<div class="demand-radar" aria-hidden="true"><span></span><span></span><span></span><i></i></div>',
-      iconSize: [72, 72],
-      iconAnchor: [36, 36]
+      html: `<div class="demand-radar" title="${count > 1 ? `${count} pedidos en esta zona` : 'Pedido disponible en esta zona'}"><span></span><span></span><span></span><i></i>${countBadge}</div>`,
+      iconSize: [80, 80],
+      iconAnchor: [40, 40]
     });
 
     const marker = L.marker([lat, lng], {
       icon,
-      interactive: false,
+      interactive: true,
       keyboard: false,
       zIndexOffset: 7200
     }).addTo(map);
+
+    marker.on('click', () => {
+      map.flyTo([lat, lng], 16, { duration: 0.8 });
+    });
+
     window.demandClusterMarkers[cluster.cluster_id] = marker;
   });
 }
