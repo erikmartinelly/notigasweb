@@ -256,17 +256,14 @@ function initNotigasMap() {
     zoomOutTitle: 'Alejar'
   }).addTo(map);
 
-  // Mapa base tipo Uber / inDrive: estilo Carto Positron limpio, nítido y moderno
+  // Mapa base OpenStreetMap original y predeterminado
   const mapAttribution =
-    '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors ' +
-    '&copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener noreferrer">CARTO</a>';
+    '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors';
   const baseTileLayer = L.tileLayer(
-    'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
     {
-      maxZoom: 20,
+      maxZoom: 19,
       maxNativeZoom: 19,
-      detectRetina: true,
-      subdomains: 'abcd',
       attribution: mapAttribution,
       className: 'map-base-layer'
     }
@@ -277,7 +274,7 @@ function initNotigasMap() {
       error.tile._fallbackDone = true;
       const c = error.coords;
       if (c) {
-        error.tile.src = `https://tile.openstreetmap.org/${c.z}/${c.x}/${c.y}.png`;
+        error.tile.src = `https://a.tile.openstreetmap.org/${c.z}/${c.x}/${c.y}.png`;
       }
     }
   });
