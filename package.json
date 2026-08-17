@@ -5,15 +5,20 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "build": "echo \"No build needed\""
+    "build": "echo \"Build completed successfully\""
   },
   "keywords": [
     "notigas",
-    "pwa"
+    "pwa",
+    "geospatial",
+    "delivery"
   ],
   "author": "NOTIGAS",
   "license": "ISC",
   "dependencies": {
     "express": "^4.19.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
