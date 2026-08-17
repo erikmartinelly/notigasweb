@@ -48,7 +48,7 @@ NOTIGAS resuelve esta necesidad democratizando el acceso a la tecnología y la l
 | **Navegación** | **Google Maps** abierto de forma externa para guiar al repartidor hacia el pedido asignado |
 | **Plataforma Web** | Google Chrome, PWA, HTML5, CSS3 y JavaScript Vanilla |
 | **Base de Datos & Backend** | **Supabase** (PostgreSQL 15+, PostGIS, Realtime WebSockets, Row Level Security) |
-| **Servidor de Producción** | **Node.js / Express** (`server.js`) con cabeceras estrictas de seguridad (CSP, HSTS, Anti-Clickjacking) |
+| **Alojamiento de Producción** | **Hostinger / Apache-LiteSpeed** como sitio estático, con reglas de seguridad y navegación PWA en `.htaccess` |
 
 ---
 
@@ -56,8 +56,7 @@ NOTIGAS resuelve esta necesidad democratizando el acceso a la tecnología y la l
 
 ```text
 ├── index.html              # Punto de entrada principal (Vistas Comprador, Repartidor y Admin)
-├── server.js               # Servidor Express de producción (Cabeceras de seguridad CSP y enrutamiento PWA)
-├── package.json            # Dependencias del servidor Node.js
+├── .htaccess               # HTTPS, cabeceras de seguridad, caché y enrutamiento PWA en Hostinger
 ├── sw.js                   # Service Worker (Caché progresivo y soporte offline PWA)
 ├── manifest.json           # Manifiesto Web PWA
 ├── js/                     # Módulos JavaScript de la aplicación
@@ -107,12 +106,14 @@ cd notigasweb
 npx serve .
 ```
 
-### 5. Ejecución en Producción
-```bash
-npm install
-npm start
-```
-Abre `http://localhost:3000` en tu navegador.
+### 5. Publicación en producción (Hostinger)
+1. Activa el certificado SSL del dominio en Hostinger.
+2. Sube el contenido de esta carpeta a `public_html`, incluyendo el archivo oculto `.htaccess`.
+3. No subas las carpetas internas `.git`, `.agents`, `scripts` ni `supabase`.
+4. Comprueba que `https://www.notigas.com/manifest.json` y `https://www.notigas.com/sw.js` respondan correctamente.
+5. En Supabase Auth, registra `https://www.notigas.com` como URL del sitio y como URL de redirección permitida.
+
+La aplicación no requiere compilación ni un proceso de servidor: se publica como HTML, CSS y JavaScript estáticos.
 
 ---
 

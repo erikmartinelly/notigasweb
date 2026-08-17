@@ -33,14 +33,6 @@ build/
 .dart_tool/
 .pub/
 
-# Dependencias Node.js y Logs
-node_modules/
-.pnpm-store/
-pnpm-lock.yaml
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
 # Archivos temporales de pruebas locales
 scratch_test_runner.html
 temp_edge_profile/
