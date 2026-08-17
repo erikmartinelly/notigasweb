@@ -256,14 +256,17 @@ function initNotigasMap() {
     zoomOutTitle: 'Alejar'
   }).addTo(map);
 
-  // Mapa base OpenStreetMap original y predeterminado
+  // Mapa base estilo Google Maps — CartoDB Voyager (colores cálidos, calles limpias, parques verdes suaves)
   const mapAttribution =
-    '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors';
+    '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors ' +
+    '&copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener noreferrer">CARTO</a>';
   const baseTileLayer = L.tileLayer(
-    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
     {
-      maxZoom: 19,
+      maxZoom: 20,
       maxNativeZoom: 19,
+      detectRetina: true,
+      subdomains: 'abcd',
       attribution: mapAttribution,
       className: 'map-base-layer'
     }
@@ -274,7 +277,7 @@ function initNotigasMap() {
       error.tile._fallbackDone = true;
       const c = error.coords;
       if (c) {
-        error.tile.src = `https://a.tile.openstreetmap.org/${c.z}/${c.x}/${c.y}.png`;
+        error.tile.src = `https://tile.openstreetmap.org/${c.z}/${c.x}/${c.y}.png`;
       }
     }
   });
