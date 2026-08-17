@@ -800,7 +800,7 @@ function guardarPrefUsuario() {
   if (isDriver) {
     // Guardar GPS
     const gpsSelect = document.getElementById('driverGpsLive');
-    const gpsVal = gpsSelect ? gpsSelect.value : 'on';
+    const gpsVal = gpsSelect ? gpsSelect.value : 'off';
     AppState.set('driverGpsLive', gpsVal);
 
     // Guardar sonido repartidor
@@ -808,7 +808,11 @@ function guardarPrefUsuario() {
     const soundVal = soundSelect ? soundSelect.value : 'enabled';
     AppState.set('prefSound', soundVal);
 
-    if (typeof verificarYMostrarRepartidorGPS === 'function') verificarYMostrarRepartidorGPS();
+    if (gpsVal === 'on' && typeof window.activarSeguirme === 'function') {
+      window.activarSeguirme();
+    } else if (gpsVal === 'off' && typeof window.pausarRecorridoRepartidor === 'function') {
+      window.pausarRecorridoRepartidor({ silent: true });
+    }
   } else {
     // Guardar sonido comprador
     const soundSelect = document.getElementById('userPrefSound');
@@ -823,7 +827,7 @@ function cerrarSesionUsuario() {
   if (typeof showConfirmModal === 'function') {
     showConfirmModal('🚪', '¿Cerrar Sesión?', 'Al cerrar sesión podrás elegir ingresar como Comprador o Repartidor.', 'Sí, cerrar sesión', () => {
       AppState.set('userData', null);
-      AppState.set('driverGpsLive', 'on');
+      AppState.set('driverGpsLive', 'off');
       AppState.set('activeOrder', null);
       AppState.set('isAdmin', false);
       if (window.supabaseClient) {
@@ -851,7 +855,7 @@ function cerrarSesionUsuario() {
     });
   } else if (confirm("🚪 ¿Estás seguro de que deseas cerrar sesión en NOTIGAS?\n\nAl cerrar sesión podrás elegir ingresar como Comprador o Repartidor.")) {
     AppState.set('userData', null);
-    AppState.set('driverGpsLive', 'on');
+    AppState.set('driverGpsLive', 'off');
     AppState.set('activeOrder', null);
     AppState.set('isAdmin', false);
     if (window.supabaseClient) {
@@ -915,7 +919,7 @@ function limpiarEstadoLocalTrasEliminarCuenta() {
   AppState.set('userRole', 'vecino');
   AppState.set('appMode', 'buyer');
   AppState.set('isDriverLive', false);
-  AppState.set('driverGpsLive', 'on');
+  AppState.set('driverGpsLive', 'off');
 }
 
 async function ejecutarEliminacionTotalCuenta() {

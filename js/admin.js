@@ -119,7 +119,7 @@ function cerrarSesionRepartidorActivarComprador() {
     showConfirmModal('🔄', '¿Cambiar a Modo Comprador?', 'Tu ficha de negocio se mantendrá guardada. Solo se cambiará tu modo de ingreso.', 'Sí, cambiar', () => {
       AppState.set('userData', null);
 
-      AppState.set('driverGpsLive', 'on');
+      AppState.set('driverGpsLive', 'off');
 
       if (typeof closeUserSettingsModal === 'function') closeUserSettingsModal();
 

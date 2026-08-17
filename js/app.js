@@ -92,7 +92,7 @@ function abrirConfiguracionSegunRol() {
 
     // Cargar estado GPS guardado
     try {
-      const gpsVal = (AppState.get('driverGpsLive') || 'on') || 'on';
+      const gpsVal = AppState.get('driverGpsLive') === 'on' ? 'on' : 'off';
       const gpsSelect = document.getElementById('driverGpsLive');
       if (gpsSelect) gpsSelect.value = gpsVal;
     } catch(e){}
@@ -158,11 +158,14 @@ function setAppMode(mode) {
       `;
     }
 
-    AppState.set('driverGpsLive', 'on');
+    actualizarEstadoBotonesRecorrido(AppState.get('driverGpsLive') === 'on');
     if (typeof verificarYMostrarRepartidorGPS === 'function') verificarYMostrarRepartidorGPS();
     if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
     if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
   } else {
+    if (AppState.get('driverGpsLive') === 'on' && typeof window.pausarRecorridoRepartidor === 'function') {
+      window.pausarRecorridoRepartidor({ silent: true });
+    }
     if (buyerActions) buyerActions.style.display = 'flex';
     if (driverActions) driverActions.style.display = 'none';
 
@@ -186,8 +189,41 @@ window.activarMiUbicacionRepartidor = function() {
   }
 };
 
+function actualizarEstadoBotonesRecorrido(isActive) {
+  const btnFollow = document.getElementById('btnDriverFollowMe');
+  const btnPause = document.getElementById('btnDriverPause');
+  const gpsSelect = document.getElementById('driverGpsLive');
+
+  if (btnFollow) {
+    btnFollow.classList.toggle('is-running', isActive);
+    btnFollow.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    btnFollow.innerHTML = isActive
+      ? '<i class="fa-solid fa-satellite-dish"></i> RECORRIDO ACTIVO'
+      : '<i class="fa-solid fa-route"></i> INICIAR RECORRIDO';
+  }
+  if (btnPause) {
+    btnPause.classList.toggle('is-paused', !isActive);
+    btnPause.setAttribute('aria-pressed', isActive ? 'false' : 'true');
+  }
+  if (gpsSelect) gpsSelect.value = isActive ? 'on' : 'off';
+}
+window.actualizarEstadoBotonesRecorrido = actualizarEstadoBotonesRecorrido;
+
 window.activarSeguirme = function() {
+  if (AppState.get('driverGpsLive') === 'on') {
+    actualizarEstadoBotonesRecorrido(true);
+    if (typeof showToast === 'function') {
+      showToast('Recorrido activo', 'Tu camión ya está transmitiendo su ubicación.', 'success', 1800);
+    }
+    return true;
+  }
+
+  isDriverGpsLive = true;
+  AppState.set('driverGpsLive', 'on');
+  AppState.set('isDriverLive', true);
   isMapInteractedByUser = false;
+
+  actualizarEstadoBotonesRecorrido(true);
 
   if (typeof conectarGPSAuto === 'function') {
       conectarGPSAuto(true);
@@ -197,48 +233,43 @@ window.activarSeguirme = function() {
     map.flyTo([currentGpsLat, currentGpsLng], map.getZoom() || 16, { duration: 1.0 });
   }
 
-  const btn = document.getElementById('btnDriverFollowMe');
-  if (btn) {
-    btn.style.background = '#059669'; // verde esmeralda para indicar ACTIVO
-    btn.innerHTML = '🎯 SIGUIENDO';
+  if (typeof showToast === 'function') {
+    showToast('Recorrido iniciado', 'Tu camión está visible y transmitiendo su ubicación.', 'success', 2200);
   }
-
-  if (typeof showToast === 'function') showToast('Seguimiento Activado', 'El mapa seguirá tus movimientos automáticamente.', 'info', 1500);
+  return true;
 };
 
 window.desactivarSeguirme = function() {
-  if (isMapInteractedByUser) {
-    const btn = document.getElementById('btnDriverFollowMe');
-    if (btn && btn.innerHTML.includes('SIGUIENDO')) {
-      btn.style.background = '#1E293B';
-      btn.innerHTML = '🎯 INICIAR RECORRIDO';
-      if (typeof showToast === 'function') showToast('Seguimiento Pausado', 'Modo exploración manual activo.', 'warning', 1500);
-    }
-  }
+  // Explorar el mapa manualmente no apaga ni elimina el recorrido publicado.
+  isMapInteractedByUser = true;
 };
 
-window.pausarRecorridoRepartidor = function() {
+window.pausarRecorridoRepartidor = async function(options = {}) {
+  const wasActive = AppState.get('driverGpsLive') === 'on';
   isDriverGpsLive = false;
   AppState.set('driverGpsLive', 'off');
+  AppState.set('isDriverLive', false);
+  isMapInteractedByUser = true;
+
+  actualizarEstadoBotonesRecorrido(false);
+
+  if (typeof window.detenerGPSComprador === 'function') {
+    window.detenerGPSComprador();
+  }
 
   if (typeof window.stopDriverLocationBroadcast === 'function') {
-    window.stopDriverLocationBroadcast();
+    await window.stopDriverLocationBroadcast();
   }
 
-  // Detener el watchPosition si existe
-  if (typeof activeGpsWatchId !== 'undefined' && activeGpsWatchId !== null && navigator.geolocation) {
-    navigator.geolocation.clearWatch(activeGpsWatchId);
+  if (!options.silent && typeof showToast === 'function') {
+    showToast(
+      wasActive ? 'Recorrido pausado' : 'Recorrido ya pausado',
+      wasActive ? 'Tu camión dejó de transmitir y fue retirado del mapa.' : 'La transmisión del camión ya estaba detenida.',
+      'warning',
+      2200
+    );
   }
-
-  // Desactivar UI
-  const btnFollow = document.getElementById('btnDriverFollowMe');
-  if (btnFollow) {
-    btnFollow.style.background = '#1E293B';
-    btnFollow.innerHTML = '🎯 INICIAR RECORRIDO';
-  }
-  isMapInteractedByUser = true; // stops auto-panning
-
-  if (typeof showToast === 'function') showToast('Recorrido Pausado', 'Se ocultó el camión y se detuvo la transmisión GPS.', 'warning', 2000);
+  return true;
 };
 
 function obtenerIconoHtmlPorCategoria(catNombre) {
@@ -373,7 +404,7 @@ window.notigasTrack = window.notigasTrack || function(event, params) {
 // 1. Registro del Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=87')
+    navigator.serviceWorker.register('./sw.js?v=88')
       .then((reg) => console.log('✅ Service Worker registrado', reg.scope))
       .catch((err) => console.error('❌ Error Service Worker:', err));
   });

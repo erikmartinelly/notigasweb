@@ -1649,11 +1649,19 @@ button:active, .tab-btn:active, .cat-chip:active {
   background: linear-gradient(135deg, #E65100 0%, #C2410C 100%);
 }
 
+.btn-driver-follow-me.is-running,
+.btn-driver-follow-me.is-running:hover {
+  background: linear-gradient(135deg, #16A34A 0%, #15803D 100%) !important;
+  border-color: #22C55E !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 16px rgba(22, 163, 74, 0.46) !important;
+}
+
 .btn-driver-pause {
   flex: 1;
-  background: rgba(220, 38, 38, 0.15);
-  color: #F87171;
-  border: 1.5px solid rgba(239, 68, 68, 0.5);
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  color: #1E293B;
+  border: 1.5px solid #FBBF24;
   padding: 11px 10px;
   border-radius: 8px;
   font-size: 11px;
@@ -1671,9 +1679,9 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 .btn-driver-pause:hover {
   transform: translateY(-2px);
-  background: rgba(239, 68, 68, 0.3);
-  border-color: #EF4444;
-  color: #FFFFFF;
+  background: linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%);
+  border-color: #FCD34D;
+  color: #0F172A;
 }
 
 .btn-driver-my-location {
@@ -3307,9 +3315,9 @@ button:active, .tab-btn:active, .cat-chip:active {
 }
 
 .btn-driver-pause {
-  color: #f8fafc !important;
-  background: #1e293b !important;
-  border: 1px solid #64748b !important;
+  color: #0f172a !important;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
+  border: 1px solid #fcd34d !important;
 }
 
 .btn-driver-complete {

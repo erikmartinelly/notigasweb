@@ -287,10 +287,6 @@ function initNotigasMap() {
     isMapInteractedByUser = true;
     if (typeof desactivarSeguirme === 'function') desactivarSeguirme();
   });
-  map.on('moveend', () => {
-    isMapInteractedByUser = true;
-    if (typeof desactivarSeguirme === 'function') desactivarSeguirme();
-  });
   map.on('zoomend', () => {
     renderDriverDemandByZoom();
   });
@@ -1067,8 +1063,8 @@ let lastBroadcastLng = null;
 
 /* ESTRATEGIA ADAPTATIVA INTELIGENTE DE TRANSMISIÓN GPS */
 async function transmitirUbicacionRepartidorServidorDB(lat, lng) {
-  const driverGpsLive = (AppState.get('driverGpsLive') || 'on');
-  if (driverGpsLive === 'off') return;
+  const driverGpsLive = AppState.get('driverGpsLive');
+  if (driverGpsLive !== 'on') return;
 
   const now = Date.now();
 

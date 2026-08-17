@@ -49,6 +49,7 @@ window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño m
     realtimeConnected: false,  // Estado de conexión Supabase Realtime
     appMode: 'buyer',          // 'buyer' | 'driver'
     isDriverLive: false,       // Si el repartidor está transmitiendo en vivo
+    driverGpsLive: 'off',      // El recorrido solo inicia por acción explícita del repartidor
   };
 
   // Suscriptores por clave de estado
