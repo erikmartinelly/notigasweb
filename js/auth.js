@@ -815,51 +815,36 @@ function guardarPrefUsuario() {
   closeUserSettingsModal();
 }
 
-function cerrarSesionUsuario() {
-  if (typeof showConfirmModal === 'function') {
-    showConfirmModal('🚪', '¿Cerrar Sesión?', 'Al cerrar sesión podrás elegir ingresar como Comprador o Repartidor.', 'Sí, cerrar sesión', () => {
-      AppState.set('userData', null);
-      AppState.set('driverGpsLive', 'off');
-      AppState.set('activeOrder', null);
-      AppState.set('isAdmin', false);
-      if (window.supabaseClient) {
-        window.supabaseClient.auth.signOut().catch(console.error);
-      }
+async function ejecutarCierreSesionUsuario() {
+  let loadingVisible = false;
+  try {
+    if (typeof showLoadingOverlay === 'function') {
+      showLoadingOverlay('Cerrando sesión de forma segura...');
+      loadingVisible = true;
+    }
 
-      closeUserSettingsModal();
-      if (typeof closeDriverModal === 'function') closeDriverModal();
+    if (typeof window.detenerGPSComprador === 'function') {
+      window.detenerGPSComprador();
+    }
+    if (typeof window.stopDriverLocationBroadcast === 'function') {
+      await window.stopDriverLocationBroadcast();
+    }
 
-      if (typeof setAppMode === 'function') {
-        setAppMode('buyer');
-      }
+    if (window.supabaseClient?.auth) {
+      const { error } = await window.supabaseClient.auth.signOut({ scope: 'local' });
+      if (error) throw error;
+    }
 
-      const modalAuth = document.getElementById('modalWelcomeAuth');
-      if (modalAuth) {
-        modalAuth.style.display = 'flex';
-        selectAuthRole('buyer');
-      }
-
-      if (typeof checkActiveOrderStatus === 'function') {
-        checkActiveOrderStatus();
-      }
-
-      if (typeof showToast === 'function') showToast('🚪 Sesión Cerrada', 'Selecciona Comprador o Repartidor para ingresar.', 'info', 1000);
-    });
-  } else if (confirm("🚪 ¿Estás seguro de que deseas cerrar sesión en NOTIGAS?\n\nAl cerrar sesión podrás elegir ingresar como Comprador o Repartidor.")) {
     AppState.set('userData', null);
     AppState.set('driverGpsLive', 'off');
+    AppState.set('isDriverLive', false);
     AppState.set('activeOrder', null);
     AppState.set('isAdmin', false);
-    if (window.supabaseClient) {
-      window.supabaseClient.auth.signOut().catch(console.error);
-    }
+    AppState.set('userRole', 'vecino');
 
     closeUserSettingsModal();
     if (typeof closeDriverModal === 'function') closeDriverModal();
-
-    if (typeof setAppMode === 'function') {
-      setAppMode('buyer');
-    }
+    if (typeof setAppMode === 'function') setAppMode('buyer');
 
     const modalAuth = document.getElementById('modalWelcomeAuth');
     if (modalAuth) {
@@ -867,13 +852,33 @@ function cerrarSesionUsuario() {
       selectAuthRole('buyer');
     }
 
-    if (typeof checkActiveOrderStatus === 'function') {
-      checkActiveOrderStatus();
+    if (typeof checkActiveOrderStatus === 'function') checkActiveOrderStatus();
+    if (typeof showToast === 'function') {
+      showToast('🚪 Sesión cerrada', 'La sesión se cerró correctamente en este dispositivo.', 'info', 2200);
     }
-
-    if (typeof showToast === 'function') showToast('🚪 Sesión Cerrada', 'Selecciona tu rol para ingresar nuevamente.', 'info', 1000);
+    return true;
+  } catch (error) {
+    console.error('No se pudo cerrar la sesión:', error);
+    if (typeof showToast === 'function') {
+      showToast('❌ No se pudo cerrar sesión', error?.message || 'La sesión sigue activa. Intenta nuevamente.', 'error', 5500);
+    }
+    return false;
+  } finally {
+    if (loadingVisible && typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
   }
 }
+
+function cerrarSesionUsuario() {
+  const confirmarCierre = () => { void ejecutarCierreSesionUsuario(); };
+  if (typeof showConfirmModal === 'function') {
+    showConfirmModal('🚪', '¿Cerrar Sesión?', 'Se detendrá la ubicación en vivo y podrás volver a ingresar como Comprador o Repartidor.', 'Sí, cerrar sesión', confirmarCierre);
+  } else if (confirm('🚪 ¿Estás seguro de que deseas cerrar sesión en NOTIGAS?')) {
+    confirmarCierre();
+  }
+}
+
+window.cerrarSesionUsuario = cerrarSesionUsuario;
+window.ejecutarCierreSesionUsuario = ejecutarCierreSesionUsuario;
 
 function eliminarMiCuentaCompleta() {
   const confirmarEliminacion = () => {

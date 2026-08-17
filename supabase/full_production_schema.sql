@@ -1214,8 +1214,23 @@ BEGIN
   FROM auth.users
   WHERE id = v_uuid;
 
-  DELETE FROM public.votos_registro WHERE user_id = v_uid;
-  DELETE FROM public.comentarios_avisos WHERE user_id = v_uid;
+  DELETE FROM public.votos_registro
+  WHERE user_id = v_uid
+     OR (tipo_entidad = 'aviso' AND entidad_id IN (
+          SELECT id FROM public.avisos WHERE user_id = v_uid
+        ))
+     OR (tipo_entidad = 'comentario' AND entidad_id IN (
+          SELECT c.id
+          FROM public.comentarios_avisos c
+          WHERE c.user_id = v_uid
+             OR c.aviso_id IN (SELECT a.id FROM public.avisos a WHERE a.user_id = v_uid)
+        ))
+     OR (tipo_entidad = 'pedido' AND entidad_id IN (
+          SELECT id FROM public.pedidos WHERE user_id = v_uid OR driver_id = v_uid
+        ));
+  DELETE FROM public.comentarios_avisos
+  WHERE user_id = v_uid
+     OR aviso_id IN (SELECT id FROM public.avisos WHERE user_id = v_uid);
   DELETE FROM public.avisos WHERE user_id = v_uid;
   DELETE FROM public.pedidos WHERE user_id = v_uid OR driver_id = v_uid;
   DELETE FROM public.rutas_repartidores WHERE user_id = v_uid;
@@ -1301,13 +1316,28 @@ BEGIN
         RAISE EXCEPTION 'No se puede eliminar una cuenta administradora desde el panel';
     END IF;
 
+    DELETE FROM public.votos_registro
+    WHERE user_id = v_uid
+       OR (tipo_entidad = 'aviso' AND entidad_id IN (
+            SELECT id FROM public.avisos WHERE user_id = v_uid
+          ))
+       OR (tipo_entidad = 'comentario' AND entidad_id IN (
+            SELECT c.id
+            FROM public.comentarios_avisos c
+            WHERE c.user_id = v_uid
+               OR c.aviso_id IN (SELECT a.id FROM public.avisos a WHERE a.user_id = v_uid)
+          ))
+       OR (tipo_entidad = 'pedido' AND entidad_id IN (
+            SELECT id FROM public.pedidos WHERE user_id = v_uid OR driver_id = v_uid
+          ));
+    DELETE FROM public.comentarios_avisos
+    WHERE user_id = v_uid
+       OR aviso_id IN (SELECT id FROM public.avisos WHERE user_id = v_uid);
+    DELETE FROM public.avisos WHERE user_id = v_uid;
     DELETE FROM public.pedidos WHERE user_id = v_uid OR driver_id = v_uid;
     DELETE FROM public.rutas_repartidores WHERE user_id = v_uid;
     DELETE FROM public.choferes_habilitados WHERE user_id = v_uid;
-    DELETE FROM public.comentarios_avisos WHERE user_id = v_uid;
-    DELETE FROM public.avisos WHERE user_id = v_uid;
     DELETE FROM public.anuncios_globales WHERE user_id = v_uid;
-    DELETE FROM public.votos_registro WHERE user_id = v_uid;
     DELETE FROM public.denuncias WHERE user_id = v_uid OR denunciante_id = v_uid OR denunciado_id = v_uid;
     DELETE FROM public.reportes_spam WHERE user_id = v_uid;
     DELETE FROM public.usuarios_baneados WHERE user_id = v_uid OR LOWER(TRIM(COALESCE(email, ''))) = v_email;

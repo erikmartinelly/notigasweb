@@ -558,6 +558,8 @@ function renderOrderRadarsOnMap(orders) {
   if (!map || typeof L === 'undefined') return;
   clearDemandClusterMarkers();
   if (map.getZoom() > DRIVER_RADAR_MAX_ZOOM) return;
+  const isDriver = (typeof AppState !== 'undefined') &&
+    (AppState.get('appMode') === 'driver' || AppState.get('userRole') === 'repartidor');
 
   (orders || []).forEach(order => {
     const lat = Number(order.latitude ?? order.lat);
@@ -576,14 +578,16 @@ function renderOrderRadarsOnMap(orders) {
 
     const marker = L.marker([lat, lng], {
       icon,
-      interactive: true,
+      interactive: isDriver,
       keyboard: false,
       zIndexOffset: 7200
     }).addTo(map);
 
-    marker.on('click', () => {
-      map.flyTo([lat, lng], 16, { duration: 0.8 });
-    });
+    if (isDriver) {
+      marker.on('click', () => {
+        map.flyTo([lat, lng], 16, { duration: 0.8 });
+      });
+    }
 
     window.demandClusterMarkers[`order_${order.id}`] = marker;
   });
@@ -666,8 +670,12 @@ function actualizarRepartidorEnMapa(data) {
 
   if (activeTruckMarkers[truckId]) {
     activeTruckMarkers[truckId].setLatLng([data.latitude, data.longitude]);
+    activeTruckMarkers[truckId]._notigasRouteId = data.id || null;
+    activeTruckMarkers[truckId]._notigasUserId = data.user_id || null;
   } else {
     const marker = L.marker([data.latitude, data.longitude], { icon: truckIcon, zIndexOffset: 9000 }).addTo(map);
+    marker._notigasRouteId = data.id || null;
+    marker._notigasUserId = data.user_id || null;
     marker.bindPopup(`
       <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
         <strong style="color:#00E676; font-size:13px;">🚛 Camión en Vivo</strong><br>
@@ -740,7 +748,13 @@ function agregarPedidoVecinoEnMapa(order) {
   const lng = parseFloat(order.longitude || order.lng);
   if (isNaN(lat) || isNaN(lng)) return; // Evita que Leaflet falle si un pedido no tiene coordenadas
 
-  const marker = L.marker([lat, lng], { icon: currentIcon, zIndexOffset: 8000 }).addTo(map);
+  const isDriverView = userRole === 'repartidor';
+  const marker = L.marker([lat, lng], {
+    icon: currentIcon,
+    zIndexOffset: 8000,
+    interactive: isDriverView,
+    keyboard: isDriverView
+  }).addTo(map);
   const isAssignedToDriver = userRole === 'repartidor' &&
     order.estado === 'asignado' && order.driver_id === localUserId;
   const telStr = isAssignedToDriver && order.telefono ? `<span class="order-popup-contact">📞 ${escapeHtmlStr(order.telefono)}</span><br>` : '';
@@ -770,22 +784,24 @@ function agregarPedidoVecinoEnMapa(order) {
     </div>
   `;
 
-  marker.bindPopup(popupHtml);
+  if (isDriverView) {
+    marker.bindPopup(popupHtml);
 
-  marker.on('popupopen', () => {
-    try {
-      if (userRole === 'repartidor' && order.estado === 'pendiente' && !order.visto && window.supabaseClient && order.id) {
-        window.supabaseClient.rpc('rpc_mark_order_seen', { p_order_id: order.id }).then(({ error }) => {
-          if (!error) {
-            order.visto = true;
-            if (neighborOrderMarkers[order.id]) {
-              neighborOrderMarkers[order.id].setIcon(garrafaYellowIcon);
+    marker.on('popupopen', () => {
+      try {
+        if (order.estado === 'pendiente' && !order.visto && window.supabaseClient && order.id) {
+          window.supabaseClient.rpc('rpc_mark_order_seen', { p_order_id: order.id }).then(({ error }) => {
+            if (!error) {
+              order.visto = true;
+              if (neighborOrderMarkers[order.id]) {
+                neighborOrderMarkers[order.id].setIcon(garrafaYellowIcon);
+              }
             }
-          }
-        }).catch(e => console.warn(e));
-      }
-    } catch(e){}
-  });
+          }).catch(e => console.warn(e));
+        }
+      } catch(e){}
+    });
+  }
 
   neighborOrderMarkers[orderId] = marker;
 
@@ -803,6 +819,17 @@ function removerPublicacionDeMapa(id) {
     if (map) map.removeLayer(neighborOrderMarkers[id]);
     delete neighborOrderMarkers[id];
   }
+  Object.keys(activeTruckMarkers).forEach(truckKey => {
+    const marker = activeTruckMarkers[truckKey];
+    if (truckKey === id || marker?._notigasRouteId === id || marker?._notigasUserId === id) {
+      if (map && marker) map.removeLayer(marker);
+      delete activeTruckMarkers[truckKey];
+      if (window.activeTruckTimers[truckKey]) {
+        clearTimeout(window.activeTruckTimers[truckKey]);
+        delete window.activeTruckTimers[truckKey];
+      }
+    }
+  });
 }
 
 function actualizarCoordenadasPedidoActivo(newLat, newLng, skipMarkerSet = false) {

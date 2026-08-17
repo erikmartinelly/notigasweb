@@ -198,12 +198,13 @@ function actualizarEstadoBotonesRecorrido(isActive) {
     btnFollow.classList.toggle('is-running', isActive);
     btnFollow.setAttribute('aria-pressed', isActive ? 'true' : 'false');
     btnFollow.innerHTML = isActive
-      ? '<i class="fa-solid fa-satellite-dish"></i> RECORRIDO ACTIVO'
-      : '<i class="fa-solid fa-route"></i> INICIAR RECORRIDO';
+      ? '<i class="fa-solid fa-satellite-dish"></i> UBICACIÓN VISIBLE'
+      : '<i class="fa-solid fa-location-dot"></i> AVISAR DE MI UBICACIÓN';
   }
   if (btnPause) {
     btnPause.classList.toggle('is-paused', !isActive);
     btnPause.setAttribute('aria-pressed', isActive ? 'false' : 'true');
+    btnPause.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> PAUSAR MI UBICACIÓN';
   }
   if (gpsSelect) gpsSelect.value = isActive ? 'on' : 'off';
 }
@@ -213,7 +214,7 @@ window.activarSeguirme = function() {
   if (AppState.get('driverGpsLive') === 'on') {
     actualizarEstadoBotonesRecorrido(true);
     if (typeof showToast === 'function') {
-      showToast('Recorrido activo', 'Tu camión ya está transmitiendo su ubicación.', 'success', 1800);
+      showToast('Ubicación visible', 'Estamos avisando tu posición en el mapa a los clientes.', 'success', 2600);
     }
     return true;
   }
@@ -234,7 +235,7 @@ window.activarSeguirme = function() {
   }
 
   if (typeof showToast === 'function') {
-    showToast('Recorrido iniciado', 'Tu camión está visible y transmitiendo su ubicación.', 'success', 2200);
+    showToast('Ubicación visible', 'Estamos avisando tu posición en el mapa a los clientes.', 'success', 3000);
   }
   return true;
 };
@@ -263,8 +264,8 @@ window.pausarRecorridoRepartidor = async function(options = {}) {
 
   if (!options.silent && typeof showToast === 'function') {
     showToast(
-      wasActive ? 'Recorrido pausado' : 'Recorrido ya pausado',
-      wasActive ? 'Tu camión dejó de transmitir y fue retirado del mapa.' : 'La transmisión del camión ya estaba detenida.',
+      wasActive ? 'Ubicación pausada' : 'Ubicación ya pausada',
+      wasActive ? 'Tu posición dejó de mostrarse a los clientes y el camión fue retirado del mapa.' : 'Tu ubicación ya estaba oculta para los clientes.',
       'warning',
       2200
     );
@@ -404,7 +405,7 @@ window.notigasTrack = window.notigasTrack || function(event, params) {
 // 1. Registro del Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=89')
+    navigator.serviceWorker.register('./sw.js?v=90')
       .then((reg) => console.log('✅ Service Worker registrado', reg.scope))
       .catch((err) => console.error('❌ Error Service Worker:', err));
   });
