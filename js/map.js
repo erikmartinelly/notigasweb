@@ -109,11 +109,19 @@ const deliveryPinSvgHtml = `
       <circle cx="192" cy="192" r="40" fill="#C5221F"/>
     </svg>
   </div>
+// ONDAS DE RADAR AZUL PARA CAMIONES REPARTIDORES AL HACER ZOOM OUT
+const truckRadarBlueSvgHtml = `
+  <div class="truck-radar-blue" title="Camión Repartidor en Vivo (Haz clic para ver)">
+    <span></span>
+    <span></span>
+    <span></span>
+    <i><i class="fa-solid fa-truck-fast"></i></i>
+  </div>
 `;
 
 let userLocationIcon, deliveryPinIcon;
 let garrafaIcon, garrafaYellowIcon, garrafaGreenIcon;
-let truckIcon;
+let truckIcon, truckRadarBlueIcon;
 
 function initNotigasMap() {
   if (typeof L === 'undefined') {
@@ -187,6 +195,13 @@ function initNotigasMap() {
     iconAnchor: [26, 29]
   });
 
+  truckRadarBlueIcon = L.divIcon({
+    className: 'driver-truck-radar-container',
+    html: truckRadarBlueSvgHtml,
+    iconSize: [80, 80],
+    iconAnchor: [40, 40]
+  });
+
   window.actualizarIconoMarcadorUsuario = function(forcedMode) {
     if (!userMarker || !truckIcon || !userLocationIcon || !deliveryPinIcon) return;
     const isDriver = (forcedMode === 'driver') || 
@@ -239,13 +254,12 @@ function initNotigasMap() {
     zoomOutTitle: 'Alejar'
   }).addTo(map);
 
-  // Mapa base legal de OSM/CARTO con una presentación clara tipo navegación.
-  // Google Maps se abre externamente cuando el repartidor elige un pedido.
+  // Mapa base tipo Uber / inDrive: estilo Carto Positron limpio, nítido y moderno
   const mapAttribution =
     '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors ' +
     '&copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener noreferrer">CARTO</a>';
   const baseTileLayer = L.tileLayer(
-    'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
     {
       maxZoom: 20,
       maxNativeZoom: 19,
@@ -539,6 +553,9 @@ function renderDriverDemandByZoom() {
   });
   const allOrders = Array.from(ordersById.values());
 
+  // Actualizar también la apariencia de los camiones repartidores (icono azul radar si zoom out)
+  actualizarIconosRepartidoresPorZoom();
+
   if (map.getZoom() <= DRIVER_RADAR_MAX_ZOOM) {
     clearNeighborOrderMarkers();
     if (activeOrderLayerGroup && map.hasLayer(activeOrderLayerGroup)) {
@@ -556,12 +573,23 @@ function renderDriverDemandByZoom() {
   allOrders.forEach(order => agregarPedidoVecinoEnMapa(order));
 }
 
+function actualizarIconosRepartidoresPorZoom() {
+  if (!map || typeof L === 'undefined' || !truckRadarBlueIcon || !truckIcon) return;
+  const isZoomOut = (map.getZoom() <= DRIVER_RADAR_MAX_ZOOM);
+  const targetIcon = isZoomOut ? truckRadarBlueIcon : truckIcon;
+
+  Object.keys(activeTruckMarkers).forEach(truckId => {
+    const marker = activeTruckMarkers[truckId];
+    if (marker && marker.setIcon) {
+      marker.setIcon(targetIcon);
+    }
+  });
+}
+
 function renderOrderRadarsOnMap(orders) {
   if (!map || typeof L === 'undefined') return;
   clearDemandClusterMarkers();
   if (map.getZoom() > DRIVER_RADAR_MAX_ZOOM) return;
-  const isDriver = (typeof AppState !== 'undefined') &&
-    (AppState.get('appMode') === 'driver' || AppState.get('userRole') === 'repartidor');
 
   (orders || []).forEach(order => {
     const lat = Number(order.latitude ?? order.lat);
@@ -573,24 +601,22 @@ function renderOrderRadarsOnMap(orders) {
       : 'Pedido';
     const icon = L.divIcon({
       className: 'demand-cluster-icon demand-order-radar-icon',
-      html: `<div class="demand-radar" title="Pedido de ${safeCategory}"><span></span><span></span><span></span><i></i></div>`,
+      html: `<div class="demand-radar" title="Pedido de ${safeCategory} (Haz clic para ver)"><span></span><span></span><span></span><i></i></div>`,
       iconSize: [80, 80],
       iconAnchor: [40, 40]
     });
 
     const marker = L.marker([lat, lng], {
       icon,
-      interactive: isDriver,
+      interactive: true,
       bubblingMouseEvents: false,
       keyboard: false,
       zIndexOffset: 7200
     }).addTo(map);
 
-    if (isDriver) {
-      marker.on('click', () => {
-        map.flyTo([lat, lng], 16, { duration: 0.8 });
-      });
-    }
+    marker.on('click', () => {
+      map.flyTo([lat, lng], 16, { duration: 0.8 });
+    });
 
     window.demandClusterMarkers[`order_${order.id}`] = marker;
   });
@@ -636,6 +662,7 @@ window.obtenerPedidosDisponiblesDesdeGrupos = obtenerPedidosDisponiblesDesdeGrup
 window.renderDemandClustersOnMap = renderDemandClustersOnMap;
 window.renderOrderRadarsOnMap = renderOrderRadarsOnMap;
 window.renderDriverDemandByZoom = renderDriverDemandByZoom;
+window.actualizarIconosRepartidoresPorZoom = actualizarIconosRepartidoresPorZoom;
 window.clearDemandClusterMarkers = clearDemandClusterMarkers;
 
 function actualizarRepartidorEnMapa(data) {
@@ -671,12 +698,18 @@ function actualizarRepartidorEnMapa(data) {
   const truckId = data.user_id || data.id || data.distribuidor_nombre;
   if (!truckId) return;
 
+  const isZoomOut = map && (map.getZoom() <= DRIVER_RADAR_MAX_ZOOM);
+  const iconToUse = isZoomOut && truckRadarBlueIcon ? truckRadarBlueIcon : truckIcon;
+
   if (activeTruckMarkers[truckId]) {
     activeTruckMarkers[truckId].setLatLng([data.latitude, data.longitude]);
     activeTruckMarkers[truckId]._notigasRouteId = data.id || null;
     activeTruckMarkers[truckId]._notigasUserId = data.user_id || null;
+    if (activeTruckMarkers[truckId].setIcon) {
+      activeTruckMarkers[truckId].setIcon(iconToUse);
+    }
   } else {
-    const marker = L.marker([data.latitude, data.longitude], { icon: truckIcon, zIndexOffset: 9000 }).addTo(map);
+    const marker = L.marker([data.latitude, data.longitude], { icon: iconToUse, zIndexOffset: 9000 }).addTo(map);
     marker._notigasRouteId = data.id || null;
     marker._notigasUserId = data.user_id || null;
     marker.bindPopup(`
@@ -687,6 +720,11 @@ function actualizarRepartidorEnMapa(data) {
         ${data.telefono ? `<a href="tel:${escapeHtmlStr(data.telefono)}" style="display:inline-block; margin-top:5px; font-size:11px; color:#1E293B; background:#FFD54F; padding:4px 8px; border-radius:12px; text-decoration:none; font-weight:bold;">📞 Llama: ${escapeHtmlStr(data.telefono)}</a>` : ''}
       </div>
     `);
+    marker.on('click', () => {
+      if (map && map.getZoom() <= DRIVER_RADAR_MAX_ZOOM) {
+        map.flyTo([data.latitude, data.longitude], 16, { duration: 0.8 });
+      }
+    });
     activeTruckMarkers[truckId] = marker;
   }
 

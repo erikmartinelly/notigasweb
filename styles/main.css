@@ -2595,8 +2595,8 @@ button:active, .tab-btn:active, .cat-chip:active {
 #map,
 .map-container,
 .leaflet-container {
-  background-color: #dbe4ee !important;
-  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, Arial, sans-serif !important;
+  background-color: #E8ECEF !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif !important;
 }
 
 .map-base-layer {
@@ -2605,8 +2605,8 @@ button:active, .tab-btn:active, .cat-chip:active {
 }
 
 .map-base-layer .leaflet-tile {
-  filter: contrast(1.16) saturate(1.42) brightness(1.02);
-  -webkit-filter: contrast(1.16) saturate(1.42) brightness(1.02);
+  filter: contrast(1.08) saturate(1.18) brightness(1.01);
+  -webkit-filter: contrast(1.08) saturate(1.18) brightness(1.01);
   transition: opacity 0.2s ease, filter 0.3s ease;
 }
 
@@ -3640,5 +3640,79 @@ button:active, .tab-btn:active, .cat-chip:active {
   50% {
     transform: translate(-50%, -50%) scale(1.22);
     filter: brightness(1.3);
+  }
+}
+
+/* ONDAS DE RADAR AZUL PARA CAMIONES REPARTIDORES AL HACER ZOOM OUT */
+.driver-truck-radar-container {
+  background: transparent !important;
+  border: 0 !important;
+  overflow: visible !important;
+  cursor: pointer !important;
+}
+
+.truck-radar-blue {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.truck-radar-blue span,
+.truck-radar-blue i {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.truck-radar-blue span {
+  width: 18px;
+  height: 18px;
+  border: 3px solid rgba(2, 136, 209, 0.95);
+  background: rgba(2, 136, 209, 0.22);
+  box-shadow: 0 0 16px rgba(2, 136, 209, 0.75);
+  animation: truckRadarWave 2.4s cubic-bezier(0.2, 0.8, 0.3, 1) infinite;
+  pointer-events: none;
+}
+
+.truck-radar-blue span:nth-child(1) { animation-delay: 0s; }
+.truck-radar-blue span:nth-child(2) { animation-delay: 0.8s; }
+.truck-radar-blue span:nth-child(3) { animation-delay: 1.6s; }
+
+.truck-radar-blue i {
+  width: 22px;
+  height: 22px;
+  background: radial-gradient(circle, #4FC3F7 0%, #0288D1 65%, #01579B 100%);
+  border: 2.5px solid #FFFFFF;
+  box-shadow: 0 0 16px rgba(2, 136, 209, 0.95), 0 2px 8px rgba(0, 0, 0, 0.5);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  font-size: 11px;
+  animation: radarCorePulse 1.2s infinite ease-in-out;
+}
+
+@keyframes truckRadarWave {
+  0% {
+    width: 16px;
+    height: 16px;
+    opacity: 0.95;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+  60% {
+    opacity: 0.75;
+  }
+  100% {
+    width: 160px;
+    height: 160px;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.35);
   }
 }
