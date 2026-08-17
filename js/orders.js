@@ -1,5 +1,17 @@
 /* ORDERS LOGIC */
 
+let driverOrdersRefreshInterval = null;
+
+function startDriverOrdersAutoRefresh() {
+  if (driverOrdersRefreshInterval) clearInterval(driverOrdersRefreshInterval);
+  driverOrdersRefreshInterval = setInterval(() => {
+    const modal = document.getElementById('modalDriverOrders');
+    if (modal && modal.style.display !== 'none') {
+      renderDriverOrdersList();
+    }
+  }, 10000);
+}
+
 function abrirModalDriverOrders() {
   const modal = document.getElementById('modalDriverOrders');
   if (modal) modal.style.display = 'flex';
@@ -11,12 +23,17 @@ function abrirModalDriverOrders() {
   }
 
   renderDriverOrdersList();
+  startDriverOrdersAutoRefresh();
 }
 window.abrirModalDriverOrders = abrirModalDriverOrders;
 
 function closeDriverOrdersModal() {
   const modal = document.getElementById('modalDriverOrders');
   if (modal) modal.style.display = 'none';
+  if (driverOrdersRefreshInterval) {
+    clearInterval(driverOrdersRefreshInterval);
+    driverOrdersRefreshInterval = null;
+  }
 }
 window.closeDriverOrdersModal = closeDriverOrdersModal;
 
@@ -95,24 +112,33 @@ async function renderDriverOrdersList() {
     console.error('Error cargando pedidos disponibles desde grupos:', error);
   }
 
-  // Fallback: si no hay grupos densos (clusters), consultar directamente pedidos públicos disponibles
-  if (!Array.isArray(availableOrders) || availableOrders.length === 0) {
-    try {
-      let pubQuery = window.supabaseClient
-        .from('pedidos_publicos')
-        .select('*')
-        .in('estado', ['pendiente', 'visto']);
-      if (normCity) pubQuery = pubQuery.ilike('ciudad', normCity);
-      const { data: pubData } = await pubQuery;
-      if (Array.isArray(pubData)) {
-        availableOrders = pubData.filter(order => {
-          return typeof window.isOrderCategoryMatchingDriver !== 'function' ||
-            window.isOrderCategoryMatchingDriver(order.categoria, driverCategoria);
-        });
-        ordersError = null;
-      }
-    } catch(e) {
-      console.warn('Error en fallback de pedidos públicos para repartidor:', e);
+  // La agrupación sirve para el radar, pero nunca debe ocultar pedidos individuales.
+  // Un pedido recién creado normalmente todavía no pertenece a un grupo de demanda.
+  // Por eso siempre unimos la vista pública con los resultados de los clusters.
+  try {
+    let pubQuery = window.supabaseClient
+      .from('pedidos_publicos')
+      .select('*')
+      .in('estado', ['pendiente', 'visto']);
+    if (normCity) pubQuery = pubQuery.ilike('ciudad', normCity);
+    const { data: pubData, error: publicOrdersError } = await pubQuery;
+    if (publicOrdersError) throw publicOrdersError;
+
+    const ordersById = new Map();
+    (Array.isArray(availableOrders) ? availableOrders : []).forEach(order => {
+      if (order?.id) ordersById.set(order.id, order);
+    });
+    (Array.isArray(pubData) ? pubData : []).forEach(order => {
+      const categoryMatches = typeof window.isOrderCategoryMatchingDriver !== 'function' ||
+        window.isOrderCategoryMatchingDriver(order.categoria, driverCategoria);
+      if (order?.id && categoryMatches) ordersById.set(order.id, order);
+    });
+    availableOrders = Array.from(ordersById.values());
+    ordersError = null;
+  } catch(e) {
+    console.warn('Error consultando pedidos públicos para repartidor:', e);
+    if (!Array.isArray(availableOrders) || availableOrders.length === 0) {
+      ordersError = e;
     }
   }
 

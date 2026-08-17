@@ -1201,28 +1201,33 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-    v_uid text;
-    v_uuid uuid;
+  v_uuid uuid := auth.uid();
+  v_uid text;
+  v_email text;
 BEGIN
-    v_uuid := auth.uid();
-    v_uid := v_uuid::text;
+  IF v_uuid IS NULL THEN
+    RAISE EXCEPTION 'Usuario no autenticado';
+  END IF;
 
-    IF v_uuid IS NULL THEN
-        RAISE EXCEPTION 'Usuario no autenticado';
-    END IF;
+  v_uid := v_uuid::text;
+  SELECT LOWER(TRIM(COALESCE(email, ''))) INTO v_email
+  FROM auth.users
+  WHERE id = v_uuid;
 
-    DELETE FROM public.votos_registro WHERE user_id = v_uid;
-    DELETE FROM public.comentarios_avisos WHERE user_id = v_uid;
-    DELETE FROM public.avisos WHERE user_id = v_uid;
-    DELETE FROM public.pedidos WHERE user_id = v_uid OR driver_id = v_uid;
-    DELETE FROM public.rutas_repartidores WHERE user_id = v_uid;
-    DELETE FROM public.choferes_habilitados WHERE user_id = v_uid;
-    DELETE FROM public.anuncios_globales WHERE user_id = v_uid;
-    DELETE FROM public.denuncias WHERE user_id = v_uid OR denunciante_id = v_uid OR denunciado_id = v_uid;
-    DELETE FROM public.reportes_spam WHERE user_id = v_uid;
-    DELETE FROM public.usuarios_baneados WHERE user_id = v_uid;
-    DELETE FROM public.profiles WHERE id = v_uuid;
-    DELETE FROM auth.users WHERE id = v_uuid;
+  DELETE FROM public.votos_registro WHERE user_id = v_uid;
+  DELETE FROM public.comentarios_avisos WHERE user_id = v_uid;
+  DELETE FROM public.avisos WHERE user_id = v_uid;
+  DELETE FROM public.pedidos WHERE user_id = v_uid OR driver_id = v_uid;
+  DELETE FROM public.rutas_repartidores WHERE user_id = v_uid;
+  DELETE FROM public.choferes_habilitados WHERE user_id = v_uid;
+  DELETE FROM public.anuncios_globales WHERE user_id = v_uid;
+  DELETE FROM public.denuncias WHERE user_id = v_uid OR denunciante_id = v_uid OR denunciado_id = v_uid;
+  DELETE FROM public.reportes_spam WHERE user_id = v_uid;
+  DELETE FROM public.usuarios_baneados
+  WHERE user_id = v_uid
+     OR (v_email <> '' AND LOWER(TRIM(COALESCE(email, ''))) = v_email);
+  DELETE FROM public.profiles WHERE id = v_uuid;
+  DELETE FROM auth.users WHERE id = v_uuid;
 END;
 $$;
 
