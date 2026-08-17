@@ -461,8 +461,9 @@ document.addEventListener('click', (e) => {
     else if (action === 'borrarRepartidorPermanente') {
       const id = btn.getAttribute('data-id');
       const userId = btn.getAttribute('data-user-id');
+      const gmail = btn.getAttribute('data-gmail') || '';
       const name = decodeURIComponent(btn.getAttribute('data-name') || '');
-      if (typeof window.borrarRepartidorPermanente === 'function') window.borrarRepartidorPermanente(id, userId, name);
+      if (typeof window.borrarRepartidorPermanente === 'function') window.borrarRepartidorPermanente(id, userId, name, gmail);
     }
     else if (action === 'banearCompradorAdmin') {
       const userId = btn.getAttribute('data-id');

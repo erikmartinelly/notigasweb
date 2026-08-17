@@ -580,7 +580,7 @@ function renderFinalVendors(defaultVendors, deletedIds, buyersList = [], usersLo
 
           `}
 
-          <button data-action="borrarRepartidorPermanente" data-id="${v.id}" data-user-id="${escapeHtmlStr(v.user_id || '')}" data-name="${safeName}" style="background:#D32F2F; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Eliminar</button>
+          <button data-action="borrarRepartidorPermanente" data-id="${v.id}" data-user-id="${escapeHtmlStr(v.user_id || '')}" data-gmail="${escapeHtmlStr(v.gmail || '')}" data-name="${safeName}" style="background:#D32F2F; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Eliminar</button>
 
         </div>
 

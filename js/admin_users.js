@@ -149,8 +149,8 @@ async function desbanearRepartidorAdmin(vendorUserId, vendorName) {
   }
 }
 
-window.borrarRepartidorPermanente = function(vendorId, vendorUserId, vendorName) {
-  const safeName = vendorName || 'este repartidor';
+window.borrarRepartidorPermanente = function(vendorId, vendorUserId, vendorName, vendorEmail = '') {
+  const safeName = vendorName || vendorEmail || 'este repartidor';
   const cleanDriverId = String(vendorId || '').replace(/^driver_/, '');
 
   const doDelete = async () => {
@@ -164,9 +164,12 @@ window.borrarRepartidorPermanente = function(vendorId, vendorUserId, vendorName)
     let deleted = false;
     let lastError = null;
 
-    // 1. Si tenemos vendorUserId válido (auth.uid), borrar toda la cuenta y tablas
-    if (vendorUserId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(vendorUserId)) {
-      const { error } = await window.supabaseClient.rpc('rpc_admin_delete_user', { p_user_id: vendorUserId });
+    // 1. Intentar borrar con rpc_admin_delete_user usando ID o email
+    if (vendorUserId || vendorEmail) {
+      const { error } = await window.supabaseClient.rpc('rpc_admin_delete_user', { 
+        p_user_id: vendorUserId || '',
+        p_email: vendorEmail || null
+      });
       if (!error) {
         deleted = true;
       } else {
@@ -220,13 +223,15 @@ window.borrarRepartidorPermanente = function(vendorId, vendorUserId, vendorName)
 };
 
 window.banearCompradorAdmin = async function(userId, email, nombre) {
-  if (!userId || !window.supabaseClient) {
-    if (typeof showToast === 'function') showToast('❌ Error', 'Falta el identificador real del comprador.', 'error', 4500);
+  if (!userId && !email) {
+    if (typeof showToast === 'function') showToast('❌ Error', 'Falta el identificador del comprador.', 'error', 4500);
     return;
   }
 
+  if (!window.supabaseClient) return;
+
   const { error } = await window.supabaseClient.from('usuarios_baneados').insert([{
-    user_id: userId,
+    user_id: userId || email,
     email: email || null,
     nombre: nombre || null,
     motivo: 'Baneado por Administrador'
@@ -239,18 +244,18 @@ window.banearCompradorAdmin = async function(userId, email, nombre) {
 
   await descargarBaneadosDeSupabase();
   if (typeof renderAdminVendorsList === 'function') renderAdminVendorsList();
-  if (typeof showToast === 'function') showToast('🚫 Comprador Baneado', `Se bloqueó el acceso de "${nombre}".`, 'success', 4000);
+  if (typeof showToast === 'function') showToast('🚫 Comprador Baneado', `Se bloqueó el acceso de "${nombre || email}".`, 'success', 4000);
 };
 
 window.borrarCompradorPermanente = function(userId, gmail, nombre) {
   const safeName = nombre || gmail || 'este comprador';
-  if (!userId) {
-    if (typeof showToast === 'function') showToast('❌ Error', 'Falta el identificador del usuario comprador.', 'error', 4500);
+  if (!userId && !gmail) {
+    if (typeof showToast === 'function') showToast('❌ Error', 'Falta el identificador o correo del usuario comprador.', 'error', 4500);
     return;
   }
 
   const doDelete = async () => {
-    await ejecutarBorradoUsuarioCompleto(userId, safeName, 'comprador');
+    await ejecutarBorradoUsuarioCompleto(userId, safeName, 'comprador', '', gmail);
   };
 
   if (typeof showConfirmModal === 'function') {
@@ -260,12 +265,15 @@ window.borrarCompradorPermanente = function(userId, gmail, nombre) {
   }
 };
 
-async function ejecutarBorradoUsuarioCompleto(userId, nombre, tipo, vendorId = '') {
+async function ejecutarBorradoUsuarioCompleto(userId, nombre, tipo, vendorId = '', email = '') {
   if (!window.supabaseClient) return;
 
   if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Eliminando usuario...');
 
-  const { error } = await window.supabaseClient.rpc('rpc_admin_delete_user', { p_user_id: userId });
+  const { error } = await window.supabaseClient.rpc('rpc_admin_delete_user', { 
+    p_user_id: userId || '',
+    p_email: email || null
+  });
 
   if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
 
@@ -288,10 +296,13 @@ async function ejecutarBorradoUsuarioCompleto(userId, nombre, tipo, vendorId = '
   if (typeof renderAdminVendorsList === 'function') renderAdminVendorsList();
   if (typeof renderAdminDashboardKPIs === 'function') renderAdminDashboardKPIs();
   if (typeof renderVendorCards === 'function') renderVendorCards('TODOS');
+
   if (typeof showToast === 'function') {
-    showToast('🗑️ Cuenta eliminada', `${tipo === 'repartidor' ? 'El repartidor' : 'El comprador'} "${nombre}" y todos sus datos fueron eliminados.`, 'success', 5000);
+    showToast('🗑️ Usuario Eliminado', `El ${tipo} "${nombre}" y todos sus datos fueron eliminados definitivamente.`, 'success', 5000);
   }
 }
+
+
 function verificarBloqueoAppUsuario() {
   try {
     const saved = JSON.stringify(AppState.get('userData') || {});
