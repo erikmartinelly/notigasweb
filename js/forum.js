@@ -73,6 +73,7 @@ async function renderForumFeed() {
   }
 
   let html = '';
+  const adInsertAfterIndex = Math.max(0, Math.ceil(localPosts.length / 2) - 1);
   localPosts.forEach((post, index) => {
     // FIX: Obtener contador de la relación Supabase
     const commentCount = (post.comentarios_avisos && post.comentarios_avisos[0]) ? post.comentarios_avisos[0].count : 0;
@@ -106,8 +107,8 @@ async function renderForumFeed() {
       </div>
     `;
 
-    // Google AdSense va dentro del feed, despues del primer aviso gratuito.
-    if (index === 0 && typeof window.getAdSenseFeedMarkup === 'function') {
+    // Google AdSense va exactamente en medio de los avisos gratuitos visibles.
+    if (index === adInsertAfterIndex && typeof window.getAdSenseFeedMarkup === 'function') {
       html += window.getAdSenseFeedMarkup('forum');
     }
   });

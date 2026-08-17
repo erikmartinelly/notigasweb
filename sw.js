@@ -1,24 +1,24 @@
-/* NOTIGAS SERVICE WORKER v83.0 - CACHÉ PROGRESIVO Y MODO OFFLINE */
-const CACHE_NAME = 'notigas-cache-v83';
+/* NOTIGAS SERVICE WORKER v84.0 - CACHÉ PROGRESIVO Y MODO OFFLINE */
+const CACHE_NAME = 'notigas-cache-v84';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './styles/main.css?v=83',
-  './js/state.js?v=83',
-  './js/ui.js?v=83',
-  './js/supabase-config.js?v=83',
-  './js/auth.js?v=83',
-  './js/vendors.js?v=83',
-  './js/map.js?v=83',
-  './js/map_search.js?v=83',
-  './js/map_gps.js?v=83',
-  './js/forum.js?v=83',
-  './js/ads.js?v=83',
-  './js/orders.js?v=83',
-  './js/admin.js?v=83',
-  './js/admin_users.js?v=83',
-  './js/app.js?v=83',
-  './js/events.js?v=83',
+  './styles/main.css?v=84',
+  './js/state.js?v=84',
+  './js/ui.js?v=84',
+  './js/supabase-config.js?v=84',
+  './js/auth.js?v=84',
+  './js/vendors.js?v=84',
+  './js/map.js?v=84',
+  './js/map_search.js?v=84',
+  './js/map_gps.js?v=84',
+  './js/forum.js?v=84',
+  './js/ads.js?v=84',
+  './js/orders.js?v=84',
+  './js/admin.js?v=84',
+  './js/admin_users.js?v=84',
+  './js/app.js?v=84',
+  './js/events.js?v=84',
   './icons/garrafa_red_clean.svg',
   './icons/garrafa_red-192.png',
   './icons/garrafa_red-512.png',
@@ -57,27 +57,11 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   if (!event.request.url.startsWith('http')) return; // Prevenir errores con extensiones de Chrome (chrome-extension://)
-  
-  const url = event.request.url;
-  // Bypass: peticiones externas, mapas y Supabase (autenticación/realtime nunca deben cachearse)
-  if (
-    url.includes('google.com') ||
-    url.includes('googleusercontent.com') ||
-    url.includes('openstreetmap.org') ||
-    url.includes('cartocdn.com') ||
-    url.includes('cloudflare.com') ||
-    url.includes('supabase.co') ||
-    url.includes('ipapi') ||
-    url.includes('ipwho') ||
-    url.includes('freeipapi') ||
-    url.includes('osrm.org') ||
-    url.includes('komoot.io') ||
-    url.includes('jsdelivr.net') ||
-    url.includes('unpkg.com') ||
-    url.includes('accounts.google.com')
-  ) {
-    return;
-  }
+
+  // Solo cachear archivos propios. Auth, Supabase, mapas, CDNs y AdSense deben
+  // comunicarse directamente con sus servidores y nunca pasar por la caché PWA.
+  const requestUrl = new URL(event.request.url);
+  if (requestUrl.origin !== self.location.origin) return;
 
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {

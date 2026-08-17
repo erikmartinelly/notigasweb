@@ -198,16 +198,14 @@ function switchModalTab(idx) {
 function cargarConfiguracionPublicidadEnAdmin() {
   const modeSelect = document.getElementById('selectAdsMode');
   const pubInput = document.getElementById('inputAdSensePubId');
-  const slotFooterInput = document.getElementById('inputAdSenseSlotFooter');
+  const slotVendorsInput = document.getElementById('inputAdSenseSlotVendors');
   const slotForumInput = document.getElementById('inputAdSenseSlotForum');
-  const slotMapInput = document.getElementById('inputAdSenseSlotMap');
 
   if (window.ADS_CONFIG) {
-    if (modeSelect) modeSelect.value = window.ADS_CONFIG.mode || 'hybrid';
+    if (modeSelect) modeSelect.value = window.ADS_CONFIG.mode === 'adsense' ? 'hybrid' : (window.ADS_CONFIG.mode || 'hybrid');
     if (pubInput) pubInput.value = window.ADS_CONFIG.publisherId || 'ca-pub-2502415561017945';
-    if (slotFooterInput) slotFooterInput.value = window.ADS_CONFIG.slotFooter || '';
+    if (slotVendorsInput) slotVendorsInput.value = window.ADS_CONFIG.slotVendors || '';
     if (slotForumInput) slotForumInput.value = window.ADS_CONFIG.slotForum || '';
-    if (slotMapInput) slotMapInput.value = window.ADS_CONFIG.slotMap || '';
   }
 }
 
@@ -480,10 +478,12 @@ window.restaurarBaseDatosPorDefecto = function() {
   }
 };
 
-function renderAdminVendorsList() {
+async function renderAdminVendorsList() {
   const container = document.getElementById('adminVendorsListContainer');
 
   if (!container) return;
+
+  container.innerHTML = '<div style="color:#94A3B8; text-align:center; padding:16px;">Cargando usuarios y repartidores...</div>';
 
   let deletedIds = [];
 
@@ -494,46 +494,47 @@ function renderAdminVendorsList() {
 
   } catch(e){}
 
-  const defaultVendors = [];
-
-  if (window.supabaseClient) {
-      window.supabaseClient.from('choferes_habilitados').select('*').then(({ data, error }) => {
-          if (error) { console.error('Error cargando choferes_habilitados:', error); return; }
-
-          if (data && data.length > 0) {
-              data.forEach(d => {
-                  defaultVendors.unshift({
-                      id: `driver_${d.id}`,
-
-                      user_id: d.user_id, // FIX: id real de Supabase Auth, necesario para banear correctamente
-
-                      name: d.nombre_completo,
-
-                      category: d.categoria || 'Gas GLP',
-
-                      plate: d.placa || 'Placa registrada',
-
-                      whatsapp: d.telefono_whatsapp || '',
-
-                      verified: d.estado_verificacion === 'aprobado'
-
-                  });
-
-              });
-
-          }
-
-          renderFinalVendors(defaultVendors, deletedIds);
-
-      });
-
-  } else {
-      renderFinalVendors(defaultVendors, deletedIds);
-
+  if (!window.supabaseClient) {
+    renderFinalVendors([], deletedIds, []);
+    return;
   }
+
+  const [driversResult, usersResult] = await Promise.all([
+    window.supabaseClient.from('choferes_habilitados').select('*').order('created_at', { ascending: false }),
+    window.supabaseClient.rpc('rpc_admin_list_users')
+  ]);
+
+  if (driversResult.error) console.error('Error cargando choferes_habilitados:', driversResult.error);
+  if (usersResult.error) console.error('Error cargando usuarios administrativos:', usersResult.error);
+
+  const users = Array.isArray(usersResult.data) ? usersResult.data : [];
+  const usersById = new Map(users.map(user => [String(user.user_id || ''), user]));
+  const defaultVendors = (driversResult.data || []).map(driver => {
+    const linkedUser = usersById.get(String(driver.user_id || ''));
+    return {
+      id: `driver_${driver.id}`,
+      user_id: driver.user_id,
+      name: driver.nombre_completo,
+      category: driver.categoria || 'Gas GLP',
+      plate: driver.placa || 'Placa registrada',
+      whatsapp: driver.telefono_whatsapp || '',
+      is_banned: !!(linkedUser && linkedUser.is_banned)
+    };
+  });
+  const buyersList = users
+    .filter(user => !user.is_driver)
+    .map(user => ({
+      user_id: user.user_id,
+      gmail: user.email || '',
+      nombre: user.nombre || user.email || 'Usuario',
+      role: user.role || 'vecino',
+      is_banned: !!user.is_banned
+    }));
+
+  renderFinalVendors(defaultVendors, deletedIds, buyersList, usersResult.error);
 }
 
-function renderFinalVendors(defaultVendors, deletedIds) {
+function renderFinalVendors(defaultVendors, deletedIds, buyersList = [], usersLoadError = null) {
   const container = document.getElementById('adminVendorsListContainer');
 
   if (!container) return;
@@ -542,8 +543,12 @@ function renderFinalVendors(defaultVendors, deletedIds) {
 
   let html = `<div style="font-weight:900; color:#FF6D00; margin-bottom:6px; font-size:11.5px;"><i class="fa-solid fa-truck-fast"></i> 🚛 REPARTIDORES Y NEGOCIOS DEL SISTEMA:</div>`;
 
+  if (finalVendors.length === 0) {
+    html += '<div style="color:#64748B; font-style:italic; font-size:10.5px; margin-bottom:8px;">No hay repartidores registrados.</div>';
+  }
+
   finalVendors.forEach((v) => {
-    const isBanned = esRepartidorBaneado(v.name, v.plate, v.whatsapp);
+    const isBanned = v.is_banned || esRepartidorBaneado(v.name, v.plate, v.whatsapp, v.user_id);
 
     const safeName = encodeURIComponent(v.name || '').replace(/'/g, "%27");
 
@@ -555,21 +560,15 @@ function renderFinalVendors(defaultVendors, deletedIds) {
 
         <div>
 
-          <strong style="color:${isBanned ? '#EF4444' : '#FF6D00'}; font-size:12px;">${isBanned ? '🚫 [BLOQUEADO/BANEADO] ' : (v.verified ? '👑 ' : '')}${escapeHtmlStr(v.name)}</strong>
+          <strong style="color:${isBanned ? '#EF4444' : '#FF6D00'}; font-size:12px;">${isBanned ? '🚫 [BLOQUEADO/BANEADO] ' : '🚚 '}${escapeHtmlStr(v.name)}</strong>
 
           <span style="font-size:10.5px; color:#CBD5E1;"> (${escapeHtmlStr(v.category)})</span>
 
-          <div style="font-size:10px; color:#94A3B8; margin-top:2px;">Placa: ${escapeHtmlStr(v.plate)} • Estado: ${isBanned ? '<span style="color:#EF4444; font-weight:700;">ACCESO BLOQUEADO</span>' : (v.verified ? '<span style="color:#00B0FF; font-weight:700;">ACTIVO/APROBADO</span>' : '<span style="color:#F57F17; font-weight:700;">PENDIENTE</span>')}</div>
+          <div style="font-size:10px; color:#94A3B8; margin-top:2px;">Placa: ${escapeHtmlStr(v.plate)} • Estado: ${isBanned ? '<span style="color:#EF4444; font-weight:700;">ACCESO BLOQUEADO</span>' : '<span style="color:#00B0FF; font-weight:700;">ACTIVO (REGISTRO AUTOMÁTICO)</span>'}</div>
 
         </div>
 
         <div style="display:flex; gap:4px;">
-
-          ${!v.verified && !isBanned ? `
-
-            <button data-action="aprobarRepartidorAdmin" data-id="${v.id}" style="background:#4CAF50; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-check"></i> Aprobar</button>
-
-          ` : ''}
 
           ${isBanned ? `
 
@@ -581,7 +580,7 @@ function renderFinalVendors(defaultVendors, deletedIds) {
 
           `}
 
-          <button data-action="borrarRepartidorPermanente" data-id="${v.id}" data-name="${safeName}" style="background:#D32F2F; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Eliminar</button>
+          <button data-action="borrarRepartidorPermanente" data-id="${v.id}" data-user-id="${escapeHtmlStr(v.user_id || '')}" data-name="${safeName}" style="background:#D32F2F; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Eliminar</button>
 
         </div>
 
@@ -595,34 +594,15 @@ function renderFinalVendors(defaultVendors, deletedIds) {
 
   html += `<div style="font-weight:900; color:#38BDF8; margin:12px 0 6px; font-size:11.5px;"><i class="fa-solid fa-users"></i> 👤 COMPRADORES Y USUARIOS VECINALES:</div>`;
 
-  let buyersList = [];
-
-  if (typeof databaseEmails !== 'undefined' && Array.isArray(databaseEmails)) {
-    buyersList = databaseEmails.filter(e => e.role === 'Cliente' || e.role === 'vecino' || !e.role);
-
-  }
-
-  try {
-    const saved = JSON.stringify(AppState.get('userData') || {});
-
-    if (saved) {
-      const u = JSON.parse(saved);
-
-      if (u.role !== 'repartidor' && u.gmail && !buyersList.some(b => b.gmail === u.gmail)) {
-        buyersList.unshift({ gmail: u.gmail, role: 'Comprador Vecinal', nombre: u.nombre || 'Usuario' });
-
-      }
-
-    }
-
-  } catch(e){}
-
-  if (buyersList.length === 0) {
+  if (usersLoadError) {
+    html += '<div style="color:#FCA5A5; background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.3); border-radius:8px; padding:8px; font-size:10.5px;">No se pudo consultar la lista real de compradores. Ejecuta la migración 044 en Supabase y vuelve a abrir el panel.</div>';
+  } else if (buyersList.length === 0) {
     html += '<div style="color:#64748B; font-style:italic; font-size:10.5px;">No hay compradores registrados aún.</div>';
 
   } else {
     buyersList.forEach(b => {
-      const isBanned = esRepartidorBaneado(b.nombre || '', '', '', b.gmail);
+      const isBanned = b.is_banned || esRepartidorBaneado(b.nombre || '', '', '', b.user_id || b.gmail);
+      const safeBuyerName = encodeURIComponent(b.nombre || b.gmail || 'Usuario').replace(/'/g, '%27');
 
       html += `
 
@@ -637,8 +617,8 @@ function renderFinalVendors(defaultVendors, deletedIds) {
           </div>
 
           <div style="display:flex; gap:4px;">
-            <button data-action="${isBanned ? 'desbanearUsuarioAdmin' : 'banearUsuarioAdmin'}" data-gmail="${escapeHtmlStr(b.gmail)}" data-id="${escapeHtmlStr(b.gmail)}" style="background:${isBanned ? '#0288D1' : '#E65100'}; color:white; border:none; padding:4px 8px; border-radius:6px; font-weight:800; font-size:9px; cursor:pointer;">${isBanned ? '🔓 Desbanear' : '🚫 Banear'}</button>
-            <button data-action="borrarCompradorPermanente" data-gmail="${escapeHtmlStr(b.gmail)}" data-name="${escapeHtmlStr(b.nombre || b.gmail)}" style="background:#D32F2F; color:white; border:none; padding:4px 8px; border-radius:6px; font-weight:800; font-size:9px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Eliminar</button>
+            <button data-action="${isBanned ? 'desbanearUsuarioAdmin' : 'banearCompradorAdmin'}" data-gmail="${escapeHtmlStr(b.gmail)}" data-id="${escapeHtmlStr(b.user_id || '')}" data-name="${safeBuyerName}" style="background:${isBanned ? '#0288D1' : '#E65100'}; color:white; border:none; padding:4px 8px; border-radius:6px; font-weight:800; font-size:9px; cursor:pointer;">${isBanned ? '🔓 Desbanear' : '🚫 Banear'}</button>
+            <button data-action="borrarCompradorPermanente" data-user-id="${escapeHtmlStr(b.user_id || '')}" data-gmail="${escapeHtmlStr(b.gmail)}" data-name="${safeBuyerName}" style="background:#D32F2F; color:white; border:none; padding:4px 8px; border-radius:6px; font-weight:800; font-size:9px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Eliminar</button>
           </div>
 
         </div>
@@ -678,7 +658,7 @@ async function renderAdminOrdersList() {
 
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
 
-      <span style="font-size:11px; color:#94A3B8;">Inspecciona todos los pedidos y alertas activas en el mapa:</span>
+      <span style="font-size:11px; color:#94A3B8;">Control total de pedidos: renovar, reabrir o eliminar:</span>
 
       <button data-action="limpiarTodosLosPedidosFantasmaAdmin" style="background:#D32F2F; color:white; border:none; padding:5px 10px; border-radius:6px; font-weight:800; font-size:10px; cursor:pointer;"><i class="fa-solid fa-broom"></i> 🧹 Limpiar Pedidos de Prueba/Caché</button>
 
@@ -695,31 +675,31 @@ async function renderAdminOrdersList() {
 
       .select('*').order('created_at', { ascending: false }).limit(500);
 
-    if (pedidos && pedidos.length > 0) {
-      const pedidosActivos = pedidos.filter(p => p.estado !== 'entregado');
+    if (error) {
+      console.error('Error cargando pedidos para administración:', error);
+      html += '<div style="color:#B91C1C; background:#FEE2E2; border-radius:8px; padding:10px; margin-bottom:8px; font-size:11px;">No se pudo consultar la lista de pedidos.</div>';
+    }
 
-      pedidosActivos.forEach(order => {
+    if (pedidos && pedidos.length > 0) {
+      pedidos.forEach(order => {
         totalCount++;
 
         const orderDate = order.created_at ? new Date(order.created_at).getTime() : Date.now();
 
-        const mins = Math.floor((Date.now() - orderDate) / 60000);
+        const mins = Number.isFinite(orderDate) ? Math.max(0, Math.floor((Date.now() - orderDate) / 60000)) : 0;
 
-        let estadoBadge = '';
-
-        let borderColor = '#56BC37';
-
-        if (order.estado === 'asignado') {
-           estadoBadge = `<span style="font-size:10px; background:#F57F17; color:white; padding:3px 6px; border-radius:4px; font-weight:800;">👀 Visto (Driver: ${order.driver_id ? order.driver_id.substring(0,6) : 'N/A'})</span>`;
-
-           borderColor = '#F57F17';
-
-        } else {
-           estadoBadge = `<span style="font-size:10px; background:rgba(86,188,55,0.2); color:#56BC37; padding:2px 6px; border-radius:4px; font-weight:700;">⏱ Hace ${mins} min</span>`;
-
-        }
-
-        const isFantasmaOrExpired = order.estado === 'fantasma' || mins > 120;
+        const statusConfig = {
+          pendiente: { label: '⏳ Pendiente', color: '#56BC37' },
+          visto: { label: '👀 Visto', color: '#0288D1' },
+          asignado: { label: '🚚 Asignado', color: '#F57F17' },
+          entregado: { label: '✅ Entregado', color: '#15803D' },
+          cancelado: { label: '⛔ Cancelado', color: '#64748B' }
+        };
+        const currentStatus = statusConfig[order.estado] || { label: escapeHtmlStr(order.estado || 'Sin estado'), color: '#64748B' };
+        const borderColor = currentStatus.color;
+        const estadoBadge = `<span style="font-size:10px; background:${borderColor}; color:white; padding:3px 6px; border-radius:4px; font-weight:800;">${currentStatus.label}</span>`;
+        const latitude = Number(order.latitude);
+        const longitude = Number(order.longitude);
 
         html += `
 
@@ -735,7 +715,7 @@ async function renderAdminOrdersList() {
 
             <div style="font-size:11.5px; color:#2F3C45; margin-top:6px;">
 
-              <strong>Estado DB:</strong> ${order.estado}<br>
+              <strong>Estado DB:</strong> ${escapeHtmlStr(order.estado || 'Sin estado')} • Hace ${mins} min<br>
 
               <strong>Producto:</strong> ${escapeHtmlStr(order.categoria || 'Gas')} (${escapeHtmlStr(order.cantidad || '1 un')})<br>
 
@@ -743,19 +723,19 @@ async function renderAdminOrdersList() {
 
               <strong>Teléfono:</strong> <span style="color:${borderColor}; font-weight:800;">${escapeHtmlStr(order.telefono || 'No especificado')}</span><br>
 
-              <span style="font-size:10px; color:#64748B;">Coordenadas: Lat ${order.lat ? order.lat.toFixed(5) : '-'}, Lng ${order.lng ? order.lng.toFixed(5) : '-'}</span>
+              <span style="font-size:10px; color:#64748B;">Coordenadas: Lat ${Number.isFinite(latitude) ? latitude.toFixed(5) : '-'}, Lng ${Number.isFinite(longitude) ? longitude.toFixed(5) : '-'}</span>
+              ${order.driver_id ? `<br><span style="font-size:10px; color:#64748B;">Repartidor: ${escapeHtmlStr(String(order.driver_id).substring(0, 8))}...</span>` : ''}
 
             </div>
 
-            ${isFantasmaOrExpired ? `
-
-            <button data-action="borrarPedidoFantasmaAdmin" data-type="supabase" data-id="${order.id}" style="margin-top:8px; width:100%; background:linear-gradient(135deg, #D32F2F, #B71C1C); color:white; border:none; padding:6px 12px; border-radius:8px; font-weight:800; font-size:11px; cursor:pointer;">
-
-              <i class="fa-solid fa-trash-can"></i> 🗑️ Borrar Pedido Corrupto/Expirado
-
-            </button>
-
-            ` : ''}
+            <div style="display:flex; gap:6px; margin-top:8px;">
+              <button data-action="renovarPedidoAdmin" data-id="${escapeHtmlStr(order.id)}" style="flex:1; background:#0288D1; color:white; border:none; padding:7px 10px; border-radius:8px; font-weight:800; font-size:10.5px; cursor:pointer;">
+                <i class="fa-solid fa-rotate"></i> Renovar / Reabrir
+              </button>
+              <button data-action="borrarPedidoFantasmaAdmin" data-type="supabase" data-id="${escapeHtmlStr(order.id)}" style="flex:1; background:linear-gradient(135deg, #D32F2F, #B71C1C); color:white; border:none; padding:7px 10px; border-radius:8px; font-weight:800; font-size:10.5px; cursor:pointer;">
+                <i class="fa-solid fa-trash-can"></i> Eliminar
+              </button>
+            </div>
 
           </div>
 
@@ -889,6 +869,7 @@ async function renderAdminOrdersList() {
 
 async function borrarPedidoFantasmaAdmin(tipo, param = null) {
   if (tipo === 'supabase' && window.supabaseClient && param) {
+    if (!confirm('⚠️ ¿Eliminar permanentemente este pedido? Esta acción no se puede deshacer.')) return;
     const { error } = await window.supabaseClient.from('pedidos').delete().eq('id', param);
 
     if (error) {
@@ -936,6 +917,27 @@ async function borrarPedidoFantasmaAdmin(tipo, param = null) {
   }
 }
 
+async function renovarPedidoAdmin(orderId) {
+  if (!orderId || !window.supabaseClient) return;
+  if (!confirm('¿Renovar este pedido? Volverá a estado pendiente, quedará sin repartidor asignado y comenzará un nuevo plazo.')) return;
+
+  const { error } = await window.supabaseClient.rpc('rpc_admin_renew_order', { p_order_id: orderId });
+  if (error) {
+    console.error('Error renovando pedido:', error);
+    if (typeof showToast === 'function') {
+      showToast('❌ No se pudo renovar', error.message || 'Verifica que la migración 044 esté aplicada en Supabase.', 'error', 5500);
+    }
+    return;
+  }
+
+  await renderAdminOrdersList();
+  if (typeof renderActiveOrdersMap === 'function') renderActiveOrdersMap();
+  if (typeof renderAdminDashboardKPIs === 'function') renderAdminDashboardKPIs();
+  if (typeof showToast === 'function') {
+    showToast('🔄 Pedido renovado', 'El pedido volvió a estado pendiente y ya puede ser tomado por un repartidor.', 'success', 4500);
+  }
+}
+
 function limpiarTodosLosPedidosFantasmaAdmin() {
   if (typeof showConfirmModal === 'function') {
     showConfirmModal('🧹', '¿Limpiar Pedidos de Prueba/Caché?', 'Se eliminarán de inmediato todos los pedidos activos en caché y reportes del mapa. No afectará los pedidos reales.', 'Sí, limpiar', () => {
@@ -979,7 +981,7 @@ async function ejecutarLimpiezaTotalPedidos() {
   renderAdminDashboardKPIs();
 
   if (typeof showToast === 'function') {
-    showToast('✨ Limpieza Total', 'Todos los pedidos y alertas han sido eliminados.', 'success', 3000);
+    showToast('✨ Caché limpiada', 'Se eliminaron el pedido local y las alertas guardadas en este dispositivo. Los pedidos reales no fueron afectados.', 'success', 4000);
 
   }
 }
@@ -996,30 +998,42 @@ async function guardarSubmenuAnuncios() {
 
   }
 
+  const inputAd = (document.getElementById('inputAdText')?.value || '').trim();
+  const inputUrl = (document.getElementById('inputAdUrl')?.value || '').trim();
+  if (inputUrl && typeof getSafeExternalUrl === 'function' && !getSafeExternalUrl(inputUrl)) {
+    if (typeof showToast === 'function') {
+      showToast('⚠️ Enlace inválido', 'El anuncio local solo admite enlaces http o https.', 'warning', 4000);
+    }
+    return;
+  }
+
   // 1. Guardar configuración de Google AdSense (Publisher ID, slots y modo)
   const adsMode = document.getElementById('selectAdsMode')?.value || 'hybrid';
   const adsensePubId = (document.getElementById('inputAdSensePubId')?.value || '').trim();
-  const adsenseSlotFooter = (document.getElementById('inputAdSenseSlotFooter')?.value || '').trim();
+  const adsenseSlotVendors = (document.getElementById('inputAdSenseSlotVendors')?.value || '').trim();
   const adsenseSlotForum = (document.getElementById('inputAdSenseSlotForum')?.value || '').trim();
-  const adsenseSlotMap = (document.getElementById('inputAdSenseSlotMap')?.value || '').trim();
 
   if (typeof guardarConfiguracionPublicidad === 'function') {
-    guardarConfiguracionPublicidad({
+    const adSenseResult = await guardarConfiguracionPublicidad({
       mode: adsMode,
       publisherId: adsensePubId,
-      slotFooter: adsenseSlotFooter,
-      slotForum: adsenseSlotForum,
-      slotMap: adsenseSlotMap
+      slotVendors: adsenseSlotVendors,
+      slotForum: adsenseSlotForum
     });
+    if (!adSenseResult || !adSenseResult.ok) {
+      const reason = adSenseResult && adSenseResult.error
+        ? adSenseResult.error
+        : 'No se pudo guardar la configuración global de Google AdSense.';
+      if (typeof showToast === 'function') showToast('❌ Publicidad no guardada', reason, 'error', 5000);
+      return;
+    }
   }
-
-  const inputAd = (document.getElementById('inputAdText')?.value || '').trim();
-
-  const inputUrl = (document.getElementById('inputAdUrl')?.value || '').trim();
 
   const activeCity = AppState.get('city');
   if (!activeCity) {
-    if (typeof showToast === 'function') showToast('⚠️ Ciudad Requerida', 'Debes seleccionar una ciudad activa antes de guardar el anuncio.', 'warning', 3000);
+    if (typeof showToast === 'function') {
+      showToast('✅ Google AdSense guardado', 'La publicidad de las pestañas quedó guardada. Selecciona una ciudad para configurar también el anuncio local inferior.', 'success', 5000);
+    }
     return;
   }
 
@@ -1085,7 +1099,7 @@ async function guardarSubmenuAnuncios() {
 
       closeAdminModal();
 
-      if (typeof showToast === 'function') { showToast('Notificación', '📢 CONFIGURACIÓN DE PUBLICIDAD GUARDADA\n\nLos cambios en anuncios locales para esta ciudad ya están activos.', 'info', 4000); } else { alert('📢 CONFIGURACIÓN DE PUBLICIDAD GUARDADA\n\nLos cambios en anuncios locales para esta ciudad ya están activos.'); };
+      if (typeof showToast === 'function') { showToast('✅ Publicidad guardada', 'Google AdSense quedó configurado dentro de Repartidores y Avisos Gratis. El anuncio local de esta ciudad permanece en la parte inferior.', 'success', 5000); } else { alert('Publicidad guardada correctamente.'); };
 
     } catch (e) {
       console.error("Error al guardar anuncio:", e);
@@ -1718,7 +1732,7 @@ window.desbanearUsuarioAdmin = (typeof desbanearUsuarioAdmin !== 'undefined') ? 
 window.borrarDenunciaAdmin = (typeof borrarDenunciaAdmin !== 'undefined') ? borrarDenunciaAdmin : undefined;
 window.limpiarTodosLosPedidosFantasmaAdmin = (typeof limpiarTodosLosPedidosFantasmaAdmin !== 'undefined') ? limpiarTodosLosPedidosFantasmaAdmin : undefined;
 window.borrarPedidoFantasmaAdmin = (typeof borrarPedidoFantasmaAdmin !== 'undefined') ? borrarPedidoFantasmaAdmin : undefined;
-window.aprobarRepartidorAdmin = (typeof aprobarRepartidorAdmin !== 'undefined') ? aprobarRepartidorAdmin : (typeof window.aprobarRepartidorAdmin !== 'undefined' ? window.aprobarRepartidorAdmin : undefined);
+window.renovarPedidoAdmin = (typeof renovarPedidoAdmin !== 'undefined') ? renovarPedidoAdmin : undefined;
 window.desbanearRepartidorAdmin = (typeof desbanearRepartidorAdmin !== 'undefined') ? desbanearRepartidorAdmin : (typeof window.desbanearRepartidorAdmin !== 'undefined' ? window.desbanearRepartidorAdmin : undefined);
 window.banearRepartidorAdmin = (typeof banearRepartidorAdmin !== 'undefined') ? banearRepartidorAdmin : (typeof window.banearRepartidorAdmin !== 'undefined' ? window.banearRepartidorAdmin : undefined);
 window.borrarPostForumAdmin = (typeof borrarPostForumAdmin !== 'undefined') ? borrarPostForumAdmin : undefined;

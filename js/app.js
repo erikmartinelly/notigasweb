@@ -270,7 +270,7 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
   if (!favEl) return;
 
   if (!categoria && !estado) {
-    favEl.href = "icons/garrafa_red-192.png?v=83";
+    favEl.href = "icons/garrafa_red-192.png?v=84";
     document.title = "NOTIGAS - Plataforma Vecinal en Vivo";
     return;
   }
@@ -283,7 +283,7 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
   else if (estado === 'cancelado' || estado === 'entregado') color = "#00E676"; // final = verde
 
   if (cat.includes('gas')) {
-    favEl.href = "icons/garrafa_red-192.png?v=83";
+    favEl.href = "icons/garrafa_red-192.png?v=84";
     document.title = "🔥 Pedido Activo: Garrafa de Gas GLP - NOTIGAS";
   } else if (cat.includes('detergente') || cat.includes('limpieza')) {
     favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="${color}"/><path d="M40 10h20v15H40V10zm25 25H35v60h30V35zm-15 15c5 0 9 4 9 9s-4 9-9 9-9-4-9-9 4-9 9-9z" fill="#FFF"/></svg>`);
@@ -373,7 +373,7 @@ window.notigasTrack = window.notigasTrack || function(event, params) {
 // 1. Registro del Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=83')
+    navigator.serviceWorker.register('./sw.js?v=84')
       .then((reg) => console.log('✅ Service Worker registrado', reg.scope))
       .catch((err) => console.error('❌ Error Service Worker:', err));
   });

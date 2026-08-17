@@ -109,6 +109,7 @@ function renderVendorCards(filterCat) {
     return;
   }
 
+  const adInsertAfterIndex = Math.max(0, Math.ceil(filtered.length / 2) - 1);
   filtered.forEach((vendor, index) => {
     const safeVendorId = escapeHtmlStr(vendor.id || '');
     const safeVendorIcon = escapeHtmlStr(vendor.icon || getIconForCategory(vendor.category));
@@ -139,8 +140,8 @@ function renderVendorCards(filterCat) {
       </div>
     `;
 
-    // Google AdSense va dentro del feed, despues de la primera ficha.
-    if (index === 0 && typeof window.getAdSenseFeedMarkup === 'function') {
+    // Google AdSense va exactamente en medio de las fichas visibles.
+    if (index === adInsertAfterIndex && typeof window.getAdSenseFeedMarkup === 'function') {
       html += window.getAdSenseFeedMarkup('vendors');
     }
   });
@@ -155,20 +156,23 @@ function abrirChatSoporteOficial() {
   showToast('Próximamente', 'El chat de soporte estará disponible pronto.', 'info');
 }
 
-function eliminarFichaAdmin(vendorId) {
-  if (confirm("🗑️ ¿Deseas eliminar permanentemente esta Ficha de Repartidor?")) {
-    let deletedIds = AppState.get('notigas_deleted_vendor_ids') || [];
+async function eliminarFichaAdmin(vendorId) {
+  if (!window.supabaseClient || !vendorId) return;
+  const rowId = String(vendorId).replace(/^driver_/, '');
+  const { data, error } = await window.supabaseClient
+    .from('choferes_habilitados')
+    .select('user_id, nombre_completo')
+    .eq('id', rowId)
+    .maybeSingle();
 
-    if (!deletedIds.includes(vendorId)) {
-      deletedIds.push(vendorId);
-      AppState.set('notigas_deleted_vendor_ids', deletedIds);
-    }
+  if (error || !data?.user_id) {
+    console.error('No se pudo resolver la cuenta del repartidor:', error);
+    if (typeof showToast === 'function') showToast('❌ Error', 'No se encontró la cuenta real del repartidor.', 'error', 4500);
+    return;
+  }
 
-    let list = getStoredVendors().filter(v => v.id !== vendorId && v.id !== 'vendor_my_profile');
-    AppState.set('notigas_vendors_directory', list);
-
-    renderVendorCards('TODOS');
-    if (typeof showToast === 'function') { showToast('Notificación', "🗑️ Ficha de Repartidor eliminada con éxito.", 'info', 4000); } else { alert("🗑️ Ficha de Repartidor eliminada con éxito."); };
+  if (typeof window.borrarRepartidorPermanente === 'function') {
+    await window.borrarRepartidorPermanente(vendorId, data.user_id, data.nombre_completo || 'Repartidor');
   }
 }
 

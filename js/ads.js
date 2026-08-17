@@ -73,8 +73,6 @@ async function cargarAnunciosGuardados() {
   if (window.ADS_CONFIG.mode === 'disabled') {
     const localAdContent = document.getElementById('localAdContent');
     if (localAdContent) localAdContent.style.display = 'none';
-    const mapAd = document.getElementById('mapLocalAdBanner');
-    if (mapAd) mapAd.style.display = 'none';
     return;
   }
 
@@ -101,8 +99,6 @@ async function cargarAnunciosGuardados() {
       if (window.ADS_CONFIG.mode === 'local') {
         const adContent = document.getElementById('localAdContent');
         if (adContent) adContent.style.display = 'flex';
-        const mapAd = document.getElementById('mapLocalAdBanner');
-        if (mapAd) mapAd.style.display = 'none';
       }
     }
   } catch (e) {
@@ -116,9 +112,7 @@ async function cargarAnunciosGuardados() {
 function actualizarAnunciosEnVivo(texto, url) {
   if (texto) {
     const adTextEl = document.getElementById('adText');
-    const adTextEl2 = document.getElementById('adText2');
     if (adTextEl) adTextEl.innerText = texto;
-    if (adTextEl2) adTextEl2.innerText = texto;
   }
   if (url) {
     currentAdUrl = getSafeExternalUrl(url) || currentAdUrl;
@@ -130,12 +124,10 @@ function actualizarAnunciosEnVivo(texto, url) {
  */
 function actualizarBannerConImagen(imageUrl) {
   const localAdContent = document.getElementById('localAdContent');
-  const mapLocalAdBanner = document.getElementById('mapLocalAdBanner');
   const safeImageUrl = getSafeAdImageUrl(imageUrl);
 
-  if (window.ADS_CONFIG.mode === 'disabled' || window.ADS_CONFIG.mode === 'adsense') {
+  if (window.ADS_CONFIG.mode === 'disabled') {
     if (localAdContent) localAdContent.style.display = 'none';
-    if (mapLocalAdBanner) mapLocalAdBanner.style.display = 'none';
     return;
   }
 
@@ -150,18 +142,6 @@ function actualizarBannerConImagen(imageUrl) {
         sub.style.background = 'rgba(0,0,0,0.6)';
         sub.style.padding = '4px 8px';
         sub.style.borderRadius = '4px';
-      }
-    }
-    if (mapLocalAdBanner) {
-      mapLocalAdBanner.style.backgroundImage = `url("${safeImageUrl.replace(/"/g, '%22')}")`;
-      mapLocalAdBanner.style.backgroundSize = 'cover';
-      mapLocalAdBanner.style.backgroundPosition = 'center';
-      mapLocalAdBanner.style.display = 'flex';
-      const sub2 = mapLocalAdBanner.querySelector('.ad-subtext');
-      if (sub2) {
-        sub2.style.background = 'rgba(0,0,0,0.6)';
-        sub2.style.padding = '4px 8px';
-        sub2.style.borderRadius = '4px';
       }
     }
   }
@@ -230,7 +210,6 @@ window.getAdSenseFeedMarkup = function(placement) {
 
   return `
     <div class="adsense-feed-slot" data-adsense-placement="${placement}">
-      <div class="adsense-label">Publicidad</div>
       <ins class="adsbygoogle"
            style="display:block"
            data-ad-client="${publisherId}"
@@ -242,6 +221,8 @@ window.getAdSenseFeedMarkup = function(placement) {
 
 window.activateAdSenseIn = function(container) {
   if (!container) return;
+  const rect = container.getBoundingClientRect();
+  if (!rect || rect.width <= 0) return;
   container.querySelectorAll('ins.adsbygoogle:not([data-adsbygoogle-status])').forEach(() => {
     try {
       (window.adsbygoogle = window.adsbygoogle || []).push({});
@@ -273,6 +254,8 @@ function inicializarGoogleAdSense() {
 
 async function guardarConfiguracionPublicidad(config) {
   if (!config) return { ok: false, error: 'Configuración ausente' };
+  const allowedModes = ['adsense', 'local', 'hybrid', 'disabled'];
+  const mode = allowedModes.includes(config.mode) ? config.mode : 'hybrid';
   const publisherId = String(config.publisherId || '').trim();
   const slotVendors = String(config.slotVendors || '').trim();
   const slotForum = String(config.slotForum || '').trim();
@@ -286,19 +269,25 @@ async function guardarConfiguracionPublicidad(config) {
   if (slotForum && !isValidAdSlotId(slotForum)) {
     return { ok: false, error: 'El Slot ID de Avisos debe contener solo números.' };
   }
+  if (mode !== 'local' && mode !== 'disabled' && (!slotVendors || !slotForum)) {
+    return { ok: false, error: 'Para mostrar Google AdSense debes ingresar los dos Slot ID: Repartidores y Avisos Gratis.' };
+  }
 
-  applyAdsConfig({ ...config, publisherId, slotVendors, slotForum });
-  if (window.supabaseClient) {
-    const { error } = await window.supabaseClient.from('configuracion_publicidad').upsert({
+  if (!window.supabaseClient) {
+    return { ok: false, error: 'No hay conexión con Supabase para guardar la configuración global.' };
+  }
+
+  const { error } = await window.supabaseClient.from('configuracion_publicidad').upsert({
       id: 1,
-      modo: window.ADS_CONFIG.mode,
-      publisher_id: window.ADS_CONFIG.publisherId,
-      slot_repartidores: window.ADS_CONFIG.slotVendors,
-      slot_avisos: window.ADS_CONFIG.slotForum,
+      modo: mode,
+      publisher_id: publisherId,
+      slot_repartidores: slotVendors,
+      slot_avisos: slotForum,
       updated_at: new Date().toISOString()
     }, { onConflict: 'id' });
-    if (error) return { ok: false, error: error.message };
-  }
+  if (error) return { ok: false, error: error.message };
+
+  applyAdsConfig({ mode, publisherId, slotVendors, slotForum });
 
   inicializarGoogleAdSense();
   document.dispatchEvent(new Event('notigas_ads_config_ready'));

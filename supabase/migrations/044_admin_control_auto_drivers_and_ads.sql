@@ -171,6 +171,7 @@ BEGIN
   DELETE FROM public.choferes_habilitados WHERE user_id = v_uid;
   DELETE FROM public.comentarios_avisos WHERE user_id = v_uid;
   DELETE FROM public.avisos WHERE user_id = v_uid;
+  DELETE FROM public.anuncios_globales WHERE user_id = v_uid;
   DELETE FROM public.votos_registro WHERE user_id = v_uid;
   DELETE FROM public.denuncias WHERE user_id = v_uid OR denunciante_id = v_uid OR denunciado_id = v_uid;
   DELETE FROM public.reportes_spam WHERE user_id = v_uid;

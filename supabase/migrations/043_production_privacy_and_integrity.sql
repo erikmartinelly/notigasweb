@@ -178,7 +178,6 @@ SELECT
   r.latitude,
   r.longitude,
   r.garrafas_agotadas,
-  r.telefono,
   r.last_active
 FROM public.rutas_repartidores r
 JOIN public.choferes_habilitados ch ON ch.user_id = r.user_id

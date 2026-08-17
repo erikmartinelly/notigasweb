@@ -1,6 +1,6 @@
 # NOTIGAS - Live Neighborhood Delivery & Geospatial Platform
 
-NOTIGAS es una Progressive Web Application (PWA) de logística comunitaria y geolocalización en tiempo real, diseñada para conectar a vecinos compradores con repartidores y distribuidores locales a través de un mapa interactivo en vivo.
+NOTIGAS es una Progressive Web Application (PWA) dinámica de logística comunitaria y geolocalización en tiempo real, diseñada para conectar a vecinos compradores con repartidores y distribuidores locales a través de un mapa interactivo en vivo. El navegador recibe los archivos web directamente del alojamiento y toda la funcionalidad dinámica usa Supabase (Auth, PostgreSQL, PostGIS y Realtime).
 
 Construida con **Vanilla JavaScript**, **Supabase PostgreSQL con PostGIS** y productos de Google. Aproximadamente el **80% de la aplicación fue desarrollado con Google Antigravity**.
 
@@ -25,7 +25,9 @@ Construida con **Vanilla JavaScript**, **Supabase PostgreSQL con PostGIS** y pro
   * **Vecino (Comprador):** Solicita suministros esenciales (Gas GLP, Agua embotellada, abarrotes) y visualiza en tiempo real los camiones que se aproximan.
   * **Repartidor (Conductor):** Registra su ficha, transmite su ubicación GPS, elige un pedido individual y activa la navegación externa con Google Maps.
 * **Muro Comunitario / Avisos de Barrio:** Tablón vecinal interactivo para alertas, comunicados y avisos con sistema de votación única y purga automática programada.
-* **Panel de Administración Blindado:** Acceso administrativo vinculado a cuentas Google autorizadas y protegido por políticas RLS en Supabase.
+* **Panel de Administración Blindado:** Acceso administrativo vinculado a cuentas Google autorizadas, con control para renovar o eliminar pedidos y banear o eliminar compradores y repartidores.
+* **Alta Automática de Repartidores:** La ficha se publica sin aprobación previa del administrador; las sanciones se aplican mediante baneo o eliminación.
+* **Publicidad Separada:** Google AdSense se integra en el centro de los feeds de Repartidores y Avisos Gratis. La publicidad comercial local permanece en la franja inferior.
 
 ---
 
@@ -57,6 +59,7 @@ NOTIGAS resuelve esta necesidad democratizando el acceso a la tecnología y la l
 ```text
 ├── index.html              # Punto de entrada principal (Vistas Comprador, Repartidor y Admin)
 ├── .htaccess               # HTTPS, cabeceras de seguridad, caché y enrutamiento PWA en Hostinger
+├── ads.txt                 # Vendedor autorizado de Google AdSense
 ├── sw.js                   # Service Worker (Caché progresivo y soporte offline PWA)
 ├── manifest.json           # Manifiesto Web PWA
 ├── js/                     # Módulos JavaScript de la aplicación
@@ -69,16 +72,16 @@ NOTIGAS resuelve esta necesidad democratizando el acceso a la tecnología y la l
 │   ├── map_search.js       # Búsqueda y geocodificación de calles/municipios con fallback multi-motor
 │   ├── map_gps.js          # Seguimiento GPS adaptativo y telemetría en vivo
 │   ├── forum.js            # Foro vecinal, publicaciones comunitarias y comentarios
-│   ├── ads.js              # Anuncios locales y banners dinámicos
+│   ├── ads.js              # Google AdSense dentro de feeds y anuncio local inferior
 │   ├── orders.js           # Creación, selección individual, asignación y entrega de pedidos
 │   ├── admin.js            # Panel de control de administración y métricas operativas
-│   ├── admin_users.js      # Moderación de usuarios y habilitación de repartidores
+│   ├── admin_users.js      # Moderación, baneo y eliminación de usuarios
 │   └── events.js           # Event listeners e interacciones globales de la UI
 ├── styles/
 │   └── main.css            # Hoja de estilos de la aplicación (Tokens de diseño y paleta Google Maps)
 └── supabase/
     ├── full_production_schema.sql # ESQUEMA COMPLETO Y CONSOLIDADO PARA PRODUCCIÓN (1-Click Deploy)
-    └── migrations/         # Migraciones incrementales históricas (001 a 043)
+    └── migrations/         # Migraciones incrementales históricas (001 a 044)
 ```
 
 ---
@@ -94,7 +97,7 @@ cd notigasweb
 ### 2. Configurar la Base de Datos (Supabase)
 * Crea un nuevo proyecto en [Supabase](https://supabase.com/).
 * **Opción A (Recomendada - Despliegue en 1 Clic):** Ejecuta el archivo consolidado [`supabase/full_production_schema.sql`](supabase/full_production_schema.sql) en el SQL Editor de Supabase. Este script único crea todas las tablas, extensiones (PostGIS), vistas públicas autorizadas, índices de alto rendimiento, triggers automáticos, procedimientos RPC atómicos y políticas de seguridad RLS.
-* **Opción B (Migraciones Incrementales):** Ejecuta los scripts en `supabase/migrations/` en orden numérico estricto (`001` a `042`).
+* **Opción B (Migraciones Incrementales):** Ejecuta los scripts disponibles en `supabase/migrations/` en orden numérico hasta `044`. En la base actualmente publicada deben aplicarse, en este orden, `043_production_privacy_and_integrity.sql` y `044_admin_control_auto_drivers_and_ads.sql`.
 * Abre `js/supabase-config.js` y coloca tu `supabaseUrl` y tu `supabaseAnonKey`.
 
 ### 3. Configurar Google Identity Services & Auth
@@ -102,9 +105,7 @@ cd notigasweb
 * En Supabase Dashboard -> **Authentication** -> **Providers** -> activa **Google** y añade tus credenciales (`Client ID` y `Client Secret`).
 
 ### 4. Ejecución en Desarrollo
-```bash
-npx serve .
-```
+No existe un gestor de paquetes ni un paso de compilación. Para una prueba completa, usa un subdominio HTTPS de pruebas en Hostinger o cualquier servidor web HTTPS y registra su URL de redirección en Supabase Auth. Abrir `index.html` con doble clic no permite validar correctamente OAuth, Service Worker ni algunas políticas del navegador.
 
 ### 5. Publicación en producción (Hostinger)
 1. Activa el certificado SSL del dominio en Hostinger.
@@ -113,7 +114,7 @@ npx serve .
 4. Comprueba que `https://www.notigas.com/manifest.json` y `https://www.notigas.com/sw.js` respondan correctamente.
 5. En Supabase Auth, registra `https://www.notigas.com` como URL del sitio y como URL de redirección permitida.
 
-La aplicación no requiere compilación ni un proceso de servidor: se publica como HTML, CSS y JavaScript estáticos.
+La aplicación no requiere compilación ni un proceso propio de servidor. Su capa de entrega son archivos HTML, CSS y JavaScript; la aplicación sigue siendo dinámica porque autenticación, pedidos, usuarios, GPS, anuncios y actualizaciones en vivo dependen de Supabase.
 
 ---
 
@@ -123,9 +124,12 @@ La aplicación no requiere compilación ni un proceso de servidor: se publica co
 * **Row Level Security (RLS):** RLS activo y riguroso en todas las tablas del esquema `public`. Los compradores solo pueden gestionar sus propios pedidos, y los choferes solo pueden interactuar con pedidos disponibles o asignados a su cuenta.
 * **Máquina de 5 Estados Oficiales:** `pendiente` → `visto` → `asignado` → `entregado` / `cancelado`, protegida mediante triggers a nivel de base de datos (`trg_check_pedido_transition`).
 * **Telemetría GPS en Vivo (`rutas_repartidores`):** Registro atómico por repartidor (`user_id`, `last_active`) con purga automática de posiciones inactivas por más de 12 horas.
-* **Privacidad por Rol:** El mapa público recibe ubicaciones aproximadas y nunca expone teléfonos o direcciones de terceros; el repartidor aprobado recibe el contacto completo solo después de asignarse el pedido.
+* **Privacidad por Rol:** El mapa público recibe ubicaciones aproximadas y nunca expone teléfonos o direcciones de terceros; el repartidor activo recibe el contacto completo solo después de asignarse el pedido.
 * **Procedimientos RPC Atómicos (`SECURITY DEFINER` con `search_path = public`):**
   * `rpc_assign_order`: Asignación individual con bloqueo de fila `FOR UPDATE`.
   * `rpc_get_demand_clusters_v2`: Agrupación espacial con algoritmo DBSCAN determinista.
   * `rpc_get_my_assigned_orders`: Acceso seguro a los datos de contacto únicamente de pedidos asignados al conductor.
+  * `rpc_admin_list_users`: Lista administrativa de compradores y repartidores con el ID real de Supabase Auth.
+  * `rpc_admin_delete_user`: Eliminación completa de una cuenta no administradora y sus datos relacionados.
+  * `rpc_admin_renew_order`: Renovación administrativa de un pedido y reapertura en estado `pendiente`.
   * `delete_user_account`: Eliminación en cascada de la cuenta y registros asociados.

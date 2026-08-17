@@ -1154,34 +1154,24 @@ footer.ad-banner-container {
   color: white; 
 }
 
-/* SLOTS RESPONSIVOS DE GOOGLE ADSENSE */
-#adsenseContent,
-.adsense-slot-wrapper,
-.adsense-map-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
+/* GOOGLE ADSENSE: UNIDAD NATIVA DENTRO DE LOS FEEDS */
+.adsense-feed-slot {
+  width: 100%;
   max-width: 100%;
-}
-
-.adsense-slot-wrapper {
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  padding: 8px;
+  min-height: 110px;
+  overflow: hidden;
+  box-sizing: border-box;
+  background: #FFFFFF;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 12px;
+  padding: 6px;
   margin: 10px 0;
   text-align: center;
 }
 
-.adsense-map-wrapper {
-  background: rgba(15, 23, 42, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
-  padding: 4px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+.adsense-feed-slot .adsbygoogle {
+  width: 100%;
+  min-height: 90px;
 }
 
 /* MODALES */

@@ -15,6 +15,7 @@ async function descargarBaneadosDeSupabase() {
           if (d.placa) window.globalBannedList.push(String(d.placa).toLowerCase().trim());
           if (d.telefono) window.globalBannedList.push(String(d.telefono).toLowerCase().trim());
         });
+        if (typeof verificarBloqueoAppUsuario === 'function') verificarBloqueoAppUsuario();
       }
     } catch(e) {
       console.error('Error al descargar baneados', e);
@@ -148,112 +149,79 @@ async function desbanearRepartidorAdmin(vendorUserId, vendorName) {
   }
 }
 
-async function aprobarRepartidorAdmin(idStr) {
-  if (!window.supabaseClient) return;
-  const dbId = idStr.replace('driver_', '');
-  if (!dbId || dbId === 'undefined' || dbId === 'null') {
-    console.warn('ID de repartidor inválido:', idStr);
+window.borrarRepartidorPermanente = async function(vendorId, vendorUserId, vendorName) {
+  if (!vendorUserId) {
+    if (typeof showToast === 'function') showToast('❌ Error', 'El repartidor no tiene un usuario de acceso asociado.', 'error', 4500);
     return;
   }
-  const { error } = await window.supabaseClient
-    .from('choferes_habilitados')
-    .update({ estado_verificacion: 'aprobado' })
-    .eq('id', dbId);
+  if (confirm(`⚠️ ¿Eliminar permanentemente la cuenta y todos los datos de ${vendorName}? Esta acción no se puede deshacer.`)) {
+    await ejecutarBorradoUsuarioCompleto(vendorUserId, vendorName, 'repartidor', vendorId);
+  }
+}
+
+window.banearCompradorAdmin = async function(userId, email, nombre) {
+  if (!userId || !window.supabaseClient) {
+    if (typeof showToast === 'function') showToast('❌ Error', 'Falta el identificador real del comprador.', 'error', 4500);
+    return;
+  }
+
+  const { error } = await window.supabaseClient.from('usuarios_baneados').insert([{
+    user_id: userId,
+    email: email || null,
+    nombre: nombre || null,
+    motivo: 'Baneado por Administrador'
+  }]);
   if (error) {
-    if (typeof showToast === 'function') showToast('Error', 'No se pudo aprobar el repartidor', 'error');
+    console.error('Error al banear comprador:', error);
+    if (typeof showToast === 'function') showToast('❌ Error', error.message || 'No se pudo bloquear al comprador.', 'error', 5000);
+    return;
+  }
+
+  await descargarBaneadosDeSupabase();
+  if (typeof renderAdminVendorsList === 'function') renderAdminVendorsList();
+  if (typeof showToast === 'function') showToast('🚫 Comprador Baneado', `Se bloqueó el acceso de "${nombre}".`, 'success', 4000);
+}
+
+window.borrarCompradorPermanente = function(userId, gmail, nombre) {
+  if (!userId) {
+    if (typeof showToast === 'function') showToast('❌ Error', 'Falta el identificador real del comprador.', 'error', 4500);
+    return;
+  }
+  if (typeof showConfirmModal === 'function') {
+    showConfirmModal('⚠️', `¿Eliminar permanentemente al usuario ${nombre}?`, 'Se eliminarán su cuenta de acceso, pedidos, avisos, comentarios, votos y bloqueos. Esta acción no se puede deshacer.', 'Eliminar definitivamente', () => {
+      ejecutarBorradoUsuarioCompleto(userId, nombre, 'comprador');
+    });
   } else {
-    if (typeof showToast === 'function') showToast('Éxito', 'Repartidor aprobado correctamente', 'success');
-    if (typeof renderAdminVendorsList === 'function') renderAdminVendorsList();
-    if (typeof descargarChoferesYRenderizar === 'function') descargarChoferesYRenderizar('TODOS');
+    if(confirm(`⚠️ ¿Eliminar permanentemente la cuenta y todos los datos de ${nombre}?`)) {
+      ejecutarBorradoUsuarioCompleto(userId, nombre, 'comprador');
+    }
   }
 }
-window.borrarRepartidorPermanente = async function(vendorId, vendorName) {
-  if (vendorId === 'driver_undefined' || !vendorId) {
-    if (confirm(`⚠️ ¿Eliminar permanentemente a ${vendorName}?`)) {
-      await ejecutarBorradoRepartidor(vendorId, vendorName);
+
+async function ejecutarBorradoUsuarioCompleto(userId, nombre, tipo, vendorId = '') {
+  if (!window.supabaseClient) return;
+  const { error } = await window.supabaseClient.rpc('rpc_admin_delete_user', { p_user_id: userId });
+  if (error) {
+    console.error('Error al eliminar usuario:', error);
+    if (typeof showToast === 'function') {
+      showToast('❌ No se pudo eliminar', error.message || 'Verifica que la migración 044 esté aplicada en Supabase.', 'error', 6000);
     }
-  } else {
-    if (confirm(`⚠️ ¿Eliminar permanentemente a ${vendorName}?`)) {
-      await ejecutarBorradoRepartidor(vendorId, vendorName);
-    }
-  }
-}
-async function ejecutarBorradoRepartidor(vendorId, vendorName) {
-  // 1. Eliminar de lista de repartidores en Supabase
-  if (window.supabaseClient) {
-      try {
-        const realId = vendorId.replace('driver_', '');
-        const { error } = await window.supabaseClient.from('choferes_habilitados').delete().eq('id', realId);
-        if (error) {
-          console.error("Error al borrar de Supabase:", error);
-          if (typeof showToast === 'function') showToast('❌ Error', 'No se pudo eliminar el repartidor.', 'error', 3000);
-          return;
-        }
-      } catch (err) {
-        console.error("Error inesperado al borrar:", err);
-      }
+    return;
   }
 
-  // 2. Limpiar notigas_user_data si coincide con el usuario activo
-  try {
-    const saved = JSON.stringify(AppState.get('userData') || {});
-    if (saved) {
-      const u = JSON.parse(saved);
-      if (u.nombre === vendorName) {
-        AppState.set('userData', null);
-      }
-    }
-  } catch(e){}
+  if (vendorId) {
+    try {
+      const list = (AppState.get('notigas_vendors_directory') || []).filter(v => v.id !== vendorId);
+      AppState.set('notigas_vendors_directory', list);
+    } catch(e){}
+  }
 
-  // 3. Remover del directorio local para refrescar la UI inmediatamente
-  try {
-    let list = AppState.get('notigas_vendors_directory') || [];
-    list = list.filter(v => v.id !== vendorId);
-    AppState.set('notigas_vendors_directory', list);
-  } catch(e){}
-
+  await descargarBaneadosDeSupabase();
   if (typeof renderAdminVendorsList === 'function') renderAdminVendorsList();
   if (typeof renderAdminDashboardKPIs === 'function') renderAdminDashboardKPIs();
   if (typeof renderVendorCards === 'function') renderVendorCards('TODOS');
-
   if (typeof showToast === 'function') {
-    showToast('🗑️ Eliminado', `La Ficha de Repartidor "${vendorName}" ha sido borrada exitosamente.`, 'success', 4000);
-  }
-}
-window.borrarCompradorPermanente = function(gmail, nombre) {
-  if (typeof showConfirmModal === 'function') {
-    showConfirmModal('⚠️', `¿Bloquear permanentemente al usuario ${nombre}?`, 'Por reglas de Supabase, la cuenta no se puede eliminar completamente desde aquí, pero se bloqueará su acceso a la app.', 'Bloquear', () => {
-      ejecutarBloqueoComprador(gmail, nombre);
-    });
-  } else {
-    if(confirm(`⚠️ ¿Bloquear permanentemente al usuario ${nombre}?`)) {
-      ejecutarBloqueoComprador(gmail, nombre);
-    }
-  }
-}
-async function ejecutarBloqueoComprador(gmail, nombre) {
-  if (window.supabaseClient) {
-    const { error } = await window.supabaseClient.from('usuarios_baneados').insert([{
-      email: gmail,
-      nombre: nombre,
-      motivo: 'Bloqueado Permanentemente'
-    }]);
-
-    if (error) {
-      console.error('Error al bloquear comprador:', error);
-      if (typeof showToast === 'function') {
-        showToast('❌ Error', 'No se pudo bloquear al comprador en la base de datos.', 'error', 5000);
-      }
-      return;
-    }
-
-    await descargarBaneadosDeSupabase();
-  }
-
-  if (typeof renderAdminVendorsList === 'function') renderAdminVendorsList();
-
-  if (typeof showToast === 'function') {
-    showToast('🚫 Comprador Bloqueado', `El usuario ${nombre} ha sido bloqueado exitosamente.`, 'success', 4000);
+    showToast('🗑️ Cuenta eliminada', `${tipo === 'repartidor' ? 'El repartidor' : 'El comprador'} "${nombre}" y sus datos fueron eliminados.`, 'success', 5000);
   }
 }
 function verificarBloqueoAppUsuario() {

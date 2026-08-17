@@ -421,10 +421,6 @@ document.addEventListener('click', (e) => {
       const id = btn.getAttribute('data-id');
       if (typeof window.borrarAnuncioLocalAdmin === 'function') window.borrarAnuncioLocalAdmin(id);
     }
-    else if (action === 'aprobarRepartidorAdmin') {
-      const id = btn.getAttribute('data-id');
-      if (typeof window.aprobarRepartidorAdmin === 'function') window.aprobarRepartidorAdmin(id);
-    }
     else if (action === 'desbanearRepartidorAdmin') {
       const userId = decodeURIComponent(btn.getAttribute('data-user-id') || '');
       const id = btn.getAttribute('data-id');
@@ -440,17 +436,25 @@ document.addEventListener('click', (e) => {
     }
     else if (action === 'borrarRepartidorPermanente') {
       const id = btn.getAttribute('data-id');
+      const userId = btn.getAttribute('data-user-id');
       const name = decodeURIComponent(btn.getAttribute('data-name') || '');
-      if (typeof window.borrarRepartidorPermanente === 'function') window.borrarRepartidorPermanente(id, name);
+      if (typeof window.borrarRepartidorPermanente === 'function') window.borrarRepartidorPermanente(id, userId, name);
+    }
+    else if (action === 'banearCompradorAdmin') {
+      const userId = btn.getAttribute('data-id');
+      const email = btn.getAttribute('data-gmail') || '';
+      const name = decodeURIComponent(btn.getAttribute('data-name') || '');
+      if (typeof window.banearCompradorAdmin === 'function') window.banearCompradorAdmin(userId, email, name);
     }
     else if (action === 'banearUsuarioAdmin') {
       const gmailOrId = btn.getAttribute('data-gmail') || btn.getAttribute('data-id');
       if (typeof window.banearUsuarioAdmin === 'function') window.banearUsuarioAdmin(gmailOrId);
     }
     else if (action === 'borrarCompradorPermanente') {
+      const userId = btn.getAttribute('data-user-id');
       const gmail = btn.getAttribute('data-gmail');
-      const name = btn.getAttribute('data-name');
-      if (typeof window.borrarCompradorPermanente === 'function') window.borrarCompradorPermanente(gmail, name);
+      const name = decodeURIComponent(btn.getAttribute('data-name') || '');
+      if (typeof window.borrarCompradorPermanente === 'function') window.borrarCompradorPermanente(userId, gmail, name);
     }
     else if (action === 'limpiarTodosLosPedidosFantasmaAdmin') {
       if (typeof window.limpiarTodosLosPedidosFantasmaAdmin === 'function') window.limpiarTodosLosPedidosFantasmaAdmin();
@@ -464,6 +468,10 @@ document.addEventListener('click', (e) => {
         else if (type === 'truck_report') window.borrarPedidoFantasmaAdmin(type, parseInt(idx || '0', 10));
         else window.borrarPedidoFantasmaAdmin(type);
       }
+    }
+    else if (action === 'renovarPedidoAdmin') {
+      const id = btn.getAttribute('data-id');
+      if (typeof window.renovarPedidoAdmin === 'function') window.renovarPedidoAdmin(id);
     }
     else if (action === 'borrarDenunciaAdmin') {
       const id = btn.getAttribute('data-id');

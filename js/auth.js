@@ -551,7 +551,7 @@ async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
   }
   return {
     ok: true,
-    status: String(data?.estado_verificacion || 'pendiente').toLowerCase()
+    status: String(data?.estado_verificacion || 'aprobado').toLowerCase()
   };
 }
 
@@ -615,18 +615,7 @@ async function guardarRegistroUnico() {
        return;
     }
 
-    if (exito.status !== 'aprobado') {
-      AppState.set('userData', { ...repartidorData, role: 'vecino', estado_verificacion: exito.status });
-      const modalAuth = document.getElementById('modalWelcomeAuth');
-      if (modalAuth) modalAuth.style.display = 'none';
-      if (typeof setAppMode === 'function') setAppMode('buyer');
-      if (typeof showToast === 'function') {
-        showToast('Ficha pendiente', 'Tu registro fue recibido. Podrás ver y elegir pedidos cuando el administrador lo apruebe.', 'info', 6000);
-      }
-      return;
-    }
-
-    // Solo guardar en local y activar modo si la BD confirmó
+    // El alta es automática. El administrador conserva las acciones de baneo y eliminación.
     AppState.set('userData', repartidorData);
 
     const modalAuth = document.getElementById('modalWelcomeAuth');
@@ -761,17 +750,6 @@ async function iniciarSesionRepartidor() {
 
   if (!exito?.ok) {
     if (typeof showToast === 'function') showToast('❌ Error', 'No se pudo guardar la configuración. Reintenta.', 'error', 3000);
-    return;
-  }
-
-  if (exito.status !== 'aprobado') {
-    AppState.set('userData', { ...repartidorData, role: 'vecino', estado_verificacion: exito.status });
-    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-    closeDriverModal();
-    if (typeof setAppMode === 'function') setAppMode('buyer');
-    if (typeof showToast === 'function') {
-      showToast('Ficha pendiente', 'Tu registro fue recibido. Podrás ver y elegir pedidos cuando el administrador lo apruebe.', 'info', 6000);
-    }
     return;
   }
 
@@ -1134,7 +1112,6 @@ async function procesarSesionExitosa(user) {
 
     // VERIFICAR SIEMPRE si el usuario ya es repartidor en la BD
     let esRepartidorDB = false;
-    let repartidorPendiente = false;
     let choferData = null;
 
     if (window.supabaseClient && user?.id) {
@@ -1144,14 +1121,10 @@ async function procesarSesionExitosa(user) {
           .select('ciudad, categoria, productos, schedule, estado_verificacion')
           .eq('user_id', user.id)
           .maybeSingle();
-        if (data && String(data.estado_verificacion || '').toLowerCase() === 'aprobado') {
+        if (data) {
           esRepartidorDB = true;
           choferData = data;
           currentSelectedRole = 'driver'; // Forzar rol
-        } else if (data) {
-          repartidorPendiente = true;
-          choferData = data;
-          currentSelectedRole = 'buyer';
         }
       } catch(e) {
         console.error("Error verificando repartidor:", e);
@@ -1159,7 +1132,7 @@ async function procesarSesionExitosa(user) {
     }
 
     // Si no es repartidor en BD y aún no ha seleccionado rol en esta sesión de login
-    if (!esRepartidorDB && !repartidorPendiente && !window._roleSelectedNow) {
+    if (!esRepartidorDB && !window._roleSelectedNow) {
       if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
       if (modalAuth) modalAuth.style.display = 'none';
 
@@ -1176,13 +1149,6 @@ async function procesarSesionExitosa(user) {
       nombre,
       user_id: user.id
     };
-
-    if (repartidorPendiente) {
-      clienteData.estado_verificacion = choferData?.estado_verificacion || 'pendiente';
-      if (typeof showToast === 'function') {
-        showToast('Ficha pendiente', 'Tu cuenta ingresó como comprador mientras el administrador revisa la ficha de repartidor.', 'info', 6000);
-      }
-    }
 
     if (currentSelectedRole === 'driver') {
       if (esRepartidorDB && choferData) {
