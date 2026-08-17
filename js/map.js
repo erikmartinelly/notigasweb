@@ -944,13 +944,17 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
     isMapInteractedByUser = false;
   }
 
-  currentGpsLat = lat;
-  window.currentGpsLat = currentGpsLat;
-  currentGpsLng = lng;
-  window.currentGpsLng = currentGpsLng;
-  if (typeof AppState !== 'undefined') {
-    AppState.set('gpsLat', lat);
-    AppState.set('gpsLng', lng);
+  // Una lectura GPS posterior no debe pisar el punto de entrega que el usuario
+  // colocó manualmente. Solo un reinicio explícito de GPS lo reemplaza.
+  if (!isUserMarkerDraggedManually) {
+    currentGpsLat = lat;
+    window.currentGpsLat = currentGpsLat;
+    currentGpsLng = lng;
+    window.currentGpsLng = currentGpsLng;
+    if (typeof AppState !== 'undefined') {
+      AppState.set('gpsLat', lat);
+      AppState.set('gpsLng', lng);
+    }
   }
 
   // Auto-detectar ciudad al obtener GPS inicial

@@ -2801,12 +2801,12 @@ button:active, .tab-btn:active, .cat-chip:active {
 /* GOOGLE MAPS BLUE DOT (UBICACIÓN GPS EN VIVO) */
 .google-blue-dot-marker {
   position: relative;
-  width: 36px;
-  height: 36px;
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
-  pointer-events: none;
+  cursor: grab;
 }
 
 .google-blue-dot-pulse {
@@ -2828,6 +2828,50 @@ button:active, .tab-btn:active, .cat-chip:active {
   border: 2.5px solid #FFFFFF;
   box-shadow: 0 1px 5px rgba(0, 0, 0, 0.45);
   pointer-events: none;
+}
+
+.user-location-marker-container {
+  z-index: 1000 !important;
+  cursor: grab !important;
+  filter: drop-shadow(0 3px 6px rgba(15, 23, 42, 0.4));
+}
+
+.user-location-marker-container:active,
+.google-blue-dot-marker:active {
+  cursor: grabbing !important;
+}
+
+.manual-location-handle {
+  position: absolute;
+  right: -3px;
+  bottom: -2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #FFFFFF;
+  border-radius: 50%;
+  color: #0F172A;
+  background: #FBBF24;
+  box-shadow: 0 2px 7px rgba(15, 23, 42, 0.48);
+  font-size: 10px;
+  pointer-events: none;
+}
+
+.manual-location-tooltip {
+  color: #FFFFFF !important;
+  background: #0288D1 !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 3px 10px rgba(2, 136, 209, 0.35) !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  padding: 5px 8px !important;
+}
+
+.manual-location-tooltip::before {
+  border-top-color: #0288D1 !important;
 }
 
 @keyframes gmapBluePulse {
