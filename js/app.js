@@ -72,6 +72,7 @@ function abrirConfiguracionSegunRol() {
   const driverSection = document.getElementById('settingsDriverSection');
   const titleEl = document.getElementById('settingsModalTitle');
   const driverNameLabel = document.getElementById('settingsDriverNameLabel');
+  const buyerToDriverContainer = document.getElementById('buyerToDriverBtnContainer');
 
   let isDriver = false;
   try {
@@ -100,6 +101,21 @@ function abrirConfiguracionSegunRol() {
     if (buyerSection) buyerSection.style.display = 'block';
     if (driverSection) driverSection.style.display = 'none';
     if (titleEl) titleEl.textContent = '⚙️ MENÚ';
+
+    if (buyerToDriverContainer) {
+      const userData = AppState.get('userData') || {};
+      const yaTieneFicha = Boolean(userData.hasDriverProfile || userData.placa || userData.whatsapp);
+      buyerToDriverContainer.innerHTML = `
+        <button type="button" id="btnActivateDriverMode" style="width:100%; background:linear-gradient(135deg,#FF6D00,#E65100); color:white; border:none; padding:10px; border-radius:10px; font-weight:800; cursor:pointer; font-size:12px;">
+          <i class="fa-solid fa-truck-fast"></i> ${yaTieneFicha ? 'Volver al modo Repartidor' : 'Registrarme como Repartidor'}
+        </button>`;
+      const activateButton = document.getElementById('btnActivateDriverMode');
+      if (activateButton) activateButton.addEventListener('click', () => {
+        if (typeof window.migrarDatosAntiguosARepartidor === 'function') {
+          window.migrarDatosAntiguosARepartidor();
+        }
+      });
+    }
   }
 
   const modal = document.getElementById('modalUserSettings');
@@ -138,8 +154,13 @@ function abrirFichaRepartidorEdicion() {
 const abrirEdicionFichaRepartidor = abrirFichaRepartidorEdicion;
 
 function setAppMode(mode) {
-  currentAppMode = mode;
-  if (typeof AppState !== 'undefined') AppState.set('appMode', mode);
+  const normalizedMode = mode === 'driver' ? 'driver' : 'buyer';
+  currentAppMode = normalizedMode;
+  mode = normalizedMode;
+  if (typeof AppState !== 'undefined') {
+    AppState.set('appMode', mode);
+    AppState.set('userRole', mode === 'driver' ? 'repartidor' : 'vecino');
+  }
   const buyerActions = document.getElementById('buyerFloatingActions');
   const driverActions = document.getElementById('driverFloatingActions');
   const badgeContainer = document.getElementById('headerRoleBadge');
@@ -174,8 +195,12 @@ function setAppMode(mode) {
         <span style="font-size:9.5px; background:rgba(2,136,209,0.2); color:#38BDF8; padding:3px 6px; border-radius:8px; font-weight:900; border:1px solid #0288D1;">🛍️ MODO COMPRADOR</span>
       `;
     }
+    if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
+    if (typeof renderActiveOrdersMap === 'function') renderActiveOrdersMap();
+    if (typeof renderReportedTrucksBuffer === 'function') renderReportedTrucksBuffer();
   }
 }
+window.setAppMode = setAppMode;
 
 window.activarMiUbicacionRepartidor = function() {
   if (typeof currentGpsLat !== 'undefined' && typeof currentGpsLng !== 'undefined' && map) {

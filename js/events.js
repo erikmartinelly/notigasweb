@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const el_auto_event_26 = document.getElementById('auto-event-26');
-    if (el_auto_event_26) el_auto_event_26.addEventListener('click', () => { safeCall('cerrarSesionUsuario'); });
+    if (el_auto_event_26) el_auto_event_26.addEventListener('click', () => { safeCall('cambiarRepartidorAComprador'); });
 
     const el_btnAdminAccessQuick = document.getElementById('btnAdminAccessQuick');
     if (el_btnAdminAccessQuick) el_btnAdminAccessQuick.addEventListener('click', () => { safeCall('abrirModalAdminDashboard'); });

@@ -541,6 +541,25 @@ async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
     if (typeof showToast === 'function') showToast('Error', 'No se pudo guardar en la nube. ' + error.message, 'error');
     return { ok: false, status: 'error' };
   }
+
+  // Persistir el modo elegido. La ficha del repartidor se conserva aunque
+  // después use temporalmente la aplicación como comprador.
+  try {
+    const { data: authData, error: authError } = await window.supabaseClient.auth.getUser();
+    if (authError || !authData?.user?.id) throw authError || new Error('Sesión no disponible');
+    await guardarPerfilSupabase(authData.user, {
+      role: 'repartidor',
+      nombre: repartidorObj.nombre,
+      ciudad: repartidorObj.ciudad || AppState.get('city') || 'cochabamba'
+    });
+  } catch (profileError) {
+    console.error('No se pudo guardar el modo repartidor en el perfil:', profileError);
+    if (typeof showToast === 'function') {
+      showToast('❌ Perfil incompleto', 'La ficha se guardó, pero no se pudo activar el rol. Intenta nuevamente.', 'error', 5000);
+    }
+    return { ok: false, status: 'profile_error' };
+  }
+
   return {
     ok: true,
     status: String(data?.estado_verificacion || 'aprobado').toLowerCase()
@@ -815,6 +834,62 @@ function guardarPrefUsuario() {
   closeUserSettingsModal();
 }
 
+async function cambiarRepartidorAComprador() {
+  let loadingVisible = false;
+  try {
+    if (!window.supabaseClient) throw new Error('No hay conexión con el servicio de cuentas.');
+    if (typeof showLoadingOverlay === 'function') {
+      showLoadingOverlay('Cambiando a modo Comprador...');
+      loadingVisible = true;
+    }
+
+    const { data: authData, error: authError } = await window.supabaseClient.auth.getUser();
+    if (authError || !authData?.user?.id) {
+      throw authError || new Error('La sesión venció. Inicia sesión nuevamente.');
+    }
+
+    await guardarPerfilSupabase(authData.user, {
+      role: 'vecino',
+      ciudad: AppState.get('city') || 'cochabamba'
+    });
+
+    if (typeof window.pausarRecorridoRepartidor === 'function') {
+      await window.pausarRecorridoRepartidor({ silent: true });
+    } else if (typeof window.stopDriverLocationBroadcast === 'function') {
+      await window.stopDriverLocationBroadcast();
+    }
+
+    const previous = AppState.get('userData') || {};
+    AppState.set('userData', {
+      ...previous,
+      role: 'vecino',
+      hasDriverProfile: true,
+      user_id: authData.user.id
+    });
+    AppState.set('driverGpsLive', 'off');
+    AppState.set('isDriverLive', false);
+    currentSelectedRole = 'buyer';
+
+    if (typeof setAppMode === 'function') setAppMode('buyer');
+    closeUserSettingsModal();
+    if (typeof closeDriverOrdersModal === 'function') closeDriverOrdersModal();
+    if (typeof switchTab === 'function') switchTab(0);
+    if (typeof showToast === 'function') {
+      showToast('🛍️ Modo Comprador activo', 'Tu ficha de repartidor se conservó. Puedes volver a activarla desde el menú.', 'success', 4200);
+    }
+    return true;
+  } catch (error) {
+    console.error('No se pudo cambiar a modo comprador:', error);
+    if (typeof showToast === 'function') {
+      showToast('❌ No se cambió el rol', error?.message || 'El modo Repartidor continúa activo.', 'error', 5000);
+    }
+    return false;
+  } finally {
+    if (loadingVisible && typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+  }
+}
+window.cambiarRepartidorAComprador = cambiarRepartidorAComprador;
+
 async function ejecutarCierreSesionUsuario() {
   let loadingVisible = false;
   try {
@@ -1007,6 +1082,43 @@ async function migrarDatosAntiguosARepartidor() {
     }
   } catch(e){}
 
+  // Si la ficha existe en Supabase pero el usuario estaba usando modo
+  // comprador, recuperarla sin pedir un registro nuevo ni duplicarla.
+  if (!driverProfile && window.supabaseClient) {
+    try {
+      const { data: authData } = await window.supabaseClient.auth.getUser();
+      const user = authData?.user;
+      if (user?.id) {
+        const { data: driverRow, error: driverError } = await window.supabaseClient
+          .from('choferes_habilitados')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (driverError) throw driverError;
+        if (driverRow) {
+          const current = AppState.get('userData') || {};
+          driverProfile = {
+            ...current,
+            role: 'repartidor',
+            hasDriverProfile: true,
+            nombre: driverRow.nombre_completo || current.nombre || 'Repartidor',
+            whatsapp: driverRow.telefono_whatsapp || '',
+            placa: driverRow.placa || '',
+            categoria: driverRow.categoria || 'gas',
+            productos: driverRow.productos || '',
+            zonas: driverRow.zonas || '',
+            schedule: driverRow.schedule || '',
+            ciudad: driverRow.ciudad || AppState.get('city') || 'cochabamba',
+            user_id: user.id,
+            gmail: user.email || current.gmail || ''
+          };
+        }
+      }
+    } catch (driverLookupError) {
+      console.warn('No se pudo recuperar la ficha existente de repartidor:', driverLookupError);
+    }
+  }
+
   // 2. Si ya hay un perfil de repartidor, activar el modo repartidor inmediatamente
   if (driverProfile) {
     if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Reactivando sesión...');
@@ -1036,6 +1148,7 @@ async function migrarDatosAntiguosARepartidor() {
     };
 
     AppState.set('userData', repartidorData);
+    AppState.set('userRole', 'repartidor');
     if (typeof guardarRepartidorEnBaseDeDatos === 'function') {
       await guardarRepartidorEnBaseDeDatos(repartidorData);
     }
@@ -1060,6 +1173,7 @@ async function migrarDatosAntiguosARepartidor() {
     selectAuthRole('driver');
   }
 }
+window.migrarDatosAntiguosARepartidor = migrarDatosAntiguosARepartidor;
 
 const iniciarSesionChofer = iniciarSesionRepartidor;
 
@@ -1179,13 +1293,14 @@ async function procesarSesionExitosa(user) {
         if (driverRes?.data) {
           esRepartidorDB = true;
           choferData = driverRes.data;
-          currentSelectedRole = 'driver'; // Forzar rol repartidor
         }
         if (profileRes?.data) {
           existingProfile = profileRes.data;
-          if (!esRepartidorDB) {
-            currentSelectedRole = (existingProfile.role === 'repartidor') ? 'driver' : 'buyer';
-          }
+        }
+        if (!window._roleSelectedNow) {
+          currentSelectedRole = esRepartidorDB && existingProfile?.role !== 'vecino'
+            ? 'driver'
+            : ((existingProfile?.role === 'repartidor') ? 'driver' : 'buyer');
         }
       } catch(e) {
         console.error("Error verificando usuario en BD:", e);
@@ -1207,7 +1322,7 @@ async function procesarSesionExitosa(user) {
     const resolvedCity = (choferData?.ciudad || existingProfile?.ciudad || AppState.get('city') || 'cochabamba').toLowerCase().trim();
 
     const clienteData = {
-      role: (currentSelectedRole === 'driver' || esRepartidorDB) ? 'repartidor' : 'vecino',
+      role: currentSelectedRole === 'driver' ? 'repartidor' : 'vecino',
       gmail,
       nombre: (existingProfile?.nombre || user.user_metadata?.full_name || nombre),
       apellido: existingProfile?.apellido || '',
@@ -1215,8 +1330,9 @@ async function procesarSesionExitosa(user) {
       ciudad: resolvedCity,
       user_id: user.id
     };
+    if (esRepartidorDB) clienteData.hasDriverProfile = true;
 
-    if (currentSelectedRole === 'driver' || esRepartidorDB) {
+    if (currentSelectedRole === 'driver') {
       if (esRepartidorDB && choferData) {
         clienteData.role = 'repartidor';
         if (choferData.ciudad) clienteData.ciudad = choferData.ciudad.toLowerCase().trim();
@@ -1260,7 +1376,7 @@ async function procesarSesionExitosa(user) {
 
     if (modalAuth) modalAuth.style.display = 'none';
 
-    if (currentSelectedRole === 'driver' || esRepartidorDB) {
+    if (currentSelectedRole === 'driver') {
       if (typeof setAppMode === 'function') setAppMode('driver');
       if (typeof showToast === 'function') showToast('✅ Sesión Segura', `Ingresaste como Repartidor (${gmail})`, 'success', 2000);
     } else {

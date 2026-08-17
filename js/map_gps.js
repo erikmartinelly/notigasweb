@@ -347,17 +347,24 @@ function conectarGPSAuto(forceReset = false) {
     // =====================================================
     detenerGPSComprador();
 
+    const isAndroid = /Android/i.test(navigator.userAgent);
     const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
     if (!isMobile) {
         // En PC: estimación IP por consenso y refinamiento nativo en paralelo.
         obtenerUbicacionIPFallbackDesktop(forceReset).then(result => {
             if (!result.exact && typeof showToast === 'function') {
-                showToast('Ubicación aproximada', 'En Windows, ajusta el marcador hasta la puerta de tu domicilio.', 'info', 5000);
+                showToast('Ubicación aproximada', 'Ajusta o arrastra el marcador hasta la puerta exacta de tu domicilio.', 'info', 4000);
             }
         });
         solicitarGeolocalizacionNativaNavegador(false, false).catch(() => {});
         return;
+    }
+
+    // EN ANDROID: Mostrar aviso de activación obligatoria si aún no hay GPS exacto
+    if (isAndroid && !window.isGpsExact) {
+        const floatingBanner = document.getElementById('gpsFloatingBanner');
+        if (floatingBanner) floatingBanner.style.display = 'block';
     }
 
     solicitarGeolocalizacionNativaNavegador(
@@ -365,24 +372,60 @@ function conectarGPSAuto(forceReset = false) {
         forceReset
     )
     .then(() => {
+        const floatingBanner = document.getElementById('gpsFloatingBanner');
+        if (floatingBanner) floatingBanner.style.display = 'none';
+        const mandatoryBanner = document.getElementById('gpsMandatoryBanner');
+        if (mandatoryBanner) mandatoryBanner.style.display = 'none';
+
         if (typeof showToast === 'function') {
             showToast(
-                '📍 Ubicación guardada',
-                'Ubicación detectada con éxito.',
+                '📍 GPS Conectado',
+                'Ubicación detectada con éxito en tu dispositivo.',
                 'success',
-                4000
+                3500
             );
         }
     })
-    .catch(() => {
+    .catch((err) => {
+        console.warn('Fallo de GPS en móvil:', err);
+        if (isAndroid) {
+            const floatingBanner = document.getElementById('gpsFloatingBanner');
+            if (floatingBanner) floatingBanner.style.display = 'block';
+            if (typeof showToast === 'function') {
+                showToast(
+                    '⚠️ GPS Requerido',
+                    'Por favor enciende el GPS de tu celular Android y permite el acceso para continuar.',
+                    'warning',
+                    5000
+                );
+            }
+        }
         obtenerUbicacionIPFallbackDesktop(forceReset);
     });
+}
+
+function verificarGpsAndroidObligatorio() {
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    if (isAndroid && !window.isGpsExact) {
+        const floatingBanner = document.getElementById('gpsFloatingBanner');
+        if (floatingBanner) floatingBanner.style.display = 'block';
+    }
+}
+
+// Comprobar automáticamente al iniciar
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(verificarGpsAndroidObligatorio, 1200);
+    });
+} else {
+    setTimeout(verificarGpsAndroidObligatorio, 1200);
 }
 
 // ==========================================
 // EXPOSICIÓN GLOBAL EN WINDOW
 // ==========================================
 window.conectarGPSAuto = conectarGPSAuto;
+window.verificarGpsAndroidObligatorio = verificarGpsAndroidObligatorio;
 window.detenerGPSComprador = detenerGPSComprador;
 window.iniciarWatchGPSRepartidor = iniciarWatchGPSRepartidor;
 window.obtenerUbicacionIPFallbackDesktop = obtenerUbicacionIPFallbackDesktop;

@@ -15,6 +15,17 @@ CREATE TABLE IF NOT EXISTS public.security_rate_limits (
 ALTER TABLE public.security_rate_limits ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.security_rate_limits FROM PUBLIC, anon, authenticated;
 
+-- Hasta esta versión, la existencia de una ficha implicaba siempre modo
+-- repartidor. Se conserva ese estado inicial; desde ahora el usuario puede
+-- persistir role='vecino' para alternar a comprador sin borrar su ficha.
+UPDATE public.profiles AS p
+SET role = 'repartidor', updated_at = now()
+WHERE p.role = 'vecino'
+  AND EXISTS (
+    SELECT 1 FROM public.choferes_habilitados ch
+    WHERE ch.user_id = p.id::text
+  );
+
 CREATE OR REPLACE FUNCTION public.enforce_action_rate_limit(
   p_action text,
   p_max_hits integer,

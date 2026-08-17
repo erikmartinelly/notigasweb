@@ -102,20 +102,32 @@ window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño m
           const user = data.session.user;
           const meta = user.user_metadata || {};
 
-          // 1. Buscar en choferes_habilitados
-          const { data: driverData } = await window.supabaseClient
-            .from('choferes_habilitados')
-            .select('*')
-            .eq('user_id', user.id)
-            .maybeSingle();
+          // Consultar ficha y preferencia de rol juntas. Tener ficha de chofer
+          // no obliga a permanecer siempre en modo repartidor.
+          const [driverResult, profileResult] = await Promise.all([
+            window.supabaseClient
+              .from('choferes_habilitados')
+              .select('*')
+              .eq('user_id', user.id)
+              .maybeSingle(),
+            window.supabaseClient
+              .from('profiles')
+              .select('*')
+              .eq('id', user.id)
+              .maybeSingle()
+          ]);
+          const driverData = driverResult?.data || null;
+          const profileData = profileResult?.data || null;
 
           if (driverData) {
-            _state['userRole'] = 'repartidor';
-            _state['appMode'] = 'driver';
+            const preferredRole = profileData?.role === 'vecino' ? 'vecino' : 'repartidor';
+            _state['userRole'] = preferredRole;
+            _state['appMode'] = preferredRole === 'repartidor' ? 'driver' : 'buyer';
             if (driverData.ciudad) _state['city'] = driverData.ciudad.toLowerCase().trim();
             _state['userData'] = {
-              role: 'repartidor',
-              nombre: driverData.nombre_completo || meta.full_name || user.email.split('@')[0],
+              role: preferredRole,
+              hasDriverProfile: true,
+              nombre: profileData?.nombre || driverData.nombre_completo || meta.full_name || user.email.split('@')[0],
               whatsapp: driverData.telefono_whatsapp || '',
               placa: driverData.placa || '',
               categoria: driverData.categoria || 'gas',
@@ -126,13 +138,6 @@ window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño m
               gmail: user.email
             };
           } else {
-            // 2. Buscar en profiles
-            const { data: profileData } = await window.supabaseClient
-              .from('profiles')
-              .select('*')
-              .eq('id', user.id)
-              .maybeSingle();
-
             if (profileData) {
               _state['userRole'] = profileData.role || 'vecino';
               _state['appMode'] = profileData.role === 'repartidor' ? 'driver' : 'buyer';

@@ -893,33 +893,37 @@ function moverMarcadorUbicacionManual(lat, lng) {
     AppState.set('gpsLng', lng);
   }
 
-  if (!userMarker) {
-    applyGpsPosition(lat, lng, "Ajuste Manual", false);
-  } else {
+  const isDriver = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver') || (typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver');
+
+  if (!userMarker && map) {
+    applyGpsPosition(lat, lng, "Ajuste Manual", false, false);
+  } else if (userMarker) {
     userMarker.setLatLng([lat, lng]);
-    const isDriver = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver') || (typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver');
     if (!isDriver && deliveryPinIcon) {
       userMarker.setIcon(deliveryPinIcon);
+    }
+    if (userMarker.dragging && !userMarker.dragging.enabled()) {
+      userMarker.dragging.enable();
+    }
+    if (userMarker.isPopupOpen && userMarker.isPopupOpen()) {
+      userMarker.closePopup();
+    }
+    if (userMarker.getPopup()) {
+      userMarker.getPopup().setContent(`
+        <div class="google-infowindow-content">
+          <strong style="color:#EA4335; font-size:13px;">📍 Ubicación de Entrega</strong><br>
+          <span style="font-size:11px; color:#1A73E8; font-weight:700;">Punto fijado en el mapa</span><br>
+          <span style="font-size:9.5px; color:#5F6368;">(Arrastra o toca en el mapa para ajustar a tu puerta)</span>
+        </div>
+      `);
     }
   }
 
   if (typeof map !== 'undefined' && map) {
-    map.setView([lat, lng], map.getZoom(), { animate: true });
+    map.panTo([lat, lng], { animate: true, duration: 0.35 });
   }
 
   actualizarCoordenadasPedidoActivo(lat, lng);
-
-  if (userMarker) {
-    userMarker.getPopup().setContent(`
-      <div class="google-infowindow-content">
-        <strong style="color:#EA4335; font-size:13px;">📍 Ubicación de Entrega</strong><br>
-        <span style="font-size:11px; color:#1A73E8; font-weight:700;">Punto fijado en el mapa</span><br>
-        <span style="font-size:9.5px; color:#5F6368;">(Arrastra el marcador a la puerta exacta de tu casa)</span>
-      </div>
-    `);
-    userMarker.openPopup();
-  }
-
   verificarYMostrarRepartidorGPS();
 }
 
@@ -1068,19 +1072,23 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
 
       actualizarCoordenadasPedidoActivo(newPos.lat, newPos.lng);
 
-      userMarker.getPopup().setContent(`
-        <div class="google-infowindow-content">
-          <strong style="color:#EA4335; font-size:13px;">📍 Ubicación de Entrega Ajustada</strong><br>
-          <span style="font-size:11px; color:#1A73E8; font-weight:700;">Fijada en el mapa</span><br>
-          <span style="font-size:9.5px; color:#5F6368;">(Arrastra el marcador a la puerta exacta de tu casa)</span>
-        </div>
-      `);
-      userMarker.openPopup();
+      if (userMarker.getPopup()) {
+        userMarker.getPopup().setContent(`
+          <div class="google-infowindow-content">
+            <strong style="color:#EA4335; font-size:13px;">📍 Ubicación de Entrega Ajustada</strong><br>
+            <span style="font-size:11px; color:#1A73E8; font-weight:700;">Fijada en el mapa</span><br>
+            <span style="font-size:9.5px; color:#5F6368;">(Arrastra o toca en el mapa para mover a tu puerta)</span>
+          </div>
+        `);
+      }
       verificarYMostrarRepartidorGPS();
     });
   } else if (userMarker) {
     userMarker.setLatLng([activeLat, activeLng]);
     userMarker.setIcon(activeIcon);
+    if (userMarker.dragging && !userMarker.dragging.enabled()) {
+      userMarker.dragging.enable();
+    }
   }
 
   const banner = document.getElementById('gpsMandatoryBanner');
