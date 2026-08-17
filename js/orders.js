@@ -50,6 +50,112 @@ async function renderDriverOrdersList() {
         driverCiudad = driverRow.ciudad || '';
         driverCategoria = driverRow.categoria || '';
       }
+    }
+  } catch (error) {
+    console.warn('Error obteniendo perfil de repartidor:', error);
+  }
+
+  const userData = (typeof AppState !== 'undefined') ? (AppState.get('userData') || {}) : {};
+  driverCiudad = driverCiudad || userData.ciudad || userData.city || ((typeof AppState !== 'undefined') ? AppState.get('city') : '');
+  driverCategoria = driverCategoria || userData.categoria || userData.category || 'gas';
+
+  if (!driverCiudad) {
+    container.innerHTML = '<div class="driver-demand-empty">Selecciona tu ciudad para ver los pedidos disponibles.</div>';
+    return;
+  }
+
+  const normCity = String(driverCiudad).toLowerCase().trim();
+  let clusters = [];
+  let availableOrders = [];
+  let assignedOrders = [];
+  let ordersError = null;
+
+  try {
+    if (typeof window.obtenerGruposDemanda === 'function') {
+      clusters = await window.obtenerGruposDemanda(normCity, driverCategoria);
+    } else {
+      const result = await window.supabaseClient.rpc('rpc_get_demand_clusters_v2', {
+        p_ciudad: normCity,
+        p_categoria: null,
+        p_distancia_metros: 300,
+        p_min_pedidos: 2
+      });
+      if (!result.error && Array.isArray(result.data)) {
+        clusters = result.data.filter(cluster => {
+          return typeof window.isOrderCategoryMatchingDriver !== 'function' ||
+            window.isOrderCategoryMatchingDriver(cluster.categoria, driverCategoria);
+        });
+      }
+    }
+    if (typeof window.obtenerPedidosDisponiblesDesdeGrupos === 'function') {
+      availableOrders = await window.obtenerPedidosDisponiblesDesdeGrupos(clusters, normCity, driverCategoria);
+    }
+  } catch (error) {
+    ordersError = error;
+    console.error('Error cargando pedidos disponibles desde grupos:', error);
+  }
+
+  // Fallback: si no hay grupos densos (clusters), consultar directamente pedidos públicos disponibles
+  if (!Array.isArray(availableOrders) || availableOrders.length === 0) {
+    try {
+      let pubQuery = window.supabaseClient
+        .from('pedidos_publicos')
+        .select('*')
+        .in('estado', ['pendiente', 'visto']);
+      if (normCity) pubQuery = pubQuery.ilike('ciudad', normCity);
+      const { data: pubData } = await pubQuery;
+      if (Array.isArray(pubData)) {
+        availableOrders = pubData.filter(order => {
+          return typeof window.isOrderCategoryMatchingDriver !== 'function' ||
+            window.isOrderCategoryMatchingDriver(order.categoria, driverCategoria);
+        });
+        ordersError = null;
+      }
+    } catch(e) {
+      console.warn('Error en fallback de pedidos públicos para repartidor:', e);
+    }
+  }
+
+  if (localUserId) {
+    const assignedResult = await window.supabaseClient.rpc('rpc_get_my_assigned_orders');
+
+    if (!assignedResult.error) {
+      assignedOrders = (assignedResult.data || []).filter(order => {
+        return typeof window.isOrderCategoryMatchingDriver !== 'function' ||
+          window.isOrderCategoryMatchingDriver(order.categoria, driverCategoria);
+      });
+    } else {
+      console.warn('RPC de contacto seguro pendiente; cargando pedidos sin correo:', assignedResult.error.message);
+      const fallbackResult = await window.supabaseClient
+        .from('pedidos')
+        .select('id, titulo, categoria, cantidad, direccion, telefono, latitude, longitude, created_at, estado')
+        .eq('driver_id', localUserId)
+        .ilike('ciudad', normCity)
+        .eq('estado', 'asignado')
+        .order('created_at', { ascending: true });
+
+      if (fallbackResult.error) {
+        console.warn('Error cargando entregas asignadas:', fallbackResult.error);
+      } else {
+        assignedOrders = fallbackResult.data || [];
+      }
+    }
+  }
+
+  const minutesSince = value => {
+    const timestamp = new Date(value || Date.now()).getTime();
+    return Math.max(0, Math.floor((Date.now() - timestamp) / 60000));
+  };
+
+  let html = '';
+
+  if (assignedOrders.length > 0) {
+    html += '<div class="demand-section-title"><i class="fa-solid fa-route"></i> Pedidos asignados</div>';
+    assignedOrders.forEach(order => {
+      const lat = Number(order.latitude);
+      const lng = Number(order.longitude);
+      const safeAddress = window.escapeHtmlStr(order.direccion || 'Ubicación fijada en el mapa');
+      const safeBuyerName = window.escapeHtmlStr(order.titulo || 'Comprador vecinal');
       const safeBuyerEmail = window.escapeHtmlStr(order.buyer_email || 'Correo disponible al aplicar migración 041');
       const emailHref = order.buyer_email ? `mailto:${encodeURIComponent(order.buyer_email)}` : '';
       html += `
