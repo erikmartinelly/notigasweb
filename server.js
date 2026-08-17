@@ -46,19 +46,6 @@ function limitarSolicitudes(req, res, next) {
   return next();
 }
 
-app.use((req, res, next) => {
-  if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
-    res.setHeader('Allow', 'GET, HEAD, OPTIONS');
-    return res.status(405).json({ error: 'Método no permitido.' });
-  }
-  if (req.originalUrl.length > 2048) {
-    return res.status(414).json({ error: 'Solicitud demasiado larga.' });
-  }
-  return next();
-});
-
-app.use(limitarSolicitudes);
-
 // Encabezados de seguridad
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -75,12 +62,12 @@ app.use((req, res, next) => {
     "object-src 'none'",
     "frame-ancestors 'self'",
     "form-action 'self' https://accounts.google.com",
-    "script-src 'self' https://accounts.google.com https://unpkg.com https://cdn.jsdelivr.net https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.google.com",
+    "script-src 'self' 'unsafe-inline' https://accounts.google.com https://unpkg.com https://cdn.jsdelivr.net https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.google.com https://*.gstatic.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://unpkg.com",
     "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com",
     "img-src 'self' data: blob: https:",
-    "connect-src 'self' https://yxzzfqyehllogzzhdtmc.supabase.co wss://yxzzfqyehllogzzhdtmc.supabase.co https://nominatim.openstreetmap.org https://photon.komoot.io https://ipapi.co https://ipinfo.io https://freeipapi.com https://ipwho.is https://*.google.com https://*.googlesyndication.com",
-    "frame-src 'self' https://accounts.google.com https://*.google.com https://*.googlesyndication.com",
+    "connect-src 'self' https://yxzzfqyehllogzzhdtmc.supabase.co wss://yxzzfqyehllogzzhdtmc.supabase.co https://nominatim.openstreetmap.org https://photon.komoot.io https://ipapi.co https://ipinfo.io https://freeipapi.com https://ipwho.is https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.googleadservices.com",
+    "frame-src 'self' https://accounts.google.com https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.googleadservices.com",
     "worker-src 'self' blob:",
     "manifest-src 'self'"
   ].join('; '));
@@ -89,6 +76,19 @@ app.use((req, res, next) => {
   }
   next();
 });
+
+app.use((req, res, next) => {
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+    res.setHeader('Allow', 'GET, HEAD, OPTIONS');
+    return res.status(405).json({ error: 'Método no permitido.' });
+  }
+  if (req.originalUrl.length > 2048) {
+    return res.status(414).json({ error: 'Solicitud demasiado larga.' });
+  }
+  return next();
+});
+
+app.use(limitarSolicitudes);
 
 // Endpoint de salud
 app.get('/health', (req, res) => {
