@@ -1,0 +1,19 @@
+{
+  "name": "notigas-web",
+  "version": "1.0.0",
+  "description": "NOTIGAS Web App PWA",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "build": "echo \"No build needed\""
+  },
+  "keywords": [
+    "notigas",
+    "pwa"
+  ],
+  "author": "NOTIGAS",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

@@ -1,5 +1,9 @@
 # NOTIGAS Web App - Git Ignore Rules
 
+# Dependencias Node.js
+node_modules/
+npm-debug.log*
+
 # Archivos de Entorno y Claves Sensibles
 .env
 .env.local
