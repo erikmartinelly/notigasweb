@@ -109,6 +109,8 @@ const deliveryPinSvgHtml = `
       <circle cx="192" cy="192" r="40" fill="#C5221F"/>
     </svg>
   </div>
+`;
+
 // ONDAS DE RADAR AZUL PARA CAMIONES REPARTIDORES AL HACER ZOOM OUT
 const truckRadarBlueSvgHtml = `
   <div class="truck-radar-blue" title="Camión Repartidor en Vivo (Haz clic para ver)">
@@ -804,6 +806,8 @@ function agregarPedidoVecinoEnMapa(order) {
   const dirStr = `<span class="order-popup-address">📍 <strong>Dirección:</strong> ${escapeHtmlStr(order.direccion || 'Ubicación fijada en mapa GPS (opcional)')}</span><br>`;
   const telStr = `<span class="order-popup-contact">📞 <strong>Teléfono:</strong> ${escapeHtmlStr(order.telefono || 'Opcional / No indicado')}</span><br>`;
   const mapsNavUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${lat},${lng}`)}`;
+  const reportBuyer = encodeURIComponent(order.buyer_name || order.titulo || 'Vecino');
+  const reportEmail = encodeURIComponent(order.buyer_email || 'Correo no disponible');
   let orderAction = '';
   if (isAssignedToDriver) {
     orderAction = `
@@ -812,10 +816,14 @@ function agregarPedidoVecinoEnMapa(order) {
       </a>`;
   } else if (userRole === 'repartidor') {
     orderAction = `
-      <button type="button" data-action="aceptarPedidoRepartidor" data-lat="${lat}" data-lng="${lng}" data-id="${escapeHtmlStr(order.id)}" class="btn-driver-accept order-popup-action">
+      <button type="button" data-action="aceptarPedidoRepartidor" data-lat="${lat}" data-lng="${lng}" data-id="${escapeHtmlStr(order.id)}" data-address="${escapeHtmlStr(order.direccion || '')}" class="btn-driver-accept order-popup-action">
         <i class="fa-solid fa-diamond-turn-right"></i> ELEGIR Y NAVEGAR (GOOGLE MAPS)
       </button>`;
   }
+  const reportAction = userRole === 'repartidor' ? `
+    <button type="button" data-action="denunciarPedidoFalso" data-id="${escapeHtmlStr(order.id)}" data-buyer="${reportBuyer}" data-email="${reportEmail}" class="btn-driver-report order-popup-action">
+      <i class="fa-solid fa-flag"></i> DENUNCIAR PEDIDO FALSO
+    </button>` : '';
   const popupHtml = `
     <div class="notigas-order-popup">
       <strong style="color:#FF6D00; font-size:13px;">📦 Pedido ${isAssignedToDriver ? 'Asignado' : 'Disponible'}</strong><br>
@@ -825,6 +833,7 @@ function agregarPedidoVecinoEnMapa(order) {
       ${dirStr}
       ${telStr}
       ${orderAction}
+      ${reportAction}
     </div>
   `;
 

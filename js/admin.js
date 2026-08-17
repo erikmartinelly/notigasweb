@@ -1634,18 +1634,21 @@ async function enviarDenuncia() {
 
   const detalle = document.getElementById('inputReportDetalle')?.value.trim() || '';
 
-  if (window.supabaseClient) {
-    const { error } = await window.supabaseClient.from('denuncias').insert([{
-      denunciado_id: context,
+  if (!window.supabaseClient) {
+    if (typeof showToast === 'function') showToast('Sin conexión', 'No se pudo enviar la denuncia. Intenta nuevamente.', 'error', 4000);
+    return;
+  }
 
-      motivo: motivo,
+  const { error } = await window.supabaseClient.from('denuncias').insert([{
+    denunciado_id: context,
+    motivo: motivo,
+    detalles: detalle
+  }]);
 
-      detalles: detalle
-
-    }]);
-
-    if (error) console.error("Error enviando denuncia:", error);
-
+  if (error) {
+    console.error("Error enviando denuncia:", error);
+    if (typeof showToast === 'function') showToast('Denuncia no enviada', error.message || 'No se pudo registrar la denuncia.', 'error', 4500);
+    return;
   }
 
   closeReportModal();

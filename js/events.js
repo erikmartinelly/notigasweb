@@ -390,6 +390,16 @@ document.addEventListener('click', (e) => {
       const title = decodeURIComponent(btn.getAttribute('data-title') || '');
       if (typeof window.abrirModalDenuncia === 'function') window.abrirModalDenuncia('Aviso Noticias Vecinales', title);
     }
+    else if (action === 'denunciarPedidoFalso') {
+      const id = btn.getAttribute('data-id') || '';
+      const buyer = decodeURIComponent(btn.getAttribute('data-buyer') || 'Vecino');
+      const email = decodeURIComponent(btn.getAttribute('data-email') || 'Correo no disponible');
+      if (typeof window.abrirModalDenuncia === 'function') {
+        window.abrirModalDenuncia('Pedido posiblemente falso', `Pedido ${id} | Comprador: ${buyer} | Correo: ${email}`);
+        const reason = document.getElementById('selectReportMotivo');
+        if (reason) reason.value = 'Pedido falso / posible fraude';
+      }
+    }
     else if (action === 'borrarPostForumAdmin') {
       const id = btn.getAttribute('data-id');
       if (typeof window.borrarPostForumAdmin === 'function') window.borrarPostForumAdmin(id);

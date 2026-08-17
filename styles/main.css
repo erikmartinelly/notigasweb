@@ -3323,6 +3323,12 @@ button:active, .tab-btn:active, .cat-chip:active {
   padding: 10px;
 }
 
+.btn-driver-report {
+  color: #0F172A !important;
+  background: linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%) !important;
+  border: 1px solid #FCD34D !important;
+}
+
 .assigned-buyer-email {
   color: #FFB74D;
   font-weight: 800;

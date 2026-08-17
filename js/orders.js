@@ -225,9 +225,6 @@ async function renderDriverOrdersList() {
             <button type="button" class="btn-driver-view-order" data-action="centrarPedidoEnMapa" data-lat="${lat}" data-lng="${lng}" data-id="${window.escapeHtmlStr(order.id)}">
               <i class="fa-solid fa-map-location-dot"></i> Ver en el mapa
             </button>
-            <button type="button" class="btn-driver-route" data-action="abrirRutaGoogleMaps" data-lat="${lat}" data-lng="${lng}" data-id="${window.escapeHtmlStr(order.id)}" data-address="${safeAddress}">
-              <i class="fa-solid fa-diamond-turn-right"></i> Navegar (Google Maps)
-            </button>
             <button type="button" class="btn-driver-complete" data-action="confirmarEntregaPedido" data-id="${window.escapeHtmlStr(order.id)}">
               <i class="fa-solid fa-check"></i> Entregado
             </button>
@@ -276,13 +273,22 @@ async function renderDriverOrdersList() {
               <button type="button" class="btn-driver-view-order" data-action="centrarPedidoEnMapa" data-lat="${lat}" data-lng="${lng}" data-id="${safeId}">
                 <i class="fa-solid fa-map-location-dot"></i> Ver en el mapa
               </button>
-              <button type="button" class="btn-driver-accept" data-action="aceptarPedidoRepartidor" data-id="${safeId}" data-lat="${lat}" data-lng="${lng}">
-                <i class="fa-solid fa-diamond-turn-right"></i> Elegir y navegar
+              <button type="button" class="btn-driver-report" data-action="denunciarPedidoFalso" data-id="${safeId}" data-buyer="${encodeURIComponent(order.buyer_name || order.titulo || 'Vecino')}" data-email="${encodeURIComponent(order.buyer_email || 'No registrado')}">
+                <i class="fa-solid fa-flag"></i> Denunciar
               </button>
             </div>
           </article>`;
       });
   }
+
+  // El mapa debe usar la misma versión segura y completa de los pedidos que
+  // acaba de ver el repartidor. Así el popup conserva correo, dirección y
+  // teléfono opcional, y la elección sólo se ofrece después de ubicarlo.
+  window.driverDemandMapState = {
+    clusters,
+    availableOrders,
+    assignedOrders
+  };
 
   container.innerHTML = html;
 }
@@ -309,7 +315,7 @@ window.centrarPedidoEnMapa = function(lat, lng, id) {
     }, 1400);
 
     if (typeof showToast === 'function') {
-      showToast('📍 Pedido localizado', 'Mostrando la ubicación exacta del pedido asignado.', 'success', 2800);
+      showToast('📍 Pedido localizado', 'Revisa los datos en el mapa antes de elegir y navegar.', 'success', 2800);
     }
   } else {
     if (typeof showToast === 'function') {
