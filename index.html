@@ -106,7 +106,7 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="styles/main.css?v=100">
+  <link rel="stylesheet" href="styles/main.css?v=101">
 
   <!-- SERVICIOS EXTERNOS -->
 
@@ -876,9 +876,11 @@
 
         <label style="font-size: 11px; color: #94A3B8; font-weight: 700; margin-bottom: 4px; display: block;">📍 Tu ciudad habitual:</label>
 
-        <select id="newUserCity" style="width: 100%; padding: 10px; background: #1E293B; border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 8px; font-size: 12px; cursor: pointer;">
+        <select id="newUserCity" style="width: 100%; padding: 10px; background: #1E293B; border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 8px; font-size: 12px; cursor: pointer;" required>
 
-          <option value="santacruz" selected>Santa Cruz de la Sierra</option>
+          <option value="" disabled selected>👉 Selecciona tu ciudad de preferencia (Obligatorio)</option>
+
+          <option value="santacruz">Santa Cruz de la Sierra</option>
 
           <option value="cochabamba">Cochabamba</option>
 
@@ -1694,21 +1696,21 @@
   <!-- SCRIPTS AL FINAL DEL BODY (ORDEN DETERMINISTA SIN CONFLICTOS DE DEFER) -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3/dist/umd/supabase.min.js"></script>
-  <script src="js/state.js?v=100"></script>
-  <script src="js/ui.js?v=100"></script>
-  <script src="js/supabase-config.js?v=100"></script>
-  <script src="js/auth.js?v=100"></script>
-  <script src="js/vendors.js?v=100"></script>
-  <script src="js/map.js?v=100"></script>
-  <script src="js/map_search.js?v=100"></script>
-  <script src="js/map_gps.js?v=100"></script>
-  <script src="js/forum.js?v=100"></script>
-  <script src="js/ads.js?v=100"></script>
-  <script src="js/orders.js?v=100"></script>
-  <script src="js/admin_users.js?v=100"></script>
-  <script src="js/admin.js?v=100"></script>
-  <script src="js/app.js?v=100"></script>
-  <script src="js/events.js?v=100"></script>
+  <script src="js/state.js?v=101"></script>
+  <script src="js/ui.js?v=101"></script>
+  <script src="js/supabase-config.js?v=101"></script>
+  <script src="js/auth.js?v=101"></script>
+  <script src="js/vendors.js?v=101"></script>
+  <script src="js/map.js?v=101"></script>
+  <script src="js/map_search.js?v=101"></script>
+  <script src="js/map_gps.js?v=101"></script>
+  <script src="js/forum.js?v=101"></script>
+  <script src="js/ads.js?v=101"></script>
+  <script src="js/orders.js?v=101"></script>
+  <script src="js/admin_users.js?v=101"></script>
+  <script src="js/admin.js?v=101"></script>
+  <script src="js/app.js?v=101"></script>
+  <script src="js/events.js?v=101"></script>
 
 </body>
 

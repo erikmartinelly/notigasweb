@@ -1447,15 +1447,15 @@ function obtenerIconoCategoriaMapa(catNombre) {
     badgeColor = '#94A3B8';
     iconContent = `<div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #94A3B8);"><i class="fa-solid fa-box" style="font-size: 34px; color: #94A3B8;"></i></div>`;
   } else {
-    // ESTÉTICA NOTIGAS ORDER (GAS)
+    // ESTÉTICA NOTIGAS ORDER (GAS - ICONO ROJO OFICIAL)
     return L.divIcon({
       className: 'notigas-order-icon',
       html: `
-        <div class="order-marker">
-          <div class="gas-cylinder">▮</div>
-        </div>
-        <div class="order-label" style="color: #ffffff; text-shadow: 0 1px 3px rgba(0,0,0,1); -webkit-font-smoothing: antialiased; transform: translateZ(0);">
-          ENTREGA <strong style="color: #ffffff; text-shadow: 0 0 5px #ff7620, 0 1px 3px rgba(0,0,0,1);">RÁPIDA</strong>
+        <div class="order-marker" style="display: flex; flex-direction: column; align-items: center;">
+          <img src="icons/garrafa_red_clean.svg" style="width: 44px; height: 50px; filter: drop-shadow(0 4px 10px rgba(229, 57, 53, 0.75)); display: block;" alt="Garrafa de Gas NOTIGAS">
+          <div class="order-label" style="margin-top: 2px; background: #0F172A; color: #FFFFFF; border: 1.5px solid #FF1744; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 900; letter-spacing: 0.5px; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.5); text-shadow: 0 1px 3px rgba(0,0,0,0.9); -webkit-font-smoothing: antialiased;">
+            PEDIDO
+          </div>
         </div>
       `,
       iconSize: [90, 82],
