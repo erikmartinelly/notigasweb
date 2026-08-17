@@ -2590,13 +2590,13 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 
 /* ==========================================================================
-   APARIENCIA Y CONTROLES ESTILO GOOGLE MAPS (CartoDB Voyager)
+   APARIENCIA Y CONTROLES IDÉNTICOS A GOOGLE MAPS
    ========================================================================== */
 #map,
 .map-container,
 .leaflet-container {
-  background-color: #F5F3F0 !important;
-  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif !important;
+  background-color: #F1F3F4 !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Roboto', 'Inter', 'Segoe UI', sans-serif !important;
 }
 
 .map-base-layer {
@@ -2605,8 +2605,8 @@ button:active, .tab-btn:active, .cat-chip:active {
 }
 
 .map-base-layer .leaflet-tile {
-  filter: saturate(1.06) contrast(1.02) brightness(1.005);
-  -webkit-filter: saturate(1.06) contrast(1.02) brightness(1.005);
+  filter: none;
+  -webkit-filter: none;
   transition: opacity 0.2s ease;
 }
 
