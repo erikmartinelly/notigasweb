@@ -1477,33 +1477,40 @@ async function procesarSesionExitosa(user) {
 }
 
 window.finalizeRoleSelection = async function(role) {
-  const modalRole = document.getElementById('modalRoleSelection');
-  if (modalRole) modalRole.style.display = 'none';
-
   const citySelect = document.getElementById('newUserCity');
   let selectedCity = null;
   if (citySelect && citySelect.value) {
     selectedCity = citySelect.value.toLowerCase().trim();
   }
 
+  if (!selectedCity) {
+    if (typeof showToast === 'function') {
+      showToast('⚠️ Ciudad Requerida', 'Por favor selecciona tu ciudad de preferencia para registrarte.', 'warning', 3500);
+    } else {
+      alert('Por favor selecciona tu ciudad de preferencia.');
+    }
+    return;
+  }
+
+  const modalRole = document.getElementById('modalRoleSelection');
+  if (modalRole) modalRole.style.display = 'none';
+
   currentSelectedRole = role === 'repartidor' ? 'driver' : 'buyer';
   window._roleSelectedNow = true;
 
-  if (selectedCity) {
-    if (typeof window.cambiarCiudad === 'function') {
-      try {
-        await window.cambiarCiudad(selectedCity);
-      } catch(e) {
-        AppState.set('city', selectedCity);
-      }
-    } else {
+  if (typeof window.cambiarCiudad === 'function') {
+    try {
+      await window.cambiarCiudad(selectedCity);
+    } catch(e) {
       AppState.set('city', selectedCity);
     }
-
-    const u = AppState.get('userData') || {};
-    u.ciudad = selectedCity;
-    AppState.set('userData', u);
+  } else {
+    AppState.set('city', selectedCity);
   }
+
+  const u = AppState.get('userData') || {};
+  u.ciudad = selectedCity;
+  AppState.set('userData', u);
 
   if (window._tempAuthUser) {
     await procesarSesionExitosa(window._tempAuthUser);

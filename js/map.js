@@ -612,17 +612,15 @@ function renderOrderRadarsOnMap(orders) {
 
     const marker = L.marker([lat, lng], {
       icon,
-      interactive: isDriver,
+      interactive: true,
       bubblingMouseEvents: false,
       keyboard: false,
       zIndexOffset: 7200
     }).addTo(map);
 
-    if (isDriver) {
-      marker.on('click', () => {
-        map.flyTo([lat, lng], 16, { duration: 0.8 });
-      });
-    }
+    marker.on('click', () => {
+      map.flyTo([lat, lng], 16, { duration: 0.8 });
+    });
 
     window.demandClusterMarkers[`order_${order.id}`] = marker;
   });
@@ -810,8 +808,6 @@ function agregarPedidoVecinoEnMapa(order) {
   const dirStr = `<span class="order-popup-address">📍 <strong>Dirección:</strong> ${escapeHtmlStr(order.direccion || 'Ubicación fijada en mapa GPS (opcional)')}</span><br>`;
   const telStr = `<span class="order-popup-contact">📞 <strong>Teléfono:</strong> ${escapeHtmlStr(order.telefono || 'Opcional / No indicado')}</span><br>`;
   const mapsNavUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${lat},${lng}`)}`;
-  const reportBuyer = encodeURIComponent(order.buyer_name || order.titulo || 'Vecino');
-  const reportEmail = encodeURIComponent(order.buyer_email || 'Correo no disponible');
   let orderAction = '';
   if (isAssignedToDriver) {
     orderAction = `
@@ -824,10 +820,7 @@ function agregarPedidoVecinoEnMapa(order) {
         <i class="fa-solid fa-diamond-turn-right"></i> ELEGIR Y NAVEGAR (GOOGLE MAPS)
       </button>`;
   }
-  const reportAction = userRole === 'repartidor' ? `
-    <button type="button" data-action="denunciarPedidoFalso" data-id="${escapeHtmlStr(order.id)}" data-buyer="${reportBuyer}" data-email="${reportEmail}" class="btn-driver-report order-popup-action">
-      <i class="fa-solid fa-flag"></i> DENUNCIAR PEDIDO FALSO
-    </button>` : '';
+
   const popupHtml = `
     <div class="notigas-order-popup">
       <strong style="color:#FF6D00; font-size:13px;">📦 Pedido ${isAssignedToDriver ? 'Asignado' : 'Disponible'}</strong><br>
@@ -837,7 +830,6 @@ function agregarPedidoVecinoEnMapa(order) {
       ${dirStr}
       ${telStr}
       ${orderAction}
-      ${reportAction}
     </div>
   `;
 

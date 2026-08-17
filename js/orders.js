@@ -225,8 +225,14 @@ async function renderDriverOrdersList() {
             <button type="button" class="btn-driver-view-order" data-action="centrarPedidoEnMapa" data-lat="${lat}" data-lng="${lng}" data-id="${window.escapeHtmlStr(order.id)}">
               <i class="fa-solid fa-map-location-dot"></i> Ver en el mapa
             </button>
+            <button type="button" class="btn-driver-route" data-action="abrirRutaGoogleMaps" data-lat="${lat}" data-lng="${lng}" data-id="${window.escapeHtmlStr(order.id)}" data-address="${safeAddress}">
+              <i class="fa-solid fa-diamond-turn-right"></i> Navegar (Google Maps)
+            </button>
             <button type="button" class="btn-driver-complete" data-action="confirmarEntregaPedido" data-id="${window.escapeHtmlStr(order.id)}">
               <i class="fa-solid fa-check"></i> Entregado
+            </button>
+            <button type="button" class="btn-driver-report" data-action="denunciarPedidoFalso" data-id="${window.escapeHtmlStr(order.id)}" data-buyer="${encodeURIComponent(order.buyer_name || order.titulo || 'Vecino')}" data-email="${encodeURIComponent(order.buyer_email || 'No registrado')}">
+              <i class="fa-solid fa-flag"></i> Denunciar pedido falso
             </button>
           </div>
         </article>`;
