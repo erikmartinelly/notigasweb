@@ -799,9 +799,10 @@ function agregarPedidoVecinoEnMapa(order) {
   }).addTo(map);
   const isAssignedToDriver = userRole === 'repartidor' &&
     order.estado === 'asignado' && order.driver_id === localUserId;
-  const telStr = isAssignedToDriver && order.telefono ? `<span class="order-popup-contact">📞 ${escapeHtmlStr(order.telefono)}</span><br>` : '';
-  const dirStr = isAssignedToDriver && order.direccion ? `<span class="order-popup-address">📍 ${escapeHtmlStr(order.direccion)}</span><br>` : '';
-  const nombreStr = isAssignedToDriver && order.titulo ? `<span class="order-popup-name">👤 ${escapeHtmlStr(order.titulo)}</span><br>` : '';
+  const nombreStr = `<span class="order-popup-name">👤 <strong>Comprador:</strong> ${escapeHtmlStr(order.buyer_name || order.titulo || 'Vecino')}</span><br>`;
+  const emailStr = order.buyer_email ? `<span class="order-popup-email" style="font-size:11px; color:#0288D1;">✉️ <strong>Correo:</strong> ${escapeHtmlStr(order.buyer_email)}</span><br>` : '';
+  const dirStr = `<span class="order-popup-address">📍 <strong>Dirección:</strong> ${escapeHtmlStr(order.direccion || 'Ubicación fijada en mapa GPS (opcional)')}</span><br>`;
+  const telStr = `<span class="order-popup-contact">📞 <strong>Teléfono:</strong> ${escapeHtmlStr(order.telefono || 'Opcional / No indicado')}</span><br>`;
   const mapsNavUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${lat},${lng}`)}`;
   let orderAction = '';
   if (isAssignedToDriver) {
@@ -812,14 +813,15 @@ function agregarPedidoVecinoEnMapa(order) {
   } else if (userRole === 'repartidor') {
     orderAction = `
       <button type="button" data-action="aceptarPedidoRepartidor" data-lat="${lat}" data-lng="${lng}" data-id="${escapeHtmlStr(order.id)}" class="btn-driver-accept order-popup-action">
-        <i class="fa-solid fa-diamond-turn-right"></i> ELEGIR Y NAVEGAR
+        <i class="fa-solid fa-diamond-turn-right"></i> ELEGIR Y NAVEGAR (GOOGLE MAPS)
       </button>`;
   }
   const popupHtml = `
     <div class="notigas-order-popup">
-      <strong>Pedido disponible</strong><br>
+      <strong style="color:#FF6D00; font-size:13px;">📦 Pedido ${isAssignedToDriver ? 'Asignado' : 'Disponible'}</strong><br>
       ${nombreStr}
-      <span class="order-popup-category">${escapeHtmlStr(order.categoria)} · ${escapeHtmlStr(order.cantidad || '1')} unidad(es)</span><br>
+      ${emailStr}
+      <span class="order-popup-category">🏷️ ${escapeHtmlStr(order.categoria || 'Gas')} · ${escapeHtmlStr(order.cantidad || '1')} unidad(es)</span><br>
       ${dirStr}
       ${telStr}
       ${orderAction}

@@ -127,28 +127,44 @@ async function renderDriverOrdersList() {
   // La agrupación sirve para el radar, pero nunca debe ocultar pedidos individuales.
   // Un pedido recién creado normalmente todavía no pertenece a un grupo de demanda.
   // Por eso siempre unimos la vista pública con los resultados de los clusters.
+  // 1. Cargar pedidos disponibles para el repartidor (incluye correo del comprador vía RPC seguro)
   try {
-    let pubQuery = window.supabaseClient
-      .from('pedidos_publicos')
-      .select('*')
-      .in('estado', ['pendiente', 'visto']);
-    if (normCity) pubQuery = pubQuery.ilike('ciudad', normCity);
-    const { data: pubData, error: publicOrdersError } = await pubQuery;
-    if (publicOrdersError) throw publicOrdersError;
+    if (localUserId) {
+      const { data: driverAvailData, error: driverAvailErr } = await window.supabaseClient.rpc('rpc_get_driver_available_orders', {
+        p_ciudad: normCity,
+        p_categoria: driverCategoria
+      });
+      if (!driverAvailErr && Array.isArray(driverAvailData) && driverAvailData.length > 0) {
+        availableOrders = driverAvailData;
+        ordersError = null;
+      }
+    }
 
-    const ordersById = new Map();
-    (Array.isArray(availableOrders) ? availableOrders : []).forEach(order => {
-      if (order?.id) ordersById.set(order.id, order);
-    });
-    (Array.isArray(pubData) ? pubData : []).forEach(order => {
-      const categoryMatches = typeof window.isOrderCategoryMatchingDriver !== 'function' ||
-        window.isOrderCategoryMatchingDriver(order.categoria, driverCategoria);
-      if (order?.id && categoryMatches) ordersById.set(order.id, order);
-    });
-    availableOrders = Array.from(ordersById.values());
-    ordersError = null;
+    if (!Array.isArray(availableOrders) || availableOrders.length === 0) {
+      let pubQuery = window.supabaseClient
+        .from('pedidos_publicos')
+        .select('*')
+        .in('estado', ['pendiente', 'visto']);
+      if (normCity) pubQuery = pubQuery.ilike('ciudad', normCity);
+      const { data: pubData, error: publicOrdersError } = await pubQuery;
+      if (publicOrdersError && !availableOrders.length) throw publicOrdersError;
+
+      const ordersById = new Map();
+      (Array.isArray(availableOrders) ? availableOrders : []).forEach(order => {
+        if (order?.id) ordersById.set(order.id, order);
+      });
+      (Array.isArray(pubData) ? pubData : []).forEach(order => {
+        const categoryMatches = typeof window.isOrderCategoryMatchingDriver !== 'function' ||
+          window.isOrderCategoryMatchingDriver(order.categoria, driverCategoria);
+        if (order?.id && categoryMatches && !ordersById.has(order.id)) {
+          ordersById.set(order.id, order);
+        }
+      });
+      availableOrders = Array.from(ordersById.values());
+      ordersError = null;
+    }
   } catch(e) {
-    console.warn('Error consultando pedidos públicos para repartidor:', e);
+    console.warn('Error consultando pedidos disponibles para repartidor:', e);
     if (!Array.isArray(availableOrders) || availableOrders.length === 0) {
       ordersError = e;
     }
@@ -187,9 +203,10 @@ async function renderDriverOrdersList() {
     assignedOrders.forEach(order => {
       const lat = Number(order.latitude);
       const lng = Number(order.longitude);
-      const safeAddress = window.escapeHtmlStr(order.direccion || 'Ubicación fijada en el mapa');
-      const safeBuyerName = window.escapeHtmlStr(order.titulo || 'Comprador vecinal');
-      const safeBuyerEmail = window.escapeHtmlStr(order.buyer_email || 'Correo disponible al aplicar migración 041');
+      const safeAddress = window.escapeHtmlStr(order.direccion || 'Ubicación fijada en el mapa GPS (opcional)');
+      const safeBuyerName = window.escapeHtmlStr(order.buyer_name || order.titulo || 'Vecino');
+      const safeBuyerEmail = window.escapeHtmlStr(order.buyer_email || 'No registrado');
+      const safePhone = window.escapeHtmlStr(order.telefono || 'Opcional / No indicado');
       const emailHref = order.buyer_email ? `mailto:${encodeURIComponent(order.buyer_email)}` : '';
       html += `
         <article class="assigned-order-card">
@@ -198,17 +215,18 @@ async function renderDriverOrdersList() {
             <span class="trip-status-text">ASIGNADO</span>
           </div>
           <div class="demand-card-meta">
-            <div><i class="fa-solid fa-user"></i> ${safeBuyerName}</div>
-            <div><i class="fa-solid fa-envelope"></i> ${emailHref ? `<a class="assigned-buyer-email" href="${emailHref}">${safeBuyerEmail}</a>` : safeBuyerEmail}</div>
-            <div><i class="fa-solid fa-box"></i> ${window.escapeHtmlStr(order.categoria || '')} (${window.escapeHtmlStr(order.cantidad || '1')})</div>
-            <div><i class="fa-solid fa-location-dot"></i> ${safeAddress}</div>
+            <div><i class="fa-solid fa-user"></i> <strong>Comprador:</strong> ${safeBuyerName}</div>
+            <div><i class="fa-solid fa-envelope"></i> <strong>Correo:</strong> ${emailHref ? `<a class="assigned-buyer-email" href="${emailHref}">${safeBuyerEmail}</a>` : safeBuyerEmail}</div>
+            <div><i class="fa-solid fa-box"></i> <strong>Solicitud:</strong> ${window.escapeHtmlStr(order.categoria || '')} (${window.escapeHtmlStr(order.cantidad || '1')} unidad/es)</div>
+            <div><i class="fa-solid fa-location-dot"></i> <strong>Dirección:</strong> ${safeAddress}</div>
+            <div><i class="fa-solid fa-phone"></i> <strong>Teléfono:</strong> ${safePhone}</div>
           </div>
           <div class="demand-card-actions">
             <button type="button" class="btn-driver-view-order" data-action="centrarPedidoEnMapa" data-lat="${lat}" data-lng="${lng}" data-id="${window.escapeHtmlStr(order.id)}">
-              <i class="fa-solid fa-map-location-dot"></i> Ver el pedido en el mapa
+              <i class="fa-solid fa-map-location-dot"></i> Ver en el mapa
             </button>
             <button type="button" class="btn-driver-route" data-action="abrirRutaGoogleMaps" data-lat="${lat}" data-lng="${lng}" data-id="${window.escapeHtmlStr(order.id)}" data-address="${safeAddress}">
-              <i class="fa-solid fa-diamond-turn-right"></i> Navegar
+              <i class="fa-solid fa-diamond-turn-right"></i> Navegar (Google Maps)
             </button>
             <button type="button" class="btn-driver-complete" data-action="confirmarEntregaPedido" data-id="${window.escapeHtmlStr(order.id)}">
               <i class="fa-solid fa-check"></i> Entregado
@@ -218,7 +236,7 @@ async function renderDriverOrdersList() {
     });
   }
 
-  html += '<div class="demand-section-title"><i class="fa-solid fa-clipboard-list"></i> Pedidos disponibles</div>';
+  html += '<div class="demand-section-title"><i class="fa-solid fa-clipboard-list"></i> Pedidos disponibles para atender</div>';
 
   if (ordersError) {
     html += `<div class="driver-demand-empty">No se pudieron cargar los pedidos: ${window.escapeHtmlStr(ordersError.message || 'error de conexión')}.</div>`;
@@ -233,7 +251,11 @@ async function renderDriverOrdersList() {
         const safeId = window.escapeHtmlStr(order.id || '');
         const safeCategory = window.escapeHtmlStr(order.categoria || driverCategoria);
         const safeQuantity = window.escapeHtmlStr(order.cantidad || '1');
-        const safeZone = window.escapeHtmlStr(order.barrio_otb || 'Zona indicada en el mapa');
+        const safeBuyerName = window.escapeHtmlStr(order.buyer_name || order.titulo || 'Vecino');
+        const safeBuyerEmail = window.escapeHtmlStr(order.buyer_email || 'No registrado');
+        const safeAddress = window.escapeHtmlStr(order.direccion || 'Ubicación fijada en mapa GPS (opcional)');
+        const safePhone = window.escapeHtmlStr(order.telefono || 'Opcional / No indicado (por seguridad)');
+        const emailHref = order.buyer_email ? `mailto:${encodeURIComponent(order.buyer_email)}` : '';
         html += `
           <article class="demand-group-card available-order-card">
             <div class="demand-card-header">
@@ -244,10 +266,16 @@ async function renderDriverOrdersList() {
               <span class="trip-status-text">DISPONIBLE</span>
             </div>
             <div class="demand-card-meta">
-              <div><i class="fa-solid fa-location-dot"></i> ${safeZone}</div>
+              <div><i class="fa-solid fa-user"></i> <strong>Comprador:</strong> ${safeBuyerName}</div>
+              <div><i class="fa-solid fa-envelope"></i> <strong>Correo:</strong> ${emailHref ? `<a class="assigned-buyer-email" href="${emailHref}" style="color:#0288D1; font-weight:700; text-decoration:underline;">${safeBuyerEmail}</a>` : safeBuyerEmail}</div>
+              <div><i class="fa-solid fa-location-dot"></i> <strong>Dirección:</strong> ${safeAddress}</div>
+              <div><i class="fa-solid fa-phone"></i> <strong>Teléfono:</strong> ${safePhone}</div>
               <div><i class="fa-regular fa-clock"></i> Publicado hace ${formatearAntiguedadPedido(order.created_at)}.</div>
             </div>
             <div class="demand-card-actions">
+              <button type="button" class="btn-driver-view-order" data-action="centrarPedidoEnMapa" data-lat="${lat}" data-lng="${lng}" data-id="${safeId}">
+                <i class="fa-solid fa-map-location-dot"></i> Ver en el mapa
+              </button>
               <button type="button" class="btn-driver-accept" data-action="aceptarPedidoRepartidor" data-id="${safeId}" data-lat="${lat}" data-lng="${lng}">
                 <i class="fa-solid fa-diamond-turn-right"></i> Elegir y navegar
               </button>
