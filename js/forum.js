@@ -23,98 +23,89 @@ async function renderForumFeed() {
     const feed = document.getElementById('forumFeed');
     if (!feed || !window.supabaseClient) return;
 
-  const currentAdmin = (typeof getVerifiedAdminEmail === 'function') ? getVerifiedAdminEmail() : null;
-  const isAdmin = !!currentAdmin;
+    const currentAdmin = (typeof getVerifiedAdminEmail === 'function') ? getVerifiedAdminEmail() : null;
+    const isAdmin = !!currentAdmin;
 
-  const tresDiasAtras = new Date(Date.now() - 72 * 3600 * 1000).toISOString();
+    const tresDiasAtras = new Date(Date.now() - 72 * 3600 * 1000).toISOString();
 
-  const userData = AppState.get('userData');
-  const ciudadReal = (userData && userData.ciudad) ? userData.ciudad : AppState.get('city');
-  if (!ciudadReal) {
-    feed.innerHTML = `
-      <div style="text-align:center; color:#94A3B8; padding:30px 14px; background: #1E293B; border-radius: 14px;">
-        <i class="fa-solid fa-location-dot" style="font-size:28px; margin-bottom:8px; color:#F59E0B;"></i><br>
-        <strong>Selecciona una ciudad en el mapa para ver avisos vecinales.</strong>
-      </div>
-    `;
-    return;
-  }
+    const userData = AppState.get('userData');
+    const ciudadSelector = document.getElementById('selectCiudadCapital')?.value;
+    const ciudadReal = (userData && userData.ciudad)
+      ? userData.ciudad.toLowerCase().trim()
+      : (AppState.get('city') || ciudadSelector || 'cochabamba').toLowerCase().trim();
 
-  // FIX: Seleccionar la cuenta de comentarios y filtrar avisos de más de 72h y por ciudad
-  const { data: localPosts, error } = await window.supabaseClient.from('avisos')
-    .select('*, comentarios_avisos(count)')
-    .eq('ciudad', ciudadReal)
-    .gte('created_at', tresDiasAtras)
-    .order('created_at', { ascending: false });
+    // Consultar avisos de las últimas 72 horas para la ciudad
+    const { data: localPosts, error } = await window.supabaseClient.from('avisos')
+      .select('*, comentarios_avisos(count)')
+      .eq('ciudad', ciudadReal)
+      .gte('created_at', tresDiasAtras)
+      .order('created_at', { ascending: false });
 
-  if (error) {
-      console.error("Error cargando foro:", error);
+    if (error) {
+        console.error("Error cargando foro:", error);
+        feed.innerHTML = `
+          <div style="text-align:center; color:#EF4444; padding:40px 14px; background: #1E293B; border-radius: 14px; border: 1px dashed rgba(239, 68, 68, 0.3);">
+            <i class="fa-solid fa-triangle-exclamation" style="font-size:32px; margin-bottom:10px;"></i><br>
+            <strong>Error de base de datos</strong><br>
+            <span style="font-size: 12px; color: #FCA5A5;">${escapeHtmlStr(error.message || 'Error de conexión.')}</span><br>
+            <span style="font-size: 10px; color: #94A3B8;">Código: ${escapeHtmlStr(error.code || 'N/A')}</span>
+          </div>
+        `;
+        return;
+    }
+
+    if (!localPosts || localPosts.length === 0) {
       feed.innerHTML = `
-        <div style="text-align:center; color:#EF4444; padding:40px 14px; background: #1E293B; border-radius: 14px; border: 1px dashed rgba(239, 68, 68, 0.3);">
-          <i class="fa-solid fa-triangle-exclamation" style="font-size:32px; margin-bottom:10px;"></i><br>
-          <strong>Error de base de datos</strong><br>
-          <span style="font-size: 12px; color: #FCA5A5;">${escapeHtmlStr(error.message || 'Error de conexión.')}</span><br>
-          <span style="font-size: 10px; color: #94A3B8;">Código: ${escapeHtmlStr(error.code || 'N/A')} (Detalle: ${escapeHtmlStr(error.details || 'Ninguno')})</span>
+        <div style="text-align:center; color:#94A3B8; padding:40px 14px; font-size:13px; background: #1E293B; border-radius: 14px; border: 1px dashed rgba(255,255,255,0.15);">
+          <i class="fa-solid fa-comments" style="font-size:32px; color:#FF6D00; margin-bottom:10px;"></i><br>
+          <strong>El Tablón de Anuncios Vecinal está limpio en ${escapeHtmlStr(ciudadReal)}.</strong><br>
+          <span style="font-size: 11px; color: #64748B;">Sé el primero en publicar un aviso, alerta u oferta para los vecinos de tu OTB.</span><br><br>
+          <button class="btn-new-post" style="margin: 0 auto; padding: 10px 16px; font-size: 12px;" data-action="abrirModalNuevoPost">📝 Publicar Nuevo Aviso (72 Horas)</button>
         </div>
       `;
       return;
-  }
+    }
 
-  if (!localPosts || localPosts.length === 0) {
-    feed.innerHTML = `
-      <div style="text-align:center; color:#94A3B8; padding:40px 14px; font-size:13px; background: #1E293B; border-radius: 14px; border: 1px dashed rgba(255,255,255,0.15);">
-        <i class="fa-solid fa-comments" style="font-size:32px; color:#FF6D00; margin-bottom:10px;"></i><br>
-        <strong>El Tablón de Anuncios Vecinal está limpio.</strong><br>
-        <span style="font-size: 11px; color: #64748B;">Sé el primero en publicar un aviso, alerta u oferta para los vecinos de tu OTB.</span><br><br>
-        <button class="btn-new-post" style="margin: 0 auto; padding: 10px 16px; font-size: 12px;" data-action="abrirModalNuevoPost">📝 Publicar Nuevo Aviso (72 Horas)</button>
-      </div>
-    `;
-    return;
-  }
+    let html = '';
+    const adInsertAfterIndex = Math.max(0, Math.ceil(localPosts.length / 2) - 1);
+    localPosts.forEach((post, index) => {
+      const commentCount = (post.comentarios_avisos && post.comentarios_avisos[0]) ? post.comentarios_avisos[0].count : 0;
 
-  let html = '';
-  const adInsertAfterIndex = Math.max(0, Math.ceil(localPosts.length / 2) - 1);
-  localPosts.forEach((post, index) => {
-    // FIX: Obtener contador de la relación Supabase
-    const commentCount = (post.comentarios_avisos && post.comentarios_avisos[0]) ? post.comentarios_avisos[0].count : 0;
+      const safeTitle = encodeURIComponent(post.titulo || '').replace(/'/g, "%27");
+      const safeDesc = encodeURIComponent(post.descripcion || '').replace(/'/g, "%27");
+      const safeCat = encodeURIComponent(post.categoria || '').replace(/'/g, "%27");
 
-    // XSS Fix: Properly encode strings for injection into HTML onclick attributes
-    const safeTitle = encodeURIComponent(post.titulo || '').replace(/'/g, "%27");
-    const safeDesc = encodeURIComponent(post.descripcion || '').replace(/'/g, "%27");
-    const safeCat = encodeURIComponent(post.categoria || '').replace(/'/g, "%27");
-
-    html += `
-      <div class="forum-card">
-        <div class="forum-votes">
-          <i class="fa-solid fa-circle-chevron-up" title="👍 Me Gusta" data-action="votarPost" data-val="1" data-id="${post.id}"></i>
-          <span class="v-count" style="color:#FF6D00;">${post.votos || 1}</span>
-          <i class="fa-solid fa-circle-chevron-down" title="👎 Me Disgusta" data-action="votarPost" data-val="-1" data-id="${post.id}"></i>
-        </div>
-        <div class="forum-body">
-          <span class="forum-cat"><i class="fa-solid fa-comments"></i> ${escapeHtmlStr(post.categoria)}</span>
-          <div class="forum-title">${escapeHtmlStr(post.titulo)}</div>
-          <div class="forum-desc">${escapeHtmlStr(post.descripcion)}</div>
-          <div class="forum-footer" style="display:flex; justify-content:space-between; align-items:center;">
-            <button data-action="abrirComentariosPost" data-id="${post.id}" data-title="${safeTitle}" data-desc="${safeDesc}" data-cat="${safeCat}" style="background: rgba(255,109,0,0.15); color: #FF6D00; border: 1px solid rgba(255,109,0,0.3); border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;">
-              <i class="fa-regular fa-comment"></i> <span class="comment-count-num">${commentCount}</span> Comentar
-            </button>
-            <div style="display:flex; gap:6px; align-items:center;">
-              <button class="btn-report" data-action="abrirModalDenuncia" data-title="${safeTitle}"><i class="fa-solid fa-flag"></i> Denunciar</button>
-              ${isAdmin ? `<button data-action="borrarPostForumAdmin" data-id="${post.id}" style="background:#D32F2F; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; font-weight:700; cursor:pointer;" title="Borrar como Admin"><i class="fa-solid fa-trash"></i> Borrar (Admin)</button>` : ''}
+      html += `
+        <div class="forum-card">
+          <div class="forum-votes">
+            <i class="fa-solid fa-circle-chevron-up" title="👍 Me Gusta" data-action="votarPost" data-val="1" data-id="${post.id}"></i>
+            <span class="v-count" style="color:#FF6D00;">${post.votos || 1}</span>
+            <i class="fa-solid fa-circle-chevron-down" title="👎 Me Disgusta" data-action="votarPost" data-val="-1" data-id="${post.id}"></i>
+          </div>
+          <div class="forum-body">
+            <span class="forum-cat"><i class="fa-solid fa-comments"></i> ${escapeHtmlStr(post.categoria)}</span>
+            <div class="forum-title">${escapeHtmlStr(post.titulo)}</div>
+            <div class="forum-desc">${escapeHtmlStr(post.descripcion)}</div>
+            <div class="forum-footer" style="display:flex; justify-content:space-between; align-items:center;">
+              <button data-action="abrirComentariosPost" data-id="${post.id}" data-title="${safeTitle}" data-desc="${safeDesc}" data-cat="${safeCat}" style="background: rgba(255,109,0,0.15); color: #FF6D00; border: 1px solid rgba(255,109,0,0.3); border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;">
+                <i class="fa-regular fa-comment"></i> <span class="comment-count-num">${commentCount}</span> Comentar
+              </button>
+              <div style="display:flex; gap:6px; align-items:center;">
+                <button class="btn-report" data-action="abrirModalDenuncia" data-title="${safeTitle}"><i class="fa-solid fa-flag"></i> Denunciar</button>
+                ${isAdmin ? `<button data-action="borrarPostForumAdmin" data-id="${post.id}" style="background:#D32F2F; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; font-weight:700; cursor:pointer;" title="Borrar como Admin"><i class="fa-solid fa-trash"></i> Borrar (Admin)</button>` : ''}
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    `;
+      `;
 
-    // Google AdSense va exactamente en medio de los avisos gratuitos visibles.
-    if (index === adInsertAfterIndex && typeof window.getAdSenseFeedMarkup === 'function') {
-      html += window.getAdSenseFeedMarkup('forum');
-    }
-  });
+      if (index === adInsertAfterIndex && typeof window.getAdSenseFeedMarkup === 'function') {
+        html += window.getAdSenseFeedMarkup('forum');
+      }
+    });
 
-  feed.innerHTML = html;
-  if (typeof window.activateAdSenseIn === 'function') window.activateAdSenseIn(feed);
+    feed.innerHTML = html;
+    if (typeof window.activateAdSenseIn === 'function') window.activateAdSenseIn(feed);
   } catch (err) {
     console.error(err);
   }
@@ -126,12 +117,13 @@ async function borrarPostForumAdmin(postId) {
   if (confirm("🗑️ ¿Deseas eliminar permanentemente esta publicación del Tablón Vecinal?")) {
       const { error } = await window.supabaseClient.from('avisos').delete().eq('id', postId);
       if (error) {
-          if (typeof showToast === 'function') { showToast('Notificación', 'Error borrando el post', 'info', 4000); } else { alert('Error borrando el post'); };
+          if (typeof showToast === 'function') { showToast('Notificación', 'Error borrando el post: ' + error.message, 'error', 4000); } else { alert('Error borrando el post'); };
           return;
       }
       if (typeof showToast === 'function') {
         showToast('🗑️ Publicación Borrada', 'El aviso o anuncio de la OTB fue eliminado del sistema.', 'info', 4000);
       }
+      await renderForumFeed();
   }
 }
 
@@ -149,9 +141,9 @@ async function votarPost(el, delta, postId) {
 
   if (!user) {
     if (typeof showToast === 'function') {
-      showToast('🔒 Inicia Sesión', 'Debes iniciar sesión con Google para votar en las noticias vecinales.', 'info', 4000);
+      showToast('🔒 Inicia Sesión', 'Debes iniciar sesión con Google o Correo para votar en las noticias vecinales.', 'info', 4000);
     } else {
-      alert('Debes iniciar sesión con Google para votar.');
+      alert('Debes iniciar sesión con Google o Correo para votar.');
     }
     return;
   }
@@ -253,91 +245,115 @@ async function crearNuevoPost() {
     const descEl = document.getElementById('inputPostDesc');
     const catEl = document.getElementById('selectPostTipo');
 
-  const title = (titleEl ? titleEl.value : '').trim();
-  const desc = (descEl ? descEl.value : '').trim();
-  const cat = (catEl ? catEl.value : 'AVISO VECINAL');
+    const title = (titleEl ? titleEl.value : '').trim();
+    const desc = (descEl ? descEl.value : '').trim();
+    const cat = (catEl ? catEl.value : 'AVISO VECINAL');
 
-  if (!title || !desc) {
-    if (typeof showToast === 'function') { showToast('Notificación', 'Por favor ingresa un título y una descripción para tu publicación vecinal.', 'info', 4000); } else { alert('Por favor ingresa un título y una descripción para tu publicación vecinal.'); };
-    return;
-  }
-
-  // FIX W-03: Filtro Anti-Spam mejorado — menos falsos positivos.
-  // Se eliminan palabras genéricas (the, and, for, with) que pueden aparecer en nombres/siglas.
-  // Ahora requiere 3+ palabras spam Y el texto no debe contener caracteres típicamente españoles.
-  const textoCompleto = (title + ' ' + desc).toLowerCase();
-
-  // Solo bloquea si el texto contiene términos claramente spam/phishing
-  const spamWords = /\b(crypto|casino|bonus|invest|bitcoin|viagra|porn|click here|forex|loan|make money|free money|winner|prize|gambling|adult content|xxx)\b/gi;
-  const spamMatches = textoCompleto.match(spamWords);
-
-  // Detectar si hay contenido en español (tildes, ñ, signos de interrogación/exclamación)
-  const hasSpanishChars = /[à-ÿñÑ¡¿]/i.test(textoCompleto);
-
-  // Bloquear si hay coincidencias claras de spam independientemente del idioma
-  if (spamMatches && spamMatches.length >= 1 && !hasSpanishChars) {
-    if (typeof showToast === 'function') { showToast('Notificación', '⛔ ALERTA DE SEGURIDAD: Tu publicación ha sido bloqueada por el filtro Anti-Spam.\n\nNOTIGAS es una plataforma exclusiva para vecinos hispanohablantes.', 'info', 4000); } else { alert('⛔ ALERTA DE SEGURIDAD: Tu publicación ha sido bloqueada por el filtro Anti-Spam.\n\nNOTIGAS es una plataforma exclusiva para vecinos hispanohablantes.'); };
-    if (window.supabaseClient) {
-      window.supabaseClient.from('reportes_spam').insert([{ texto: textoCompleto, motivo: 'Filtro Anti-Spam mejorado' }]);
-    }
-    closeNewPostModal();
-    return;
-  }
-
-  // Obtener user_id de la sesión activa (Supabase v2)
-  let userId = null;
-  try {
-    const sessionData = await window.supabaseClient.auth.getSession();
-    if (sessionData && sessionData.data && sessionData.data.session && sessionData.data.session.user) {
-        userId = sessionData.data.session.user.id;
-    }
-  } catch(e) {
-    console.warn("No se pudo obtener la sesión de usuario para el aviso:", e);
-  }
-
-  // FIX: Bloquear la inserción si el usuario no tiene sesión
-  if (!userId) {
-     if (typeof showToast === 'function') { showToast('Notificación', 'Debes iniciar sesión con Google o Email para poder publicar un aviso vecinal.', 'info', 4000); } else { alert('Debes iniciar sesión con Google o Email para poder publicar un aviso vecinal.'); };
-     closeNewPostModal();
-     return;
-  }
-
-    const userData = AppState.get('userData');
-    const ciudadReal = (userData && userData.ciudad) ? userData.ciudad : AppState.get('city');
-
-    if (!ciudadReal) {
+    if (!title || !desc) {
       if (typeof showToast === 'function') {
-        showToast('⚠️ Ciudad Requerida', 'No se ha definido la ciudad. Por favor selecciona tu ciudad en el mapa antes de publicar.', 'warning', 4000);
+        showToast('Campos requeridos', 'Por favor ingresa un título y una descripción para tu aviso.', 'warning', 4000);
       } else {
-        alert('No se ha definido la ciudad.');
+        alert('Por favor ingresa un título y una descripción para tu aviso.');
       }
       return;
     }
 
-    const { error } = await window.supabaseClient.from('avisos').insert([{
+    const textoCompleto = (title + ' ' + desc).toLowerCase();
+    const spamWords = /\b(crypto|casino|bonus|invest|bitcoin|viagra|porn|click here|forex|loan|make money|free money|winner|prize|gambling|adult content|xxx)\b/gi;
+    const spamMatches = textoCompleto.match(spamWords);
+    const hasSpanishChars = /[à-ÿñÑ¡¿]/i.test(textoCompleto);
+
+    if (spamMatches && spamMatches.length >= 1 && !hasSpanishChars) {
+      if (typeof showToast === 'function') {
+        showToast('Seguridad', '⛔ Tu publicación contiene términos no permitidos.', 'warning', 4000);
+      }
+      if (window.supabaseClient) {
+        window.supabaseClient.from('reportes_spam').insert([{ texto: textoCompleto, motivo: 'Filtro Anti-Spam' }]);
+      }
+      closeNewPostModal();
+      return;
+    }
+
+    // Obtener user_id de la sesión activa
+    let userId = null;
+    if (window.supabaseClient) {
+      try {
+        const { data: authData } = await window.supabaseClient.auth.getUser();
+        if (authData?.user?.id) {
+          userId = authData.user.id;
+        } else {
+          const { data: sessionData } = await window.supabaseClient.auth.getSession();
+          userId = sessionData?.session?.user?.id || null;
+        }
+      } catch(e) {
+        console.warn("Error obteniendo usuario para aviso:", e);
+      }
+    }
+
+    if (!userId && typeof getCurrentUserId === 'function') {
+      const candidate = getCurrentUserId();
+      if (candidate && candidate !== 'anonimo_id') userId = candidate;
+    }
+
+    if (!userId) {
+      if (typeof showToast === 'function') {
+        showToast('🔒 Inicia Sesión', 'Debes iniciar sesión para publicar un aviso gratis.', 'warning', 4000);
+      } else {
+        alert('Debes iniciar sesión para poder publicar un aviso vecinal.');
+      }
+      closeNewPostModal();
+      const modalAuth = document.getElementById('modalWelcomeAuth');
+      if (modalAuth) modalAuth.style.display = 'flex';
+      return;
+    }
+
+    const userData = AppState.get('userData');
+    const ciudadSelector = document.getElementById('selectCiudadCapital')?.value;
+    const ciudadReal = (userData && userData.ciudad)
+      ? userData.ciudad.toLowerCase().trim()
+      : (AppState.get('city') || ciudadSelector || 'cochabamba').toLowerCase().trim();
+
+    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Publicando aviso...');
+
+    const { data: newPost, error } = await window.supabaseClient.from('avisos').insert([{
       categoria: cat,
       titulo: title,
       descripcion: desc,
       ciudad: ciudadReal,
       barrio_otb: 'Global',
       user_id: userId,
-      votos: 1
-    }]);
+      votos: 1,
+      activo: true,
+      tipo: 'aviso'
+    }]).select().single();
 
-  if (error) {
-      console.error(error);
-      if (typeof showToast === 'function') { showToast('Notificación', 'Hubo un error publicando el aviso.', 'info', 4000); } else { alert('Hubo un error publicando el aviso.'); };
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+
+    if (error) {
+      console.error('Error insertando aviso:', error);
+      if (typeof showToast === 'function') {
+        showToast('❌ Error al Publicar', error.message || 'No se pudo guardar la publicación.', 'error', 4500);
+      } else {
+        alert('Hubo un error publicando el aviso: ' + error.message);
+      }
       return;
-  }
+    }
 
-  closeNewPostModal();
-  if (document.getElementById('inputPostTitulo')) document.getElementById('inputPostTitulo').value = '';
-  if (document.getElementById('inputPostTitle')) document.getElementById('inputPostTitle').value = '';
-  if (document.getElementById('inputPostDesc')) document.getElementById('inputPostDesc').value = '';
+    closeNewPostModal();
+    if (document.getElementById('inputPostTitulo')) document.getElementById('inputPostTitulo').value = '';
+    if (document.getElementById('inputPostTitle')) document.getElementById('inputPostTitle').value = '';
+    if (document.getElementById('inputPostDesc')) document.getElementById('inputPostDesc').value = '';
 
-  if (typeof showToast === 'function') { showToast('Notificación', '📌 ¡Aviso publicado exitosamente! Todos los vecinos podrán verlo en tiempo real.', 'info', 4000); } else { alert('📌 ¡Aviso publicado exitosamente! Todos los vecinos podrán verlo en tiempo real.'); };
+    if (typeof showToast === 'function') {
+      showToast('📌 ¡Aviso Publicado!', 'Tu aviso ya está disponible en el tablón vecinal.', 'success', 4000);
+    }
+
+    // Refrescar el feed inmediatamente
+    await renderForumFeed();
   } catch (err) {
-    alert("Error interno al publicar: " + err.message);
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+    console.error('Error interno al publicar:', err);
+    if (typeof showToast === 'function') showToast('Error', err.message, 'error', 4000);
   }
 }
 

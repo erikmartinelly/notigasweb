@@ -41,7 +41,7 @@ window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño m
   const _state = {
     userRole: 'vecino',        // 'vecino' | 'repartidor' | 'admin'
     userData: null,            // Objeto con datos del usuario autenticado
-    city: undefined, // Se establecerá dinámicamente según GPS/login
+    city: 'cochabamba',        // Ciudad por defecto segura (se actualiza por GPS/login/selector)
     gpsLat: null,
     gpsLng: null,
     gpsReady: false,
@@ -69,7 +69,7 @@ window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño m
       const prev = _state[key];
       _state[key] = value;
 
-      // Sincronizar de forma transparente con Supabase Auth (metadata) en lugar de localStorage
+      // Sincronizar de forma transparente con listeners
       if (prev !== value && _listeners[key]) {
         _listeners[key].forEach(fn => {
           try {
@@ -95,7 +95,6 @@ window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño m
     },
 
     async hydrate() {
-      // 100% Dependiente de Supabase Auth
       try {
         if (!window.supabaseClient) return;
         const { data } = await window.supabaseClient.auth.getSession();
@@ -103,18 +102,66 @@ window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño m
           const user = data.session.user;
           const meta = user.user_metadata || {};
 
-          if (Object.keys(meta).length > 0) {
-            // Establecer sin disparar el guardado nuevamente
-            _state['userData'] = meta;
-            _state['userRole'] = meta.role || 'vecino';
-            if (meta.ciudad || meta.city) {
-              _state['city'] = (meta.ciudad || meta.city).toLowerCase();
+          // 1. Buscar en choferes_habilitados
+          const { data: driverData } = await window.supabaseClient
+            .from('choferes_habilitados')
+            .select('*')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+          if (driverData) {
+            _state['userRole'] = 'repartidor';
+            _state['appMode'] = 'driver';
+            if (driverData.ciudad) _state['city'] = driverData.ciudad.toLowerCase().trim();
+            _state['userData'] = {
+              role: 'repartidor',
+              nombre: driverData.nombre_completo || meta.full_name || user.email.split('@')[0],
+              whatsapp: driverData.telefono_whatsapp || '',
+              placa: driverData.placa || '',
+              categoria: driverData.categoria || 'gas',
+              productos: driverData.productos || '',
+              schedule: driverData.schedule || '',
+              ciudad: driverData.ciudad || _state['city'],
+              user_id: user.id,
+              gmail: user.email
+            };
+          } else {
+            // 2. Buscar en profiles
+            const { data: profileData } = await window.supabaseClient
+              .from('profiles')
+              .select('*')
+              .eq('id', user.id)
+              .maybeSingle();
+
+            if (profileData) {
+              _state['userRole'] = profileData.role || 'vecino';
+              _state['appMode'] = profileData.role === 'repartidor' ? 'driver' : 'buyer';
+              if (profileData.ciudad) _state['city'] = profileData.ciudad.toLowerCase().trim();
+              _state['userData'] = {
+                role: profileData.role || 'vecino',
+                nombre: profileData.nombre || meta.full_name || user.email.split('@')[0],
+                apellido: profileData.apellido || '',
+                telefono: profileData.telefono || '',
+                ciudad: profileData.ciudad || _state['city'],
+                user_id: user.id,
+                gmail: user.email
+              };
+            } else if (Object.keys(meta).length > 0) {
+              _state['userData'] = {
+                ...meta,
+                user_id: user.id,
+                gmail: user.email
+              };
+              _state['userRole'] = meta.role || 'vecino';
+              if (meta.ciudad || meta.city) {
+                _state['city'] = (meta.ciudad || meta.city).toLowerCase();
+              }
+              _state['appMode'] = meta.role === 'repartidor' ? 'driver' : 'buyer';
             }
-            _state['appMode'] = meta.role === 'repartidor' ? 'driver' : 'buyer';
           }
         }
 
-        // Pedido Activo (Consultar a Supabase en lugar de local storage)
+        // Pedido Activo (Consultar a Supabase)
         if (data && data.session && data.session.user && _state['userRole'] === 'vecino') {
            const { data: activeOrders } = await window.supabaseClient
              .from('pedidos')
@@ -139,7 +186,5 @@ window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño m
   };
 
   window.AppState = AppState;
-
-  // Ya no hidratamos aquí. Se hidratará en initAuthSession de auth.js cuando Supabase esté listo.
-  console.log('✅ AppState cargado correctamente. Esperando conexión a Supabase...');
+  console.log('✅ AppState inicializado.');
 })();

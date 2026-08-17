@@ -96,7 +96,8 @@ function _clearRealtimeRetryTimer() {
 // 1. Suscripción a Avisos Oficiales en tiempo real
 window.iniciarSuscripcionAvisos = function() {
     if (!window.supabaseClient) return;
-    const ciudad = (typeof AppState !== 'undefined') ? AppState.get('city') : null;
+    const rawCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || 'cochabamba') : 'cochabamba';
+    const ciudad = String(rawCity || 'cochabamba').toLowerCase().trim();
     if (!ciudad) return;
 
     if (_activeAvisosCity === ciudad && _isRealtimeChannelActive(window.notigasAvisosChannel)) {
@@ -154,7 +155,8 @@ window.iniciarSuscripcionAvisos = function() {
 window.iniciarSuscripcionesRealtime = function() {
     if (!window.supabaseClient) return;
 
-    const activeCity = (typeof AppState !== 'undefined') ? AppState.get('city') : null;
+    const rawCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || 'cochabamba') : 'cochabamba';
+    const activeCity = String(rawCity || 'cochabamba').toLowerCase().trim();
     if (!activeCity) {
         console.warn('⚠️ No hay ciudad activa definida para suscripción Realtime.');
         return;

@@ -399,7 +399,7 @@ async function cargarPedidosVecinalesEnVivo() {
         if (normCity) assignedQuery = assignedQuery.ilike('ciudad', normCity);
         const assignedResult = await assignedQuery;
         assignedOrders = assignedResult.data || [];
-        pedidosError = assignedResult.error;
+        pedidosError = pedidosError || assignedResult.error;
       }
       window.driverDemandMapState = { clusters: [], availableOrders, assignedOrders };
       renderDriverDemandByZoom();
