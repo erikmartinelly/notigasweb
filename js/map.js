@@ -420,7 +420,7 @@ async function cargarPedidosVecinalesEnVivo() {
         assignedOrders = assignedResult.data || [];
         pedidosError = pedidosError || assignedResult.error;
       }
-      window.driverDemandMapState = { clusters: [], availableOrders, assignedOrders };
+      window.driverDemandMapState = { availableOrders, assignedOrders };
       renderDriverDemandByZoom();
       pedidosData = [];
     } else {
@@ -434,7 +434,6 @@ async function cargarPedidosVecinalesEnVivo() {
       pedidosData = buyerResult.data || [];
       pedidosError = buyerResult.error;
       window.driverDemandMapState = {
-        clusters: [],
         availableOrders: pedidosData,
         assignedOrders: []
       };
@@ -466,9 +465,10 @@ async function cargarPedidosVecinalesEnVivo() {
   }
 }
 
-window.demandClusterMarkers = window.demandClusterMarkers || {};
+// Marcadores de radar individuales por pedido
+window.orderRadarMarkers = window.orderRadarMarkers || {};
+window.demandClusterMarkers = window.orderRadarMarkers; // alias retrocompatibilidad
 window.driverDemandMapState = window.driverDemandMapState || {
-  clusters: [],
   availableOrders: [],
   assignedOrders: []
 };
@@ -487,75 +487,26 @@ function clearNeighborOrderMarkers() {
   });
 }
 
-function clearDemandClusterMarkers() {
-  Object.keys(window.demandClusterMarkers).forEach(clusterId => {
-    const marker = window.demandClusterMarkers[clusterId];
+function clearOrderRadarMarkers() {
+  Object.keys(window.orderRadarMarkers).forEach(orderId => {
+    const marker = window.orderRadarMarkers[orderId];
     if (map && marker) map.removeLayer(marker);
-    delete window.demandClusterMarkers[clusterId];
+    delete window.orderRadarMarkers[orderId];
   });
 }
-
-async function obtenerGruposDemanda(ciudad, categoriaRepartidor) {
-  if (!window.supabaseClient || !ciudad) return [];
-
-  const { data, error } = await window.supabaseClient.rpc('rpc_get_demand_clusters_v2', {
-    p_ciudad: String(ciudad).toLowerCase().trim(),
-    p_categoria: null,
-    p_distancia_metros: 300,
-    p_min_pedidos: 2
-  });
-
-  if (error) throw error;
-
-  return (data || []).filter(cluster => {
-    return typeof window.isOrderCategoryMatchingDriver !== 'function' ||
-      window.isOrderCategoryMatchingDriver(cluster.categoria, categoriaRepartidor);
-  });
-}
-
-async function obtenerPedidosDisponiblesDesdeGrupos(clusters, ciudad, categoriaRepartidor) {
-  if (!window.supabaseClient || !Array.isArray(clusters) || clusters.length === 0) return [];
-
-  const results = await Promise.all(clusters.map(cluster => {
-    return window.supabaseClient.rpc('rpc_get_orders_for_cluster_v2', {
-      p_cluster_id: cluster.cluster_id,
-      p_ciudad: cluster.ciudad || ciudad,
-      p_categoria: cluster.categoria || categoriaRepartidor,
-      p_distancia_metros: 300,
-      p_min_pedidos: 2
-    });
-  }));
-
-  const ordersById = new Map();
-  let firstError = null;
-  results.forEach(result => {
-    if (result.error) {
-      firstError = firstError || result.error;
-      return;
-    }
-    (result.data || []).forEach(order => {
-      if (!order?.id || !['pendiente', 'visto'].includes(order.estado || 'pendiente')) return;
-      if (typeof window.isOrderCategoryMatchingDriver === 'function' &&
-          !window.isOrderCategoryMatchingDriver(order.categoria, categoriaRepartidor)) return;
-      ordersById.set(order.id, order);
-    });
-  });
-
-  if (ordersById.size === 0 && firstError) throw firstError;
-  return Array.from(ordersById.values());
-}
+const clearDemandClusterMarkers = clearOrderRadarMarkers;
 
 function renderDriverDemandByZoom() {
   if (!map || typeof L === 'undefined') return;
   const state = window.driverDemandMapState || {};
   const ordersById = new Map();
 
-  // Agregar pedidos de demanda / públicos
+  // 1. Agregar todos los pedidos individuales (disponibles y asignados)
   [...(state.availableOrders || []), ...(state.assignedOrders || [])].forEach(order => {
     if (order?.id) ordersById.set(order.id, order);
   });
 
-  // Asegurar que el pedido activo del usuario actual NUNCA se oculte ni pierda señal de radar
+  // 2. Asegurar que el pedido activo del usuario actual NUNCA se oculte ni pierda señal de radar
   try {
     const rawOrder = (typeof AppState !== 'undefined') ? AppState.get('activeOrder') : null;
     if (rawOrder) {
@@ -572,6 +523,7 @@ function renderDriverDemandByZoom() {
   // Actualizar también la apariencia de los camiones repartidores (icono azul radar si zoom out)
   actualizarIconosRepartidoresPorZoom();
 
+  // VISTA LEJANA (zoom <= 14): CADA PEDIDO GENERA SU PROPIO RADAR INDIVIDUAL
   if (map.getZoom() <= DRIVER_RADAR_MAX_ZOOM) {
     clearNeighborOrderMarkers();
     if (activeOrderLayerGroup && map.hasLayer(activeOrderLayerGroup)) {
@@ -581,7 +533,8 @@ function renderDriverDemandByZoom() {
     return;
   }
 
-  clearDemandClusterMarkers();
+  // VISTA CERCANA (zoom > 14): MARCADORES / PINES INDIVIDUALES DETALLADOS
+  clearOrderRadarMarkers();
   clearNeighborOrderMarkers();
   if (activeOrderLayerGroup && !map.hasLayer(activeOrderLayerGroup)) {
     activeOrderLayerGroup.addTo(map);
@@ -620,9 +573,10 @@ function actualizarIconosRepartidoresPorZoom() {
   }
 }
 
+// Renderiza un radar individual por cada pedido existente en la zona
 function renderOrderRadarsOnMap(orders) {
   if (!map || typeof L === 'undefined') return;
-  clearDemandClusterMarkers();
+  clearOrderRadarMarkers();
   if (map.getZoom() > DRIVER_RADAR_MAX_ZOOM) return;
 
   (orders || []).forEach(order => {
@@ -634,7 +588,7 @@ function renderOrderRadarsOnMap(orders) {
       ? escapeHtmlStr(order.categoria || 'Gas')
       : 'Gas';
     const icon = L.divIcon({
-      className: 'demand-cluster-icon demand-order-radar-icon',
+      className: 'demand-order-radar-icon',
       html: `<div class="demand-radar" title="Pedido Activo de ${safeCategory} (Haz clic para ver)"><span></span><span></span><span></span><i></i></div>`,
       iconSize: [80, 80],
       iconAnchor: [40, 40]
@@ -652,51 +606,14 @@ function renderOrderRadarsOnMap(orders) {
       map.flyTo([lat, lng], 16, { duration: 0.8 });
     });
 
-    window.demandClusterMarkers[`order_${order.id}`] = marker;
+    window.orderRadarMarkers[`order_${order.id}`] = marker;
   });
 }
 
-function renderDemandClustersOnMap(clusters) {
-  if (!map || typeof L === 'undefined') return;
-  clearDemandClusterMarkers();
-  if (map.getZoom() > DRIVER_RADAR_MAX_ZOOM) return;
-
-  (clusters || []).forEach(cluster => {
-    const lat = Number(cluster.centro_lat || cluster.latitude || cluster.lat);
-    const lng = Number(cluster.centro_lng || cluster.longitude || cluster.lng);
-    if (!Number.isFinite(lat) || !Number.isFinite(lng) || !cluster.cluster_id) return;
-
-    const count = Number(cluster.pedidos_activos) || 1;
-    const countBadge = count > 1 ? `<span class="demand-radar-badge">${count}</span>` : '';
-
-    const icon = L.divIcon({
-      className: 'demand-cluster-icon',
-      html: `<div class="demand-radar" title="${count > 1 ? `${count} pedidos en esta zona` : 'Pedido disponible en esta zona'}"><span></span><span></span><span></span><i></i>${countBadge}</div>`,
-      iconSize: [80, 80],
-      iconAnchor: [40, 40]
-    });
-
-    const marker = L.marker([lat, lng], {
-      icon,
-      interactive: true,
-      keyboard: false,
-      zIndexOffset: 7200
-    }).addTo(map);
-
-    marker.on('click', () => {
-      map.flyTo([lat, lng], 16, { duration: 0.8 });
-    });
-
-    window.demandClusterMarkers[cluster.cluster_id] = marker;
-  });
-}
-
-window.obtenerGruposDemanda = obtenerGruposDemanda;
-window.obtenerPedidosDisponiblesDesdeGrupos = obtenerPedidosDisponiblesDesdeGrupos;
-window.renderDemandClustersOnMap = renderDemandClustersOnMap;
 window.renderOrderRadarsOnMap = renderOrderRadarsOnMap;
 window.renderDriverDemandByZoom = renderDriverDemandByZoom;
 window.actualizarIconosRepartidoresPorZoom = actualizarIconosRepartidoresPorZoom;
+window.clearOrderRadarMarkers = clearOrderRadarMarkers;
 window.clearDemandClusterMarkers = clearDemandClusterMarkers;
 
 function actualizarRepartidorEnMapa(data) {
