@@ -2183,3 +2183,19 @@ CREATE INDEX IF NOT EXISTS idx_profiles_role ON public.profiles (role);
 CREATE INDEX IF NOT EXISTS idx_choferes_habilitados_user_id ON public.choferes_habilitados (user_id);
 CREATE INDEX IF NOT EXISTS idx_pedidos_user_estado ON public.pedidos (user_id, estado);
 
+-- ============================================================================
+-- 062: RESOLUCIÓN DE ALERTA DE SEGURIDAD POSTGIS Y RLS PUBLIC
+-- ============================================================================
+DROP EXTENSION IF EXISTS postgis;
+CREATE EXTENSION IF NOT EXISTS postgis SCHEMA extensions;
+
+REVOKE EXECUTE ON FUNCTION public.rpc_driver_confirm_delivery(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.rpc_driver_confirm_delivery(uuid) TO authenticated;
+
+DROP POLICY IF EXISTS "rate_limits_admin_only" ON public.security_rate_limits;
+CREATE POLICY "rate_limits_admin_only" ON public.security_rate_limits
+  FOR ALL TO authenticated
+  USING (is_admin_email())
+  WITH CHECK (is_admin_email());
+
+
