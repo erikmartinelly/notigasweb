@@ -3,28 +3,34 @@
 window.globalBannedList = window.globalBannedList || [];
 
 async function descargarBaneadosDeSupabase() {
-  if (window.supabaseClient) {
-    try {
-      const { data, error } = await window.supabaseClient.from('usuarios_baneados').select('*');
-      if (!error && data) {
-        window.globalBannedList = [];
-        data.forEach(d => {
-          if (d.user_id) window.globalBannedList.push(String(d.user_id).toLowerCase().trim());
-          if (d.email) window.globalBannedList.push(String(d.email).toLowerCase().trim());
-          if (d.nombre) window.globalBannedList.push(String(d.nombre).toLowerCase().trim());
-          if (d.placa) window.globalBannedList.push(String(d.placa).toLowerCase().trim());
-          if (d.telefono) window.globalBannedList.push(String(d.telefono).toLowerCase().trim());
-        });
-        if (typeof verificarBloqueoAppUsuario === 'function') verificarBloqueoAppUsuario();
-      }
-    } catch(e) {
-      console.error('Error al descargar baneados', e);
+  if (!window.supabaseClient) return;
+  const isAdmin = (typeof AppState !== 'undefined' && AppState.get('isAdmin') === true) || (typeof getVerifiedAdminEmail === 'function' && !!getVerifiedAdminEmail());
+  if (!isAdmin) return; // Sólo los administradores pueden consultar usuarios_baneados
+
+  try {
+    const { data, error } = await window.supabaseClient.from('usuarios_baneados').select('*');
+    if (!error && data) {
+      window.globalBannedList = [];
+      data.forEach(d => {
+        if (d.user_id) window.globalBannedList.push(String(d.user_id).toLowerCase().trim());
+        if (d.email) window.globalBannedList.push(String(d.email).toLowerCase().trim());
+        if (d.nombre) window.globalBannedList.push(String(d.nombre).toLowerCase().trim());
+        if (d.placa) window.globalBannedList.push(String(d.placa).toLowerCase().trim());
+        if (d.telefono) window.globalBannedList.push(String(d.telefono).toLowerCase().trim());
+      });
+      if (typeof verificarBloqueoAppUsuario === 'function') verificarBloqueoAppUsuario();
     }
+  } catch(e) {
+    console.error('Error al descargar baneados', e);
   }
 }
 
-// Llamar al cargar para tener los baneos listos para el render sincrónico
-document.addEventListener('DOMContentLoaded', descargarBaneadosDeSupabase);
+// Llamar al confirmar permisos admin
+document.addEventListener('notigas_auth_ready', () => {
+  if (typeof AppState !== 'undefined' && AppState.get('isAdmin')) {
+    descargarBaneadosDeSupabase();
+  }
+});
 
 function esRepartidorBaneado(nombre, placa, whatsapp, gmail) {
   if (!window.globalBannedList || window.globalBannedList.length === 0) return false;

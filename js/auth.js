@@ -56,6 +56,9 @@ document.addEventListener('DOMContentLoaded', () => {
   initGoogleOneTap();
 
   const initAuthSession = async () => {
+    if (window._authSessionInitializing) return;
+    window._authSessionInitializing = true;
+
     let hasSession = false;
     if (window.supabaseClient) {
       try {
@@ -70,9 +73,6 @@ document.addEventListener('DOMContentLoaded', () => {
           const modalRole = document.getElementById('modalRoleSelection');
           if (modalRole) modalRole.style.display = 'none';
 
-          if (typeof AppState !== 'undefined' && AppState.hydrate) {
-            await AppState.hydrate();
-          }
           await procesarSesionExitosa(sessionData.session.user);
         }
       } catch(e) {
@@ -81,38 +81,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 2. Si no hay sesión, mostrar el modal de bienvenida/ingreso
-    if (!hasSession) {
-      const modalAuth = document.getElementById('modalWelcomeAuth');
-      if (modalAuth) modalAuth.style.display = 'flex';
-    } else {
-      const modalAuth = document.getElementById('modalWelcomeAuth');
-      if (modalAuth) modalAuth.style.display = 'none';
+    const modalAuth = document.getElementById('modalWelcomeAuth');
+    if (modalAuth) {
+      modalAuth.style.display = hasSession ? 'none' : 'flex';
     }
 
     // 3. Notificar al resto de la app que Auth terminó su validación inicial
     document.dispatchEvent(new Event('notigas_auth_ready'));
+    window._authSessionInitializing = false;
   };
 
-  if (window.supabaseClient) {
+  const setupAuthListener = () => {
+    if (window._authListenerRegistered || !window.supabaseClient) return;
+    window._authListenerRegistered = true;
+
     initAuthSession();
+
     window.supabaseClient.auth.onAuthStateChange((event, session) => {
       if (session && session.user) {
         window._tempAuthUser = session.user;
         window.checkAndApplyAdminStatus(session.user);
       }
     });
+  };
+
+  if (window.supabaseClient) {
+    setupAuthListener();
   } else {
-    document.addEventListener('supabase_ready', () => {
-      initAuthSession();
-      if (window.supabaseClient) {
-        window.supabaseClient.auth.onAuthStateChange((event, session) => {
-          if (session && session.user) {
-            window._tempAuthUser = session.user;
-            window.checkAndApplyAdminStatus(session.user);
-          }
-        });
-      }
-    });
+    document.addEventListener('supabase_ready', setupAuthListener, { once: true });
   }
 });
 
@@ -1341,6 +1337,8 @@ async function registrarEmail() {
 async function procesarSesionExitosa(user) {
   try {
     const modalAuth = document.getElementById('modalWelcomeAuth');
+    if (modalAuth) modalAuth.style.display = 'none';
+
     const gmail = user.email ? user.email.toLowerCase().trim() : '';
 
     let userNombre = user.user_metadata?.nombre || '';
@@ -1352,16 +1350,9 @@ async function procesarSesionExitosa(user) {
     }
     if (!userNombre) userNombre = (gmail ? gmail.split('@')[0] : 'Usuario');
 
-    try {
-      if (window.supabaseClient && gmail) {
-        const { data } = await window.supabaseClient.from('admin_credentials').select('email').ilike('email', gmail).maybeSingle();
-        if (data) {
-          const btnAdmin = document.getElementById('btnAdminAccessQuick');
-          if (btnAdmin) btnAdmin.style.display = 'flex';
-          AppState.set('isAdmin', true);
-        }
-      }
-    } catch(e) {}
+    if (window.checkAndApplyAdminStatus) {
+      window.checkAndApplyAdminStatus(user).catch(() => {});
+    }
 
     // 1. VERIFICAR si el usuario ya existe en choferes_habilitados o en profiles
     let esRepartidorDB = false;
@@ -1440,15 +1431,7 @@ async function procesarSesionExitosa(user) {
         if (choferData.productos) clienteData.productos = choferData.productos;
         if (choferData.schedule) clienteData.schedule = choferData.schedule;
 
-        if (typeof window.cambiarCiudad === 'function') {
-          try {
-            await window.cambiarCiudad(clienteData.ciudad);
-          } catch(e) {
-            AppState.set('city', clienteData.ciudad);
-          }
-        } else {
-          AppState.set('city', clienteData.ciudad);
-        }
+        AppState.set('city', clienteData.ciudad);
       } else {
         // Driver NO EXISTE en la DB. Mostrar formulario de registro de negocio
         if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
@@ -1472,7 +1455,7 @@ async function procesarSesionExitosa(user) {
 
     AppState.set('userData', clienteData);
     if (clienteData.ciudad) AppState.set('city', clienteData.ciudad);
-    window._roleSelectedNow = false; // Reset state
+    window._roleSelectedNow = false;
 
     if (modalAuth) modalAuth.style.display = 'none';
 
@@ -1482,30 +1465,24 @@ async function procesarSesionExitosa(user) {
     } else {
       // Comprador
       try {
-        const profile = await guardarPerfilSupabase(user, {
-            nombre: clienteData.nombre,
-            apellido: clienteData.apellido,
-            role: 'vecino',
-            ciudad: clienteData.ciudad || AppState.get('city') || 'cochabamba'
-        });
-
-        if (profile && profile.ciudad) {
-          clienteData.ciudad = profile.ciudad.toLowerCase().trim();
-          AppState.set('city', clienteData.ciudad);
-          if (typeof window.cambiarCiudad === 'function') {
-            try {
-              await window.cambiarCiudad(clienteData.ciudad);
-            } catch(e){}
-          }
+        if (!existingProfile) {
+          guardarPerfilSupabase(user, {
+              nombre: clienteData.nombre,
+              apellido: clienteData.apellido,
+              role: 'vecino',
+              ciudad: clienteData.ciudad || AppState.get('city') || 'cochabamba'
+          }).catch(err => console.warn('Aviso creando perfil nuevo:', err));
         }
 
-        const tieneUbicacion = (profile && profile.latitude != null && profile.longitude != null) || (existingProfile && existingProfile.latitude != null);
-
+        const tieneUbicacion = (existingProfile && existingProfile.latitude != null) || (window.currentGpsLat != null);
         if (!tieneUbicacion) {
-            await solicitarYGuardarUbicacionHabitual(user);
+          // Asíncrono en segundo plano — no bloquea el hilo principal ni la interfaz
+          setTimeout(() => {
+            solicitarYGuardarUbicacionHabitual(user).catch(() => {});
+          }, 300);
         }
       } catch(pErr) {
-        console.warn('Aviso guardando perfil comprador:', pErr);
+        console.warn('Aviso perfil comprador:', pErr);
       }
 
       if (typeof setAppMode === 'function') setAppMode('buyer');

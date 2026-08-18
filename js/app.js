@@ -483,7 +483,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    document.addEventListener('notigas_auth_ready', initSupabaseFeatures);
+    document.addEventListener('notigas_auth_ready', initSupabaseFeatures, { once: true });
 });
 
 // 5. Función de navegación entre vistas

@@ -58,7 +58,10 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
 }
 
 document.addEventListener('notigas_auth_ready', () => {
-  descargarChoferesYRenderizar('TODOS');
+  const tab1 = document.getElementById('tab1');
+  if (tab1 && tab1.classList.contains('active')) {
+    descargarChoferesYRenderizar('TODOS');
+  }
 });
 
 function filterVendorCategory(cat, chipElem) {

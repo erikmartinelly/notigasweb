@@ -73,9 +73,21 @@ function solicitarGeolocalizacionNativaNavegador(
 }
 
 async function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
+    if (!forceReset) {
+        try {
+            const cached = sessionStorage.getItem('notigas_ip_geo_cache');
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                if (parsed && Number.isFinite(parsed.lat) && Number.isFinite(parsed.lng) && (Date.now() - parsed.time < 30 * 60 * 1000)) {
+                    return parsed;
+                }
+            }
+        } catch (_) {}
+    }
+
     const fetchIP = (source, url, parser) => {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 4500);
+        const timeoutId = setTimeout(() => controller.abort(), 2200);
         return fetch(url, { signal: controller.signal })
             .then(response => {
                 clearTimeout(timeoutId);
@@ -89,6 +101,18 @@ async function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
     };
 
     const apis = [
+        fetchIP('freeipapi', 'https://freeipapi.com/api/json', data => {
+            if (data?.latitude != null && data?.longitude != null) {
+                return { lat: Number(data.latitude), lng: Number(data.longitude), city: data.cityName, region: data.regionName, countryCode: data.countryCode };
+            }
+            throw new Error('no lat/lng');
+        }),
+        fetchIP('ipwhois', 'https://ipwho.is/', data => {
+            if (data?.success && data?.latitude != null && data?.longitude != null) {
+                return { lat: Number(data.latitude), lng: Number(data.longitude), city: data.city, region: data.region, countryCode: data.country_code };
+            }
+            throw new Error('no success');
+        }),
         fetchIP('ipapi', 'https://ipapi.co/json/', data => {
             if (data?.latitude != null && data?.longitude != null) {
                 return { lat: Number(data.latitude), lng: Number(data.longitude), city: data.city, region: data.region, countryCode: data.country_code };
@@ -101,18 +125,6 @@ async function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
                 return { lat: Number(parts[0]), lng: Number(parts[1]), city: data.city, region: data.region, countryCode: data.country };
             }
             throw new Error('no loc');
-        }),
-        fetchIP('freeipapi', 'https://freeipapi.com/api/json', data => {
-            if (data?.latitude != null && data?.longitude != null) {
-                return { lat: Number(data.latitude), lng: Number(data.longitude), city: data.cityName, region: data.regionName, countryCode: data.countryCode };
-            }
-            throw new Error('no lat/lng');
-        }),
-        fetchIP('ipwhois', 'https://ipwho.is/', data => {
-            if (data?.success && data?.latitude != null && data?.longitude != null) {
-                return { lat: Number(data.latitude), lng: Number(data.longitude), city: data.city, region: data.region, countryCode: data.country_code };
-            }
-            throw new Error('no success');
         })
     ];
 
@@ -192,7 +204,9 @@ async function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
             AppState.set('city', detectedCity);
         }
 
-        return { lat: finalLat, lng: finalLng, city: detectedCity, exact: false, providers: coords.providers };
+        const finalResult = { lat: finalLat, lng: finalLng, city: detectedCity, exact: false, providers: coords.providers, time: Date.now() };
+        try { sessionStorage.setItem('notigas_ip_geo_cache', JSON.stringify(finalResult)); } catch(_) {}
+        return finalResult;
     } catch(err) {
         if (window.isGpsExact === true && Number.isFinite(window.currentGpsLat) && Number.isFinite(window.currentGpsLng)) {
             return {

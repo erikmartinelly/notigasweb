@@ -6,15 +6,11 @@ let activePostCommentsRef = null;
 
 // escapeHtmlStr está centralizada en state.js — eliminada aquí para evitar duplicados.
 
-// Escuchar el evento personalizado emitido por supabase-config.js
-document.addEventListener('supabase_ready', () => {
-  renderForumFeed();
-});
-
-// Respaldo en caso de que supabase_ready ya se haya emitido antes de que este script cargue
+// Solo renderizar en inicio si el usuario abrió directamente la pestaña de foro
 document.addEventListener('DOMContentLoaded', () => {
-  if (window.supabaseClient) {
-      renderForumFeed();
+  const tab2 = document.getElementById('tab2');
+  if (tab2 && tab2.classList.contains('active') && window.supabaseClient) {
+    renderForumFeed();
   }
 });
 

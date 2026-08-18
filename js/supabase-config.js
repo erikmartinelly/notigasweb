@@ -377,22 +377,10 @@ window.reiniciarSuscripcionesRealtime = async function() {
 
 // 4. Función central para cambiar de ciudad y reactivar todos los módulos
 window.cambiarCiudad = async function(nuevaCiudad) {
-    if (!nuevaCiudad) {
-        console.error('Ciudad inválida para cambiarCiudad.');
-        throw new Error('Ciudad inválida.');
-    }
+    if (!nuevaCiudad) return;
 
     nuevaCiudad = String(nuevaCiudad).toLowerCase().trim();
     const ciudadActual = (typeof AppState !== 'undefined') ? AppState.get('city') : null;
-
-    if (ciudadActual === nuevaCiudad) {
-        window.iniciarSuscripcionAvisos();
-        window.iniciarSuscripcionesRealtime();
-        if (typeof iniciarSuscripcionAnuncios === 'function') {
-            iniciarSuscripcionAnuncios();
-        }
-        return;
-    }
 
     if (typeof AppState !== 'undefined') {
         AppState.set('city', nuevaCiudad);
@@ -405,26 +393,40 @@ window.cambiarCiudad = async function(nuevaCiudad) {
         }
     }
 
-    await window.reiniciarSuscripcionesRealtime();
+    // Reiniciar suscripciones limpiamente
+    window.iniciarSuscripcionAvisos();
+    window.iniciarSuscripcionesRealtime();
+    if (typeof iniciarSuscripcionAnuncios === 'function') {
+        iniciarSuscripcionAnuncios();
+    }
 
-    if (typeof renderDriverOrdersList === 'function') {
-        await renderDriverOrdersList();
-    }
-    if (typeof cargarAnunciosGuardados === 'function') {
-        await cargarAnunciosGuardados();
-    }
-    if (typeof renderForumFeed === 'function') {
-        renderForumFeed();
-    }
-    if (typeof descargarChoferesYRenderizar === 'function') {
-        descargarChoferesYRenderizar('TODOS');
+    // Actualizar bajo demanda sólo la pestaña activa (evita sobrecargar la red)
+    const tab0 = document.getElementById('tab0');
+    const tab1 = document.getElementById('tab1');
+    const tab2 = document.getElementById('tab2');
+
+    if (tab0 && tab0.classList.contains('active')) {
+        if (typeof cargarPedidosVecinalesEnVivo === 'function') {
+            cargarPedidosVecinalesEnVivo();
+        }
+    } else if (tab1 && tab1.classList.contains('active')) {
+        if (typeof descargarChoferesYRenderizar === 'function') {
+            descargarChoferesYRenderizar('TODOS');
+        }
+        if (typeof cargarAnunciosGuardados === 'function') {
+            cargarAnunciosGuardados();
+        }
+    } else if (tab2 && tab2.classList.contains('active')) {
+        if (typeof renderForumFeed === 'function') {
+            renderForumFeed();
+        }
     }
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Iniciar suscripciones al iniciar
+    // Iniciar suscripciones una sola vez al estar listo Supabase
     document.addEventListener('supabase_ready', () => {
         window.iniciarSuscripcionesRealtime();
         window.iniciarSuscripcionAvisos();
-    });
+    }, { once: true });
 });

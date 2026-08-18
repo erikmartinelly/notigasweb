@@ -2174,3 +2174,12 @@ REVOKE ALL ON FUNCTION public.enforce_action_rate_limit(text, integer, integer) 
 REVOKE ALL ON FUNCTION public.guard_profile_field_integrity() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.guard_limited_content_insert() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.guard_optional_order_insert() FROM PUBLIC, anon, authenticated;
+
+-- ============================================================================
+-- 061: ÍNDICES DE RENDIMIENTO Y OPTIMIZACIÓN RLS INITPLAN
+-- ============================================================================
+CREATE INDEX IF NOT EXISTS idx_comentarios_avisos_aviso_id ON public.comentarios_avisos (aviso_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_profiles_role ON public.profiles (role);
+CREATE INDEX IF NOT EXISTS idx_choferes_habilitados_user_id ON public.choferes_habilitados (user_id);
+CREATE INDEX IF NOT EXISTS idx_pedidos_user_estado ON public.pedidos (user_id, estado);
+

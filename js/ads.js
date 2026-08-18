@@ -297,7 +297,10 @@ async function guardarConfiguracionPublicidad(config) {
 
 document.addEventListener('notigas_auth_ready', async () => {
   await cargarConfiguracionPublicidadGlobal();
-  cargarAnunciosGuardados();
+  const tab1 = document.getElementById('tab1');
+  if (tab1 && tab1.classList.contains('active')) {
+    cargarAnunciosGuardados();
+  }
   iniciarSuscripcionAnuncios();
 });
 
