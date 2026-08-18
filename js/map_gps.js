@@ -14,13 +14,13 @@ function esModoRepartidor() {
 }
 
 function detenerGPSComprador() {
-    if (
-        typeof activeGpsWatchId !== 'undefined' &&
-        activeGpsWatchId !== null &&
-        navigator.geolocation?.clearWatch
-    ) {
-        navigator.geolocation.clearWatch(activeGpsWatchId);
-        activeGpsWatchId = null;
+    const watchId = window.activeGpsWatchId || (typeof activeGpsWatchId !== 'undefined' ? activeGpsWatchId : null);
+    if (watchId !== null && navigator.geolocation?.clearWatch) {
+        navigator.geolocation.clearWatch(watchId);
+        window.activeGpsWatchId = null;
+        if (typeof activeGpsWatchId !== 'undefined') {
+            try { activeGpsWatchId = null; } catch (_) {}
+        }
     }
     if (typeof window.activeGpsIpInterval !== 'undefined' && window.activeGpsIpInterval !== null) {
         clearInterval(window.activeGpsIpInterval);
@@ -235,19 +235,19 @@ function iniciarWatchGPSRepartidor() {
     let lastLng = null;
     let stationarySince = null;
 
-    if (typeof activeGpsWatchId !== 'undefined' && activeGpsWatchId !== null) {
-        navigator.geolocation.clearWatch(
-            activeGpsWatchId
-        );
+    const oldWatchId = window.activeGpsWatchId || (typeof activeGpsWatchId !== 'undefined' ? activeGpsWatchId : null);
+    if (oldWatchId !== null && navigator.geolocation?.clearWatch) {
+        navigator.geolocation.clearWatch(oldWatchId);
     }
 
-    activeGpsWatchId =
-        navigator.geolocation.watchPosition(
+    const newWatchId = navigator.geolocation.watchPosition(
             position => {
                 const lat =
                     position.coords.latitude;
                 const lng =
                     position.coords.longitude;
+                window.currentGpsLat = lat;
+                window.currentGpsLng = lng;
                 const now = Date.now();
                 let moved = 0;
 
@@ -302,6 +302,7 @@ function iniciarWatchGPSRepartidor() {
                 maximumAge: 5000
             }
         );
+    window.activeGpsWatchId = newWatchId;
 }
 
 function conectarGPSAuto(forceReset = false) {

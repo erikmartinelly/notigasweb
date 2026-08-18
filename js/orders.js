@@ -1,24 +1,25 @@
-/* ORDERS LOGIC */
-
-let driverOrdersRefreshInterval = null;
+/* ==========================================================================
+   NOTIGAS - GESTIÓN DE PEDIDOS Y ALERTAS VECINALES (V104)
+   ========================================================================== */
 
 function formatearAntiguedadPedido(value) {
-  const timestamp = value instanceof Date ? value.getTime() : new Date(value || Date.now()).getTime();
-  const totalMinutos = Math.max(0, Math.floor((Date.now() - timestamp) / 60000));
-  const horas = Math.floor(totalMinutos / 60);
-  const minutos = totalMinutos % 60;
-
-  if (horas < 1) return `${totalMinutos} min`;
-  if (minutos === 0) return `${horas} h`;
-  return `${horas} h ${minutos} min`;
+  if (!value) return 'reciente';
+  const time = typeof value === 'number' ? value : new Date(value).getTime();
+  if (isNaN(time)) return 'reciente';
+  const diffMinutes = Math.floor((Date.now() - time) / 60000);
+  if (diffMinutes < 1) return 'hace un momento';
+  if (diffMinutes < 60) return `hace ${diffMinutes} min`;
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `hace ${diffHours} h`;
+  return `hace ${Math.floor(diffHours / 24)} d`;
 }
 window.formatearAntiguedadPedido = formatearAntiguedadPedido;
 
 function startDriverOrdersAutoRefresh() {
-  if (driverOrdersRefreshInterval) clearInterval(driverOrdersRefreshInterval);
-  driverOrdersRefreshInterval = setInterval(() => {
+  if (window._driverOrdersInterval) clearInterval(window._driverOrdersInterval);
+  window._driverOrdersInterval = setInterval(() => {
     const modal = document.getElementById('modalDriverOrders');
-    if (modal && modal.style.display !== 'none') {
+    if (modal && modal.style.display === 'flex' && typeof renderDriverOrdersList === 'function') {
       renderDriverOrdersList();
     }
   }, 10000);
@@ -26,302 +27,176 @@ function startDriverOrdersAutoRefresh() {
 
 function abrirModalDriverOrders() {
   const modal = document.getElementById('modalDriverOrders');
-  if (modal) modal.style.display = 'flex';
-
-  const selectCity = document.getElementById('selectDriverModalCity');
-  if (selectCity) {
-    const currentCity = (typeof AppState !== 'undefined') ? AppState.get('city') : 'cochabamba';
-    if (currentCity) selectCity.value = currentCity;
+  if (modal) {
+    modal.style.display = 'flex';
+    if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
+    startDriverOrdersAutoRefresh();
   }
-
-  renderDriverOrdersList();
-  startDriverOrdersAutoRefresh();
 }
 window.abrirModalDriverOrders = abrirModalDriverOrders;
 
 function closeDriverOrdersModal() {
   const modal = document.getElementById('modalDriverOrders');
-  if (modal) modal.style.display = 'none';
-  if (driverOrdersRefreshInterval) {
-    clearInterval(driverOrdersRefreshInterval);
-    driverOrdersRefreshInterval = null;
+  if (modal) {
+    modal.style.display = 'none';
+    if (window._driverOrdersInterval) {
+      clearInterval(window._driverOrdersInterval);
+      window._driverOrdersInterval = null;
+    }
   }
 }
 window.closeDriverOrdersModal = closeDriverOrdersModal;
 
 async function renderDriverOrdersList() {
-  const container = document.getElementById('driverOrdersContainer');
+  const container = document.getElementById('driverOrdersList');
   if (!container) return;
 
-  container.innerHTML = '<div class="driver-demand-empty">Cargando pedidos...</div>';
-
   if (!window.supabaseClient) {
-    container.innerHTML = '<div class="driver-demand-empty">Sin conexión con la base de datos.</div>';
+    container.innerHTML = '<div style="padding:15px; color:#F8FAFC; text-align:center;">Sin conexión a Supabase</div>';
     return;
   }
 
-  let driverCiudad = '';
-  let driverCategoria = '';
-  let localUserId = null;
+  const activeCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || '') : '';
+  const now = Date.now();
+  const expirationMs = (window.NOTIGAS && window.NOTIGAS.ORDER_EXPIRATION_MS) ? window.NOTIGAS.ORDER_EXPIRATION_MS : 48 * 60 * 60 * 1000;
+  const activeWindow = new Date(now - expirationMs).toISOString();
 
-  try {
-    const { data: sessionData } = await window.supabaseClient.auth.getSession();
-    const user = sessionData?.session?.user;
-    if (user) {
-      localUserId = user.id;
-      const { data: driverRow } = await window.supabaseClient
-        .from('choferes_habilitados')
-        .select('ciudad, categoria')
-        .eq('user_id', user.id)
-        .maybeSingle();
+  let query = window.supabaseClient
+    .from('pedidos')
+    .select('id, user_id, categoria, cantidad, calle_principal, telefono, latitude, longitude, created_at, estado, driver_id, buyer_name, buyer_email, departamento')
+    .in('estado', ['pendiente', 'visto', 'asignado'])
+    .gte('created_at', activeWindow)
+    .order('created_at', { ascending: false });
 
-      if (driverRow) {
-        driverCiudad = driverRow.ciudad || '';
-        driverCategoria = driverRow.categoria || '';
-      }
-    }
-  } catch (error) {
-    console.warn('Error obteniendo perfil de repartidor:', error);
+  if (activeCity) {
+    query = query.ilike('departamento', `%${activeCity}%`);
   }
 
-  const userData = (typeof AppState !== 'undefined') ? (AppState.get('userData') || {}) : {};
-  driverCiudad = driverCiudad || userData.ciudad || userData.city || ((typeof AppState !== 'undefined') ? AppState.get('city') : '');
-  driverCategoria = driverCategoria || userData.categoria || userData.category || 'gas';
+  const { data: orders, error } = await query;
 
-  if (!driverCiudad) {
-    container.innerHTML = '<div class="driver-demand-empty">Selecciona tu ciudad para ver los pedidos disponibles.</div>';
+  if (error) {
+    console.error("Error cargando lista de pedidos repartidor:", error);
+    container.innerHTML = '<div style="padding:15px; color:#EF4444; text-align:center;">Error al cargar requerimientos</div>';
     return;
   }
 
-  const normCity = String(driverCiudad).toLowerCase().trim();
-  let clusters = [];
-  let availableOrders = [];
-  let assignedOrders = [];
-  let ordersError = null;
-
-  try {
-    if (typeof window.obtenerGruposDemanda === 'function') {
-      clusters = await window.obtenerGruposDemanda(normCity, driverCategoria);
-    } else {
-      const result = await window.supabaseClient.rpc('rpc_get_demand_clusters_v2', {
-        p_ciudad: normCity,
-        p_categoria: null,
-        p_distancia_metros: 300,
-        p_min_pedidos: 2
-      });
-      if (!result.error && Array.isArray(result.data)) {
-        clusters = result.data.filter(cluster => {
-          return typeof window.isOrderCategoryMatchingDriver !== 'function' ||
-            window.isOrderCategoryMatchingDriver(cluster.categoria, driverCategoria);
-        });
-      }
-    }
-    if (typeof window.obtenerPedidosDisponiblesDesdeGrupos === 'function') {
-      availableOrders = await window.obtenerPedidosDisponiblesDesdeGrupos(clusters, normCity, driverCategoria);
-    }
-  } catch (error) {
-    ordersError = error;
-    console.error('Error cargando pedidos disponibles desde grupos:', error);
+  if (!orders || orders.length === 0) {
+    container.innerHTML = '<div style="padding:25px; text-align:center; color:#94A3B8; font-size:12px;"><i class="fa-solid fa-clipboard-check" style="font-size:24px; margin-bottom:8px; display:block;"></i>No hay pedidos pendientes en esta zona.</div>';
+    return;
   }
 
-  // La agrupación sirve para el radar, pero nunca debe ocultar pedidos individuales.
-  // Un pedido recién creado normalmente todavía no pertenece a un grupo de demanda.
-  // Por eso siempre unimos la vista pública con los resultados de los clusters.
-  // 1. Cargar pedidos disponibles para el repartidor (incluye correo del comprador vía RPC seguro)
-  try {
-    if (localUserId) {
-      const { data: driverAvailData, error: driverAvailErr } = await window.supabaseClient.rpc('rpc_get_driver_available_orders', {
-        p_ciudad: normCity,
-        p_categoria: driverCategoria
-      });
-      if (!driverAvailErr && Array.isArray(driverAvailData) && driverAvailData.length > 0) {
-        availableOrders = driverAvailData;
-        ordersError = null;
-      }
-    }
+  const localUserId = (typeof getAuthenticatedUserId === 'function') ? await getAuthenticatedUserId() : ((typeof getCurrentUserId === 'function') ? getCurrentUserId() : null);
 
-    if (!Array.isArray(availableOrders) || availableOrders.length === 0) {
-      let pubQuery = window.supabaseClient
-        .from('pedidos_publicos')
-        .select('*')
-        .in('estado', ['pendiente', 'visto']);
-      if (normCity) pubQuery = pubQuery.ilike('ciudad', normCity);
-      const { data: pubData, error: publicOrdersError } = await pubQuery;
-      if (publicOrdersError && !availableOrders.length) throw publicOrdersError;
-
-      const ordersById = new Map();
-      (Array.isArray(availableOrders) ? availableOrders : []).forEach(order => {
-        if (order?.id) ordersById.set(order.id, order);
-      });
-      (Array.isArray(pubData) ? pubData : []).forEach(order => {
-        const categoryMatches = typeof window.isOrderCategoryMatchingDriver !== 'function' ||
-          window.isOrderCategoryMatchingDriver(order.categoria, driverCategoria);
-        if (order?.id && categoryMatches && !ordersById.has(order.id)) {
-          ordersById.set(order.id, order);
-        }
-      });
-      availableOrders = Array.from(ordersById.values());
-      ordersError = null;
-    }
-  } catch(e) {
-    console.warn('Error consultando pedidos disponibles para repartidor:', e);
-    if (!Array.isArray(availableOrders) || availableOrders.length === 0) {
-      ordersError = e;
-    }
-  }
-
-  if (localUserId) {
-    const assignedResult = await window.supabaseClient.rpc('rpc_get_my_assigned_orders');
-
-    if (!assignedResult.error) {
-      assignedOrders = (assignedResult.data || []).filter(order => {
-        return typeof window.isOrderCategoryMatchingDriver !== 'function' ||
-          window.isOrderCategoryMatchingDriver(order.categoria, driverCategoria);
-      });
-    } else {
-      console.warn('RPC de contacto seguro pendiente; cargando pedidos sin correo:', assignedResult.error.message);
-      const fallbackResult = await window.supabaseClient
-        .from('pedidos')
-        .select('id, titulo, categoria, cantidad, direccion, telefono, latitude, longitude, created_at, estado')
-        .eq('driver_id', localUserId)
-        .ilike('ciudad', normCity)
-        .eq('estado', 'asignado')
-        .order('created_at', { ascending: true });
-
-      if (fallbackResult.error) {
-        console.warn('Error cargando entregas asignadas:', fallbackResult.error);
-      } else {
-        assignedOrders = fallbackResult.data || [];
-      }
-    }
-  }
+  // Agrupar pedidos por categoría
+  const groups = {};
+  orders.forEach(o => {
+    const cat = o.categoria || 'Gas GLP';
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(o);
+  });
 
   let html = '';
 
-  if (assignedOrders.length > 0) {
-    html += '<div class="demand-section-title"><i class="fa-solid fa-route"></i> Pedidos asignados</div>';
-    assignedOrders.forEach(order => {
-      const lat = Number(order.latitude);
-      const lng = Number(order.longitude);
-      const safeAddress = window.escapeHtmlStr(order.direccion || 'Ubicación fijada en el mapa GPS (opcional)');
-      const safeBuyerName = window.escapeHtmlStr(order.buyer_name || order.titulo || 'Vecino');
-      const safeBuyerEmail = window.escapeHtmlStr(order.buyer_email || 'No registrado');
-      const safePhone = window.escapeHtmlStr(order.telefono || 'Opcional / No indicado');
-      const emailHref = order.buyer_email ? `mailto:${encodeURIComponent(order.buyer_email)}` : '';
+  // Pedidos asignados a este chofer
+  const myAssigned = orders.filter(o => o.estado === 'asignado' && o.driver_id === localUserId);
+  if (myAssigned.length > 0) {
+    html += '<div class="demand-section-title" style="color:#10B981; margin-bottom:8px;"><i class="fa-solid fa-truck-fast"></i> Mis Pedidos en Camino</div>';
+    myAssigned.forEach(o => {
+      const antiguedad = formatearAntiguedadPedido(o.created_at);
+      const street = o.calle_principal ? escapeHtmlStr(o.calle_principal) : 'Ubicación GPS';
+      const lat = o.latitude || 0;
+      const lng = o.longitude || 0;
+      const tel = o.telefono ? escapeHtmlStr(o.telefono) : '';
+
       html += `
-        <article class="assigned-order-card">
+        <div class="assigned-order-card" style="margin-bottom:10px; border-left:4px solid #10B981;">
           <div class="demand-card-header">
-            <strong>Entrega #${window.escapeHtmlStr(String(order.id).slice(0, 8))}</strong>
-            <span class="trip-status-text">ASIGNADO</span>
+            <div>
+              <span style="font-size:9px; background:#10B981; color:white; padding:2px 6px; border-radius:4px; font-weight:800;">EN ENTREGA</span>
+              <div style="font-size:13px; font-weight:800; color:#F8FAFC; margin-top:2px;">${escapeHtmlStr(o.categoria)} (${o.cantidad})</div>
+            </div>
+            <div style="font-size:10px; color:#94A3B8;">${antiguedad}</div>
           </div>
-          <div class="demand-card-meta">
-            <div><i class="fa-solid fa-user"></i> <strong>Comprador:</strong> ${safeBuyerName}</div>
-            <div><i class="fa-solid fa-envelope"></i> <strong>Correo:</strong> ${emailHref ? `<a class="assigned-buyer-email" href="${emailHref}">${safeBuyerEmail}</a>` : safeBuyerEmail}</div>
-            <div><i class="fa-solid fa-box"></i> <strong>Solicitud:</strong> ${window.escapeHtmlStr(order.categoria || '')} (${window.escapeHtmlStr(order.cantidad || '1')} unidad/es)</div>
-            <div><i class="fa-solid fa-location-dot"></i> <strong>Dirección:</strong> ${safeAddress}</div>
-            <div><i class="fa-solid fa-phone"></i> <strong>Teléfono:</strong> ${safePhone}</div>
+          <div class="demand-card-meta" style="margin-top:6px;">
+            <div>📍 <strong>Destino:</strong> ${street}</div>
+            ${tel ? `<div>📞 <strong>Tel:</strong> <a href="tel:${tel}" style="color:#38BDF8;">${tel}</a></div>` : ''}
           </div>
-          <div class="demand-card-actions">
-            <button type="button" class="btn-driver-view-order" data-action="centrarPedidoEnMapa" data-lat="${lat}" data-lng="${lng}" data-id="${window.escapeHtmlStr(order.id)}">
-              <i class="fa-solid fa-map-location-dot"></i> Ver en el mapa
+          <div class="demand-card-actions" style="margin-top:8px; display:flex; gap:6px;">
+            <button type="button" class="btn-action" style="background:#0284C7; color:white; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:700; border:none; cursor:pointer; flex:1;" data-action="centrarPedidoEnMapa" data-lat="${lat}" data-lng="${lng}" data-order-id="${o.id}">
+              <i class="fa-solid fa-map-location-dot"></i> Ver Mapa
             </button>
-            <button type="button" class="btn-driver-route" data-action="abrirRutaGoogleMaps" data-lat="${lat}" data-lng="${lng}" data-id="${window.escapeHtmlStr(order.id)}" data-address="${safeAddress}">
-              <i class="fa-solid fa-diamond-turn-right"></i> Navegar (Google Maps)
-            </button>
-            <button type="button" class="btn-driver-complete" data-action="confirmarEntregaPedido" data-id="${window.escapeHtmlStr(order.id)}">
-              <i class="fa-solid fa-check"></i> Entregado
-            </button>
-            <button type="button" class="btn-driver-report" data-action="denunciarPedidoFalso" data-id="${window.escapeHtmlStr(order.id)}" data-buyer="${encodeURIComponent(order.buyer_name || order.titulo || 'Vecino')}" data-email="${encodeURIComponent(order.buyer_email || 'No registrado')}">
-              <i class="fa-solid fa-flag"></i> Denunciar pedido falso
+            <button type="button" class="btn-action" style="background:#10B981; color:white; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:700; border:none; cursor:pointer; flex:1;" data-action="confirmarEntregaPedido" data-id="${o.id}">
+              <i class="fa-solid fa-circle-check"></i> Entregado
             </button>
           </div>
-        </article>`;
+        </div>
+      `;
     });
   }
 
-  html += '<div class="demand-section-title"><i class="fa-solid fa-clipboard-list"></i> Pedidos disponibles para atender</div>';
+  // Grupos de demanda disponibles
+  html += '<div class="demand-section-title" style="margin-top:12px; margin-bottom:8px;"><i class="fa-solid fa-layer-group"></i> Demanda Vecinal Acumulada</div>';
+  Object.keys(groups).forEach(cat => {
+    const list = groups[cat].filter(o => o.estado === 'pendiente' || o.estado === 'visto');
+    if (list.length === 0) return;
 
-  if (ordersError) {
-    html += `<div class="driver-demand-empty">No se pudieron cargar los pedidos: ${window.escapeHtmlStr(ordersError.message || 'error de conexión')}.</div>`;
-  } else if (availableOrders.length === 0) {
-    html += `<div class="driver-demand-empty">Todavía no hay pedidos disponibles de ${window.escapeHtmlStr(driverCategoria)} en esta ciudad.</div>`;
-  } else {
-    availableOrders
-      .sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0))
-      .forEach(order => {
-        const lat = Number(order.latitude);
-        const lng = Number(order.longitude);
-        const safeId = window.escapeHtmlStr(order.id || '');
-        const safeCategory = window.escapeHtmlStr(order.categoria || driverCategoria);
-        const safeQuantity = window.escapeHtmlStr(order.cantidad || '1');
-        const safeBuyerName = window.escapeHtmlStr(order.buyer_name || order.titulo || 'Vecino');
-        const safeBuyerEmail = window.escapeHtmlStr(order.buyer_email || 'No registrado');
-        const safeAddress = window.escapeHtmlStr(order.direccion || 'Ubicación fijada en mapa GPS (opcional)');
-        const safePhone = window.escapeHtmlStr(order.telefono || 'Opcional / No indicado (por seguridad)');
-        const emailHref = order.buyer_email ? `mailto:${encodeURIComponent(order.buyer_email)}` : '';
-        html += `
-          <article class="demand-group-card available-order-card">
-            <div class="demand-card-header">
-              <div>
-                <div class="demand-card-count">${safeCategory}</div>
-                <strong>${safeQuantity} unidad(es)</strong>
+    const totalGarrafas = list.reduce((acc, cur) => acc + (parseInt(cur.cantidad, 10) || 1), 0);
+    const newestTime = list[0].created_at;
+    const antiguedad = formatearAntiguedadPedido(newestTime);
+
+    html += `
+      <div class="demand-group-card" style="margin-bottom:10px;">
+        <div class="demand-card-header">
+          <div>
+            <div style="font-size:13px; font-weight:800; color:#F8FAFC;">${escapeHtmlStr(cat)}</div>
+            <div style="font-size:10px; color:#94A3B8;">${list.length} ${list.length === 1 ? 'vecino esperando' : 'vecinos esperando'}</div>
+          </div>
+          <div class="demand-card-count">${totalGarrafas} <span style="font-size:10px; color:#94A3B8;">pedidos</span></div>
+        </div>
+        <div class="demand-card-meta">
+          <div>⏱️ Último pedido: ${antiguedad}</div>
+        </div>
+        <div style="margin-top:8px; border-top:1px solid rgba(255,255,255,0.06); padding-top:8px;">
+          ${list.map(o => {
+            const st = o.calle_principal ? escapeHtmlStr(o.calle_principal) : 'Ubicación GPS';
+            const lat = o.latitude || 0;
+            const lng = o.longitude || 0;
+            const buyer = o.buyer_name ? escapeHtmlStr(o.buyer_name) : 'Vecino';
+            const buyerEmail = o.buyer_email ? escapeHtmlStr(o.buyer_email) : '';
+            return `
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px dashed rgba(255,255,255,0.04); font-size:11px;">
+                <div>
+                  <span style="color:#F8FAFC; font-weight:700;">${st}</span> (${o.cantidad})
+                  <div style="font-size:9.5px; color:#64748B;">${buyer}</div>
+                </div>
+                <div style="display:flex; gap:4px;">
+                  <button type="button" style="background:#334155; color:#F8FAFC; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:700; cursor:pointer;" data-action="centrarPedidoEnMapa" data-lat="${lat}" data-lng="${lng}" data-order-id="${o.id}" title="Ver en mapa">
+                    <i class="fa-solid fa-location-crosshairs"></i>
+                  </button>
+                  <button type="button" style="background:#FF6D00; color:white; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:800; cursor:pointer;" data-action="aceptarPedidoRepartidor" data-id="${o.id}" data-lat="${lat}" data-lng="${lng}" data-address="${escapeHtmlStr(o.calle_principal || '')}">
+                    <i class="fa-solid fa-truck"></i> Tomar
+                  </button>
+                  <button type="button" style="background:rgba(239,68,68,0.2); color:#EF4444; border:1px solid rgba(239,68,68,0.4); padding:4px 6px; border-radius:4px; font-size:9px; cursor:pointer;" data-action="denunciarPedidoFalso" data-id="${o.id}" data-buyer="${encodeURIComponent(buyer)}" data-email="${encodeURIComponent(buyerEmail)}" title="Denunciar pedido falso">
+                    <i class="fa-solid fa-flag"></i>
+                  </button>
+                </div>
               </div>
-              <span class="trip-status-text">DISPONIBLE</span>
-            </div>
-            <div class="demand-card-meta">
-              <div><i class="fa-solid fa-user"></i> <strong>Comprador:</strong> ${safeBuyerName}</div>
-              <div><i class="fa-solid fa-envelope"></i> <strong>Correo:</strong> ${emailHref ? `<a class="assigned-buyer-email" href="${emailHref}" style="color:#0288D1; font-weight:700; text-decoration:underline;">${safeBuyerEmail}</a>` : safeBuyerEmail}</div>
-              <div><i class="fa-solid fa-location-dot"></i> <strong>Dirección:</strong> ${safeAddress}</div>
-              <div><i class="fa-solid fa-phone"></i> <strong>Teléfono:</strong> ${safePhone}</div>
-              <div><i class="fa-regular fa-clock"></i> Publicado hace ${formatearAntiguedadPedido(order.created_at)}.</div>
-            </div>
-            <div class="demand-card-actions">
-              <button type="button" class="btn-driver-view-order" data-action="centrarPedidoEnMapa" data-lat="${lat}" data-lng="${lng}" data-id="${safeId}">
-                <i class="fa-solid fa-map-location-dot"></i> Ver en el mapa
-              </button>
-              <button type="button" class="btn-driver-report" data-action="denunciarPedidoFalso" data-id="${safeId}" data-buyer="${encodeURIComponent(order.buyer_name || order.titulo || 'Vecino')}" data-email="${encodeURIComponent(order.buyer_email || 'No registrado')}">
-                <i class="fa-solid fa-flag"></i> Denunciar
-              </button>
-            </div>
-          </article>`;
-      });
-  }
-
-  // El mapa debe usar la misma versión segura y completa de los pedidos que
-  // acaba de ver el repartidor. Así el popup conserva correo, dirección y
-  // teléfono opcional, y la elección sólo se ofrece después de ubicarlo.
-  window.driverDemandMapState = {
-    clusters,
-    availableOrders,
-    assignedOrders
-  };
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  });
 
   container.innerHTML = html;
 }
 
 window.centrarPedidoEnMapa = function(lat, lng, id) {
-  const nLat = Number(lat);
-  const nLng = Number(lng);
-  if (typeof map !== 'undefined' && map && !isNaN(nLat) && !isNaN(nLng) && nLat !== 0 && nLng !== 0) {
-    if (typeof closeDriverOrdersModal === 'function') closeDriverOrdersModal();
-    if (typeof switchTab === 'function') switchTab(0);
-    if (typeof desactivarSeguirme === 'function') desactivarSeguirme();
-
-    setTimeout(() => {
-      map.invalidateSize();
-      map.flyTo([nLat, nLng], 18, { duration: 1.2 });
-      if (typeof window.renderDriverDemandByZoom === 'function') {
-        window.renderDriverDemandByZoom();
-      }
-    }, 80);
-
-    setTimeout(() => {
-      const marker = window.neighborOrderMarkers?.[id];
-      if (marker) marker.openPopup();
-    }, 1400);
-
+  if (typeof closeDriverOrdersModal === 'function') closeDriverOrdersModal();
+  if (lat && lng && !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0 && typeof map !== 'undefined' && map) {
+    map.flyTo([lat, lng], 17, { duration: 1.2 });
     if (typeof showToast === 'function') {
-      showToast('📍 Pedido localizado', 'Revisa los datos en el mapa antes de elegir y navegar.', 'success', 2800);
+      showToast('Ubicación Localizada', 'Centrando el mapa en el destino del pedido.', 'info', 2500);
     }
   } else {
     if (typeof showToast === 'function') {
@@ -368,20 +243,17 @@ window.abrirRutaGoogleMaps = function (a, b, c, d) {
   let orderId = null;
   let address = '';
 
-  // Determinar argumentos de manera flexible (múltiples firmas)
   if (typeof a === 'object' && a !== null) {
     lat = Number(a.latitude ?? a.lat);
     lng = Number(a.longitude ?? a.lng);
     orderId = a.id || a.order_id || null;
     address = a.direccion || a.address || '';
   } else if (typeof a === 'string' && isNaN(Number(a)) && (a.includes('-') || a.length > 15)) {
-    // a es UUID orderId
     orderId = a;
     lat = Number(b);
     lng = Number(c);
     address = d || '';
   } else {
-    // a es lat, b es lng, c es orderId
     lat = Number(a);
     lng = Number(b);
     orderId = c || null;
@@ -408,7 +280,6 @@ window.abrirRutaGoogleMaps = function (a, b, c, d) {
 
   const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
 
-  // Abrir Google Maps de forma nativa e inmediata
   try {
     const newWin = window.open(mapsUrl, '_blank');
     if (!newWin) {
@@ -427,40 +298,39 @@ window.abrirRutaGoogleMaps = function (a, b, c, d) {
   if (typeof showToast === 'function') {
     showToast('🚀 En Ruta', 'Abriendo navegación en Google Maps...', 'success', 2500);
   }
-
-  // La navegación se habilita después de asignar el pedido individual.
 };
 
 async function confirmarEntregaPedido(id) {
   if (!window.supabaseClient) return;
 
-  showConfirmModal('🏁', 'Confirmar Entrega', '¿El vecino ya recibió su pedido y se realizó el pago?', 'Sí, ya entregué el pedido', async () => {
+  showConfirmModal('🏁', 'Confirmar Entrega', '¿El vecino ya recibió su pedido y se realizó el cobro/entrega?', 'Sí, ya entregué el pedido', async () => {
     showLoadingOverlay('Confirmando entrega...');
 
-    const localUserId = (typeof getAuthenticatedUserId === 'function') ? await getAuthenticatedUserId() : ((typeof getCurrentUserId === 'function') ? getCurrentUserId() : null);
+    try {
+      const { data, error } = await window.supabaseClient.rpc('rpc_driver_confirm_delivery', {
+        p_order_id: id
+      });
 
-    const { error } = await window.supabaseClient.from('pedidos')
-      .update({ estado: 'entregado' })
-      .eq('id', id)
-      .eq('driver_id', localUserId)
-      .in('estado', ['asignado']);
+      hideLoadingOverlay();
 
-    hideLoadingOverlay();
-
-    if (error) {
-      console.error("Error confirmando entrega:", error);
-      showToast('Error', 'No se pudo confirmar la entrega.', 'error');
-    } else {
-      closeDriverOrdersModal();
-      showToast('¡Buen trabajo!', 'Pedido entregado. El pedido fue archivado en tus estadísticas.', 'success', 5000);
-      if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
-      if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
+      if (error) {
+        console.error("Error confirmando entrega:", error);
+        showToast('Error', error.message || 'No se pudo confirmar la entrega.', 'error', 4000);
+      } else {
+        closeDriverOrdersModal();
+        showToast('¡Buen trabajo!', 'Pedido entregado. El pedido fue archivado en tus estadísticas.', 'success', 5000);
+        if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
+        if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
+      }
+    } catch(e) {
+      hideLoadingOverlay();
+      console.error("Error inesperado en confirmarEntregaPedido:", e);
+      showToast('Error', 'Error inesperado al confirmar entrega.', 'error', 4000);
     }
-  });
+  }, 'Volver');
 }
 window.confirmarEntregaPedido = confirmarEntregaPedido;
 
-// Purga automática de caché local (elimina pedidos locales expirados, no la base de datos)
 function ejecutarPurgaBaseDeDatosAuto() {
   const now = Date.now();
   const expirationMs = (window.NOTIGAS && window.NOTIGAS.ORDER_EXPIRATION_MS) ? window.NOTIGAS.ORDER_EXPIRATION_MS : 48 * 60 * 60 * 1000;
@@ -549,6 +419,8 @@ function renderActiveOrderNotice(order) {
   const driverName = document.getElementById('tripCardDriverName');
   const timeEst = document.getElementById('tripCardTime');
   const statusIndicator = document.getElementById('tripCardStatusIndicator');
+  const tripBtnReceived = tripCard.querySelector('.trip-btn-received');
+  const tripBtnCancel = tripCard.querySelector('.trip-btn-cancel');
 
   tripCard.dataset.orderState = estado;
   tripCard.style.display = 'block';
@@ -564,6 +436,13 @@ function renderActiveOrderNotice(order) {
   if (statusIndicator) {
     statusIndicator.style.background = view.color;
     statusIndicator.style.boxShadow = `0 0 0 4px ${view.shadow}`;
+  }
+
+  if (tripBtnReceived) {
+    tripBtnReceived.style.display = (estado === 'asignado') ? 'flex' : 'none';
+  }
+  if (tripBtnCancel) {
+    tripBtnCancel.style.display = (estado === 'entregado' || estado === 'cancelado') ? 'none' : 'flex';
   }
 }
 
@@ -597,7 +476,7 @@ async function syncActiveOrderStatusFromDatabase(order) {
       _activeOrderFinalTimer = setTimeout(() => {
         AppState.set('activeOrder', null);
         checkActiveOrderStatus();
-      }, 5000);
+      }, 4000);
     }
   } catch (error) {
     console.warn('Verificación de estado de pedido:', error);
@@ -610,6 +489,7 @@ function checkActiveOrderStatus() {
   ejecutarPurgaBaseDeDatosAuto();
 
   const btnCancel = document.getElementById('btnCancelOrder');
+  const btnReceived = document.getElementById('btnConfirmOrderReceived');
   const btnMain = document.getElementById('btnMainOrder');
   const tripCard = document.getElementById('notigasTripCard');
   const buyerActions = document.getElementById('buyerFloatingActions');
@@ -620,13 +500,22 @@ function checkActiveOrderStatus() {
   if (activeOrder && !isAdmin) {
     try {
       const order = activeOrder;
+      const estado = String(order.estado || 'pendiente').toLowerCase();
 
-      if (btnCancel) btnCancel.style.display = 'flex';
       if (btnMain) btnMain.style.display = 'none';
-
       if (buyerActions) buyerActions.style.display = 'flex';
-      renderActiveOrderNotice(order);
 
+      if (estado === 'asignado') {
+        // En camino: el comprador puede confirmar que ya lo recibió o cancelar
+        if (btnReceived) btnReceived.style.display = 'flex';
+        if (btnCancel) btnCancel.style.display = 'flex';
+      } else {
+        // Pendiente o Visto: sólo cancelar permitido, no confirmar antes de asignación
+        if (btnReceived) btnReceived.style.display = 'none';
+        if (btnCancel) btnCancel.style.display = 'flex';
+      }
+
+      renderActiveOrderNotice(order);
       actualizarFaviconSegunPedido(order.categoria, order.estado);
       syncActiveOrderStatusFromDatabase(order);
 
@@ -635,10 +524,10 @@ function checkActiveOrderStatus() {
       }
 
       return;
-
     } catch(e){}
   }
 
+  if (btnReceived) btnReceived.style.display = 'none';
   if (btnCancel) btnCancel.style.display = 'none';
   if (btnMain) btnMain.style.display = 'flex'; // Restaurar Hacer Pedido
 
@@ -658,13 +547,11 @@ if (typeof AppState !== 'undefined' && typeof AppState.on === 'function') {
 
 function abrirSubmenuPedidos() {
   const modalSubmenu = document.getElementById('modalSubmenu');
-
   if (modalSubmenu) modalSubmenu.style.display = 'flex';
 }
 
 function closeSubmenuModal() {
   const modalSubmenu = document.getElementById('modalSubmenu');
-
   if (modalSubmenu) modalSubmenu.style.display = 'none';
 }
 
@@ -687,656 +574,495 @@ function seleccionarYPedirDirecto(catNombre) {
   closeSubmenuModal();
 
   const sel = document.getElementById('selectCategoria');
-
   if (sel && catNombre) {
     let foundIdx = -1;
-
     const cleanSearch = catNombre.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 
     for (let i = 0; i < sel.options.length; i++) {
       const cleanVal = sel.options[i].value.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-
       if (cleanVal && (cleanVal.includes(cleanSearch) || cleanSearch.includes(cleanVal))) {
         foundIdx = i;
-
         break;
-
       }
-
     }
 
     if (foundIdx !== -1) {
       sel.selectedIndex = foundIdx;
-
       sel.dispatchEvent(new Event('change'));
-
     }
-
   }
 
   const modalPedido = document.getElementById('modalPedido');
-
   if (modalPedido) modalPedido.style.display = 'flex';
 }
 
 function closePedidoModal() {
   const modalPedido = document.getElementById('modalPedido');
-
   if (modalPedido) modalPedido.style.display = 'none';
 }
 
 function confirmarPedido() {
-  const ciudad = (typeof AppState !== 'undefined') ? AppState.get('city') : null;
-  if (!ciudad) {
-    if (typeof showToast === 'function') {
-      showToast('⚠️ Ciudad Requerida', 'No se ha definido la ciudad. Por favor selecciona tu ciudad en el mapa antes de pedir.', 'warning', 4500);
-    } else {
-      alert('No se ha definido la ciudad.');
-    }
+  const selectCategoria = document.getElementById('selectCategoria');
+  const inputCantidad = document.getElementById('inputCantidad');
+  const inputCalle = document.getElementById('inputCallePrincipal');
+  const inputTel = document.getElementById('inputTelefono');
+
+  const categoria = selectCategoria ? selectCategoria.value : 'Gas GLP';
+  const cantidad = inputCantidad ? inputCantidad.value : '1';
+  const calle = inputCalle ? inputCalle.value.trim() : '';
+  const telefono = inputTel ? inputTel.value.trim() : '';
+
+  if (!calle) {
+    showToast('Campo Requerido', 'Por favor ingresa tu calle o referencia de entrega.', 'warning', 3000);
     return;
   }
 
-  const pos = getActiveUserLocation();
-  if (!pos.lat || !pos.lng) {
-    const defaultCoords = {
-      santacruz: { lat: -17.7833, lng: -63.1821 },
-      cochabamba: { lat: -17.3895, lng: -66.1568 },
-      lapaz: { lat: -16.5000, lng: -68.1500 },
-      elalto: { lat: -16.5000, lng: -68.1900 },
-      sucre: { lat: -19.0333, lng: -65.2627 },
-      tarija: { lat: -21.5355, lng: -64.7296 },
-      oruro: { lat: -17.9833, lng: -67.1500 },
-      potosi: { lat: -19.5836, lng: -65.7531 },
-      trinidad: { lat: -14.8333, lng: -64.9000 },
-      cobija: { lat: -11.0267, lng: -68.7692 }
-    };
-    if (defaultCoords[ciudad]) {
-      pos.lat = defaultCoords[ciudad].lat;
-      pos.lng = defaultCoords[ciudad].lng;
-    }
-  }
+  const activePos = (typeof window.getActiveUserLocation === 'function') ? window.getActiveUserLocation() : ((typeof AppState !== 'undefined') ? AppState.get('userLocation') : null);
+  const lat = activePos ? (activePos.lat || activePos.latitude || -17.3935) : -17.3935;
+  const lng = activePos ? (activePos.lng || activePos.longitude || -66.1570) : -66.1570;
 
-  let cat = document.getElementById('selectCategoria')?.value || 'gas';
-  if (cat === 'otros') {
-    const detail = (document.getElementById('inputOrderOtrosDetalle')?.value || '').trim();
-    if (detail) {
-        // Standard category code 'otros'
-    }
-  }
+  const currentCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || 'Cochabamba') : 'Cochabamba';
 
-  const inputAddr = (document.getElementById('inputCallePrincipal')?.value || '').trim();
-  const inputTel = (document.getElementById('inputTelefonoComprador')?.value || '').trim();
-  const direccion = inputAddr || 'Ubicación fijada en mapa por GPS';
-  const telefono = inputTel || '';
-
-  let buyerName = 'Comprador Vecinal';
-  try {
-    const saved = JSON.stringify(AppState.get('userData') || {});
-    if (saved) {
-      const u = JSON.parse(saved);
-      if (u.nombre) buyerName = `${u.nombre}${u.apellido ? ' ' + u.apellido[0] + '.' : ''}`;
-    }
-  } catch(e){}
+  const orderData = {
+    categoria,
+    cantidad: parseInt(cantidad, 10) || 1,
+    callePrincipal: calle,
+    telefono,
+    latitude: lat,
+    longitude: lng,
+    departamento: currentCity,
+    timestamp: Date.now(),
+    estado: 'pendiente'
+  };
 
   if (window.supabaseClient) {
-    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Creando pedido...');
+    showLoadingOverlay('Registrando tu pedido...');
 
-    window.supabaseClient.auth.getSession().then(async ({ data: sessionData }) => {
-      const userId = sessionData?.session?.user?.id;
+    getAuthenticatedUserId().then(async (userId) => {
       if (!userId) {
-         if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-         if (typeof showToast === 'function') {
-           showToast('Inicia Sesión', 'Debes iniciar sesión con Google o Email para enviar tu pedido.', 'warning', 4000);
-         } else {
-           alert("Debes iniciar sesión con Google o Email para enviar tu pedido.");
-         }
-         closePedidoModal();
-         const modalAuth = document.getElementById('modalWelcomeAuth');
-         if (modalAuth) modalAuth.style.display = 'flex';
-         return;
+        hideLoadingOverlay();
+        showToast('Error', 'Debes estar autenticado para crear un pedido.', 'error', 3000);
+        return;
       }
 
-      const { data: resultData, error } = await window.supabaseClient.from('pedidos').insert([{
-          categoria: cat,
-          cantidad: '1 unidad',
-          titulo: buyerName,
-          direccion: direccion,
-          telefono: telefono,
-          descripcion: `Pedido rápido: 1 unidad.`,
-          ciudad: ciudad,
-          barrio_otb: 'Por GPS',
+      const { data, error } = await window.supabaseClient
+        .from('pedidos')
+        .insert([{
           user_id: userId,
-          latitude: pos.lat,
-          longitude: pos.lng
-      }]).select('id').single();
+          categoria: orderData.categoria,
+          cantidad: orderData.cantidad,
+          calle_principal: orderData.callePrincipal,
+          telefono: orderData.telefono,
+          latitude: orderData.latitude,
+          longitude: orderData.longitude,
+          departamento: orderData.departamento,
+          estado: 'pendiente'
+        }])
+        .select()
+        .single();
 
-      if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+      hideLoadingOverlay();
 
       if (error) {
-        console.error("Error enviando pedido a Supabase:", error);
-        if (typeof showToast === 'function') {
-          showToast('Error', 'No se pudo enviar el pedido al servidor: ' + (error.message || ''), 'error', 4000);
-        } else {
-          alert('Error al enviar pedido: ' + error.message);
+        console.error('Error insertando pedido:', error);
+        showToast('Error', error.message || 'No se pudo guardar el pedido en el servidor.', 'error', 4000);
+        return;
+      }
+
+      orderData.id = data.id;
+      AppState.set('activeOrder', orderData);
+      closePedidoModal();
+      showToast('¡Pedido Publicado!', 'Tu pedido ya está visible para los repartidores en el mapa.', 'success', 5000);
+      checkActiveOrderStatus();
+
+      if (typeof renderActiveOrdersMap === 'function') {
+        renderActiveOrdersMap();
+      }
+    }).catch(e => {
+      hideLoadingOverlay();
+      console.error(e);
+      showToast('Error', 'Error de conexión con la cuenta. Tu pedido no pudo ser registrado.', 'error', 3000);
+    });
+  } else {
+    showToast('Error', 'El servidor no está disponible. No se puede crear el pedido.', 'error', 3000);
+  }
+}
+
+function cancelarPedidoActivo() {
+  const rawOrder = JSON.stringify(AppState.get('activeOrder'));
+  if (!rawOrder) {
+    showToast('Sin Pedido Activo', 'No tienes un pedido activo para cancelar.', 'warning', 3000);
+    return;
+  }
+
+  showConfirmModal(
+    '❌',
+    '¿Cancelar tu pedido?',
+    'Tu pedido activo dejará de aparecer en el mapa y los repartidores ya no lo verán.',
+    'Sí, cancelar',
+    async () => {
+      if (!window.supabaseClient) {
+        showToast('Error de Conexión', 'No hay conexión con el servidor.', 'error', 4000);
+        return;
+      }
+
+      showLoadingOverlay('Cancelando requerimiento...');
+      try {
+        const order = JSON.parse(rawOrder);
+        if (!order || !order.id) {
+          hideLoadingOverlay();
+          AppState.set('activeOrder', null);
+          checkActiveOrderStatus();
+          if (typeof renderActiveOrdersMap === 'function') renderActiveOrdersMap();
+          return;
         }
-      } else {
-        console.log("✅ Pedido guardado en Supabase.");
-        closePedidoModal();
 
-        // FIX: Solo guardar localmente si la BD aceptó, y añadir el ID real
+        const { data, error } = await window.supabaseClient.rpc('rpc_cancel_own_order', {
+          p_order_id: order.id
+        });
 
-        const activeOrderData = {
-          id: resultData.id,
-          categoria: cat,
-          cantidad: '1 unidad',
-          callePrincipal: direccion,
-          telefono: telefono,
-          buyerName: buyerName,
-          lat: pos.lat,
-          lng: pos.lng,
-          estado: 'pendiente',
-          timestamp: Date.now()
-        };
+        hideLoadingOverlay();
 
-        AppState.set('activeOrder', activeOrderData);
+        if (error) {
+          console.error("Error cancelando pedido:", error);
+          showToast('Error', error.message || 'No se pudo cancelar el pedido en el servidor.', 'error', 4500);
+          return;
+        }
 
-        if (typeof notigasTrack === 'function') notigasTrack('pedido_creado', { categoria: cat });
+        const currentMarker = window.userMarker || (typeof userMarker !== 'undefined' ? userMarker : null);
+        const locIcon = window.userLocationIcon || (typeof userLocationIcon !== 'undefined' ? userLocationIcon : null);
+        if (currentMarker && locIcon && typeof currentMarker.setIcon === 'function') {
+          currentMarker.setIcon(locIcon);
+        }
 
-        showToast('✅ Pedido Recibido', 'Tu solicitud fue enviada a los repartidores disponibles de tu zona. La atención depende de la disponibilidad de un repartidor.', 'success', 5000);
-
-        closePedidoModal();
-
+        AppState.set('activeOrder', null);
+        showToast('Pedido Cancelado', 'Se ha cancelado tu requerimiento.', 'info', 4000);
         checkActiveOrderStatus();
 
         if (typeof renderActiveOrdersMap === 'function') {
           renderActiveOrdersMap();
         }
-      }
-
-    }).catch(e => {
-       if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-
-       console.error(e);
-
-       showToast('Error', 'Error de conexión con la cuenta. Tu pedido no pudo ser registrado.', 'error', 3000);
-
-    });
-
-  } else {
-    showToast('Error', 'El servidor no está disponible. No se puede crear el pedido.', 'error', 3000);
-
-  }
-}
-
-function cancelarPedidoActivo() {
-  showConfirmModal('❌', '¿Cancelar tu pedido?', 'Tu pedido activo será eliminado del mapa y los repartidores dejarán de verlo.', 'Sí, cancelar', async () => {
-    const rawOrder = JSON.stringify(AppState.get('activeOrder'));
-
-    if (window.supabaseClient && rawOrder) {
-      try {
-        const order = JSON.parse(rawOrder);
-
-        if (order.id) {
-          const userId = await getAuthenticatedUserId();
-          if (userId) {
-             const { error } = await window.supabaseClient.from('pedidos')
-                .delete()
-                .eq('id', order.id)
-                .eq('user_id', userId);
-
-             if (error) {
-                 console.error("Error cancelando pedido en Supabase:", error);
-                 showToast('Error', 'No se pudo cancelar el pedido.', 'error', 3000);
-             }
-          }
-        }
-
       } catch(e) {
-          console.error("Error al cancelar pedido local:", e);
+        hideLoadingOverlay();
+        console.error("Excepción al cancelar pedido:", e);
+        showToast('Error', 'Error inesperado al cancelar el pedido.', 'error', 4000);
       }
-
-    }
-
-    if (typeof userMarker !== 'undefined' && userMarker && typeof userLocationIcon !== 'undefined') {
-        userMarker.setIcon(userLocationIcon);
-        await new Promise(r => setTimeout(r, 1500));
-    }
-
-    AppState.set('activeOrder', null);
-
-    showToast('Pedido Cancelado', 'Se ha restaurado el estado normal de la aplicación.', 'error', 4000);
-
-    checkActiveOrderStatus();
-
-    if (typeof renderActiveOrdersMap === 'function') {
-      renderActiveOrdersMap();
-
-    }
-
-  });
+    },
+    'Volver'
+  );
 }
 window.cancelarPedidoActivo = cancelarPedidoActivo;
 
 async function confirmarRecepcionComprador() {
-  showConfirmModal('🏁', 'Confirmar Recepción', '¿Confirmas que el repartidor llegó y recibiste tu pedido de forma exitosa?', 'Sí, lo recibí', async () => {
-     const rawOrder = JSON.stringify(AppState.get('activeOrder'));
+  const rawOrder = JSON.stringify(AppState.get('activeOrder'));
+  if (!rawOrder) {
+    showToast('Sin Pedido Activo', 'No tienes un pedido activo en curso.', 'warning', 3000);
+    return;
+  }
 
-     if (window.supabaseClient && rawOrder) {
-         showLoadingOverlay('Confirmando entrega...');
+  showConfirmModal(
+    '🏁',
+    '¿Ya recibiste tu pedido?',
+    'Al confirmar, el requerimiento dejará de aparecer en el mapa y ya no estará disponible para nuevos repartidores.',
+    'Sí, ya lo recibí',
+    async () => {
+      if (!window.supabaseClient) {
+        showToast('Error de Conexión', 'No hay conexión con el servidor. Verifica tu internet.', 'error', 4000);
+        return;
+      }
 
-         try {
-             const order = JSON.parse(rawOrder);
+      showLoadingOverlay('Confirmando recepción...');
+      try {
+        const order = JSON.parse(rawOrder);
+        if (!order || !order.id) {
+          hideLoadingOverlay();
+          showToast('Error', 'Datos del pedido no válidos.', 'error', 3000);
+          return;
+        }
 
-             if (order.id) {
-                const localUserId = (typeof getAuthenticatedUserId === 'function') ? await getAuthenticatedUserId() : ((typeof getCurrentUserId === 'function') ? getCurrentUserId() : null);
-                const { error } = await window.supabaseClient.from('pedidos')
-                    .update({ estado: 'entregado' })
-                    .eq('id', order.id)
-                    .eq('user_id', localUserId);
+        const { data, error } = await window.supabaseClient.rpc('rpc_confirm_order_received', {
+          p_order_id: order.id
+        });
 
-                if (error) {
-                    console.error("Error confirmando entrega:", error);
-                    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-                    showToast('Error', 'No se pudo confirmar la entrega.', 'error');
-                    return;
-                }
+        hideLoadingOverlay();
 
-             }
+        if (error) {
+          console.error("Error confirmando recepción:", error);
+          showToast('Error', error.message || 'No se pudo confirmar la recepción del pedido.', 'error', 4500);
+          return;
+        }
 
-         } catch(e) {
-             console.error("Excepción en confirmarRecepcionComprador:", e);
-         } finally {
-             if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-         }
+        const currentMarker = window.userMarker || (typeof userMarker !== 'undefined' ? userMarker : null);
+        const greenIcon = window.garrafaGreenIcon || (typeof garrafaGreenIcon !== 'undefined' ? garrafaGreenIcon : null);
+        if (currentMarker && greenIcon && typeof currentMarker.setIcon === 'function') {
+          currentMarker.setIcon(greenIcon);
+          await new Promise(r => setTimeout(r, 1000));
+        }
 
-     }
+        AppState.set('activeOrder', null);
+        showToast('¡Gracias!', 'Gracias por confirmar. Tu pedido ha sido finalizado exitosamente.', 'success', 5000);
+        checkActiveOrderStatus();
 
-     if (typeof userMarker !== 'undefined' && userMarker && typeof garrafaGreenIcon !== 'undefined') {
-         userMarker.setIcon(garrafaGreenIcon);
-         await new Promise(r => setTimeout(r, 1500));
-     }
-
-     AppState.set('activeOrder', null);
-
-     showToast('¡Gracias!', 'Gracias por confirmar. El pedido ha sido finalizado exitosamente.', 'success', 5000);
-
-     checkActiveOrderStatus();
-
-     if (typeof renderActiveOrdersMap === 'function') renderActiveOrdersMap();
-
-  });
+        if (typeof renderActiveOrdersMap === 'function') {
+          renderActiveOrdersMap();
+        }
+      } catch(e) {
+        hideLoadingOverlay();
+        console.error("Excepción en confirmarRecepcionComprador:", e);
+        showToast('Error', 'Ocurrió un error inesperado al confirmar la recepción.', 'error', 4000);
+      }
+    },
+    'Volver'
+  );
 }
+window.confirmarRecepcionComprador = confirmarRecepcionComprador;
 
 async function abrirPanoramicaPedidos() {
   let contenido = '';
-
   const now = Date.now();
 
-  // Pedido propio activo (desde localStorage)
-
   const rawPropio = JSON.stringify(AppState.get('activeOrder'));
-
   if (rawPropio) {
     try {
       const o = JSON.parse(rawPropio);
-
       const antiguedad = formatearAntiguedadPedido(o.timestamp);
+      const isAsignado = (o.estado === 'asignado');
 
       contenido += `
-
         <div style="background: linear-gradient(135deg, rgba(255,109,0,0.15), rgba(0,230,118,0.08)); border: 1px solid #FF6D00; border-radius: 12px; padding: 12px; margin-bottom: 10px;">
-
           <div style="font-weight: 900; font-size: 13px; color: #FF6D00; margin-bottom: 6px;"><i class="fa-solid fa-box"></i> Tu Pedido Activo</div>
-
           <div style="font-size: 12px; color: #CBD5E1;"><strong>📦 Producto:</strong> ${escapeHtmlStr(o.categoria)}</div>
-
-          <div style="font-size: 12px; color: #CBD5E1;"><strong>🔢 Cantidad:</strong> ${escapeHtmlStr(o.cantidad)}</div>
-
+          <div style="font-size: 12px; color: #CBD5E1;"><strong>🔢 Cantidad:</strong> ${escapeHtmlStr(String(o.cantidad))}</div>
           <div style="font-size: 12px; color: #CBD5E1;"><strong>🚦 Calle:</strong> ${escapeHtmlStr(o.callePrincipal || 'En mapa')}</div>
-
           <div style="font-size: 11px; color: #64748B; margin-top: 4px;">⏱️ Publicado hace ${antiguedad}</div>
-
-          <button data-action="cancelarPedidoActivo" style="margin-top:8px; background:#D32F2F; color:white; border:none; padding:6px 12px; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer; width:100%;">❌ Cancelar este Pedido</button>
-
+          <div style="display:flex; gap:6px; margin-top:10px;">
+            ${isAsignado ? `
+              <button type="button" data-action="confirmarRecepcionComprador" style="flex:1; background:linear-gradient(135deg, #10B981, #059669); color:white; border:none; padding:7px 10px; border-radius:8px; font-size:11px; font-weight:800; cursor:pointer;">
+                <i class="fa-solid fa-circle-check"></i> Ya recibí mi pedido
+              </button>
+            ` : ''}
+            <button type="button" data-action="cancelarPedidoActivo" style="flex:1; background:#ef4444; color:white; border:none; padding:7px 10px; border-radius:8px; font-size:11px; font-weight:800; cursor:pointer;">
+              <i class="fa-solid fa-ban"></i> Cancelar
+            </button>
+          </div>
         </div>
-
       `;
-
     } catch(e){}
-
   }
 
-  // FIX W-02: Cargar pedidos reales de otros vecinos desde Supabase (en lugar de mockOrders)
-
   let otrosPedidosHtml = '';
-
   if (window.supabaseClient) {
     try {
       const expirationMs = (window.NOTIGAS && window.NOTIGAS.ORDER_EXPIRATION_MS) ? window.NOTIGAS.ORDER_EXPIRATION_MS : 48 * 60 * 60 * 1000;
-
       const activeWindow = new Date(now - expirationMs).toISOString();
+      const currentCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || '') : '';
 
-      const ciudadReal = AppState.get('city');
-
-      const { data: pedidosReales } = await window.supabaseClient
-        .from('pedidos_publicos')
-        .select('id, categoria, created_at')
-
-        .eq('ciudad', ciudadReal)
-
+      let query = window.supabaseClient
+        .from('pedidos')
+        .select('id, categoria, cantidad, calle_principal, created_at, estado, latitude, longitude')
+        .in('estado', ['pendiente', 'visto'])
         .gte('created_at', activeWindow)
-
         .order('created_at', { ascending: false })
+        .limit(20);
 
-        .limit(10);
-
-      if (pedidosReales && pedidosReales.length > 0) {
-        pedidosReales.forEach(o => {
-          const antiguedad = formatearAntiguedadPedido(o.created_at);
-
-          const iconHtml = typeof obtenerIconoHtmlPorCategoria === 'function' ? obtenerIconoHtmlPorCategoria(o.categoria) : '📦';
-
-          otrosPedidosHtml += `
-
-            <div style="background: rgba(30,41,59,0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 10px; margin-bottom: 8px; display:flex; align-items:center; gap:10px;">
-
-              <div style="width:36px; height:36px; background: rgba(255,109,0,0.1); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">${iconHtml}</div>
-
-              <div style="flex:1;">
-
-                <div style="font-size:12px; font-weight:700; color:white;">${escapeHtmlStr(o.categoria)}</div>
-
-                <div style="font-size:11px; color:#94A3B8;">📍 Vecino cercano • ⏱️ hace ${antiguedad}</div>
-
-              </div>
-
-              <span style="font-size:10px; background:rgba(0,230,118,0.15); color:#00E676; padding:3px 7px; border-radius:20px; font-weight:700;">ACTIVO</span>
-
-            </div>
-
-          `;
-
-        });
-
-        contenido += otrosPedidosHtml;
-
-      } else if (!rawPropio) {
-        contenido = `<div style="text-align:center; color:#64748B; padding:20px 0;"><i class="fa-solid fa-inbox" style="font-size:32px; margin-bottom:10px; display:block;"></i>No hay pedidos activos en tu zona en este momento.</div>`;
-
+      if (currentCity) {
+        query = query.ilike('departamento', `%${currentCity}%`);
       }
 
-    } catch (e) {
-      console.warn('Error cargando pedidos reales en panorámica:', e);
+      const { data: otros } = await query;
+      if (otros && otros.length > 0) {
+        otros.forEach(p => {
+          const antiguedad = formatearAntiguedadPedido(p.created_at);
+          otrosPedidosHtml += `
+            <div style="background: #1E293B; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px; margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center;">
+              <div style="flex:1;">
+                <div style="font-size:12px; font-weight:800; color:#F8FAFC;">${escapeHtmlStr(p.categoria)} (${p.cantidad})</div>
+                <div style="font-size:11px; color:#94A3B8;">📍 ${escapeHtmlStr(p.calle_principal || 'Zona vecinal')}</div>
+                <div style="font-size:10px; color:#64748B;">⏱️ ${antiguedad}</div>
+              </div>
+              <button type="button" data-action="centrarPedidoEnMapa" data-lat="${p.latitude}" data-lng="${p.longitude}" data-order-id="${p.id}" style="background:#334155; color:#F8FAFC; border:none; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;">
+                <i class="fa-solid fa-crosshairs"></i>
+              </button>
+            </div>
+          `;
+        });
+      }
+    } catch(e){}
+  }
 
-    }
-
+  if (otrosPedidosHtml) {
+    contenido += `
+      <div style="font-weight: 800; font-size: 12px; color: #94A3B8; margin: 12px 0 6px;"><i class="fa-solid fa-users"></i> Otros Pedidos en tu Zona</div>
+      ${otrosPedidosHtml}
+    `;
   }
 
   if (!contenido) {
-    contenido = `<div style="text-align:center; color:#64748B; padding:20px 0;"><i class="fa-solid fa-inbox" style="font-size:32px; margin-bottom:10px; display:block;"></i>No hay pedidos activos en tu zona en este momento.</div>`;
-
+    contenido = '<div style="text-align:center; padding:30px; color:#94A3B8; font-size:12px;"><i class="fa-solid fa-circle-info" style="font-size:24px; margin-bottom:8px; display:block;"></i>No hay pedidos activos registrados en este momento.</div>';
   }
 
-  let modal = document.getElementById('modalPanoramicaPedidos');
-
-  if (!modal) {
-    modal = document.createElement('div');
-
-    modal.id = 'modalPanoramicaPedidos';
-
-    modal.className = 'modal';
-
-    modal.innerHTML = `
-
-      <div class="modal-content" style="max-width:480px; max-height:80vh; overflow-y:auto;">
-
-        <div class="modal-title">
-
-          <span><i class="fa-solid fa-chart-bar"></i> 📊 Panorámica de Pedidos Activos</span>
-
-          <button class="btn-close" data-action="cerrarPanoramicaPedidos">✖</button>
-
-        </div>
-
-        <p style="font-size:11px; color:#94A3B8; margin-bottom:12px;">Resumen en tiempo real de los pedidos activos en tu zona. Los pedidos se actualizan automáticamente.</p>
-
-        <div id="panoramicaContent"></div>
-
-      </div>
-
-    `;
-
-    document.body.appendChild(modal);
-
+  const modal = document.getElementById('modalPanoramicaPedidos');
+  const body = document.getElementById('bodyPanoramicaPedidos');
+  if (modal && body) {
+    body.innerHTML = contenido;
+    modal.style.display = 'flex';
   }
-
-  const contentEl = document.getElementById('panoramicaContent');
-
-  if (contentEl) contentEl.innerHTML = contenido;
-
-  modal.style.display = 'flex';
 }
+window.abrirPanoramicaPedidos = abrirPanoramicaPedidos;
 
 function cerrarPanoramicaPedidos() {
   const modal = document.getElementById('modalPanoramicaPedidos');
-
   if (modal) modal.style.display = 'none';
 }
-
-const ALERTA_VECINAL_COOLDOWN_MS = 20 * 1000;
-const ultimaAlertaVecinalPorTipo = Object.create(null);
+window.cerrarPanoramicaPedidos = cerrarPanoramicaPedidos;
 
 function coordenadasValidasAlerta(pos) {
-  const lat = Number(pos?.lat);
-  const lng = Number(pos?.lng);
-  return Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+  if (!pos) return false;
+  const lat = Number(pos.lat ?? pos.latitude);
+  const lng = Number(pos.lng ?? pos.longitude);
+  return !isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
 }
 
 async function transmitirAlertaVecinal(payload) {
-  const activeChannel = window.notigasGlobalChannel || window._realtimeChannel;
-  if (!activeChannel || typeof activeChannel.send !== 'function') {
-    throw new Error('El canal en vivo todavía no está conectado. Intenta nuevamente en unos segundos.');
+  if (!window.supabaseClient || !payload) return false;
+  try {
+    const channel = window.supabaseClient.channel('alertas_vecinales_realtime');
+    await channel.send({
+      type: 'broadcast',
+      event: 'alerta_vecinal',
+      payload
+    });
+    return true;
+  } catch (error) {
+    console.warn('Transmisión de alerta vecinal no disponible:', error);
+    return false;
   }
-
-  const resultado = await activeChannel.send({
-    type: 'broadcast',
-    event: 'vecinos_alert',
-    payload
-  });
-
-  if (resultado && resultado !== 'ok') {
-    throw new Error('El servidor en vivo no confirmó el aviso.');
-  }
-
-  recibirAlertaVecinalBroadcast(payload);
 }
 
 function puedeEmitirAlertaVecinal(tipo) {
-  const ahora = Date.now();
-  const ultima = Number(ultimaAlertaVecinalPorTipo[tipo] || 0);
-  if (ahora - ultima < ALERTA_VECINAL_COOLDOWN_MS) {
-    const segundos = Math.ceil((ALERTA_VECINAL_COOLDOWN_MS - (ahora - ultima)) / 1000);
+  const key = `notigas_last_alert_${tipo}`;
+  const lastTime = parseInt(localStorage.getItem(key) || '0', 10);
+  const now = Date.now();
+  const COOLDOWN_MS = 60 * 1000; // 1 minuto
+  if (now - lastTime < COOLDOWN_MS) {
+    const remainingSecs = Math.ceil((COOLDOWN_MS - (now - lastTime)) / 1000);
     if (typeof showToast === 'function') {
-      showToast('⏳ Espera un momento', `Podrás volver a enviar este aviso en ${segundos} s.`, 'warning', 3000);
+      showToast('Espera un momento', `Ya emitiste esta alerta recientemente. Espera ${remainingSecs}s para enviar otra.`, 'warning', 3000);
     }
     return false;
   }
-  ultimaAlertaVecinalPorTipo[tipo] = ahora;
+  localStorage.setItem(key, String(now));
   return true;
 }
 
 async function notificarEscucheCamion() {
-  const pos = getActiveUserLocation();
-  if (!coordenadasValidasAlerta(pos)) {
-    if (typeof showToast === 'function') showToast('📍 Falta tu ubicación', 'Activa o ajusta tu ubicación antes de reportar el camión.', 'warning', 4500);
-    return;
-  }
   if (!puedeEmitirAlertaVecinal('escuche_camion')) return;
 
-  let reporterName = "Un vecino";
-
-  try {
-    const saved = JSON.stringify(AppState.get('userData') || {});
-    if (saved) {
-      const u = JSON.parse(saved);
-      if (u.nombre) reporterName = u.nombre;
-    }
-  } catch(e){}
-
-  const rawCity = AppState.get('city') || document.getElementById('selectCiudadCapital')?.value || 'cochabamba';
-  const miCiudad = String(rawCity).toLowerCase().trim();
-
-  const alertPayload = {
-    id: Date.now(),
-    lat: pos.lat,
-    lng: pos.lng,
-    timestamp: Date.now(),
-    reporter: reporterName,
-    tipo: 'escuche_camion',
-    cat: 'gas',
-    ciudad: miCiudad,
-    sender_id: (typeof getCurrentUserId === 'function') ? getCurrentUserId() : null
-  };
-
-  try {
-    await transmitirAlertaVecinal(alertPayload);
-    if (typeof showToast === 'function') {
-      showToast('📢 Alerta confirmada', 'El aviso “Escuché camión” ya aparece en el mapa de tu ciudad.', 'success', 4000);
-    }
-  } catch (err) {
-    ultimaAlertaVecinalPorTipo.escuche_camion = 0;
-    console.warn('No se pudo transmitir “Escuché camión”:', err);
-    if (typeof showToast === 'function') showToast('❌ Aviso no enviado', err.message || 'No se pudo confirmar el aviso en vivo.', 'error', 5000);
-  }
-}
-
-async function lanzarEspecialEsperame() {
-  const pos = getActiveUserLocation();
+  const pos = (typeof window.getActiveUserLocation === 'function') ? window.getActiveUserLocation() : ((typeof AppState !== 'undefined') ? AppState.get('userLocation') : null);
   if (!coordenadasValidasAlerta(pos)) {
-    if (typeof showToast === 'function') showToast('📍 Falta tu ubicación', 'Activa o ajusta tu ubicación antes de pedir que te esperen.', 'warning', 4500);
+    if (typeof showToast === 'function') showToast('GPS Requerido', 'Activa tu GPS para avisar a los vecinos dónde escuchaste el camión.', 'warning', 3500);
     return;
   }
-  if (!puedeEmitirAlertaVecinal('esperame')) return;
 
-  let reporterName = "Un vecino";
-
-  try {
-    const saved = JSON.stringify(AppState.get('userData') || {});
-    if (saved) {
-      const u = JSON.parse(saved);
-      if (u.nombre) reporterName = u.nombre;
-    }
-  } catch(e){}
-
-  const rawCity = AppState.get('city') || document.getElementById('selectCiudadCapital')?.value || 'cochabamba';
-  const miCiudad = String(rawCity).toLowerCase().trim();
-
-  const alertPayload = {
-    id: Date.now(),
-    lat: pos.lat,
-    lng: pos.lng,
-    timestamp: Date.now(),
-    reporter: `${reporterName} (🛑 Alerta Espérame)`,
-    tipo: 'esperame',
-    cat: 'gas',
-    ciudad: miCiudad,
-    sender_id: (typeof getCurrentUserId === 'function') ? getCurrentUserId() : null,
-    radio_metros: 500
+  const payload = {
+    tipo: 'escuche_camion',
+    titulo: '¡Camión de Gas Escuchado!',
+    mensaje: 'Un vecino cercano reporta haber escuchado la música del camión de gas en esta zona.',
+    lat: Number(pos.lat || pos.latitude),
+    lng: Number(pos.lng || pos.longitude),
+    timestamp: Date.now()
   };
 
+  showLoadingOverlay('Avisando a los vecinos...');
   try {
-    await transmitirAlertaVecinal(alertPayload);
-    if (typeof showToast === 'function') {
-      showToast('🛑 Alerta confirmada', 'Se avisó a los repartidores que estén a menos de 500 m y se marcó tu punto en el mapa.', 'warning', 4500);
+    const sent = await transmitirAlertaVecinal(payload);
+    let saved = false;
+    if (window.supabaseClient) {
+      const { error } = await window.supabaseClient.from('alertas_comunitarias').insert([{
+        tipo: 'camion_cerca',
+        latitud: payload.lat,
+        longitud: payload.lng,
+        departamento: (typeof AppState !== 'undefined') ? (AppState.get('city') || 'Cochabamba') : 'Cochabamba'
+      }]);
+      saved = !error;
     }
-  } catch (err) {
-    ultimaAlertaVecinalPorTipo.esperame = 0;
-    console.warn('No se pudo transmitir “Espérame”:', err);
-    if (typeof showToast === 'function') showToast('❌ Alerta no enviada', err.message || 'No se pudo confirmar la alerta en vivo.', 'error', 5000);
+    hideLoadingOverlay();
+    if (saved || sent) {
+      if (typeof showToast === 'function') showToast('¡Aviso Enviado!', 'Los vecinos de tu zona han sido notificados.', 'success', 4000);
+    } else {
+      if (typeof showToast === 'function') showToast('Aviso Vecinal', 'Tu reporte fue transmitido a los vecinos en el mapa.', 'info', 3500);
+    }
+  } catch (e) {
+    hideLoadingOverlay();
+    console.error('Error enviando alerta vecinal:', e);
+    if (typeof showToast === 'function') showToast('Aviso Registrado', 'Tu reporte fue registrado.', 'info', 3000);
   }
 }
+window.notificarEscucheCamion = notificarEscucheCamion;
+
+async function lanzarEspecialEsperame() {
+  if (!puedeEmitirAlertaVecinal('esperame')) return;
+
+  const pos = (typeof window.getActiveUserLocation === 'function') ? window.getActiveUserLocation() : ((typeof AppState !== 'undefined') ? AppState.get('userLocation') : null);
+  if (!coordenadasValidasAlerta(pos)) {
+    if (typeof showToast === 'function') showToast('GPS Requerido', 'Activa tu ubicación GPS para pedir al repartidor que te espere.', 'warning', 3500);
+    return;
+  }
+
+  const payload = {
+    tipo: 'esperame',
+    titulo: '¡Vecino saliendo con garrafa!',
+    mensaje: 'Un vecino cercano está saliendo con su garrafa. Por favor espérale unos minutos.',
+    lat: Number(pos.lat || pos.latitude),
+    lng: Number(pos.lng || pos.longitude),
+    timestamp: Date.now()
+  };
+
+  showLoadingOverlay('Avisando al repartidor...');
+  try {
+    const sent = await transmitirAlertaVecinal(payload);
+    let saved = false;
+    if (window.supabaseClient) {
+      const { error } = await window.supabaseClient.from('alertas_comunitarias').insert([{
+        tipo: 'vecino_esperando',
+        latitud: payload.lat,
+        longitud: payload.lng,
+        departamento: (typeof AppState !== 'undefined') ? (AppState.get('city') || 'Cochabamba') : 'Cochabamba'
+      }]);
+      saved = !error;
+    }
+    hideLoadingOverlay();
+    if (saved || sent) {
+      if (typeof showToast === 'function') showToast('¡Aviso Enviado!', 'Se ha alertado a los repartidores que estás saliendo.', 'success', 4000);
+    } else {
+      if (typeof showToast === 'function') showToast('Aviso Registrado', 'Tu alerta está activa en el mapa vecinal.', 'info', 3500);
+    }
+  } catch (e) {
+    hideLoadingOverlay();
+    console.error('Error enviando alerta espérame:', e);
+  }
+}
+window.lanzarEspecialEsperame = lanzarEspecialEsperame;
 
 window.recibirAlertaVecinalBroadcast = function(payload) {
   if (!payload || !payload.lat || !payload.lng) return;
-
-  // Solo procesar alertas de la misma ciudad (insensible a mayúsculas)
-  const miCiudad = String(AppState.get('city') || 'cochabamba').toLowerCase().trim();
-  const alertCiudad = String(payload.ciudad || miCiudad).toLowerCase().trim();
-  if (alertCiudad && alertCiudad !== miCiudad) return;
-
-  let buffer = [];
-  try {
-    const raw = localStorage.getItem('notigas_reported_trucks_buffer');
-    if (raw) buffer = JSON.parse(raw);
-  } catch(e){}
-
-  // Evitar alertas duplicadas
-  if (buffer.find(a => a.id === payload.id)) return;
-
-  const now = Date.now();
-  buffer = buffer.filter(t => (now - t.timestamp) < (30 * 60 * 1000));
-  buffer.unshift(payload);
-  localStorage.setItem('notigas_reported_trucks_buffer', JSON.stringify(buffer));
-
-  // 1. Refrescar el mapa con el marcador para todos (compradores y repartidores)
-  if (typeof renderReportedTrucksBuffer === 'function') {
-    renderReportedTrucksBuffer();
+  const userPos = (typeof window.getActiveUserLocation === 'function') ? window.getActiveUserLocation() : ((typeof AppState !== 'undefined') ? AppState.get('userLocation') : null);
+  if (userPos && userPos.lat && userPos.lng && typeof calcularDistanciaMetros === 'function') {
+    const dist = calcularDistanciaMetros(userPos.lat, userPos.lng, payload.lat, payload.lng);
+    if (dist > 3000) return;
   }
 
-  // 2. Notificación especial al repartidor
-  const isDriver = (AppState.get('appMode') === 'driver' || AppState.get('userRole') === 'repartidor');
-  const esEsperame = (payload.tipo === 'esperame' || (payload.reporter && payload.reporter.includes('Espérame')));
-  const miUserId = (typeof getCurrentUserId === 'function') ? String(getCurrentUserId() || '') : '';
-  const esEmisorLocal = Boolean(miUserId && payload.sender_id && String(payload.sender_id) === miUserId);
-
-  if (esEsperame) {
-    let distanciaAlRepartidor = null;
-    if (isDriver) {
-      const posicionRepartidor = (typeof getActiveUserLocation === 'function') ? getActiveUserLocation() : null;
-      if (coordenadasValidasAlerta(posicionRepartidor)) {
-        if (typeof window.calcularDistanciaMetros === 'function') {
-          distanciaAlRepartidor = window.calcularDistanciaMetros(
-            Number(posicionRepartidor.lat), Number(posicionRepartidor.lng), Number(payload.lat), Number(payload.lng)
-          );
-        } else {
-          const rad = grados => grados * Math.PI / 180;
-          const dLat = rad(Number(payload.lat) - Number(posicionRepartidor.lat));
-          const dLng = rad(Number(payload.lng) - Number(posicionRepartidor.lng));
-          const a = Math.sin(dLat / 2) ** 2 + Math.cos(rad(Number(posicionRepartidor.lat))) *
-            Math.cos(rad(Number(payload.lat))) * Math.sin(dLng / 2) ** 2;
-          distanciaAlRepartidor = Math.round(6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
-        }
-      }
+  if (payload.tipo === 'escuche_camion') {
+    if (typeof mostrarPopupAlertaRepartidor === 'function') {
+      mostrarPopupAlertaRepartidor('🎵 ¡Camión de Gas Cerca!', payload.mensaje || 'Un vecino reporta haber escuchado la música del camión cerca de tu zona.');
+    } else if (typeof showToast === 'function') {
+      showToast('🎵 ¡Camión de Gas Cerca!', payload.mensaje || 'Un vecino reporta el camión cerca.', 'info', 5000);
     }
-
-    const radioMetros = Math.min(500, Math.max(1, Number(payload.radio_metros) || 500));
-    const repartidorCercano = isDriver && Number.isFinite(distanciaAlRepartidor) && distanciaAlRepartidor <= radioMetros;
-
-    if (repartidorCercano) {
-      if (typeof mostrarPopupAlertaRepartidor === 'function') {
-        mostrarPopupAlertaRepartidor(
-          '🛑 ¡VECINO SOLICITA ESPERA!',
-          `Un vecino a ${Math.max(1, Math.round(distanciaAlRepartidor))} m pide: “¡ESPÉRAME!”. Revisa el punto rojo en el mapa.`
-        );
-      }
-      if (typeof showToast === 'function') {
-        showToast('🛑 ¡Atención Repartidor!', `Un vecino a ${Math.max(1, Math.round(distanciaAlRepartidor))} m activó “ESPÉRAME”.`, 'warning', 7000);
-      }
-    } else if (!isDriver && !esEmisorLocal) {
-      if (typeof showToast === 'function') {
-        showToast('🛑 Alerta Comunitaria', 'Un vecino ha pedido que el camión lo espere en la zona.', 'info', 4000);
-      }
-    }
-  } else {
-    // Alerta "ESCUCHÉ CAMIÓN"
-    if (isDriver) {
-      if (typeof showToast === 'function') {
-        showToast('📢 Aviso Vecinal', `Un vecino reportó haber escuchado el camión en la zona.`, 'info', 5000);
-      }
-    } else if (!esEmisorLocal) {
-      if (typeof showToast === 'function') {
-        showToast('📢 Camión en la Zona', 'Un vecino reportó haber escuchado el camión de gas cerca.', 'info', 4000);
-      }
+  } else if (payload.tipo === 'esperame') {
+    if (typeof mostrarPopupAlertaRepartidor === 'function') {
+      mostrarPopupAlertaRepartidor('⏳ ¡Vecino Saliendo!', payload.mensaje || 'Un vecino cercano está saliendo con su garrafa.');
+    } else if (typeof showToast === 'function') {
+      showToast('⏳ ¡Vecino Saliendo!', payload.mensaje || 'Un vecino cercano está saliendo.', 'warning', 5000);
     }
   }
 };

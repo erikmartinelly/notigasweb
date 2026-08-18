@@ -231,6 +231,15 @@
 
         <div class="trip-time" id="tripCardTime">Esperando que un repartidor elija tu pedido.</div>
 
+        <div class="trip-actions" id="tripCardActions">
+          <button type="button" class="trip-btn-received" data-action="confirmarRecepcionComprador" title="Confirmar que recibiste tu pedido">
+            <i class="fa-solid fa-circle-check"></i> Ya recibí mi pedido
+          </button>
+          <button type="button" class="trip-btn-cancel" data-action="cancelarPedidoActivo" title="Cancelar este requerimiento">
+            <i class="fa-solid fa-ban"></i> Cancelar
+          </button>
+        </div>
+
       </aside>
 
       <!-- BANNER DE ACTIVACIÓN OBLIGATORIA DE GPS EN MÓVILES/ANDROID -->
@@ -310,6 +319,8 @@
       <!-- PANEL DE ACCIONES FLOTANTES EXCLUSIVO PARA COMPRADOR (CLIENTE / VECINO) -->
 
       <div class="floating-actions-container" id="buyerFloatingActions">
+
+        <button class="btn-confirm-order-received" id="btnConfirmOrderReceived" style="display: none;" title="Confirmar recepción del pedido"><i class="fa-solid fa-circle-check"></i> YA RECIBÍ MI PEDIDO</button>
 
         <button class="btn-cancel-order" id="btnCancelOrder" style="display: none;" ><i class="fa-solid fa-circle-xmark"></i> CANCELAR PEDIDO</button>
 

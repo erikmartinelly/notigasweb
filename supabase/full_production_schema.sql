@@ -897,6 +897,168 @@ BEGIN
 END;
 $$;
 
+-- 1.1 Comprador confirma recepción de su pedido (V104)
+CREATE OR REPLACE FUNCTION public.rpc_confirm_order_received(p_order_id uuid)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+DECLARE
+    v_user_id text;
+    v_order record;
+BEGIN
+    v_user_id := auth.uid()::text;
+    IF v_user_id IS NULL THEN
+        RAISE EXCEPTION 'Usuario no autenticado';
+    END IF;
+
+    IF is_banned() THEN
+        RAISE EXCEPTION 'El usuario está suspendido';
+    END IF;
+
+    SELECT *
+    INTO v_order
+    FROM public.pedidos
+    WHERE id = p_order_id
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Pedido no encontrado';
+    END IF;
+
+    IF v_order.user_id <> v_user_id AND NOT is_admin_email() THEN
+        RAISE EXCEPTION 'Acceso denegado: no eres el propietario de este pedido';
+    END IF;
+
+    IF v_order.estado IN ('entregado', 'cancelado') THEN
+        RAISE EXCEPTION 'El pedido ya fue finalizado previamente';
+    END IF;
+
+    IF v_order.estado NOT IN ('asignado', 'pendiente', 'visto') THEN
+        RAISE EXCEPTION 'El pedido no se encuentra en un estado válido para confirmar';
+    END IF;
+
+    UPDATE public.pedidos
+    SET
+        estado = 'entregado',
+        updated_at = now()
+    WHERE id = p_order_id;
+
+    RETURN jsonb_build_object(
+        'ok', true,
+        'order_id', p_order_id,
+        'estado', 'entregado',
+        'confirmed_by', 'buyer'
+    );
+END;
+$$;
+
+-- 1.2 Repartidor confirma entrega del pedido (V104)
+CREATE OR REPLACE FUNCTION public.rpc_driver_confirm_delivery(p_order_id uuid)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+DECLARE
+    v_driver_id text;
+    v_order record;
+BEGIN
+    v_driver_id := auth.uid()::text;
+    IF v_driver_id IS NULL THEN
+        RAISE EXCEPTION 'Usuario no autenticado';
+    END IF;
+
+    IF is_banned() THEN
+        RAISE EXCEPTION 'El usuario está suspendido';
+    END IF;
+
+    SELECT *
+    INTO v_order
+    FROM public.pedidos
+    WHERE id = p_order_id
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Pedido no encontrado';
+    END IF;
+
+    IF v_order.driver_id <> v_driver_id AND NOT is_admin_email() THEN
+        RAISE EXCEPTION 'Acceso denegado: este pedido no está asignado a tu cuenta';
+    END IF;
+
+    IF v_order.estado <> 'asignado' AND NOT is_admin_email() THEN
+        RAISE EXCEPTION 'El pedido no se encuentra en estado asignado';
+    END IF;
+
+    UPDATE public.pedidos
+    SET
+        estado = 'entregado',
+        updated_at = now()
+    WHERE id = p_order_id;
+
+    RETURN jsonb_build_object(
+        'ok', true,
+        'order_id', p_order_id,
+        'estado', 'entregado',
+        'confirmed_by', 'driver'
+    );
+END;
+$$;
+
+-- 1.3 Comprador cancela su pedido (V104)
+CREATE OR REPLACE FUNCTION public.rpc_cancel_own_order(p_order_id uuid)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+DECLARE
+    v_user_id text;
+    v_order record;
+BEGIN
+    v_user_id := auth.uid()::text;
+    IF v_user_id IS NULL THEN
+        RAISE EXCEPTION 'Usuario no autenticado';
+    END IF;
+
+    IF is_banned() THEN
+        RAISE EXCEPTION 'El usuario está suspendido';
+    END IF;
+
+    SELECT *
+    INTO v_order
+    FROM public.pedidos
+    WHERE id = p_order_id
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Pedido no encontrado';
+    END IF;
+
+    IF v_order.user_id <> v_user_id AND NOT is_admin_email() THEN
+        RAISE EXCEPTION 'Acceso denegado: no eres el propietario de este pedido';
+    END IF;
+
+    IF v_order.estado IN ('entregado', 'cancelado') THEN
+        RAISE EXCEPTION 'El pedido ya fue finalizado y no puede ser cancelado';
+    END IF;
+
+    UPDATE public.pedidos
+    SET
+        estado = 'cancelado',
+        updated_at = now()
+    WHERE id = p_order_id;
+
+    RETURN jsonb_build_object(
+        'ok', true,
+        'order_id', p_order_id,
+        'estado', 'cancelado'
+    );
+END;
+$$;
+
 -- 2. Marcar pedido como visto por un conductor
 CREATE OR REPLACE FUNCTION public.rpc_mark_order_seen(p_order_id uuid)
 RETURNS void
@@ -1631,21 +1793,18 @@ CREATE POLICY "Pedidos Insertar propio" ON public.pedidos FOR INSERT WITH CHECK 
 );
 
 DROP POLICY IF EXISTS "Pedidos Actualizar propio o asignado" ON public.pedidos;
-CREATE POLICY "Pedidos Actualizar propio o asignado" ON public.pedidos FOR UPDATE USING (
-    (auth.uid())::text = user_id 
-    OR (auth.uid())::text = driver_id 
-    OR is_admin_email()
+DROP POLICY IF EXISTS "Pedidos Actualizar admin" ON public.pedidos;
+CREATE POLICY "Pedidos Actualizar admin" ON public.pedidos FOR UPDATE TO authenticated USING (
+    is_admin_email()
 )
 WITH CHECK (
-    (auth.uid())::text = user_id
-    OR (auth.uid())::text = driver_id
-    OR is_admin_email()
+    is_admin_email()
 );
 
 DROP POLICY IF EXISTS "Pedidos Borrar propio o admin" ON public.pedidos;
-CREATE POLICY "Pedidos Borrar propio o admin" ON public.pedidos FOR DELETE USING (
-    (auth.uid())::text = user_id 
-    OR is_admin_email()
+DROP POLICY IF EXISTS "Pedidos Borrar admin" ON public.pedidos;
+CREATE POLICY "Pedidos Borrar admin" ON public.pedidos FOR DELETE TO authenticated USING (
+    is_admin_email()
 );
 
 -- E. Políticas: rutas_repartidores
@@ -1987,6 +2146,7 @@ BEGIN
     WHERE n.nspname = 'public'
       AND p.proname = ANY (ARRAY[
         'is_admin_email', 'is_banned', 'rpc_assign_order', 'rpc_mark_order_seen',
+        'rpc_confirm_order_received', 'rpc_driver_confirm_delivery', 'rpc_cancel_own_order',
         'rpc_get_demand_clusters_v2', 'rpc_get_orders_for_cluster_v2',
         'rpc_get_driver_available_orders',
         'rpc_get_my_assigned_orders', 'rpc_purge_old_records',

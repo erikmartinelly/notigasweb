@@ -51,7 +51,7 @@ window.hideLoadingOverlay = function() {
     clearTimeout(window.globalLoadingAutoDismiss);
   }
 };
-function showToast(title, message, type = 'info', durationMs = 1000) {
+function showToast(title, message, type = 'info', durationMs = 4000) {
   const container = document.getElementById('toastContainer');
   if (!container) return;
 
@@ -90,7 +90,8 @@ function showToast(title, message, type = 'info', durationMs = 1000) {
   // Auto-cierre
   setTimeout(dismiss, durationMs);
 }
-function showConfirmModal(icon, title, text, acceptLabel, acceptCallback) {
+
+function showConfirmModal(icon, title, text, acceptLabel, acceptCallback, cancelLabel = 'Cancelar') {
   const overlay = document.getElementById('confirmModalOverlay');
   if (!overlay) { if (confirm(text)) { acceptCallback(); } return; }
 
@@ -102,6 +103,7 @@ function showConfirmModal(icon, title, text, acceptLabel, acceptCallback) {
   const btnCancel = document.getElementById('confirmModalCancel');
 
   btnAccept.textContent = acceptLabel || 'Confirmar';
+  btnCancel.textContent = cancelLabel || 'Cancelar';
 
   // Limpiar listeners previos
   const newAccept = btnAccept.cloneNode(true);
@@ -124,6 +126,7 @@ function showConfirmModal(icon, title, text, acceptLabel, acceptCallback) {
     if (e.target === overlay) overlay.style.display = 'none';
   }, { once: true });
 }
+
 function mostrarPopupAlertaRepartidor(titulo, mensaje) {
   const popup = document.getElementById('driverAlertPopup');
   if (!popup) return;
@@ -139,10 +142,24 @@ function mostrarPopupAlertaRepartidor(titulo, mensaje) {
     if (popup) popup.style.display = 'none';
   }, 7000);
 }
-window.mostrarNotificacion = function(tipo, mensaje, duracion = 3000) {
-    if (typeof showToast === 'function') {
-        showToast(tipo, mensaje, tipo, duracion);
-    } else {
-        console.log(`[${tipo.toUpperCase()}] ${mensaje}`);
-    }
+
+window.showToast = showToast;
+window.showConfirmModal = showConfirmModal;
+window.mostrarPopupAlertaRepartidor = mostrarPopupAlertaRepartidor;
+
+window.mostrarNotificacion = function(tipo, mensaje, duracion = 4000) {
+  const titles = {
+    success: 'Éxito',
+    error: 'Error',
+    warning: 'Atención',
+    info: 'Información',
+    order: 'Pedido'
+  };
+  const title = titles[tipo] || (tipo ? tipo.charAt(0).toUpperCase() + tipo.slice(1) : 'Notificación');
+  if (typeof showToast === 'function') {
+    showToast(title, mensaje, tipo, duracion);
+  } else {
+    console.log(`[${tipo.toUpperCase()}] ${mensaje}`);
+  }
 };
+

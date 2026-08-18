@@ -63,8 +63,12 @@ function buscarCalle() {
                 if (inputPrin) inputPrin.value = callePrin;
                 if (inputRef) inputRef.value = calleRef;
 
-                currentGpsLat = pLat;
-                currentGpsLng = pLon;
+                window.currentGpsLat = pLat;
+                window.currentGpsLng = pLon;
+                if (typeof AppState !== 'undefined') {
+                  AppState.set('gpsLat', pLat);
+                  AppState.set('gpsLng', pLon);
+                }
 
                 const mapCandidates = [
                   window.notigasMap,

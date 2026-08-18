@@ -366,15 +366,14 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
   }
 }
 
-// Función verificarGPSObligatorio eliminada para evitar redundancia y conflictos con conectarGPSAuto en map.js
-
 function switchTab(index) {
   document.querySelectorAll('.tab-btn').forEach((btn, i) => btn.classList.toggle('active', i === index));
   document.querySelectorAll('.tab-content').forEach((tab, i) => tab.classList.toggle('active', i === index));
 
   if (index === 0) {
-    if (typeof map !== 'undefined' && map) {
-      setTimeout(() => map.invalidateSize(), 200);
+    const activeMap = window.notigasMap || window.map || (typeof map !== 'undefined' ? map : null);
+    if (activeMap && typeof activeMap.invalidateSize === 'function') {
+      setTimeout(() => activeMap.invalidateSize(), 200);
     }
   } else if (index === 1) {
     // Carga bajo demanda del directorio de repartidores y publicidad
@@ -388,12 +387,13 @@ function switchTab(index) {
 window.switchTab = switchTab;
 
 function getActiveUserLocation() {
-  let lat = (typeof currentGpsLat !== 'undefined' && currentGpsLat) ? currentGpsLat : (AppState.get('gpsLat') || null);
-  let lng = (typeof currentGpsLng !== 'undefined' && currentGpsLng) ? currentGpsLng : (AppState.get('gpsLng') || null);
+  let lat = window.currentGpsLat || (typeof currentGpsLat !== 'undefined' ? currentGpsLat : (typeof AppState !== 'undefined' ? AppState.get('gpsLat') : null));
+  let lng = window.currentGpsLng || (typeof currentGpsLng !== 'undefined' ? currentGpsLng : (typeof AppState !== 'undefined' ? AppState.get('gpsLng') : null));
 
-  if (typeof userMarker !== 'undefined' && userMarker && userMarker.getLatLng) {
+  const marker = window.userMarker || (typeof userMarker !== 'undefined' ? userMarker : null);
+  if (marker && typeof marker.getLatLng === 'function') {
     try {
-      const pos = userMarker.getLatLng();
+      const pos = marker.getLatLng();
       if (pos && pos.lat && pos.lng) {
         lat = pos.lat;
         lng = pos.lng;
@@ -402,9 +402,10 @@ function getActiveUserLocation() {
   }
 
   // Fallback al centro actual del mapa si las coordenadas no están fijadas
-  if ((!lat || !lng) && typeof map !== 'undefined' && map && map.getCenter) {
+  const activeMap = window.notigasMap || window.map || (typeof map !== 'undefined' ? map : null);
+  if ((!lat || !lng) && activeMap && typeof activeMap.getCenter === 'function') {
     try {
-      const center = map.getCenter();
+      const center = activeMap.getCenter();
       if (center && center.lat && center.lng) {
         lat = center.lat;
         lng = center.lng;
@@ -414,9 +415,7 @@ function getActiveUserLocation() {
 
   return { lat, lng };
 }
-
-/* PANORÁMICA DE PEDIDOS ACTIVOS */
-// FIX W-02: Reemplaza los mockOrders hardcodeados con datos reales de Supabase.
+window.getActiveUserLocation = getActiveUserLocation;
 
 /* ==========================================================================
    NOTIGAS - APLICACIÓN PRINCIPAL (CARRITO, GEOLOCALIZACIÓN Y NOTIFICACIONES)
@@ -430,7 +429,7 @@ window.notigasTrack = window.notigasTrack || function(event, params) {
 // 1. Registro del Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=90')
+    navigator.serviceWorker.register('./sw.js?v=103')
       .then((reg) => console.log('✅ Service Worker registrado', reg.scope))
       .catch((err) => console.error('❌ Error Service Worker:', err));
   });
@@ -472,11 +471,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('notigas_auth_ready', initSupabaseFeatures);
 });
-
-// 3. Manejo de eventos globales
-// (El guardado de estado en localStorage al cerrar ha sido eliminado)
-
-// (El handler de error global ya está registrado al inicio del archivo)
 
 // 5. Función de navegación entre vistas
 window.navegarA = function(vista) {

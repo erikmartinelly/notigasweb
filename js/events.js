@@ -54,6 +54,9 @@ document.addEventListener('DOMContentLoaded', () => {
       safeCall('cambiarCiudadCapital', event.target.value);
     });
 
+    const el_btnConfirmOrderReceived = document.getElementById('btnConfirmOrderReceived');
+    if (el_btnConfirmOrderReceived) el_btnConfirmOrderReceived.addEventListener('click', () => { safeCall('confirmarRecepcionComprador'); });
+
     const el_btnCancelOrder = document.getElementById('btnCancelOrder');
     if (el_btnCancelOrder) el_btnCancelOrder.addEventListener('click', () => { safeCall('cancelarPedidoActivo'); });
 
@@ -344,6 +347,10 @@ document.addEventListener('click', (e) => {
       const id = btn.getAttribute('data-id');
       if (typeof window.confirmarEntregaPedido === 'function') window.confirmarEntregaPedido(id);
     }
+    else if (action === 'confirmarRecepcionComprador') {
+      if (typeof window.confirmarRecepcionComprador === 'function') window.confirmarRecepcionComprador();
+      if (typeof window.cerrarPanoramicaPedidos === 'function') window.cerrarPanoramicaPedidos();
+    }
     else if (action === 'cancelarPedidoActivo') {
       if (typeof window.cancelarPedidoActivo === 'function') window.cancelarPedidoActivo();
       if (typeof window.cerrarPanoramicaPedidos === 'function') window.cerrarPanoramicaPedidos();
@@ -361,9 +368,9 @@ document.addEventListener('click', (e) => {
       }
     }
     else if (action === 'centrarPedidoEnMapa') {
-      const id = btn.getAttribute('data-id');
       const lat = parseFloat(btn.getAttribute('data-lat'));
       const lng = parseFloat(btn.getAttribute('data-lng'));
+      const id = btn.getAttribute('data-order-id') || btn.getAttribute('data-id');
       if (typeof window.centrarPedidoEnMapa === 'function') {
         window.centrarPedidoEnMapa(lat, lng, id);
       }
@@ -423,12 +430,6 @@ document.addEventListener('click', (e) => {
     else if (action === 'seleccionarYPedirDirecto') {
       const cat = decodeURIComponent(btn.getAttribute('data-cat') || '');
       if (typeof window.seleccionarYPedirDirecto === 'function') window.seleccionarYPedirDirecto(cat);
-    }
-    else if (action === 'centrarPedidoEnMapa') {
-      const lat = parseFloat(btn.getAttribute('data-lat'));
-      const lng = parseFloat(btn.getAttribute('data-lng'));
-      const id = btn.getAttribute('data-id');
-      if (typeof window.centrarPedidoEnMapa === 'function') window.centrarPedidoEnMapa(lat, lng, id);
     }
     else if (action === 'abrirRutaGoogleMaps') {
       e.preventDefault();
@@ -510,12 +511,6 @@ document.addEventListener('click', (e) => {
       const lat = parseFloat(btn.getAttribute('data-lat'));
       const lng = parseFloat(btn.getAttribute('data-lng'));
       if (typeof window.dibujarRutaAlPedido === 'function') window.dibujarRutaAlPedido(lat, lng);
-    }
-    else if (action === 'centrarPedidoEnMapa') {
-      const lat = parseFloat(btn.getAttribute('data-lat'));
-      const lng = parseFloat(btn.getAttribute('data-lng'));
-      const orderId = btn.getAttribute('data-order-id') || btn.getAttribute('data-id');
-      if (typeof window.centrarPedidoEnMapa === 'function') window.centrarPedidoEnMapa(lat, lng, orderId);
     }
     else if (action === 'abrirModalReglasApp') {
       if (typeof window.abrirModalReglasApp === 'function') window.abrirModalReglasApp();

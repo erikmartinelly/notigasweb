@@ -517,6 +517,31 @@ main {
   background: linear-gradient(135deg, #E65100 0%, #D97706 100%);
 }
 
+.btn-confirm-order-received {
+  width: 100%;
+  background: linear-gradient(135deg, #10B981 0%, #047857 100%);
+  color: white;
+  border: 1.5px solid #6EE7B7;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  animation: pulse 2s infinite;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.btn-confirm-order-received:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+}
+
 .btn-cancel-order {
   width: 100%;
   background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%);
@@ -3044,6 +3069,7 @@ button:active, .tab-btn:active, .cat-chip:active {
   color: #CBD5E1 !important;
 }
 
+
 .city-selector-bar {
   padding: 6px 10px;
   border-radius: 9px;
@@ -3147,6 +3173,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 .gas-cylinder::after {
   content: ""; position: absolute; width: 15px; height: 3px; left: -2px; bottom: 3px; background: #ed570b;
 }
+
 /* Etiqueta Pedido */
 .order-label {
   margin-top: 6px; padding: 4px 7px; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -3161,7 +3188,7 @@ button:active, .tab-btn:active, .cat-chip:active {
   top: 112px;
   right: 12px;
   z-index: 1900;
-  width: 248px;
+  width: 256px;
   max-width: calc(100% - 24px);
   box-sizing: border-box;
   padding: 11px 42px 11px 12px;
@@ -3177,6 +3204,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 .notigas-trip-card[data-order-state="visto"] { border-left-color: #FF8F00; }
 .notigas-trip-card[data-order-state="asignado"] { border-left-color: #D32F2F; }
 .notigas-trip-card[data-order-state="entregado"] { border-left-color: #188038; }
+.notigas-trip-card[data-order-state="recibido"] { border-left-color: #10B981; }
 .notigas-trip-card[data-order-state="cancelado"] { border-left-color: #d93025; }
 
 .trip-heading {
@@ -3204,6 +3232,57 @@ button:active, .tab-btn:active, .cat-chip:active {
   color: #3c4043;
   font-size: 10.5px;
   line-height: 1.35;
+}
+
+.trip-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.trip-btn-received {
+  flex: 1;
+  background: linear-gradient(135deg, #10B981, #059669);
+  color: white;
+  border: none;
+  padding: 7px 8px;
+  border-radius: 6px;
+  font-weight: 800;
+  font-size: 10.5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.trip-btn-received:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.trip-btn-cancel {
+  flex: 1;
+  background: #f1f3f4;
+  color: #d93025;
+  border: 1px solid #dadce0;
+  padding: 7px 8px;
+  border-radius: 6px;
+  font-weight: 800;
+  font-size: 10.5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.trip-btn-cancel:hover {
+  background: #FEE2E2;
+  color: #b91c1c;
 }
 
 .trip-meta {
@@ -3284,8 +3363,6 @@ button:active, .tab-btn:active, .cat-chip:active {
 .assigned-order-card {
   border-left: 4px solid #D32F2F;
 }
-
-.demand-card-header,
 .demand-card-actions {
   display: flex;
   align-items: center;

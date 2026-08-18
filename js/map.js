@@ -1576,7 +1576,16 @@ function renderActiveOrdersMap() {
 
       const btnAccion = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver')
         ? '' // El repartidor gestiona los pedidos desde su panel.
-        : `<button style="margin-top:6px; background:#D32F2F; color:white; border:none; padding:5px 12px; border-radius:6px; font-size:11px; font-weight:900; cursor:pointer;" data-action="cancelarPedidoActivo">⛔ Cancelar Pedido</button>`;
+        : `
+          <div style="display:flex; gap:6px; margin-top:8px;">
+            <button type="button" style="flex:1; background:linear-gradient(135deg, #10B981, #059669); color:white; border:none; padding:6px 8px; border-radius:6px; font-size:10.5px; font-weight:800; cursor:pointer;" data-action="confirmarRecepcionComprador" title="Confirmar que recibiste tu pedido">
+              <i class="fa-solid fa-circle-check"></i> Ya recibí
+            </button>
+            <button type="button" style="flex:1; background:#ef4444; color:white; border:none; padding:6px 8px; border-radius:6px; font-size:10.5px; font-weight:800; cursor:pointer;" data-action="cancelarPedidoActivo" title="Cancelar este requerimiento">
+              <i class="fa-solid fa-ban"></i> Cancelar
+            </button>
+          </div>
+        `;
 
       const telInfo = order.telefono ? `<br><span style="font-size:10.5px; color:#00E676; font-weight:800;">📞 Tel: ${escapeHtmlStr(order.telefono)}</span>` : '';
       const addrInfo = order.callePrincipal ? `<br><span style="font-size:10.5px; color:#FFB300; font-weight:800;">🏠 ${escapeHtmlStr(order.callePrincipal)}</span>` : '';
