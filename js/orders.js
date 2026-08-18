@@ -63,13 +63,13 @@ async function renderDriverOrdersList() {
 
   let query = window.supabaseClient
     .from('pedidos')
-    .select('id, user_id, categoria, cantidad, calle_principal, telefono, latitude, longitude, created_at, estado, driver_id, buyer_name, buyer_email, departamento')
+    .select('id, user_id, categoria, cantidad, direccion, telefono, latitude, longitude, created_at, estado, driver_id, ciudad')
     .in('estado', ['pendiente', 'visto', 'asignado'])
     .gte('created_at', activeWindow)
     .order('created_at', { ascending: false });
 
   if (activeCity) {
-    query = query.ilike('departamento', `%${activeCity}%`);
+    query = query.ilike('ciudad', `%${activeCity}%`);
   }
 
   const { data: orders, error } = await query;
@@ -103,7 +103,7 @@ async function renderDriverOrdersList() {
     html += '<div class="demand-section-title" style="color:#10B981; margin-bottom:8px;"><i class="fa-solid fa-truck-fast"></i> Mis Pedidos en Camino</div>';
     myAssigned.forEach(o => {
       const antiguedad = formatearAntiguedadPedido(o.created_at);
-      const street = o.calle_principal ? escapeHtmlStr(o.calle_principal) : 'Ubicación GPS';
+      const street = o.direccion ? escapeHtmlStr(o.direccion) : 'Ubicación GPS en Mapa';
       const lat = o.latitude || 0;
       const lng = o.longitude || 0;
       const tel = o.telefono ? escapeHtmlStr(o.telefono) : '';
@@ -158,26 +158,22 @@ async function renderDriverOrdersList() {
         </div>
         <div style="margin-top:8px; border-top:1px solid rgba(255,255,255,0.06); padding-top:8px;">
           ${list.map(o => {
-            const st = o.calle_principal ? escapeHtmlStr(o.calle_principal) : 'Ubicación GPS';
+            const st = o.direccion ? escapeHtmlStr(o.direccion) : 'Ubicación GPS en Mapa';
             const lat = o.latitude || 0;
             const lng = o.longitude || 0;
-            const buyer = o.buyer_name ? escapeHtmlStr(o.buyer_name) : 'Vecino';
-            const buyerEmail = o.buyer_email ? escapeHtmlStr(o.buyer_email) : '';
+            const buyer = 'Vecino';
             return `
               <div style="display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px dashed rgba(255,255,255,0.04); font-size:11px;">
                 <div>
-                  <span style="color:#F8FAFC; font-weight:700;">${st}</span> (${o.cantidad})
+                  <span style="color:#F8FAFC; font-weight:700;">${st}</span> (${o.cantidad || '1 un'})
                   <div style="font-size:9.5px; color:#64748B;">${buyer}</div>
                 </div>
                 <div style="display:flex; gap:4px;">
                   <button type="button" style="background:#334155; color:#F8FAFC; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:700; cursor:pointer;" data-action="centrarPedidoEnMapa" data-lat="${lat}" data-lng="${lng}" data-order-id="${o.id}" title="Ver en mapa">
                     <i class="fa-solid fa-location-crosshairs"></i>
                   </button>
-                  <button type="button" style="background:#FF6D00; color:white; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:800; cursor:pointer;" data-action="aceptarPedidoRepartidor" data-id="${o.id}" data-lat="${lat}" data-lng="${lng}" data-address="${escapeHtmlStr(o.calle_principal || '')}">
+                  <button type="button" style="background:#FF6D00; color:white; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:800; cursor:pointer;" data-action="aceptarPedidoRepartidor" data-id="${o.id}" data-lat="${lat}" data-lng="${lng}" data-address="${escapeHtmlStr(o.direccion || '')}">
                     <i class="fa-solid fa-truck"></i> Tomar
-                  </button>
-                  <button type="button" style="background:rgba(239,68,68,0.2); color:#EF4444; border:1px solid rgba(239,68,68,0.4); padding:4px 6px; border-radius:4px; font-size:9px; cursor:pointer;" data-action="denunciarPedidoFalso" data-id="${o.id}" data-buyer="${encodeURIComponent(buyer)}" data-email="${encodeURIComponent(buyerEmail)}" title="Denunciar pedido falso">
-                    <i class="fa-solid fa-flag"></i>
                   </button>
                 </div>
               </div>
@@ -605,32 +601,31 @@ function confirmarPedido() {
   const selectCategoria = document.getElementById('selectCategoria');
   const inputCantidad = document.getElementById('inputCantidad');
   const inputCalle = document.getElementById('inputCallePrincipal');
-  const inputTel = document.getElementById('inputTelefono');
+  const inputTel = document.getElementById('inputTelefonoComprador') || document.getElementById('inputTelefono');
 
-  const categoria = selectCategoria ? selectCategoria.value : 'Gas GLP';
+  const categoria = selectCategoria ? selectCategoria.value : 'gas';
   const cantidad = inputCantidad ? inputCantidad.value : '1';
   const calle = inputCalle ? inputCalle.value.trim() : '';
   const telefono = inputTel ? inputTel.value.trim() : '';
 
-  if (!calle) {
-    showToast('Campo Requerido', 'Por favor ingresa tu calle o referencia de entrega.', 'warning', 3000);
-    return;
-  }
-
+  // La ubicación se determina por GPS en el mapa; dirección y teléfono son opcionales
   const activePos = (typeof window.getActiveUserLocation === 'function') ? window.getActiveUserLocation() : ((typeof AppState !== 'undefined') ? AppState.get('userLocation') : null);
-  const lat = activePos ? (activePos.lat || activePos.latitude || -17.3935) : -17.3935;
-  const lng = activePos ? (activePos.lng || activePos.longitude || -66.1570) : -66.1570;
+  const lat = activePos ? (activePos.lat || activePos.latitude || window.currentGpsLat || -17.3935) : (window.currentGpsLat || -17.3935);
+  const lng = activePos ? (activePos.lng || activePos.longitude || window.currentGpsLng || -66.1570) : (window.currentGpsLng || -66.1570);
 
   const currentCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || 'Cochabamba') : 'Cochabamba';
 
   const orderData = {
     categoria,
-    cantidad: parseInt(cantidad, 10) || 1,
-    callePrincipal: calle,
-    telefono,
+    cantidad: cantidad ? `${cantidad} un` : '1 un',
+    direccion: calle || 'Ubicación GPS indicada en el mapa',
+    callePrincipal: calle || 'Ubicación GPS indicada en el mapa',
+    telefono: telefono || null,
     latitude: lat,
     longitude: lng,
-    departamento: currentCity,
+    lat,
+    lng,
+    ciudad: currentCity,
     timestamp: Date.now(),
     estado: 'pendiente'
   };
@@ -651,11 +646,11 @@ function confirmarPedido() {
           user_id: userId,
           categoria: orderData.categoria,
           cantidad: orderData.cantidad,
-          calle_principal: orderData.callePrincipal,
+          direccion: orderData.direccion,
           telefono: orderData.telefono,
           latitude: orderData.latitude,
           longitude: orderData.longitude,
-          departamento: orderData.departamento,
+          ciudad: orderData.ciudad,
           estado: 'pendiente'
         }])
         .select()
@@ -664,7 +659,7 @@ function confirmarPedido() {
       hideLoadingOverlay();
 
       if (error) {
-        console.error('Error insertando pedido:', error);
+        console.error('Error insertando pedido en Supabase:', error);
         showToast('Error', error.message || 'No se pudo guardar el pedido en el servidor.', 'error', 4000);
         return;
       }
@@ -675,8 +670,15 @@ function confirmarPedido() {
       showToast('¡Pedido Publicado!', 'Tu pedido ya está visible para los repartidores en el mapa.', 'success', 5000);
       checkActiveOrderStatus();
 
+      if (typeof cargarPedidosVecinalesEnVivo === 'function') {
+        cargarPedidosVecinalesEnVivo();
+      }
+
       if (typeof renderActiveOrdersMap === 'function') {
         renderActiveOrdersMap();
+      }
+      if (typeof renderDriverDemandByZoom === 'function') {
+        renderDriverDemandByZoom();
       }
     }).catch(e => {
       hideLoadingOverlay();
@@ -859,14 +861,14 @@ async function abrirPanoramicaPedidos() {
 
       let query = window.supabaseClient
         .from('pedidos')
-        .select('id, categoria, cantidad, calle_principal, created_at, estado, latitude, longitude')
+        .select('id, categoria, cantidad, direccion, created_at, estado, latitude, longitude')
         .in('estado', ['pendiente', 'visto'])
         .gte('created_at', activeWindow)
         .order('created_at', { ascending: false })
         .limit(20);
 
       if (currentCity) {
-        query = query.ilike('departamento', `%${currentCity}%`);
+        query = query.ilike('ciudad', `%${currentCity}%`);
       }
 
       const { data: otros } = await query;
@@ -877,7 +879,7 @@ async function abrirPanoramicaPedidos() {
             <div style="background: #1E293B; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px; margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center;">
               <div style="flex:1;">
                 <div style="font-size:12px; font-weight:800; color:#F8FAFC;">${escapeHtmlStr(p.categoria)} (${p.cantidad})</div>
-                <div style="font-size:11px; color:#94A3B8;">📍 ${escapeHtmlStr(p.calle_principal || 'Zona vecinal')}</div>
+                <div style="font-size:11px; color:#94A3B8;">📍 ${escapeHtmlStr(p.direccion || 'Ubicación GPS en Mapa')}</div>
                 <div style="font-size:10px; color:#64748B;">⏱️ ${antiguedad}</div>
               </div>
               <button type="button" data-action="centrarPedidoEnMapa" data-lat="${p.latitude}" data-lng="${p.longitude}" data-order-id="${p.id}" style="background:#334155; color:#F8FAFC; border:none; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;">

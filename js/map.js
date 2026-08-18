@@ -539,8 +539,18 @@ function renderDriverDemandByZoom() {
   if (activeOrderLayerGroup && !map.hasLayer(activeOrderLayerGroup)) {
     activeOrderLayerGroup.addTo(map);
   }
+
+  const currentActiveOrderId = (() => {
+    try {
+      const raw = (typeof AppState !== 'undefined') ? AppState.get('activeOrder') : null;
+      if (!raw) return null;
+      const ao = (typeof raw === 'string') ? JSON.parse(raw) : raw;
+      return ao?.id || null;
+    } catch(e){ return null; }
+  })();
+
   allOrders.forEach(order => {
-    if (order.id !== 'mi_pedido_activo') {
+    if (order.id !== 'mi_pedido_activo' && order.id !== currentActiveOrderId) {
       agregarPedidoVecinoEnMapa(order);
     }
   });
@@ -835,7 +845,17 @@ function actualizarCoordenadasPedidoActivo(newLat, newLng, skipMarkerSet = false
       const order = JSON.parse(raw);
       order.lat = newLat;
       order.lng = newLng;
+      order.latitude = newLat;
+      order.longitude = newLng;
       AppState.set('activeOrder', order);
+
+      if (order.id && window.supabaseClient) {
+        window.supabaseClient
+          .from('pedidos')
+          .update({ latitude: newLat, longitude: newLng, updated_at: new Date().toISOString() })
+          .eq('id', order.id)
+          .then();
+      }
     }
   } catch(e){}
 
