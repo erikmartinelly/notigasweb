@@ -3060,30 +3060,28 @@ button:active, .tab-btn:active, .cat-chip:active {
   border-radius: 6px;
 }
 
-/* MARCADOR ÚNICO DEL REPARTIDOR: CAMIÓN 3D ROJO NOTIGAS + R */
+/* MARCADOR ÚNICO DEL REPARTIDOR: VISTA CENITAL DRON (ESTILO UBER / INDRIVE) */
 .driver-map-marker {
   position: relative;
-  width: 60px;
-  height: 60px;
+  width: 52px;
+  height: 62px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: visible !important;
-  filter: drop-shadow(0 6px 12px rgba(15, 23, 42, 0.5));
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
   cursor: pointer;
   z-index: 10000;
 }
 
 .driver-map-marker:hover {
-  transform: scale(1.18) translateY(-4px);
+  transform: scale(1.18) translateY(-3px);
 }
 
 .driver-3d-truck-img {
-  width: 58px;
-  height: 58px;
+  width: 50px;
+  height: 60px;
   object-fit: contain;
-  filter: drop-shadow(0 2px 6px rgba(225, 29, 72, 0.4));
   user-select: none;
   pointer-events: none;
 }

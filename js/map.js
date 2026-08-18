@@ -191,8 +191,8 @@ function initNotigasMap() {
   truckIcon = L.divIcon({
     className: 'notigas-driver-marker',
     html: truckSvgMarkerHtml,
-    iconSize: [60, 60],
-    iconAnchor: [30, 30]
+    iconSize: [52, 62],
+    iconAnchor: [26, 31]
   });
 
   truckRadarBlueIcon = L.divIcon({
