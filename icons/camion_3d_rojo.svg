@@ -1,154 +1,162 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120" width="100" height="120">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
   <defs>
-    <!-- Sombra de suelo para vista cenital (Dron / Uber / InDrive) -->
-    <filter id="droneViewShadow" x="-30%" y="-30%" width="160%" height="160%">
-      <feDropShadow dx="0" dy="5" stdDeviation="4.5" flood-color="#090D16" flood-opacity="0.55"/>
+    <filter id="truckShadow3D" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="8" stdDeviation="5" flood-color="#090D16" flood-opacity="0.6"/>
     </filter>
-
-    <!-- Resplandor LED frontal -->
-    <filter id="ledGlowTop" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="1.8" result="blur"/>
+    
+    <filter id="headlightGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
       <feComposite in="SourceGraphic" in2="blur" operator="over"/>
     </filter>
 
-    <!-- Gradiente de Carrocería Roja Top-Down (Rojo Rubí Metalizado) -->
-    <linearGradient id="redBodyTopDown" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FF4D6D"/>
-      <stop offset="35%" stop-color="#E11D48"/>
-      <stop offset="75%" stop-color="#BE123C"/>
+    <!-- Gradientes Carrocería 3D -->
+    <!-- Techo Superior (Iluminado desde arriba) -->
+    <linearGradient id="roofGrad3D" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF6B8B"/>
+      <stop offset="40%" stop-color="#FF3366"/>
+      <stop offset="100%" stop-color="#E11D48"/>
+    </linearGradient>
+
+    <!-- Lateral Principal (Vista de costado 3/4) -->
+    <linearGradient id="sideBodyGrad3D" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FF2E56"/>
+      <stop offset="25%" stop-color="#E11D48"/>
+      <stop offset="70%" stop-color="#BE123C"/>
       <stop offset="100%" stop-color="#881337"/>
     </linearGradient>
 
-    <!-- Gradiente Techo Cabina -->
-    <linearGradient id="cabRoofGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#FF385C"/>
-      <stop offset="50%" stop-color="#E11D48"/>
-      <stop offset="100%" stop-color="#9F1239"/>
+    <!-- Frente / Trompa (Ángulo sombreado) -->
+    <linearGradient id="frontBodyGrad3D" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#BE123C"/>
+      <stop offset="60%" stop-color="#9F1239"/>
+      <stop offset="100%" stop-color="#700C28"/>
     </linearGradient>
 
-    <!-- Gradiente Parabrisas Frontal Vista Superior (Cristal Polarizado) -->
-    <linearGradient id="windshieldTopDown" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#BAE6FD"/>
-      <stop offset="30%" stop-color="#38BDF8"/>
+    <!-- Parabrisas 3D Tintado -->
+    <linearGradient id="windshieldGrad3D" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E0F2FE"/>
+      <stop offset="25%" stop-color="#38BDF8"/>
       <stop offset="75%" stop-color="#0284C7"/>
       <stop offset="100%" stop-color="#075985"/>
     </linearGradient>
 
-    <!-- Ventanillas Laterales y Luna Trasera -->
-    <linearGradient id="sideGlassTop" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#0284C7"/>
-      <stop offset="50%" stop-color="#0369A1"/>
+    <!-- Ventanilla Lateral 3D -->
+    <linearGradient id="sideWindowGrad3D" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="60%" stop-color="#0284C7"/>
       <stop offset="100%" stop-color="#0C4A6E"/>
     </linearGradient>
 
-    <!-- Furgón de Carga Posterior (Techo Metálico con Ranuras) -->
-    <linearGradient id="cargoRoofGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#9F1239"/>
-      <stop offset="15%" stop-color="#E11D48"/>
-      <stop offset="50%" stop-color="#FF385C"/>
-      <stop offset="85%" stop-color="#E11D48"/>
-      <stop offset="100%" stop-color="#881337"/>
+    <!-- Ruedas y Llantas 3D -->
+    <linearGradient id="tireGrad3D" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#27272A"/>
+      <stop offset="50%" stop-color="#18181B"/>
+      <stop offset="100%" stop-color="#09090B"/>
     </linearGradient>
-
-    <!-- Espejos Retrovisores y Parachoques -->
-    <linearGradient id="mirrorChassis" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#334155"/>
-      <stop offset="100%" stop-color="#0F172A"/>
-    </linearGradient>
-
-    <!-- Faros LED Delanteros -->
-    <linearGradient id="headlightTop" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#FFFFFF"/>
-      <stop offset="60%" stop-color="#67E8F9"/>
-      <stop offset="100%" stop-color="#06B6D4"/>
-    </linearGradient>
-
-    <!-- Luces Traseras de Freno -->
-    <linearGradient id="taillightTop" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#FF1744"/>
-      <stop offset="100%" stop-color="#B71C1C"/>
+    <linearGradient id="rimGrad3D" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F1F5F9"/>
+      <stop offset="50%" stop-color="#94A3B8"/>
+      <stop offset="100%" stop-color="#475569"/>
     </linearGradient>
   </defs>
 
-  <g id="droneTruckVehicle" filter="url(#droneViewShadow)">
+  <!-- Sombra Proyectada en el Piso -->
+  <ellipse cx="62" cy="102" rx="50" ry="14" fill="#090D16" opacity="0.4"/>
+
+  <g id="truck3DAngled" filter="url(#truckShadow3D)">
+    <!-- 1. RUEDA TRASERA IZQUIERDA -->
+    <ellipse cx="36" cy="90" rx="8" ry="12" fill="url(#tireGrad3D)"/>
+
+    <!-- 2. CHASIS INFERIOR Y BAJO MOTOR -->
+    <path d="M 14 79 L 24 88 L 96 95 L 110 88 L 102 78 Z" fill="#0F172A"/>
+
+    <!-- 3. FURGÓN DE CARGA POSTERIOR (Costado y Techo) -->
+    <!-- Techo del Furgón -->
+    <path d="M 16 38 L 44 23 L 78 30 L 50 45 Z" fill="url(#roofGrad3D)"/>
+    <!-- Líneas de Brillo / Ranuras en Techo Furgón -->
+    <line x1="27" y1="32" x2="57" y2="39" stroke="rgba(255,255,255,0.45)" stroke-width="1" stroke-linecap="round"/>
+    <line x1="37" y1="27" x2="67" y2="34" stroke="rgba(255,255,255,0.3)" stroke-width="1" stroke-linecap="round"/>
+
+    <!-- Lateral Principal del Furgón (Vista de costado amplia) -->
+    <path d="M 16 38 L 50 45 L 50 82 L 16 75 Z" fill="url(#sideBodyGrad3D)"/>
     
-    <!-- 1. RETROVISORES LATERALES (AERODINÁMICOS VISTOS DESDE ARRIBA) -->
-    <!-- Espejo Izquierdo -->
-    <path d="M 22 28 C 16 28 15 31 16 34 C 18 36 24 35 24 32 Z" fill="url(#mirrorChassis)"/>
-    <ellipse cx="19" cy="33" rx="2.5" ry="1.2" fill="#38BDF8" opacity="0.8"/>
+    <!-- Bisel Superior del Furgón -->
+    <path d="M 16 38 L 50 45" stroke="#FFA4B6" stroke-width="1.2" stroke-linecap="round" opacity="0.8"/>
 
-    <!-- Espejo Derecho -->
-    <path d="M 78 28 C 84 28 85 31 84 34 C 82 36 76 35 76 32 Z" fill="url(#mirrorChassis)"/>
-    <ellipse cx="81" cy="33" rx="2.5" ry="1.2" fill="#38BDF8" opacity="0.8"/>
+    <!-- Ranura Vertical / Moldura del Furgón -->
+    <line x1="33" y1="41" x2="33" y2="78" stroke="rgba(0,0,0,0.25)" stroke-width="1.2"/>
+    <line x1="34" y1="41" x2="34" y2="78" stroke="rgba(255,255,255,0.25)" stroke-width="0.8"/>
 
-    <!-- 2. CHASIS / SILUETA BASE DEL CAMIÓN -->
-    <rect x="23" y="8" width="54" height="102" rx="10" fill="#0F172A"/>
+    <!-- Emblema NOTIGAS / Llama de GLP en el lateral del Furgón -->
+    <circle cx="33" cy="58" r="9" fill="#0F172A" opacity="0.35"/>
+    <circle cx="33" cy="58" r="8" fill="#1E293B" stroke="#FBBF24" stroke-width="1"/>
+    <!-- Llama Amarilla / Naranja -->
+    <path d="M 33 52 C 33 52 29 56 29 58.5 C 29 60.8 30.8 62.5 33 62.5 C 35.2 62.5 37 60.8 37 58.5 C 37 56 33 52 33 52 Z" fill="#FBBF24"/>
+    <path d="M 33 55.5 C 33 55.5 31 57.5 31 59 C 31 60.2 31.8 61 33 61 C 34.2 61 35 60.2 35 59 C 35 57.5 33 55.5 33 55.5 Z" fill="#EA580C"/>
 
-    <!-- 3. CABINA DELANTERA (VISTA SUPERIOR CENITAL) -->
-    <!-- Capó y Parachoques Frontal Curvado -->
-    <path d="M 25 24 C 25 13 34 8 50 8 C 66 8 75 13 75 24 L 75 48 L 25 48 Z" fill="url(#cabRoofGrad)"/>
+    <!-- Franja Reflectiva Plateada Lateral -->
+    <path d="M 16 70 L 50 77" stroke="rgba(255,255,255,0.45)" stroke-width="1.5" stroke-linecap="round"/>
+
+    <!-- 4. CABINA DELANTERA (3D de Costado y Frente) -->
+    <!-- Techo de Cabina -->
+    <path d="M 50 45 L 78 30 L 86 36 L 63 51 Z" fill="url(#roofGrad3D)"/>
     
-    <!-- Bisel de Luz en Borde Frontal -->
-    <path d="M 30 11 C 40 8.5 60 8.5 70 11" stroke="#FFA4B6" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.9"/>
+    <!-- Parabrisas Delantero Inclinado (Cristal Panorámico) -->
+    <path d="M 86 36 L 110 59 L 98 67 L 63 51 Z" fill="url(#windshieldGrad3D)"/>
+    <!-- Destello Blanco Reflejo en Parabrisas -->
+    <path d="M 88 38 L 108 58 L 103 61 L 83 41 Z" fill="#FFFFFF" opacity="0.55"/>
 
-    <!-- Faros Delanteros LED Esquinados con Brillo -->
-    <g filter="url(#ledGlowTop)">
-      <path d="M 27 12 C 30 10 34 11 35 15 L 29 16 C 27 16 26 14 27 12 Z" fill="url(#headlightTop)"/>
-      <path d="M 73 12 C 70 10 66 11 65 15 L 71 16 C 73 16 74 14 73 12 Z" fill="url(#headlightTop)"/>
+    <!-- Ventanilla Lateral de la Cabina -->
+    <path d="M 52 48 L 62 52 L 62 65 L 52 61 Z" fill="url(#sideWindowGrad3D)"/>
+    <!-- Reflejo Ventanilla Lateral -->
+    <path d="M 54 49 L 60 52 L 58 58 L 54 55 Z" fill="#FFFFFF" opacity="0.4"/>
+
+    <!-- Puerta / Costado Lateral de la Cabina -->
+    <path d="M 50 45 L 63 51 L 63 85 L 50 82 Z" fill="url(#sideBodyGrad3D)"/>
+    <!-- Manilla de Puerta -->
+    <rect x="54" y="66" width="4" height="1.5" rx="0.7" fill="#1E293B"/>
+
+    <!-- Espejo Retrovisor 3D -->
+    <path d="M 63 52 L 67 51 L 67 58 L 63 57 Z" fill="#0F172A"/>
+    <ellipse cx="65" cy="54.5" rx="1.2" ry="2.5" fill="#38BDF8" opacity="0.8"/>
+
+    <!-- Capó Frontal / Parrilla Delantera -->
+    <path d="M 63 51 L 98 67 L 98 86 L 63 85 Z" fill="url(#frontBodyGrad3D)"/>
+    
+    <!-- Frente / Trompa Frontal con Rejilla y Faros -->
+    <path d="M 98 67 L 114 74 L 114 90 L 98 86 Z" fill="url(#frontBodyGrad3D)"/>
+    
+    <!-- Rejilla Radiador Frontal -->
+    <path d="M 103 76 L 112 80 L 112 86 L 103 82 Z" fill="#0F172A"/>
+    <line x1="105" y1="78" x2="110" y2="80" stroke="#475569" stroke-width="1"/>
+    <line x1="105" y1="81" x2="110" y2="83" stroke="#475569" stroke-width="1"/>
+
+    <!-- Faros Delanteros LED con Resplandor Neón -->
+    <g filter="url(#headlightGlow)">
+      <path d="M 99 71 L 103 72.5 L 103 77 L 99 75.5 Z" fill="#E0F2FE"/>
+      <path d="M 111 76 L 114 77.5 L 114 82 L 111 80.5 Z" fill="#38BDF8"/>
     </g>
 
-    <!-- Parabrisas Delantero Panorámico (Curva y Cristal Superior) -->
-    <path d="M 27 20 C 35 17 65 17 73 20 L 71 31 C 63 29 37 29 29 31 Z" fill="url(#windshieldTopDown)"/>
-    <!-- Destello Blanco Reflejo en Parabrisas -->
-    <path d="M 31 22 C 38 20 62 20 69 22 L 67 25 C 61 23 39 23 33 25 Z" fill="#FFFFFF" opacity="0.65"/>
-    <path d="M 35 26 L 42 27 L 40 29 L 34 28 Z" fill="#FFFFFF" opacity="0.4"/>
+    <!-- Parachoques Frontal Metálico -->
+    <path d="M 97 85 L 115 89 L 115 94 L 97 90 Z" fill="#334155"/>
 
-    <!-- Ventanillas Laterales de la Cabina -->
-    <path d="M 25 32 L 28 32 L 27 45 L 25 44 Z" fill="url(#sideGlassTop)"/>
-    <path d="M 75 32 L 72 32 L 73 45 L 75 44 Z" fill="url(#sideGlassTop)"/>
+    <!-- 5. RUEDAS 3D EN EL LATERAL VISIBLE -->
+    <!-- Rueda Delantera -->
+    <g>
+      <ellipse cx="78" cy="87" rx="8.5" ry="13" fill="url(#tireGrad3D)"/>
+      <ellipse cx="78" cy="87" rx="5.5" ry="8.5" fill="url(#rimGrad3D)"/>
+      <ellipse cx="78" cy="87" rx="2.5" ry="4" fill="#0F172A"/>
+    </g>
 
-    <!-- Techo Superior de Cabina -->
-    <path d="M 29 31 C 37 29 63 29 71 31 L 72 47 C 62 46.5 38 46.5 28 47 Z" fill="url(#redBodyTopDown)"/>
-    <!-- Ranuras en Techo de Cabina -->
-    <line x1="42" y1="34" x2="42" y2="44" stroke="rgba(0,0,0,0.25)" stroke-width="1.2"/>
-    <line x1="43" y1="34" x2="43" y2="44" stroke="rgba(255,255,255,0.3)" stroke-width="0.8"/>
-    <line x1="57" y1="34" x2="57" y2="44" stroke="rgba(0,0,0,0.25)" stroke-width="1.2"/>
-    <line x1="58" y1="34" x2="58" y2="44" stroke="rgba(255,255,255,0.3)" stroke-width="0.8"/>
+    <!-- Rueda Trasera Principal -->
+    <g>
+      <ellipse cx="28" cy="80" rx="8.5" ry="13" fill="url(#tireGrad3D)"/>
+      <ellipse cx="28" cy="80" rx="5.5" ry="8.5" fill="url(#rimGrad3D)"/>
+      <ellipse cx="28" cy="80" rx="2.5" ry="4" fill="#0F172A"/>
+    </g>
 
-    <!-- 4. SEPARADOR / UNIÓN DE CABINA Y FURGÓN -->
-    <rect x="25" y="47" width="50" height="2.5" fill="#0F172A"/>
-
-    <!-- 5. FURGÓN DE CARGA TRASERO (VISTA SUPERIOR DESDE ARRIBA) -->
-    <rect x="24" y="49" width="52" height="58" rx="4" fill="url(#cargoRoofGrad)"/>
-    
-    <!-- Bisel de Luz Perimetral del Furgón -->
-    <rect x="25" y="50" width="50" height="56" rx="3" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1"/>
-
-    <!-- Ranuras y Costillas de Refuerzo del Techo del Furgón (Efecto Texturizado 3D) -->
-    <line x1="32" y1="52" x2="32" y2="103" stroke="rgba(0,0,0,0.3)" stroke-width="1.5"/>
-    <line x1="33" y1="52" x2="33" y2="103" stroke="rgba(255,255,255,0.25)" stroke-width="0.8"/>
-
-    <line x1="41" y1="52" x2="41" y2="103" stroke="rgba(0,0,0,0.3)" stroke-width="1.5"/>
-    <line x1="42" y1="52" x2="42" y2="103" stroke="rgba(255,255,255,0.25)" stroke-width="0.8"/>
-
-    <line x1="58" y1="52" x2="58" y2="103" stroke="rgba(0,0,0,0.3)" stroke-width="1.5"/>
-    <line x1="59" y1="52" x2="59" y2="103" stroke="rgba(255,255,255,0.25)" stroke-width="0.8"/>
-
-    <line x1="67" y1="52" x2="67" y2="103" stroke="rgba(0,0,0,0.3)" stroke-width="1.5"/>
-    <line x1="68" y1="52" x2="68" y2="103" stroke="rgba(255,255,255,0.25)" stroke-width="0.8"/>
-
-    <!-- Emblema Central en el Techo (Círculo de Distribución de Gas / Llama de Energía) -->
-    <circle cx="50" cy="77" r="10" fill="#0F172A" opacity="0.45"/>
-    <circle cx="50" cy="77" r="8.5" fill="#1E293B" stroke="#FBBF24" stroke-width="1"/>
-    <!-- Llama Dorada GLP en el Techo -->
-    <path d="M 50 71 C 50 71 45.5 75 45.5 77.5 C 45.5 80 47.5 82 50 82 C 52.5 82 54.5 80 54.5 77.5 C 54.5 75 50 71 50 71 Z" fill="#FBBF24"/>
-    <path d="M 50 74.5 C 50 74.5 47.5 76.5 47.5 78 C 47.5 79.5 48.5 80.5 50 80.5 C 51.5 80.5 52.5 79.5 52.5 78 C 52.5 76.5 50 74.5 50 74.5 Z" fill="#F59E0B"/>
-
-    <!-- 6. PARACHOQUES TRASERO Y LUCES DE FRENO -->
-    <rect x="26" y="106" width="48" height="3" rx="1.5" fill="#1E293B"/>
-    <!-- Luz Trasera Izquierda -->
-    <rect x="26" y="105" width="8" height="2.5" rx="1" fill="url(#taillightTop)"/>
-    <!-- Luz Trasera Derecha -->
-    <rect x="66" y="105" width="8" height="2.5" rx="1" fill="url(#taillightTop)"/>
+    <!-- Guardabarros 3D -->
+    <path d="M 20 78 C 20 72 36 72 36 78" stroke="#881337" stroke-width="2.5" fill="none"/>
+    <path d="M 70 85 C 70 79 86 79 86 85" stroke="#700C28" stroke-width="2.5" fill="none"/>
   </g>
 </svg>

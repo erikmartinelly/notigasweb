@@ -1,82 +1,102 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <defs>
-    <!-- Gradiente de carrocería principal: Rojo profesional profundo -->
+    <!-- Sombra suave de elevación -->
+    <filter id="softElevation" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="2.5" flood-color="#090D16" flood-opacity="0.5"/>
+    </filter>
+
+    <!-- Gradientes Carrocería 3D -->
     <linearGradient id="modernRedBody" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#FF334B"/>
-      <stop offset="60%" stop-color="#D5001C"/>
+      <stop offset="40%" stop-color="#E11D48"/>
       <stop offset="100%" stop-color="#990012"/>
     </linearGradient>
 
-    <!-- Gradiente de cabina frontal -->
-    <linearGradient id="cabinModernGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FF5266"/>
-      <stop offset="100%" stop-color="#B70018"/>
+    <linearGradient id="roofGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF6B8B"/>
+      <stop offset="60%" stop-color="#E11D48"/>
+      <stop offset="100%" stop-color="#BE123C"/>
     </linearGradient>
 
-    <!-- Gradiente de parabrisas tintado moderno -->
+    <linearGradient id="cabinFrontGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#BE123C"/>
+      <stop offset="100%" stop-color="#700C28"/>
+    </linearGradient>
+
     <linearGradient id="windshieldGlass" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#38BDF8"/>
-      <stop offset="50%" stop-color="#0284C7"/>
+      <stop offset="0%" stop-color="#BAE6FD"/>
+      <stop offset="35%" stop-color="#38BDF8"/>
+      <stop offset="85%" stop-color="#0284C7"/>
       <stop offset="100%" stop-color="#0369A1"/>
     </linearGradient>
 
-    <!-- Gradiente de chasis metálico -->
-    <linearGradient id="metallicChassis" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#1E293B"/>
-      <stop offset="50%" stop-color="#334155"/>
-      <stop offset="100%" stop-color="#0F172A"/>
-    </linearGradient>
-
-    <!-- Llantas de aleación deportiva -->
     <linearGradient id="wheelRim" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#E2E8F0"/>
+      <stop offset="0%" stop-color="#F1F5F9"/>
       <stop offset="100%" stop-color="#64748B"/>
     </linearGradient>
-
-    <!-- Sombra suave de elevación -->
-    <filter id="softElevation" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#0F172A" flood-opacity="0.45"/>
-    </filter>
   </defs>
+
+  <!-- Sombra en el suelo -->
+  <ellipse cx="32" cy="53" rx="26" ry="7" fill="#090D16" opacity="0.4"/>
 
   <g filter="url(#softElevation)">
     <!-- Chasis inferior -->
-    <rect x="8" y="42" width="46" height="5" rx="2" fill="url(#metallicChassis)"/>
+    <path d="M 8 40 L 14 45 L 48 49 L 55 45 L 51 40 Z" fill="#0F172A"/>
 
-    <!-- Furgón de Carga Principal (Aerodinámico y minimalista) -->
-    <path d="M 6 20 C 6 17.5 7.5 16 10 16 L 39 16 C 40 16 41 17 41 18 L 41 42 L 6 42 Z" fill="url(#modernRedBody)"/>
-    
-    <!-- Línea decorativa plateada de velocidad / flota moderna -->
-    <path d="M 6 34 L 38 34" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" stroke-linecap="round"/>
-    <path d="M 12 24 L 20 24" stroke="rgba(255,255,255,0.3)" stroke-width="1" stroke-linecap="round"/>
+    <!-- Techo del Furgón -->
+    <path d="M 9 19 L 23 11 L 40 15 L 26 23 Z" fill="url(#roofGrad)"/>
+    <line x1="14" y1="16" x2="29" y2="20" stroke="rgba(255,255,255,0.4)" stroke-width="0.8" stroke-linecap="round"/>
 
-    <!-- Icono minimalista de energía / gas en el lateral del furgón -->
-    <circle cx="24" cy="25" r="5.5" fill="rgba(0,0,0,0.2)"/>
-    <path d="M 24 21.5 C 24 21.5 21.5 24 21.5 25.8 C 21.5 27.2 22.6 28.2 24 28.2 C 25.4 28.2 26.5 27.2 26.5 25.8 C 26.5 24 24 21.5 24 21.5 Z" fill="#FACC15"/>
+    <!-- Lateral Principal del Furgón (Costado en perspectiva 3/4) -->
+    <path d="M 9 19 L 26 23 L 26 42 L 9 38 Z" fill="url(#modernRedBody)"/>
+    <path d="M 9 19 L 26 23" stroke="#FFA4B6" stroke-width="0.8" opacity="0.8"/>
 
-    <!-- Cabina Frontal Moderna y Agresiva -->
-    <path d="M 41 22 L 49 22 C 52 22 55 25 56.5 28.5 L 59 34.5 C 59.7 36 59.7 38 59 39.5 L 58 42 L 41 42 Z" fill="url(#cabinModernGrad)"/>
+    <!-- Llama / Emblema GLP lateral -->
+    <circle cx="17.5" cy="30" r="4.5" fill="#0F172A" opacity="0.3"/>
+    <circle cx="17.5" cy="30" r="4" fill="#1E293B" stroke="#FBBF24" stroke-width="0.6"/>
+    <path d="M 17.5 27 C 17.5 27 15.5 29 15.5 30.5 C 15.5 31.6 16.4 32.5 17.5 32.5 C 18.6 32.5 19.5 31.6 19.5 30.5 C 19.5 29 17.5 27 17.5 27 Z" fill="#FBBF24"/>
+    <path d="M 17.5 28.8 C 17.5 28.8 16.5 29.8 16.5 30.7 C 16.5 31.3 17 31.7 17.5 31.7 C 18 31.7 18.5 31.3 18.5 30.7 C 18.5 29.8 17.5 28.8 17.5 28.8 Z" fill="#EA580C"/>
 
-    <!-- Parabrisas / Ventana lateral panorámica -->
-    <path d="M 43.5 24.5 L 48.5 24.5 C 50.8 24.5 53 26.5 54 29 L 55.8 33.5 L 43.5 33.5 Z" fill="url(#windshieldGlass)"/>
-    
-    <!-- Reflejo blanco en el cristal -->
-    <path d="M 45 25.5 L 49 25.5 C 50.5 25.5 51.8 26.8 52.5 28.2 L 53.5 30.5 L 49 30.5 Z" fill="rgba(255,255,255,0.4)"/>
+    <!-- Franja reflectiva lateral -->
+    <path d="M 9 35.5 L 26 39.5" stroke="rgba(255,255,255,0.4)" stroke-width="1" stroke-linecap="round"/>
 
-    <!-- Faro LED Frontal Brillante -->
-    <path d="M 57.5 36.5 L 59.5 37 C 60 37.3 60 38.7 59.5 39 L 57 39.5 Z" fill="#00E5FF"/>
-    
-    <!-- Parachoques Delantero -->
-    <rect x="56" y="40" width="3.5" height="2.5" rx="1" fill="#475569"/>
+    <!-- Techo Cabina -->
+    <path d="M 26 23 L 40 15 L 44 18 L 32 26 Z" fill="url(#roofGrad)"/>
 
-    <!-- Rueda Trasera 1 -->
-    <circle cx="16" cy="44" r="6" fill="#18181B" stroke="#27272A" stroke-width="1"/>
-    <circle cx="16" cy="44" r="3.2" fill="url(#wheelRim)"/>
-    <circle cx="16" cy="44" r="1.2" fill="#09090B"/>
+    <!-- Parabrisas Delantero Panorámico 3D -->
+    <path d="M 44 18 L 56 30 L 50 34 L 32 26 Z" fill="url(#windshieldGlass)"/>
+    <path d="M 45 19 L 55 29 L 52 31 L 42 21 Z" fill="#FFFFFF" opacity="0.5"/>
 
+    <!-- Ventanilla Lateral Cabina -->
+    <path d="M 27 24.5 L 32 26.5 L 32 33 L 27 31 Z" fill="url(#windshieldGlass)"/>
+
+    <!-- Costado de la Cabina / Puerta -->
+    <path d="M 26 23 L 32 26 L 32 43 L 26 42 Z" fill="url(#modernRedBody)"/>
+
+    <!-- Espejo Retrovisor -->
+    <rect x="32" y="27" width="2" height="3" rx="0.5" fill="#0F172A"/>
+
+    <!-- Trompa / Frente Delantero -->
+    <path d="M 32 26 L 50 34 L 50 44 L 32 43 Z" fill="url(#cabinFrontGrad)"/>
+    <path d="M 50 34 L 58 38 L 58 46 L 50 44 Z" fill="url(#cabinFrontGrad)"/>
+
+    <!-- Rejilla y Faros LED Frontales -->
+    <path d="M 52 39 L 57 41.5 L 57 44.5 L 52 42.5 Z" fill="#0F172A"/>
+    <path d="M 50.5 36 L 52.5 37 L 52.5 39.5 L 50.5 38.5 Z" fill="#00E5FF"/>
+    <path d="M 56.5 39 L 58 39.8 L 58 42 L 56.5 41.5 Z" fill="#38BDF8"/>
+
+    <!-- Parachoques Frontal -->
+    <path d="M 49 43.5 L 58 45.5 L 58 48 L 49 46 Z" fill="#475569"/>
+
+    <!-- Ruedas 3D -->
     <!-- Rueda Delantera -->
-    <circle cx="49" cy="44" r="6" fill="#18181B" stroke="#27272A" stroke-width="1"/>
-    <circle cx="49" cy="44" r="3.2" fill="url(#wheelRim)"/>
-    <circle cx="49" cy="44" r="1.2" fill="#09090B"/>
+    <ellipse cx="40" cy="44.5" rx="4.5" ry="6.8" fill="#18181B"/>
+    <ellipse cx="40" cy="44.5" rx="2.8" ry="4.4" fill="url(#wheelRim)"/>
+    <ellipse cx="40" cy="44.5" rx="1.2" ry="2" fill="#09090B"/>
+
+    <!-- Rueda Trasera -->
+    <ellipse cx="15" cy="41" rx="4.5" ry="6.8" fill="#18181B"/>
+    <ellipse cx="15" cy="41" rx="2.8" ry="4.4" fill="url(#wheelRim)"/>
+    <ellipse cx="15" cy="41" rx="1.2" ry="2" fill="#09090B"/>
   </g>
 </svg>

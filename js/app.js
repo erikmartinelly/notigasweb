@@ -326,9 +326,23 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
   if (!favEl) favEl = document.querySelector("link[rel*='icon']");
   if (!favEl) return;
 
+  const isDriverMode = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver') || 
+                       (typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver');
+
   if (!categoria && !estado) {
-    favEl.href = "icons/garrafa_red-192.png?v=85";
-    document.title = "NOTIGAS - Plataforma Vecinal en Vivo";
+    if (isDriverMode) {
+      favEl.href = "icons/camion_3d_rojo.svg?v=86";
+      document.title = "🚛 MODO REPARTIDOR - NOTIGAS en Vivo";
+    } else {
+      favEl.href = "icons/garrafa_red-192.png?v=85";
+      document.title = "NOTIGAS - Plataforma Vecinal en Vivo";
+    }
+    return;
+  }
+
+  if (estado === 'asignado') {
+    favEl.href = "icons/camion_3d_rojo.svg?v=86";
+    document.title = "🚚 Pedido en Camino: Repartidor Asignado - NOTIGAS";
     return;
   }
 
