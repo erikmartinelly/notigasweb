@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (el_btnMainOrder) el_btnMainOrder.addEventListener('click', () => { safeCall('abrirSubmenuPedidos'); });
 
     const el_auto_event_7 = document.getElementById('auto-event-7');
-    if (el_auto_event_7) el_auto_event_7.addEventListener('click', () => { safeCall('lanzarEspecialEsperame'); });
+    if (el_auto_event_7) el_auto_event_7.addEventListener('click', () => { safeCall('abrirSubmenuPedidos'); });
 
     const el_auto_event_8 = document.getElementById('auto-event-8');
     if (el_auto_event_8) el_auto_event_8.addEventListener('click', () => { safeCall('notificarEscucheCamion'); });

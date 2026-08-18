@@ -37,6 +37,14 @@ window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño m
 (function() {
   'use strict';
 
+  let initialActiveOrder = null;
+  try {
+    const cachedOrder = localStorage.getItem('notigas_active_order');
+    if (cachedOrder) {
+      initialActiveOrder = JSON.parse(cachedOrder);
+    }
+  } catch(e){}
+
   // Estado inicial de la aplicación
   const _state = {
     userRole: 'vecino',        // 'vecino' | 'repartidor' | 'admin'
@@ -45,7 +53,7 @@ window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño m
     gpsLat: null,
     gpsLng: null,
     gpsReady: false,
-    activeOrder: null,         // Pedido activo del usuario actual
+    activeOrder: initialActiveOrder, // Pedido activo del usuario actual persistido
     realtimeConnected: false,  // Estado de conexión Supabase Realtime
     appMode: 'buyer',          // 'buyer' | 'driver'
     isDriverLive: false,       // Si el repartidor está transmitiendo en vivo
@@ -68,6 +76,16 @@ window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño m
     set(key, value) {
       const prev = _state[key];
       _state[key] = value;
+
+      if (key === 'activeOrder') {
+        try {
+          if (value) {
+            localStorage.setItem('notigas_active_order', JSON.stringify(value));
+          } else {
+            localStorage.removeItem('notigas_active_order');
+          }
+        } catch(e){}
+      }
 
       // Sincronizar de forma transparente con listeners
       if (prev !== value && _listeners[key]) {
@@ -166,9 +184,9 @@ window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño m
           }
         }
 
-        // Pedido Activo (Consultar a Supabase)
-        if (data && data.session && data.session.user && _state['userRole'] === 'vecino') {
-           const { data: activeOrders } = await window.supabaseClient
+        // Pedido Activo (Consultar a Supabase para sincronizar con la nube)
+        if (data && data.session && data.session.user && _state['userRole'] !== 'repartidor') {
+           const { data: activeOrders, error: orderErr } = await window.supabaseClient
              .from('pedidos')
              .select('*')
              .eq('user_id', data.session.user.id)
@@ -176,8 +194,27 @@ window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño m
              .order('created_at', { ascending: false })
              .limit(1);
 
-           if (activeOrders && activeOrders.length > 0) {
-             _state['activeOrder'] = activeOrders[0];
+           if (!orderErr && activeOrders && activeOrders.length > 0) {
+             AppState.set('activeOrder', activeOrders[0]);
+             if (typeof checkActiveOrderStatus === 'function') {
+               checkActiveOrderStatus();
+             }
+           } else if (!orderErr && (!activeOrders || activeOrders.length === 0)) {
+             // Si en la nube ya no está pendiente/visto/asignado
+             const localOrder = _state['activeOrder'];
+             if (localOrder && localOrder.id) {
+               const { data: pastOrder } = await window.supabaseClient
+                 .from('pedidos')
+                 .select('estado')
+                 .eq('id', localOrder.id)
+                 .maybeSingle();
+               if (pastOrder && (pastOrder.estado === 'entregado' || pastOrder.estado === 'cancelado')) {
+                 AppState.set('activeOrder', null);
+                 if (typeof checkActiveOrderStatus === 'function') {
+                   checkActiveOrderStatus();
+                 }
+               }
+             }
            }
         }
       } catch (e) {

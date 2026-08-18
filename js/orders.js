@@ -827,23 +827,15 @@ function confirmarPedido() {
 
         const activeOrderData = {
           id: resultData.id,
-
           categoria: cat,
-
           cantidad: '1 unidad',
-
           callePrincipal: direccion,
-
           telefono: telefono,
-
           buyerName: buyerName,
-
           lat: pos.lat,
-
           lng: pos.lng,
-
+          estado: 'pendiente',
           timestamp: Date.now()
-
         };
 
         AppState.set('activeOrder', activeOrderData);

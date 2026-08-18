@@ -257,6 +257,11 @@ function abrirModalNuevoPost() {
     cityLabel.innerText = String(rawCity).charAt(0).toUpperCase() + String(rawCity).slice(1);
   }
 
+  const inputNom = document.getElementById('inputPostNombre');
+  const inputApe = document.getElementById('inputPostApellido');
+  if (inputNom && !inputNom.value && userData?.nombre) inputNom.value = userData.nombre;
+  if (inputApe && !inputApe.value && userData?.apellido) inputApe.value = userData.apellido;
+
   modal.style.display = 'flex';
 }
 
@@ -274,10 +279,14 @@ async function crearNuevoPost() {
     const titleEl = document.getElementById('inputPostTitulo') || document.getElementById('inputPostTitle');
     const descEl = document.getElementById('inputPostDesc');
     const catEl = document.getElementById('selectPostTipo');
+    const inputNom = document.getElementById('inputPostNombre');
+    const inputApe = document.getElementById('inputPostApellido');
 
     const title = (titleEl ? titleEl.value : '').trim();
     const desc = (descEl ? descEl.value : '').trim();
     const cat = (catEl ? catEl.value : 'AVISO VECINAL');
+    const formNombre = (inputNom ? inputNom.value : '').trim();
+    const formApellido = (inputApe ? inputApe.value : '').trim();
 
     if (!title || !desc) {
       if (typeof showToast === 'function') {
@@ -352,6 +361,16 @@ async function crearNuevoPost() {
     const isAdmin = !!currentAdmin || (typeof AppState !== 'undefined' && AppState.get('isAdmin') === true);
     const ciudadSelector = document.getElementById('selectCiudadCapital')?.value;
 
+    // Si no es admin, validar que ingrese su nombre y apellido
+    if (!isAdmin && (!formNombre || !formApellido) && (!userData?.nombre || !userData?.apellido)) {
+      if (typeof showToast === 'function') {
+        showToast('Datos requeridos', 'Por favor ingresa tu Nombre y Apellido para publicar el aviso.', 'warning', 4000);
+      } else {
+        alert('Por favor ingresa tu Nombre y Apellido.');
+      }
+      return;
+    }
+
     // Si es comprador o repartidor, restringir estrictamente a su ciudad registrada
     // Si es administrador, usar la ciudad seleccionada
     let rawCity = 'cochabamba';
@@ -362,17 +381,26 @@ async function crearNuevoPost() {
     }
     const ciudadReal = String(rawCity || 'cochabamba').toLowerCase().trim();
 
-    // Determinar nombre del autor: Nombre y Apellido para vecinos, o Nombre Comercial para repartidores
+    // Determinar nombre del autor: Nombre y Apellido
     let authorName = 'Vecino de la OTB';
     if (isAdmin) {
       authorName = 'Administración NOTIGAS';
-    } else if (userData) {
-      if (userData.role === 'repartidor') {
-        authorName = userData.nombre || 'Repartidor de la OTB';
-      } else {
-        const nom = (userData.nombre || '').trim();
-        const ape = (userData.apellido || '').trim();
-        authorName = [nom, ape].filter(Boolean).join(' ') || nom || 'Vecino de la OTB';
+    } else {
+      const nom = formNombre || userData?.nombre || '';
+      const ape = formApellido || userData?.apellido || '';
+      authorName = [nom, ape].filter(Boolean).join(' ') || nom || 'Vecino de la OTB';
+
+      // Persistir si el usuario los completó en el modal
+      if (userData && (formNombre || formApellido)) {
+        if (formNombre) userData.nombre = formNombre;
+        if (formApellido) userData.apellido = formApellido;
+        AppState.set('userData', userData);
+        if (window.supabaseClient && userId) {
+          window.supabaseClient.from('profiles').update({
+            nombre: userData.nombre,
+            apellido: userData.apellido
+          }).eq('id', userId).then(() => {}).catch(() => {});
+        }
       }
     }
 
