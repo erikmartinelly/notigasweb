@@ -1261,8 +1261,9 @@ BEGIN
     DELETE FROM public.rutas_repartidores
     WHERE last_active < now() - interval '12 hours';
 
+    -- Avisos gratis duran 48 horas
     DELETE FROM public.avisos
-    WHERE created_at < now() - interval '72 hours';
+    WHERE created_at < now() - interval '48 hours';
 END;
 $$;
 
@@ -1301,8 +1302,9 @@ BEGIN
     WHERE last_active < now() - interval '12 hours';
     GET DIAGNOSTICS v_rutas_borradas = ROW_COUNT;
 
+    -- Avisos gratis duran 48 horas
     DELETE FROM public.avisos
-    WHERE created_at < now() - interval '72 hours';
+    WHERE created_at < now() - interval '48 hours';
     GET DIAGNOSTICS v_avisos_borrados = ROW_COUNT;
 
     RETURN jsonb_build_object(
@@ -1310,6 +1312,7 @@ BEGIN
         'pedidos_purgados', v_pedidos_borrados,
         'rutas_purgadas', v_rutas_borradas,
         'avisos_purgados', v_avisos_borrados,
+        'duracion_avisos_horas', 48,
         'ejecutado_el', now()
     );
 END;

@@ -75,14 +75,12 @@ const garrafaGreenSvgMarkerHtml = `
   </div>
 `;
 
-// Marcador único de repartidor: camión moderno + insignia R (Estilo Google Maps)
+// Marcador único de repartidor: Camión 3D Rojo Moderno + insignia R Oficial
 const truckSvgMarkerHtml = `
-  <div class="driver-map-marker" title="Repartidor NOTIGAS">
-    <div class="driver-marker-truck" aria-hidden="true">
-      <i class="fa-solid fa-truck-fast"></i>
-    </div>
+  <div class="driver-map-marker" title="Repartidor Oficial NOTIGAS en Vivo">
+    <img src="icons/camion_3d_rojo.svg" class="driver-3d-truck-img" alt="Camión Repartidor 3D">
     <span class="driver-marker-badge" aria-hidden="true">R</span>
-    <span class="driver-marker-online" title="GPS activo"></span>
+    <span class="driver-marker-online" title="GPS en Tiempo Real"></span>
   </div>
 `;
 
@@ -193,8 +191,8 @@ function initNotigasMap() {
   truckIcon = L.divIcon({
     className: 'notigas-driver-marker',
     html: truckSvgMarkerHtml,
-    iconSize: [52, 58],
-    iconAnchor: [26, 29]
+    iconSize: [60, 60],
+    iconAnchor: [30, 30]
   });
 
   truckRadarBlueIcon = L.divIcon({
@@ -211,7 +209,8 @@ function initNotigasMap() {
                      (typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver') ||
                      (AppState.get('userData') && AppState.get('userData').role === 'repartidor');
     if (isDriver) {
-      userMarker.setIcon(truckIcon);
+      const isZoomOut = map && (map.getZoom() <= DRIVER_RADAR_MAX_ZOOM);
+      userMarker.setIcon(isZoomOut && truckRadarBlueIcon ? truckRadarBlueIcon : truckIcon);
     } else {
       userMarker.setIcon(userLocationIcon);
     }
@@ -301,6 +300,9 @@ function initNotigasMap() {
   map.on('dragstart', () => {
     isMapInteractedByUser = true;
     if (typeof desactivarSeguirme === 'function') desactivarSeguirme();
+  });
+  map.on('zoom', () => {
+    actualizarIconosRepartidoresPorZoom();
   });
   map.on('zoomend', () => {
     renderDriverDemandByZoom();
@@ -547,9 +549,24 @@ function renderDriverDemandByZoom() {
   if (!map || typeof L === 'undefined') return;
   const state = window.driverDemandMapState || {};
   const ordersById = new Map();
+
+  // Agregar pedidos de demanda / públicos
   [...(state.availableOrders || []), ...(state.assignedOrders || [])].forEach(order => {
     if (order?.id) ordersById.set(order.id, order);
   });
+
+  // Asegurar que el pedido activo del usuario actual NUNCA se oculte ni pierda señal de radar
+  try {
+    const rawOrder = (typeof AppState !== 'undefined') ? AppState.get('activeOrder') : null;
+    if (rawOrder) {
+      const ao = (typeof rawOrder === 'string') ? JSON.parse(rawOrder) : rawOrder;
+      if (ao && (ao.latitude || ao.lat) && (ao.longitude || ao.lng)) {
+        const aoId = ao.id || 'mi_pedido_activo';
+        ordersById.set(aoId, ao);
+      }
+    }
+  } catch(e){}
+
   const allOrders = Array.from(ordersById.values());
 
   // Actualizar también la apariencia de los camiones repartidores (icono azul radar si zoom out)
@@ -569,7 +586,16 @@ function renderDriverDemandByZoom() {
   if (activeOrderLayerGroup && !map.hasLayer(activeOrderLayerGroup)) {
     activeOrderLayerGroup.addTo(map);
   }
-  allOrders.forEach(order => agregarPedidoVecinoEnMapa(order));
+  allOrders.forEach(order => {
+    if (order.id !== 'mi_pedido_activo') {
+      agregarPedidoVecinoEnMapa(order);
+    }
+  });
+
+  // Re-dibujar el marcador interactivo del pedido propio en modo detalle
+  if (typeof renderActiveOrdersMap === 'function') {
+    renderActiveOrdersMap();
+  }
 }
 
 function actualizarIconosRepartidoresPorZoom() {
@@ -583,14 +609,21 @@ function actualizarIconosRepartidoresPorZoom() {
       marker.setIcon(targetIcon);
     }
   });
+
+  if (userMarker && userMarker.setIcon) {
+    const isDriver = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver') || 
+                     (typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver') ||
+                     (AppState.get('userData') && AppState.get('userData').role === 'repartidor');
+    if (isDriver) {
+      userMarker.setIcon(targetIcon);
+    }
+  }
 }
 
 function renderOrderRadarsOnMap(orders) {
   if (!map || typeof L === 'undefined') return;
   clearDemandClusterMarkers();
   if (map.getZoom() > DRIVER_RADAR_MAX_ZOOM) return;
-  const isDriver = (typeof AppState !== 'undefined') &&
-    (AppState.get('appMode') === 'driver' || AppState.get('userRole') === 'repartidor');
 
   (orders || []).forEach(order => {
     const lat = Number(order.latitude ?? order.lat);
@@ -598,11 +631,11 @@ function renderOrderRadarsOnMap(orders) {
     if (!Number.isFinite(lat) || !Number.isFinite(lng) || !order?.id) return;
 
     const safeCategory = typeof escapeHtmlStr === 'function'
-      ? escapeHtmlStr(order.categoria || 'Pedido')
-      : 'Pedido';
+      ? escapeHtmlStr(order.categoria || 'Gas')
+      : 'Gas';
     const icon = L.divIcon({
       className: 'demand-cluster-icon demand-order-radar-icon',
-      html: `<div class="demand-radar" title="Pedido de ${safeCategory} (Haz clic para ver)"><span></span><span></span><span></span><i></i></div>`,
+      html: `<div class="demand-radar" title="Pedido Activo de ${safeCategory} (Haz clic para ver)"><span></span><span></span><span></span><i></i></div>`,
       iconSize: [80, 80],
       iconAnchor: [40, 40]
     });
@@ -612,7 +645,7 @@ function renderOrderRadarsOnMap(orders) {
       interactive: true,
       bubblingMouseEvents: false,
       keyboard: false,
-      zIndexOffset: 7200
+      zIndexOffset: 12000
     }).addTo(map);
 
     marker.on('click', () => {
@@ -1079,8 +1112,9 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
     }
   }
 
-  const isDriver = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver') || (typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver');
-  const activeIcon = isDriver ? truckIcon : userLocationIcon;
+  const isDriver = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver') || (typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver') || (typeof AppState !== 'undefined' && AppState.get('userData')?.role === 'repartidor');
+  const isZoomOut = map && (map.getZoom() <= DRIVER_RADAR_MAX_ZOOM);
+  const activeIcon = isDriver ? (isZoomOut && truckRadarBlueIcon ? truckRadarBlueIcon : truckIcon) : userLocationIcon;
 
   if (!userMarker && map) {
     userMarker = L.marker([activeLat, activeLng], {

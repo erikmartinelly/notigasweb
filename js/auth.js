@@ -1271,10 +1271,21 @@ async function registrarEmail() {
     if (typeof showToast === 'function') showToast('Error', 'El servidor no está disponible. Recarga la página.', 'error');
     return;
   }
+
+  const nombreEl = document.getElementById('authNombre');
+  const apellidoEl = document.getElementById('authApellido');
   const emailEl = document.getElementById('authEmail');
   const passwordEl = document.getElementById('authPassword');
+
+  const nombre = nombreEl ? nombreEl.value.trim() : '';
+  const apellido = apellidoEl ? apellidoEl.value.trim() : '';
   const email = emailEl ? emailEl.value.trim() : '';
   const password = passwordEl ? passwordEl.value : '';
+
+  if (!nombre || !apellido) {
+    if (typeof showToast === 'function') showToast('Campos requeridos', 'Por favor ingresa tu Nombre y Apellido para registrarte.', 'warning', 4000);
+    return;
+  }
 
   if (!email || !password) {
     if (typeof showToast === 'function') showToast('Error', 'Ingresa correo y contraseña', 'error');
@@ -1294,11 +1305,18 @@ async function registrarEmail() {
     const { data, error } = await window.supabaseClient.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: window.location.origin }
+      options: {
+        emailRedirectTo: window.location.origin,
+        data: {
+          full_name: `${nombre} ${apellido}`.trim(),
+          nombre: nombre,
+          apellido: apellido
+        }
+      }
     });
 
     if (error) {
-      if (typeof showToast === 'function') showToast('Error de registro', 'No se pudo completar el registro. Revisa los datos o intenta más tarde.', 'error');
+      if (typeof showToast === 'function') showToast('Error de registro', 'No se pudo completar el registro: ' + (error.message || 'Revisa los datos.'), 'error');
       return;
     }
 
@@ -1324,7 +1342,15 @@ async function procesarSesionExitosa(user) {
   try {
     const modalAuth = document.getElementById('modalWelcomeAuth');
     const gmail = user.email ? user.email.toLowerCase().trim() : '';
-    const nombre = user.user_metadata?.full_name || (gmail ? gmail.split('@')[0] : 'Usuario');
+
+    let userNombre = user.user_metadata?.nombre || '';
+    let userApellido = user.user_metadata?.apellido || '';
+    if (!userNombre && user.user_metadata?.full_name) {
+      const parts = user.user_metadata.full_name.trim().split(' ');
+      userNombre = parts[0] || '';
+      userApellido = parts.slice(1).join(' ') || '';
+    }
+    if (!userNombre) userNombre = (gmail ? gmail.split('@')[0] : 'Usuario');
 
     try {
       if (window.supabaseClient && gmail) {
@@ -1363,6 +1389,8 @@ async function procesarSesionExitosa(user) {
         }
         if (profileRes?.data) {
           existingProfile = profileRes.data;
+          if (existingProfile.nombre) userNombre = existingProfile.nombre;
+          if (existingProfile.apellido) userApellido = existingProfile.apellido;
         }
         if (!window._roleSelectedNow) {
           currentSelectedRole = esRepartidorDB && existingProfile?.role !== 'vecino'
@@ -1381,6 +1409,11 @@ async function procesarSesionExitosa(user) {
 
       window._tempAuthUser = user;
 
+      const inputName = document.getElementById('newUserName');
+      const inputLastName = document.getElementById('newUserLastName');
+      if (inputName && !inputName.value) inputName.value = userNombre;
+      if (inputLastName && !inputLastName.value) inputLastName.value = userApellido;
+
       const modalRole = document.getElementById('modalRoleSelection');
       if (modalRole) modalRole.style.display = 'flex';
       return;
@@ -1391,8 +1424,8 @@ async function procesarSesionExitosa(user) {
     const clienteData = {
       role: currentSelectedRole === 'driver' ? 'repartidor' : 'vecino',
       gmail,
-      nombre: (existingProfile?.nombre || user.user_metadata?.full_name || nombre),
-      apellido: existingProfile?.apellido || '',
+      nombre: (existingProfile?.nombre || userNombre),
+      apellido: (existingProfile?.apellido || userApellido),
       telefono: existingProfile?.telefono || choferData?.telefono_whatsapp || '',
       ciudad: resolvedCity,
       user_id: user.id
@@ -1422,7 +1455,7 @@ async function procesarSesionExitosa(user) {
         if (modalAuth) modalAuth.style.display = 'none';
 
         const inputDriverNombre = document.getElementById('inputDriverNombre');
-        if (inputDriverNombre) inputDriverNombre.value = nombre;
+        if (inputDriverNombre) inputDriverNombre.value = clienteData.nombre;
 
         const modalDriver = document.getElementById('modalDriver');
         if (modalDriver) modalDriver.style.display = 'flex';
@@ -1451,6 +1484,7 @@ async function procesarSesionExitosa(user) {
       try {
         const profile = await guardarPerfilSupabase(user, {
             nombre: clienteData.nombre,
+            apellido: clienteData.apellido,
             role: 'vecino',
             ciudad: clienteData.ciudad || AppState.get('city') || 'cochabamba'
         });
@@ -1475,7 +1509,7 @@ async function procesarSesionExitosa(user) {
       }
 
       if (typeof setAppMode === 'function') setAppMode('buyer');
-      if (typeof showToast === 'function') showToast('✅ Sesión Segura', `Bienvenido a NOTIGAS (${gmail})`, 'success', 2000);
+      if (typeof showToast === 'function') showToast('✅ Sesión Segura', `Bienvenido a NOTIGAS (${clienteData.nombre} ${clienteData.apellido})`, 'success', 2000);
     }
   } catch (err) {
     console.error('Error procesando sesión exitosa:', err);
@@ -1487,7 +1521,22 @@ async function procesarSesionExitosa(user) {
 }
 
 window.finalizeRoleSelection = async function(role) {
+  const nameInput = document.getElementById('newUserName');
+  const lastNameInput = document.getElementById('newUserLastName');
   const citySelect = document.getElementById('newUserCity');
+
+  const selectedName = (nameInput ? nameInput.value : '').trim();
+  const selectedLastName = (lastNameInput ? lastNameInput.value : '').trim();
+
+  if (!selectedName || !selectedLastName) {
+    if (typeof showToast === 'function') {
+      showToast('⚠️ Datos Requeridos', 'Por favor ingresa tu Nombre y Apellido completos.', 'warning', 3500);
+    } else {
+      alert('Por favor ingresa tu Nombre y Apellido.');
+    }
+    return;
+  }
+
   let selectedCity = null;
   if (citySelect && citySelect.value) {
     selectedCity = citySelect.value.toLowerCase().trim();
@@ -1519,10 +1568,31 @@ window.finalizeRoleSelection = async function(role) {
   }
 
   const u = AppState.get('userData') || {};
+  u.nombre = selectedName;
+  u.apellido = selectedLastName;
   u.ciudad = selectedCity;
   AppState.set('userData', u);
 
+  if (role === 'repartidor') {
+    const inputDriverCiudad = document.getElementById('inputDriverCiudad');
+    if (inputDriverCiudad) inputDriverCiudad.value = selectedCity;
+    const inputDriverNombre = document.getElementById('inputDriverNombre');
+    if (inputDriverNombre && !inputDriverNombre.value) {
+      inputDriverNombre.value = `${selectedName} ${selectedLastName}`.trim();
+    }
+  }
+
   if (window._tempAuthUser) {
+    try {
+      await guardarPerfilSupabase(window._tempAuthUser, {
+        nombre: selectedName,
+        apellido: selectedLastName,
+        ciudad: selectedCity,
+        role: role === 'repartidor' ? 'repartidor' : 'vecino'
+      });
+    } catch(e) {
+      console.warn("Error guardando perfil en selección de rol:", e);
+    }
     await procesarSesionExitosa(window._tempAuthUser);
   }
 };
@@ -1532,15 +1602,19 @@ let currentAuthAction = 'login'; // 'login' or 'register'
 window.showAuthStep = function(step) {
   const step1 = document.getElementById('authStep1_Action');
   const step2 = document.getElementById('authStep2_Method');
+  const namesGroup = document.getElementById('authRegisterNamesGroup');
 
   if (step1) step1.style.display = (step === 1) ? 'block' : 'none';
   if (step2) step2.style.display = (step === 2) ? 'block' : 'none';
 
   if (step === 2) {
+    if (namesGroup) {
+      namesGroup.style.display = (currentAuthAction === 'register') ? 'block' : 'none';
+    }
     const btnEmailAction = document.getElementById('btnEmailAction');
     const step2Title = document.getElementById('authStep2Title');
     if (btnEmailAction) btnEmailAction.innerText = (currentAuthAction === 'login') ? 'Ingresar' : 'Registrarse';
-    if (step2Title) step2Title.innerText = (currentAuthAction === 'login') ? 'Selecciona método de ingreso:' : 'Selecciona método de registro:';
+    if (step2Title) step2Title.innerText = (currentAuthAction === 'login') ? 'Selecciona método de ingreso:' : 'Completa tus datos para registrarte:';
   }
 };
 

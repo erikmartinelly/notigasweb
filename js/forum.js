@@ -24,20 +24,28 @@ async function renderForumFeed() {
     if (!feed || !window.supabaseClient) return;
 
     const currentAdmin = (typeof getVerifiedAdminEmail === 'function') ? getVerifiedAdminEmail() : null;
-    const isAdmin = !!currentAdmin;
+    const isAdmin = !!currentAdmin || (typeof AppState !== 'undefined' && AppState.get('isAdmin') === true);
 
-    const tresDiasAtras = new Date(Date.now() - 72 * 3600 * 1000).toISOString();
+    const dosDiasAtras = new Date(Date.now() - 48 * 3600 * 1000).toISOString();
 
-    const userData = AppState.get('userData');
+    const userData = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
     const ciudadSelector = document.getElementById('selectCiudadCapital')?.value;
-    const rawCity = (userData && userData.ciudad) || AppState.get('city') || ciudadSelector || 'cochabamba';
+    
+    // Si es comprador o repartidor registrado, mostrar estrictamente los avisos de su ciudad registrada
+    // Si es administrador o visitante, usar la ciudad seleccionada en la cabecera
+    let rawCity = 'cochabamba';
+    if (!isAdmin && userData && userData.ciudad) {
+      rawCity = userData.ciudad;
+    } else {
+      rawCity = ciudadSelector || (typeof AppState !== 'undefined' && AppState.get('city')) || (userData && userData.ciudad) || 'cochabamba';
+    }
     const ciudadReal = String(rawCity || 'cochabamba').toLowerCase().trim();
 
-    // Consultar avisos de las últimas 72 horas para la ciudad (insensible a mayúsculas)
+    // Consultar avisos de las últimas 48 horas para la ciudad (insensible a mayúsculas)
     const { data: localPosts, error } = await window.supabaseClient.from('avisos')
       .select('*, comentarios_avisos(count)')
       .ilike('ciudad', ciudadReal)
-      .gte('created_at', tresDiasAtras)
+      .gte('created_at', dosDiasAtras)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -59,7 +67,7 @@ async function renderForumFeed() {
           <i class="fa-solid fa-comments" style="font-size:32px; color:#FF6D00; margin-bottom:10px;"></i><br>
           <strong>El Tablón de Anuncios Vecinal está limpio en ${escapeHtmlStr(ciudadReal)}.</strong><br>
           <span style="font-size: 11px; color: #64748B;">Sé el primero en publicar un aviso, alerta u oferta para los vecinos de tu OTB.</span><br><br>
-          <button class="btn-new-post" style="margin: 0 auto; padding: 10px 16px; font-size: 12px;" data-action="abrirModalNuevoPost">📝 Publicar Nuevo Aviso (72 Horas)</button>
+          <button class="btn-new-post" style="margin: 0 auto; padding: 10px 16px; font-size: 12px;" data-action="abrirModalNuevoPost">📝 Publicar Nuevo Aviso (48 Horas)</button>
         </div>
       `;
       return;
@@ -73,6 +81,7 @@ async function renderForumFeed() {
       const safeTitle = encodeURIComponent(post.titulo || '').replace(/'/g, "%27");
       const safeDesc = encodeURIComponent(post.descripcion || '').replace(/'/g, "%27");
       const safeCat = encodeURIComponent(post.categoria || '').replace(/'/g, "%27");
+      const authorName = post.autor || 'Vecino de la OTB';
 
       html += `
         <div class="forum-card">
@@ -82,7 +91,10 @@ async function renderForumFeed() {
             <i class="fa-solid fa-circle-chevron-down" title="👎 Me Disgusta" data-action="votarPost" data-val="-1" data-id="${post.id}"></i>
           </div>
           <div class="forum-body">
-            <span class="forum-cat"><i class="fa-solid fa-comments"></i> ${escapeHtmlStr(post.categoria)}</span>
+            <div class="forum-meta-header">
+              <span class="forum-cat"><i class="fa-solid fa-comments"></i> ${escapeHtmlStr(post.categoria)}</span>
+              <span class="forum-author"><i class="fa-solid fa-user"></i> ${escapeHtmlStr(authorName)}</span>
+            </div>
             <div class="forum-title">${escapeHtmlStr(post.titulo)}</div>
             <div class="forum-desc">${escapeHtmlStr(post.descripcion)}</div>
             <div class="forum-footer" style="display:flex; justify-content:space-between; align-items:center;">
@@ -226,7 +238,26 @@ async function votarPost(el, delta, postId) {
 
 function abrirModalNuevoPost() {
   const modal = document.getElementById('modalNuevoPost');
-  if (modal) modal.style.display = 'flex';
+  if (!modal) return;
+
+  const userData = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
+  const currentAdmin = (typeof getVerifiedAdminEmail === 'function') ? getVerifiedAdminEmail() : null;
+  const isAdmin = !!currentAdmin || (typeof AppState !== 'undefined' && AppState.get('isAdmin') === true);
+  const ciudadSelector = document.getElementById('selectCiudadCapital')?.value;
+
+  let rawCity = 'cochabamba';
+  if (!isAdmin && userData && userData.ciudad) {
+    rawCity = userData.ciudad;
+  } else {
+    rawCity = ciudadSelector || (typeof AppState !== 'undefined' && AppState.get('city')) || (userData && userData.ciudad) || 'cochabamba';
+  }
+
+  const cityLabel = document.getElementById('newPostCityLabel');
+  if (cityLabel) {
+    cityLabel.innerText = String(rawCity).charAt(0).toUpperCase() + String(rawCity).slice(1);
+  }
+
+  modal.style.display = 'flex';
 }
 
 function closeNewPostModal() {
@@ -316,10 +347,34 @@ async function crearNuevoPost() {
       return;
     }
 
-    const userData = AppState.get('userData');
+    const userData = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
+    const currentAdmin = (typeof getVerifiedAdminEmail === 'function') ? getVerifiedAdminEmail() : null;
+    const isAdmin = !!currentAdmin || (typeof AppState !== 'undefined' && AppState.get('isAdmin') === true);
     const ciudadSelector = document.getElementById('selectCiudadCapital')?.value;
-    const rawCity = (userData && userData.ciudad) || AppState.get('city') || ciudadSelector || 'cochabamba';
+
+    // Si es comprador o repartidor, restringir estrictamente a su ciudad registrada
+    // Si es administrador, usar la ciudad seleccionada
+    let rawCity = 'cochabamba';
+    if (!isAdmin && userData && userData.ciudad) {
+      rawCity = userData.ciudad;
+    } else {
+      rawCity = ciudadSelector || (typeof AppState !== 'undefined' && AppState.get('city')) || (userData && userData.ciudad) || 'cochabamba';
+    }
     const ciudadReal = String(rawCity || 'cochabamba').toLowerCase().trim();
+
+    // Determinar nombre del autor: Nombre y Apellido para vecinos, o Nombre Comercial para repartidores
+    let authorName = 'Vecino de la OTB';
+    if (isAdmin) {
+      authorName = 'Administración NOTIGAS';
+    } else if (userData) {
+      if (userData.role === 'repartidor') {
+        authorName = userData.nombre || 'Repartidor de la OTB';
+      } else {
+        const nom = (userData.nombre || '').trim();
+        const ape = (userData.apellido || '').trim();
+        authorName = [nom, ape].filter(Boolean).join(' ') || nom || 'Vecino de la OTB';
+      }
+    }
 
     if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Publicando aviso...');
 
@@ -333,7 +388,8 @@ async function crearNuevoPost() {
         p_titulo: title,
         p_descripcion: desc,
         p_ciudad: ciudadReal,
-        p_barrio_otb: 'Global'
+        p_barrio_otb: 'Global',
+        p_autor: authorName
       });
 
       if (!rpcErr && rpcData) {
@@ -353,6 +409,7 @@ async function crearNuevoPost() {
         descripcion: desc,
         ciudad: ciudadReal,
         barrio_otb: 'Global',
+        autor: authorName,
         user_id: userId,
         votos: 1,
         activo: true,
@@ -383,7 +440,7 @@ async function crearNuevoPost() {
     if (descEl) descEl.value = '';
 
     if (typeof showToast === 'function') {
-      showToast('📌 ¡Aviso Publicado!', 'Tu aviso ya está disponible en el tablón vecinal.', 'success', 4000);
+      showToast('📌 ¡Aviso Publicado!', `Tu aviso ya está disponible en el tablón vecinal de ${ciudadReal.toUpperCase()} (duración: 48 horas).`, 'success', 4000);
     }
 
     // Refrescar el feed inmediatamente
@@ -392,7 +449,6 @@ async function crearNuevoPost() {
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
     console.error('Error interno al publicar:', err);
     if (typeof showToast === 'function') showToast('Error', err.message, 'error', 4000);
-  }
 }
 
 /**
@@ -581,10 +637,21 @@ async function agregarComentarioPost() {
   let authorName = 'Vecino de la OTB';
   let userId = null;
   try {
-    const saved = JSON.stringify(AppState.get('userData') || {});
-    if (saved) {
-      const u = JSON.parse(saved);
-      if (u.nombre) authorName = u.nombre;
+    const currentAdmin = (typeof getVerifiedAdminEmail === 'function') ? getVerifiedAdminEmail() : null;
+    const isAdmin = !!currentAdmin || (typeof AppState !== 'undefined' && AppState.get('isAdmin') === true);
+    if (isAdmin) {
+      authorName = 'Administración NOTIGAS';
+    } else {
+      const u = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
+      if (u) {
+        if (u.role === 'repartidor') {
+          authorName = u.nombre || 'Repartidor de la OTB';
+        } else {
+          const nom = (u.nombre || '').trim();
+          const ape = (u.apellido || '').trim();
+          authorName = [nom, ape].filter(Boolean).join(' ') || nom || 'Vecino de la OTB';
+        }
+      }
     }
     const { data: sessionData } = await window.supabaseClient.auth.getSession();
     userId = sessionData?.session?.user?.id || null;

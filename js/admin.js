@@ -440,7 +440,7 @@ async function emitirAlertaOficialAdmin(mensaje) {
 
 async function ejecutarPurgaBaseDeDatosManual() {
   if (typeof showConfirmModal === 'function') {
-    showConfirmModal('🧹', '¿Ejecutar Purga de Base de Datos?', 'Se eliminarán de PostgreSQL pedidos mayores a 48h y avisos mayores a 72h, además de limpiar el caché local.', 'Sí, purgar BD', async () => {
+    showConfirmModal('🧹', '¿Ejecutar Purga de Base de Datos?', 'Se eliminarán de PostgreSQL pedidos mayores a 48h y avisos mayores a 48h, además de limpiar el caché local.', 'Sí, purgar BD', async () => {
       if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Ejecutando purga en PostgreSQL...');
       try {
         if (window.supabaseClient) {
