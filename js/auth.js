@@ -484,27 +484,48 @@ function iniciarConGoogleDirecto() {
       if (!_googleGisInitialized) {
         google.accounts.id.initialize({
           client_id: GOOGLE_CLIENT_ID,
-          callback: handleCredentialResponse
+          callback: handleCredentialResponse,
+          auto_select: false,
+          cancel_on_tap_outside: true
         });
         _googleGisInitialized = true;
       }
 
       google.accounts.id.prompt((notification) => {
         if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          console.info("Google One Tap no disponible en este navegador/origen. Alternando a formulario...");
-          selectAuthMethod('email');
-          const authEmail = document.getElementById('authEmail');
-          if (authEmail) authEmail.focus();
-          if (typeof showToast === 'function') {
-            showToast('Verificación de Correo', 'Ingresa tu correo Gmail en el formulario para ingresar.', 'info', 4000);
+          console.info("Google One Tap no disponible en este navegador/origen. Alternando a OAuth...");
+          if (window.supabaseClient) {
+            window.supabaseClient.auth.signInWithOAuth({
+              provider: 'google',
+              options: { redirectTo: window.location.origin }
+            }).catch(err => {
+              console.warn("OAuth fallback error:", err);
+              selectAuthMethod('email');
+            });
+          } else {
+            selectAuthMethod('email');
           }
         }
       });
     } catch(err) {
-      selectAuthMethod('email');
+      if (window.supabaseClient) {
+        window.supabaseClient.auth.signInWithOAuth({
+          provider: 'google',
+          options: { redirectTo: window.location.origin }
+        }).catch(() => selectAuthMethod('email'));
+      } else {
+        selectAuthMethod('email');
+      }
     }
   } else {
-    selectAuthMethod('email');
+    if (window.supabaseClient) {
+      window.supabaseClient.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin }
+      }).catch(() => selectAuthMethod('email'));
+    } else {
+      selectAuthMethod('email');
+    }
   }
 }
 
@@ -515,9 +536,9 @@ async function handleCredentialResponse(response) {
       return;
     }
 
-    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Autenticando...');
+    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Autenticando con Google...');
 
-    // 1. Iniciar sesión en Supabase con Google One-Tap
+    // 1. Iniciar sesión en Supabase con Google One-Tap ID Token
     const { data: authData, error } = await window.supabaseClient.auth.signInWithIdToken({
       provider: 'google',
       token: response.credential
@@ -525,18 +546,31 @@ async function handleCredentialResponse(response) {
 
     if (error) {
       if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-      alert("Error de seguridad: No se pudo verificar la sesión con Supabase. " + error.message);
+      console.warn("Fallo signInWithIdToken, intentando OAuth redirect:", error.message);
+      if (window.supabaseClient) {
+        window.supabaseClient.auth.signInWithOAuth({
+          provider: 'google',
+          options: { redirectTo: window.location.origin }
+        }).catch(() => {
+          showToast('Error de inicio de sesión', error.message || 'No se pudo verificar la sesión con Google.', 'error', 4500);
+        });
+      }
       return;
     }
 
     const session = authData.session;
-    const user = session.user;
-    const gmail = user.email.toLowerCase().trim();
-    const nombre = user.user_metadata?.full_name || gmail;
+    const user = session ? session.user : authData.user;
+    if (!user) {
+      if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+      showToast('Error', 'No se pudieron recuperar los datos de usuario.', 'error');
+      return;
+    }
+
+    const gmail = user.email ? user.email.toLowerCase().trim() : '';
 
     // Los administradores ingresan como usuarios normales pero con privilegios extra
     try {
-      if (window.supabaseClient) {
+      if (window.supabaseClient && gmail) {
         const { data } = await window.supabaseClient.from('admin_credentials').select('email').ilike('email', gmail).maybeSingle();
         if (data) {
           const btnAdmin = document.getElementById('btnAdminAccessQuick');
@@ -1247,8 +1281,10 @@ async function iniciarSesionEmail() {
   try {
     const { data, error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
     if (error) {
-      recordAuthThrottleHit('login', 5);
-      if (typeof showToast === 'function') showToast('Error de acceso', 'No se pudo validar el correo y la contraseña.', 'error');
+      const msg = error.message.includes('Invalid login credentials') 
+        ? 'Correo o contraseña incorrectos. Si te registraste con Google, ingresa con el botón de Google.'
+        : error.message;
+      if (typeof showToast === 'function') showToast('Error de acceso', msg, 'error', 5000);
       return;
     }
     clearAuthThrottle('login');
@@ -1292,8 +1328,7 @@ async function registrarEmail() {
     if (typeof showToast === 'function') showToast('Error', 'La contraseña debe tener al menos 8 caracteres', 'error');
     return;
   }
-  if (emailAuthRequestInFlight || !canRunAuthAction('register')) return;
-  recordAuthThrottleHit('register', 3);
+  if (emailAuthRequestInFlight) return;
 
   emailAuthRequestInFlight = true;
   if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Registrando...');

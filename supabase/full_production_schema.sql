@@ -2193,9 +2193,16 @@ REVOKE EXECUTE ON FUNCTION public.rpc_driver_confirm_delivery(uuid) FROM PUBLIC,
 GRANT EXECUTE ON FUNCTION public.rpc_driver_confirm_delivery(uuid) TO authenticated;
 
 DROP POLICY IF EXISTS "rate_limits_admin_only" ON public.security_rate_limits;
-CREATE POLICY "rate_limits_admin_only" ON public.security_rate_limits
+DROP POLICY IF EXISTS "rate_limits_system_policy" ON public.security_rate_limits;
+CREATE POLICY "rate_limits_system_policy" ON public.security_rate_limits
   FOR ALL TO authenticated
-  USING (is_admin_email())
-  WITH CHECK (is_admin_email());
+  USING (user_id = (SELECT auth.uid()))
+  WITH CHECK (user_id = (SELECT auth.uid()));
+
+GRANT EXECUTE ON FUNCTION public.enforce_action_rate_limit(text, integer, integer) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.guard_profile_field_integrity() TO postgres, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.guard_limited_content_insert() TO postgres, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.guard_optional_order_insert() TO postgres, authenticated, service_role;
+
 
 
