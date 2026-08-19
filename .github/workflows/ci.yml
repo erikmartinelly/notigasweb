@@ -20,3 +20,6 @@ jobs:
 
       - name: Verify JavaScript Syntax
         run: node scripts/check_syntax.js
+
+      - name: Verify Runtime & Map Initialization
+        run: node scripts/check_runtime.js

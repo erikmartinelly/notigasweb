@@ -5,8 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node scripts/check_syntax.js",
-    "build": "node scripts/check_syntax.js"
+    "test": "node scripts/check_syntax.js && node scripts/check_runtime.js",
+    "build": "node scripts/check_syntax.js && node scripts/check_runtime.js"
   },
   "keywords": [
     "notigas",
