@@ -53,12 +53,12 @@ document.addEventListener('DOMContentLoaded', () => {
   try {
     const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
     if (u.role === 'repartidor') {
-      setAppMode('driver');
+      setAppMode('driver', false);
     } else {
-      setAppMode('buyer');
+      setAppMode('buyer', false);
     }
   } catch(e){
-    setAppMode('buyer');
+    setAppMode('buyer', false);
   }
 });
 
@@ -112,6 +112,8 @@ function abrirConfiguracionSegunRol() {
   }
   const subtitleEl = document.getElementById('driverModalSubtitle');
   if (titleEl) titleEl.textContent = 'Editar Mi Ficha de Repartidor';
+  const subtitleEl = document.getElementById('driverModalSubtitle');
+  if (titleEl) titleEl.textContent = 'Editar Mi Ficha de Repartidor';
   if (subtitleEl) subtitleEl.textContent = 'Actualiza los datos de tu negocio. Los cambios se aplican de inmediato.';
 
   const modal = document.getElementById('modalDriver');
@@ -120,8 +122,8 @@ function abrirConfiguracionSegunRol() {
 
 const abrirEdicionFichaRepartidor = abrirFichaRepartidorEdicion;
 
-function setAppMode(mode) {
-  const normalizedMode = mode === 'driver' ? 'driver' : 'buyer';
+function setAppMode(mode, refreshData = true) {
+  const normalizedMode = (mode === 'driver' || mode === 'repartidor') ? 'driver' : 'buyer';
   currentAppMode = normalizedMode;
   mode = normalizedMode;
   if (typeof AppState !== 'undefined') {
@@ -148,7 +150,7 @@ function setAppMode(mode) {
 
     actualizarEstadoBotonesRecorrido(AppState.get('driverGpsLive') === 'on');
     if (typeof verificarYMostrarRepartidorGPS === 'function') verificarYMostrarRepartidorGPS();
-    if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
+    if (refreshData && typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
     if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
   } else {
     if (AppState.get('driverGpsLive') === 'on' && typeof window.pausarRecorridoRepartidor === 'function') {
@@ -162,7 +164,7 @@ function setAppMode(mode) {
         <span style="font-size:9.5px; background:rgba(2,136,209,0.2); color:#38BDF8; padding:3px 6px; border-radius:8px; font-weight:900; border:1px solid #0288D1;">🛍️ MODO COMPRADOR</span>
       `;
     }
-    if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
+    if (refreshData && typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
     if (typeof renderActiveOrdersMap === 'function') renderActiveOrdersMap();
     if (typeof renderReportedTrucksBuffer === 'function') renderReportedTrucksBuffer();
   }
@@ -439,32 +441,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Escuchar a que Auth termine de inicializar y validar la BD (para asegurar rol y ciudad)
     const initSupabaseFeatures = () => {
-        console.log('🔗 Auth y BD sincronizados. Iniciando servicios en red...');
+        console.log('🔗 Auth y BD sincronizados. Conectando Realtime y cargando datos...');
         if (typeof iniciarSuscripcionesRealtime === 'function') {
             iniciarSuscripcionesRealtime();
         }
         if (typeof cargarPedidosVecinalesEnVivo === 'function') {
-            cargarPedidosVecinalesEnVivo();
-            // Mecanismo de recuperación (polling backup) en caso de que falle Realtime
-            if (typeof iniciarSuscripcionesRealtime === 'function') {
-                if (window.notigasRealtimeFallbackInterval) {
-                    clearInterval(
-                        window.notigasRealtimeFallbackInterval
-                    );
-                }
-
-                window.notigasRealtimeFallbackInterval =
-                    setInterval(() => {
-                        if (
-                            AppState.get(
-                                'realtimeConnected'
-                            ) === false
-                        ) {
-                            cargarPedidosVecinalesEnVivo();
-                        }
-                    }, 15000);
-            }
+            cargarPedidosVecinalesEnVivo(true);
         }
+        // Mecanismo de recuperación (polling backup) sólo si Realtime no está conectado (30 segundos)
+        if (window.notigasRealtimeFallbackInterval) {
+            clearInterval(window.notigasRealtimeFallbackInterval);
+        }
+        window.notigasRealtimeFallbackInterval = setInterval(() => {
+            if (AppState && AppState.get('realtimeConnected') === false) {
+                if (typeof cargarPedidosVecinalesEnVivo === 'function') {
+                    cargarPedidosVecinalesEnVivo();
+                }
+            }
+        }, 30000);
     };
 
     document.addEventListener('notigas_auth_ready', initSupabaseFeatures, { once: true });

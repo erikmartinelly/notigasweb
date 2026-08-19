@@ -145,11 +145,6 @@ window.iniciarSuscripcionesRealtime = function() {
 
     console.log(`📡 Suscripción Realtime global multiplexada iniciando para ${activeCity}... (intento ${_realtimeRetryCount + 1})`);
 
-    // Cargar datos iniciales al conectar
-    if (_realtimeRetryCount === 0 && typeof cargarPedidosVecinalesEnVivo === 'function') {
-        cargarPedidosVecinalesEnVivo();
-    }
-
     let _debounceOrdersTimer = null;
     const debouncedRefreshOrders = () => {
         clearTimeout(_debounceOrdersTimer);

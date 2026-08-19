@@ -325,7 +325,6 @@ function initNotigasMap() {
     conectarGPSAuto(false);
   }
   renderReportedTrucksBuffer();
-  cargarPedidosVecinalesEnVivo();
 }
 
 function startMapWhenReady() {
@@ -342,120 +341,124 @@ if (document.readyState === 'loading') {
   startMapWhenReady();
 }
 
-document.addEventListener('supabase_ready', () => {
-  if (typeof cargarPedidosVecinalesEnVivo === 'function') {
-    cargarPedidosVecinalesEnVivo();
-  }
-});
-
+let _activeFetchOrdersPromise = null;
 let _lastCargarPedidosTime = 0;
-async function cargarPedidosVecinalesEnVivo() {
-  if (Date.now() - _lastCargarPedidosTime < 2000) return;
-  _lastCargarPedidosTime = Date.now();
 
+async function cargarPedidosVecinalesEnVivo(force = false) {
   if (!window.supabaseClient || !map) {
-    console.warn("⚠️ cargarPedidosVecinalesEnVivo cancelado: Supabase o el Mapa no están listos.");
     return;
   }
-  const expirationMs = (window.NOTIGAS && window.NOTIGAS.ORDER_EXPIRATION_MS) ? window.NOTIGAS.ORDER_EXPIRATION_MS : 48 * 60 * 60 * 1000;
-  const activeWindow = new Date(Date.now() - expirationMs).toISOString();
-  console.log("🔍 Consultando pedidos en Supabase desde:", activeWindow);
+  // Si ya hay una consulta idéntica en vuelo, reutilizarla (evita peticiones duplicadas)
+  if (_activeFetchOrdersPromise) {
+    return _activeFetchOrdersPromise;
+  }
+  // Throttling: descartar ráfagas en menos de 1500ms salvo que sea forzada
+  const now = Date.now();
+  if (!force && now - _lastCargarPedidosTime < 1500) {
+    return;
+  }
 
-  const activeCity = (typeof AppState !== 'undefined') ? AppState.get('city') : null;
+  _activeFetchOrdersPromise = (async () => {
+    try {
+      _lastCargarPedidosTime = Date.now();
+      const expirationMs = (window.NOTIGAS && window.NOTIGAS.ORDER_EXPIRATION_MS) ? window.NOTIGAS.ORDER_EXPIRATION_MS : 48 * 60 * 60 * 1000;
+      const activeWindow = new Date(Date.now() - expirationMs).toISOString();
 
-  try {
-    const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
-    let isDriverUser = (u.role === 'repartidor') || ((typeof AppState !== 'undefined') && (AppState.get('appMode') === 'driver' || AppState.get('userRole') === 'repartidor'));
-    let driverCategoria = u.categoria || 'gas';
+      const activeCity = (typeof AppState !== 'undefined') ? AppState.get('city') : null;
+      const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
+      let isDriverUser = (u.role === 'repartidor') || ((typeof AppState !== 'undefined') && (AppState.get('appMode') === 'driver' || AppState.get('userRole') === 'repartidor'));
+      let driverCategoria = u.categoria || 'gas';
 
-    const normCity = String(activeCity || '').toLowerCase().trim();
+      const normCity = String(activeCity || '').toLowerCase().trim();
 
-    let pedidosData = [];
-    let pedidosError = null;
+      let pedidosData = [];
+      let pedidosError = null;
 
-    if (isDriverUser) {
-      clearNeighborOrderMarkers();
-      let availableOrders = [];
+      if (isDriverUser) {
+        clearNeighborOrderMarkers();
+        let availableOrders = [];
 
-      // 1. Cargar todos los pedidos públicos disponibles para la ciudad/categoría
-      try {
-        let pubQuery = window.supabaseClient
+        // 1. Cargar pedidos públicos disponibles para la ciudad/categoría
+        try {
+          let pubQuery = window.supabaseClient
+            .from('pedidos_publicos')
+            .select('*')
+            .gte('created_at', activeWindow)
+            .in('estado', ['pendiente', 'visto']);
+          if (normCity) pubQuery = pubQuery.ilike('ciudad', normCity);
+          const { data: pubData, error: pubQueryError } = await pubQuery;
+          if (pubQueryError) throw pubQueryError;
+          if (Array.isArray(pubData)) {
+            availableOrders = pubData.filter(order => {
+              return typeof window.isOrderCategoryMatchingDriver !== 'function' ||
+                window.isOrderCategoryMatchingDriver(order.categoria, driverCategoria);
+            });
+          }
+        } catch (pubErr) {
+          pedidosError = pubErr;
+          console.warn('Error consultando pedidos públicos en vivo:', pubErr);
+        }
+
+        let assignedOrders = [];
+        const { data: sessionData } = await window.supabaseClient.auth.getSession();
+        const driverId = sessionData?.session?.user?.id;
+        if (driverId) {
+          let assignedQuery = window.supabaseClient
+            .from('pedidos')
+            .select('*')
+            .eq('driver_id', driverId)
+            .eq('estado', 'asignado')
+            .gte('created_at', activeWindow);
+          if (normCity) assignedQuery = assignedQuery.ilike('ciudad', normCity);
+          const assignedResult = await assignedQuery;
+          assignedOrders = assignedResult.data || [];
+          pedidosError = pedidosError || assignedResult.error;
+        }
+        window.driverDemandMapState = { availableOrders, assignedOrders };
+        renderDriverDemandByZoom();
+        pedidosData = [];
+      } else {
+        let buyerQuery = window.supabaseClient
           .from('pedidos_publicos')
           .select('*')
           .gte('created_at', activeWindow)
           .in('estado', ['pendiente', 'visto']);
-        if (normCity) pubQuery = pubQuery.ilike('ciudad', normCity);
-        const { data: pubData, error: pubQueryError } = await pubQuery;
-        if (pubQueryError) throw pubQueryError;
-        if (Array.isArray(pubData)) {
-          availableOrders = pubData.filter(order => {
-            return typeof window.isOrderCategoryMatchingDriver !== 'function' ||
-              window.isOrderCategoryMatchingDriver(order.categoria, driverCategoria);
-          });
-        }
-      } catch (pubErr) {
-        pedidosError = pubErr;
-        console.warn('Error consultando pedidos públicos en vivo:', pubErr);
+        if (normCity) buyerQuery = buyerQuery.ilike('ciudad', normCity);
+        const buyerResult = await buyerQuery;
+        pedidosData = buyerResult.data || [];
+        pedidosError = buyerResult.error;
+        window.driverDemandMapState = {
+          availableOrders: pedidosData,
+          assignedOrders: []
+        };
+        renderDriverDemandByZoom();
       }
 
-      let assignedOrders = [];
-      const { data: sessionData } = await window.supabaseClient.auth.getSession();
-      const driverId = sessionData?.session?.user?.id;
-      if (driverId) {
-        let assignedQuery = window.supabaseClient
-          .from('pedidos')
-          .select('*')
-          .eq('driver_id', driverId)
-          .eq('estado', 'asignado')
-          .gte('created_at', activeWindow);
-        if (normCity) assignedQuery = assignedQuery.ilike('ciudad', normCity);
-        const assignedResult = await assignedQuery;
-        assignedOrders = assignedResult.data || [];
-        pedidosError = pedidosError || assignedResult.error;
+      if (pedidosError) {
+        console.error("❌ Error de Supabase al cargar pedidos:", pedidosError.message, pedidosError.details);
       }
-      window.driverDemandMapState = { availableOrders, assignedOrders };
-      renderDriverDemandByZoom();
-      pedidosData = [];
-    } else {
-      let buyerQuery = window.supabaseClient
-        .from('pedidos_publicos')
+
+      // FETCH LIVE TRUCKS (Últimos 10 minutos)
+      const tenMinsAgo = new Date(Date.now() - 10 * 60000).toISOString();
+      const res = await window.supabaseClient
+        .from('rutas_repartidores_publicas')
         .select('*')
-        .gte('created_at', activeWindow)
-        .in('estado', ['pendiente', 'visto']);
-      if (normCity) buyerQuery = buyerQuery.ilike('ciudad', normCity);
-      const buyerResult = await buyerQuery;
-      pedidosData = buyerResult.data || [];
-      pedidosError = buyerResult.error;
-      window.driverDemandMapState = {
-        availableOrders: pedidosData,
-        assignedOrders: []
-      };
-      renderDriverDemandByZoom();
-    }
+        .eq('ciudad', activeCity)
+        .gte('last_active', tenMinsAgo);
 
-    if (pedidosError) {
-      console.error("❌ Error de Supabase al cargar pedidos:", pedidosError.message, pedidosError.details);
-    } else if (pedidosData) {
-      console.log(`✅ Supabase devolvió ${pedidosData.length} pedidos.`);
+      if (res.data && !res.error) {
+         res.data.forEach(truck => actualizarRepartidorEnMapa(truck));
+      } else if (res.error) {
+         console.error("❌ Error de Supabase al cargar camiones:", res.error.message);
+      }
+    } catch(e) {
+      console.error("❌ Error general cargando live data:", e);
+    } finally {
+      _activeFetchOrdersPromise = null;
     }
+  })();
 
-    // FETCH LIVE TRUCKS (Last 10 minutes to avoid stale trucks)
-    const tenMinsAgo = new Date(Date.now() - 10 * 60000).toISOString();
-    const res = await window.supabaseClient
-      .from('rutas_repartidores_publicas')
-      .select('*')
-      .eq('ciudad', activeCity)
-      .gte('last_active', tenMinsAgo);
-
-    if (res.data && !res.error) {
-       console.log(`✅ Supabase devolvió ${res.data.length} camiones activos.`);
-       res.data.forEach(truck => actualizarRepartidorEnMapa(truck));
-    } else if (res.error) {
-       console.error("❌ Error de Supabase al cargar camiones:", res.error.message);
-    }
-  } catch(e) {
-    console.error("❌ Error general cargando live data:", e);
-  }
+  return _activeFetchOrdersPromise;
 }
 
 // Marcadores de radar individuales por pedido
