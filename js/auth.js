@@ -527,6 +527,31 @@ function iniciarConGoogleDirecto() {
   }
 }
 
+async function iniciarConGoogleOAuthRedirect() {
+  if (!window.supabaseClient) {
+    if (typeof showToast === 'function') showToast('Error', 'Servidor no disponible', 'error');
+    return;
+  }
+  try {
+    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Conectando con Google...');
+    const redirectUrl = window.location.origin + window.location.pathname;
+    const { error } = await window.supabaseClient.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: redirectUrl
+      }
+    });
+    if (error) {
+      if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+      if (typeof showToast === 'function') showToast('Error Google OAuth', error.message, 'error', 5000);
+    }
+  } catch (err) {
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+    console.error("Error iniciando OAuth redirect:", err);
+  }
+}
+window.iniciarConGoogleOAuthRedirect = iniciarConGoogleOAuthRedirect;
+
 async function handleCredentialResponse(response) {
   try {
     if (!response || !response.credential || typeof response.credential !== 'string') {
@@ -1407,39 +1432,60 @@ async function procesarSesionExitosa(user) {
     }
     if (!userNombre) userNombre = (gmail ? gmail.split('@')[0] : 'Usuario');
 
-    if (window.checkAndApplyAdminStatus) {
-      window.checkAndApplyAdminStatus(user).catch(() => {});
-    }
-
-    // 1. VERIFICAR si el usuario ya existe en choferes_habilitados o en profiles
+    // 1. CARGA UNIFICADA DE DATOS DE USUARIO (1 solo viaje de red)
     let esRepartidorDB = false;
     let choferData = null;
     let existingProfile = null;
 
     if (window.supabaseClient && user?.id) {
       try {
-        const [driverRes, profileRes] = await Promise.all([
-          window.supabaseClient
-            .from('choferes_habilitados')
-            .select('ciudad, categoria, productos, schedule, estado_verificacion')
-            .eq('user_id', user.id)
-            .maybeSingle(),
-          window.supabaseClient
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .maybeSingle()
-        ]);
+        const { data: bootData, error: bootErr } = await window.supabaseClient.rpc('rpc_get_user_bootstrap_data');
+        if (!bootErr && bootData) {
+          if (bootData.driver) {
+            esRepartidorDB = true;
+            choferData = bootData.driver;
+          }
+          if (bootData.profile) {
+            existingProfile = bootData.profile;
+            if (existingProfile.nombre) userNombre = existingProfile.nombre;
+            if (existingProfile.apellido) userApellido = existingProfile.apellido;
+          }
+          if (bootData.is_admin) {
+            AppState.set('isAdmin', true);
+            window._cachedIsAdmin = true;
+            window._cachedAdminEmail = gmail;
+            const btnAdmin = document.getElementById('btnAdminAccessQuick');
+            if (btnAdmin) btnAdmin.style.display = 'flex';
+          }
+        } else {
+          // Fallback a consultas paralelas directas
+          const [driverRes, profileRes] = await Promise.all([
+            window.supabaseClient
+              .from('choferes_habilitados')
+              .select('ciudad, categoria, productos, schedule, estado_verificacion')
+              .eq('user_id', user.id)
+              .maybeSingle(),
+            window.supabaseClient
+              .from('profiles')
+              .select('*')
+              .eq('id', user.id)
+              .maybeSingle()
+          ]);
 
-        if (driverRes?.data) {
-          esRepartidorDB = true;
-          choferData = driverRes.data;
+          if (driverRes?.data) {
+            esRepartidorDB = true;
+            choferData = driverRes.data;
+          }
+          if (profileRes?.data) {
+            existingProfile = profileRes.data;
+            if (existingProfile.nombre) userNombre = existingProfile.nombre;
+            if (existingProfile.apellido) userApellido = existingProfile.apellido;
+          }
+          if (window.checkAndApplyAdminStatus) {
+            window.checkAndApplyAdminStatus(user).catch(() => {});
+          }
         }
-        if (profileRes?.data) {
-          existingProfile = profileRes.data;
-          if (existingProfile.nombre) userNombre = existingProfile.nombre;
-          if (existingProfile.apellido) userApellido = existingProfile.apellido;
-        }
+
         if (!window._roleSelectedNow) {
           currentSelectedRole = esRepartidorDB && existingProfile?.role !== 'vecino'
             ? 'driver'

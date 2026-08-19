@@ -1076,276 +1076,62 @@ BEGIN
 
     IF NOT public.is_current_enabled_driver(v_order.ciudad, v_order.categoria) THEN
         RAISE EXCEPTION 'Repartidor no habilitado para este pedido';
-    END IF;
-
-    UPDATE public.pedidos
-    SET visto = true, updated_at = timezone('utc'::text, now())
-    WHERE id = p_order_id
       AND estado = 'pendiente';
 END;
 $$;
 
--- 3. Obtener grupos de demanda espacial (DBSCAN determinista)
-CREATE OR REPLACE FUNCTION public.rpc_get_demand_clusters_v2(
-    p_ciudad text DEFAULT NULL,
-    p_categoria text DEFAULT NULL,
-    p_distancia_metros double precision DEFAULT 300,
-    p_min_pedidos integer DEFAULT 2
-)
-RETURNS TABLE (
-    cluster_id text,
-    ciudad text,
-    categoria text,
-    centro_lat double precision,
-    centro_lng double precision,
-    pedidos_activos bigint,
-    created_at_ultimo timestamp with time zone
-)
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-BEGIN
-    IF NOT public.is_current_enabled_driver(p_ciudad, NULL) THEN
-        RAISE EXCEPTION 'Repartidor no habilitado para esta ciudad';
-    END IF;
-
-    RETURN QUERY
-    WITH clustered_orders AS (
-        SELECT 
-            p.id,
-            p.ciudad,
-            p.categoria,
-            p.latitude,
-            p.longitude,
-            p.created_at,
-            ST_ClusterDBSCAN(
-                ST_Transform(ST_SetSRID(ST_MakePoint(p.longitude, p.latitude), 4326), 3857),
-                eps := p_distancia_metros,
-                minpoints := p_min_pedidos
-            ) OVER (PARTITION BY p.ciudad, p.categoria) AS cluster_id_raw
-        FROM 
-            public.pedidos p
-        WHERE 
-            p.estado = 'pendiente'
-            AND (p_ciudad IS NULL OR LOWER(TRIM(p.ciudad)) = LOWER(TRIM(p_ciudad)))
-            AND (p_categoria IS NULL OR LOWER(TRIM(p.categoria)) = LOWER(TRIM(p_categoria)))
-            AND p.latitude IS NOT NULL
-            AND p.longitude IS NOT NULL
-    )
-    SELECT 
-        md5(string_agg(c.id::text, ',' ORDER BY c.id)) AS cluster_id,
-        c.ciudad,
-        c.categoria,
-        AVG(c.latitude) AS centro_lat,
-        AVG(c.longitude) AS centro_lng,
-        COUNT(c.id) AS pedidos_activos,
-        MAX(c.created_at) AS created_at_ultimo
-    FROM 
-        clustered_orders c
-    WHERE 
-        c.cluster_id_raw IS NOT NULL
-    GROUP BY 
-        c.ciudad,
-        c.categoria,
-        c.cluster_id_raw;
-END;
-$$;
-
--- 4. Obtener pedidos dentro de un grupo de demanda
-CREATE OR REPLACE FUNCTION public.rpc_get_orders_for_cluster_v2(
-    p_cluster_id text,
-    p_ciudad text,
-    p_categoria text,
-    p_distancia_metros double precision DEFAULT 300,
-    p_min_pedidos integer DEFAULT 2
-)
-RETURNS TABLE (
-    id uuid,
-    user_id text,
-    categoria text,
-    titulo text,
-    descripcion text,
-    cantidad text,
-    direccion text,
-    telefono text,
-    estado text,
-    driver_id text,
-    ciudad text,
-    barrio_otb text,
-    latitude double precision,
-    longitude double precision,
-    created_at timestamp with time zone,
-    updated_at timestamp with time zone
-)
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-BEGIN
-    IF NOT public.is_current_enabled_driver(p_ciudad, p_categoria) THEN
-        RAISE EXCEPTION 'Repartidor no habilitado para esta ciudad o categoria';
-    END IF;
-
-    RETURN QUERY
-    WITH clustered_orders AS (
-        SELECT 
-            p.*,
-            ST_ClusterDBSCAN(
-                ST_Transform(ST_SetSRID(ST_MakePoint(p.longitude, p.latitude), 4326), 3857),
-                eps := p_distancia_metros,
-                minpoints := p_min_pedidos
-            ) OVER (PARTITION BY p.ciudad, p.categoria) AS cluster_id_raw
-        FROM 
-            public.pedidos p
-        WHERE 
-            p.estado = 'pendiente'
-            AND LOWER(TRIM(p.ciudad)) = LOWER(TRIM(p_ciudad))
-            AND LOWER(TRIM(p.categoria)) = LOWER(TRIM(p_categoria))
-            AND p.latitude IS NOT NULL
-            AND p.longitude IS NOT NULL
-    ),
-    valid_clusters AS (
-        SELECT 
-            co.cluster_id_raw,
-            md5(string_agg(co.id::text, ',' ORDER BY co.id)) AS gen_cluster_id,
-            COUNT(co.id) AS cluster_count
-        FROM clustered_orders co
-        WHERE co.cluster_id_raw IS NOT NULL
-        GROUP BY co.cluster_id_raw
-    )
-    SELECT 
-        co.id,
-        NULL::text AS user_id,
-        co.categoria,
-        NULL::text AS titulo,
-        NULL::text AS descripcion,
-        co.cantidad,
-        NULL::text AS direccion,
-        NULL::text AS telefono,
-        co.estado,
-        NULL::text AS driver_id,
-        co.ciudad,
-        co.barrio_otb,
-        co.latitude,
-        co.longitude,
-        co.created_at,
-        co.updated_at
-    FROM clustered_orders co
-    JOIN valid_clusters vc ON co.cluster_id_raw = vc.cluster_id_raw
-    WHERE vc.gen_cluster_id = p_cluster_id
-      AND vc.cluster_count >= p_min_pedidos;
-END;
-$$;
-
--- 5. Aceptar grupo de demanda completo atómicamente
-CREATE OR REPLACE FUNCTION public.rpc_accept_demand_cluster_v2(
-    p_cluster_id text,
-    p_ciudad text,
-    p_categoria text,
-    p_distancia_metros double precision DEFAULT 300,
-    p_min_pedidos integer DEFAULT 2
-)
+-- 3. Bootstrap consolidado de usuario (1 sola consulta en login)
+CREATE OR REPLACE FUNCTION public.rpc_get_user_bootstrap_data()
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path TO 'public', 'auth', 'pg_temp'
 AS $$
 DECLARE
-    v_driver_id text;
-    v_driver_record RECORD;
-    v_updated_count integer;
-    v_assigned_ids uuid[];
-    v_d_cat text;
-    v_p_cat text;
+  v_user_id uuid := auth.uid();
+  v_user_id_text text;
+  v_is_admin boolean := false;
+  v_profile jsonb := null;
+  v_driver jsonb := null;
 BEGIN
-    v_driver_id := auth.uid()::text;
-    IF v_driver_id IS NULL THEN
-        RAISE EXCEPTION 'No autenticado';
-    END IF;
-
-    SELECT * INTO v_driver_record
-    FROM public.choferes_habilitados
-    WHERE user_id = v_driver_id 
-      AND NOT EXISTS (SELECT 1 FROM public.usuarios_baneados WHERE user_id = v_driver_id);
-
-    IF NOT FOUND THEN
-        RAISE EXCEPTION 'Conductor no registrado o se encuentra baneado';
-    END IF;
-
-    IF LOWER(TRIM(COALESCE(v_driver_record.ciudad, ''))) <> LOWER(TRIM(COALESCE(p_ciudad, ''))) THEN
-        RAISE EXCEPTION 'El conductor no opera en esta ciudad';
-    END IF;
-
-    v_d_cat := LOWER(TRIM(COALESCE(v_driver_record.categoria, '')));
-    v_p_cat := LOWER(TRIM(COALESCE(p_categoria, '')));
-
-    IF v_d_cat ILIKE '%gas%' OR v_d_cat ILIKE '%glp%' OR v_d_cat ILIKE '%garrafa%' THEN v_d_cat := 'gas'; END IF;
-    IF v_d_cat ILIKE '%agua%' OR v_d_cat ILIKE '%botell%' THEN v_d_cat := 'agua'; END IF;
-    IF v_p_cat ILIKE '%gas%' OR v_p_cat ILIKE '%glp%' OR v_p_cat ILIKE '%garrafa%' THEN v_p_cat := 'gas'; END IF;
-    IF v_p_cat ILIKE '%agua%' OR v_p_cat ILIKE '%botell%' THEN v_p_cat := 'agua'; END IF;
-
-    IF v_d_cat <> v_p_cat AND v_d_cat <> 'otros' AND v_p_cat <> 'otros' THEN
-        RAISE EXCEPTION 'La categoría del conductor no coincide con la demanda';
-    END IF;
-
-    WITH clustered_orders AS (
-        SELECT 
-            p.id,
-            ST_ClusterDBSCAN(
-                ST_Transform(ST_SetSRID(ST_MakePoint(p.longitude, p.latitude), 4326), 3857),
-                eps := p_distancia_metros,
-                minpoints := p_min_pedidos
-            ) OVER (PARTITION BY p.ciudad, p.categoria) AS cluster_id_raw
-        FROM 
-            public.pedidos p
-        WHERE 
-            p.estado = 'pendiente'
-            AND LOWER(TRIM(p.ciudad)) = LOWER(TRIM(p_ciudad))
-            AND LOWER(TRIM(p.categoria)) = LOWER(TRIM(p_categoria))
-            AND p.latitude IS NOT NULL
-            AND p.longitude IS NOT NULL
-    ),
-    valid_clusters AS (
-        SELECT 
-            cluster_id_raw,
-            md5(string_agg(id::text, ',' ORDER BY id)) AS gen_cluster_id,
-            COUNT(id) AS cluster_count
-        FROM clustered_orders
-        WHERE cluster_id_raw IS NOT NULL
-        GROUP BY cluster_id_raw
-    ),
-    updated AS (
-        UPDATE public.pedidos up
-        SET 
-            estado = 'asignado',
-            driver_id = v_driver_id,
-            updated_at = timezone('utc'::text, now())
-        FROM clustered_orders co
-        JOIN valid_clusters vc ON co.cluster_id_raw = vc.cluster_id_raw
-        WHERE up.id = co.id
-          AND vc.gen_cluster_id = p_cluster_id
-          AND vc.cluster_count >= p_min_pedidos
-          AND up.estado = 'pendiente'
-        RETURNING up.id
-    )
-    SELECT array_agg(id) INTO v_assigned_ids FROM updated;
-
-    v_updated_count := coalesce(cardinality(v_assigned_ids), 0);
-
-    IF v_updated_count < p_min_pedidos THEN
-        RAISE EXCEPTION 'El grupo de demanda ya no tiene suficientes pedidos activos o fue tomado por alguien más';
-    END IF;
-
+  IF v_user_id IS NULL THEN
     RETURN jsonb_build_object(
-        'ok', true,
-        'assigned_count', v_updated_count,
-        'cluster_id', p_cluster_id,
-        'driver_id', v_driver_id,
-        'order_ids', v_assigned_ids
+      'authenticated', false,
+      'is_admin', false,
+      'profile', null,
+      'driver', null
     );
+  END IF;
+
+  v_user_id_text := v_user_id::text;
+  v_is_admin := public.is_admin_email();
+
+  -- Obtener perfil
+  SELECT to_jsonb(p) INTO v_profile
+  FROM public.profiles p
+  WHERE p.id = v_user_id;
+
+  -- Obtener datos de chofer si existen y no está baneado
+  SELECT to_jsonb(ch) INTO v_driver
+  FROM public.choferes_habilitados ch
+  WHERE ch.user_id = v_user_id_text
+    AND NOT EXISTS (
+      SELECT 1 FROM public.usuarios_baneados ub
+      WHERE ub.user_id = v_user_id_text
+    );
+
+  RETURN jsonb_build_object(
+    'authenticated', true,
+    'user_id', v_user_id_text,
+    'is_admin', v_is_admin,
+    'profile', v_profile,
+    'driver', v_driver
+  );
 END;
 $$;
+
+REVOKE ALL ON FUNCTION public.rpc_get_user_bootstrap_data() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.rpc_get_user_bootstrap_data() TO authenticated;
 
 -- 6. Contacto seguro de compradores para el grupo asignado
 CREATE OR REPLACE FUNCTION public.rpc_get_my_assigned_orders()
@@ -1960,12 +1746,6 @@ GRANT EXECUTE ON FUNCTION public.rpc_assign_order(uuid) TO authenticated;
 REVOKE ALL ON FUNCTION public.rpc_mark_order_seen(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.rpc_mark_order_seen(uuid) TO authenticated;
 
-REVOKE ALL ON FUNCTION public.rpc_accept_demand_cluster_v2(text, text, text, double precision, integer) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.rpc_accept_demand_cluster_v2(text, text, text, double precision, integer) FROM authenticated;
-
-REVOKE ALL ON FUNCTION public.rpc_get_orders_for_cluster_v2(text, text, text, double precision, integer) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.rpc_get_orders_for_cluster_v2(text, text, text, double precision, integer) TO authenticated;
-
 REVOKE ALL ON FUNCTION public.rpc_get_my_assigned_orders() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.rpc_get_my_assigned_orders() TO authenticated;
 
@@ -1978,10 +1758,8 @@ GRANT EXECUTE ON FUNCTION public.incrementar_votos_aviso(uuid, integer) TO authe
 REVOKE ALL ON FUNCTION public.incrementar_votos_comentario(uuid, integer) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.incrementar_votos_comentario(uuid, integer) TO authenticated;
 
-REVOKE ALL ON FUNCTION public.rpc_get_demand_clusters_v2(text, text, double precision, integer) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.rpc_get_demand_clusters_v2(text, text, double precision, integer) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.is_admin_email() TO anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.is_banned() TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.is_admin_email() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_banned() TO authenticated;
 
 -- ==============================================================================
 -- 8.1 REVISION SEGURA DEL PEDIDO POR EL REPARTIDOR (MIGRACION 054)
@@ -2158,8 +1936,7 @@ BEGIN
       AND p.proname = ANY (ARRAY[
         'is_admin_email', 'is_banned', 'rpc_assign_order', 'rpc_mark_order_seen',
         'rpc_confirm_order_received', 'rpc_driver_confirm_delivery', 'rpc_cancel_own_order',
-        'rpc_get_demand_clusters_v2', 'rpc_get_orders_for_cluster_v2',
-        'rpc_get_driver_available_orders',
+        'rpc_get_driver_available_orders', 'rpc_get_user_bootstrap_data',
         'rpc_get_my_assigned_orders', 'rpc_purge_old_records',
         'incrementar_votos_aviso', 'incrementar_votos_comentario',
         'delete_user_account', 'rpc_admin_list_users', 'rpc_admin_delete_user',

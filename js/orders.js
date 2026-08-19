@@ -15,22 +15,20 @@ function formatearAntiguedadPedido(value) {
 }
 window.formatearAntiguedadPedido = formatearAntiguedadPedido;
 
-function startDriverOrdersAutoRefresh() {
-  if (window._driverOrdersInterval) clearInterval(window._driverOrdersInterval);
-  window._driverOrdersInterval = setInterval(() => {
-    const modal = document.getElementById('modalDriverOrders');
-    if (modal && modal.style.display === 'flex' && typeof renderDriverOrdersList === 'function') {
-      renderDriverOrdersList();
-    }
-  }, 10000);
-}
+window.ORDER_STATES = Object.freeze({
+  PENDIENTE: 'pendiente',
+  VISTO: 'visto',
+  ASIGNADO: 'asignado',
+  ENTREGADO: 'entregado',
+  RECIBIDO: 'recibido',
+  CANCELADO: 'cancelado'
+});
 
 function abrirModalDriverOrders() {
   const modal = document.getElementById('modalDriverOrders');
   if (modal) {
     modal.style.display = 'flex';
     if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
-    startDriverOrdersAutoRefresh();
   }
 }
 window.abrirModalDriverOrders = abrirModalDriverOrders;
@@ -39,10 +37,6 @@ function closeDriverOrdersModal() {
   const modal = document.getElementById('modalDriverOrders');
   if (modal) {
     modal.style.display = 'none';
-    if (window._driverOrdersInterval) {
-      clearInterval(window._driverOrdersInterval);
-      window._driverOrdersInterval = null;
-    }
   }
 }
 window.closeDriverOrdersModal = closeDriverOrdersModal;

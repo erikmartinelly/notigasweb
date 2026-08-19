@@ -394,7 +394,7 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
       let assignedPromise = Promise.resolve({ data: [], error: null });
       if (isDriverUser) {
         const currentUserId = (typeof getAuthenticatedUserId === 'function')
-          ? getAuthenticatedUserId()
+          ? await getAuthenticatedUserId()
           : (u.id || (typeof AppState !== 'undefined' ? AppState.get('userData')?.id : null) || window._tempAuthUser?.id);
 
         if (currentUserId) {
@@ -685,8 +685,8 @@ window.actualizarPedidoEnMapa = function(order, eventType = 'UPDATE') {
   if (!map || !order || !order.id) return;
   const state = window.driverDemandMapState = window.driverDemandMapState || { availableOrders: [], assignedOrders: [] };
   const orderId = String(order.id);
-  const localUserId = (typeof getAuthenticatedUserId === 'function')
-    ? getAuthenticatedUserId()
+  const localUserId = (typeof getCurrentUserId === 'function')
+    ? getCurrentUserId()
     : ((typeof AppState !== 'undefined' ? AppState.get('userData')?.id : null) || window._tempAuthUser?.id);
 
   // 1. Si el pedido fue cancelado o entregado, removerlo del mapa

@@ -34,6 +34,15 @@ window.NOTIGAS.MIN_MOVEMENT_METERS   = 15;                     // 15 metros (mov
 window.NOTIGAS.IDLE_THRESHOLD_MS     = 3 * 60 * 1000;         // 3 minutos (repartidor inactivo)
 window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño máximo imagen)
 
+window.ORDER_STATES = Object.freeze({
+  PENDIENTE: 'pendiente',
+  VISTO: 'visto',
+  ASIGNADO: 'asignado',
+  ENTREGADO: 'entregado',
+  RECIBIDO: 'recibido',
+  CANCELADO: 'cancelado'
+});
+
 /* =====================================================
    CARGADOR ASÍNCRONO DE MÓDULOS BAJO DEMANDA (CODE-SPLITTING)
    ===================================================== */
@@ -164,22 +173,38 @@ window.loadAdsModule = async function() {
           const user = data.session.user;
           const meta = user.user_metadata || {};
 
-          // Consultar ficha y preferencia de rol juntas. Tener ficha de chofer
-          // no obliga a permanecer siempre en modo repartidor.
-          const [driverResult, profileResult] = await Promise.all([
-            window.supabaseClient
-              .from('choferes_habilitados')
-              .select('*')
-              .eq('user_id', user.id)
-              .maybeSingle(),
-            window.supabaseClient
-              .from('profiles')
-              .select('*')
-              .eq('id', user.id)
-              .maybeSingle()
-          ]);
-          const driverData = driverResult?.data || null;
-          const profileData = profileResult?.data || null;
+          let driverData = null;
+          let profileData = null;
+
+          try {
+            const { data: bootData, error: bootErr } = await window.supabaseClient.rpc('rpc_get_user_bootstrap_data');
+            if (!bootErr && bootData) {
+              driverData = bootData.driver || null;
+              profileData = bootData.profile || null;
+              if (bootData.is_admin) {
+                _state['isAdmin'] = true;
+                window._cachedIsAdmin = true;
+                window._cachedAdminEmail = (user.email || '').toLowerCase().trim();
+              }
+            }
+          } catch (_) {}
+
+          if (!driverData && !profileData) {
+            const [driverResult, profileResult] = await Promise.all([
+              window.supabaseClient
+                .from('choferes_habilitados')
+                .select('*')
+                .eq('user_id', user.id)
+                .maybeSingle(),
+              window.supabaseClient
+                .from('profiles')
+                .select('*')
+                .eq('id', user.id)
+                .maybeSingle()
+            ]);
+            driverData = driverResult?.data || null;
+            profileData = profileResult?.data || null;
+          }
 
           if (driverData) {
             const preferredRole = profileData?.role === 'vecino' ? 'vecino' : 'repartidor';

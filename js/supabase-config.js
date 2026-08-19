@@ -4,11 +4,10 @@ const SUPABASE_URL = 'https://yxzzfqyehllogzzhdtmc.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_wWVQ59Rejod5Oc1X4s_eeQ_ONbXzyi2';
 const SUPABASE_SESSION_STORAGE_KEY = 'notigas_auth_session';
 
-// Limpieza proactiva de tokens heredados/corruptos de versiones anteriores
+// Limpieza proactiva de tokens heredados/corruptos de versiones anteriores (preservando PKCE)
 (function cleanupLegacyAuthStorage() {
   try {
     const obsoleteKeys = [
-      'sb-pkce-code-verifier',
       'supabase.auth.token',
       'sb-auth-token',
       'notigas-auth-session-v1',
@@ -26,8 +25,8 @@ function createNotigasSupabaseClient() {
     auth: {
       autoRefreshToken: true,
       persistSession: true,
-      detectSessionInUrl: false,
-      flowType: 'implicit',
+      detectSessionInUrl: true,
+      flowType: 'pkce',
       storageKey: SUPABASE_SESSION_STORAGE_KEY,
       storage: window.localStorage
     }
