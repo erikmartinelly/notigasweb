@@ -23,7 +23,7 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
     // Consultar exclusivamente de la vista pública autorizada
     const { data, error } = await window.supabaseClient
       .from('choferes_publicos')
-      .select('*')
+      .select('id, nombre_completo, categoria, ciudad, telefono, descripcion, foto_url, estado_verificacion, created_at')
       .eq('ciudad', cityNormalized);
 
     if (error) {

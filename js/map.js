@@ -366,90 +366,84 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
 
       const activeCity = (typeof AppState !== 'undefined') ? AppState.get('city') : null;
       const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
-      let isDriverUser = (u.role === 'repartidor') || ((typeof AppState !== 'undefined') && (AppState.get('appMode') === 'driver' || AppState.get('userRole') === 'repartidor'));
-      let driverCategoria = u.categoria || 'gas';
-
+      const isDriverUser = (u.role === 'repartidor') || ((typeof AppState !== 'undefined') && (AppState.get('appMode') === 'driver' || AppState.get('userRole') === 'repartidor'));
+      const driverCategoria = u.categoria || 'gas';
       const normCity = String(activeCity || '').toLowerCase().trim();
+      const tenMinsAgo = new Date(Date.now() - 10 * 60000).toISOString();
 
-      let pedidosData = [];
-      let pedidosError = null;
+      // Proyección explícita de columnas necesarias (elimina el overhead masivo de select *)
+      const ORDER_COLUMNS = 'id, user_id, categoria, titulo, cantidad, direccion, telefono, estado, driver_id, ciudad, latitude, longitude, created_at';
+      const TRUCK_COLUMNS = 'id, user_id, distribuidor_nombre, categoria, titulo, ciudad, latitude, longitude, garrafas_agotadas, last_active, telefono, placa, productos';
+
+      // 1. Consulta de Camiones en vivo (común para ambos roles)
+      let trucksQuery = window.supabaseClient
+        .from('rutas_repartidores_publicas')
+        .select(TRUCK_COLUMNS)
+        .gte('last_active', tenMinsAgo);
+      if (normCity) trucksQuery = trucksQuery.ilike('ciudad', normCity);
+
+      // 2. Consulta de Pedidos Públicos (pendientes y vistos)
+      let pubQuery = window.supabaseClient
+        .from('pedidos_publicos')
+        .select(ORDER_COLUMNS)
+        .gte('created_at', activeWindow)
+        .in('estado', ['pendiente', 'visto']);
+      if (normCity) pubQuery = pubQuery.ilike('ciudad', normCity);
+
+      // 3. Consulta de Pedidos Asignados (sólo para repartidor autenticado)
+      let assignedPromise = Promise.resolve({ data: [], error: null });
+      if (isDriverUser) {
+        const currentUserId = (typeof getAuthenticatedUserId === 'function')
+          ? getAuthenticatedUserId()
+          : (u.id || (typeof AppState !== 'undefined' ? AppState.get('userData')?.id : null) || window._tempAuthUser?.id);
+
+        if (currentUserId) {
+          let assignedQuery = window.supabaseClient
+            .from('pedidos')
+            .select(ORDER_COLUMNS)
+            .eq('driver_id', currentUserId)
+            .eq('estado', 'asignado')
+            .gte('created_at', activeWindow);
+          if (normCity) assignedQuery = assignedQuery.ilike('ciudad', normCity);
+          assignedPromise = assignedQuery;
+        }
+      }
+
+      // EJECUCIÓN PARALELA DE TODAS LAS CONSULTAS DE RED (Reduce latencia de T1+T2+T3 a max(T1,T2,T3))
+      const [pubRes, assignedRes, trucksRes] = await Promise.all([
+        pubQuery,
+        assignedPromise,
+        trucksQuery
+      ]);
+
+      if (pubRes.error) console.error("❌ Error de Supabase al cargar pedidos públicos:", pubRes.error.message);
+      if (assignedRes.error) console.error("❌ Error de Supabase al cargar pedidos asignados:", assignedRes.error.message);
+      if (trucksRes.error) console.error("❌ Error de Supabase al cargar camiones:", trucksRes.error.message);
 
       if (isDriverUser) {
         clearNeighborOrderMarkers();
         let availableOrders = [];
-
-        // 1. Cargar pedidos públicos disponibles para la ciudad/categoría
-        try {
-          let pubQuery = window.supabaseClient
-            .from('pedidos_publicos')
-            .select('*')
-            .gte('created_at', activeWindow)
-            .in('estado', ['pendiente', 'visto']);
-          if (normCity) pubQuery = pubQuery.ilike('ciudad', normCity);
-          const { data: pubData, error: pubQueryError } = await pubQuery;
-          if (pubQueryError) throw pubQueryError;
-          if (Array.isArray(pubData)) {
-            availableOrders = pubData.filter(order => {
-              return typeof window.isOrderCategoryMatchingDriver !== 'function' ||
-                window.isOrderCategoryMatchingDriver(order.categoria, driverCategoria);
-            });
-          }
-        } catch (pubErr) {
-          pedidosError = pubErr;
-          console.warn('Error consultando pedidos públicos en vivo:', pubErr);
+        if (Array.isArray(pubRes.data)) {
+          availableOrders = pubRes.data.filter(order => {
+            return typeof window.isOrderCategoryMatchingDriver !== 'function' ||
+              window.isOrderCategoryMatchingDriver(order.categoria, driverCategoria);
+          });
         }
-
-        let assignedOrders = [];
-        const { data: sessionData } = await window.supabaseClient.auth.getSession();
-        const driverId = sessionData?.session?.user?.id;
-        if (driverId) {
-          let assignedQuery = window.supabaseClient
-            .from('pedidos')
-            .select('*')
-            .eq('driver_id', driverId)
-            .eq('estado', 'asignado')
-            .gte('created_at', activeWindow);
-          if (normCity) assignedQuery = assignedQuery.ilike('ciudad', normCity);
-          const assignedResult = await assignedQuery;
-          assignedOrders = assignedResult.data || [];
-          pedidosError = pedidosError || assignedResult.error;
-        }
+        const assignedOrders = assignedRes.data || [];
         window.driverDemandMapState = { availableOrders, assignedOrders };
         renderDriverDemandByZoom();
-        pedidosData = [];
       } else {
-        let buyerQuery = window.supabaseClient
-          .from('pedidos_publicos')
-          .select('*')
-          .gte('created_at', activeWindow)
-          .in('estado', ['pendiente', 'visto']);
-        if (normCity) buyerQuery = buyerQuery.ilike('ciudad', normCity);
-        const buyerResult = await buyerQuery;
-        pedidosData = buyerResult.data || [];
-        pedidosError = buyerResult.error;
+        const availableOrders = pubRes.data || [];
         window.driverDemandMapState = {
-          availableOrders: pedidosData,
+          availableOrders,
           assignedOrders: []
         };
         renderDriverDemandByZoom();
       }
 
-      if (pedidosError) {
-        console.error("❌ Error de Supabase al cargar pedidos:", pedidosError.message, pedidosError.details);
-      }
-
-      // FETCH LIVE TRUCKS (Últimos 10 minutos)
-      const tenMinsAgo = new Date(Date.now() - 10 * 60000).toISOString();
-      const res = await window.supabaseClient
-        .from('rutas_repartidores_publicas')
-        .select('*')
-        .eq('ciudad', activeCity)
-        .gte('last_active', tenMinsAgo);
-
-      if (res.data && !res.error) {
-         res.data.forEach(truck => actualizarRepartidorEnMapa(truck));
-      } else if (res.error) {
-         console.error("❌ Error de Supabase al cargar camiones:", res.error.message);
+      // Renderizado de camiones activos
+      if (Array.isArray(trucksRes.data)) {
+        trucksRes.data.forEach(truck => actualizarRepartidorEnMapa(truck));
       }
     } catch(e) {
       console.error("❌ Error general cargando live data:", e);
