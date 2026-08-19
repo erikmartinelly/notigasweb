@@ -39,7 +39,6 @@ window.ORDER_STATES = Object.freeze({
   VISTO: 'visto',
   ASIGNADO: 'asignado',
   ENTREGADO: 'entregado',
-  RECIBIDO: 'recibido',
   CANCELADO: 'cancelado'
 });
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * NOTIGAS - Runtime & Initialization Integrity Checker
- * Simulates browser environment to execute map.js and core modules,
+ * NOTIGAS - Complete Runtime & Initialization Integrity Checker
+ * Simulates the full browser environment to evaluate and run all 15 application modules,
  * verifying that no Temporal Dead Zone (TDZ), ReferenceError, or TypeError occurs
- * during startup, Leaflet event dispatching (moveend, zoomend), or GPS updates.
+ * across map, orders, auth, forum, admin, and state management.
  */
 
 const fs = require('fs');
@@ -12,23 +12,18 @@ const vm = require('vm');
 
 const ROOT_DIR = path.resolve(__dirname, '..');
 
-console.log('🧪 Iniciando prueba de runtime para NOTIGAS (map.js & core modules)...\n');
+console.log('🧪 Iniciando prueba de runtime integral para NOTIGAS (15 módulos frontend)...\n');
 
-// 1. Crear entorno simulado de navegador (DOM, Leaflet, Supabase, AppState, Storage)
+// 1. Entorno de Simulación de Navegador Completo
 const windowListeners = {};
 const docListeners = {};
 const mapListeners = {};
 
 class MockLayerGroup {
-  constructor() {
-    this.layers = [];
-  }
+  constructor() { this.layers = []; }
   addTo(m) { return this; }
   addLayer(l) { this.layers.push(l); return this; }
-  removeLayer(l) {
-    this.layers = this.layers.filter(x => x !== l);
-    return this;
-  }
+  removeLayer(l) { this.layers = this.layers.filter(x => x !== l); return this; }
   clearLayers() { this.layers = []; return this; }
   hasLayer(l) { return this.layers.includes(l); }
 }
@@ -38,11 +33,7 @@ class MockMarker {
     this.latlng = Array.isArray(latlng) ? { lat: latlng[0], lng: latlng[1] } : latlng;
     this.options = options;
     this._listeners = {};
-    this.dragging = {
-      enable: () => {},
-      disable: () => {},
-      enabled: () => true
-    };
+    this.dragging = { enable: () => {}, disable: () => {}, enabled: () => true };
   }
   addTo(m) { return this; }
   getLatLng() { return this.latlng; }
@@ -59,9 +50,7 @@ class MockMarker {
     return this;
   }
   fire(event, data = {}) {
-    if (this._listeners[event]) {
-      this._listeners[event].forEach(fn => fn(data));
-    }
+    if (this._listeners[event]) this._listeners[event].forEach(fn => fn(data));
   }
   closePopup() {}
   isPopupOpen() { return false; }
@@ -115,9 +104,7 @@ class MockMap {
     return this;
   }
   fire(event, data = {}) {
-    if (mapListeners[event]) {
-      mapListeners[event].forEach(fn => fn(data));
-    }
+    if (mapListeners[event]) mapListeners[event].forEach(fn => fn(data));
   }
 }
 
@@ -125,6 +112,9 @@ const mockElement = {
   _leaflet_id: null,
   style: {},
   value: '',
+  innerHTML: '',
+  innerText: '',
+  textContent: '',
   classList: {
     add: () => {},
     remove: () => {},
@@ -135,11 +125,67 @@ const mockElement = {
   removeEventListener: () => {},
   appendChild: () => {},
   removeChild: () => {},
-  querySelector: () => null,
-  querySelectorAll: () => [],
+  querySelector: () => mockElement,
+  querySelectorAll: () => [mockElement],
   setAttribute: () => {},
   removeAttribute: () => {},
-  getAttribute: () => null
+  getAttribute: (attr) => (attr === 'data-category' ? 'gas' : null),
+  getBoundingClientRect: () => ({ top: 0, left: 0, width: 100, height: 100, bottom: 100, right: 100 }),
+  scrollIntoView: () => {},
+  focus: () => {},
+  blur: () => {}
+};
+
+const createBuilder = () => {
+  const builder = {
+    select: () => builder,
+    insert: () => builder,
+    upsert: () => builder,
+    update: () => builder,
+    delete: () => builder,
+    gte: () => builder,
+    lte: () => builder,
+    gt: () => builder,
+    lt: () => builder,
+    eq: () => builder,
+    neq: () => builder,
+    in: () => builder,
+    is: () => builder,
+    ilike: () => builder,
+    like: () => builder,
+    order: () => builder,
+    range: () => builder,
+    limit: () => builder,
+    single: () => Promise.resolve({ data: {}, error: null }),
+    maybeSingle: () => Promise.resolve({ data: null, error: null }),
+    then: (resolve, reject) => Promise.resolve({ data: [], error: null }).then(resolve, reject),
+    catch: (reject) => Promise.resolve({ data: [], error: null }).catch(reject)
+  };
+  return builder;
+};
+
+const mockSupabaseClient = {
+  from: (table) => createBuilder(),
+  rpc: (fn, params) => Promise.resolve({ data: [], error: null }),
+  channel: (name) => ({
+    on: () => ({ subscribe: () => {} }),
+    subscribe: () => {}
+  }),
+  removeChannel: () => {},
+  auth: {
+    getUser: () => Promise.resolve({ data: { user: { id: 'test-user-id', email: 'test@notigas.com' } }, error: null }),
+    getSession: () => Promise.resolve({ data: { session: { user: { id: 'test-user-id' } } }, error: null }),
+    onAuthStateChange: (cb) => ({ data: { subscription: { unsubscribe: () => {} } } }),
+    signInWithPassword: () => Promise.resolve({ data: { user: { id: 'test-user-id' } }, error: null }),
+    signUp: () => Promise.resolve({ data: { user: { id: 'test-user-id' } }, error: null }),
+    signOut: () => Promise.resolve({ error: null })
+  },
+  storage: {
+    from: () => ({
+      upload: () => Promise.resolve({ data: { path: 'test.jpg' }, error: null }),
+      getPublicUrl: () => ({ data: { publicUrl: 'https://test.notigas.com/test.jpg' } })
+    })
+  }
 };
 
 const sandbox = {
@@ -165,6 +211,9 @@ const sandbox = {
   parseInt,
   encodeURIComponent,
   decodeURIComponent,
+  btoa: (s) => Buffer.from(String(s)).toString('base64'),
+  atob: (s) => Buffer.from(String(s), 'base64').toString('binary'),
+  fetch: () => Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({}) }),
   escapeHtmlStr: (s) => (typeof s === 'string' ? s.replace(/</g, '&lt;') : ''),
   addEventListener: (event, fn) => {
     windowListeners[event] = windowListeners[event] || [];
@@ -192,11 +241,22 @@ const sandbox = {
     pushState: () => {},
     replaceState: () => {}
   },
+  Event: class Event {
+    constructor(type) {
+      this.type = type;
+    }
+  },
   CustomEvent: class CustomEvent {
     constructor(type, detail = {}) {
       this.type = type;
       this.detail = detail;
     }
+  },
+  IntersectionObserver: class IntersectionObserver {
+    constructor() {}
+    observe() {}
+    unobserve() {}
+    disconnect() {}
   },
   getComputedStyle: () => ({}),
   requestAnimationFrame: (fn) => setTimeout(fn, 16),
@@ -208,7 +268,7 @@ const sandbox = {
     documentElement: mockElement,
     getElementById: (id) => mockElement,
     querySelector: () => mockElement,
-    querySelectorAll: () => [],
+    querySelectorAll: () => [mockElement],
     createElement: () => mockElement,
     addEventListener: (event, fn) => {
       docListeners[event] = docListeners[event] || [];
@@ -255,40 +315,18 @@ const sandbox = {
       zoom: () => ({ addTo: () => {} })
     }
   },
-  AppState: {
-    _state: {
-      city: 'cochabamba',
-      appMode: 'driver',
-      userRole: 'repartidor',
-      driverGpsLive: 'off',
-      userData: { id: 'test-driver-1', role: 'repartidor', categoria: 'gas', nombre: 'Chofer Test' }
-    },
-    get(k) { return this._state[k]; },
-    set(k, v) { this._state[k] = v; },
-    subscribe: () => () => {}
+  supabase: {
+    createClient: () => mockSupabaseClient
   },
-  supabaseClient: {
-    from: (table) => {
-      const createBuilder = () => {
-        const builder = {
-          select: () => builder,
-          gte: () => builder,
-          lte: () => builder,
-          eq: () => builder,
-          in: () => builder,
-          ilike: () => builder,
-          limit: () => builder,
-          upsert: () => Promise.resolve({ data: null, error: null }),
-          update: () => Promise.resolve({ data: null, error: null }),
-          maybeSingle: () => Promise.resolve({ data: null, error: null }),
-          then: (resolve, reject) => Promise.resolve({ data: [], error: null }).then(resolve, reject),
-          catch: (reject) => Promise.resolve({ data: [], error: null }).catch(reject)
-        };
-        return builder;
-      };
-      return createBuilder();
-    },
-    rpc: () => Promise.resolve({ data: null, error: null })
+  supabaseClient: mockSupabaseClient,
+  google: {
+    accounts: {
+      id: {
+        initialize: () => {},
+        renderButton: () => {},
+        prompt: () => {}
+      }
+    }
   }
 };
 
@@ -297,20 +335,31 @@ sandbox.global = sandbox;
 
 const context = vm.createContext(sandbox);
 
-// 2. Cargar scripts en el orden de index.html
-const scriptsToLoad = [
+// 2. Cargar los 15 scripts en el orden exacto del frontend
+const allModules = [
   'js/state.js',
   'js/ui.js',
+  'js/supabase-config.js',
+  'js/auth.js',
+  'js/vendors.js',
   'js/map.js',
+  'js/map_search.js',
   'js/map_gps.js',
-  'js/map_search.js'
+  'js/orders.js',
+  'js/app.js',
+  'js/events.js',
+  'js/forum.js',
+  'js/ads.js',
+  'js/admin.js',
+  'js/admin_users.js'
 ];
 
 try {
-  for (const scriptRel of scriptsToLoad) {
+  console.log('📦 Evaluando y ejecutando módulos frontend:');
+  for (const scriptRel of allModules) {
     const scriptPath = path.join(ROOT_DIR, scriptRel);
     if (!fs.existsSync(scriptPath)) {
-      console.warn(`⚠️ Archivo ${scriptRel} no encontrado, saltando...`);
+      console.warn(`  ⚠️ Archivo ${scriptRel} no encontrado, saltando...`);
       continue;
     }
     const code = fs.readFileSync(scriptPath, 'utf8');
@@ -374,8 +423,8 @@ try {
   context.renderReportedTrucksBuffer();
   console.log('  ✅ renderReportedTrucksBuffer() OK');
 
-  // 6. Verificar integridad de constantes y exports
-  console.log('\n🔒 Verificando constantes críticas y exports...');
+  // 6. Verificar integridad de constantes, estados canónicos y exports
+  console.log('\n🔒 Verificando constantes críticas, máquina de estados y exports...');
   const radarZoom = context.window.DRIVER_RADAR_MAX_ZOOM ?? context.DRIVER_RADAR_MAX_ZOOM;
   if (radarZoom !== 14) {
     throw new Error(`DRIVER_RADAR_MAX_ZOOM esperado 14 pero obtenido: ${radarZoom}`);
@@ -387,8 +436,21 @@ try {
     throw new Error('window.orderRadarMarkers no está inicializado.');
   }
 
+  // Verificar máquina canónica de 5 estados (sin RECIBIDO)
+  const states = Object.values(context.window.ORDER_STATES || {});
+  if (states.includes('recibido')) {
+    throw new Error('ORDER_STATES contiene "recibido", violando la máquina canónica de 5 estados de BD.');
+  }
+  const expectedStates = ['pendiente', 'visto', 'asignado', 'entregado', 'cancelado'];
+  for (const s of expectedStates) {
+    if (!states.includes(s)) {
+      throw new Error(`ORDER_STATES no contiene el estado requerido: ${s}`);
+    }
+  }
+  console.log('  ✅ ORDER_STATES verificado (5 estados canónicos estrictos)');
+
   console.log('\n--------------------------------------------------');
-  console.log('✨ ÉXITO: Prueba de runtime completada al 100% sin excepciones.\n');
+  console.log(`✨ ÉXITO: Prueba de runtime completada sobre los ${allModules.length} módulos sin excepciones.\n`);
   process.exit(0);
 
 } catch (err) {

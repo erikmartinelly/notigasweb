@@ -135,7 +135,7 @@ node server.js
 * **Role-Based Data Privacy:** The public map layer receives privacy-fuzzed coordinates and never exposes buyer phone numbers or street addresses publicly. Drivers only receive complete contact details once an order is officially assigned to their account.
 * **Atomic RPC Functions (`SECURITY DEFINER` with `search_path = public`):**
   * `rpc_assign_order`: Atomic single-driver order assignment protected with `FOR UPDATE` row locking.
-  * `rpc_get_demand_clusters_v2`: Spatial density grouping utilizing deterministic DBSCAN clustering.
+  * `rpc_mark_order_seen`: Atomic status update marking orders as viewed by nearby drivers.
   * `rpc_get_my_assigned_orders`: Secure retrieval of contact information exclusively for driver-assigned orders.
   * `rpc_admin_list_users`: Administrative listing of buyers and drivers linked to authentic Supabase Auth UUIDs.
   * `rpc_admin_delete_user`: Complete administrative purge of non-admin accounts and associated relational records.
