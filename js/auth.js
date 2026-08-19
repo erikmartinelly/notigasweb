@@ -507,66 +507,38 @@ function parseGoogleJwt(token) {
 }
 
 function iniciarConGoogleDirecto() {
+  selectAuthMethod('google');
   if (typeof google !== 'undefined' && google && google.accounts && google.accounts.id) {
     try {
       if (!_googleGisInitialized) {
-        google.accounts.id.initialize({
-          client_id: GOOGLE_CLIENT_ID,
-          callback: handleCredentialResponse,
-          auto_select: false,
-          cancel_on_tap_outside: true
-        });
-        _googleGisInitialized = true;
+        initGoogleOneTap();
       }
 
       google.accounts.id.prompt((notification) => {
         if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          console.info("Google One Tap no disponible en este navegador/origen. Alternando a OAuth...");
-          if (window.supabaseClient) {
-            window.supabaseClient.auth.signInWithOAuth({
-              provider: 'google',
-              options: { redirectTo: window.location.origin }
-            }).catch(err => {
-              console.warn("OAuth fallback error:", err);
-              selectAuthMethod('email');
-            });
-          } else {
-            selectAuthMethod('email');
-          }
+          console.info("Google One Tap omitido por el navegador. Usa el botón oficial de Google en pantalla.");
         }
       });
     } catch(err) {
-      if (window.supabaseClient) {
-        window.supabaseClient.auth.signInWithOAuth({
-          provider: 'google',
-          options: { redirectTo: window.location.origin }
-        }).catch(() => selectAuthMethod('email'));
-      } else {
-        selectAuthMethod('email');
-      }
+      console.warn("Aviso Google GIS prompt:", err);
     }
   } else {
-    if (window.supabaseClient) {
-      window.supabaseClient.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo: window.location.origin }
-      }).catch(() => selectAuthMethod('email'));
-    } else {
-      selectAuthMethod('email');
-    }
+    tryInitGoogleGis();
   }
 }
 
 async function handleCredentialResponse(response) {
   try {
     if (!response || !response.credential || typeof response.credential !== 'string') {
-      selectAuthMethod('email');
+      if (typeof showToast === 'function') {
+        showToast('Google Auth', 'No se recibió la credencial de Google. Por favor, intenta de nuevo.', 'warning', 4000);
+      }
       return;
     }
 
     if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Autenticando con Google...');
 
-    // 1. Iniciar sesión en Supabase con Google One-Tap ID Token
+    // 1. Iniciar sesión en Supabase con Google ID Token
     const { data: authData, error } = await window.supabaseClient.auth.signInWithIdToken({
       provider: 'google',
       token: response.credential
@@ -574,14 +546,9 @@ async function handleCredentialResponse(response) {
 
     if (error) {
       if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-      console.warn("Fallo signInWithIdToken, intentando OAuth redirect:", error.message);
-      if (window.supabaseClient) {
-        window.supabaseClient.auth.signInWithOAuth({
-          provider: 'google',
-          options: { redirectTo: window.location.origin }
-        }).catch(() => {
-          showToast('Error de inicio de sesión', error.message || 'No se pudo verificar la sesión con Google.', 'error', 4500);
-        });
+      console.error("Error en signInWithIdToken:", error);
+      if (typeof showToast === 'function') {
+        showToast('Error de autenticación Google', error.message || 'Verifica que el dominio actual esté autorizado en Google Cloud Console.', 'error', 6000);
       }
       return;
     }
