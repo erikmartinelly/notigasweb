@@ -255,16 +255,17 @@ function initNotigasMap() {
     zoomOutTitle: 'Alejar'
   }).addTo(map);
 
-  // Mapa base Google Maps Roadmap (apariencia 100% idéntica a Google Maps)
-  const mapAttribution = '&copy; Google Maps';
+  // Mapa base optimizado de alta velocidad (CartoDB Voyager + OSM Fallback, sin rate-limit 429)
+  const mapAttribution = '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>';
   const baseTileLayer = L.tileLayer(
-    'https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+    'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
     {
       maxZoom: 20,
-      maxNativeZoom: 20,
-      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+      maxNativeZoom: 19,
+      subdomains: ['a', 'b', 'c', 'd'],
       attribution: mapAttribution,
-      className: 'map-base-layer'
+      className: 'map-base-layer',
+      crossOrigin: true
     }
   );
 
@@ -273,7 +274,7 @@ function initNotigasMap() {
       error.tile._fallbackDone = true;
       const c = error.coords;
       if (c) {
-        error.tile.src = `https://a.basemaps.cartocdn.com/rastertiles/voyager/${c.z}/${c.x}/${c.y}.png`;
+        error.tile.src = `https://tile.openstreetmap.org/${c.z}/${c.x}/${c.y}.png`;
       }
     }
   });
@@ -363,17 +364,9 @@ async function cargarPedidosVecinalesEnVivo() {
   const activeCity = (typeof AppState !== 'undefined') ? AppState.get('city') : null;
 
   try {
-    let isDriverUser = false;
-    let driverCategoria = 'gas';
-    const saved = JSON.stringify((typeof AppState !== 'undefined') ? (AppState.get('userData') || {}) : {});
-    if (saved) {
-      const u = JSON.parse(saved);
-      if (u.role === 'repartidor') isDriverUser = true;
-      if (u.categoria) driverCategoria = u.categoria;
-    }
-    if (typeof AppState !== 'undefined' && (AppState.get('appMode') === 'driver' || AppState.get('userRole') === 'repartidor')) {
-      isDriverUser = true;
-    }
+    const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
+    let isDriverUser = (u.role === 'repartidor') || ((typeof AppState !== 'undefined') && (AppState.get('appMode') === 'driver' || AppState.get('userRole') === 'repartidor'));
+    let driverCategoria = u.categoria || 'gas';
 
     const normCity = String(activeCity || '').toLowerCase().trim();
 
@@ -641,18 +634,11 @@ function actualizarRepartidorEnMapa(data) {
   }
 
   // Filtrar si es otro repartidor de otra categoría
-  let userRole = 'vecino';
-  let driverCategoria = 'Gas GLP';
-  try {
-    const saved = JSON.stringify(AppState.get('userData') || {});
-    if (saved) {
-      const u = JSON.parse(saved);
-      if (u.role) userRole = u.role;
-      if (u.categoria) driverCategoria = u.categoria;
-    }
-  } catch(e){}
+  const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
+  const userRole = u.role || ((typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver') ? 'repartidor' : 'vecino');
+  const driverCategoria = u.categoria || 'gas';
 
-  if (userRole === 'repartidor' && typeof isOrderCategoryMatchingDriver === 'function' && !isOrderCategoryMatchingDriver(data.categoria)) {
+  if (userRole === 'repartidor' && typeof isOrderCategoryMatchingDriver === 'function' && !isOrderCategoryMatchingDriver(data.categoria, driverCategoria)) {
      return; // Repartidores solo ven camiones de su rubro
   }
 
@@ -728,19 +714,9 @@ function agregarPedidoVecinoEnMapa(order) {
   }
 
   // Si el usuario actual es REPARTIDOR, solo ver pedidos de SU MISMA CATEGORÍA
-  let userRole = 'vecino';
-  let driverCategoria = 'gas';
-  try {
-    const saved = JSON.stringify(AppState.get('userData') || {});
-    if (saved) {
-      const u = JSON.parse(saved);
-      if (u.role) userRole = u.role;
-      if (u.categoria) driverCategoria = u.categoria;
-    }
-  } catch(e){}
-  if (AppState.get('appMode') === 'driver' || AppState.get('userRole') === 'repartidor') {
-    userRole = 'repartidor';
-  }
+  const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
+  let userRole = u.role || ((typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver') ? 'repartidor' : 'vecino');
+  let driverCategoria = u.categoria || 'gas';
 
   if (userRole === 'repartidor' && typeof isOrderCategoryMatchingDriver === 'function' && !isOrderCategoryMatchingDriver(order.categoria, driverCategoria)) {
      return; // Ignore orders outside of their category
@@ -840,9 +816,9 @@ function removerPublicacionDeMapa(id) {
 
 function actualizarCoordenadasPedidoActivo(newLat, newLng, skipMarkerSet = false) {
   try {
-    const raw = JSON.stringify(AppState.get('activeOrder'));
-    if (raw) {
-      const order = JSON.parse(raw);
+    const rawOrder = (typeof AppState !== 'undefined' ? AppState.get('activeOrder') : null);
+    if (rawOrder) {
+      const order = (typeof rawOrder === 'string') ? JSON.parse(rawOrder) : { ...rawOrder };
       order.lat = newLat;
       order.lng = newLng;
       order.latitude = newLat;
@@ -1128,12 +1104,8 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
   }
 
   // Emitir posición GPS a base de datos solo si explícitamente es repartidor
-  const savedUser = JSON.stringify(AppState.get('userData') || {});
-  let isRepartidor = false;
-  try {
-      const u = JSON.parse(savedUser);
-      if (u.role === 'repartidor') isRepartidor = true;
-  } catch(e) {}
+  const user = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
+  const isRepartidor = (user.role === 'repartidor') || ((typeof AppState !== 'undefined') && AppState.get('appMode') === 'driver');
 
   if (isRepartidor) {
       const _lat = isUserMarkerDraggedManually ? currentGpsLat : lat;
@@ -1171,13 +1143,11 @@ async function transmitirUbicacionRepartidorServidorDB(lat, lng) {
   }
 
   try {
-    const saved = JSON.stringify(AppState.get('userData') || {});
-    if (saved) {
-      const u = JSON.parse(saved);
-      if (u.role === 'repartidor') {
-        lastBroadcastLat = lat;
-        lastBroadcastLng = lng;
-        lastGpsBroadcastTime = now;
+    const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
+    if (u.role === 'repartidor') {
+      lastBroadcastLat = lat;
+      lastBroadcastLng = lng;
+      lastGpsBroadcastTime = now;
 
         if (window.supabaseClient) {
           const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
@@ -1288,11 +1258,8 @@ function renderReportedTrucksBuffer() {
   localStorage.setItem('notigas_reported_trucks_buffer', JSON.stringify(validTrucks));
 
   // Si el usuario actual es REPARTIDOR, filtrar camiones reportados por su categoría específica
-  let isDriverUser = false;
-  try {
-    const saved = JSON.stringify(AppState.get('userData') || {});
-    if (saved) { const u = JSON.parse(saved); isDriverUser = (u.role === 'repartidor'); }
-  } catch(e){}
+  const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
+  const isDriverUser = (u.role === 'repartidor') || ((typeof AppState !== 'undefined') && AppState.get('appMode') === 'driver');
 
   if (isDriverUser && typeof isOrderCategoryMatchingDriver === 'function') {
     validTrucks = validTrucks.filter(t => isOrderCategoryMatchingDriver(t.cat || 'Gas GLP'));
@@ -1360,13 +1327,8 @@ window.normalizeCategoryCode = function(cat) {
 window.isOrderCategoryMatchingDriver = function(orderCategory, driverCatInput) {
   let driverCat = driverCatInput;
   if (!driverCat) {
-    try {
-      const saved = JSON.stringify((typeof AppState !== 'undefined') ? (AppState.get('userData') || {}) : {});
-      if (saved) {
-        const u = JSON.parse(saved);
-        if (u.categoria) driverCat = u.categoria;
-      }
-    } catch(e){}
+    const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
+    if (u.categoria) driverCat = u.categoria;
   }
   if (!driverCat) return true; // Si no tiene categoría configurada, ve todo
 
@@ -1460,8 +1422,8 @@ function renderActiveOrdersMap() {
   }
   activeOrderLayerGroup.clearLayers();
 
-  const raw = JSON.stringify(AppState.get('activeOrder'));
-  if (!raw) {
+  const rawOrder = (typeof AppState !== 'undefined' ? AppState.get('activeOrder') : null);
+  if (!rawOrder) {
     if (userMarker && !map.hasLayer(userMarker)) {
       userMarker.addTo(map);
     }
@@ -1469,15 +1431,12 @@ function renderActiveOrdersMap() {
   }
 
   try {
-    const order = JSON.parse(raw);
+    const order = (typeof rawOrder === 'string') ? JSON.parse(rawOrder) : rawOrder;
 
-    let isDriverUser = false;
-    try {
-      const saved = JSON.stringify(AppState.get('userData') || {});
-      if (saved) { const u = JSON.parse(saved); isDriverUser = (u.role === 'repartidor'); }
-    } catch(e){}
+    const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
+    const isDriverUser = (u.role === 'repartidor') || ((typeof AppState !== 'undefined') && AppState.get('appMode') === 'driver');
 
-    if (isDriverUser && typeof isOrderCategoryMatchingDriver === 'function' && !isOrderCategoryMatchingDriver(order.categoria)) {
+    if (isDriverUser && typeof isOrderCategoryMatchingDriver === 'function' && !isOrderCategoryMatchingDriver(order.categoria, u.categoria)) {
       return;
     }
 

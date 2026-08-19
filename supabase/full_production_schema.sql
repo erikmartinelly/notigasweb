@@ -1810,16 +1810,20 @@ CREATE POLICY "Pedidos Borrar admin" ON public.pedidos FOR DELETE TO authenticat
 -- E. Políticas: rutas_repartidores
 DROP POLICY IF EXISTS "Rutas Public SELECT" ON public.rutas_repartidores;
 DROP POLICY IF EXISTS "Rutas Own Admin SELECT" ON public.rutas_repartidores;
-CREATE POLICY "Rutas Own Admin SELECT" ON public.rutas_repartidores FOR SELECT USING (auth.uid()::text = user_id OR is_admin_email());
+DROP POLICY IF EXISTS "rutas_select_public" ON public.rutas_repartidores;
+CREATE POLICY "rutas_select_public" ON public.rutas_repartidores FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "Rutas Driver Insertar" ON public.rutas_repartidores;
-CREATE POLICY "Rutas Driver Insertar" ON public.rutas_repartidores FOR INSERT WITH CHECK (auth.uid()::text = user_id AND NOT is_banned());
+DROP POLICY IF EXISTS "rutas_insert_own" ON public.rutas_repartidores;
+CREATE POLICY "rutas_insert_own" ON public.rutas_repartidores FOR INSERT WITH CHECK (((SELECT auth.uid())::text = user_id) AND NOT is_banned());
 
 DROP POLICY IF EXISTS "Rutas Driver Actualizar" ON public.rutas_repartidores;
-CREATE POLICY "Rutas Driver Actualizar" ON public.rutas_repartidores FOR UPDATE USING (auth.uid()::text = user_id OR is_admin_email());
+DROP POLICY IF EXISTS "rutas_update_own_or_admin" ON public.rutas_repartidores;
+CREATE POLICY "rutas_update_own_or_admin" ON public.rutas_repartidores FOR UPDATE USING (((SELECT auth.uid())::text = user_id) OR is_admin_email()) WITH CHECK (((SELECT auth.uid())::text = user_id) OR is_admin_email());
 
 DROP POLICY IF EXISTS "Rutas Driver Borrar" ON public.rutas_repartidores;
-CREATE POLICY "Rutas Driver Borrar" ON public.rutas_repartidores FOR DELETE USING (auth.uid()::text = user_id OR is_admin_email());
+DROP POLICY IF EXISTS "rutas_delete_own_or_admin" ON public.rutas_repartidores;
+CREATE POLICY "rutas_delete_own_or_admin" ON public.rutas_repartidores FOR DELETE USING (((SELECT auth.uid())::text = user_id) OR is_admin_email());
 
 -- F. Políticas: avisos y comentarios
 DROP POLICY IF EXISTS "Avisos Public SELECT" ON public.avisos;
@@ -1827,33 +1831,33 @@ CREATE POLICY "Avisos Public SELECT" ON public.avisos FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "Avisos User Insert" ON public.avisos;
 CREATE POLICY "Avisos User Insert" ON public.avisos FOR INSERT WITH CHECK (
-    auth.uid()::text = user_id
+    ((SELECT auth.uid())::text = user_id)
     AND NOT is_banned()
     AND (LOWER(TRIM(COALESCE(tipo, ''))) NOT IN ('oficial', 'alerta_oficial') OR is_admin_email())
 );
 
 DROP POLICY IF EXISTS "Avisos User Update" ON public.avisos;
 CREATE POLICY "Avisos User Update" ON public.avisos FOR UPDATE
-USING (auth.uid()::text = user_id OR is_admin_email())
+USING (((SELECT auth.uid())::text = user_id) OR is_admin_email())
 WITH CHECK (
-    (auth.uid()::text = user_id OR is_admin_email())
+    (((SELECT auth.uid())::text = user_id) OR is_admin_email())
     AND (LOWER(TRIM(COALESCE(tipo, ''))) NOT IN ('oficial', 'alerta_oficial') OR is_admin_email())
 );
 
 DROP POLICY IF EXISTS "Avisos User Delete" ON public.avisos;
-CREATE POLICY "Avisos User Delete" ON public.avisos FOR DELETE USING (auth.uid()::text = user_id OR is_admin_email());
+CREATE POLICY "Avisos User Delete" ON public.avisos FOR DELETE USING (((SELECT auth.uid())::text = user_id) OR is_admin_email());
 
 DROP POLICY IF EXISTS "Comentarios Public SELECT" ON public.comentarios_avisos;
 CREATE POLICY "Comentarios Public SELECT" ON public.comentarios_avisos FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "Comentarios User Insert" ON public.comentarios_avisos;
-CREATE POLICY "Comentarios User Insert" ON public.comentarios_avisos FOR INSERT WITH CHECK (auth.uid()::text = user_id AND NOT is_banned());
+CREATE POLICY "Comentarios User Insert" ON public.comentarios_avisos FOR INSERT WITH CHECK (((SELECT auth.uid())::text = user_id) AND NOT is_banned());
 
 DROP POLICY IF EXISTS "Comentarios User Update" ON public.comentarios_avisos;
-CREATE POLICY "Comentarios User Update" ON public.comentarios_avisos FOR UPDATE USING (auth.uid()::text = user_id OR is_admin_email());
+CREATE POLICY "Comentarios User Update" ON public.comentarios_avisos FOR UPDATE USING (((SELECT auth.uid())::text = user_id) OR is_admin_email());
 
 DROP POLICY IF EXISTS "Comentarios User Delete" ON public.comentarios_avisos;
-CREATE POLICY "Comentarios User Delete" ON public.comentarios_avisos FOR DELETE USING (auth.uid()::text = user_id OR is_admin_email());
+CREATE POLICY "Comentarios User Delete" ON public.comentarios_avisos FOR DELETE USING (((SELECT auth.uid())::text = user_id) OR is_admin_email());
 
 -- G. Políticas: anuncios_globales
 DROP POLICY IF EXISTS "Anuncios Public SELECT" ON public.anuncios_globales;
@@ -1870,37 +1874,44 @@ DROP POLICY IF EXISTS "Admin Credentials Admin ALL" ON public.admin_credentials;
 CREATE POLICY "Admin Credentials Admin ALL" ON public.admin_credentials FOR ALL USING (is_admin_email());
 
 DROP POLICY IF EXISTS "Admins select own record" ON public.admin_credentials;
-CREATE POLICY "Admins select own record" ON public.admin_credentials FOR SELECT USING (LOWER(TRIM(email)) = LOWER(TRIM(COALESCE(auth.jwt() ->> 'email', ''))));
+DROP POLICY IF EXISTS "admin_credentials_select_own" ON public.admin_credentials;
+CREATE POLICY "admin_credentials_select_own" ON public.admin_credentials FOR SELECT USING (LOWER(TRIM(email)) = LOWER(TRIM(COALESCE((SELECT auth.jwt() ->> 'email'), ''))));
 
 -- I. Políticas: votos_registro
 DROP POLICY IF EXISTS "Auth SELECT votos_registro" ON public.votos_registro;
-CREATE POLICY "Auth SELECT votos_registro" ON public.votos_registro FOR SELECT USING (auth.uid()::text = user_id OR is_admin_email());
+CREATE POLICY "Auth SELECT votos_registro" ON public.votos_registro FOR SELECT USING (((SELECT auth.uid())::text = user_id) OR is_admin_email());
 
 DROP POLICY IF EXISTS "Auth INSERT votos_registro" ON public.votos_registro;
-CREATE POLICY "Auth INSERT votos_registro" ON public.votos_registro FOR INSERT WITH CHECK (auth.uid()::text = user_id);
+CREATE POLICY "Auth INSERT votos_registro" ON public.votos_registro FOR INSERT WITH CHECK ((SELECT auth.uid())::text = user_id);
 
 DROP POLICY IF EXISTS "Auth DELETE votos_registro" ON public.votos_registro;
-CREATE POLICY "Auth DELETE votos_registro" ON public.votos_registro FOR DELETE USING (auth.uid()::text = user_id);
+CREATE POLICY "Auth DELETE votos_registro" ON public.votos_registro FOR DELETE USING ((SELECT auth.uid())::text = user_id);
 
 -- J. Políticas: denuncias y reportes_spam
 DROP POLICY IF EXISTS "Denuncias Insertar auth" ON public.denuncias;
-CREATE POLICY "Denuncias Insertar auth" ON public.denuncias FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+DROP POLICY IF EXISTS "denuncias_insert_auth" ON public.denuncias;
+CREATE POLICY "denuncias_insert_auth" ON public.denuncias FOR INSERT TO authenticated WITH CHECK ((SELECT auth.uid()) IS NOT NULL);
 
 DROP POLICY IF EXISTS "Denuncias Admin ALL" ON public.denuncias;
-CREATE POLICY "Denuncias Admin ALL" ON public.denuncias FOR ALL USING (is_admin_email());
+DROP POLICY IF EXISTS "denuncias_admin_mod" ON public.denuncias;
+CREATE POLICY "denuncias_admin_mod" ON public.denuncias FOR ALL TO authenticated USING (is_admin_email()) WITH CHECK (is_admin_email());
 
 DROP POLICY IF EXISTS "Reportes Insertar auth" ON public.reportes_spam;
-CREATE POLICY "Reportes Insertar auth" ON public.reportes_spam FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+DROP POLICY IF EXISTS "reportes_spam_insert_auth" ON public.reportes_spam;
+CREATE POLICY "reportes_spam_insert_auth" ON public.reportes_spam FOR INSERT TO authenticated WITH CHECK ((SELECT auth.uid()) IS NOT NULL);
 
 DROP POLICY IF EXISTS "Reportes Admin ALL" ON public.reportes_spam;
-CREATE POLICY "Reportes Admin ALL" ON public.reportes_spam FOR ALL USING (is_admin_email());
+DROP POLICY IF EXISTS "reportes_spam_admin_mod" ON public.reportes_spam;
+CREATE POLICY "reportes_spam_admin_mod" ON public.reportes_spam FOR ALL TO authenticated USING (is_admin_email()) WITH CHECK (is_admin_email());
 
 -- K. Politicas: configuracion_publicidad
 DROP POLICY IF EXISTS "Publicidad Public SELECT" ON public.configuracion_publicidad;
-CREATE POLICY "Publicidad Public SELECT" ON public.configuracion_publicidad FOR SELECT USING (true);
+DROP POLICY IF EXISTS "config_publicidad_select_public" ON public.configuracion_publicidad;
+CREATE POLICY "config_publicidad_select_public" ON public.configuracion_publicidad FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "Publicidad Admin ALL" ON public.configuracion_publicidad;
-CREATE POLICY "Publicidad Admin ALL" ON public.configuracion_publicidad FOR ALL
+DROP POLICY IF EXISTS "config_publicidad_admin_mod" ON public.configuracion_publicidad;
+CREATE POLICY "config_publicidad_admin_mod" ON public.configuracion_publicidad FOR ALL TO authenticated
 USING (is_admin_email()) WITH CHECK (is_admin_email());
 
 -- ==============================================================================

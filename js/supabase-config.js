@@ -111,14 +111,13 @@ window.stopDriverLocationBroadcast = async function() {
     }
 };
 
-// --- CANALES GLOBALES Y SUSCRIPCIONES EN TIEMPO REAL ---
+// --- CANALES GLOBALES Y SUSCRIPCIONES EN TIEMPO REAL MULTIPLEXADAS ---
 window.notigasGlobalChannel = null;
 window.notigasAvisosChannel = null;
 let _realtimeRetryCount = 0;
 let _realtimeRetryTimeout = null;
 let _realtimeGeneration = 0;
 let _activeRealtimeCity = null;
-let _activeAvisosCity = null;
 const MAX_REALTIME_RETRIES = 8;
 
 function _isRealtimeChannelActive(channel) {
@@ -134,65 +133,14 @@ function _clearRealtimeRetryTimer() {
     }
 }
 
-// 1. Suscripción a Avisos Oficiales en tiempo real
+// 1. Suscripción a Avisos Oficiales (delegada a canal global unificado)
 window.iniciarSuscripcionAvisos = function() {
-    if (!window.supabaseClient) return;
-    const rawCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || 'cochabamba') : 'cochabamba';
-    const ciudad = String(rawCity || 'cochabamba').toLowerCase().trim();
-    if (!ciudad) return;
-
-    if (_activeAvisosCity === ciudad && _isRealtimeChannelActive(window.notigasAvisosChannel)) {
-        return;
+    if (typeof window.iniciarSuscripcionesRealtime === 'function') {
+        window.iniciarSuscripcionesRealtime();
     }
-
-    if (window.notigasAvisosChannel) {
-        const oldAvisosChannel = window.notigasAvisosChannel;
-        window.notigasAvisosChannel = null;
-        _activeAvisosCity = null;
-        try { window.supabaseClient.removeChannel(oldAvisosChannel); } catch(e) {}
-    }
-
-    console.log(`📢 Suscribiendo a canal avisos-${ciudad}...`);
-    _activeAvisosCity = ciudad;
-
-    window.notigasAvisosChannel = window.supabaseClient
-        .channel(`avisos-${ciudad}`)
-        .on(
-            'postgres_changes',
-            {
-                event: 'INSERT',
-                schema: 'public',
-                table: 'avisos',
-                filter: `ciudad=eq.${ciudad}`
-            },
-            payload => {
-                const aviso = payload.new;
-                if (!aviso) return;
-
-                if (aviso.activo && (aviso.tipo === 'oficial' || aviso.tipo === 'alerta_oficial')) {
-                    const mensaje = aviso.mensaje || aviso.descripcion || aviso.titulo || 'Comunicado oficial';
-                    if (typeof mostrarPopupAlertaRepartidor === 'function') {
-                        mostrarPopupAlertaRepartidor('COMUNICADO OFICIAL ADMINISTRACIÓN OTB', mensaje);
-                    }
-                    if (typeof showToast === 'function') {
-                        showToast('📢 Comunicado Oficial OTB', mensaje, 'info', 6000);
-                    }
-                }
-
-                // Si es un aviso vecinal o general, actualizar el feed del foro
-                if (typeof renderForumFeed === 'function') {
-                    renderForumFeed();
-                }
-            }
-        )
-        .subscribe((status) => {
-            if (status === 'SUBSCRIBED') {
-                console.log(`✅ Canal de avisos oficiales conectado para ${ciudad}.`);
-            }
-        });
 };
 
-// 2. Suscripciones generales (Pedidos, Rutas, Comentarios, Broadcasts)
+// 2. Suscripciones generales multiplexadas (Pedidos, Rutas, Comentarios, Avisos, Broadcasts)
 window.iniciarSuscripcionesRealtime = function() {
     if (!window.supabaseClient) return;
 
@@ -216,7 +164,7 @@ window.iniciarSuscripcionesRealtime = function() {
         try { window.supabaseClient.removeChannel(oldGlobalChannel); } catch(e) {}
     }
 
-    console.log(`📡 Suscripción Realtime global iniciando para ${activeCity}... (intento ${_realtimeRetryCount + 1})`);
+    console.log(`📡 Suscripción Realtime global multiplexada iniciando para ${activeCity}... (intento ${_realtimeRetryCount + 1})`);
 
     // Cargar datos iniciales al conectar
     if (_realtimeRetryCount === 0 && typeof cargarPedidosVecinalesEnVivo === 'function') {
@@ -246,7 +194,7 @@ window.iniciarSuscripcionesRealtime = function() {
     };
 
     const channelGeneration = _realtimeGeneration;
-    const globalChannel = window.supabaseClient.channel('global_changes_' + activeCity);
+    const globalChannel = window.supabaseClient.channel('notigas_realtime_' + activeCity);
     window.notigasGlobalChannel = globalChannel;
     window._realtimeChannel = globalChannel;
     _activeRealtimeCity = activeCity;
@@ -270,7 +218,17 @@ window.iniciarSuscripcionesRealtime = function() {
                 if (typeof removerPublicacionDeMapa === 'function') removerPublicacionDeMapa(payload.old?.id);
             }
         })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'avisos', filter: `ciudad=eq.${activeCity}` }, () => {
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'avisos', filter: `ciudad=eq.${activeCity}` }, payload => {
+            const aviso = payload.new;
+            if (aviso && aviso.activo && (aviso.tipo === 'oficial' || aviso.tipo === 'alerta_oficial')) {
+                const mensaje = aviso.mensaje || aviso.descripcion || aviso.titulo || 'Comunicado oficial';
+                if (typeof mostrarPopupAlertaRepartidor === 'function') {
+                    mostrarPopupAlertaRepartidor('COMUNICADO OFICIAL ADMINISTRACIÓN OTB', mensaje);
+                }
+                if (typeof showToast === 'function') {
+                    showToast('📢 Comunicado Oficial OTB', mensaje, 'info', 6000);
+                }
+            }
             debouncedRefreshForum();
         })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'comentarios_avisos' }, () => {
@@ -290,14 +248,14 @@ window.iniciarSuscripcionesRealtime = function() {
                 if (window.AppState) window.AppState.set('realtimeConnected', false);
             }
         })
-        .subscribe((status, err) => {
+        .subscribe((status) => {
             if (globalChannel !== window.notigasGlobalChannel || channelGeneration !== _realtimeGeneration) {
                 return;
             }
             if (status === 'SUBSCRIBED') {
                 console.log(`✅ Realtime global conectado correctamente para ${activeCity}.`);
                 _clearRealtimeRetryTimer();
-                _realtimeRetryCount = 0; // Resetear contador en conexión exitosa
+                _realtimeRetryCount = 0;
                 if (window.AppState) window.AppState.set('realtimeConnected', true);
             } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
                 console.warn(`⚠️ Realtime desconectado (${status}). Intentando reconectar...`);
@@ -332,7 +290,6 @@ function _programarReconexionRealtime() {
     _realtimeRetryTimeout = setTimeout(() => {
         if (window.supabaseClient) {
             window.iniciarSuscripcionesRealtime();
-            window.iniciarSuscripcionAvisos();
         }
     }, delay);
 }
@@ -342,15 +299,6 @@ window.reiniciarSuscripcionesRealtime = async function() {
     if (!window.supabaseClient) return;
     _clearRealtimeRetryTimer();
     _realtimeGeneration++;
-
-    if (window.notigasAvisosChannel) {
-        const oldAvisosChannel = window.notigasAvisosChannel;
-        window.notigasAvisosChannel = null;
-        _activeAvisosCity = null;
-        try {
-            await window.supabaseClient.removeChannel(oldAvisosChannel);
-        } catch(e) {}
-    }
 
     if (window.notigasGlobalChannel) {
         const oldGlobalChannel = window.notigasGlobalChannel;
@@ -368,7 +316,6 @@ window.reiniciarSuscripcionesRealtime = async function() {
         window.adsSubscriptionChannel = null;
     }
 
-    window.iniciarSuscripcionAvisos();
     window.iniciarSuscripcionesRealtime();
     if (typeof iniciarSuscripcionAnuncios === 'function') {
         iniciarSuscripcionAnuncios();
@@ -380,7 +327,6 @@ window.cambiarCiudad = async function(nuevaCiudad) {
     if (!nuevaCiudad) return;
 
     nuevaCiudad = String(nuevaCiudad).toLowerCase().trim();
-    const ciudadActual = (typeof AppState !== 'undefined') ? AppState.get('city') : null;
 
     if (typeof AppState !== 'undefined') {
         AppState.set('city', nuevaCiudad);
@@ -394,7 +340,6 @@ window.cambiarCiudad = async function(nuevaCiudad) {
     }
 
     // Reiniciar suscripciones limpiamente
-    window.iniciarSuscripcionAvisos();
     window.iniciarSuscripcionesRealtime();
     if (typeof iniciarSuscripcionAnuncios === 'function') {
         iniciarSuscripcionAnuncios();
@@ -427,6 +372,5 @@ document.addEventListener('DOMContentLoaded', () => {
     // Iniciar suscripciones una sola vez al estar listo Supabase
     document.addEventListener('supabase_ready', () => {
         window.iniciarSuscripcionesRealtime();
-        window.iniciarSuscripcionAvisos();
     }, { once: true });
 });

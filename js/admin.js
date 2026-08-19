@@ -336,11 +336,8 @@ async function renderAdminDashboardKPIs() {
       }
 
       try {
-        const saved = JSON.stringify(AppState.get('userData') || {});
-        if (saved) {
-          const u = JSON.parse(saved);
-          if (u.gmail) uniqueUsers.add(u.gmail);
-        }
+        const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
+        if (u.gmail) uniqueUsers.add(u.gmail);
       } catch(e){}
 
       usersCount = uniqueUsers.size;
@@ -749,11 +746,11 @@ async function renderAdminOrdersList() {
 
   // 2. Pedido Activo de Comprador Local (Respaldo)
 
-  const rawOrder = JSON.stringify(AppState.get('activeOrder'));
+  const rawOrder = (typeof AppState !== 'undefined') ? AppState.get('activeOrder') : null;
 
   if (rawOrder) {
     try {
-      const order = JSON.parse(rawOrder);
+      const order = (typeof rawOrder === 'string') ? JSON.parse(rawOrder) : rawOrder;
 
       totalCount++;
 
@@ -1240,31 +1237,17 @@ function descargarListaCorreosCSV() {
 
   if (typeof databaseEmails !== 'undefined' && Array.isArray(databaseEmails)) {
     emailsList = [...databaseEmails];
-
-  }
-
   // Correos de la base de datos se exportan directamente
 
   try {
-    const saved = JSON.stringify(AppState.get('userData') || {});
-
-    if (saved) {
-      const u = JSON.parse(saved);
-
-      if (u.gmail) {
-        emailsList.push({
-          gmail: u.gmail,
-
-          role: u.role === 'repartidor' || u.role === 'chofer' ? 'Repartidor' : 'Cliente',
-
-          fecha: new Date().toISOString().split('T')[0]
-
-        });
-
-      }
-
+    const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
+    if (u.gmail) {
+      emailsList.push({
+        gmail: u.gmail,
+        role: u.role === 'repartidor' || u.role === 'chofer' ? 'Repartidor' : 'Cliente',
+        fecha: new Date().toISOString().split('T')[0]
+      });
     }
-
   } catch(e){}
 
   const uniqueEmailsMap = new Map();

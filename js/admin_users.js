@@ -311,9 +311,8 @@ async function ejecutarBorradoUsuarioCompleto(userId, nombre, tipo, vendorId = '
 
 function verificarBloqueoAppUsuario() {
   try {
-    const saved = JSON.stringify(AppState.get('userData') || {});
-    if (!saved) return;
-    const u = JSON.parse(saved);
+    const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
+    if (!u.nombre && !u.gmail && !u.placa) return;
 
     const isBanned = (typeof esRepartidorBaneado === 'function')
       ? esRepartidorBaneado(u.nombre, u.placa, u.whatsapp, u.gmail)

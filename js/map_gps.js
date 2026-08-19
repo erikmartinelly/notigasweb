@@ -73,166 +73,116 @@ function solicitarGeolocalizacionNativaNavegador(
 }
 
 async function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
+    if (window.isGpsExact === true && Number.isFinite(window.currentGpsLat) && Number.isFinite(window.currentGpsLng)) {
+        return {
+            lat: window.currentGpsLat,
+            lng: window.currentGpsLng,
+            city: (typeof AppState !== 'undefined') ? AppState.get('city') : null,
+            exact: true
+        };
+    }
+
     if (!forceReset) {
         try {
             const cached = sessionStorage.getItem('notigas_ip_geo_cache');
             if (cached) {
                 const parsed = JSON.parse(cached);
-                if (parsed && Number.isFinite(parsed.lat) && Number.isFinite(parsed.lng) && (Date.now() - parsed.time < 30 * 60 * 1000)) {
+                if (parsed && Number.isFinite(parsed.lat) && Number.isFinite(parsed.lng) && (Date.now() - parsed.time < 60 * 60 * 1000)) {
                     return parsed;
                 }
             }
         } catch (_) {}
     }
 
-    const fetchIP = (source, url, parser) => {
+    const fetchSingleIP = async (url, parser) => {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2200);
-        return fetch(url, { signal: controller.signal })
-            .then(response => {
-                clearTimeout(timeoutId);
-                return response.ok ? response.json() : Promise.reject(new Error('HTTP ' + response.status));
-            })
-            .then(data => ({ source, ...parser(data) }))
-            .catch(err => {
-                clearTimeout(timeoutId);
-                throw err;
-            });
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+        try {
+            const res = await fetch(url, { signal: controller.signal });
+            clearTimeout(timeoutId);
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+            return parser(data);
+        } catch(e) {
+            clearTimeout(timeoutId);
+            throw e;
+        }
     };
 
-    const apis = [
-        fetchIP('freeipapi', 'https://freeipapi.com/api/json', data => {
-            if (data?.latitude != null && data?.longitude != null) {
-                return { lat: Number(data.latitude), lng: Number(data.longitude), city: data.cityName, region: data.regionName, countryCode: data.countryCode };
+    let item = null;
+    const providers = [
+        () => fetchSingleIP('https://freeipapi.com/api/json', d => {
+            if (d?.latitude != null && d?.longitude != null) {
+                return { lat: Number(d.latitude), lng: Number(d.longitude), city: d.cityName, region: d.regionName, countryCode: d.countryCode };
             }
             throw new Error('no lat/lng');
         }),
-        fetchIP('ipwhois', 'https://ipwho.is/', data => {
-            if (data?.success && data?.latitude != null && data?.longitude != null) {
-                return { lat: Number(data.latitude), lng: Number(data.longitude), city: data.city, region: data.region, countryCode: data.country_code };
+        () => fetchSingleIP('https://ipwho.is/', d => {
+            if (d?.success && d?.latitude != null && d?.longitude != null) {
+                return { lat: Number(d.latitude), lng: Number(d.longitude), city: d.city, region: d.region, countryCode: d.country_code };
             }
             throw new Error('no success');
         }),
-        fetchIP('ipapi', 'https://ipapi.co/json/', data => {
-            if (data?.latitude != null && data?.longitude != null) {
-                return { lat: Number(data.latitude), lng: Number(data.longitude), city: data.city, region: data.region, countryCode: data.country_code };
+        () => fetchSingleIP('https://ipapi.co/json/', d => {
+            if (d?.latitude != null && d?.longitude != null) {
+                return { lat: Number(d.latitude), lng: Number(d.longitude), city: d.city, region: d.region, countryCode: d.country_code };
             }
             throw new Error('no lat/lng');
-        }),
-        fetchIP('ipinfo', 'https://ipinfo.io/json', data => {
-            if (data?.loc) {
-                const parts = data.loc.split(',');
-                return { lat: Number(parts[0]), lng: Number(parts[1]), city: data.city, region: data.region, countryCode: data.country };
-            }
-            throw new Error('no loc');
         })
     ];
 
-    try {
-        const results = await Promise.allSettled(apis);
-        const validResults = results
-            .filter(result => result.status === 'fulfilled')
-            .map(result => result.value)
-            .filter(item => Number.isFinite(item.lat) && Number.isFinite(item.lng))
-            .filter(item => {
-                const country = String(item.countryCode || '').toUpperCase();
-                const inBolivia = item.lat >= -23.5 && item.lat <= -9.5 && item.lng >= -70 && item.lng <= -57;
-                return inBolivia && (!country || country === 'BO');
-            });
-
-        if (validResults.length === 0) {
-            throw new Error('Ningún proveedor devolvió una ubicación válida en Bolivia');
-        }
-
-        const median = values => {
-            const sorted = [...values].sort((a, b) => a - b);
-            const middle = Math.floor(sorted.length / 2);
-            return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
-        };
-        const medianLat = median(validResults.map(item => item.lat));
-        const medianLng = median(validResults.map(item => item.lng));
-        const distanceToMedian = item => Math.hypot(item.lat - medianLat, item.lng - medianLng);
-        const consensus = validResults.filter(item => distanceToMedian(item) <= 1.2);
-        const sources = consensus.length > 0 ? consensus : validResults;
-        const coords = {
-            lat: median(sources.map(item => item.lat)),
-            lng: median(sources.map(item => item.lng))
-        };
-        const metadata = sources.reduce((closest, item) => {
-            return !closest || distanceToMedian(item) < distanceToMedian(closest) ? item : closest;
-        }, null);
-        coords.city = metadata?.city;
-        coords.region = metadata?.region;
-        coords.providers = sources.map(item => item.source);
-
-        console.log('NOTIGAS ubicación IP por consenso:', coords);
-
-        if (window.isGpsExact === true && Number.isFinite(window.currentGpsLat) && Number.isFinite(window.currentGpsLng)) {
-            return {
-                lat: window.currentGpsLat,
-                lng: window.currentGpsLng,
-                city: (typeof AppState !== 'undefined') ? AppState.get('city') : null,
-                exact: true
-            };
-        }
-
-        let detectedCity = 'cochabamba';
-        if (typeof window.inferMainCityFromCoords === 'function') {
-            detectedCity = window.inferMainCityFromCoords(coords.lat, coords.lng);
-        }
-        if (!detectedCity || detectedCity === 'fuera_de_cobertura') {
-            if (typeof window.matchCityByNameOrRegion === 'function') {
-                detectedCity = window.matchCityByNameOrRegion(coords.city, coords.region) || 'cochabamba';
-            } else {
-                detectedCity = 'cochabamba';
+    for (const provider of providers) {
+        try {
+            const res = await provider();
+            if (res && Number.isFinite(res.lat) && Number.isFinite(res.lng)) {
+                const country = String(res.countryCode || '').toUpperCase();
+                const inBolivia = res.lat >= -23.5 && res.lat <= -9.5 && res.lng >= -70 && res.lng <= -57;
+                if (inBolivia && (!country || country === 'BO')) {
+                    item = res;
+                    break;
+                }
             }
-        }
-
-        const cityDefs = (typeof window.BOLIVIA_CITIES !== 'undefined') ? window.BOLIVIA_CITIES : null;
-        const cityData = (cityDefs && cityDefs[detectedCity]) ? cityDefs[detectedCity] : { key: 'cochabamba', nombre: 'Cochabamba', lat: -17.3895, lon: -66.1568 };
-
-        const finalLat = coords.lat;
-        const finalLng = coords.lng;
-
-        if (typeof window.applyGpsPosition === 'function') {
-            window.applyGpsPosition(finalLat, finalLng, `Ubicación por IP (${cityData.nombre})`, forceReset, false);
-        }
-
-        if (typeof window.cambiarCiudad === 'function') {
-            window.cambiarCiudad(detectedCity);
-        } else if (typeof AppState !== 'undefined') {
-            AppState.set('city', detectedCity);
-        }
-
-        const finalResult = { lat: finalLat, lng: finalLng, city: detectedCity, exact: false, providers: coords.providers, time: Date.now() };
-        try { sessionStorage.setItem('notigas_ip_geo_cache', JSON.stringify(finalResult)); } catch(_) {}
-        return finalResult;
-    } catch(err) {
-        if (window.isGpsExact === true && Number.isFinite(window.currentGpsLat) && Number.isFinite(window.currentGpsLng)) {
-            return {
-                lat: window.currentGpsLat,
-                lng: window.currentGpsLng,
-                city: (typeof AppState !== 'undefined') ? AppState.get('city') : null,
-                exact: true
-            };
-        }
-        console.log('Ubicación por IP no disponible; usando ciudad base Cochabamba:', err);
-        const fallback = (typeof window.BOLIVIA_CITIES !== 'undefined' && window.BOLIVIA_CITIES['cochabamba'])
-            ? window.BOLIVIA_CITIES['cochabamba']
-            : { key: 'cochabamba', nombre: 'Cochabamba', lat: -17.3895, lon: -66.1568 };
-
-        if (typeof window.applyGpsPosition === 'function') {
-            window.applyGpsPosition(fallback.lat, fallback.lon || fallback.lng, 'Cochabamba (Ubicación Base)', forceReset, false);
-        }
-
-        if (typeof window.cambiarCiudad === 'function') {
-            window.cambiarCiudad('cochabamba');
-        } else if (typeof AppState !== 'undefined') {
-            AppState.set('city', 'cochabamba');
-        }
-
-        return { lat: fallback.lat, lng: fallback.lon || fallback.lng, city: 'cochabamba', exact: false, fallback: true };
+        } catch (_) {}
     }
+
+    if (!item) {
+        // Fallback seguro a Cochabamba por defecto
+        item = { lat: -17.3895, lng: -66.1568, city: 'Cochabamba', region: 'Cochabamba' };
+    }
+
+    const coords = { lat: item.lat, lng: item.lng, city: item.city, region: item.region, time: Date.now(), exact: false };
+
+    let detectedCity = 'cochabamba';
+    if (typeof window.inferMainCityFromCoords === 'function') {
+        detectedCity = window.inferMainCityFromCoords(coords.lat, coords.lng);
+    }
+    if (!detectedCity || detectedCity === 'fuera_de_cobertura') {
+        if (typeof window.matchCityByNameOrRegion === 'function') {
+            detectedCity = window.matchCityByNameOrRegion(coords.city, coords.region) || 'cochabamba';
+        } else {
+            detectedCity = 'cochabamba';
+        }
+    }
+
+    const cityDefs = (typeof window.BOLIVIA_CITIES !== 'undefined') ? window.BOLIVIA_CITIES : null;
+    const cityData = (cityDefs && cityDefs[detectedCity]) ? cityDefs[detectedCity] : { key: 'cochabamba', nombre: 'Cochabamba', lat: -17.3895, lon: -66.1568 };
+
+    const finalLat = coords.lat;
+    const finalLng = coords.lng;
+
+    if (typeof window.applyGpsPosition === 'function') {
+        window.applyGpsPosition(finalLat, finalLng, `Ubicación por IP (${cityData.nombre})`, forceReset, false);
+    }
+
+    if (typeof window.cambiarCiudad === 'function') {
+        window.cambiarCiudad(detectedCity);
+    } else if (typeof AppState !== 'undefined') {
+        AppState.set('city', detectedCity);
+    }
+
+    const finalResult = { lat: finalLat, lng: finalLng, city: detectedCity, exact: false, time: Date.now() };
+    try { sessionStorage.setItem('notigas_ip_geo_cache', JSON.stringify(finalResult)); } catch(_) {}
+    return finalResult;
 }
 
 function iniciarWatchGPSRepartidor() {

@@ -143,14 +143,16 @@ body {
 
 /* HEADER & BRANDING GLASSMORPHISM SYSTEM */
 header { 
-  background: rgba(30, 41, 59, 0.92); 
+  background: rgba(30, 41, 59, 0.94); 
   padding: 8px 6px; 
   display: flex; 
   align-items: center; 
   justify-content: space-between; 
   border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
   z-index: 1000; 
-  backdrop-filter: blur(16px);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transform: translateZ(0);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); 
 }
 
@@ -262,11 +264,13 @@ header {
 
 /* NAVEGACIÓN 3 PESTAÑAS */
 nav { 
-  background: rgba(15, 23, 42, 0.95); 
+  background: rgba(15, 23, 42, 0.96); 
   display: flex; 
   border-bottom: 1px solid rgba(255, 255, 255, 0.08); 
   z-index: 999; 
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transform: translateZ(0);
 }
 
 .tab-btn { 
@@ -1581,8 +1585,9 @@ button:active, .tab-btn:active, .cat-chip:active {
   text-align: center;
   font-size: 12px;
   font-weight: 900;
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  transform: translateZ(0);
   letter-spacing: 0.6px;
   box-shadow: 0 4px 20px rgba(255, 109, 0, 0.35);
   text-shadow: 0 1px 4px rgba(0,0,0,0.6);

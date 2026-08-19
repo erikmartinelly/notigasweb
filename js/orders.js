@@ -691,8 +691,8 @@ function confirmarPedido() {
 }
 
 function cancelarPedidoActivo() {
-  const rawOrder = JSON.stringify(AppState.get('activeOrder'));
-  if (!rawOrder) {
+  const activeOrder = (typeof AppState !== 'undefined') ? AppState.get('activeOrder') : null;
+  if (!activeOrder) {
     showToast('Sin Pedido Activo', 'No tienes un pedido activo para cancelar.', 'warning', 3000);
     return;
   }
@@ -710,7 +710,7 @@ function cancelarPedidoActivo() {
 
       showLoadingOverlay('Cancelando requerimiento...');
       try {
-        const order = JSON.parse(rawOrder);
+        const order = (typeof activeOrder === 'string') ? JSON.parse(activeOrder) : activeOrder;
         if (!order || !order.id) {
           hideLoadingOverlay();
           AppState.set('activeOrder', null);
@@ -756,8 +756,8 @@ function cancelarPedidoActivo() {
 window.cancelarPedidoActivo = cancelarPedidoActivo;
 
 async function confirmarRecepcionComprador() {
-  const rawOrder = JSON.stringify(AppState.get('activeOrder'));
-  if (!rawOrder) {
+  const activeOrder = (typeof AppState !== 'undefined') ? AppState.get('activeOrder') : null;
+  if (!activeOrder) {
     showToast('Sin Pedido Activo', 'No tienes un pedido activo en curso.', 'warning', 3000);
     return;
   }
@@ -775,7 +775,7 @@ async function confirmarRecepcionComprador() {
 
       showLoadingOverlay('Confirmando recepción...');
       try {
-        const order = JSON.parse(rawOrder);
+        const order = (typeof activeOrder === 'string') ? JSON.parse(activeOrder) : activeOrder;
         if (!order || !order.id) {
           hideLoadingOverlay();
           showToast('Error', 'Datos del pedido no válidos.', 'error', 3000);
@@ -823,10 +823,10 @@ async function abrirPanoramicaPedidos() {
   let contenido = '';
   const now = Date.now();
 
-  const rawPropio = JSON.stringify(AppState.get('activeOrder'));
+  const rawPropio = (typeof AppState !== 'undefined') ? AppState.get('activeOrder') : null;
   if (rawPropio) {
     try {
-      const o = JSON.parse(rawPropio);
+      const o = (typeof rawPropio === 'string') ? JSON.parse(rawPropio) : rawPropio;
       const antiguedad = formatearAntiguedadPedido(o.timestamp);
       const isAsignado = (o.estado === 'asignado');
 

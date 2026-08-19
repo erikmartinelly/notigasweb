@@ -769,16 +769,9 @@ async function iniciarSesionRepartidor() {
   }
 
   const tempGmail = sessionStorage.getItem('notigas_temp_gmail') || '';
-  let existingGmail = tempGmail;
-  let existingUserId = null;
-  try {
-     const saved = JSON.stringify(AppState.get('userData') || {});
-     if (saved) {
-       const u = JSON.parse(saved);
-       if (u.gmail) existingGmail = u.gmail;
-       if (u.user_id) existingUserId = u.user_id;
-     }
-  } catch(e){}
+  const cachedUser = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
+  let existingGmail = cachedUser.gmail || tempGmail;
+  let existingUserId = cachedUser.user_id || null;
 
   // COMPROBACIÓN ESTRICTA DE BANEO POR LA ADMINISTRACIÓN
   if (typeof esRepartidorBaneado === 'function' && esRepartidorBaneado(nombreNegocio, plate, whatsapp, existingGmail)) {
@@ -807,16 +800,7 @@ async function iniciarSesionRepartidor() {
     existingUserId = session.user.id;
   }
 
-  let ciudad = (document.getElementById('inputDriverCiudad')?.value || '').trim();
-  if (!ciudad) {
-    try {
-      const saved = JSON.stringify(AppState.get('userData') || {});
-      if (saved) {
-        const u = JSON.parse(saved);
-        if (u.ciudad) ciudad = u.ciudad;
-      }
-    } catch(e) {}
-  }
+  let ciudad = (document.getElementById('inputDriverCiudad')?.value || '').trim() || cachedUser.ciudad || 'cochabamba';
 
   const validCities = ['santacruz', 'cochabamba', 'lapaz', 'elalto', 'sucre', 'tarija', 'oruro', 'potosi', 'trinidad', 'cobija'];
   if (!ciudad || !validCities.includes(ciudad.toLowerCase())) {
@@ -882,14 +866,10 @@ function closeUserSettingsModal() {
   const modal = document.getElementById('modalUserSettings');
   if (modal) modal.style.display = 'none';
 }
-
 function guardarPrefUsuario() {
   // Detectar si es repartidor
-  let isDriver = false;
-  try {
-    const saved = JSON.stringify(AppState.get('userData') || {});
-    if (saved) { const u = JSON.parse(saved); isDriver = (u.role === 'repartidor'); }
-  } catch(e){}
+  const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
+  const isDriver = (u.role === 'repartidor');
 
   if (isDriver) {
     // Guardar GPS
@@ -908,10 +888,49 @@ function guardarPrefUsuario() {
       window.pausarRecorridoRepartidor({ silent: true });
     }
   } else {
-    // Guardar sonido comprador
-    const soundSelect = document.getElementById('userPrefSound');
-    const soundVal = soundSelect ? soundSelect.value : 'enabled';
-    AppState.set('prefSound', soundVal);
+    // Guardar opciones de comprador
+    const catSelect = document.getElementById('userPrefCategory');
+    if (catSelect) {
+      AppState.set('prefCategory', catSelect.value);
+    }
+    const soundSelect = document.getElementById('userPrefSoundBuyer');
+    if (soundSelect) {
+      AppState.set('prefSound', soundSelect.value);
+    }
+  }
+
+  // Guardar ciudad si se seleccionó en el menú de configuración
+  const citySelect = document.getElementById('userPrefCity');
+  if (citySelect && citySelect.value) {
+    const nuevaCiudad = citySelect.value.toLowerCase().trim();
+    const ciudadActual = AppState.get('city');
+    if (nuevaCiudad !== ciudadActual) {
+      if (typeof window.cambiarCiudad === 'function') {
+        window.cambiarCiudad(nuevaCiudad);
+      } else {
+        AppState.set('city', nuevaCiudad);
+      }
+    }
+  }
+
+  showToast('Preferencias Guardadas', 'Tus preferencias han sido actualizadas correctamente.', 'success', 3000);
+  closeUserSettingsModal();
+}
+window.guardarPrefUsuario = guardarPrefUsuario;
+
+/* MIGRA DATOS ANTIGUOS DE REPARTIDOR AL NUEVO SISTEMA SIN PERDERLOS */
+async function migrarDatosAntiguosARepartidor() {
+  if (typeof closeUserSettingsModal === 'function') {
+    closeUserSettingsModal();
+  }
+
+  const modalAuth = document.getElementById('modalWelcomeAuth');
+
+  // 1. Buscar si ya existe un perfil de repartidor en notigas_user_data
+  let driverProfile = null;
+  const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
+  if (u.role === 'repartidor' && u.nombre) {
+    driverProfile = u;
   }
 
   closeUserSettingsModal();

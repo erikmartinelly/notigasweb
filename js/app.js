@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+
   // PURGA AUTOMÁTICA DE CACHÉ LOCAL (Limpia pedidos antiguos del localStorage, no de la BD)
   // verificarGPSObligatorio() eliminada para no causar doble petición y bloquear PC
   if (typeof ejecutarPurgaBaseDeDatosAuto === 'function') ejecutarPurgaBaseDeDatosAuto();
@@ -50,14 +51,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // AUTODETECTAR Y ACTIVAR MODO SEGÚN ROL REGISTRADO (COMPRADOR VS REPARTIDOR)
   try {
-    const saved = JSON.stringify(AppState.get('userData') || {});
-    if (saved) {
-      const u = JSON.parse(saved);
-      if (u.role === 'repartidor') {
-        setAppMode('driver');
-      } else {
-        setAppMode('buyer');
-      }
+    const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
+    if (u.role === 'repartidor') {
+      setAppMode('driver');
     } else {
       setAppMode('buyer');
     }
@@ -76,13 +72,10 @@ function abrirConfiguracionSegunRol() {
 
   let isDriver = false;
   try {
-    const saved = JSON.stringify(AppState.get('userData') || {});
-    if (saved) {
-      const u = JSON.parse(saved);
-      isDriver = (u.role === 'repartidor');
-      if (isDriver && driverNameLabel && u.nombre) {
-        driverNameLabel.textContent = u.nombre;
-      }
+    const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
+    isDriver = (u.role === 'repartidor');
+    if (isDriver && driverNameLabel && u.nombre) {
+      driverNameLabel.textContent = u.nombre;
     }
   } catch(e){}
 
@@ -117,32 +110,6 @@ function abrirConfiguracionSegunRol() {
       });
     }
   }
-
-  const modal = document.getElementById('modalUserSettings');
-  if (modal) modal.style.display = 'flex';
-}
-
-/* ABRE LA FICHA DEL REPARTIDOR EN MODO EDICIÓN (DESDE EL MENÚ CONFIG, NO DEL HEADER) */
-function abrirFichaRepartidorEdicion() {
-  // Cargar datos existentes del repartidor en el formulario
-  try {
-    const saved = JSON.stringify(AppState.get('userData') || {});
-    if (saved) {
-      const u = JSON.parse(saved);
-      const setVal = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
-      setVal('inputDriverNombre', u.nombre);
-      setVal('inputDriverTelRef', u.whatsapp);
-      setVal('inputDriverPlate', u.placa);
-      setVal('inputDriverCat', u.categoria);
-      setVal('inputDriverProductos', u.productos);
-      setVal('inputDriverCiudad', u.ciudad);
-
-      setVal('inputDriverSchedule', u.schedule);
-    }
-  } catch(e){}
-
-  // Cambiar título a modo edición
-  const titleEl = document.getElementById('driverModalTitleText');
   const subtitleEl = document.getElementById('driverModalSubtitle');
   if (titleEl) titleEl.textContent = 'Editar Mi Ficha de Repartidor';
   if (subtitleEl) subtitleEl.textContent = 'Actualiza los datos de tu negocio. Los cambios se aplican de inmediato.';
