@@ -110,8 +110,28 @@ function abrirConfiguracionSegunRol() {
       });
     }
   }
-  const subtitleEl = document.getElementById('driverModalSubtitle');
-  if (titleEl) titleEl.textContent = 'Editar Mi Ficha de Repartidor';
+
+  const modal = document.getElementById('modalUserSettings');
+  if (modal) modal.style.display = 'flex';
+}
+
+/* ABRE LA FICHA DEL REPARTIDOR EN MODO EDICIÓN (DESDE EL MENÚ CONFIG, NO DEL HEADER) */
+function abrirFichaRepartidorEdicion() {
+  // Cargar datos existentes del repartidor en el formulario
+  try {
+    const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
+    const setVal = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+    setVal('inputDriverNombre', u.nombre);
+    setVal('inputDriverTelRef', u.whatsapp);
+    setVal('inputDriverPlate', u.placa);
+    setVal('inputDriverCat', u.categoria);
+    setVal('inputDriverProductos', u.productos);
+    setVal('inputDriverZonas', u.zonas);
+    setVal('inputDriverSchedule', u.schedule);
+  } catch(e){}
+
+  // Cambiar título a modo edición
+  const titleEl = document.getElementById('driverModalTitleText');
   const subtitleEl = document.getElementById('driverModalSubtitle');
   if (titleEl) titleEl.textContent = 'Editar Mi Ficha de Repartidor';
   if (subtitleEl) subtitleEl.textContent = 'Actualiza los datos de tu negocio. Los cambios se aplican de inmediato.';

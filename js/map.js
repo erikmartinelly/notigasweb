@@ -308,6 +308,11 @@ function initNotigasMap() {
   map.on('zoomend', () => {
     renderDriverDemandByZoom();
   });
+  map.on('moveend', () => {
+    if (typeof cargarPedidosVecinalesEnVivo === 'function') {
+      cargarPedidosVecinalesEnVivo();
+    }
+  });
 
   map.on('click', (e) => {
     mostrarEfectoPuntoClic(e.latlng.lat, e.latlng.lng);
@@ -375,20 +380,54 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
       const ORDER_COLUMNS = 'id, user_id, categoria, titulo, cantidad, direccion, telefono, estado, driver_id, ciudad, latitude, longitude, created_at';
       const TRUCK_COLUMNS = 'id, user_id, distribuidor_nombre, categoria, titulo, ciudad, latitude, longitude, garrafas_agotadas, last_active, telefono, placa, productos';
 
-      // 1. Consulta de Camiones en vivo (común para ambos roles)
+      // Obtener Bounding Box del viewport visible con margen de 25% para pre-carga suave
+      let bbox = null;
+      if (map && typeof map.getBounds === 'function') {
+        try {
+          const rawBounds = map.getBounds();
+          if (rawBounds && typeof rawBounds.pad === 'function' && typeof rawBounds.getSouth === 'function') {
+            const padded = rawBounds.pad(0.25);
+            const s = padded.getSouth();
+            const n = padded.getNorth();
+            const w = padded.getWest();
+            const e = padded.getEast();
+            if (!isNaN(s) && !isNaN(n) && !isNaN(w) && !isNaN(e) && s < n && w < e) {
+              bbox = { minLat: s, maxLat: n, minLng: w, maxLng: e };
+            }
+          }
+        } catch (_) {}
+      }
+
+      // 1. Consulta de Camiones en vivo (común para ambos roles con límite de seguridad)
       let trucksQuery = window.supabaseClient
         .from('rutas_repartidores_publicas')
         .select(TRUCK_COLUMNS)
-        .gte('last_active', tenMinsAgo);
+        .gte('last_active', tenMinsAgo)
+        .limit(100);
       if (normCity) trucksQuery = trucksQuery.ilike('ciudad', normCity);
+      if (bbox) {
+        trucksQuery = trucksQuery
+          .gte('latitude', bbox.minLat)
+          .lte('latitude', bbox.maxLat)
+          .gte('longitude', bbox.minLng)
+          .lte('longitude', bbox.maxLng);
+      }
 
-      // 2. Consulta de Pedidos Públicos (pendientes y vistos)
+      // 2. Consulta de Pedidos Públicos (filtrados por viewport visible y con límite)
       let pubQuery = window.supabaseClient
         .from('pedidos_publicos')
         .select(ORDER_COLUMNS)
         .gte('created_at', activeWindow)
-        .in('estado', ['pendiente', 'visto']);
+        .in('estado', ['pendiente', 'visto'])
+        .limit(150);
       if (normCity) pubQuery = pubQuery.ilike('ciudad', normCity);
+      if (bbox) {
+        pubQuery = pubQuery
+          .gte('latitude', bbox.minLat)
+          .lte('latitude', bbox.maxLat)
+          .gte('longitude', bbox.minLng)
+          .lte('longitude', bbox.maxLng);
+      }
 
       // 3. Consulta de Pedidos Asignados (sólo para repartidor autenticado)
       let assignedPromise = Promise.resolve({ data: [], error: null });
@@ -403,7 +442,8 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
             .select(ORDER_COLUMNS)
             .eq('driver_id', currentUserId)
             .eq('estado', 'asignado')
-            .gte('created_at', activeWindow);
+            .gte('created_at', activeWindow)
+            .limit(50);
           if (normCity) assignedQuery = assignedQuery.ilike('ciudad', normCity);
           assignedPromise = assignedQuery;
         }
@@ -569,12 +609,26 @@ function renderOrderRadarsOnMap(orders) {
   }
 
   const activeKeys = new Set();
+  const bounds = (typeof map.getBounds === 'function') ? map.getBounds().pad(0.1) : null;
+  const maxRadars = 35; // Límite estricto de elementos para garantizar 60 FPS y bajo consumo en Android
 
-  (orders || []).forEach(order => {
+  // 1. Filtrar solo pedidos dentro del viewport visible
+  let visibleOrders = (orders || []).filter(order => {
     const lat = Number(order.latitude ?? order.lat);
     const lng = Number(order.longitude ?? order.lng);
-    if (!Number.isFinite(lat) || !Number.isFinite(lng) || !order?.id) return;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || !order?.id) return false;
+    if (bounds && typeof bounds.contains === 'function' && !bounds.contains([lat, lng])) return false;
+    return true;
+  });
 
+  // 2. Limitar cantidad máxima de radares en pantalla
+  if (visibleOrders.length > maxRadars) {
+    visibleOrders = visibleOrders.slice(0, maxRadars);
+  }
+
+  visibleOrders.forEach(order => {
+    const lat = Number(order.latitude ?? order.lat);
+    const lng = Number(order.longitude ?? order.lng);
     const key = String(order.id);
     activeKeys.add(key);
 
@@ -588,15 +642,15 @@ function renderOrderRadarsOnMap(orders) {
       return;
     }
 
-    // Creación única para nuevos pedidos
+    // Creación única para nuevos pedidos con estructura DOM ligera
     const safeCategory = typeof escapeHtmlStr === 'function'
       ? escapeHtmlStr(order.categoria || 'Gas')
       : 'Gas';
     const icon = L.divIcon({
       className: 'demand-order-radar-icon',
-      html: `<div class="demand-radar" title="Pedido Activo de ${safeCategory} (Haz clic para ver)"><span></span><span></span><span></span><i></i></div>`,
-      iconSize: [80, 80],
-      iconAnchor: [40, 40]
+      html: `<div class="demand-radar" title="Pedido Activo de ${safeCategory} (Haz clic para ver)"><span></span><i></i></div>`,
+      iconSize: [60, 60],
+      iconAnchor: [30, 30]
     });
 
     const marker = L.marker([lat, lng], {
@@ -614,7 +668,7 @@ function renderOrderRadarsOnMap(orders) {
     window.orderRadarMarkers[key] = marker;
   });
 
-  // Eliminar únicamente radares de pedidos que ya no existen
+  // Eliminar únicamente radares de pedidos fuera de vista o inactivos
   Object.keys(window.orderRadarMarkers).forEach(key => {
     if (!activeKeys.has(key)) {
       const marker = window.orderRadarMarkers[key];
@@ -1288,15 +1342,54 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
 
 let lastBroadcastLat = null;
 let lastBroadcastLng = null;
+let _cachedDriverProfile = null;
+let _cachedDriverUserId = null;
 
-/* ESTRATEGIA ADAPTATIVA INTELIGENTE DE TRANSMISIÓN GPS */
+async function obtenerFichaChoferEnMemoria(userId, userData) {
+  // 1. Usar datos ya cargados en AppState si están disponibles
+  if (userData && (userData.nombre || userData.placa || userData.whatsapp)) {
+    return {
+      nombre_completo: userData.nombre || userData.full_name || 'Repartidor GLP',
+      telefono_whatsapp: userData.whatsapp || userData.telefono || '',
+      placa: userData.placa || 'Camión',
+      categoria: userData.categoria || 'Gas GLP',
+      ciudad: userData.ciudad || (typeof AppState !== 'undefined' ? AppState.get('city') : 'cbba')
+    };
+  }
+
+  // 2. Si ya está en caché local de memoria y coincide el user_id
+  if (_cachedDriverProfile && _cachedDriverUserId === userId) {
+    return _cachedDriverProfile;
+  }
+
+  // 3. Consulta única inicial a Supabase si no está en memoria
+  if (window.supabaseClient && userId) {
+    try {
+      const { data: driver } = await window.supabaseClient
+        .from('choferes_habilitados')
+        .select('nombre_completo, telefono_whatsapp, placa, categoria, ciudad')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (driver) {
+        _cachedDriverProfile = driver;
+        _cachedDriverUserId = userId;
+        return driver;
+      }
+    } catch (_) {}
+  }
+
+  return null;
+}
+
+/* ESTRATEGIA ADAPTATIVA INTELIGENTE DE TRANSMISIÓN GPS (1 sola operación UPSERT por tick) */
 async function transmitirUbicacionRepartidorServidorDB(lat, lng) {
   const driverGpsLive = AppState.get('driverGpsLive');
   if (driverGpsLive !== 'on') return;
 
   const now = Date.now();
 
-  // 2. Comprobar si el vehículo está detenido o en movimiento
+  // Comprobar si el vehículo está detenido o en movimiento
   if (lastBroadcastLat !== null && lastBroadcastLng !== null) {
     const distMovida = calcularDistanciaMetros(lastBroadcastLat, lastBroadcastLng, lat, lng);
     const tiempoTranscurrido = now - lastGpsBroadcastTime;
@@ -1321,56 +1414,33 @@ async function transmitirUbicacionRepartidorServidorDB(lat, lng) {
       lastBroadcastLng = lng;
       lastGpsBroadcastTime = now;
 
-        if (window.supabaseClient) {
-          const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
+      if (window.supabaseClient) {
+        const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
+        const driver = await obtenerFichaChoferEnMemoria(localUserId, u);
 
-          const { data: driver } =
-              await window.supabaseClient
-                  .from('choferes_habilitados')
-                  .select(
-                      'nombre_completo, telefono_whatsapp, placa, categoria, ciudad'
-                  )
-                  .eq('user_id', localUserId)
-                  .maybeSingle();
-
-          if (!driver) {
-              return;
-          }
-
-          await window.supabaseClient
-              .from('rutas_repartidores')
-              .upsert(
-                  {
-                      user_id: localUserId,
-                      distribuidor_nombre:
-                          driver.nombre_completo ||
-                          'Repartidor GLP',
-
-                      categoria:
-                          driver.categoria ||
-                          'Gas GLP',
-
-                      titulo:
-                          driver.placa ||
-                          'Camión',
-
-                      ciudad:
-                          driver.ciudad,
-
-                      latitude: lat,
-                      longitude: lng,
-
-                      telefono:
-                          driver.telefono_whatsapp || '',
-
-                      last_active:
-                          new Date().toISOString()
-                  },
-                  {
-                      onConflict: 'user_id'
-                  }
-              );
+        if (!driver) {
+          return;
         }
+
+        // Transmisión directa mediante 1 sola operación UPSERT sin lecturas redundantes
+        await window.supabaseClient
+          .from('rutas_repartidores')
+          .upsert(
+            {
+              user_id: localUserId,
+              distribuidor_nombre: driver.nombre_completo || 'Repartidor GLP',
+              categoria: driver.categoria || 'Gas GLP',
+              titulo: driver.placa || 'Camión',
+              ciudad: driver.ciudad || (typeof AppState !== 'undefined' ? AppState.get('city') : 'cbba'),
+              latitude: lat,
+              longitude: lng,
+              telefono: driver.telefono_whatsapp || '',
+              last_active: new Date().toISOString()
+            },
+            {
+              onConflict: 'user_id'
+            }
+          );
       }
     }
   } catch(e){

@@ -52,6 +52,10 @@ GRANT SELECT ON public.pedidos_publicos TO anon, authenticated;
 GRANT SELECT ON public.choferes_publicos TO anon, authenticated;
 GRANT SELECT ON public.rutas_repartidores_publicas TO anon, authenticated;
 
+ALTER VIEW public.pedidos_publicos SET (security_invoker = true);
+ALTER VIEW public.choferes_publicos SET (security_invoker = true);
+ALTER VIEW public.rutas_repartidores_publicas SET (security_invoker = true);
+
 -- 2. Eliminar funciones obsoletas de clusters y chat
 DROP FUNCTION IF EXISTS public.rpc_get_demand_clusters_v2(text, text, double precision, integer);
 DROP FUNCTION IF EXISTS public.rpc_get_orders_for_cluster_v2(text, text, text, double precision, integer);

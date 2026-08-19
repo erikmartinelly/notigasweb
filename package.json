@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "build": "echo \"Build completed successfully\""
+    "test": "node scripts/check_syntax.js",
+    "build": "node scripts/check_syntax.js"
   },
   "keywords": [
     "notigas",

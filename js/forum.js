@@ -473,6 +473,7 @@ async function crearNuevoPost() {
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
     console.error('Error interno al publicar:', err);
     if (typeof showToast === 'function') showToast('Error', err.message, 'error', 4000);
+  }
 }
 
 /**

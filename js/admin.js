@@ -188,8 +188,11 @@ async function renderAdminAdsAndPostsList() {
   let count = 0;
 
   // 1. Anuncio Local Personalizado
-
-  const { data: adData, error: adsError } = await window.supabaseClient.from('anuncios_globales').select('*').order('created_at', { ascending: false });
+  const { data: adData, error: adsError } = await window.supabaseClient
+    .from('anuncios_globales')
+    .select('id, titulo, url, ciudad, created_at')
+    .order('created_at', { ascending: false })
+    .limit(50);
   if (adsError) { console.error('Error cargando anuncios_globales:', adsError); return; }
 
   if (adData && adData.length > 0) {
@@ -225,8 +228,11 @@ async function renderAdminAdsAndPostsList() {
   }
 
   // 2. Avisos y Noticias de la OTB
-
-  const { data: localPosts, error: postsError } = await window.supabaseClient.from('avisos').select('*');
+  const { data: localPosts, error: postsError } = await window.supabaseClient
+    .from('avisos')
+    .select('id, titulo, categoria, ciudad, created_at, user_nombre')
+    .order('created_at', { ascending: false })
+    .limit(100);
   if (postsError) { console.error('Error cargando avisos:', postsError); return; }
 
   if (localPosts && localPosts.length > 0) {
@@ -267,84 +273,57 @@ async function renderAdminAdsAndPostsList() {
 
 async function renderAdminDashboardKPIs() {
   const elUsers = document.getElementById('adminKpiUsers');
-
   const elVendors = document.getElementById('adminKpiVendors');
-
   const elOrders = document.getElementById('adminKpiOrders');
-
   const elReports = document.getElementById('adminKpiReports');
 
   let usersCount = 0;
-
   let vendorsCount = 0;
-
   let ordersCount = 0;
-
   let reportsCount = 0;
 
   if (window.supabaseClient) {
     try {
-      const { count: cVendors } = await window.supabaseClient.from('choferes_habilitados').select('*', { count: 'exact', head: true });
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const hoyIsoStart = todayStart.toISOString();
 
-      vendorsCount = cVendors || 0;
+      // CONSULTAS AGREGADAS DIRECTAS EN POSTGRESQL (Cero filas descargadas, máxima velocidad)
+      const [
+        resVendors,
+        resProfiles,
+        resActiveOrders,
+        resTodayOrders,
+        resTodayDelivered,
+        resReports
+      ] = await Promise.all([
+        window.supabaseClient.from('choferes_habilitados').select('*', { count: 'exact', head: true }),
+        window.supabaseClient.from('profiles').select('*', { count: 'exact', head: true }),
+        window.supabaseClient.from('pedidos').select('*', { count: 'exact', head: true }).in('estado', ['pendiente', 'visto', 'asignado']),
+        window.supabaseClient.from('pedidos').select('*', { count: 'exact', head: true }).gte('created_at', hoyIsoStart),
+        window.supabaseClient.from('pedidos').select('*', { count: 'exact', head: true }).eq('estado', 'entregado').gte('created_at', hoyIsoStart),
+        window.supabaseClient.from('denuncias').select('*', { count: 'exact', head: true })
+      ]);
 
-      // Unique users from orders + localStorage/databaseEmails as a proxy for users count
-      const uniqueUsers = new Set();
+      vendorsCount = resVendors.count || 0;
+      usersCount = resProfiles.count || 0;
+      ordersCount = resActiveOrders.count || 0;
+      const creadosHoy = resTodayOrders.count || 0;
+      const entregadosHoy = resTodayDelivered.count || 0;
+      reportsCount = resReports.count || 0;
 
-      const { data: pedidosUsersData, error: pedidosUsersErr } = await window.supabaseClient.from('pedidos').select('user_id');
-      if (pedidosUsersErr) {
-        console.error('Error cargando usuarios de pedidos:', pedidosUsersErr);
-      } else if (pedidosUsersData) {
-        pedidosUsersData.forEach(p => { if (p.user_id) uniqueUsers.add(p.user_id); });
+      const elOrdersTitle = document.getElementById('adminKpiOrders')?.parentElement?.firstElementChild;
+      if (elOrdersTitle) {
+        elOrdersTitle.innerHTML = `📦 PEDIDOS ACTIVOS <span style="display:block; font-size:9px; color:#56BC37; font-weight:700; margin-top:2px;">${creadosHoy} Hoy • ${entregadosHoy} Entregados</span>`;
       }
-
-      if (typeof databaseEmails !== 'undefined' && Array.isArray(databaseEmails)) {
-        databaseEmails.forEach(e => { if (e.gmail) uniqueUsers.add(e.gmail); });
-      }
-
-      try {
-        const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
-        if (u.gmail) uniqueUsers.add(u.gmail);
-      } catch(e){}
-
-      usersCount = uniqueUsers.size;
-
-      const { data: ordersData, error: ordersErr } = await window.supabaseClient.from('pedidos').select('estado, created_at');
-      if (ordersErr) {
-        console.error('Error cargando estados de pedidos:', ordersErr);
-      } else if (ordersData) {
-        const activos = ordersData.filter(p => p.estado === 'pendiente' || p.estado === 'asignado').length;
-        ordersCount = activos;
-
-        const hoyStr = new Date().toISOString().split('T')[0];
-
-        const creadosHoy = ordersData.filter(p => p.created_at && p.created_at.startsWith(hoyStr)).length;
-
-        const entregadosHoy = ordersData.filter(p => p.estado === 'entregado' && p.created_at && p.created_at.startsWith(hoyStr)).length;
-
-        const elOrdersTitle = document.getElementById('adminKpiOrders')?.parentElement?.firstElementChild;
-
-        if (elOrdersTitle) {
-           elOrdersTitle.innerHTML = `📦 PEDIDOS ACTIVOS <span style="display:block; font-size:9px; color:#56BC37; font-weight:700; margin-top:2px;">${creadosHoy} Hoy • ${entregadosHoy} Entregados</span>`;
-        }
-      }
-
-      const { count: cReports } = await window.supabaseClient.from('denuncias').select('*', { count: 'exact', head: true });
-
-      reportsCount = cReports || 0;
-
     } catch(e) {
-      console.error('Error cargando KPIs del dashboard de administración:', e);
+      console.error('Error cargando KPIs agregados del dashboard de administración:', e);
     }
-
   }
 
   if (elUsers) elUsers.innerText = usersCount;
-
   if (elVendors) elVendors.innerText = vendorsCount;
-
   if (elOrders) elOrders.innerText = ordersCount;
-
   if (elReports) elReports.innerText = reportsCount;
 }
 
@@ -464,7 +443,7 @@ async function renderAdminVendorsList() {
   }
 
   const [driversResult, usersResult] = await Promise.all([
-    window.supabaseClient.from('choferes_habilitados').select('*').order('created_at', { ascending: false }),
+    window.supabaseClient.from('choferes_habilitados').select('id, user_id, nombre_completo, categoria, placa, telefono_whatsapp, created_at').order('created_at', { ascending: false }).limit(100),
     window.supabaseClient.rpc('rpc_admin_list_users')
   ]);
 
@@ -1204,6 +1183,7 @@ function descargarListaCorreosCSV() {
 
   if (typeof databaseEmails !== 'undefined' && Array.isArray(databaseEmails)) {
     emailsList = [...databaseEmails];
+  }
   // Correos de la base de datos se exportan directamente
 
   try {
@@ -1398,8 +1378,11 @@ async function renderAdminReports() {
   if (!container || !bannedContainer || !window.supabaseClient) return;
 
   // 1. Fetch Denuncias
-
-  const { data: reports, error: reportsError } = await window.supabaseClient.from('denuncias').select('*').order('created_at', { ascending: false });
+  const { data: reports, error: reportsError } = await window.supabaseClient
+    .from('denuncias')
+    .select('id, denunciado_id, motivo, detalles, created_at')
+    .order('created_at', { ascending: false })
+    .limit(100);
   if (reportsError) { console.error('Error cargando denuncias:', reportsError); return; }
 
   if (!reports || reports.length === 0) {
@@ -1440,8 +1423,10 @@ async function renderAdminReports() {
   }
 
   // 2. Fetch Baneados
-
-  const { data: banned, error: bannedError } = await window.supabaseClient.from('usuarios_baneados').select('*');
+  const { data: banned, error: bannedError } = await window.supabaseClient
+    .from('usuarios_baneados')
+    .select('id, user_id, email, nombre, motivo, created_at')
+    .limit(100);
   if (bannedError) { console.error('Error cargando usuarios_baneados:', bannedError); return; }
 
   if (!banned || banned.length === 0) {
@@ -1593,8 +1578,11 @@ async function renderAdminReports() {
   if (!container || !bannedContainer || !window.supabaseClient) return;
 
   // 1. Fetch Denuncias
-
-  const { data: reports, error: reportsError } = await window.supabaseClient.from('denuncias').select('*').order('created_at', { ascending: false });
+  const { data: reports, error: reportsError } = await window.supabaseClient
+    .from('denuncias')
+    .select('id, denunciado_id, motivo, detalles, created_at')
+    .order('created_at', { ascending: false })
+    .limit(100);
   if (reportsError) { console.error('Error cargando denuncias:', reportsError); return; }
 
   if (!reports || reports.length === 0) {
@@ -1635,8 +1623,10 @@ async function renderAdminReports() {
   }
 
   // 2. Fetch Baneados
-
-  const { data: banned, error: bannedError } = await window.supabaseClient.from('usuarios_baneados').select('*');
+  const { data: banned, error: bannedError } = await window.supabaseClient
+    .from('usuarios_baneados')
+    .select('id, user_id, email, nombre, motivo, created_at')
+    .limit(100);
   if (bannedError) { console.error('Error cargando usuarios_baneados:', bannedError); return; }
 
   if (!banned || banned.length === 0) {

@@ -49,7 +49,7 @@ window.ORDER_STATES = Object.freeze({
 window._loadedDynamicModules = window._loadedDynamicModules || {};
 
 window.loadScriptAsync = function(src) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     if (window._loadedDynamicModules[src] || document.querySelector(`script[src*="${src}"]`)) {
       resolve();
       return;
@@ -62,8 +62,12 @@ window.loadScriptAsync = function(src) {
       resolve();
     };
     script.onerror = (e) => {
-      console.warn(`Aviso: Error cargando script dinámico: ${src}`, e);
-      resolve();
+      const err = new Error(`Error al cargar el módulo dinámico: ${src}`);
+      console.error(`❌ [loadScriptAsync] ${err.message}`, e);
+      if (typeof showToast === 'function') {
+        showToast('Error de Carga', `No se pudo cargar el módulo: ${src}`, 'error', 5000);
+      }
+      reject(err);
     };
     document.body.appendChild(script);
   });
