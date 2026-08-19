@@ -207,21 +207,24 @@ CREATE TABLE IF NOT EXISTS public.security_rate_limits (
 
 -- ==============================================================================
 -- 3. VISTAS PÚBLICAS AUTORIZADAS
--- ==============================================================================
-
-CREATE OR REPLACE VIEW public.choferes_publicos
-WITH (security_barrier = true)
+-- ============================================================================CREATE OR REPLACE VIEW public.choferes_publicos
+WITH (security_barrier = true, security_invoker = false)
 AS
 SELECT 
-    id,
-    nombre_completo,
-    categoria,
-    ciudad,
-    zonas,
-    schedule,
-    placa,
-    productos,
-    estado_verificacion
+    ch.id,
+    ch.user_id,
+    ch.nombre_completo,
+    ch.categoria,
+    ch.ciudad,
+    ch.zonas,
+    ch.schedule,
+    ch.placa,
+    ch.productos,
+    ch.telefono_whatsapp AS telefono,
+    NULL::text AS descripcion,
+    NULL::text AS foto_url,
+    ch.estado_verificacion,
+    ch.created_at
 FROM public.choferes_habilitados ch
 WHERE LOWER(TRIM(COALESCE(ch.estado_verificacion, ''))) = 'aprobado'
   AND NOT EXISTS (
@@ -229,29 +232,53 @@ WHERE LOWER(TRIM(COALESCE(ch.estado_verificacion, ''))) = 'aprobado'
     WHERE (ub.user_id IS NOT NULL AND ub.user_id = ch.user_id)
        OR (ub.telefono IS NOT NULL AND ub.telefono = ch.telefono_whatsapp)
        OR (ub.placa IS NOT NULL AND LOWER(ub.placa) = LOWER(ch.placa))
-);
+  );
 
 GRANT SELECT ON public.choferes_publicos TO anon, authenticated;
 
 CREATE OR REPLACE VIEW public.pedidos_publicos
-WITH (security_barrier = true)
+WITH (security_barrier = true, security_invoker = false)
 AS
 SELECT
     p.id,
-    CASE WHEN p.user_id = auth.uid()::text THEN p.user_id ELSE NULL::text END AS user_id,
+    CASE 
+        WHEN (p.user_id = (SELECT auth.uid()::text)) THEN p.user_id 
+        ELSE NULL::text 
+    END AS user_id,
     p.categoria,
-    CASE WHEN p.user_id = auth.uid()::text THEN p.titulo ELSE NULL::text END AS titulo,
+    CASE 
+        WHEN (p.user_id = (SELECT auth.uid()::text) OR is_current_enabled_driver(p.ciudad, NULL::text)) THEN p.titulo 
+        ELSE 'Pedido Vecinal'::text 
+    END AS titulo,
     p.cantidad,
-    CASE WHEN p.user_id = auth.uid()::text THEN p.direccion ELSE NULL::text END AS direccion,
-    CASE WHEN p.user_id = auth.uid()::text THEN p.telefono ELSE NULL::text END AS telefono,
+    CASE 
+        WHEN (p.user_id = (SELECT auth.uid()::text) OR is_current_enabled_driver(p.ciudad, NULL::text)) THEN p.direccion 
+        ELSE NULL::text 
+    END AS direccion,
+    CASE 
+        WHEN (p.user_id = (SELECT auth.uid()::text) OR is_current_enabled_driver(p.ciudad, NULL::text)) THEN p.telefono 
+        ELSE NULL::text 
+    END AS telefono,
     p.estado,
-    CASE WHEN p.user_id = auth.uid()::text OR p.driver_id = auth.uid()::text THEN p.driver_id ELSE NULL::text END AS driver_id,
+    CASE 
+        WHEN (p.user_id = (SELECT auth.uid()::text) OR p.driver_id = (SELECT auth.uid()::text)) THEN p.driver_id 
+        ELSE NULL::text 
+    END AS driver_id,
     p.ciudad,
-    p.barrio_otb,
-    CASE WHEN p.user_id = auth.uid()::text THEN p.latitude ELSE ROUND(p.latitude::numeric, 3)::double precision END AS latitude,
-    CASE WHEN p.user_id = auth.uid()::text THEN p.longitude ELSE ROUND(p.longitude::numeric, 3)::double precision END AS longitude,
-    CASE WHEN p.user_id = auth.uid()::text THEN p.descripcion ELSE NULL::text END AS descripcion,
-    p.visto,
+    COALESCE(p.barrio_otb, 'Zona indicada en el mapa'::text) AS barrio_otb,
+    CASE 
+        WHEN (p.user_id = (SELECT auth.uid()::text) OR is_current_enabled_driver(p.ciudad, NULL::text)) THEN p.latitude 
+        ELSE (round(p.latitude::numeric, 3))::double precision 
+    END AS latitude,
+    CASE 
+        WHEN (p.user_id = (SELECT auth.uid()::text) OR is_current_enabled_driver(p.ciudad, NULL::text)) THEN p.longitude 
+        ELSE (round(p.longitude::numeric, 3))::double precision 
+    END AS longitude,
+    CASE 
+        WHEN (p.user_id = (SELECT auth.uid()::text) OR is_current_enabled_driver(p.ciudad, NULL::text)) THEN p.descripcion 
+        ELSE NULL::text 
+    END AS descripcion,
+    COALESCE(p.visto, false) AS visto,
     p.created_at
 FROM public.pedidos p
 WHERE p.estado IN ('pendiente', 'visto');
@@ -259,23 +286,28 @@ WHERE p.estado IN ('pendiente', 'visto');
 GRANT SELECT ON public.pedidos_publicos TO anon, authenticated;
 
 CREATE OR REPLACE VIEW public.rutas_repartidores_publicas
-WITH (security_barrier = true)
+WITH (security_barrier = true, security_invoker = false)
 AS
 SELECT
     r.id,
-    CASE WHEN r.user_id = auth.uid()::text THEN r.user_id ELSE NULL::text END AS user_id,
-    r.distribuidor_nombre,
-    r.categoria,
-    r.titulo,
+    CASE 
+        WHEN (r.user_id = (SELECT auth.uid()::text)) THEN r.user_id 
+        ELSE NULL::text 
+    END AS user_id,
+    COALESCE(r.distribuidor_nombre, ch.nombre_completo, 'Repartidor NOTIGAS'::text) AS distribuidor_nombre,
+    COALESCE(r.categoria, ch.categoria, 'Gas GLP'::text) AS categoria,
+    COALESCE(r.titulo, 'En ruta de distribución'::text) AS titulo,
     r.ciudad,
     r.latitude,
     r.longitude,
-    r.garrafas_agotadas,
-    r.last_active
+    COALESCE(r.garrafas_agotadas, false) AS garrafas_agotadas,
+    r.last_active,
+    COALESCE(NULLIF(TRIM(r.telefono), ''), NULLIF(TRIM(ch.telefono_whatsapp), '')) AS telefono,
+    COALESCE(ch.placa, '') AS placa,
+    COALESCE(ch.productos, '') AS productos
 FROM public.rutas_repartidores r
-JOIN public.choferes_habilitados ch ON ch.user_id = r.user_id
-WHERE r.last_active >= now() - interval '10 minutes'
-  AND LOWER(TRIM(COALESCE(ch.estado_verificacion, ''))) = 'aprobado'
+LEFT JOIN public.choferes_habilitados ch ON ch.user_id = r.user_id
+WHERE r.last_active >= (now() - interval '10 minutes')
   AND NOT EXISTS (
       SELECT 1 FROM public.usuarios_baneados ub WHERE ub.user_id = r.user_id
   );

@@ -23,3 +23,6 @@ jobs:
 
       - name: Verify Runtime & Map Initialization
         run: node scripts/check_runtime.js
+
+      - name: Verify Cross-Role RLS & View Visibility
+        run: node scripts/test_rls_security.js
