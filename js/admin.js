@@ -5,14 +5,7 @@
    ========================================================================== */
 
 // La lista quemada de emails ha sido eliminada. La validación se hace contra Supabase `admin_credentials`.
-
-// Duración máxima de sesión admin sin re-autenticación: 30 minutos
-
 const ADMIN_SESSION_MAX_MS = 30 * 60 * 1000;
-
-/* closeUserSettingsModal, guardarPrefUsuario y cerrarSesionUsuario residen en auth.js (que carga primero).
-
-   Se eliminan aquí para evitar que admin.js sobreescriba las versiones correctas con soporte de rol Repartidor. */
 
 window.getVerifiedAdminEmail = function() {
   try {
@@ -20,7 +13,7 @@ window.getVerifiedAdminEmail = function() {
     if (!isAdmin) return null;
     if (window._verifiedAdminEmail) return window._verifiedAdminEmail.toLowerCase().trim();
     if (window._tempAuthUser && window._tempAuthUser.email) return window._tempAuthUser.email.toLowerCase().trim();
-    const data = AppState.get('userData');
+    const data = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
     return data && (data.gmail || data.email) ? (data.gmail || data.email).toLowerCase().trim() : null;
   } catch(e) { return null; }
 };
@@ -43,22 +36,14 @@ window.abrirModalAdminDashboard = async function() {
   if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Verificando credenciales de administrador...');
 
   try {
-    // 1. Obtener el usuario autenticado real desde Supabase Auth (Fuente de Verdad)
-    let email = '';
-    const { data: sessionData, error: sessionErr } = await window.supabaseClient.auth.getSession();
-    const user = sessionData?.session?.user;
-
-    if (user && user.email) {
-      email = user.email.toLowerCase().trim();
-    } else {
-      // Fallback a getUser()
-      const { data: userData } = await window.supabaseClient.auth.getUser();
-      if (userData?.user?.email) {
-        email = userData.user.email.toLowerCase().trim();
-      }
+    let email = window._tempAuthUser?.email || (typeof AppState !== 'undefined' ? AppState.get('userData')?.gmail : '') || '';
+    if (!email) {
+      const { data: sessionData } = await window.supabaseClient.auth.getSession();
+      email = sessionData?.session?.user?.email || '';
     }
+    email = email.toLowerCase().trim();
 
-    if (!email || sessionErr) {
+    if (!email) {
       if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
       if (typeof showToast === 'function') {
         showToast('Acceso Restringido', 'Debes iniciar sesión con tu cuenta de Administrador.', 'warning', 4500);
@@ -70,7 +55,7 @@ window.abrirModalAdminDashboard = async function() {
       return;
     }
 
-    // 2. Comprobar contra admin_credentials en PostgreSQL (insensible a mayúsculas)
+    // Comprobar contra admin_credentials en PostgreSQL
     const { data: adminData, error } = await window.supabaseClient
       .from('admin_credentials')
       .select('email')
@@ -90,9 +75,9 @@ window.abrirModalAdminDashboard = async function() {
       return;
     }
 
-    // 3. Administrador verificado
+    // Administrador verificado
     window._verifiedAdminEmail = email;
-    AppState.set('isAdmin', true);
+    if (typeof AppState !== 'undefined') AppState.set('isAdmin', true);
 
     modalAdmin.style.display = 'flex';
     if (typeof switchModalTab === 'function') switchModalTab(0);
@@ -103,36 +88,21 @@ window.abrirModalAdminDashboard = async function() {
     console.error('Error al abrir panel de admin:', e);
     if (typeof showToast === 'function') {
       showToast('Error', 'No se pudieron verificar las credenciales de administrador.', 'error', 4000);
-    } else {
-      alert('Error verificando credenciales.');
     }
-    return;
   }
-
-  modalAdmin.style.display = 'flex';
-
-  renderAdminReports();
 };
 
 function cerrarSesionRepartidorActivarComprador() {
   if (typeof showConfirmModal === 'function') {
     showConfirmModal('🔄', '¿Cambiar a Modo Comprador?', 'Tu ficha de negocio se mantendrá guardada. Solo se cambiará tu modo de ingreso.', 'Sí, cambiar', () => {
       AppState.set('userData', null);
-
       AppState.set('driverGpsLive', 'off');
-
       if (typeof closeUserSettingsModal === 'function') closeUserSettingsModal();
-
       if (typeof setAppMode === 'function') setAppMode('buyer');
-
       const modalAuth = document.getElementById('modalWelcomeAuth');
-
       if (modalAuth) modalAuth.style.display = 'flex';
-
       if (typeof showToast === 'function') showToast('🛒 Modo Comprador', 'Modo Repartidor cerrado. Puedes ingresar como Comprador.', 'info', 2000);
-
     });
-
   }
 }
 
@@ -142,14 +112,11 @@ let adminLoginAttempts = 0;
 
 function closeAdminModal() {
   const modalAdmin = document.getElementById('modalAdmin');
-
   if (modalAdmin) modalAdmin.style.display = 'none';
 
   // Restaurar el manejador de Google general
-
   if (typeof initGoogleOneTap === 'function') {
     initGoogleOneTap();
-
   }
 }
 

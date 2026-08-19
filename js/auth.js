@@ -51,44 +51,51 @@ function clearAuthThrottle(kind) {
   try { sessionStorage.removeItem(`notigas_auth_throttle_${kind}`); } catch (_) {}
 }
 
+let _authInitPromise = null;
+let _processingSessionUserId = null;
+let _lastProcessedSessionTime = 0;
+window._cachedAdminEmail = null;
+window._cachedIsAdmin = false;
+
 document.addEventListener('DOMContentLoaded', () => {
   // 1. Iniciar One Tap en segundo plano
   initGoogleOneTap();
 
   const initAuthSession = async () => {
-    if (window._authSessionInitializing) return;
-    window._authSessionInitializing = true;
+    if (_authInitPromise) return _authInitPromise;
+    _authInitPromise = (async () => {
+      let hasSession = false;
+      if (window.supabaseClient) {
+        try {
+          const { data: sessionData } = await window.supabaseClient.auth.getSession();
+          const user = sessionData?.session?.user;
+          if (user) {
+            hasSession = true;
+            window._tempAuthUser = user;
+            
+            // Ocultar cualquier modal de autenticación inmediatamente para ingreso directo
+            const modalAuth = document.getElementById('modalWelcomeAuth');
+            if (modalAuth) modalAuth.style.display = 'none';
+            const modalRole = document.getElementById('modalRoleSelection');
+            if (modalRole) modalRole.style.display = 'none';
 
-    let hasSession = false;
-    if (window.supabaseClient) {
-      try {
-        const { data: sessionData } = await window.supabaseClient.auth.getSession();
-        if (sessionData && sessionData.session && sessionData.session.user) {
-          hasSession = true;
-          window._tempAuthUser = sessionData.session.user;
-          
-          // Ocultar cualquier modal de autenticación inmediatamente para ingreso directo
-          const modalAuth = document.getElementById('modalWelcomeAuth');
-          if (modalAuth) modalAuth.style.display = 'none';
-          const modalRole = document.getElementById('modalRoleSelection');
-          if (modalRole) modalRole.style.display = 'none';
-
-          await procesarSesionExitosa(sessionData.session.user);
+            await procesarSesionExitosa(user);
+          }
+        } catch(e) {
+          console.warn("No se pudo restaurar la sesión automáticamente", e);
         }
-      } catch(e) {
-        console.warn("No se pudo restaurar la sesión automáticamente", e);
       }
-    }
 
-    // 2. Si no hay sesión, mostrar el modal de bienvenida/ingreso
-    const modalAuth = document.getElementById('modalWelcomeAuth');
-    if (modalAuth) {
-      modalAuth.style.display = hasSession ? 'none' : 'flex';
-    }
+      // 2. Si no hay sesión, mostrar el modal de bienvenida/ingreso
+      const modalAuth = document.getElementById('modalWelcomeAuth');
+      if (modalAuth) {
+        modalAuth.style.display = hasSession ? 'none' : 'flex';
+      }
 
-    // 3. Notificar al resto de la app que Auth terminó su validación inicial
-    document.dispatchEvent(new Event('notigas_auth_ready'));
-    window._authSessionInitializing = false;
+      // 3. Notificar al resto de la app que Auth terminó su validación inicial
+      document.dispatchEvent(new Event('notigas_auth_ready'));
+    })();
+    return _authInitPromise;
   };
 
   const setupAuthListener = () => {
@@ -97,10 +104,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initAuthSession();
 
-    window.supabaseClient.auth.onAuthStateChange((event, session) => {
-      if (session && session.user) {
-        window._tempAuthUser = session.user;
-        window.checkAndApplyAdminStatus(session.user);
+    window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
+      const user = session?.user;
+      if (user) {
+        window._tempAuthUser = user;
+        if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+          const now = Date.now();
+          if (_processingSessionUserId !== user.id || (now - _lastProcessedSessionTime > 2500)) {
+            await procesarSesionExitosa(user);
+          }
+        } else {
+          window.checkAndApplyAdminStatus(user);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        window._tempAuthUser = null;
+        window._cachedAdminEmail = null;
+        window._cachedIsAdmin = false;
+        AppState.set('userData', null);
+        AppState.set('isAdmin', false);
       }
     });
   };
@@ -115,43 +136,44 @@ document.addEventListener('DOMContentLoaded', () => {
 window.checkAndApplyAdminStatus = async function(user) {
   if (!window.supabaseClient) return false;
   try {
-    let email = user?.email;
+    let email = user?.email || window._tempAuthUser?.email || AppState.get('userData')?.gmail;
     if (!email) {
       const { data: sessionData } = await window.supabaseClient.auth.getSession();
       email = sessionData?.session?.user?.email;
     }
     if (!email) {
-      const { data: userData } = await window.supabaseClient.auth.getUser();
-      email = userData?.user?.email;
-    }
-    if (!email) {
       const btnAdmin = document.getElementById('btnAdminAccessQuick');
       if (btnAdmin) btnAdmin.style.display = 'none';
       AppState.set('isAdmin', false);
       window._verifiedAdminEmail = null;
       return false;
+    }
+
+    const normEmail = email.toLowerCase().trim();
+    if (window._cachedAdminEmail === normEmail) {
+      const btnAdmin = document.getElementById('btnAdminAccessQuick');
+      if (btnAdmin) btnAdmin.style.display = window._cachedIsAdmin ? 'flex' : 'none';
+      AppState.set('isAdmin', window._cachedIsAdmin);
+      window._verifiedAdminEmail = window._cachedIsAdmin ? normEmail : null;
+      return window._cachedIsAdmin;
     }
 
     const { data: adminData, error } = await window.supabaseClient
       .from('admin_credentials')
       .select('email')
-      .ilike('email', email.toLowerCase().trim())
+      .ilike('email', normEmail)
       .limit(1)
       .maybeSingle();
 
-    if (adminData && adminData.email) {
-      const btnAdmin = document.getElementById('btnAdminAccessQuick');
-      if (btnAdmin) btnAdmin.style.display = 'flex';
-      AppState.set('isAdmin', true);
-      window._verifiedAdminEmail = email.toLowerCase().trim();
-      return true;
-    } else {
-      const btnAdmin = document.getElementById('btnAdminAccessQuick');
-      if (btnAdmin) btnAdmin.style.display = 'none';
-      AppState.set('isAdmin', false);
-      window._verifiedAdminEmail = null;
-      return false;
-    }
+    const isAdmin = Boolean(adminData && adminData.email);
+    window._cachedAdminEmail = normEmail;
+    window._cachedIsAdmin = isAdmin;
+
+    const btnAdmin = document.getElementById('btnAdminAccessQuick');
+    if (btnAdmin) btnAdmin.style.display = isAdmin ? 'flex' : 'none';
+    AppState.set('isAdmin', isAdmin);
+    window._verifiedAdminEmail = isAdmin ? normEmail : null;
+    return isAdmin;
   } catch(e) {
     console.warn("Error comprobando estado de admin:", e);
     AppState.set('isAdmin', false);
@@ -175,10 +197,16 @@ function getCurrentUserId() {
 window.getCurrentUserId = getCurrentUserId;
 
 async function getAuthenticatedUserId() {
+  if (window._tempAuthUser?.id) return window._tempAuthUser.id;
+  const localUser = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
+  if (localUser?.user_id) return localUser.user_id;
   if (!window.supabaseClient) return null;
-  const { data, error } = await window.supabaseClient.auth.getUser();
-  if (error || !data?.user) return null;
-  return data.user.id;
+  try {
+    const { data } = await window.supabaseClient.auth.getSession();
+    return data?.session?.user?.id || null;
+  } catch(_) {
+    return null;
+  }
 }
 window.getAuthenticatedUserId = getAuthenticatedUserId;
 
@@ -1389,6 +1417,14 @@ async function registrarEmail() {
 }
 
 async function procesarSesionExitosa(user) {
+  if (!user || !user.id) return;
+  const now = Date.now();
+  if (_processingSessionUserId === user.id && (now - _lastProcessedSessionTime < 2500)) {
+    return;
+  }
+  _processingSessionUserId = user.id;
+  _lastProcessedSessionTime = now;
+
   try {
     const modalAuth = document.getElementById('modalWelcomeAuth');
     if (modalAuth) modalAuth.style.display = 'none';

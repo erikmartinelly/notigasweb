@@ -6,40 +6,19 @@ const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_wWVQ59Rejod5Oc1X4s_eeQ_ONbXzyi2
 const SUPABASE_SESSION_STORAGE_KEY = 'notigas-auth-session-v1';
 
 function createPersistentAuthStorage() {
-  const fallback = new Map();
-  return {
-    getItem(key) {
-      try {
-        const val = window.localStorage.getItem(key);
-        if (val) return val;
-        // Migración de sesión si existiera en sessionStorage o clave anterior
-        const legacyVal = window.sessionStorage.getItem(key) || window.sessionStorage.getItem('notigas-secure-session-v1');
-        if (legacyVal) {
-          window.localStorage.setItem(key, legacyVal);
-          return legacyVal;
-        }
-        return null;
-      } catch (_) {
-        return fallback.get(key) || null;
-      }
-    },
-    setItem(key, value) {
-      try {
-        window.localStorage.setItem(key, value);
-      } catch (_) {
-        fallback.set(key, value);
-      }
-    },
-    removeItem(key) {
-      try {
-        window.localStorage.removeItem(key);
-        window.sessionStorage.removeItem(key);
-        window.sessionStorage.removeItem('notigas-secure-session-v1');
-      } catch (_) {
-        fallback.delete(key);
-      }
-    }
-  };
+  try {
+    const testKey = '__sb_test__';
+    window.localStorage.setItem(testKey, '1');
+    window.localStorage.removeItem(testKey);
+    return window.localStorage;
+  } catch (_) {
+    const memMap = new Map();
+    return {
+      getItem: (k) => memMap.get(k) || null,
+      setItem: (k, v) => memMap.set(k, v),
+      removeItem: (k) => memMap.delete(k)
+    };
+  }
 }
 
 function createNotigasSupabaseClient() {
@@ -48,7 +27,7 @@ function createNotigasSupabaseClient() {
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: true,
-      flowType: 'pkce',
+      flowType: 'implicit',
       storageKey: SUPABASE_SESSION_STORAGE_KEY,
       storage: createPersistentAuthStorage()
     }
