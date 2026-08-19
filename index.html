@@ -586,6 +586,14 @@
 
         </button>
 
+        <!-- DENUNCIAR PEDIDO FALSO (SOLO DISPONIBLE EN EL MENÚ) -->
+
+        <button type="button" data-action="abrirModalDenunciaPedidoFalsoMenu" style="width:100%; background: linear-gradient(135deg, #DC2626, #991B1B); color: white; border: 1px solid #EF4444; padding: 10px; border-radius: 10px; font-weight: 800; cursor: pointer; margin-top: 10px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(220,38,38,0.35);">
+
+          <i class="fa-solid fa-triangle-exclamation"></i> 🚨 Denunciar Pedido Falso
+
+        </button>
+
         <!-- CAMBIAR DE MODO SIN CERRAR LA CUENTA NI BORRAR LA FICHA -->
 
         <button style="width:100%; background: linear-gradient(135deg, #37474F, #263238); color: #CFD8DC; border: 1px solid rgba(255,255,255,0.15); padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 10px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;"  id="auto-event-26" >
@@ -983,7 +991,7 @@
 
       <div class="modal-title">
 
-        <span>🚨 Denunciar Publicación o Acoso</span>
+        <span id="reportModalTitleText">🚨 Denunciar Publicación o Pedido Falso</span>
 
         <button class="btn-close"  id="auto-event-36" >✖</button>
 
@@ -993,19 +1001,30 @@
 
       <input type="hidden" id="reportContext" value="">
 
+      <!-- CAMPO OBLIGATORIO: NOMBRE DE LA PERSONA DEL PEDIDO FALSO -->
+      <div class="form-group" id="groupReportPersonName" style="display:none; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 10px; margin-bottom: 12px;">
+
+        <label id="lblReportPersonName" style="color: #F87171; font-weight: 800; font-size: 11.5px; display: block; margin-bottom: 5px;">
+          👤 Nombre de la persona que realizó el pedido falso (*Obligatorio):
+        </label>
+
+        <input type="text" id="inputReportPersonName" placeholder="Escribe el nombre o contacto de la persona..." style="width: 100%; padding: 9px; background: #0F172A; border: 1.5px solid #EF4444; color: white; border-radius: 8px; font-size: 12px; box-sizing: border-box;">
+
+      </div>
+
       <div class="form-group">
 
         <label>Motivo de la Denuncia:</label>
 
         <select id="selectReportMotivo">
 
+          <option value="Pedido falso / posible fraude">📦 Pedido falso o posible fraude</option>
+
           <option value="Acoso o Bullying">🛑 Acoso o Bullying a un vecino</option>
 
           <option value="Contenido Ofensivo / Inapropiado">⚠️ Contenido Ofensivo o Lenguaje Inapropiado</option>
 
           <option value="Información Falsa / Spam">❌ Información Falsa o Spam</option>
-
-          <option value="Pedido falso / posible fraude">📦 Pedido falso o posible fraude</option>
 
           <option value="Conducta Indebida del Repartidor / Cliente">🚨 Conducta Indebida</option>
 

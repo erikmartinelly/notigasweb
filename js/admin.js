@@ -1516,15 +1516,206 @@ async function banearUsuarioAdmin(identifier) {
 
   const isEmail = target.includes('@');
 
+  if (driversList.length === 0) {
+    driversList = [
+
+      { nombre_completo: "Gas GLP N° 42", telefono_whatsapp: "74123456", placa: "3842XYZ", categoria: "Gas GLP", productos: "Garrafas GLP 10kg, reguladores", zonas: "OTB Central", schedule: "07:00 a 18:00", created_at: "2026-08-01" },
+
+      { nombre_completo: "Agua Cristallina 20L", telefono_whatsapp: "74123456", placa: "2105ABC", categoria: "Agua 20L", productos: "Botellones 20L, surtidores", zonas: "Zona Norte", schedule: "08:00 a 17:00", created_at: "2026-08-01" }
+
+    ];
+
+  }
+
+  let csvRows = ["Nombre Negocio/Repartidor,WhatsApp,Placa,Categoria,Productos,Zonas Recorrido,Horarios,Fecha Registro"];
+
+  driversList.forEach(d => {
+    csvRows.push(`"${d.nombre_completo || ''}","${d.telefono_whatsapp || ''}","${d.placa || ''}","${d.categoria || ''}","${d.productos || ''}","${d.zonas || ''}","${d.schedule || ''}","${d.created_at || ''}"`);
+
+  });
+
+  const csvString = "\uFEFF" + csvRows.join("\n");
+
+  const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+
+  link.setAttribute("href", url);
+
+  link.setAttribute("download", `fichas_repartidores_notigas_${new Date().toISOString().split('T')[0]}.csv`);
+
+  document.body.appendChild(link);
+
+  link.click();
+
+  document.body.removeChild(link);
+
+  alert(`📥 DESCARGA COMPLETADA EN FORMATO .CSV\n\nSe exportaron ${driversList.length} Fichas de Repartidores registradas para el panel de administración.`);
+}
+
+/* DESCARGA COMPLETA DE ESTADÍSTICAS GENERALES (.CSV) */
+
+function descargarEstadisticasGeneralesCSV() {
+  let currentAdmin = getVerifiedAdminEmail();
+
+  if (!currentAdmin) {
+    if (typeof showToast === 'function') { showToast('Notificación', "⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña.", 'info', 4000); } else { alert("⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña."); };
+
+    if (typeof showToast === 'function') showToast('Acceso Denegado', 'Inicia sesión con tu cuenta de administrador Google para realizar esta acción.', 'error');
+
+    return;
+
+  }
+
+  const elUsers = document.getElementById('adminKpiUsers');
+
+  const elVendors = document.getElementById('adminKpiVendors');
+
+  const elOrders = document.getElementById('adminKpiOrders');
+
+  const elReports = document.getElementById('adminKpiReports');
+
+  const usersCount = elUsers ? elUsers.innerText : '0';
+
+  const vendorsCount = elVendors ? elVendors.innerText : '0';
+
+  const ordersCount = elOrders ? elOrders.innerText : '0';
+
+  const reportsCount = elReports ? elReports.innerText : '0';
+
+  const fechaHoy = new Date().toISOString().split('T')[0];
+
+  let csvRows = ["Metrica,Valor,Fecha"];
+
+  csvRows.push(`"Usuarios Totales","${usersCount}","${fechaHoy}"`);
+
+  csvRows.push(`"Repartidores Activos","${vendorsCount}","${fechaHoy}"`);
+
+  csvRows.push(`"Pedidos del Dia","${ordersCount}","${fechaHoy}"`);
+
+  csvRows.push(`"Denuncias Emitidas","${reportsCount}","${fechaHoy}"`);
+
+  const csvString = "\uFEFF" + csvRows.join("\n");
+
+  const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+
+  link.setAttribute("href", url);
+
+  link.setAttribute("download", `estadisticas_generales_notigas_${fechaHoy}.csv`);
+
+  document.body.appendChild(link);
+
+  link.click();
+
+  document.body.removeChild(link);
+
+  alert(`📥 DESCARGA COMPLETADA EN FORMATO .CSV\n\nSe exportaron las estadísticas generales del panel de administración.`);
+}
+
+async function renderAdminReports() {
+  const container = document.getElementById('adminReportsContainer');
+
+  const bannedContainer = document.getElementById('adminBannedList');
+
+  if (!container || !bannedContainer || !window.supabaseClient) return;
+
+  // 1. Fetch Denuncias
+
+  const { data: reports, error: reportsError } = await window.supabaseClient.from('denuncias').select('*').order('created_at', { ascending: false });
+  if (reportsError) { console.error('Error cargando denuncias:', reportsError); return; }
+
+  if (!reports || reports.length === 0) {
+    container.innerHTML = '<div style="color:#64748B; font-style:italic;">No hay denuncias pendientes de revisión.</div>';
+
+  } else {
+    let html = '';
+
+    reports.forEach((rep) => {
+      html += `
+
+        <div style="background:#1E293B; padding:6px 8px; border-radius:6px; border-left:3px solid #EF4444; display:flex; justify-content:space-between; align-items:center;">
+
+          <div>
+
+            <strong>${escapeHtmlStr(rep.denunciado_id || 'Publicación')}</strong>: ${escapeHtmlStr(rep.motivo)}
+
+            <div style="font-size:9px; color:#94A3B8;">${escapeHtmlStr(rep.detalles || 'Sin detalle')}</div>
+
+          </div>
+
+          <div style="display:flex; gap:4px;">
+
+            <button data-action="borrarDenunciaAdmin" data-id="${rep.id}" style="background:#0288D1; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; cursor:pointer;" title="Desestimar">👍 Ok</button>
+
+            <button data-action="banearUsuarioAdmin" data-id="${escapeHtmlStr(rep.denunciado_id)}" style="background:#D32F2F; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; cursor:pointer;" title="Banear Usuario">🚫 Banear</button>
+
+          </div>
+
+        </div>
+
+      `;
+
+    });
+
+    container.innerHTML = html;
+
+  }
+
+  // 2. Fetch Baneados
+
+  const { data: banned, error: bannedError } = await window.supabaseClient.from('usuarios_baneados').select('*');
+  if (bannedError) { console.error('Error cargando usuarios_baneados:', bannedError); return; }
+
+  if (!banned || banned.length === 0) {
+    bannedContainer.innerHTML = '<div style="color:#64748B; font-style:italic;">No hay usuarios baneados actualmente.</div>';
+
+  } else {
+    let html = '';
+
+    banned.forEach((u) => {
+      let uIdentificador = u.email || u.nombre || u.user_id || u.motivo || 'Desconocido';
+
+      html += `
+
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#1E293B; padding:4px 8px; border-radius:4px; margin-bottom:4px;">
+
+          <span style="font-size:11px;">🚫 ${escapeHtmlStr(uIdentificador)}</span>
+
+          <button data-action="desbanearUsuarioAdmin" data-id="${u.id}" style="background:#00E676; color:#0F172A; border:none; padding:2px 6px; border-radius:4px; font-weight:700; font-size:9px; cursor:pointer;">Desbanear</button>
+
+        </div>
+
+      `;
+
+    });
+
+    bannedContainer.innerHTML = html;
+
+  }
+}
+
+async function banearUsuarioAdmin(identifier) {
+  const target = (identifier || document.getElementById('inputBanIdentifier')?.value || '').trim();
+  if (!target || !window.supabaseClient) {
+    if (!target && typeof showToast === 'function') {
+      showToast('⚠️ Campo Requerido', 'Ingresa un correo, nombre o placa a banear.', 'warning', 3000);
+    }
+    return;
+  }
+
+  const isEmail = target.includes('@');
+
   const { error } = await window.supabaseClient.from('usuarios_baneados').insert([{
     user_id: !isEmail ? target : null,
-
     email: isEmail ? target : null,
-
     nombre: !isEmail ? target : null,
-
     motivo: 'Baneado por Administrador'
-
   }]);
 
   if (typeof descargarBaneadosDeSupabase === 'function') await descargarBaneadosDeSupabase();
@@ -1542,7 +1733,8 @@ async function banearUsuarioAdmin(identifier) {
     if (typeof showToast === 'function') showToast('Error', error.message || 'No se pudo registrar el baneo.', 'error', 4000);
   }
 
-  renderAdminReports();
+  if (typeof renderAdminReports === 'function') renderAdminReports();
+  if (typeof renderAdminVendorsList === 'function') renderAdminVendorsList();
 }
 
 async function desbanearUsuarioAdmin(idOrEmail) {
@@ -1590,43 +1782,96 @@ async function borrarDenunciaAdmin(indexId) {
 
 /* FUNCIONALIDAD DEL MODAL DE DENUNCIAS (REPORTAR CONTENIDO / USUARIO) */
 
-function abrirModalDenuncia(contextTitle, targetInfo) {
+function abrirModalDenuncia(contextTitle, targetInfo, isFakeOrder = false) {
   const modal = document.getElementById('modalReport');
-
   const label = document.getElementById('reportTargetLabel');
-
+  const titleText = document.getElementById('reportModalTitleText');
   const inputContext = document.getElementById('reportContext');
+  const groupName = document.getElementById('groupReportPersonName');
+  const inputName = document.getElementById('inputReportPersonName');
+  const selectMotivo = document.getElementById('selectReportMotivo');
+  const inputDetalle = document.getElementById('inputReportDetalle');
 
-  if (label) label.innerText = `Reportar ${contextTitle}: "${targetInfo}"`;
+  if (inputName) {
+    inputName.value = '';
+    inputName.style.border = '1.5px solid #EF4444';
+  }
+  if (inputDetalle) inputDetalle.value = '';
 
-  if (inputContext) inputContext.value = `${contextTitle} - ${targetInfo}`;
+  if (isFakeOrder) {
+    if (titleText) titleText.textContent = '🚨 Denunciar Pedido Falso';
+    if (label) label.innerText = 'Denunciar un pedido falso o ficticio a la Administración:';
+    if (inputContext) inputContext.value = 'Pedido Falso';
+    if (selectMotivo) selectMotivo.value = 'Pedido falso / posible fraude';
+    if (groupName) groupName.style.display = 'block';
+    if (inputName) {
+      setTimeout(() => inputName.focus(), 150);
+    }
+  } else {
+    if (titleText) titleText.textContent = '🚨 Denunciar Publicación o Acoso';
+    if (label) label.innerText = `Reportar ${contextTitle}: "${targetInfo}"`;
+    if (inputContext) inputContext.value = `${contextTitle} - ${targetInfo}`;
+    if (groupName) groupName.style.display = (selectMotivo && selectMotivo.value === 'Pedido falso / posible fraude') ? 'block' : 'none';
+  }
 
   if (modal) modal.style.display = 'flex';
 }
 
+window.abrirModalDenunciaPedidoFalso = function() {
+  const modalSettings = document.getElementById('modalUserSettings');
+  if (modalSettings) modalSettings.style.display = 'none';
+  abrirModalDenuncia('Pedido Falso', 'Reporte desde Menú Repartidor', true);
+};
+
 function closeReportModal() {
   const modal = document.getElementById('modalReport');
-
   if (modal) modal.style.display = 'none';
+  const groupName = document.getElementById('groupReportPersonName');
+  if (groupName) groupName.style.display = 'none';
+  const inputName = document.getElementById('inputReportPersonName');
+  if (inputName) inputName.value = '';
 }
 
 async function enviarDenuncia() {
   const context = document.getElementById('reportContext')?.value || 'General';
-
   const motivo = document.getElementById('selectReportMotivo')?.value || 'Contenido Ofensivo';
-
   const detalle = document.getElementById('inputReportDetalle')?.value.trim() || '';
+  const personNameInput = document.getElementById('inputReportPersonName');
+  const personName = personNameInput ? personNameInput.value.trim() : '';
+
+  // VALIDACIÓN ESTRICTA: Para denunciar un pedido falso DEBE nombrarse a la persona
+  if (motivo === 'Pedido falso / posible fraude' || context.toLowerCase().includes('pedido falso')) {
+    if (!personName) {
+      if (typeof showToast === 'function') {
+        showToast('⚠️ Campo Obligatorio', 'Debes ingresar el nombre de la persona que realizó el pedido falso.', 'warning', 5000);
+      } else {
+        alert('Debes ingresar el nombre de la persona que realizó el pedido falso.');
+      }
+      if (personNameInput) {
+        personNameInput.focus();
+        personNameInput.style.border = '2px solid #EF4444';
+      }
+      return;
+    }
+  }
 
   if (!window.supabaseClient) {
     if (typeof showToast === 'function') showToast('Sin conexión', 'No se pudo enviar la denuncia. Intenta nuevamente.', 'error', 4000);
     return;
   }
 
+  const denunciadoIdFinal = personName ? `Persona: ${personName}` : context;
+  const detalleFinal = personName ? `${detalle ? detalle + ' | ' : ''}Persona denunciada: ${personName}` : detalle;
+
+  if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Enviando denuncia...');
+
   const { error } = await window.supabaseClient.from('denuncias').insert([{
-    denunciado_id: context,
+    denunciado_id: denunciadoIdFinal,
     motivo: motivo,
-    detalles: detalle
+    detalles: detalleFinal
   }]);
+
+  if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
 
   if (error) {
     console.error("Error enviando denuncia:", error);
@@ -1636,83 +1881,16 @@ async function enviarDenuncia() {
 
   closeReportModal();
 
+  if (personNameInput) personNameInput.value = '';
   const inputDetalle = document.getElementById('inputReportDetalle');
-
   if (inputDetalle) inputDetalle.value = '';
 
-  if (typeof showToast === 'function') { showToast('Notificación', '⚠️ Denuncia registrada de forma segura. El equipo de moderación revisará el elemento reportado.', 'info', 4000); } else { alert('⚠️ Denuncia registrada de forma segura. El equipo de moderación revisará el elemento reportado.'); };
-}
-
-window.borrarAnuncioLocalAdmin = async function(adId) {
-  if (!confirm('¿Estás seguro de que deseas borrar este anuncio definitivamente?')) return;
-
-  try {
-    // 1. Obtener la URL de la imagen del anuncio
-
-    const { data: adData, error: fetchError } = await window.supabaseClient
-
-      .from('anuncios_globales')
-
-      .select('image_url')
-
-      .eq('id', adId)
-      .limit(1)
-      .maybeSingle();
-
-    if (fetchError) {
-      console.error('Error buscando anuncio:', fetchError);
-
-      if (typeof showToast === 'function') showToast('Error', 'No se encontró el anuncio.', 'error');
-
-      return;
-
-    }
-
-    // 2. Si tiene imagen en storage, borrarla
-
-    if (adData && adData.image_url && adData.image_url.includes('anuncios-media')) {
-      const urlParts = adData.image_url.split('/');
-
-      const fileName = urlParts[urlParts.length - 1];
-
-      if (fileName) {
-        await window.supabaseClient.storage.from('anuncios-media').remove([fileName]);
-
-      }
-
-    }
-
-    // 3. Borrar el registro de la BD
-
-    const { error: deleteError } = await window.supabaseClient
-
-      .from('anuncios_globales')
-
-      .delete()
-
-      .eq('id', adId);
-
-    if (deleteError) throw deleteError;
-
-    if (typeof showToast === 'function') showToast('Eliminado', 'Anuncio y su imagen borrados correctamente.', 'success');
-
-    // 4. Recargar vista
-
-    const container = document.getElementById('adminAdsListContainer');
-
-    if (container) {
-      renderAdminAdsAndPostsList(container);
-
-    }
-
-  } catch (error) {
-    console.error('Error al borrar anuncio:', error);
-
-    if (typeof showToast === 'function') showToast('Error', 'No se pudo borrar el anuncio.', 'error');
-
+  if (typeof showToast === 'function') {
+    showToast('🚨 Denuncia Registrada', 'Denuncia registrada de forma segura. El equipo de administración revisará al usuario y tomará las sanciones correspondientes.', 'success', 5000);
+  } else {
+    alert('⚠️ Denuncia registrada de forma segura. El equipo de administración revisará al usuario.');
   }
-};
-
+}
 window.banearUsuarioAdmin = (typeof banearUsuarioAdmin !== 'undefined') ? banearUsuarioAdmin : (typeof window.banearUsuarioAdmin !== 'undefined' ? window.banearUsuarioAdmin : undefined);
 window.desbanearUsuarioAdmin = (typeof desbanearUsuarioAdmin !== 'undefined') ? desbanearUsuarioAdmin : (typeof window.desbanearUsuarioAdmin !== 'undefined' ? window.desbanearUsuarioAdmin : undefined);
 window.borrarDenunciaAdmin = (typeof borrarDenunciaAdmin !== 'undefined') ? borrarDenunciaAdmin : undefined;

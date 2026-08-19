@@ -192,6 +192,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_auto_event_37 = document.getElementById('auto-event-37');
     if (el_auto_event_37) el_auto_event_37.addEventListener('click', () => { safeCall('enviarDenuncia'); });
 
+    const selReportMotivo = document.getElementById('selectReportMotivo');
+    if (selReportMotivo) {
+      selReportMotivo.addEventListener('change', (e) => {
+        const groupName = document.getElementById('groupReportPersonName');
+        const inputName = document.getElementById('inputReportPersonName');
+        if (groupName) {
+          const isFake = e.target.value === 'Pedido falso / posible fraude';
+          groupName.style.display = isFake ? 'block' : 'none';
+          if (isFake && inputName) setTimeout(() => inputName.focus(), 100);
+        }
+      });
+    }
+
     const el_auto_event_38 = document.getElementById('auto-event-38');
     if (el_auto_event_38) el_auto_event_38.addEventListener('click', () => { safeCall('closeSubmenuModal'); });
 
@@ -397,14 +410,17 @@ document.addEventListener('click', (e) => {
       const title = decodeURIComponent(btn.getAttribute('data-title') || '');
       if (typeof window.abrirModalDenuncia === 'function') window.abrirModalDenuncia('Aviso Noticias Vecinales', title);
     }
+    else if (action === 'abrirModalDenunciaPedidoFalsoMenu') {
+      if (typeof window.abrirModalDenunciaPedidoFalso === 'function') {
+        window.abrirModalDenunciaPedidoFalso();
+      }
+    }
     else if (action === 'denunciarPedidoFalso') {
       const id = btn.getAttribute('data-id') || '';
       const buyer = decodeURIComponent(btn.getAttribute('data-buyer') || 'Vecino');
       const email = decodeURIComponent(btn.getAttribute('data-email') || 'Correo no disponible');
       if (typeof window.abrirModalDenuncia === 'function') {
-        window.abrirModalDenuncia('Pedido posiblemente falso', `Pedido ${id} | Comprador: ${buyer} | Correo: ${email}`);
-        const reason = document.getElementById('selectReportMotivo');
-        if (reason) reason.value = 'Pedido falso / posible fraude';
+        window.abrirModalDenuncia('Pedido Falso', `Pedido ${id} | Comprador: ${buyer} | Correo: ${email}`, true);
       }
     }
     else if (action === 'borrarPostForumAdmin') {
