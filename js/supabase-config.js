@@ -1,35 +1,35 @@
 // Configuración e Inicialización de Supabase
 const SUPABASE_URL = 'https://yxzzfqyehllogzzhdtmc.supabase.co';
-// Esta es una clave publicable del navegador (sb_publishable), nunca una clave
-// service_role. La protección real se aplica con RLS, triggers y permisos SQL.
+// Clave publicable del navegador (sb_publishable) para consultas públicas con RLS
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_wWVQ59Rejod5Oc1X4s_eeQ_ONbXzyi2';
-const SUPABASE_SESSION_STORAGE_KEY = 'notigas-auth-session-v1';
+const SUPABASE_SESSION_STORAGE_KEY = 'notigas_auth_session';
 
-function createPersistentAuthStorage() {
+// Limpieza proactiva de tokens heredados/corruptos de versiones anteriores
+(function cleanupLegacyAuthStorage() {
   try {
-    const testKey = '__sb_test__';
-    window.localStorage.setItem(testKey, '1');
-    window.localStorage.removeItem(testKey);
-    return window.localStorage;
-  } catch (_) {
-    const memMap = new Map();
-    return {
-      getItem: (k) => memMap.get(k) || null,
-      setItem: (k, v) => memMap.set(k, v),
-      removeItem: (k) => memMap.delete(k)
-    };
-  }
-}
+    const obsoleteKeys = [
+      'sb-pkce-code-verifier',
+      'supabase.auth.token',
+      'sb-auth-token',
+      'notigas-auth-session-v1',
+      'supabase.dashboard.auth.token'
+    ];
+    obsoleteKeys.forEach(k => {
+      try { window.localStorage.removeItem(k); } catch(_) {}
+      try { window.sessionStorage.removeItem(k); } catch(_) {}
+    });
+  } catch(_) {}
+})();
 
 function createNotigasSupabaseClient() {
   return supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     auth: {
       autoRefreshToken: true,
       persistSession: true,
-      detectSessionInUrl: true,
+      detectSessionInUrl: false,
       flowType: 'implicit',
       storageKey: SUPABASE_SESSION_STORAGE_KEY,
-      storage: createPersistentAuthStorage()
+      storage: window.localStorage
     }
   });
 }
