@@ -15,7 +15,8 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 console.log('🧪 Iniciando prueba de runtime para NOTIGAS (map.js & core modules)...\n');
 
 // 1. Crear entorno simulado de navegador (DOM, Leaflet, Supabase, AppState, Storage)
-const listeners = {};
+const windowListeners = {};
+const docListeners = {};
 const mapListeners = {};
 
 class MockLayerGroup {
@@ -124,11 +125,21 @@ const mockElement = {
   _leaflet_id: null,
   style: {},
   value: '',
+  classList: {
+    add: () => {},
+    remove: () => {},
+    toggle: () => {},
+    contains: () => false
+  },
   addEventListener: () => {},
+  removeEventListener: () => {},
   appendChild: () => {},
   removeChild: () => {},
   querySelector: () => null,
-  querySelectorAll: () => []
+  querySelectorAll: () => [],
+  setAttribute: () => {},
+  removeAttribute: () => {},
+  getAttribute: () => null
 };
 
 const sandbox = {
@@ -155,15 +166,58 @@ const sandbox = {
   encodeURIComponent,
   decodeURIComponent,
   escapeHtmlStr: (s) => (typeof s === 'string' ? s.replace(/</g, '&lt;') : ''),
+  addEventListener: (event, fn) => {
+    windowListeners[event] = windowListeners[event] || [];
+    windowListeners[event].push(fn);
+  },
+  removeEventListener: (event, fn) => {
+    if (windowListeners[event]) {
+      windowListeners[event] = windowListeners[event].filter(cb => cb !== fn);
+    }
+  },
+  dispatchEvent: (event) => {
+    const type = event?.type || event;
+    if (windowListeners[type]) {
+      windowListeners[type].forEach(fn => fn(event));
+    }
+  },
+  location: {
+    href: 'http://localhost/',
+    search: '',
+    hash: '',
+    pathname: '/',
+    origin: 'http://localhost'
+  },
+  history: {
+    pushState: () => {},
+    replaceState: () => {}
+  },
+  CustomEvent: class CustomEvent {
+    constructor(type, detail = {}) {
+      this.type = type;
+      this.detail = detail;
+    }
+  },
+  getComputedStyle: () => ({}),
+  requestAnimationFrame: (fn) => setTimeout(fn, 16),
+  cancelAnimationFrame: (id) => clearTimeout(id),
   document: {
     readyState: 'complete',
+    body: mockElement,
+    head: mockElement,
+    documentElement: mockElement,
     getElementById: (id) => mockElement,
     querySelector: () => mockElement,
     querySelectorAll: () => [],
     createElement: () => mockElement,
     addEventListener: (event, fn) => {
-      listeners[event] = listeners[event] || [];
-      listeners[event].push(fn);
+      docListeners[event] = docListeners[event] || [];
+      docListeners[event].push(fn);
+    },
+    removeEventListener: (event, fn) => {
+      if (docListeners[event]) {
+        docListeners[event] = docListeners[event].filter(cb => cb !== fn);
+      }
     }
   },
   navigator: {
@@ -215,19 +269,24 @@ const sandbox = {
   },
   supabaseClient: {
     from: (table) => {
-      const chain = {
-        select: () => chain,
-        gte: () => chain,
-        lte: () => chain,
-        eq: () => chain,
-        in: () => chain,
-        ilike: () => chain,
-        limit: () => Promise.resolve({ data: [], error: null }),
-        upsert: () => Promise.resolve({ data: null, error: null }),
-        update: () => Promise.resolve({ data: null, error: null }),
-        maybeSingle: () => Promise.resolve({ data: null, error: null })
+      const createBuilder = () => {
+        const builder = {
+          select: () => builder,
+          gte: () => builder,
+          lte: () => builder,
+          eq: () => builder,
+          in: () => builder,
+          ilike: () => builder,
+          limit: () => builder,
+          upsert: () => Promise.resolve({ data: null, error: null }),
+          update: () => Promise.resolve({ data: null, error: null }),
+          maybeSingle: () => Promise.resolve({ data: null, error: null }),
+          then: (resolve, reject) => Promise.resolve({ data: [], error: null }).then(resolve, reject),
+          catch: (reject) => Promise.resolve({ data: [], error: null }).catch(reject)
+        };
+        return builder;
       };
-      return chain;
+      return createBuilder();
     },
     rpc: () => Promise.resolve({ data: null, error: null })
   }
@@ -317,8 +376,9 @@ try {
 
   // 6. Verificar integridad de constantes y exports
   console.log('\n🔒 Verificando constantes críticas y exports...');
-  if (context.DRIVER_RADAR_MAX_ZOOM !== 14) {
-    throw new Error(`DRIVER_RADAR_MAX_ZOOM esperado 14 pero obtenido: ${context.DRIVER_RADAR_MAX_ZOOM}`);
+  const radarZoom = context.window.DRIVER_RADAR_MAX_ZOOM ?? context.DRIVER_RADAR_MAX_ZOOM;
+  if (radarZoom !== 14) {
+    throw new Error(`DRIVER_RADAR_MAX_ZOOM esperado 14 pero obtenido: ${radarZoom}`);
   }
   if (!context.window.BOLIVIA_CITIES || !context.window.BOLIVIA_CITIES.cochabamba) {
     throw new Error('window.BOLIVIA_CITIES no está inicializado.');
