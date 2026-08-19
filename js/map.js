@@ -457,7 +457,7 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
 
 // Marcadores de radar individuales por pedido
 window.orderRadarMarkers = window.orderRadarMarkers || {};
-window.demandClusterMarkers = window.orderRadarMarkers; // alias retrocompatibilidad
+window.orderRadarMarkers = window.orderRadarMarkers || {};
 window.driverDemandMapState = window.driverDemandMapState || {
   availableOrders: [],
   assignedOrders: []
@@ -484,25 +484,24 @@ function clearOrderRadarMarkers() {
     delete window.orderRadarMarkers[orderId];
   });
 }
-const clearDemandClusterMarkers = clearOrderRadarMarkers;
 
 function renderDriverDemandByZoom() {
   if (!map || typeof L === 'undefined') return;
   const state = window.driverDemandMapState || {};
   const ordersById = new Map();
 
-  // 1. Agregar todos los pedidos individuales (disponibles y asignados)
+  // 1. Indexar todos los pedidos individuales (disponibles y asignados)
   [...(state.availableOrders || []), ...(state.assignedOrders || [])].forEach(order => {
-    if (order?.id) ordersById.set(order.id, order);
+    if (order?.id) ordersById.set(String(order.id), order);
   });
 
-  // 2. Asegurar que el pedido activo del usuario actual NUNCA se oculte ni pierda señal de radar
+  // 2. Asegurar que el pedido activo del usuario actual NUNCA se oculte ni pierda señal
   try {
     const rawOrder = (typeof AppState !== 'undefined') ? AppState.get('activeOrder') : null;
     if (rawOrder) {
       const ao = (typeof rawOrder === 'string') ? JSON.parse(rawOrder) : rawOrder;
       if (ao && (ao.latitude || ao.lat) && (ao.longitude || ao.lng)) {
-        const aoId = ao.id || 'mi_pedido_activo';
+        const aoId = String(ao.id || 'mi_pedido_activo');
         ordersById.set(aoId, ao);
       }
     }
@@ -513,8 +512,10 @@ function renderDriverDemandByZoom() {
   // Actualizar también la apariencia de los camiones repartidores (icono azul radar si zoom out)
   actualizarIconosRepartidoresPorZoom();
 
-  // VISTA LEJANA (zoom <= 14): CADA PEDIDO GENERA SU PROPIO RADAR INDIVIDUAL
-  if (map.getZoom() <= DRIVER_RADAR_MAX_ZOOM) {
+  const isZoomOut = (map.getZoom() <= DRIVER_RADAR_MAX_ZOOM);
+
+  // VISTA LEJANA (zoom <= 14): RECONCILIACIÓN DE RADARES INDIVIDUALES
+  if (isZoomOut) {
     clearNeighborOrderMarkers();
     if (activeOrderLayerGroup && map.hasLayer(activeOrderLayerGroup)) {
       map.removeLayer(activeOrderLayerGroup);
@@ -523,27 +524,13 @@ function renderDriverDemandByZoom() {
     return;
   }
 
-  // VISTA CERCANA (zoom > 14): MARCADORES / PINES INDIVIDUALES DETALLADOS
+  // VISTA CERCANA (zoom > 14): RECONCILIACIÓN DE PINES INDIVIDUALES
   clearOrderRadarMarkers();
-  clearNeighborOrderMarkers();
   if (activeOrderLayerGroup && !map.hasLayer(activeOrderLayerGroup)) {
     activeOrderLayerGroup.addTo(map);
   }
 
-  const currentActiveOrderId = (() => {
-    try {
-      const raw = (typeof AppState !== 'undefined') ? AppState.get('activeOrder') : null;
-      if (!raw) return null;
-      const ao = (typeof raw === 'string') ? JSON.parse(raw) : raw;
-      return ao?.id || null;
-    } catch(e){ return null; }
-  })();
-
-  allOrders.forEach(order => {
-    if (order.id !== 'mi_pedido_activo' && order.id !== currentActiveOrderId) {
-      agregarPedidoVecinoEnMapa(order);
-    }
-  });
+  renderNeighborOrdersDetailed(allOrders);
 
   // Re-dibujar el marcador interactivo del pedido propio en modo detalle
   if (typeof renderActiveOrdersMap === 'function') {
@@ -558,7 +545,7 @@ function actualizarIconosRepartidoresPorZoom() {
 
   Object.keys(activeTruckMarkers).forEach(truckId => {
     const marker = activeTruckMarkers[truckId];
-    if (marker && marker.setIcon) {
+    if (marker && marker.setIcon && marker.options?.icon !== targetIcon) {
       marker.setIcon(targetIcon);
     }
   });
@@ -567,23 +554,41 @@ function actualizarIconosRepartidoresPorZoom() {
     const isDriver = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver') || 
                      (typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver') ||
                      (AppState.get('userData') && AppState.get('userData').role === 'repartidor');
-    if (isDriver) {
+    if (isDriver && userMarker.options?.icon !== targetIcon) {
       userMarker.setIcon(targetIcon);
     }
   }
 }
 
-// Renderiza un radar individual por cada pedido existente en la zona
+// Reconciliación eficiente de radares individuales (DOM Diffing sin destruir elementos activos)
 function renderOrderRadarsOnMap(orders) {
   if (!map || typeof L === 'undefined') return;
-  clearOrderRadarMarkers();
-  if (map.getZoom() > DRIVER_RADAR_MAX_ZOOM) return;
+  if (map.getZoom() > DRIVER_RADAR_MAX_ZOOM) {
+    clearOrderRadarMarkers();
+    return;
+  }
+
+  const activeKeys = new Set();
 
   (orders || []).forEach(order => {
     const lat = Number(order.latitude ?? order.lat);
     const lng = Number(order.longitude ?? order.lng);
     if (!Number.isFinite(lat) || !Number.isFinite(lng) || !order?.id) return;
 
+    const key = String(order.id);
+    activeKeys.add(key);
+
+    const existingMarker = window.orderRadarMarkers[key];
+    if (existingMarker) {
+      // Reutilizar marcador existente en el DOM: solo mover si cambió posición
+      const currentPos = existingMarker.getLatLng();
+      if (Math.abs(currentPos.lat - lat) > 0.00001 || Math.abs(currentPos.lng - lng) > 0.00001) {
+        existingMarker.setLatLng([lat, lng]);
+      }
+      return;
+    }
+
+    // Creación única para nuevos pedidos
     const safeCategory = typeof escapeHtmlStr === 'function'
       ? escapeHtmlStr(order.categoria || 'Gas')
       : 'Gas';
@@ -606,7 +611,67 @@ function renderOrderRadarsOnMap(orders) {
       map.flyTo([lat, lng], 16, { duration: 0.8 });
     });
 
-    window.orderRadarMarkers[`order_${order.id}`] = marker;
+    window.orderRadarMarkers[key] = marker;
+  });
+
+  // Eliminar únicamente radares de pedidos que ya no existen
+  Object.keys(window.orderRadarMarkers).forEach(key => {
+    if (!activeKeys.has(key)) {
+      const marker = window.orderRadarMarkers[key];
+      if (map && marker) map.removeLayer(marker);
+      delete window.orderRadarMarkers[key];
+    }
+  });
+}
+
+// Reconciliación eficiente de pines de detalle (zoom > 14)
+function renderNeighborOrdersDetailed(orders) {
+  if (!map || typeof L === 'undefined') return;
+
+  const currentActiveOrderId = (() => {
+    try {
+      const raw = (typeof AppState !== 'undefined') ? AppState.get('activeOrder') : null;
+      if (!raw) return null;
+      const ao = (typeof raw === 'string') ? JSON.parse(raw) : raw;
+      return String(ao?.id || '');
+    } catch(e){ return null; }
+  })();
+
+  const activeKeys = new Set();
+
+  (orders || []).forEach(order => {
+    const orderId = String(order.id || '');
+    if (!orderId || orderId === 'mi_pedido_activo' || orderId === currentActiveOrderId) return;
+    activeKeys.add(orderId);
+
+    // Si ya existe el pin, reutilizarlo sin disparar reflows
+    if (neighborOrderMarkers[orderId]) {
+      const lat = parseFloat(order.latitude || order.lat);
+      const lng = parseFloat(order.longitude || order.lng);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        const currentPos = neighborOrderMarkers[orderId].getLatLng();
+        if (Math.abs(currentPos.lat - lat) > 0.00001 || Math.abs(currentPos.lng - lng) > 0.00001) {
+          neighborOrderMarkers[orderId].setLatLng([lat, lng]);
+        }
+      }
+      return;
+    }
+
+    agregarPedidoVecinoEnMapa(order);
+  });
+
+  // Eliminar únicamente pines de pedidos que ya no están activos
+  Object.keys(neighborOrderMarkers).forEach(orderId => {
+    if (!activeKeys.has(orderId)) {
+      if (map && neighborOrderMarkers[orderId]) {
+        map.removeLayer(neighborOrderMarkers[orderId]);
+      }
+      delete neighborOrderMarkers[orderId];
+      if (window.neighborOrderTimers[orderId]) {
+        clearTimeout(window.neighborOrderTimers[orderId]);
+        delete window.neighborOrderTimers[orderId];
+      }
+    }
   });
 }
 
@@ -614,7 +679,6 @@ window.renderOrderRadarsOnMap = renderOrderRadarsOnMap;
 window.renderDriverDemandByZoom = renderDriverDemandByZoom;
 window.actualizarIconosRepartidoresPorZoom = actualizarIconosRepartidoresPorZoom;
 window.clearOrderRadarMarkers = clearOrderRadarMarkers;
-window.clearDemandClusterMarkers = clearDemandClusterMarkers;
 
 function actualizarRepartidorEnMapa(data) {
   if (!map || !data) return;
