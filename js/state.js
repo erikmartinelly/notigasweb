@@ -34,6 +34,50 @@ window.NOTIGAS.MIN_MOVEMENT_METERS   = 15;                     // 15 metros (mov
 window.NOTIGAS.IDLE_THRESHOLD_MS     = 3 * 60 * 1000;         // 3 minutos (repartidor inactivo)
 window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño máximo imagen)
 
+/* =====================================================
+   CARGADOR ASÍNCRONO DE MÓDULOS BAJO DEMANDA (CODE-SPLITTING)
+   ===================================================== */
+window._loadedDynamicModules = window._loadedDynamicModules || {};
+
+window.loadScriptAsync = function(src) {
+  return new Promise((resolve) => {
+    if (window._loadedDynamicModules[src] || document.querySelector(`script[src*="${src}"]`)) {
+      resolve();
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = `${src}?v=104`;
+    script.async = true;
+    script.onload = () => {
+      window._loadedDynamicModules[src] = true;
+      resolve();
+    };
+    script.onerror = (e) => {
+      console.warn(`Aviso: Error cargando script dinámico: ${src}`, e);
+      resolve();
+    };
+    document.body.appendChild(script);
+  });
+};
+
+window.loadAdminModules = async function() {
+  if (typeof window.renderAdminReports === 'function') return;
+  await Promise.all([
+    window.loadScriptAsync('js/admin_users.js'),
+    window.loadScriptAsync('js/admin.js')
+  ]);
+};
+
+window.loadForumModule = async function() {
+  if (typeof window.renderForumFeed === 'function') return;
+  await window.loadScriptAsync('js/forum.js');
+};
+
+window.loadAdsModule = async function() {
+  if (typeof window.cargarAnunciosGuardados === 'function') return;
+  await window.loadScriptAsync('js/ads.js');
+};
+
 (function() {
   'use strict';
 

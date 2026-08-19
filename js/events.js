@@ -13,9 +13,21 @@ window.closeRulesModal = function() {
 
 document.addEventListener('DOMContentLoaded', () => {
   try {
-    const safeCall = (fnName, ...args) => {
+    const safeCall = async (fnName, ...args) => {
       if (typeof window[fnName] === 'function') {
         return window[fnName](...args);
+      }
+      if (fnName.includes('Admin') || fnName.includes('Denuncia') || fnName.includes('FichaAdmin')) {
+        if (typeof window.loadAdminModules === 'function') await window.loadAdminModules();
+        if (typeof window[fnName] === 'function') return window[fnName](...args);
+      }
+      if (fnName.includes('Forum') || fnName.includes('Post') || fnName.includes('Comentario')) {
+        if (typeof window.loadForumModule === 'function') await window.loadForumModule();
+        if (typeof window[fnName] === 'function') return window[fnName](...args);
+      }
+      if (fnName.includes('Anuncio')) {
+        if (typeof window.loadAdsModule === 'function') await window.loadAdsModule();
+        if (typeof window[fnName] === 'function') return window[fnName](...args);
       }
       console.warn(`Acción no disponible: ${fnName}`);
     };
@@ -392,11 +404,13 @@ document.addEventListener('click', (e) => {
       if (typeof window.abrirSubmenuPedidos === 'function') window.abrirSubmenuPedidos();
     }
     else if (action === 'abrirModalNuevoPost') {
+      if (typeof window.loadForumModule === 'function') await window.loadForumModule();
       if (typeof window.abrirModalNuevoPost === 'function') window.abrirModalNuevoPost();
     }
     else if (action === 'votarPost') {
       const val = parseInt(btn.getAttribute('data-val') || '0', 10);
       const id = btn.getAttribute('data-id');
+      if (typeof window.loadForumModule === 'function') await window.loadForumModule();
       if (typeof window.votarPost === 'function') window.votarPost(btn, val, id);
     }
     else if (action === 'abrirComentariosPost') {
@@ -404,13 +418,16 @@ document.addEventListener('click', (e) => {
       const title = decodeURIComponent(btn.getAttribute('data-title') || '');
       const desc = decodeURIComponent(btn.getAttribute('data-desc') || '');
       const cat = decodeURIComponent(btn.getAttribute('data-cat') || '');
+      if (typeof window.loadForumModule === 'function') await window.loadForumModule();
       if (typeof window.abrirComentariosPost === 'function') window.abrirComentariosPost(id, title, desc, cat, btn);
     }
     else if (action === 'abrirModalDenuncia') {
       const title = decodeURIComponent(btn.getAttribute('data-title') || '');
+      if (typeof window.loadAdminModules === 'function') await window.loadAdminModules();
       if (typeof window.abrirModalDenuncia === 'function') window.abrirModalDenuncia('Aviso Noticias Vecinales', title);
     }
     else if (action === 'abrirModalDenunciaPedidoFalsoMenu') {
+      if (typeof window.loadAdminModules === 'function') await window.loadAdminModules();
       if (typeof window.abrirModalDenunciaPedidoFalso === 'function') {
         window.abrirModalDenunciaPedidoFalso();
       }
@@ -419,20 +436,24 @@ document.addEventListener('click', (e) => {
       const id = btn.getAttribute('data-id') || '';
       const buyer = decodeURIComponent(btn.getAttribute('data-buyer') || 'Vecino');
       const email = decodeURIComponent(btn.getAttribute('data-email') || 'Correo no disponible');
+      if (typeof window.loadAdminModules === 'function') await window.loadAdminModules();
       if (typeof window.abrirModalDenuncia === 'function') {
         window.abrirModalDenuncia('Pedido Falso', `Pedido ${id} | Comprador: ${buyer} | Correo: ${email}`, true);
       }
     }
     else if (action === 'borrarPostForumAdmin') {
       const id = btn.getAttribute('data-id');
+      if (typeof window.loadAdminModules === 'function') await window.loadAdminModules();
       if (typeof window.borrarPostForumAdmin === 'function') window.borrarPostForumAdmin(id);
     }
     else if (action === 'abrirAnuncioWhatsApp') {
+      if (typeof window.loadAdsModule === 'function') await window.loadAdsModule();
       if (typeof window.abrirAnuncioWhatsApp === 'function') window.abrirAnuncioWhatsApp();
     }
     else if (action === 'votarComentario') {
       const id = btn.getAttribute('data-id');
       const val = parseInt(btn.getAttribute('data-val') || '0', 10);
+      if (typeof window.loadForumModule === 'function') await window.loadForumModule();
       if (typeof window.votarComentario === 'function') window.votarComentario(id, val);
     }
     else if (action === 'abrirModalDriver') {
@@ -441,6 +462,7 @@ document.addEventListener('click', (e) => {
     }
     else if (action === 'eliminarFichaAdmin') {
       const id = btn.getAttribute('data-id');
+      if (typeof window.loadAdminModules === 'function') await window.loadAdminModules();
       if (typeof window.eliminarFichaAdmin === 'function') window.eliminarFichaAdmin(id);
     }
     else if (action === 'seleccionarYPedirDirecto') {

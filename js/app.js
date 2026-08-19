@@ -347,7 +347,7 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
   }
 }
 
-function switchTab(index) {
+async function switchTab(index) {
   document.querySelectorAll('.tab-btn').forEach((btn, i) => btn.classList.toggle('active', i === index));
   document.querySelectorAll('.tab-content').forEach((tab, i) => tab.classList.toggle('active', i === index));
 
@@ -358,14 +358,31 @@ function switchTab(index) {
     }
   } else if (index === 1) {
     // Carga bajo demanda del directorio de repartidores y publicidad
+    if (typeof window.loadAdsModule === 'function') await window.loadAdsModule();
     if (typeof descargarChoferesYRenderizar === 'function') descargarChoferesYRenderizar('TODOS');
     if (typeof cargarAnunciosGuardados === 'function') cargarAnunciosGuardados();
   } else if (index === 2) {
-    // Carga bajo demanda del muro vecinal
+    // Carga bajo demanda del muro vecinal / foro
+    if (typeof window.loadForumModule === 'function') await window.loadForumModule();
     if (typeof renderForumFeed === 'function') renderForumFeed();
   }
 }
 window.switchTab = switchTab;
+
+// Pre-carga en segundo plano durante tiempo libre de la CPU (Idle Preload)
+if (typeof window.requestIdleCallback === 'function') {
+  window.requestIdleCallback(() => {
+    setTimeout(() => {
+      if (typeof window.loadForumModule === 'function') window.loadForumModule();
+      if (typeof window.loadAdsModule === 'function') window.loadAdsModule();
+    }, 2500);
+  });
+} else {
+  setTimeout(() => {
+    if (typeof window.loadForumModule === 'function') window.loadForumModule();
+    if (typeof window.loadAdsModule === 'function') window.loadAdsModule();
+  }, 3500);
+}
 
 function getActiveUserLocation() {
   let lat = window.currentGpsLat || (typeof currentGpsLat !== 'undefined' ? currentGpsLat : (typeof AppState !== 'undefined' ? AppState.get('gpsLat') : null));
