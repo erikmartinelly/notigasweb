@@ -9,6 +9,10 @@ DROP POLICY IF EXISTS "Public SELECT" ON public.rutas_repartidores;
 DROP POLICY IF EXISTS "Insertar propio" ON public.rutas_repartidores;
 DROP POLICY IF EXISTS "Actualizar propio o Admin" ON public.rutas_repartidores;
 DROP POLICY IF EXISTS "Borrar propio o Admin" ON public.rutas_repartidores;
+DROP POLICY IF EXISTS "rutas_select_public" ON public.rutas_repartidores;
+DROP POLICY IF EXISTS "rutas_insert_own" ON public.rutas_repartidores;
+DROP POLICY IF EXISTS "rutas_update_own_or_admin" ON public.rutas_repartidores;
+DROP POLICY IF EXISTS "rutas_delete_own_or_admin" ON public.rutas_repartidores;
 
 CREATE POLICY "rutas_select_public" ON public.rutas_repartidores
   FOR SELECT TO public
@@ -38,6 +42,8 @@ CREATE POLICY "rutas_delete_own_or_admin" ON public.rutas_repartidores
 -- 2. Optimizar public.usuarios_roles
 DROP POLICY IF EXISTS "Admin Control Total Roles" ON public.usuarios_roles;
 DROP POLICY IF EXISTS "Lectura publica usuarios_roles" ON public.usuarios_roles;
+DROP POLICY IF EXISTS "usuarios_roles_select_public" ON public.usuarios_roles;
+DROP POLICY IF EXISTS "usuarios_roles_admin_all" ON public.usuarios_roles;
 
 CREATE POLICY "usuarios_roles_select_public" ON public.usuarios_roles
   FOR SELECT TO public
@@ -65,6 +71,8 @@ CREATE POLICY "usuarios_roles_admin_all" ON public.usuarios_roles
 -- 3. Optimizar public.denuncias
 DROP POLICY IF EXISTS "Denuncias Admin ALL" ON public.denuncias;
 DROP POLICY IF EXISTS "Denuncias Insertar auth" ON public.denuncias;
+DROP POLICY IF EXISTS "denuncias_insert_auth" ON public.denuncias;
+DROP POLICY IF EXISTS "denuncias_admin_all" ON public.denuncias;
 
 CREATE POLICY "denuncias_insert_auth" ON public.denuncias
   FOR INSERT TO authenticated
@@ -78,6 +86,8 @@ CREATE POLICY "denuncias_admin_all" ON public.denuncias
 -- 4. Optimizar public.reportes_spam
 DROP POLICY IF EXISTS "Reportes Admin ALL" ON public.reportes_spam;
 DROP POLICY IF EXISTS "Reportes Insertar auth" ON public.reportes_spam;
+DROP POLICY IF EXISTS "reportes_spam_insert_auth" ON public.reportes_spam;
+DROP POLICY IF EXISTS "reportes_spam_admin_all" ON public.reportes_spam;
 
 CREATE POLICY "reportes_spam_insert_auth" ON public.reportes_spam
   FOR INSERT TO authenticated
@@ -91,6 +101,8 @@ CREATE POLICY "reportes_spam_admin_all" ON public.reportes_spam
 -- 5. Optimizar public.anuncios_nativos_sistema & configuracion_publicidad
 DROP POLICY IF EXISTS "Lectura publica anuncios" ON public.anuncios_nativos_sistema;
 DROP POLICY IF EXISTS "anuncios_nativos_admin" ON public.anuncios_nativos_sistema;
+DROP POLICY IF EXISTS "anuncios_nativos_select_public" ON public.anuncios_nativos_sistema;
+DROP POLICY IF EXISTS "anuncios_nativos_admin_mod" ON public.anuncios_nativos_sistema;
 
 CREATE POLICY "anuncios_nativos_select_public" ON public.anuncios_nativos_sistema
   FOR SELECT TO public
@@ -103,6 +115,8 @@ CREATE POLICY "anuncios_nativos_admin_mod" ON public.anuncios_nativos_sistema
 
 DROP POLICY IF EXISTS "Publicidad Public SELECT" ON public.configuracion_publicidad;
 DROP POLICY IF EXISTS "publicidad_admin" ON public.configuracion_publicidad;
+DROP POLICY IF EXISTS "config_publicidad_select_public" ON public.configuracion_publicidad;
+DROP POLICY IF EXISTS "config_publicidad_admin_mod" ON public.configuracion_publicidad;
 
 CREATE POLICY "config_publicidad_select_public" ON public.configuracion_publicidad
   FOR SELECT TO public
@@ -115,6 +129,7 @@ CREATE POLICY "config_publicidad_admin_mod" ON public.configuracion_publicidad
 
 -- 6. Optimizar public.admin_credentials
 DROP POLICY IF EXISTS "Admins select own record" ON public.admin_credentials;
+DROP POLICY IF EXISTS "admin_credentials_select_own" ON public.admin_credentials;
 
 CREATE POLICY "admin_credentials_select_own" ON public.admin_credentials
   FOR SELECT TO public

@@ -9,6 +9,10 @@ DROP POLICY IF EXISTS "Profiles delete own or admin" ON public.profiles;
 DROP POLICY IF EXISTS "Profiles insert own" ON public.profiles;
 DROP POLICY IF EXISTS "Profiles select own or admin" ON public.profiles;
 DROP POLICY IF EXISTS "Profiles update own or admin" ON public.profiles;
+DROP POLICY IF EXISTS "profiles_select" ON public.profiles;
+DROP POLICY IF EXISTS "profiles_insert" ON public.profiles;
+DROP POLICY IF EXISTS "profiles_update" ON public.profiles;
+DROP POLICY IF EXISTS "profiles_delete" ON public.profiles;
 
 CREATE POLICY "profiles_select" ON public.profiles 
   FOR SELECT TO authenticated 
@@ -31,6 +35,8 @@ CREATE POLICY "profiles_delete" ON public.profiles
 DROP POLICY IF EXISTS "Insertar propio" ON public.pedidos;
 DROP POLICY IF EXISTS "Pedidos Insertar propio" ON public.pedidos;
 DROP POLICY IF EXISTS "Pedidos Dueño Driver Admin SELECT" ON public.pedidos;
+DROP POLICY IF EXISTS "pedidos_insert" ON public.pedidos;
+DROP POLICY IF EXISTS "pedidos_select" ON public.pedidos;
 
 CREATE POLICY "pedidos_insert" ON public.pedidos 
   FOR INSERT TO authenticated 
@@ -45,6 +51,10 @@ DROP POLICY IF EXISTS "Choferes Own Admin SELECT" ON public.choferes_habilitados
 DROP POLICY IF EXISTS "Choferes Insertar propio" ON public.choferes_habilitados;
 DROP POLICY IF EXISTS "Choferes Actualizar propio o Admin" ON public.choferes_habilitados;
 DROP POLICY IF EXISTS "Choferes Borrar propio o Admin" ON public.choferes_habilitados;
+DROP POLICY IF EXISTS "choferes_select" ON public.choferes_habilitados;
+DROP POLICY IF EXISTS "choferes_insert" ON public.choferes_habilitados;
+DROP POLICY IF EXISTS "choferes_update" ON public.choferes_habilitados;
+DROP POLICY IF EXISTS "choferes_delete" ON public.choferes_habilitados;
 
 CREATE POLICY "choferes_select" ON public.choferes_habilitados 
   FOR SELECT TO authenticated 
@@ -68,6 +78,9 @@ DROP POLICY IF EXISTS "Avisos User Update" ON public.avisos;
 DROP POLICY IF EXISTS "Actualizar propio o Admin" ON public.avisos;
 DROP POLICY IF EXISTS "Avisos User Insert" ON public.avisos;
 DROP POLICY IF EXISTS "Borrar propio o Admin" ON public.avisos;
+DROP POLICY IF EXISTS "avisos_insert" ON public.avisos;
+DROP POLICY IF EXISTS "avisos_update" ON public.avisos;
+DROP POLICY IF EXISTS "avisos_delete" ON public.avisos;
 
 CREATE POLICY "avisos_insert" ON public.avisos 
   FOR INSERT TO authenticated 
@@ -85,6 +98,9 @@ CREATE POLICY "avisos_delete" ON public.avisos
 DROP POLICY IF EXISTS "Insertar propio" ON public.comentarios_avisos;
 DROP POLICY IF EXISTS "Actualizar propio o Admin" ON public.comentarios_avisos;
 DROP POLICY IF EXISTS "Borrar propio o Admin" ON public.comentarios_avisos;
+DROP POLICY IF EXISTS "comentarios_insert" ON public.comentarios_avisos;
+DROP POLICY IF EXISTS "comentarios_update" ON public.comentarios_avisos;
+DROP POLICY IF EXISTS "comentarios_delete" ON public.comentarios_avisos;
 
 CREATE POLICY "comentarios_insert" ON public.comentarios_avisos 
   FOR INSERT TO authenticated 
@@ -103,6 +119,9 @@ CREATE POLICY "comentarios_delete" ON public.comentarios_avisos
 DROP POLICY IF EXISTS "Auth SELECT votos_registro" ON public.votos_registro;
 DROP POLICY IF EXISTS "Auth INSERT votos_registro" ON public.votos_registro;
 DROP POLICY IF EXISTS "Auth DELETE votos_registro" ON public.votos_registro;
+DROP POLICY IF EXISTS "votos_select" ON public.votos_registro;
+DROP POLICY IF EXISTS "votos_insert" ON public.votos_registro;
+DROP POLICY IF EXISTS "votos_delete" ON public.votos_registro;
 
 CREATE POLICY "votos_select" ON public.votos_registro 
   FOR SELECT TO authenticated 
@@ -118,12 +137,16 @@ CREATE POLICY "votos_delete" ON public.votos_registro
 
 -- 6. ANUNCIOS & PUBLICIDAD ADMIN
 DROP POLICY IF EXISTS "Admin Control Total Anuncios" ON public.anuncios_nativos_sistema;
+DROP POLICY IF EXISTS "anuncios_nativos_admin" ON public.anuncios_nativos_sistema;
+
 CREATE POLICY "anuncios_nativos_admin" ON public.anuncios_nativos_sistema 
   FOR ALL TO authenticated 
   USING (is_admin_email()) 
   WITH CHECK (is_admin_email());
 
 DROP POLICY IF EXISTS "Publicidad Admin ALL" ON public.configuracion_publicidad;
+DROP POLICY IF EXISTS "publicidad_admin" ON public.configuracion_publicidad;
+
 CREATE POLICY "publicidad_admin" ON public.configuracion_publicidad 
   FOR ALL TO authenticated 
   USING (is_admin_email()) 

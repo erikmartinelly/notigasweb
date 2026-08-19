@@ -1,6 +1,6 @@
 -- 013_demand_clusters_v2.sql
 -- Habilitar PostGIS para operaciones geoespaciales avanzadas (DBSCAN)
-CREATE EXTENSION IF NOT EXISTS postgis;
+CREATE EXTENSION IF NOT EXISTS postgis WITH SCHEMA extensions;
 
 -- Eliminar funciones antiguas si existen
 DROP FUNCTION IF EXISTS rpc_get_demand_clusters(text, text, integer);
