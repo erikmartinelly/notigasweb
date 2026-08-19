@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const modalRole = document.getElementById('modalRoleSelection');
             if (modalRole) modalRole.style.display = 'none';
 
-            await procesarSesionExitosa(user);
+            await procesarSesionExitosa(user, false);
           }
         } catch(e) {
           console.warn("No se pudo restaurar la sesión automáticamente", e);
@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
           const now = Date.now();
           if (_processingSessionUserId !== user.id || (now - _lastProcessedSessionTime > 2500)) {
-            await procesarSesionExitosa(user);
+            await procesarSesionExitosa(user, false);
           }
         } else {
           window.checkAndApplyAdminStatus(user);
@@ -1327,7 +1327,7 @@ async function iniciarSesionEmail() {
       return;
     }
     clearAuthThrottle('login');
-    if (data && data.user) await procesarSesionExitosa(data.user);
+    if (data && data.user) await procesarSesionExitosa(data.user, true);
   } catch (networkError) {
     console.warn('Fallo de red durante el inicio de sesión:', networkError);
     if (typeof showToast === 'function') showToast('Sin conexión', 'No se pudo contactar al servicio de acceso. Intenta nuevamente.', 'error', 5000);
@@ -1393,7 +1393,7 @@ async function registrarEmail() {
     if (data && data.session) {
       clearAuthThrottle('register');
       if (typeof showToast === 'function') showToast('Éxito', 'Registro completado. Ingresando...', 'success');
-      await procesarSesionExitosa(data.user);
+      await procesarSesionExitosa(data.user, true);
     } else if (data && data.user) {
       clearAuthThrottle('register');
       if (typeof showToast === 'function') showToast('Revisa tu correo', 'Te hemos enviado un enlace para confirmar tu cuenta. Confírmala y luego ingresa.', 'info', 8000);
@@ -1408,7 +1408,7 @@ async function registrarEmail() {
   }
 }
 
-async function procesarSesionExitosa(user) {
+async function procesarSesionExitosa(user, isInteractive = false) {
   if (!user || !user.id) return;
   const now = Date.now();
   if (_processingSessionUserId === user.id && (now - _lastProcessedSessionTime < 2500)) {
@@ -1564,7 +1564,13 @@ async function procesarSesionExitosa(user) {
 
     if (currentSelectedRole === 'driver') {
       if (typeof setAppMode === 'function') setAppMode('driver');
-      if (typeof showToast === 'function') showToast('✅ Sesión Segura', `Ingresaste como Repartidor (${gmail})`, 'success', 2000);
+      if (isInteractive && typeof showToast === 'function') {
+        const welcomedKey = `notigas_welcomed_${user.id}`;
+        if (!sessionStorage.getItem(welcomedKey)) {
+          sessionStorage.setItem(welcomedKey, 'true');
+          showToast('✅ Sesión Segura', `Ingresaste como Repartidor (${gmail})`, 'success', 2000);
+        }
+      }
     } else {
       // Comprador
       try {
@@ -1589,7 +1595,13 @@ async function procesarSesionExitosa(user) {
       }
 
       if (typeof setAppMode === 'function') setAppMode('buyer');
-      if (typeof showToast === 'function') showToast('✅ Sesión Segura', `Bienvenido a NOTIGAS (${clienteData.nombre} ${clienteData.apellido})`, 'success', 2000);
+      if (isInteractive && typeof showToast === 'function') {
+        const welcomedKey = `notigas_welcomed_${user.id}`;
+        if (!sessionStorage.getItem(welcomedKey)) {
+          sessionStorage.setItem(welcomedKey, 'true');
+          showToast('✅ Sesión Segura', `Bienvenido a NOTIGAS (${clienteData.nombre} ${clienteData.apellido})`, 'success', 2000);
+        }
+      }
     }
   } catch (err) {
     console.error('Error procesando sesión exitosa:', err);
@@ -1673,7 +1685,7 @@ window.finalizeRoleSelection = async function(role) {
     } catch(e) {
       console.warn("Error guardando perfil en selección de rol:", e);
     }
-    await procesarSesionExitosa(window._tempAuthUser);
+    await procesarSesionExitosa(window._tempAuthUser, true);
   }
 };
 

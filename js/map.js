@@ -253,12 +253,12 @@ window.isOrderCategoryMatchingDriver = function(orderCategory, driverCatInput) {
     const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
     if (u.categoria) driverCat = u.categoria;
   }
-  if (!driverCat) return true; // Si no tiene categoría configurada, ve todo
+  if (!driverCat || driverCat === 'todos' || driverCat === 'all') return true; // Si no tiene categoría configurada, ve todo
 
   const normDriver = window.normalizeCategoryCode(driverCat);
   const normOrder = window.normalizeCategoryCode(orderCategory);
 
-  return normDriver === normOrder || normDriver === 'otros' || normOrder === 'otros';
+  return normDriver === normOrder || normDriver === 'otros' || normOrder === 'otros' || normDriver === 'todos';
 };
 
 function isOrderCategoryMatchingDriver(orderCategory, driverCatInput) {
@@ -951,18 +951,24 @@ function agregarPedidoVecinoEnMapa(order) {
   const marker = L.marker([lat, lng], {
     icon: currentIcon,
     zIndexOffset: 8000,
-    interactive: isDriverView,
+    interactive: true,
     bubblingMouseEvents: false,
-    keyboard: isDriverView
+    keyboard: true
   }).addTo(map);
   const isAssignedToDriver = userRole === 'repartidor' &&
     order.estado === 'asignado' && order.driver_id === localUserId;
 
   const escapeFn = typeof escapeHtmlStr === 'function' ? escapeHtmlStr : (s => s || '');
-  const nombreStr = `<span class="order-popup-name">👤 <strong>Comprador:</strong> ${escapeFn(order.buyer_name || order.titulo || 'Vecino')}</span><br>`;
-  const emailStr = order.buyer_email ? `<span class="order-popup-email" style="font-size:11px; color:#0288D1;">✉️ <strong>Correo:</strong> ${escapeFn(order.buyer_email)}</span><br>` : '';
-  const dirStr = `<span class="order-popup-address">📍 <strong>Dirección:</strong> ${escapeFn(order.direccion || 'Ubicación fijada en mapa GPS (opcional)')}</span><br>`;
-  const telStr = `<span class="order-popup-contact">📞 <strong>Teléfono:</strong> ${escapeFn(order.telefono || 'Opcional / No indicado')}</span><br>`;
+  const nombreStr = isDriverView
+    ? `<span class="order-popup-name">👤 <strong>Comprador:</strong> ${escapeFn(order.buyer_name || order.titulo || 'Vecino')}</span><br>`
+    : `<span class="order-popup-name">📦 <strong>Pedido Vecinal</strong></span><br>`;
+  const emailStr = (isDriverView && order.buyer_email) ? `<span class="order-popup-email" style="font-size:11px; color:#0288D1;">✉️ <strong>Correo:</strong> ${escapeFn(order.buyer_email)}</span><br>` : '';
+  const dirStr = isDriverView
+    ? `<span class="order-popup-address">📍 <strong>Dirección:</strong> ${escapeFn(order.direccion || 'Ubicación fijada en mapa GPS (opcional)')}</span><br>`
+    : `<span class="order-popup-address">📍 <strong>Zona:</strong> ${escapeFn(order.barrio_otb || order.direccion || 'Ubicación fijada en mapa')}</span><br>`;
+  const telStr = isDriverView
+    ? `<span class="order-popup-contact">📞 <strong>Teléfono:</strong> ${escapeFn(order.telefono || 'Opcional / No indicado')}</span><br>`
+    : '';
   const mapsNavUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${lat},${lng}`)}`;
   let orderAction = '';
   if (isAssignedToDriver) {
@@ -975,11 +981,16 @@ function agregarPedidoVecinoEnMapa(order) {
       <button type="button" data-action="aceptarPedidoRepartidor" data-lat="${lat}" data-lng="${lng}" data-id="${escapeFn(order.id)}" data-address="${escapeFn(order.direccion || '')}" class="btn-driver-accept order-popup-action">
         <i class="fa-solid fa-diamond-turn-right"></i> ELEGIR Y NAVEGAR (GOOGLE MAPS)
       </button>`;
+  } else {
+    orderAction = `
+      <button type="button" data-action="abrirSubmenuPedidos" class="btn-action" style="margin-top:6px; background:linear-gradient(135deg, #FF6D00, #E65100); color:white; border:none; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; width:100%;">
+        🛒 Pedir Garrafa / Servicio Aquí
+      </button>`;
   }
 
   const popupHtml = `
-    <div class="notigas-order-popup">
-      <strong style="color:#FF6D00; font-size:13px;">📦 Pedido ${isAssignedToDriver ? 'Asignado' : 'Disponible'}</strong><br>
+    <div class="notigas-order-popup" style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
+      <strong style="color:#FF6D00; font-size:13px;">📦 Pedido ${isAssignedToDriver ? 'Asignado' : (isDriverView ? 'Disponible' : 'Vecinal')}</strong><br>
       ${nombreStr}
       ${emailStr}
       <span class="order-popup-category">🏷️ ${escapeFn(order.categoria || 'Gas')} · ${escapeFn(order.cantidad || '1')} unidad(es)</span><br>
@@ -989,9 +1000,9 @@ function agregarPedidoVecinoEnMapa(order) {
     </div>
   `;
 
-  if (isDriverView) {
-    marker.bindPopup(popupHtml);
+  marker.bindPopup(popupHtml);
 
+  if (isDriverView) {
     marker.on('popupopen', () => {
       try {
         if (order.estado === 'pendiente' && !order.visto && window.supabaseClient && order.id) {
@@ -1616,13 +1627,14 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
         .select(TRUCK_COLUMNS)
         .gte('last_active', tenMinsAgo)
         .limit(100);
-      if (normCity) trucksQuery = trucksQuery.ilike('ciudad', normCity);
       if (bbox) {
         trucksQuery = trucksQuery
           .gte('latitude', bbox.minLat)
           .lte('latitude', bbox.maxLat)
           .gte('longitude', bbox.minLng)
           .lte('longitude', bbox.maxLng);
+      } else if (normCity && normCity !== 'todos' && normCity !== 'all') {
+        trucksQuery = trucksQuery.ilike('ciudad', `%${normCity}%`);
       }
 
       // 2. Consulta de Pedidos Públicos (filtrados por viewport visible y con límite)
@@ -1632,13 +1644,14 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
         .gte('created_at', activeWindow)
         .in('estado', ['pendiente', 'visto'])
         .limit(150);
-      if (normCity) pubQuery = pubQuery.ilike('ciudad', normCity);
       if (bbox) {
         pubQuery = pubQuery
           .gte('latitude', bbox.minLat)
           .lte('latitude', bbox.maxLat)
           .gte('longitude', bbox.minLng)
           .lte('longitude', bbox.maxLng);
+      } else if (normCity && normCity !== 'todos' && normCity !== 'all') {
+        pubQuery = pubQuery.ilike('ciudad', `%${normCity}%`);
       }
 
       // 3. Consulta de Pedidos Asignados (sólo para repartidor autenticado)
@@ -1656,7 +1669,9 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
             .eq('estado', 'asignado')
             .gte('created_at', activeWindow)
             .limit(50);
-          if (normCity) assignedQuery = assignedQuery.ilike('ciudad', normCity);
+          if (!bbox && normCity && normCity !== 'todos' && normCity !== 'all') {
+            assignedQuery = assignedQuery.ilike('ciudad', `%${normCity}%`);
+          }
           assignedPromise = assignedQuery;
         }
       }

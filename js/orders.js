@@ -53,32 +53,55 @@ async function renderDriverOrdersList() {
   const now = Date.now();
   const expirationMs = (window.NOTIGAS && window.NOTIGAS.ORDER_EXPIRATION_MS) ? window.NOTIGAS.ORDER_EXPIRATION_MS : 48 * 60 * 60 * 1000;
   const activeWindow = new Date(now - expirationMs).toISOString();
+  const localUserId = (typeof getAuthenticatedUserId === 'function')
+    ? await getAuthenticatedUserId()
+    : ((typeof getCurrentUserId === 'function') ? getCurrentUserId() : null);
 
-  let query = window.supabaseClient
-    .from('pedidos')
-    .select('id, user_id, categoria, cantidad, direccion, telefono, latitude, longitude, created_at, estado, driver_id, ciudad')
-    .in('estado', ['pendiente', 'visto', 'asignado'])
+  // 1. Pedidos disponibles desde la vista pública (evita bloqueo por RLS de pedidos no asignados)
+  let pubQuery = window.supabaseClient
+    .from('pedidos_publicos')
+    .select('id, user_id, categoria, titulo, cantidad, direccion, telefono, latitude, longitude, created_at, estado, driver_id, ciudad')
+    .in('estado', ['pendiente', 'visto'])
     .gte('created_at', activeWindow)
     .order('created_at', { ascending: false });
 
-  if (activeCity) {
-    query = query.ilike('ciudad', `%${activeCity}%`);
+  if (activeCity && activeCity !== 'todos' && activeCity !== 'all') {
+    pubQuery = pubQuery.ilike('ciudad', `%${activeCity}%`);
   }
 
-  const { data: orders, error } = await query;
-
-  if (error) {
-    console.error("Error cargando lista de pedidos repartidor:", error);
-    container.innerHTML = '<div style="padding:15px; color:#EF4444; text-align:center;">Error al cargar requerimientos</div>';
-    return;
+  // 2. Pedidos ya asignados a este repartidor desde la tabla pedidos
+  let assignedPromise = Promise.resolve({ data: [], error: null });
+  if (localUserId) {
+    let assignedQuery = window.supabaseClient
+      .from('pedidos')
+      .select('id, user_id, categoria, titulo, cantidad, direccion, telefono, latitude, longitude, created_at, estado, driver_id, ciudad')
+      .eq('driver_id', localUserId)
+      .eq('estado', 'asignado')
+      .gte('created_at', activeWindow)
+      .order('created_at', { ascending: false });
+    if (activeCity && activeCity !== 'todos' && activeCity !== 'all') {
+      assignedQuery = assignedQuery.ilike('ciudad', `%${activeCity}%`);
+    }
+    assignedPromise = assignedQuery;
   }
+
+  const [pubRes, assignedRes] = await Promise.all([pubQuery, assignedPromise]);
+
+  if (pubRes.error) {
+    console.error("Error cargando lista de pedidos repartidor (públicos):", pubRes.error);
+  }
+  if (assignedRes.error) {
+    console.error("Error cargando pedidos asignados repartidor:", assignedRes.error);
+  }
+
+  const pubOrders = pubRes.data || [];
+  const assignedOrders = assignedRes.data || [];
+  const orders = [...assignedOrders, ...pubOrders];
 
   if (!orders || orders.length === 0) {
     container.innerHTML = '<div style="padding:25px; text-align:center; color:#94A3B8; font-size:12px;"><i class="fa-solid fa-clipboard-check" style="font-size:24px; margin-bottom:8px; display:block;"></i>No hay pedidos pendientes en esta zona.</div>';
     return;
   }
-
-  const localUserId = (typeof getAuthenticatedUserId === 'function') ? await getAuthenticatedUserId() : ((typeof getCurrentUserId === 'function') ? getCurrentUserId() : null);
 
   // Agrupar pedidos por categoría
   const groups = {};

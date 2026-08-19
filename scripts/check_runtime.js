@@ -278,6 +278,12 @@ const sandbox = {
       if (docListeners[event]) {
         docListeners[event] = docListeners[event].filter(cb => cb !== fn);
       }
+    },
+    dispatchEvent: (event) => {
+      const type = event?.type || event;
+      if (docListeners[type]) {
+        docListeners[type].forEach(fn => fn(event));
+      }
     }
   },
   navigator: {
