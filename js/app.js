@@ -429,7 +429,7 @@ window.notigasTrack = window.notigasTrack || function(event, params) {
 // 1. Registro del Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=103')
+    navigator.serviceWorker.register('./sw.js?v=104')
       .then((reg) => console.log('✅ Service Worker registrado', reg.scope))
       .catch((err) => console.error('❌ Error Service Worker:', err));
   });

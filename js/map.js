@@ -680,6 +680,117 @@ window.renderDriverDemandByZoom = renderDriverDemandByZoom;
 window.actualizarIconosRepartidoresPorZoom = actualizarIconosRepartidoresPorZoom;
 window.clearOrderRadarMarkers = clearOrderRadarMarkers;
 
+// ACTUALIZACIÓN GRANULAR INCREMENTAL DE 1 PEDIDO (0 CONSULTAS DE RED)
+window.actualizarPedidoEnMapa = function(order, eventType = 'UPDATE') {
+  if (!map || !order || !order.id) return;
+  const state = window.driverDemandMapState = window.driverDemandMapState || { availableOrders: [], assignedOrders: [] };
+  const orderId = String(order.id);
+  const localUserId = (typeof getAuthenticatedUserId === 'function')
+    ? getAuthenticatedUserId()
+    : ((typeof AppState !== 'undefined' ? AppState.get('userData')?.id : null) || window._tempAuthUser?.id);
+
+  // 1. Si el pedido fue cancelado o entregado, removerlo del mapa
+  if (eventType === 'DELETE' || order.estado === 'cancelado' || order.estado === 'entregado') {
+    window.removerPedidoDeMapa(orderId);
+    return;
+  }
+
+  // 2. Actualizar estado en memoria
+  const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
+  const isDriverUser = (u.role === 'repartidor') || ((typeof AppState !== 'undefined') && (AppState.get('appMode') === 'driver' || AppState.get('userRole') === 'repartidor'));
+  const driverCategoria = u.categoria || 'gas';
+
+  if (order.estado === 'asignado') {
+    state.availableOrders = (state.availableOrders || []).filter(o => String(o.id) !== orderId);
+    if (isDriverUser && order.driver_id === localUserId) {
+      const idx = (state.assignedOrders || []).findIndex(o => String(o.id) === orderId);
+      if (idx >= 0) state.assignedOrders[idx] = order;
+      else state.assignedOrders.push(order);
+    } else {
+      window.removerPedidoDeMapa(orderId);
+      return;
+    }
+  } else {
+    // Pendiente o Visto
+    if (isDriverUser && typeof window.isOrderCategoryMatchingDriver === 'function' && !window.isOrderCategoryMatchingDriver(order.categoria, driverCategoria)) {
+      window.removerPedidoDeMapa(orderId);
+      return;
+    }
+    const idx = (state.availableOrders || []).findIndex(o => String(o.id) === orderId);
+    if (idx >= 0) state.availableOrders[idx] = order;
+    else state.availableOrders.push(order);
+  }
+
+  // 3. Renderizado incremental directo en el mapa
+  const lat = parseFloat(order.latitude || order.lat);
+  const lng = parseFloat(order.longitude || order.lng);
+  if (isNaN(lat) || isNaN(lng)) return;
+
+  const isZoomOut = (map.getZoom() <= DRIVER_RADAR_MAX_ZOOM);
+
+  if (isZoomOut) {
+    const existingRadar = window.orderRadarMarkers[orderId];
+    if (existingRadar) {
+      existingRadar.setLatLng([lat, lng]);
+    } else {
+      const safeCategory = typeof escapeHtmlStr === 'function' ? escapeHtmlStr(order.categoria || 'Gas') : 'Gas';
+      const icon = L.divIcon({
+        className: 'demand-order-radar-icon',
+        html: `<div class="demand-radar" title="Pedido Activo de ${safeCategory} (Haz clic para ver)"><span></span><span></span><span></span><i></i></div>`,
+        iconSize: [80, 80],
+        iconAnchor: [40, 40]
+      });
+      const marker = L.marker([lat, lng], {
+        icon,
+        interactive: true,
+        bubblingMouseEvents: false,
+        keyboard: false,
+        zIndexOffset: 12000
+      }).addTo(map);
+      marker.on('click', () => {
+        map.flyTo([lat, lng], 16, { duration: 0.8 });
+      });
+      window.orderRadarMarkers[orderId] = marker;
+    }
+    if (neighborOrderMarkers[orderId]) {
+      map.removeLayer(neighborOrderMarkers[orderId]);
+      delete neighborOrderMarkers[orderId];
+    }
+  } else {
+    const existingPin = neighborOrderMarkers[orderId];
+    if (existingPin) {
+      existingPin.setLatLng([lat, lng]);
+    } else {
+      agregarPedidoVecinoEnMapa(order);
+    }
+    if (window.orderRadarMarkers[orderId]) {
+      map.removeLayer(window.orderRadarMarkers[orderId]);
+      delete window.orderRadarMarkers[orderId];
+    }
+  }
+};
+
+window.removerPedidoDeMapa = function(orderId) {
+  if (!orderId) return;
+  const key = String(orderId);
+  const state = window.driverDemandMapState = window.driverDemandMapState || { availableOrders: [], assignedOrders: [] };
+  state.availableOrders = (state.availableOrders || []).filter(o => String(o.id) !== key);
+  state.assignedOrders = (state.assignedOrders || []).filter(o => String(o.id) !== key);
+
+  if (window.orderRadarMarkers[key]) {
+    if (map) map.removeLayer(window.orderRadarMarkers[key]);
+    delete window.orderRadarMarkers[key];
+  }
+  if (neighborOrderMarkers[key]) {
+    if (map) map.removeLayer(neighborOrderMarkers[key]);
+    delete neighborOrderMarkers[key];
+    if (window.neighborOrderTimers[key]) {
+      clearTimeout(window.neighborOrderTimers[key]);
+      delete window.neighborOrderTimers[key];
+    }
+  }
+};
+
 function actualizarRepartidorEnMapa(data) {
   if (!map || !data) return;
 

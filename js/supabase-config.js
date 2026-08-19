@@ -177,12 +177,30 @@ window.iniciarSuscripcionesRealtime = function() {
         .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos', filter: `ciudad=eq.${activeCity}` }, payload => {
             const activeOrder = (typeof AppState !== 'undefined') ? AppState.get('activeOrder') : null;
             const changedOrder = payload.new || payload.old;
-            if (activeOrder?.id && changedOrder?.id === activeOrder.id && payload.eventType !== 'DELETE') {
-                AppState.set('activeOrder', { ...activeOrder, ...payload.new });
-            } else if (activeOrder?.id && changedOrder?.id === activeOrder.id && payload.eventType === 'DELETE') {
-                AppState.set('activeOrder', null);
+            if (activeOrder?.id && changedOrder?.id === activeOrder.id) {
+                if (payload.eventType === 'DELETE' || changedOrder.estado === 'cancelado' || changedOrder.estado === 'entregado') {
+                    AppState.set('activeOrder', null);
+                } else {
+                    AppState.set('activeOrder', { ...activeOrder, ...payload.new });
+                }
             }
-            debouncedRefreshOrders();
+
+            // ACTUALIZACIÓN INCREMENTAL PURA (0 peticiones a la base de datos)
+            if (payload.eventType === 'DELETE') {
+                if (typeof window.removerPedidoDeMapa === 'function') {
+                    window.removerPedidoDeMapa(payload.old?.id);
+                }
+            } else if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+                if (typeof window.actualizarPedidoEnMapa === 'function') {
+                    window.actualizarPedidoEnMapa(payload.new, payload.eventType);
+                }
+            }
+
+            // Si el modal de lista de pedidos del chofer está abierto, refrescar únicamente la lista visual
+            const modal = document.getElementById('modalDriverOrders');
+            if (modal && modal.style.display !== 'none' && typeof renderDriverOrdersList === 'function') {
+                renderDriverOrdersList();
+            }
         })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'rutas_repartidores', filter: `ciudad=eq.${activeCity}` }, payload => {
             const data = payload.new;
