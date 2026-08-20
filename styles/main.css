@@ -2657,9 +2657,9 @@ button:active, .tab-btn:active, .cat-chip:active {
 }
 
 .map-base-layer .leaflet-tile {
-  /* Bordes de calles más oscuros, nítidos y definidos */
-  filter: contrast(135%) brightness(95%) saturate(105%);
-  -webkit-filter: contrast(135%) brightness(95%) saturate(105%);
+  /* Bordes negros y alto contraste para las líneas de las calles */
+  filter: contrast(190%) brightness(88%) saturate(115%);
+  -webkit-filter: contrast(190%) brightness(88%) saturate(115%);
   transition: opacity 0.2s ease;
 }
 
@@ -2672,8 +2672,8 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 .map-labels-layer .leaflet-tile {
   /* Filtro de matriz calibrado: transforma las letras de las calles en azul oscuro nítido */
-  filter: contrast(160%) brightness(85%) sepia(100%) hue-rotate(185deg) saturate(340%);
-  -webkit-filter: contrast(160%) brightness(85%) sepia(100%) hue-rotate(185deg) saturate(340%);
+  filter: contrast(175%) brightness(78%) sepia(100%) hue-rotate(185deg) saturate(380%);
+  -webkit-filter: contrast(175%) brightness(78%) sepia(100%) hue-rotate(185deg) saturate(380%);
   transition: opacity 0.2s ease;
 }
 
