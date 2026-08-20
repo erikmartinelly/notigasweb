@@ -2647,7 +2647,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 #map,
 .map-container,
 .leaflet-container {
-  background-color: #F8F5EC !important; /* Tono blanco marfil / pergamino antiguo */
+  background-color: #FFFFFF !important; /* Fondo del mapa en blanco puro */
   font-family: -apple-system, BlinkMacSystemFont, 'Roboto', 'Inter', 'Segoe UI', sans-serif !important;
 }
 
@@ -2657,13 +2657,13 @@ button:active, .tab-btn:active, .cat-chip:active {
 }
 
 .map-base-layer .leaflet-tile {
-  /* Tono blanco marfil pergamino antiguo con bordes negros nítidos en polígonos y calles */
-  filter: url('#notigasMapBlackEdges') sepia(35%) contrast(180%) brightness(96%) saturate(125%);
-  -webkit-filter: url('#notigasMapBlackEdges') sepia(35%) contrast(180%) brightness(96%) saturate(125%);
+  /* Fondo blanco limpio con polígonos, manzanas y calles en negro nítido */
+  filter: url('#notigasMapBlackEdges') grayscale(100%) contrast(250%) brightness(110%);
+  -webkit-filter: url('#notigasMapBlackEdges') grayscale(100%) contrast(250%) brightness(110%);
   transition: opacity 0.2s ease;
 }
 
-/* Polígonos vectoriales y trazados en el mapa con bordes negros */
+/* Polígonos vectoriales y trazados en el mapa en color negro */
 .leaflet-overlay-pane svg path,
 .leaflet-overlay-pane path,
 svg.leaflet-zoom-animated path {
@@ -2674,7 +2674,7 @@ svg.leaflet-zoom-animated path {
   stroke-linecap: round;
 }
 
-/* CAPA DE NOMBRES DE CALLES Y ETIQUETAS (Texto en Color Negro Oscuro Profundo) */
+/* CAPA DE NOMBRES DE CALLES Y TEXTOS (Solo color Azul Oscuro Profundo / Navy) */
 .map-labels-layer {
   pointer-events: none !important;
   image-rendering: -webkit-optimize-contrast;
@@ -2682,9 +2682,9 @@ svg.leaflet-zoom-animated path {
 }
 
 .map-labels-layer .leaflet-tile {
-  /* Filtro de escala de grises y alto contraste: transforma todas las letras de calles en negro oscuro puro */
-  filter: grayscale(100%) contrast(300%) brightness(20%);
-  -webkit-filter: grayscale(100%) contrast(300%) brightness(20%);
+  /* Filtro cromático calibrado: todas las letras y palabras del mapa exclusivamente en azul oscuro */
+  filter: invert(12%) sepia(95%) saturate(5000%) hue-rotate(205deg) brightness(75%) contrast(160%);
+  -webkit-filter: invert(12%) sepia(95%) saturate(5000%) hue-rotate(205deg) brightness(75%) contrast(160%);
   transition: opacity 0.2s ease;
 }
 
