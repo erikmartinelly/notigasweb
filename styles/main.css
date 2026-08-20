@@ -2647,7 +2647,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 #map,
 .map-container,
 .leaflet-container {
-  background-color: #F1F3F4 !important;
+  background-color: #F8F5EC !important; /* Tono blanco marfil / pergamino antiguo */
   font-family: -apple-system, BlinkMacSystemFont, 'Roboto', 'Inter', 'Segoe UI', sans-serif !important;
 }
 
@@ -2657,9 +2657,9 @@ button:active, .tab-btn:active, .cat-chip:active {
 }
 
 .map-base-layer .leaflet-tile {
-  /* Bordes negros nítidos en polígonos, manzanas, áreas y líneas de calles */
-  filter: url('#notigasMapBlackEdges') contrast(200%) brightness(88%) saturate(115%);
-  -webkit-filter: url('#notigasMapBlackEdges') contrast(200%) brightness(88%) saturate(115%);
+  /* Tono blanco marfil pergamino antiguo con bordes negros nítidos en polígonos y calles */
+  filter: url('#notigasMapBlackEdges') sepia(35%) contrast(180%) brightness(96%) saturate(125%);
+  -webkit-filter: url('#notigasMapBlackEdges') sepia(35%) contrast(180%) brightness(96%) saturate(125%);
   transition: opacity 0.2s ease;
 }
 
