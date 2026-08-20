@@ -694,12 +694,22 @@ function confirmarPedido() {
   const calle = inputCalle ? inputCalle.value.trim() : '';
   const telefono = inputTel ? inputTel.value.trim() : '';
 
-  // La ubicación se determina por GPS en el mapa; dirección y teléfono son opcionales
+  // La ubicación se determina por GPS en el mapa de forma obligatoria y real (sin coordenadas inventadas)
   const activePos = (typeof window.getActiveUserLocation === 'function') ? window.getActiveUserLocation() : ((typeof AppState !== 'undefined') ? AppState.get('userLocation') : null);
-  const lat = activePos ? (activePos.lat || activePos.latitude || window.currentGpsLat || -17.3935) : (window.currentGpsLat || -17.3935);
-  const lng = activePos ? (activePos.lng || activePos.longitude || window.currentGpsLng || -66.1570) : (window.currentGpsLng || -66.1570);
+  const rawLat = activePos ? (activePos.lat ?? activePos.latitude ?? window.currentGpsLat) : window.currentGpsLat;
+  const rawLng = activePos ? (activePos.lng ?? activePos.longitude ?? window.currentGpsLng) : window.currentGpsLng;
 
-  const currentCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || 'Cochabamba') : 'Cochabamba';
+  const lat = Number(rawLat);
+  const lng = Number(rawLng);
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+    if (typeof showToast === 'function') {
+      showToast('📍 Ubicación GPS Requerida', 'No se pudo obtener tu ubicación en el mapa. Activa tu GPS o pulsa el botón "Mi Ubicación" antes de pedir.', 'warning', 6000);
+    }
+    return;
+  }
+
+  const currentCity = (typeof AppState !== 'undefined' && AppState.get('city')) ? AppState.get('city') : (window.selectedCity || 'cochabamba');
 
   const orderData = {
     categoria,
