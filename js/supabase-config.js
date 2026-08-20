@@ -172,8 +172,18 @@ window.iniciarSuscripcionesRealtime = function() {
     window._realtimeChannel = globalChannel;
     _activeRealtimeCity = activeCity;
 
+    const pedidosOpts = (activeCity && activeCity !== 'todos' && activeCity !== 'all')
+        ? { event: '*', schema: 'public', table: 'pedidos', filter: `ciudad=eq.${activeCity}` }
+        : { event: '*', schema: 'public', table: 'pedidos' };
+    const rutasOpts = (activeCity && activeCity !== 'todos' && activeCity !== 'all')
+        ? { event: '*', schema: 'public', table: 'rutas_repartidores', filter: `ciudad=eq.${activeCity}` }
+        : { event: '*', schema: 'public', table: 'rutas_repartidores' };
+    const avisosOpts = (activeCity && activeCity !== 'todos' && activeCity !== 'all')
+        ? { event: '*', schema: 'public', table: 'avisos', filter: `ciudad=eq.${activeCity}` }
+        : { event: '*', schema: 'public', table: 'avisos' };
+
     globalChannel
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos', filter: `ciudad=eq.${activeCity}` }, payload => {
+        .on('postgres_changes', pedidosOpts, payload => {
             const activeOrder = (typeof AppState !== 'undefined') ? AppState.get('activeOrder') : null;
             const changedOrder = payload.new || payload.old;
             if (activeOrder?.id && changedOrder?.id === activeOrder.id) {
@@ -201,7 +211,7 @@ window.iniciarSuscripcionesRealtime = function() {
                 renderDriverOrdersList();
             }
         })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'rutas_repartidores', filter: `ciudad=eq.${activeCity}` }, payload => {
+        .on('postgres_changes', rutasOpts, payload => {
             const data = payload.new;
             if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
                 if (typeof actualizarRepartidorEnMapa === 'function') actualizarRepartidorEnMapa(data);
@@ -209,7 +219,7 @@ window.iniciarSuscripcionesRealtime = function() {
                 if (typeof removerPublicacionDeMapa === 'function') removerPublicacionDeMapa(payload.old?.id);
             }
         })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'avisos', filter: `ciudad=eq.${activeCity}` }, payload => {
+        .on('postgres_changes', avisosOpts, payload => {
             const aviso = payload.new;
             if (aviso && aviso.activo && (aviso.tipo === 'oficial' || aviso.tipo === 'alerta_oficial')) {
                 const mensaje = aviso.mensaje || aviso.descripcion || aviso.titulo || 'Comunicado oficial';

@@ -621,12 +621,19 @@ AS $$
       FROM public.choferes_habilitados ch
       WHERE ch.user_id = auth.uid()::text
         AND LOWER(TRIM(COALESCE(ch.estado_verificacion, ''))) = 'aprobado'
-        AND (p_ciudad IS NULL OR LOWER(TRIM(ch.ciudad)) = LOWER(TRIM(p_ciudad)))
+        AND (
+          p_ciudad IS NULL
+          OR LOWER(TRIM(ch.ciudad)) = LOWER(TRIM(p_ciudad))
+          OR (LOWER(TRIM(ch.ciudad)) IN ('cochabamba', 'cbba', 'cercado') AND LOWER(TRIM(p_ciudad)) IN ('cochabamba', 'cbba', 'sacaba', 'quillacollo', 'tiquipaya', 'colcapirhua', 'vinto', 'sipesipe'))
+          OR (LOWER(TRIM(ch.ciudad)) IN ('santacruz', 'santa cruz') AND LOWER(TRIM(p_ciudad)) IN ('santacruz', 'santa cruz', 'warnes', 'cotoca', 'montero', 'la guardia', 'laguardia', 'porongo'))
+          OR (LOWER(TRIM(ch.ciudad)) IN ('lapaz', 'la paz') AND LOWER(TRIM(p_ciudad)) IN ('lapaz', 'la paz', 'el alto', 'elalto', 'viacha', 'achocalla'))
+        )
         AND (
           p_categoria IS NULL
           OR public.normalize_delivery_category(ch.categoria) = public.normalize_delivery_category(p_categoria)
           OR public.normalize_delivery_category(ch.categoria) = 'otros'
           OR public.normalize_delivery_category(p_categoria) = 'otros'
+          OR LOWER(TRIM(COALESCE(ch.categoria, ''))) IN ('todos', 'all', '')
         )
     )
 $$;
@@ -1108,6 +1115,12 @@ BEGIN
 
     IF NOT public.is_current_enabled_driver(v_order.ciudad, v_order.categoria) THEN
         RAISE EXCEPTION 'Repartidor no habilitado para este pedido';
+    END IF;
+
+    UPDATE public.pedidos
+    SET visto = true,
+        updated_at = timezone('utc'::text, now())
+    WHERE id = p_order_id
       AND estado = 'pendiente';
 END;
 $$;
@@ -1597,11 +1610,13 @@ DROP POLICY IF EXISTS "Choferes Borrar propio o Admin" ON public.choferes_habili
 CREATE POLICY "Choferes Borrar propio o Admin" ON public.choferes_habilitados FOR DELETE USING (auth.uid()::text = user_id OR is_admin_email());
 
 -- D. Políticas: pedidos
+DROP POLICY IF EXISTS "pedidos_select" ON public.pedidos;
 DROP POLICY IF EXISTS "Pedidos Dueño Driver Admin SELECT" ON public.pedidos;
-CREATE POLICY "Pedidos Dueño Driver Admin SELECT" ON public.pedidos FOR SELECT USING (
+CREATE POLICY "pedidos_select" ON public.pedidos FOR SELECT USING (
     (auth.uid())::text = user_id 
     OR (auth.uid())::text = driver_id 
     OR is_admin_email()
+    OR (estado IN ('pendiente', 'visto') AND public.is_current_enabled_driver(ciudad, NULL::text))
 );
 
 DROP POLICY IF EXISTS "Pedidos Insertar propio" ON public.pedidos;

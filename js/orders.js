@@ -65,8 +65,17 @@ async function renderDriverOrdersList() {
     .gte('created_at', activeWindow)
     .order('created_at', { ascending: false });
 
-  if (activeCity && activeCity !== 'todos' && activeCity !== 'all') {
-    pubQuery = pubQuery.ilike('ciudad', `%${activeCity}%`);
+  const normCity = String(activeCity || '').toLowerCase().trim();
+  if (normCity && normCity !== 'todos' && normCity !== 'all') {
+    if (normCity === 'cbba' || normCity === 'cochabamba' || normCity === 'cercado') {
+      pubQuery = pubQuery.or('ciudad.ilike.%cochabamba%,ciudad.ilike.%cbba%,ciudad.ilike.%sacaba%,ciudad.ilike.%quillacollo%,ciudad.ilike.%tiquipaya%,ciudad.ilike.%colcapirhua%,ciudad.ilike.%vinto%,ciudad.ilike.%sipesipe%');
+    } else if (normCity === 'santacruz' || normCity === 'santa cruz') {
+      pubQuery = pubQuery.or('ciudad.ilike.%santacruz%,ciudad.ilike.%santa cruz%,ciudad.ilike.%warnes%,ciudad.ilike.%cotoca%,ciudad.ilike.%montero%,ciudad.ilike.%la guardia%,ciudad.ilike.%laguardia%,ciudad.ilike.%porongo%');
+    } else if (normCity === 'lapaz' || normCity === 'la paz') {
+      pubQuery = pubQuery.or('ciudad.ilike.%lapaz%,ciudad.ilike.%la paz%,ciudad.ilike.%el alto%,ciudad.ilike.%elalto%,ciudad.ilike.%viacha%,ciudad.ilike.%achocalla%');
+    } else {
+      pubQuery = pubQuery.ilike('ciudad', `%${normCity}%`);
+    }
   }
 
   // 2. Pedidos ya asignados a este repartidor desde la tabla pedidos
@@ -79,8 +88,16 @@ async function renderDriverOrdersList() {
       .eq('estado', 'asignado')
       .gte('created_at', activeWindow)
       .order('created_at', { ascending: false });
-    if (activeCity && activeCity !== 'todos' && activeCity !== 'all') {
-      assignedQuery = assignedQuery.ilike('ciudad', `%${activeCity}%`);
+    if (normCity && normCity !== 'todos' && normCity !== 'all') {
+      if (normCity === 'cbba' || normCity === 'cochabamba' || normCity === 'cercado') {
+        assignedQuery = assignedQuery.or('ciudad.ilike.%cochabamba%,ciudad.ilike.%cbba%,ciudad.ilike.%sacaba%,ciudad.ilike.%quillacollo%,ciudad.ilike.%tiquipaya%,ciudad.ilike.%colcapirhua%,ciudad.ilike.%vinto%,ciudad.ilike.%sipesipe%');
+      } else if (normCity === 'santacruz' || normCity === 'santa cruz') {
+        assignedQuery = assignedQuery.or('ciudad.ilike.%santacruz%,ciudad.ilike.%santa cruz%,ciudad.ilike.%warnes%,ciudad.ilike.%cotoca%,ciudad.ilike.%montero%,ciudad.ilike.%la guardia%,ciudad.ilike.%laguardia%,ciudad.ilike.%porongo%');
+      } else if (normCity === 'lapaz' || normCity === 'la paz') {
+        assignedQuery = assignedQuery.or('ciudad.ilike.%lapaz%,ciudad.ilike.%la paz%,ciudad.ilike.%el alto%,ciudad.ilike.%elalto%,ciudad.ilike.%viacha%,ciudad.ilike.%achocalla%');
+      } else {
+        assignedQuery = assignedQuery.ilike('ciudad', `%${normCity}%`);
+      }
     }
     assignedPromise = assignedQuery;
   }

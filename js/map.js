@@ -401,7 +401,7 @@ async function obtenerFichaChoferEnMemoria(userId, userData) {
       telefono_whatsapp: userData.whatsapp || userData.telefono || '',
       placa: userData.placa || 'Camión',
       categoria: userData.categoria || 'Gas GLP',
-      ciudad: userData.ciudad || (typeof AppState !== 'undefined' ? AppState.get('city') : 'cbba')
+      ciudad: userData.ciudad || (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba')
     };
   }
 
@@ -926,18 +926,23 @@ function agregarPedidoVecinoEnMapa(order) {
     return;
   }
 
-  // Asignar el icono dependiendo del estado
-  let currentIcon = garrafaIcon;
+  // Asignar el icono dependiendo del estado y categoría
+  let currentIcon = null;
   if (order.estado === 'entregado') {
      currentIcon = garrafaGreenIcon;
   } else if (order.visto === true) {
      currentIcon = garrafaYellowIcon;
+  } else if (typeof obtenerIconoCategoriaMapa === 'function') {
+     currentIcon = obtenerIconoCategoriaMapa(order.categoria);
+  }
+  if (!currentIcon) {
+     currentIcon = garrafaIcon;
   }
 
   // Si el usuario actual es REPARTIDOR, solo ver pedidos de SU MISMA CATEGORÍA
   const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
   let userRole = u.role || ((typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver') ? 'repartidor' : 'vecino');
-  let driverCategoria = u.categoria || 'gas';
+  let driverCategoria = u.categoria || 'todos';
 
   if (userRole === 'repartidor' && typeof isOrderCategoryMatchingDriver === 'function' && !isOrderCategoryMatchingDriver(order.categoria, driverCategoria)) {
      return; // Ignore orders outside of their category
@@ -1048,7 +1053,7 @@ window.actualizarPedidoEnMapa = function(order, eventType = 'UPDATE') {
   // 2. Actualizar estado en memoria
   const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
   const isDriverUser = (u.role === 'repartidor') || ((typeof AppState !== 'undefined') && (AppState.get('appMode') === 'driver' || AppState.get('userRole') === 'repartidor'));
-  const driverCategoria = u.categoria || 'gas';
+  const driverCategoria = u.categoria || 'todos';
 
   if (order.estado === 'asignado') {
     state.availableOrders = (state.availableOrders || []).filter(o => String(o.id) !== orderId);
@@ -1195,6 +1200,15 @@ function verPedidosEnMapa() {
     if (map.hasLayer(marker)) {
       const latlng = marker.getLatLng();
       allBounds.push([latlng.lat, latlng.lng]);
+    }
+  }
+  if (window.orderRadarMarkers) {
+    for (const id in window.orderRadarMarkers) {
+      const marker = window.orderRadarMarkers[id];
+      if (map.hasLayer(marker)) {
+        const latlng = marker.getLatLng();
+        allBounds.push([latlng.lat, latlng.lng]);
+      }
     }
   }
 
@@ -1555,7 +1569,7 @@ async function transmitirUbicacionRepartidorServidorDB(lat, lng) {
               distribuidor_nombre: driver.nombre_completo || 'Repartidor GLP',
               categoria: driver.categoria || 'Gas GLP',
               titulo: driver.placa || 'Camión',
-              ciudad: driver.ciudad || (typeof AppState !== 'undefined' ? AppState.get('city') : 'cbba'),
+              ciudad: driver.ciudad || (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba'),
               latitude: lat,
               longitude: lng,
               telefono: driver.telefono_whatsapp || '',
@@ -1595,7 +1609,7 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
       const activeCity = (typeof AppState !== 'undefined') ? AppState.get('city') : null;
       const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
       const isDriverUser = (u.role === 'repartidor') || ((typeof AppState !== 'undefined') && (AppState.get('appMode') === 'driver' || AppState.get('userRole') === 'repartidor'));
-      const driverCategoria = u.categoria || 'gas';
+      const driverCategoria = u.categoria || 'todos';
       const normCity = String(activeCity || '').toLowerCase().trim();
       const tenMinsAgo = new Date(Date.now() - 10 * 60000).toISOString();
 
@@ -1921,6 +1935,11 @@ function initNotigasMap() {
     conectarGPSAuto(false);
   }
   renderReportedTrucksBuffer();
+
+  // Carga inmediata de pedidos en vivo al inicializar el mapa
+  if (typeof cargarPedidosVecinalesEnVivo === 'function') {
+    cargarPedidosVecinalesEnVivo(true);
+  }
 }
 
 // ==========================================================================
