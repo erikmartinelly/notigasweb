@@ -356,6 +356,11 @@ async function confirmarEntregaPedido(id) {
       }
     } catch(e) {
       hideLoadingOverlay();
+      console.error("Error inesperado en confirmarEntregaPedido:", e);
+      showToast('Error', 'Error inesperado al confirmar entrega.', 'error', 4000);
+    }
+  }, 'Volver');
+}
 window.confirmarEntregaPedido = confirmarEntregaPedido;
 
 function ejecutarPurgaBaseDeDatosAuto() {
