@@ -1242,7 +1242,9 @@ function removerPublicacionDeMapa(id) {
   });
 }
 
-function actualizarCoordenadasPedidoActivo(newLat, newLng, skipMarkerSet = false) {
+let _orderLocationDebounceTimer = null;
+
+async function actualizarCoordenadasPedidoActivo(newLat, newLng, skipMarkerSet = false) {
   try {
     const rawOrder = (typeof AppState !== 'undefined' ? AppState.get('activeOrder') : null);
     if (rawOrder) {
@@ -1254,14 +1256,47 @@ function actualizarCoordenadasPedidoActivo(newLat, newLng, skipMarkerSet = false
       AppState.set('activeOrder', order);
 
       if (order.id && window.supabaseClient) {
-        window.supabaseClient
-          .from('pedidos')
-          .update({ latitude: newLat, longitude: newLng, updated_at: new Date().toISOString() })
-          .eq('id', order.id)
-          .then();
+        clearTimeout(_orderLocationDebounceTimer);
+        _orderLocationDebounceTimer = setTimeout(async () => {
+          try {
+            // 1. Intentar actualizar vía RPC con SECURITY DEFINER
+            let isSaved = false;
+            try {
+              const { data: rpcRes, error: rpcErr } = await window.supabaseClient.rpc('rpc_update_order_location', {
+                p_order_id: order.id,
+                p_latitude: newLat,
+                p_longitude: newLng
+              });
+              if (!rpcErr && rpcRes && rpcRes.success) {
+                isSaved = true;
+              }
+            } catch(e){}
+
+            // 2. Fallback a UPDATE directo con política RLS pedidos_update_own
+            if (!isSaved) {
+              const { error: directErr } = await window.supabaseClient
+                .from('pedidos')
+                .update({ latitude: newLat, longitude: newLng, updated_at: new Date().toISOString() })
+                .eq('id', order.id);
+              if (!directErr) isSaved = true;
+            }
+
+            if (isSaved) {
+              if (typeof showToast === 'function') {
+                showToast("📍 Ubicación de tu pedido actualizada en el mapa", "success");
+              }
+            } else {
+              console.warn("⚠️ No se pudo guardar la nueva ubicación del pedido en Supabase");
+            }
+          } catch(err) {
+            console.error("Error sincronizando nueva posición del pedido:", err);
+          }
+        }, 350);
       }
     }
-  } catch(e){}
+  } catch(e){
+    console.error("Error en actualizarCoordenadasPedidoActivo:", e);
+  }
 
   if (!skipMarkerSet && currentActiveOrderMarker) {
     currentActiveOrderMarker.setLatLng([newLat, newLng]);
@@ -1598,7 +1633,9 @@ function procesarResultadoBusqueda(item, queryOriginal) {
   applyGpsPosition(lat, lon, '', false);
 }
 
-/* ESTRATEGIA ADAPTATIVA INTELIGENTE DE TRANSMISIÓN GPS (1 sola operación UPSERT por tick) */
+let _driverGpsConsecutiveErrors = 0;
+
+/* ESTRATEGIA ADAPTATIVA INTELIGENTE DE TRANSMISIÓN GPS (1 sola operación UPSERT por tick con verificación de red) */
 async function transmitirUbicacionRepartidorServidorDB(lat, lng) {
   const driverGpsLive = (typeof AppState !== 'undefined') ? AppState.get('driverGpsLive') : null;
   if (driverGpsLive !== 'on') return;
@@ -1626,10 +1663,6 @@ async function transmitirUbicacionRepartidorServidorDB(lat, lng) {
   try {
     const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
     if (u.role === 'repartidor') {
-      lastBroadcastLat = lat;
-      lastBroadcastLng = lng;
-      lastGpsBroadcastTime = now;
-
       if (window.supabaseClient) {
         const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
         const driver = await obtenerFichaChoferEnMemoria(localUserId, u);
@@ -1638,8 +1671,8 @@ async function transmitirUbicacionRepartidorServidorDB(lat, lng) {
           return;
         }
 
-        // Transmisión directa mediante 1 sola operación UPSERT sin lecturas redundantes
-        await window.supabaseClient
+        // Transmisión directa mediante 1 sola operación UPSERT con verificación de errores
+        const { error: upsertErr } = await window.supabaseClient
           .from('rutas_repartidores')
           .upsert(
             {
@@ -1657,10 +1690,26 @@ async function transmitirUbicacionRepartidorServidorDB(lat, lng) {
               onConflict: 'user_id'
             }
           );
+
+        if (upsertErr) {
+          _driverGpsConsecutiveErrors++;
+          console.warn(`⚠️ Error al sincronizar GPS del repartidor con Supabase (Fallo #${_driverGpsConsecutiveErrors}):`, upsertErr.message);
+          if (_driverGpsConsecutiveErrors === 3 && typeof showToast === 'function') {
+            showToast('⚠️ Tu señal GPS no se está sincronizando con la nube. Revisa tu conexión a internet.', 'warning');
+          }
+          return; // No actualizar timestamp para reintentar en el siguiente ciclo
+        }
+
+        // Éxito confirmado
+        _driverGpsConsecutiveErrors = 0;
+        lastBroadcastLat = lat;
+        lastBroadcastLng = lng;
+        lastGpsBroadcastTime = now;
       }
     }
   } catch(e){
-    console.error("Error transmitiendo GPS", e);
+    _driverGpsConsecutiveErrors++;
+    console.error("Error transmitiendo GPS:", e);
   }
 }
 
@@ -1717,6 +1766,10 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
         ? window.getCityMetroKeys(activeCity)
         : (normCity && normCity !== 'todos' && normCity !== 'all' ? [normCity] : null);
 
+      // Usar Bounding Box siempre que el zoom sea operativo (>= 8) para reducir tráfico y evitar pedidos faltantes
+      const currentZoom = (map && typeof map.getZoom === 'function') ? map.getZoom() : 13;
+      const shouldUseBbox = bbox && (currentZoom >= 8);
+
       // 1. Consulta de Camiones en vivo (común para ambos roles con límite de seguridad)
       let trucksQuery = window.supabaseClient
         .from('rutas_repartidores_publicas')
@@ -1725,6 +1778,13 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
         .limit(100);
       if (cityKeys && cityKeys.length > 0) {
         trucksQuery = trucksQuery.in('ciudad', cityKeys);
+      }
+      if (shouldUseBbox) {
+        trucksQuery = trucksQuery
+          .gte('latitude', bbox.minLat)
+          .lte('latitude', bbox.maxLat)
+          .gte('longitude', bbox.minLng)
+          .lte('longitude', bbox.maxLng);
       }
 
       // 2. Consulta de Pedidos Públicos (disponibles para radar y mapa en la zona metropolitana)
@@ -1736,6 +1796,13 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
         .limit(200);
       if (cityKeys && cityKeys.length > 0) {
         pubQuery = pubQuery.in('ciudad', cityKeys);
+      }
+      if (shouldUseBbox) {
+        pubQuery = pubQuery
+          .gte('latitude', bbox.minLat)
+          .lte('latitude', bbox.maxLat)
+          .gte('longitude', bbox.minLng)
+          .lte('longitude', bbox.maxLng);
       }
 
       // 3. Consulta de Pedidos Asignados (sólo para repartidor autenticado)
