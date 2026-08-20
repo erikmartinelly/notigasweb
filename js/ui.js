@@ -127,20 +127,39 @@ function showConfirmModal(icon, title, text, acceptLabel, acceptCallback, cancel
   }, { once: true });
 }
 
-function mostrarPopupAlertaRepartidor(titulo, mensaje) {
-  const popup = document.getElementById('driverAlertPopup');
-  if (!popup) return;
+function mostrarPopupAlertaRepartidor(titulo, mensaje, duracion = 7000) {
+  let popup = document.getElementById('driverAlertPopup');
+  if (!popup) {
+    popup = document.createElement('div');
+    popup.id = 'driverAlertPopup';
+    popup.className = 'driver-alert-popup';
+    document.body.appendChild(popup);
+  }
 
   const heading = document.createElement('strong');
+  heading.style.color = '#FF6D00';
+  heading.style.fontSize = '13.5px';
+  heading.style.display = 'block';
+  heading.style.marginBottom = '4px';
+  heading.textContent = String(titulo || '🔔 Alerta para Repartidor');
+
   const detail = document.createElement('span');
-  heading.textContent = String(titulo || 'Alerta NOTIGAS');
+  detail.style.color = '#E2E8F0';
+  detail.style.fontSize = '12px';
+  detail.style.lineHeight = '1.4';
   detail.textContent = String(mensaje || '');
-  popup.replaceChildren(heading, document.createElement('br'), detail);
+
+  popup.replaceChildren(heading, detail);
   popup.style.display = 'block';
 
-  setTimeout(() => {
+  try {
+    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+  } catch(e){}
+
+  clearTimeout(window._driverAlertTimeout);
+  window._driverAlertTimeout = setTimeout(() => {
     if (popup) popup.style.display = 'none';
-  }, 7000);
+  }, duracion);
 }
 
 window.showToast = showToast;

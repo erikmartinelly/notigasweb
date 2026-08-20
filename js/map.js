@@ -861,69 +861,125 @@ function verificarYMostrarRepartidorGPS() {
 function actualizarRepartidorEnMapa(data) {
   if (!map || !data) return;
 
-  const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
+  const lat = parseFloat(data.latitude || data.lat);
+  const lng = parseFloat(data.longitude || data.lng);
+  if (isNaN(lat) || isNaN(lng)) return;
 
-  // Si el camión recibido es del propio usuario activo, no duplicar (ya está representado por userMarker)
-  if (data.user_id && localUserId && data.user_id === localUserId) {
-    if (activeTruckMarkers[data.user_id]) {
-      map.removeLayer(activeTruckMarkers[data.user_id]);
-      delete activeTruckMarkers[data.user_id];
-    }
+  // 1. Detectar si el camión pertenece al usuario actual conectado en este dispositivo
+  const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
+  const currentAuthId = (typeof window._tempAuthUser !== 'undefined' && window._tempAuthUser?.id) 
+    ? window._tempAuthUser.id 
+    : ((typeof getCurrentUserId === 'function') ? getCurrentUserId() : null);
+  const userRole = u.role || ((typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver') ? 'repartidor' : 'vecino');
+  const isSelfDriver = (userRole === 'repartidor') && (
+    (data.user_id && currentAuthId && String(data.user_id) === String(currentAuthId)) ||
+    (data.user_id && u.user_id && String(data.user_id) === String(u.user_id)) ||
+    (data.user_id && u.id && String(data.user_id) === String(u.id)) ||
+    (data.distribuidor_nombre && u.nombre && String(data.distribuidor_nombre).toLowerCase().trim() === String(u.nombre).toLowerCase().trim())
+  );
+
+  // Si es el propio chofer en su propio dispositivo, su posición ya la dibuja userMarker (GPS en vivo)
+  if (isSelfDriver) {
+    // Limpiar cualquier marcador residual en activeTruckMarkers que coincida con este chofer
+    Object.keys(activeTruckMarkers).forEach(key => {
+      const m = activeTruckMarkers[key];
+      if (key === data.id || key === data.user_id || m?._notigasRouteId === data.id || m?._notigasUserId === data.user_id) {
+        if (map && m) map.removeLayer(m);
+        delete activeTruckMarkers[key];
+      }
+    });
     return;
   }
 
-  // Filtrar si es otro repartidor de otra categoría
-  const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
-  const userRole = u.role || ((typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver') ? 'repartidor' : 'vecino');
+  // 2. Filtrar por categoría si el observador es un chofer (repartidores solo ven camiones de su rubro)
   const driverCategoria = u.categoria || 'gas';
-
   if (userRole === 'repartidor' && typeof isOrderCategoryMatchingDriver === 'function' && !isOrderCategoryMatchingDriver(data.categoria, driverCategoria)) {
-     return; // Repartidores solo ven camiones de su rubro
+     return;
   }
 
-  const truckId = data.user_id || data.id || data.distribuidor_nombre;
-  if (!truckId) return;
+  // 3. Buscar si ya existe un marcador para este camión por routeId, userId o nombre
+  const routeId = data.id ? String(data.id) : null;
+  const userId = data.user_id ? String(data.user_id) : null;
+  const driverName = data.distribuidor_nombre ? String(data.distribuidor_nombre).trim() : null;
+
+  let existingKey = null;
+  let existingMarker = null;
+
+  // Búsqueda exhaustiva para reutilizar el mismo marcador y evitar duplicados
+  for (const key of Object.keys(activeTruckMarkers)) {
+    const m = activeTruckMarkers[key];
+    if (!m) continue;
+    if ((routeId && (key === routeId || m._notigasRouteId === routeId)) ||
+        (userId && (key === userId || m._notigasUserId === userId)) ||
+        (driverName && m._notigasDriverName === driverName)) {
+      existingKey = key;
+      existingMarker = m;
+      break;
+    }
+  }
 
   const isZoomOut = map && (map.getZoom() <= DRIVER_RADAR_MAX_ZOOM);
   const iconToUse = isZoomOut && truckRadarBlueIcon ? truckRadarBlueIcon : truckIcon;
+  const safeNombre = typeof escapeHtmlStr === 'function' ? escapeHtmlStr(data.distribuidor_nombre || 'Repartidor') : (data.distribuidor_nombre || 'Repartidor');
+  const safeCategoria = typeof escapeHtmlStr === 'function' ? escapeHtmlStr(data.categoria || 'Servicio de Entrega') : (data.categoria || 'Servicio de Entrega');
+  const safeTelefono = data.telefono ? (typeof escapeHtmlStr === 'function' ? escapeHtmlStr(data.telefono) : data.telefono) : '';
 
-  if (activeTruckMarkers[truckId]) {
-    activeTruckMarkers[truckId].setLatLng([data.latitude, data.longitude]);
-    activeTruckMarkers[truckId]._notigasRouteId = data.id || null;
-    activeTruckMarkers[truckId]._notigasUserId = data.user_id || null;
-    if (activeTruckMarkers[truckId].setIcon) {
-      activeTruckMarkers[truckId].setIcon(iconToUse);
+  const popupHtml = `
+    <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
+      <strong style="color:#00E676; font-size:13px;">🚛 Camión en Vivo</strong><br>
+      <span style="font-size:12px; color:#FFFFFF; font-weight:800;">${safeNombre}</span><br>
+      <span style="font-size:11px; color:#64748B;">${safeCategoria}</span><br>
+      ${safeTelefono ? `<a href="tel:${safeTelefono}" style="display:inline-block; margin-top:5px; font-size:11px; color:#1E293B; background:#FFD54F; padding:4px 8px; border-radius:12px; text-decoration:none; font-weight:bold;">📞 Llama: ${safeTelefono}</a>` : ''}
+    </div>
+  `;
+
+  // Clave canónica unificada para el mapa
+  const canonicalKey = routeId || userId || driverName;
+  if (!canonicalKey) return;
+
+  if (existingMarker) {
+    existingMarker.setLatLng([lat, lng]);
+    existingMarker._notigasRouteId = routeId || existingMarker._notigasRouteId;
+    existingMarker._notigasUserId = userId || existingMarker._notigasUserId;
+    existingMarker._notigasDriverName = driverName || existingMarker._notigasDriverName;
+    if (existingMarker.setIcon) existingMarker.setIcon(iconToUse);
+    if (existingMarker.getPopup()) {
+      existingMarker.setPopupContent(popupHtml);
+    }
+
+    if (existingKey !== canonicalKey) {
+      delete activeTruckMarkers[existingKey];
+      activeTruckMarkers[canonicalKey] = existingMarker;
     }
   } else {
-    const marker = L.marker([data.latitude, data.longitude], { icon: iconToUse, zIndexOffset: 9000 }).addTo(map);
-    marker._notigasRouteId = data.id || null;
-    marker._notigasUserId = data.user_id || null;
-    const safeNombre = typeof escapeHtmlStr === 'function' ? escapeHtmlStr(data.distribuidor_nombre || 'Repartidor') : (data.distribuidor_nombre || 'Repartidor');
-    const safeCategoria = typeof escapeHtmlStr === 'function' ? escapeHtmlStr(data.categoria || 'Servicio de Entrega') : (data.categoria || 'Servicio de Entrega');
-    const safeTelefono = data.telefono ? (typeof escapeHtmlStr === 'function' ? escapeHtmlStr(data.telefono) : data.telefono) : '';
-
-    marker.bindPopup(`
-      <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
-        <strong style="color:#00E676; font-size:13px;">🚛 Camión en Vivo</strong><br>
-        <span style="font-size:12px; color:#FFFFFF; font-weight:800;">${safeNombre}</span><br>
-        <span style="font-size:11px; color:#64748B;">${safeCategoria}</span><br>
-        ${safeTelefono ? `<a href="tel:${safeTelefono}" style="display:inline-block; margin-top:5px; font-size:11px; color:#1E293B; background:#FFD54F; padding:4px 8px; border-radius:12px; text-decoration:none; font-weight:bold;">📞 Llama: ${safeTelefono}</a>` : ''}
-      </div>
-    `);
-    marker.on('click', () => {
-      if (map && map.getZoom() <= DRIVER_RADAR_MAX_ZOOM) {
-        map.flyTo([data.latitude, data.longitude], 16, { duration: 0.8 });
+    // Limpiar posibles residuos antes de instanciar uno nuevo
+    Object.keys(activeTruckMarkers).forEach(key => {
+      const m = activeTruckMarkers[key];
+      if (m && ((routeId && m._notigasRouteId === routeId) || (userId && m._notigasUserId === userId) || (driverName && m._notigasDriverName === driverName))) {
+        if (map) map.removeLayer(m);
+        delete activeTruckMarkers[key];
       }
     });
-    activeTruckMarkers[truckId] = marker;
+
+    const marker = L.marker([lat, lng], { icon: iconToUse, zIndexOffset: 9000 }).addTo(map);
+    marker._notigasRouteId = routeId;
+    marker._notigasUserId = userId;
+    marker._notigasDriverName = driverName;
+    marker.bindPopup(popupHtml);
+    marker.on('click', () => {
+      if (map && map.getZoom() <= DRIVER_RADAR_MAX_ZOOM) {
+        map.flyTo([lat, lng], 16, { duration: 0.8 });
+      }
+    });
+    activeTruckMarkers[canonicalKey] = marker;
   }
 
-  // Eliminar camiones fantasma sin actualizar en 10 minutos
-  if (window.activeTruckTimers[truckId]) clearTimeout(window.activeTruckTimers[truckId]);
-  window.activeTruckTimers[truckId] = setTimeout(() => {
-    if (activeTruckMarkers[truckId]) {
-      map.removeLayer(activeTruckMarkers[truckId]);
-      delete activeTruckMarkers[truckId];
+  // Eliminar camiones fantasma sin actualización en 10 minutos
+  if (window.activeTruckTimers[canonicalKey]) clearTimeout(window.activeTruckTimers[canonicalKey]);
+  window.activeTruckTimers[canonicalKey] = setTimeout(() => {
+    if (activeTruckMarkers[canonicalKey]) {
+      map.removeLayer(activeTruckMarkers[canonicalKey]);
+      delete activeTruckMarkers[canonicalKey];
     }
   }, 10 * 60000);
 }
@@ -1736,9 +1792,33 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
         renderDriverDemandByZoom();
       }
 
-      // Renderizado de camiones activos
+      // Renderizado y reconciliación de camiones activos en vivo
       if (Array.isArray(trucksRes.data)) {
-        trucksRes.data.forEach(truck => actualizarRepartidorEnMapa(truck));
+        const liveTruckIds = new Set();
+        trucksRes.data.forEach(truck => {
+          actualizarRepartidorEnMapa(truck);
+          if (truck.id) liveTruckIds.add(String(truck.id));
+          if (truck.user_id) liveTruckIds.add(String(truck.user_id));
+          if (truck.distribuidor_nombre) liveTruckIds.add(String(truck.distribuidor_nombre).trim());
+        });
+
+        // Reconciliación: eliminar del mapa camiones que hayan dejado de transmitir o estén inactivos
+        Object.keys(activeTruckMarkers).forEach(key => {
+          const m = activeTruckMarkers[key];
+          const isAlive = liveTruckIds.has(key) ||
+            (m?._notigasRouteId && liveTruckIds.has(m._notigasRouteId)) ||
+            (m?._notigasUserId && liveTruckIds.has(m._notigasUserId)) ||
+            (m?._notigasDriverName && liveTruckIds.has(m._notigasDriverName));
+
+          if (!isAlive) {
+            if (map && m) map.removeLayer(m);
+            delete activeTruckMarkers[key];
+            if (window.activeTruckTimers[key]) {
+              clearTimeout(window.activeTruckTimers[key]);
+              delete window.activeTruckTimers[key];
+            }
+          }
+        });
       }
     } catch(e) {
       console.error("❌ Error general cargando live data:", e);
