@@ -809,7 +809,11 @@ function renderActiveOrdersMap() {
         window.currentGpsLat = currentGpsLat;
         currentGpsLng = newPos.lng;
         window.currentGpsLng = currentGpsLng;
-        actualizarCoordenadasPedidoActivo(newPos.lat, newPos.lng, true);
+        if (typeof window.actualizarCoordenadasPedidoActivo === 'function') {
+          window.actualizarCoordenadasPedidoActivo(newPos.lat, newPos.lng, true);
+        } else if (typeof actualizarCoordenadasPedidoActivo === 'function') {
+          actualizarCoordenadasPedidoActivo(newPos.lat, newPos.lng, true);
+        }
       });
 
       const btnAccion = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver')
@@ -1302,6 +1306,7 @@ async function actualizarCoordenadasPedidoActivo(newLat, newLng, skipMarkerSet =
     currentActiveOrderMarker.setLatLng([newLat, newLng]);
   }
 }
+window.actualizarCoordenadasPedidoActivo = actualizarCoordenadasPedidoActivo;
 
 function verPedidosEnMapa() {
   if (!map) return;
@@ -1400,7 +1405,11 @@ function moverMarcadorUbicacionManual(lat, lng) {
 function programarSincronizacionUbicacionManual(lat, lng) {
   if (manualLocationSyncTimer) clearTimeout(manualLocationSyncTimer);
   manualLocationSyncTimer = setTimeout(() => {
-    actualizarCoordenadasPedidoActivo(lat, lng);
+    if (typeof window.actualizarCoordenadasPedidoActivo === 'function') {
+      window.actualizarCoordenadasPedidoActivo(lat, lng);
+    } else if (typeof actualizarCoordenadasPedidoActivo === 'function') {
+      actualizarCoordenadasPedidoActivo(lat, lng);
+    }
     verificarYMostrarRepartidorGPS();
     manualLocationSyncTimer = null;
   }, 80);

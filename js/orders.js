@@ -948,17 +948,20 @@ async function abrirPanoramicaPedidos() {
       const expirationMs = (window.NOTIGAS && window.NOTIGAS.ORDER_EXPIRATION_MS) ? window.NOTIGAS.ORDER_EXPIRATION_MS : 48 * 60 * 60 * 1000;
       const activeWindow = new Date(now - expirationMs).toISOString();
       const currentCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || '') : '';
+      const cityKeys = (typeof window.getCityMetroKeys === 'function')
+        ? window.getCityMetroKeys(currentCity)
+        : (currentCity && currentCity !== 'todos' && currentCity !== 'all' ? [currentCity.toLowerCase().trim()] : null);
 
       let query = window.supabaseClient
-        .from('pedidos')
+        .from('pedidos_publicos')
         .select('id, categoria, cantidad, direccion, created_at, estado, latitude, longitude')
         .in('estado', ['pendiente', 'visto'])
         .gte('created_at', activeWindow)
         .order('created_at', { ascending: false })
         .limit(20);
 
-      if (currentCity) {
-        query = query.ilike('ciudad', `%${currentCity}%`);
+      if (cityKeys && cityKeys.length > 0) {
+        query = query.in('ciudad', cityKeys);
       }
 
       const { data: otros } = await query;
