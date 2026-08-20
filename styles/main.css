@@ -2657,10 +2657,21 @@ button:active, .tab-btn:active, .cat-chip:active {
 }
 
 .map-base-layer .leaflet-tile {
-  /* Bordes negros y alto contraste para las líneas de las calles */
-  filter: contrast(190%) brightness(88%) saturate(115%);
-  -webkit-filter: contrast(190%) brightness(88%) saturate(115%);
+  /* Bordes negros nítidos en polígonos, manzanas, áreas y líneas de calles */
+  filter: url('#notigasMapBlackEdges') contrast(200%) brightness(88%) saturate(115%);
+  -webkit-filter: url('#notigasMapBlackEdges') contrast(200%) brightness(88%) saturate(115%);
   transition: opacity 0.2s ease;
+}
+
+/* Polígonos vectoriales y trazados en el mapa con bordes negros */
+.leaflet-overlay-pane svg path,
+.leaflet-overlay-pane path,
+svg.leaflet-zoom-animated path {
+  stroke: #000000 !important;
+  stroke-width: 2.5px !important;
+  stroke-opacity: 0.95 !important;
+  stroke-linejoin: round;
+  stroke-linecap: round;
 }
 
 /* CAPA DE NOMBRES DE CALLES Y ETIQUETAS (Texto en Azul Oscuro Profundo / Navy) */
