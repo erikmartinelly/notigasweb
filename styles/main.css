@@ -2642,12 +2642,12 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 
 /* ==========================================================================
-   APARIENCIA Y CONTROLES IDÉNTICOS A GOOGLE MAPS
+   APARIENCIA Y CONTROLES IDÉNTICOS A GOOGLE MAPS (MODO CLARO / ESTÁNDAR UX)
    ========================================================================== */
 #map,
 .map-container,
 .leaflet-container {
-  background-color: #FFFFFF !important; /* Fondo del mapa en blanco puro */
+  background-color: #F4F5F7 !important; /* Lienzo general / tierra: gris muy claro anti-fatiga */
   font-family: -apple-system, BlinkMacSystemFont, 'Roboto', 'Inter', 'Segoe UI', sans-serif !important;
 }
 
@@ -2657,24 +2657,13 @@ button:active, .tab-btn:active, .cat-chip:active {
 }
 
 .map-base-layer .leaflet-tile {
-  /* Fondo blanco limpio con polígonos, manzanas y calles en negro nítido */
-  filter: url('#notigasMapBlackEdges') grayscale(100%) contrast(250%) brightness(110%);
-  -webkit-filter: url('#notigasMapBlackEdges') grayscale(100%) contrast(250%) brightness(110%);
+  /* Separación armónica: manzanas en gris suave (#E2E5EB), calles en blanco limpio (#FFFFFF) y bordes sutiles (#D1D5DB) */
+  filter: contrast(106%) brightness(101%) saturate(104%);
+  -webkit-filter: contrast(106%) brightness(101%) saturate(104%);
   transition: opacity 0.2s ease;
 }
 
-/* Polígonos vectoriales y trazados en el mapa en color negro */
-.leaflet-overlay-pane svg path,
-.leaflet-overlay-pane path,
-svg.leaflet-zoom-animated path {
-  stroke: #000000 !important;
-  stroke-width: 2.5px !important;
-  stroke-opacity: 0.95 !important;
-  stroke-linejoin: round;
-  stroke-linecap: round;
-}
-
-/* CAPA DE NOMBRES DE CALLES Y TEXTOS (Solo color Azul Oscuro Profundo / Navy) */
+/* CAPA DE NOMBRES DE CALLES Y ETIQUETAS (Gris Carbón Muy Oscuro #1F2937 / #111827) */
 .map-labels-layer {
   pointer-events: none !important;
   image-rendering: -webkit-optimize-contrast;
@@ -2682,9 +2671,9 @@ svg.leaflet-zoom-animated path {
 }
 
 .map-labels-layer .leaflet-tile {
-  /* Filtro cromático calibrado: todas las letras y palabras del mapa exclusivamente en azul oscuro */
-  filter: invert(12%) sepia(95%) saturate(5000%) hue-rotate(205deg) brightness(75%) contrast(160%);
-  -webkit-filter: invert(12%) sepia(95%) saturate(5000%) hue-rotate(205deg) brightness(75%) contrast(160%);
+  /* Jerarquía de texto y legibilidad natural sin fatiga visual */
+  filter: contrast(125%) brightness(82%);
+  -webkit-filter: contrast(125%) brightness(82%);
   transition: opacity 0.2s ease;
 }
 
