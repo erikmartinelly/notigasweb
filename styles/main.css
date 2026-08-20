@@ -2674,7 +2674,7 @@ svg.leaflet-zoom-animated path {
   stroke-linecap: round;
 }
 
-/* CAPA DE NOMBRES DE CALLES Y ETIQUETAS (Texto en Azul Oscuro Profundo / Navy) */
+/* CAPA DE NOMBRES DE CALLES Y ETIQUETAS (Texto en Color Negro Oscuro Profundo) */
 .map-labels-layer {
   pointer-events: none !important;
   image-rendering: -webkit-optimize-contrast;
@@ -2682,9 +2682,9 @@ svg.leaflet-zoom-animated path {
 }
 
 .map-labels-layer .leaflet-tile {
-  /* Filtro de matriz calibrado: transforma las letras de las calles en azul oscuro nítido */
-  filter: contrast(175%) brightness(78%) sepia(100%) hue-rotate(185deg) saturate(380%);
-  -webkit-filter: contrast(175%) brightness(78%) sepia(100%) hue-rotate(185deg) saturate(380%);
+  /* Filtro de escala de grises y alto contraste: transforma todas las letras de calles en negro oscuro puro */
+  filter: grayscale(100%) contrast(300%) brightness(20%);
+  -webkit-filter: grayscale(100%) contrast(300%) brightness(20%);
   transition: opacity 0.2s ease;
 }
 
