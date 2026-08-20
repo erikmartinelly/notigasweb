@@ -1757,10 +1757,10 @@ REVOKE EXECUTE ON FUNCTION public.trg_check_pedido_transition() FROM PUBLIC, ano
 REVOKE EXECUTE ON FUNCTION public.sanitize_html() FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.sanitize_html_chat() FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.purge_old_records() FROM PUBLIC, anon, authenticated;
-REVOKE EXECUTE ON FUNCTION public.fn_auto_purga_notigas() FROM PUBLIC, anon, authenticated;
-REVOKE EXECUTE ON FUNCTION public.normalize_delivery_category(text) FROM PUBLIC, anon, authenticated;
-REVOKE EXECUTE ON FUNCTION public.is_current_enabled_driver(text, text) FROM PUBLIC, anon, authenticated;
-REVOKE EXECUTE ON FUNCTION public.enforce_official_notice_admin() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.normalize_delivery_category(text) TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.is_current_enabled_driver(text, text) TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.is_banned() TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.is_admin_email() TO anon, authenticated, service_role;
 REVOKE EXECUTE ON FUNCTION public.guard_pedido_mutation() FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.guard_driver_verification() FROM PUBLIC, anon, authenticated;
 
