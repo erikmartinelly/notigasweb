@@ -15,7 +15,7 @@ function formatearAntiguedadPedido(value) {
 }
 window.formatearAntiguedadPedido = formatearAntiguedadPedido;
 
-window.ORDER_STATES = Object.freeze({
+window.ORDER_STATES = window.ORDER_STATES || Object.freeze({
   PENDIENTE: 'pendiente',
   VISTO: 'visto',
   ASIGNADO: 'asignado',

@@ -62,12 +62,12 @@ app.use((req, res, next) => {
     "object-src 'none'",
     "frame-ancestors 'self'",
     "form-action 'self' https://accounts.google.com",
-    "script-src 'self' 'unsafe-inline' https://accounts.google.com https://unpkg.com https://cdn.jsdelivr.net https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.google.com https://*.gstatic.com",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://unpkg.com",
-    "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com",
+    "script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://partner.googleadservices.com https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com https://*.google.com https://*.gstatic.com https://*.googlesyndication.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com",
+    "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net",
     "img-src 'self' data: blob: https:",
-    "connect-src 'self' https://yxzzfqyehllogzzhdtmc.supabase.co wss://yxzzfqyehllogzzhdtmc.supabase.co https://nominatim.openstreetmap.org https://photon.komoot.io https://ipapi.co https://ipinfo.io https://freeipapi.com https://ipwho.is https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.googleadservices.com",
-    "frame-src 'self' https://accounts.google.com https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.googleadservices.com",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://accounts.google.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://ep1.adtrafficquality.google https://ep2.adtrafficquality.google https://ipinfo.io https://ipapi.co https://freeipapi.com https://ipwho.is https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://router.project-osrm.org https://nominatim.openstreetmap.org https://photon.komoot.io https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.googleadservices.com",
+    "frame-src 'self' https://accounts.google.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://*.google.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net https://*.googleadservices.com",
     "worker-src 'self' blob:",
     "manifest-src 'self'"
   ].join('; '));

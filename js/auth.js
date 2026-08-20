@@ -181,6 +181,38 @@ window.checkAndApplyAdminStatus = async function(user) {
   }
 };
 
+window.getVerifiedAdminEmail = function() {
+  try {
+    const isAdmin = (typeof AppState !== 'undefined') && AppState.get('isAdmin') === true;
+    if (!isAdmin) return null;
+    if (window._verifiedAdminEmail) return window._verifiedAdminEmail.toLowerCase().trim();
+    if (window._tempAuthUser && window._tempAuthUser.email) return window._tempAuthUser.email.toLowerCase().trim();
+    const data = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
+    return data && (data.gmail || data.email) ? (data.gmail || data.email).toLowerCase().trim() : null;
+  } catch(e) { return null; }
+};
+
+window.esRepartidorBaneado = function(nombre, placa, whatsapp, gmail) {
+  if (!window.globalBannedList || window.globalBannedList.length === 0) return false;
+  const n = nombre ? String(nombre).toLowerCase().trim() : '';
+  const p = placa ? String(placa).toLowerCase().trim().replace(/[^a-z0-9]/g, '') : '';
+  const w = whatsapp ? String(whatsapp).toLowerCase().trim().replace(/[^0-9]/g, '') : '';
+  const g = gmail ? String(gmail).toLowerCase().trim() : '';
+
+  for (const b of window.globalBannedList) {
+    if (!b) continue;
+    const bClean = String(b).toLowerCase().trim();
+    const bDigits = bClean.replace(/[^0-9]/g, '');
+    const bAlphanum = bClean.replace(/[^a-z0-9]/g, '');
+
+    if (g && bClean === g) return true;
+    if (p && bAlphanum && p === bAlphanum) return true;
+    if (w && w.length >= 7 && bDigits && w === bDigits) return true;
+    if (n && n.length >= 4 && (n === bClean || (bClean.length >= 6 && n.includes(bClean)))) return true;
+  }
+  return false;
+};
+
 function getCurrentUserId() {
   // Priorizar siempre el ID de la sesión autenticada real
   if (window._tempAuthUser && window._tempAuthUser.id) {
@@ -913,7 +945,7 @@ function guardarPrefUsuario() {
     if (catSelect) {
       AppState.set('prefCategory', catSelect.value);
     }
-    const soundSelect = document.getElementById('userPrefSoundBuyer');
+    const soundSelect = document.getElementById('userPrefSoundBuyer') || document.getElementById('userPrefSound');
     if (soundSelect) {
       AppState.set('prefSound', soundSelect.value);
     }
@@ -937,24 +969,6 @@ function guardarPrefUsuario() {
   closeUserSettingsModal();
 }
 window.guardarPrefUsuario = guardarPrefUsuario;
-
-/* MIGRA DATOS ANTIGUOS DE REPARTIDOR AL NUEVO SISTEMA SIN PERDERLOS */
-async function migrarDatosAntiguosARepartidor() {
-  if (typeof closeUserSettingsModal === 'function') {
-    closeUserSettingsModal();
-  }
-
-  const modalAuth = document.getElementById('modalWelcomeAuth');
-
-  // 1. Buscar si ya existe un perfil de repartidor en notigas_user_data
-  let driverProfile = null;
-  const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
-  if (u.role === 'repartidor' && u.nombre) {
-    driverProfile = u;
-  }
-
-  closeUserSettingsModal();
-}
 
 async function cambiarRepartidorAComprador() {
   let loadingVisible = false;

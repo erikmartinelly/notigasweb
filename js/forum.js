@@ -83,7 +83,7 @@ async function renderForumFeed() {
         <div class="forum-card">
           <div class="forum-votes">
             <i class="fa-solid fa-circle-chevron-up" title="👍 Me Gusta" data-action="votarPost" data-val="1" data-id="${post.id}"></i>
-            <span class="v-count" style="color:#FF6D00;">${post.votos || 1}</span>
+            <span class="v-count" style="color:#FF6D00;">${typeof post.votos === 'number' ? post.votos : (post.votos ?? 1)}</span>
             <i class="fa-solid fa-circle-chevron-down" title="👎 Me Disgusta" data-action="votarPost" data-val="-1" data-id="${post.id}"></i>
           </div>
           <div class="forum-body">
@@ -539,7 +539,7 @@ function renderCommentsListUI(comments) {
     comments.forEach(c => {
         // FIX W-01: Los comentarios de la nueva tabla tienen campo 'id' de BD (bigint), siempre único.
         const cId = c.id;
-        const v = c.votos || 1;
+        const v = typeof c.votos === 'number' ? c.votos : (c.votos ?? 1);
         const autor = c.autor || c.author || 'Vecino de la OTB';
         const texto = c.texto || c.text || '';
         const tiempo = c.created_at ? new Date(c.created_at).toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' }) : 'Ahora mismo';

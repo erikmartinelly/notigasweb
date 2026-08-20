@@ -37,10 +37,10 @@ window.showLoadingOverlay = function(message = "Procesando...") {
       btn.style.display = 'inline-flex';
     }, 3500);
 
-    // Descarte automático de seguridad a los 6 segundos para NUNCA colgar la app
+    // Descarte automático de seguridad a los 10 segundos para NUNCA colgar la app
     window.globalLoadingAutoDismiss = setTimeout(() => {
       window.hideLoadingOverlay();
-    }, 6000);
+    }, 10000);
   }
 };
 window.hideLoadingOverlay = function() {
