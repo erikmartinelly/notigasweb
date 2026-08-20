@@ -1,17 +1,18 @@
 /* ==========================================================================
-   NOTIGAS - MÓDULO INTEGRADO DE PUBLICIDAD (GOOGLE ADSENSE & ANUNCIOS LOCALES)
+   NOTIGAS - MÓDULO DE PROPAGANDA LOCAL & PATROCINADORES OTB (3 LUGARES)
+   Espacios Habilitados:
+   1. Banner Inferior Fijo (#localAdContent)
+   2. Tarjeta Patrocinador en Feed de Repartidores
+   3. Tarjeta Patrocinador en Feed de Avisos Gratis
    ========================================================================== */
 
-// Configuración global de Publicidad y Google AdSense
 window.ADS_CONFIG = {
-  mode: localStorage.getItem('notigas_ads_mode') || 'hybrid', // 'adsense' | 'local' | 'hybrid' | 'disabled'
-  publisherId: localStorage.getItem('notigas_adsense_pub_id') || 'ca-pub-2502415561017945',
-  slotVendors: localStorage.getItem('notigas_adsense_slot_vendors') || localStorage.getItem('notigas_adsense_slot_footer') || '',
-  slotForum: localStorage.getItem('notigas_adsense_slot_forum') || '',
+  mode: localStorage.getItem('notigas_ads_mode') || 'local', // 'local' | 'disabled'
   adSenseLoaded: false
 };
 
 window.adsSubscriptionChannel = null;
+window._currentLocalAdData = null;
 let currentAdUrl = 'https://wa.me/59170000000?text=Hola';
 
 function getSafeExternalUrl(value) {
@@ -28,7 +29,7 @@ function getSafeAdImageUrl(value) {
   if (!safe) return '';
   try {
     const parsed = new URL(safe);
-    return parsed.protocol === 'https:' ? parsed.href : '';
+    return (parsed.protocol === 'https:' || parsed.protocol === 'http:') ? parsed.href : '';
   } catch (_) {
     return '';
   }
@@ -48,7 +49,7 @@ function iniciarSuscripcionAnuncios() {
   }
 
   window.adsSubscriptionChannel = window.supabaseClient.channel('custom-all-channel-ads-' + activeCity)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'anuncios_globales', filter: `ciudad=eq.${activeCity}` }, payload => {
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'anuncios_globales' }, () => {
         cargarAnunciosGuardados();
     })
     .subscribe();
@@ -58,53 +59,74 @@ function iniciarSuscripcionAnuncios() {
  * Abrir enlace o WhatsApp del anuncio local
  */
 function abrirAnuncioWhatsApp() {
-  const safeUrl = getSafeExternalUrl(currentAdUrl);
+  const targetUrl = (window._currentLocalAdData && window._currentLocalAdData.url)
+    ? window._currentLocalAdData.url
+    : currentAdUrl;
+  const safeUrl = getSafeExternalUrl(targetUrl);
   if (safeUrl) {
     window.open(safeUrl, '_blank', 'noopener,noreferrer');
   } else if (typeof showToast === 'function') {
-    showToast('Enlace no disponible', 'El anuncio no tiene un enlace web seguro.', 'warning', 3000);
+    showToast('Enlace no disponible', 'El anuncio no tiene un enlace web o de WhatsApp configurado.', 'warning', 3000);
   }
 }
+window.abrirAnuncioWhatsApp = abrirAnuncioWhatsApp;
 
 /**
  * Cargar anuncios locales desde Supabase
  */
 async function cargarAnunciosGuardados() {
-  if (window.ADS_CONFIG.mode === 'disabled') {
-    const localAdContent = document.getElementById('localAdContent');
+  const mode = localStorage.getItem('notigas_ads_mode') || window.ADS_CONFIG.mode || 'local';
+  window.ADS_CONFIG.mode = mode;
+
+  const localAdContent = document.getElementById('localAdContent');
+  if (mode === 'disabled') {
     if (localAdContent) localAdContent.style.display = 'none';
+    window._currentLocalAdData = null;
     return;
   }
 
-  if (!window.supabaseClient) return;
+  if (!window.supabaseClient) {
+    if (localAdContent) localAdContent.style.display = 'flex';
+    return;
+  }
+
   const activeCity = (typeof AppState !== 'undefined') ? AppState.get('city') : null;
   if (!activeCity) return;
 
   try {
+    const normCity = String(activeCity).toLowerCase().trim();
     const { data, error } = await window.supabaseClient
       .from('anuncios_globales')
-      .select('titulo, url, image_url')
-      .eq('ciudad', activeCity)
+      .select('id, titulo, descripcion, url, image_url, ciudad, activo')
+      .eq('ciudad', normCity)
       .eq('activo', true)
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
 
     if (!error && data) {
+      window._currentLocalAdData = data;
       actualizarAnunciosEnVivo(data.titulo, data.url);
       actualizarBannerConImagen(data.image_url);
       currentAdUrl = getSafeExternalUrl(data.url) || currentAdUrl;
+      if (localAdContent) localAdContent.style.display = 'flex';
     } else {
-      // Si no hay anuncio local activo y estamos en modo solo local
-      if (window.ADS_CONFIG.mode === 'local') {
-        const adContent = document.getElementById('localAdContent');
-        if (adContent) adContent.style.display = 'flex';
-      }
+      window._currentLocalAdData = {
+        titulo: 'Promociona tu negocio o servicio profesional directamente en tu OTB',
+        url: 'https://wa.me/59170000000?text=Hola%20quiero%20anunciar%20en%20NOTIGAS',
+        image_url: null,
+        ciudad: normCity
+      };
+      actualizarAnunciosEnVivo(window._currentLocalAdData.titulo, window._currentLocalAdData.url);
+      actualizarBannerConImagen(null);
+      if (localAdContent) localAdContent.style.display = 'flex';
     }
   } catch (e) {
     console.error("Error cargando anuncios locales:", e);
+    if (localAdContent) localAdContent.style.display = 'flex';
   }
 }
+window.cargarAnunciosGuardados = cargarAnunciosGuardados;
 
 /**
  * Actualizar textos dinámicos del banner local
@@ -120,188 +142,113 @@ function actualizarAnunciosEnVivo(texto, url) {
 }
 
 /**
- * Actualizar imagen de fondo del banner local
+ * Actualizar imagen de fondo del banner local inferior
  */
 function actualizarBannerConImagen(imageUrl) {
   const localAdContent = document.getElementById('localAdContent');
-  const safeImageUrl = getSafeAdImageUrl(imageUrl);
+  if (!localAdContent) return;
 
   if (window.ADS_CONFIG.mode === 'disabled') {
-    if (localAdContent) localAdContent.style.display = 'none';
+    localAdContent.style.display = 'none';
     return;
   }
 
+  const safeImageUrl = getSafeAdImageUrl(imageUrl);
   if (safeImageUrl) {
-    if (localAdContent) {
-      localAdContent.style.backgroundImage = `url("${safeImageUrl.replace(/"/g, '%22')}")`;
-      localAdContent.style.backgroundSize = 'cover';
-      localAdContent.style.backgroundPosition = 'center';
-      localAdContent.style.display = 'flex';
-      const sub = localAdContent.querySelector('.ad-subtext');
-      if (sub) {
-        sub.style.background = 'rgba(0,0,0,0.6)';
-        sub.style.padding = '4px 8px';
-        sub.style.borderRadius = '4px';
-      }
+    localAdContent.style.backgroundImage = `url("${safeImageUrl.replace(/"/g, '%22')}")`;
+    localAdContent.style.backgroundSize = 'cover';
+    localAdContent.style.backgroundPosition = 'center';
+    localAdContent.style.display = 'flex';
+    const sub = localAdContent.querySelector('.ad-subtext');
+    if (sub) {
+      sub.style.background = 'rgba(0,0,0,0.65)';
+      sub.style.padding = '4px 8px';
+      sub.style.borderRadius = '4px';
+    }
+  } else {
+    localAdContent.style.backgroundImage = 'none';
+    localAdContent.style.display = 'flex';
+    const sub = localAdContent.querySelector('.ad-subtext');
+    if (sub) {
+      sub.style.background = 'transparent';
+      sub.style.padding = '0';
     }
   }
 }
 
-function isValidPublisherId(value) {
-  return /^ca-pub-\d{10,20}$/.test(String(value || '').trim());
-}
-
-function isValidAdSlotId(value) {
-  return /^\d{6,20}$/.test(String(value || '').trim());
-}
-
-function applyAdsConfig(config) {
-  if (!config) return;
-  const allowedModes = ['adsense', 'local', 'hybrid', 'disabled'];
-  const mode = allowedModes.includes(config.mode) ? config.mode : window.ADS_CONFIG.mode;
-  const publisherId = String(config.publisherId || '').trim();
-  const slotVendors = String(config.slotVendors || '').trim();
-  const slotForum = String(config.slotForum || '').trim();
-
-  window.ADS_CONFIG.mode = mode;
-  if (isValidPublisherId(publisherId)) window.ADS_CONFIG.publisherId = publisherId;
-  window.ADS_CONFIG.slotVendors = isValidAdSlotId(slotVendors) ? slotVendors : '';
-  window.ADS_CONFIG.slotForum = isValidAdSlotId(slotForum) ? slotForum : '';
-
-  localStorage.setItem('notigas_ads_mode', window.ADS_CONFIG.mode);
-  localStorage.setItem('notigas_adsense_pub_id', window.ADS_CONFIG.publisherId);
-  localStorage.setItem('notigas_adsense_slot_vendors', window.ADS_CONFIG.slotVendors);
-  localStorage.setItem('notigas_adsense_slot_forum', window.ADS_CONFIG.slotForum);
-}
-
-async function cargarConfiguracionPublicidadGlobal() {
-  if (!window.supabaseClient) return;
-  const { data, error } = await window.supabaseClient
-    .from('configuracion_publicidad')
-    .select('modo, publisher_id, slot_repartidores, slot_avisos')
-    .eq('id', 1)
-    .maybeSingle();
-
-  if (error) {
-    console.warn('Configuración global de publicidad no disponible. Aplica la migración 044.', error.message);
-    return;
-  }
-  if (data) {
-    applyAdsConfig({
-      mode: data.modo,
-      publisherId: data.publisher_id,
-      slotVendors: data.slot_repartidores,
-      slotForum: data.slot_avisos
-    });
-  }
-  inicializarGoogleAdSense();
-  document.dispatchEvent(new Event('notigas_ads_config_ready'));
-}
-
+/**
+ * Generador de tarjeta para los 2 feeds (Repartidores y Avisos Gratis)
+ */
 window.getAdSenseFeedMarkup = function(placement) {
-  const mode = window.ADS_CONFIG.mode || 'hybrid';
-  if (mode === 'disabled' || mode === 'local') return '';
+  const mode = window.ADS_CONFIG.mode || localStorage.getItem('notigas_ads_mode') || 'local';
+  if (mode === 'disabled') return '';
 
-  const publisherId = String(window.ADS_CONFIG.publisherId || '').trim();
-  const slotId = placement === 'vendors'
-    ? String(window.ADS_CONFIG.slotVendors || '').trim()
-    : String(window.ADS_CONFIG.slotForum || '').trim();
-  if (!isValidPublisherId(publisherId) || !isValidAdSlotId(slotId)) return '';
+  const ad = window._currentLocalAdData || {
+    titulo: 'Promociona tu negocio o servicio profesional directamente en tu OTB',
+    url: 'https://wa.me/59170000000?text=Hola%20quiero%20anunciar%20en%20NOTIGAS',
+    image_url: null,
+    ciudad: (typeof AppState !== 'undefined' ? AppState.get('city') : 'Tu Ciudad') || 'Tu Ciudad'
+  };
+
+  const safeTitle = (typeof window.escapeHtmlStr === 'function')
+    ? window.escapeHtmlStr(ad.titulo || 'Espacio Publicitario Disponible')
+    : (ad.titulo || 'Espacio Publicitario Disponible');
+  const safeCity = (typeof window.escapeHtmlStr === 'function')
+    ? window.escapeHtmlStr(String(ad.ciudad || 'Local').toUpperCase())
+    : String(ad.ciudad || 'Local').toUpperCase();
+  const safeUrl = getSafeExternalUrl(ad.url) || 'https://wa.me/59170000000?text=Hola';
+  const safeImg = getSafeAdImageUrl(ad.image_url);
+
+  const bgStyle = safeImg
+    ? `background-image: linear-gradient(180deg, rgba(15,23,42,0.85), rgba(15,23,42,0.92)), url('${safeImg.replace(/'/g, "\\'")}'); background-size: cover; background-position: center;`
+    : `background: linear-gradient(135deg, #1E293B, #0F172A);`;
 
   return `
-    <div class="adsense-feed-slot" data-adsense-placement="${placement}">
-      <ins class="adsbygoogle"
-           style="display:block"
-           data-ad-client="${publisherId}"
-           data-ad-slot="${slotId}"
-           data-ad-format="auto"
-           data-full-width-responsive="true"></ins>
+    <div class="local-propaganda-feed-card" data-ad-placement="${placement}" style="${bgStyle}">
+      <div class="local-ad-header">
+        <span class="local-ad-badge"><i class="fa-solid fa-bullhorn"></i> PROPAGANDA LOCAL</span>
+        <span class="local-ad-city">📍 ${safeCity}</span>
+      </div>
+      <div class="local-ad-body">
+        <h4 class="local-ad-title">${safeTitle}</h4>
+        <p class="local-ad-sub">Comercio & Servicios de Barrio Verificados • Apoya lo local</p>
+        <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="btn-local-ad-action">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i> Contactar / Ver Información
+        </a>
+      </div>
     </div>`;
 };
 
 window.activateAdSenseIn = function(container) {
-  if (!container) return;
-  const rect = container.getBoundingClientRect();
-  if (!rect || rect.width <= 0) return;
-  container.querySelectorAll('ins.adsbygoogle:not([data-adsbygoogle-status])').forEach(() => {
-    try {
-      (window.adsbygoogle = window.adsbygoogle || []).push({});
-    } catch (error) {
-      console.warn('AdSense no pudo activar una unidad del feed:', error);
-    }
-  });
+  // No-op para compatibilidad de interfaces
 };
 
 function inicializarGoogleAdSense() {
-  const localAdContent = document.getElementById('localAdContent');
-  if (localAdContent) {
-    localAdContent.style.display = window.ADS_CONFIG.mode === 'disabled' ? 'none' : 'flex';
-  }
-
-  if (window.ADS_CONFIG.mode === 'disabled' || window.ADS_CONFIG.mode === 'local') return;
-  const pubId = String(window.ADS_CONFIG.publisherId || '').trim();
-  if (!isValidPublisherId(pubId)) return;
-
-  if (!document.querySelector('script[src*="pagead2.googlesyndication.com"]')) {
-    const script = document.createElement('script');
-    script.async = true;
-    script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${encodeURIComponent(pubId)}`;
-    script.crossOrigin = 'anonymous';
-    document.head.appendChild(script);
-  }
-  window.ADS_CONFIG.adSenseLoaded = true;
+  cargarAnunciosGuardados();
 }
 
-async function guardarConfiguracionPublicidad(config) {
-  if (!config) return { ok: false, error: 'Configuración ausente' };
-  const allowedModes = ['adsense', 'local', 'hybrid', 'disabled'];
-  const mode = allowedModes.includes(config.mode) ? config.mode : 'hybrid';
-  const publisherId = String(config.publisherId || '').trim();
-  const slotVendors = String(config.slotVendors || '').trim();
-  const slotForum = String(config.slotForum || '').trim();
+async function cargarConfiguracionPublicidadGlobal() {
+  if (!window.supabaseClient) return;
+  try {
+    const { data } = await window.supabaseClient
+      .from('configuracion_publicidad')
+      .select('modo')
+      .eq('id', 1)
+      .maybeSingle();
 
-  if (!isValidPublisherId(publisherId)) {
-    return { ok: false, error: 'El Publisher ID debe tener el formato ca-pub- seguido de números.' };
-  }
-  if (slotVendors && !isValidAdSlotId(slotVendors)) {
-    return { ok: false, error: 'El Slot ID de Repartidores debe contener solo números.' };
-  }
-  if (slotForum && !isValidAdSlotId(slotForum)) {
-    return { ok: false, error: 'El Slot ID de Avisos debe contener solo números.' };
-  }
-  if (mode !== 'local' && mode !== 'disabled' && (!slotVendors || !slotForum)) {
-    return { ok: false, error: 'Para mostrar Google AdSense debes ingresar los dos Slot ID: Repartidores y Avisos Gratis.' };
-  }
-
-  if (!window.supabaseClient) {
-    return { ok: false, error: 'No hay conexión con Supabase para guardar la configuración global.' };
-  }
-
-  const { error } = await window.supabaseClient.from('configuracion_publicidad').upsert({
-      id: 1,
-      modo: mode,
-      publisher_id: publisherId,
-      slot_repartidores: slotVendors,
-      slot_avisos: slotForum,
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'id' });
-  if (error) return { ok: false, error: error.message };
-
-  applyAdsConfig({ mode, publisherId, slotVendors, slotForum });
-
-  inicializarGoogleAdSense();
-  document.dispatchEvent(new Event('notigas_ads_config_ready'));
+    if (data && data.modo) {
+      window.ADS_CONFIG.mode = data.modo;
+      localStorage.setItem('notigas_ads_mode', data.modo);
+    }
+  } catch(_) {}
   cargarAnunciosGuardados();
-  return { ok: true };
 }
 
 document.addEventListener('notigas_auth_ready', async () => {
   await cargarConfiguracionPublicidadGlobal();
-  const tab1 = document.getElementById('tab1');
-  if (tab1 && tab1.classList.contains('active')) {
-    cargarAnunciosGuardados();
-  }
   iniciarSuscripcionAnuncios();
 });
 
-document.addEventListener('DOMContentLoaded', inicializarGoogleAdSense);
+document.addEventListener('DOMContentLoaded', () => {
+  cargarAnunciosGuardados();
+});

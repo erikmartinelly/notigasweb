@@ -24,8 +24,6 @@
 
   <meta name="theme-color" content="#FF6D00">
 
-  <meta name="google-adsense-account" content="ca-pub-2502415561017945">
-
   <meta name="apple-mobile-web-app-capable" content="yes">
 
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -1632,51 +1630,29 @@
 
           </div>
 
-          <!-- SUBMENÚ 3: CONFIGURACIÓN DE PUBLICIDAD, IMÁGENES & GOOGLE ADSENSE -->
+          <!-- SUBMENÚ 3: CONFIGURACIÓN DE PROPAGANDA Y PUBLICIDAD LOCAL -->
 
           <div class="modal-tab-pane" id="modalPane3">
 
-            <!-- SECCIÓN GOOGLE ADSENSE -->
-            <div style="background: rgba(26, 115, 232, 0.08); border: 1px solid rgba(26, 115, 232, 0.3); border-radius: 10px; padding: 12px; margin-bottom: 14px;">
-              <h4 style="font-size: 12px; color: #8AB4F8; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
-                <i class="fa-brands fa-google"></i> Google AdSense Oficial
+            <!-- SECCIÓN PROPAGANDA LOCAL DE BARRIO (SPONSOR EN 3 LUGARES) -->
+            <div style="background: rgba(255, 109, 0, 0.08); border: 1px solid rgba(255, 109, 0, 0.35); border-radius: 10px; padding: 14px; margin-bottom: 14px;">
+              <h4 style="font-size: 13px; color: #FF6D00; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-rectangle-ad"></i> Propaganda Local & Patrocinadores OTB
               </h4>
-              
-              <div class="form-group" style="margin-bottom: 8px;">
-                <label style="font-size: 11px;">Modo de Publicidad:</label>
+              <p style="font-size: 10.5px; color: #CBD5E1; margin-bottom: 12px; line-height: 1.4;">
+                La propaganda local se muestra en los <strong>3 espacios habilitados</strong>: 1) Banner inferior fijo, 2) Feed de Repartidores, y 3) Feed de Avisos Gratis.
+              </p>
+
+              <div class="form-group" style="margin-bottom: 10px;">
+                <label style="font-size: 11px;">Estado de Propaganda:</label>
                 <select id="selectAdsMode" style="font-size: 11px; background: #1E293B; color: white; border: 1px solid #334155; padding: 6px; border-radius: 6px; width: 100%;">
-                  <option value="hybrid">🌐 Google en los feeds + anuncio local abajo</option>
-                  <option value="local">📍 Solo anuncio local inferior</option>
+                  <option value="local">✅ Habilitar Propaganda Local (3 lugares)</option>
                   <option value="disabled">🚫 Desactivar Toda la Publicidad</option>
                 </select>
               </div>
 
-              <div class="form-group" style="margin-bottom: 8px;">
-                <label style="font-size: 11px;">Google AdSense Publisher ID (ca-pub-XXXXXXXXXXXX):</label>
-                <input type="text" id="inputAdSensePubId" placeholder="ca-pub-2502415561017945" style="font-size: 11px; background: #0F172A; border: 1px solid #334155; color: white;">
-              </div>
-
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                <div class="form-group" style="margin-bottom: 6px;">
-                  <label style="font-size: 10px;">Slot ID Repartidores (2.ª pestaña):</label>
-                  <input type="text" id="inputAdSenseSlotVendors" inputmode="numeric" placeholder="ID numérico obligatorio" style="font-size: 10px; background: #0F172A; border: 1px solid #334155; color: white;">
-                </div>
-                <div class="form-group" style="margin-bottom: 6px;">
-                  <label style="font-size: 10px;">Slot ID Avisos gratis (3.ª pestaña):</label>
-                  <input type="text" id="inputAdSenseSlotForum" inputmode="numeric" placeholder="ID numérico obligatorio" style="font-size: 10px; background: #0F172A; border: 1px solid #334155; color: white;">
-                </div>
-              </div>
-              <div style="font-size:9.5px; color:#94A3B8; margin-top:4px; line-height:1.35;">Crea dos unidades responsivas de display en AdSense y copia aquí únicamente sus identificadores numéricos. Sin ambos Slot ID, Google no puede mostrar anuncios dentro de los feeds.</div>
-            </div>
-
-            <!-- SECCIÓN ANUNCIOS LOCALES / NEGOCIOS DE BARRIO -->
-            <div style="background: rgba(255, 109, 0, 0.06); border: 1px solid rgba(255, 109, 0, 0.25); border-radius: 10px; padding: 12px; margin-bottom: 14px;">
-              <h4 style="font-size: 12px; color: #FF6D00; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
-                <i class="fa-solid fa-store"></i> Anuncio Local de Barrio (Sponsor)
-              </h4>
-
-              <div class="form-group">
-                <label style="font-size: 11px;">📸 Subir Imagen Banner para Anuncio Local (PNG/JPG):</label>
+              <div class="form-group" style="margin-bottom: 10px;">
+                <label style="font-size: 11px;">📸 Subir Imagen / Banner de Propaganda (PNG/JPG):</label>
                 <input type="file" id="inputAdImageFile" accept="image/*" style="font-size:11px; background:#1E293B; padding:6px; border-radius:6px; color:white; width:100%;">
                 <div id="adImagePreviewBox" style="margin-top:8px; display:none; align-items:center; gap:10px;">
                   <img id="adImagePreview" alt="Vista previa del anuncio local" style="max-height:60px; max-width:200px; border-radius:6px; border:1px solid #FF6D00; object-fit:cover;">
@@ -1684,22 +1660,22 @@
                 </div>
               </div>
 
-              <div class="form-group">
-                <label style="font-size: 11px;">Texto del Anuncio Local en Feed:</label>
-                <input type="text" id="inputAdText" value="Promociona tu negocio o servicio profesional directamente en tu OTB">
+              <div class="form-group" style="margin-bottom: 10px;">
+                <label style="font-size: 11px;">Texto / Título de la Propaganda Local:</label>
+                <input type="text" id="inputAdText" value="Promociona tu negocio o servicio profesional directamente en tu OTB" style="font-size: 11px; background: #0F172A; border: 1px solid #334155; color: white; width: 100%; padding: 6px; border-radius: 6px;">
               </div>
 
-              <div class="form-group">
-                <label style="font-size: 11px;">Enlace WhatsApp / Web del Anuncio:</label>
-                <input type="text" id="inputAdUrl" value="" placeholder="https://wa.me/59170000000?text=Hola">
+              <div class="form-group" style="margin-bottom: 10px;">
+                <label style="font-size: 11px;">Enlace WhatsApp / Web de Contacto:</label>
+                <input type="text" id="inputAdUrl" value="" placeholder="https://wa.me/59170000000?text=Hola" style="font-size: 11px; background: #0F172A; border: 1px solid #334155; color: white; width: 100%; padding: 6px; border-radius: 6px;">
               </div>
             </div>
 
-            <button class="btn-submit" id="auto-event-66"><i class="fa-solid fa-floppy-disk"></i> Guardar Configuración de Publicidad</button>
+            <button class="btn-submit" id="auto-event-66"><i class="fa-solid fa-floppy-disk"></i> Guardar Propaganda Local</button>
 
             <div style="background-color: #0F172A; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.08); margin-top: 12px;">
 
-              <h4 style="font-size: 12px; color: #FF6D00; margin-bottom: 8px;"><i class="fa-solid fa-rectangle-ad"></i> Anuncios y Avisos OTB Publicados (Tab 3):</h4>
+              <h4 style="font-size: 12px; color: #FF6D00; margin-bottom: 8px;"><i class="fa-solid fa-bullhorn"></i> Propagandas Registradas por Ciudad:</h4>
 
               <div id="adminAdsListContainer" style="max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 11px;">
 

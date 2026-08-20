@@ -207,7 +207,9 @@ CREATE TABLE IF NOT EXISTS public.security_rate_limits (
 
 -- ==============================================================================
 -- 3. VISTAS PÚBLICAS AUTORIZADAS
--- ============================================================================CREATE OR REPLACE VIEW public.choferes_publicos
+-- ==============================================================================
+
+CREATE OR REPLACE VIEW public.choferes_publicos
 WITH (security_barrier = true, security_invoker = false)
 AS
 SELECT 

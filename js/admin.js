@@ -162,17 +162,40 @@ function switchModalTab(idx) {
   if (idx === 4) renderAdminReports();
 }
 
-function cargarConfiguracionPublicidadEnAdmin() {
+async function cargarConfiguracionPublicidadEnAdmin() {
   const modeSelect = document.getElementById('selectAdsMode');
-  const pubInput = document.getElementById('inputAdSensePubId');
-  const slotVendorsInput = document.getElementById('inputAdSenseSlotVendors');
-  const slotForumInput = document.getElementById('inputAdSenseSlotForum');
+  const inputAdText = document.getElementById('inputAdText');
+  const inputAdUrl = document.getElementById('inputAdUrl');
+  const adImagePreview = document.getElementById('adImagePreview');
+  const adImagePreviewBox = document.getElementById('adImagePreviewBox');
 
-  if (window.ADS_CONFIG) {
-    if (modeSelect) modeSelect.value = window.ADS_CONFIG.mode === 'adsense' ? 'hybrid' : (window.ADS_CONFIG.mode || 'hybrid');
-    if (pubInput) pubInput.value = window.ADS_CONFIG.publisherId || 'ca-pub-2502415561017945';
-    if (slotVendorsInput) slotVendorsInput.value = window.ADS_CONFIG.slotVendors || '';
-    if (slotForumInput) slotForumInput.value = window.ADS_CONFIG.slotForum || '';
+  const currentMode = localStorage.getItem('notigas_ads_mode') || window.ADS_CONFIG?.mode || 'local';
+  if (modeSelect) modeSelect.value = (currentMode === 'disabled') ? 'disabled' : 'local';
+
+  const activeCity = (typeof AppState !== 'undefined') ? AppState.get('city') : null;
+  if (!activeCity || !window.supabaseClient) return;
+
+  try {
+    const normCity = String(activeCity).toLowerCase().trim();
+    const { data } = await window.supabaseClient
+      .from('anuncios_globales')
+      .select('titulo, url, image_url, activo')
+      .eq('ciudad', normCity)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (data) {
+      if (inputAdText && data.titulo) inputAdText.value = data.titulo;
+      if (inputAdUrl && data.url) inputAdUrl.value = data.url;
+      if (data.image_url && adImagePreview && adImagePreviewBox) {
+        adImagePreview.src = data.image_url;
+        adImagePreviewBox.style.display = 'flex';
+        window.pendingUploadUrl = data.image_url;
+      }
+    }
+  } catch(e) {
+    console.warn('Error precargando propaganda local en admin:', e);
   }
 }
 
@@ -933,129 +956,118 @@ async function guardarSubmenuAnuncios() {
   const currentAdmin = getVerifiedAdminEmail();
 
   if (!currentAdmin) {
-    if (typeof showToast === 'function') { showToast('Notificación', "⛔ ACCESO RESTRINGIDO\nDebes ingresar tus credenciales de Administrador para modificar anuncios.", 'info', 4000); } else { alert("⛔ ACCESO RESTRINGIDO\nDebes ingresar tus credenciales de Administrador para modificar anuncios."); };
-
-    if (typeof showToast === 'function') showToast('Acceso Denegado', 'Inicia sesión con tu cuenta de administrador Google para realizar esta acción.', 'error');
-
+    if (typeof showToast === 'function') {
+      showToast('⛔ Acceso Restringido', 'Debes iniciar sesión con tu cuenta administradora para modificar anuncios.', 'error', 4500);
+    }
     return;
-
   }
 
   const inputAd = (document.getElementById('inputAdText')?.value || '').trim();
   const inputUrl = (document.getElementById('inputAdUrl')?.value || '').trim();
+  const adsMode = document.getElementById('selectAdsMode')?.value || 'local';
+
   if (inputUrl && typeof getSafeExternalUrl === 'function' && !getSafeExternalUrl(inputUrl)) {
     if (typeof showToast === 'function') {
-      showToast('⚠️ Enlace inválido', 'El anuncio local solo admite enlaces http o https.', 'warning', 4000);
+      showToast('⚠️ Enlace inválido', 'El enlace debe comenzar con https:// o http://', 'warning', 4000);
     }
     return;
   }
 
-  // 1. Guardar configuración de Google AdSense (Publisher ID, slots y modo)
-  const adsMode = document.getElementById('selectAdsMode')?.value || 'hybrid';
-  const adsensePubId = (document.getElementById('inputAdSensePubId')?.value || '').trim();
-  const adsenseSlotVendors = (document.getElementById('inputAdSenseSlotVendors')?.value || '').trim();
-  const adsenseSlotForum = (document.getElementById('inputAdSenseSlotForum')?.value || '').trim();
+  const activeCity = (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba') || 'cochabamba';
+  const normCity = String(activeCity).toLowerCase().trim();
+  const isActivo = (adsMode !== 'disabled');
+  const imgUrl = window.pendingUploadUrl || null;
 
-  if (typeof guardarConfiguracionPublicidad === 'function') {
-    const adSenseResult = await guardarConfiguracionPublicidad({
-      mode: adsMode,
-      publisherId: adsensePubId,
-      slotVendors: adsenseSlotVendors,
-      slotForum: adsenseSlotForum
-    });
-    if (!adSenseResult || !adSenseResult.ok) {
-      const reason = adSenseResult && adSenseResult.error
-        ? adSenseResult.error
-        : 'No se pudo guardar la configuración global de Google AdSense.';
-      if (typeof showToast === 'function') showToast('❌ Publicidad no guardada', reason, 'error', 5000);
-      return;
-    }
-  }
-
-  const activeCity = AppState.get('city');
-  if (!activeCity) {
-    if (typeof showToast === 'function') {
-      showToast('✅ Google AdSense guardado', 'La publicidad de las pestañas quedó guardada. Selecciona una ciudad para configurar también el anuncio local inferior.', 'success', 5000);
-    }
-    return;
-  }
-
-  const imgUrl = (window.pendingUploadUrl) ? window.pendingUploadUrl : null;
-
-  if (typeof actualizarAnunciosEnVivo === 'function') {
-    actualizarAnunciosEnVivo(inputAd, inputUrl);
-  }
-
-  if (imgUrl && typeof actualizarBannerConImagen === 'function') {
-    actualizarBannerConImagen(imgUrl);
-  }
-
-  // Sincronizar con Supabase para la ciudad actual
+  localStorage.setItem('notigas_ads_mode', adsMode);
+  if (window.ADS_CONFIG) window.ADS_CONFIG.mode = adsMode;
 
   if (window.supabaseClient) {
-    const payload = {
-        titulo: inputAd,
-
-        descripcion: 'Anuncio Global Sponsor',
-
-        url: inputUrl,
-
-        activo: true,
-
-        ciudad: activeCity
-
-    };
-
-    if (imgUrl) payload.image_url = imgUrl;
+    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Guardando propaganda local en Supabase...');
 
     try {
-      const { data, error: findError } = await window.supabaseClient
+      let isSaved = false;
 
-        .from('anuncios_globales')
+      // 1. Guardar a través de la función RPC con permisos definidos
+      try {
+        const { data: rpcRes, error: rpcErr } = await window.supabaseClient.rpc('rpc_save_local_ad', {
+          p_titulo: inputAd || 'Promociona tu negocio o servicio profesional directamente en tu OTB',
+          p_descripcion: 'Propaganda Local',
+          p_url: inputUrl || '',
+          p_image_url: imgUrl || '',
+          p_ciudad: normCity,
+          p_activo: isActivo
+        });
 
-        .select('id')
-
-        .eq('ciudad', activeCity)
-
-        .limit(1);
-
-      if (findError) throw findError;
-
-      let opError = null;
-
-      if (data && data.length > 0) {
-          const { error } = await window.supabaseClient.from('anuncios_globales').update(payload).eq('id', data[0].id);
-
-          opError = error;
-
-      } else {
-          const { error } = await window.supabaseClient.from('anuncios_globales').insert([payload]);
-
-          opError = error;
-
+        if (!rpcErr && rpcRes && rpcRes.success) {
+          isSaved = true;
+        } else if (rpcErr) {
+          console.warn('Advertencia en RPC rpc_save_local_ad:', rpcErr.message);
+        }
+      } catch(rpcEx) {
+        console.warn('Excepción llamando a rpc_save_local_ad:', rpcEx);
       }
 
-      if (opError) {
-          throw opError;
+      // 2. Fallback directo a la tabla anuncios_globales
+      if (!isSaved) {
+        const { data: existingAds } = await window.supabaseClient
+          .from('anuncios_globales')
+          .select('id')
+          .eq('ciudad', normCity)
+          .limit(1);
 
+        const payload = {
+          titulo: inputAd || 'Promociona tu negocio o servicio profesional directamente en tu OTB',
+          descripcion: 'Propaganda Local',
+          url: inputUrl || '',
+          activo: isActivo,
+          ciudad: normCity,
+          created_at: new Date().toISOString()
+        };
+        if (imgUrl) payload.image_url = imgUrl;
+
+        let opError = null;
+        if (existingAds && existingAds.length > 0) {
+          const { error } = await window.supabaseClient
+            .from('anuncios_globales')
+            .update(payload)
+            .eq('id', existingAds[0].id);
+          opError = error;
+        } else {
+          const { error } = await window.supabaseClient
+            .from('anuncios_globales')
+            .insert([payload]);
+          opError = error;
+        }
+
+        if (!opError) isSaved = true;
+        else throw opError;
       }
 
+      if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
       closeAdminModal();
 
-      if (typeof showToast === 'function') { showToast('✅ Publicidad guardada', 'Google AdSense quedó configurado dentro de Repartidores y Avisos Gratis. El anuncio local de esta ciudad permanece en la parte inferior.', 'success', 5000); } else { alert('Publicidad guardada correctamente.'); };
+      // Recargar banners y feeds
+      if (typeof cargarAnunciosGuardados === 'function') {
+        await cargarAnunciosGuardados();
+      }
+      if (typeof renderVendorsList === 'function') renderVendorsList();
+      if (typeof renderForumFeed === 'function') renderForumFeed();
 
+      if (typeof showToast === 'function') {
+        showToast('✅ Propaganda Local Guardada', `La propaganda quedó activa en los 3 espacios de ${normCity.toUpperCase()}.`, 'success', 5000);
+      }
     } catch (e) {
+      if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
       console.error("Error al guardar anuncio:", e);
-
-      if (typeof showToast === 'function') showToast('❌ Error', 'No se pudo guardar la configuración de anuncios.', 'error');
-
+      if (typeof showToast === 'function') {
+        showToast('❌ Error al guardar', e.message || 'No se pudo guardar la propaganda en Supabase.', 'error', 5000);
+      }
     }
-
   } else {
-      closeAdminModal();
-
-      if (typeof showToast === 'function') { showToast('Notificación', '📢 CONFIGURACIÓN DE PUBLICIDAD GUARDADA\n\nLos cambios en anuncios locales para esta ciudad ya están activos (Solo caché).', 'info', 4000); } else { alert('📢 CONFIGURACIÓN DE PUBLICIDAD GUARDADA\n\nLos cambios en anuncios locales para esta ciudad ya están activos (Solo caché).'); };
-
+    closeAdminModal();
+    if (typeof showToast === 'function') {
+      showToast('Guardado Local', 'Configuración guardada en el dispositivo.', 'info', 3500);
+    }
   }
 }
 
