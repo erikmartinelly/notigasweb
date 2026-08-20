@@ -41,7 +41,7 @@ function closeDriverOrdersModal() {
 window.closeDriverOrdersModal = closeDriverOrdersModal;
 
 async function renderDriverOrdersList() {
-  const container = document.getElementById('driverOrdersList');
+  const container = document.getElementById('driverOrdersContainer') || document.getElementById('driverOrdersList');
   if (!container) return;
 
   if (!window.supabaseClient) {
@@ -57,6 +57,10 @@ async function renderDriverOrdersList() {
     ? await getAuthenticatedUserId()
     : ((typeof getCurrentUserId === 'function') ? getCurrentUserId() : null);
 
+  const cityKeys = (typeof window.getCityMetroKeys === 'function')
+    ? window.getCityMetroKeys(activeCity)
+    : (activeCity && activeCity !== 'todos' && activeCity !== 'all' ? [String(activeCity).toLowerCase().trim()] : null);
+
   // 1. Pedidos disponibles desde la vista pública (evita bloqueo por RLS de pedidos no asignados)
   let pubQuery = window.supabaseClient
     .from('pedidos_publicos')
@@ -65,17 +69,8 @@ async function renderDriverOrdersList() {
     .gte('created_at', activeWindow)
     .order('created_at', { ascending: false });
 
-  const normCity = String(activeCity || '').toLowerCase().trim();
-  if (normCity && normCity !== 'todos' && normCity !== 'all') {
-    if (normCity === 'cbba' || normCity === 'cochabamba' || normCity === 'cercado') {
-      pubQuery = pubQuery.or('ciudad.ilike.%cochabamba%,ciudad.ilike.%cbba%,ciudad.ilike.%sacaba%,ciudad.ilike.%quillacollo%,ciudad.ilike.%tiquipaya%,ciudad.ilike.%colcapirhua%,ciudad.ilike.%vinto%,ciudad.ilike.%sipesipe%');
-    } else if (normCity === 'santacruz' || normCity === 'santa cruz') {
-      pubQuery = pubQuery.or('ciudad.ilike.%santacruz%,ciudad.ilike.%santa cruz%,ciudad.ilike.%warnes%,ciudad.ilike.%cotoca%,ciudad.ilike.%montero%,ciudad.ilike.%la guardia%,ciudad.ilike.%laguardia%,ciudad.ilike.%porongo%');
-    } else if (normCity === 'lapaz' || normCity === 'la paz') {
-      pubQuery = pubQuery.or('ciudad.ilike.%lapaz%,ciudad.ilike.%la paz%,ciudad.ilike.%el alto%,ciudad.ilike.%elalto%,ciudad.ilike.%viacha%,ciudad.ilike.%achocalla%');
-    } else {
-      pubQuery = pubQuery.ilike('ciudad', `%${normCity}%`);
-    }
+  if (cityKeys && cityKeys.length > 0) {
+    pubQuery = pubQuery.in('ciudad', cityKeys);
   }
 
   // 2. Pedidos ya asignados a este repartidor desde la tabla pedidos
@@ -88,16 +83,8 @@ async function renderDriverOrdersList() {
       .eq('estado', 'asignado')
       .gte('created_at', activeWindow)
       .order('created_at', { ascending: false });
-    if (normCity && normCity !== 'todos' && normCity !== 'all') {
-      if (normCity === 'cbba' || normCity === 'cochabamba' || normCity === 'cercado') {
-        assignedQuery = assignedQuery.or('ciudad.ilike.%cochabamba%,ciudad.ilike.%cbba%,ciudad.ilike.%sacaba%,ciudad.ilike.%quillacollo%,ciudad.ilike.%tiquipaya%,ciudad.ilike.%colcapirhua%,ciudad.ilike.%vinto%,ciudad.ilike.%sipesipe%');
-      } else if (normCity === 'santacruz' || normCity === 'santa cruz') {
-        assignedQuery = assignedQuery.or('ciudad.ilike.%santacruz%,ciudad.ilike.%santa cruz%,ciudad.ilike.%warnes%,ciudad.ilike.%cotoca%,ciudad.ilike.%montero%,ciudad.ilike.%la guardia%,ciudad.ilike.%laguardia%,ciudad.ilike.%porongo%');
-      } else if (normCity === 'lapaz' || normCity === 'la paz') {
-        assignedQuery = assignedQuery.or('ciudad.ilike.%lapaz%,ciudad.ilike.%la paz%,ciudad.ilike.%el alto%,ciudad.ilike.%elalto%,ciudad.ilike.%viacha%,ciudad.ilike.%achocalla%');
-      } else {
-        assignedQuery = assignedQuery.ilike('ciudad', `%${normCity}%`);
-      }
+    if (cityKeys && cityKeys.length > 0) {
+      assignedQuery = assignedQuery.in('ciudad', cityKeys);
     }
     assignedPromise = assignedQuery;
   }
@@ -224,6 +211,11 @@ window.centrarPedidoEnMapa = function(lat, lng, id) {
   if (typeof closeDriverOrdersModal === 'function') closeDriverOrdersModal();
   if (lat && lng && !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0 && typeof map !== 'undefined' && map) {
     map.flyTo([lat, lng], 17, { duration: 1.2 });
+    setTimeout(() => {
+      if (id && window.neighborOrderMarkers && window.neighborOrderMarkers[id]) {
+        try { window.neighborOrderMarkers[id].openPopup(); } catch(e){}
+      }
+    }, 1300);
     if (typeof showToast === 'function') {
       showToast('Ubicación Localizada', 'Centrando el mapa en el destino del pedido.', 'info', 2500);
     }

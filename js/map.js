@@ -276,6 +276,24 @@ window.matchCityByNameOrRegion = function(cityName, regionName) {
   return null;
 };
 
+window.getCityMetroKeys = function(cityKey) {
+  const norm = String(cityKey || '').toLowerCase().trim();
+  if (!norm || norm === 'todos' || norm === 'all') return null;
+  if (norm === 'cochabamba' || norm === 'cbba' || norm === 'cercado') {
+    return ['cochabamba', 'cbba', 'sacaba', 'quillacollo', 'tiquipaya', 'colcapirhua', 'vinto', 'sipesipe', 'cercado'];
+  }
+  if (norm === 'santacruz' || norm === 'santa cruz') {
+    return ['santacruz', 'santa cruz', 'warnes', 'cotoca', 'montero', 'la guardia', 'laguardia', 'porongo'];
+  }
+  if (norm === 'lapaz' || norm === 'la paz') {
+    return ['lapaz', 'la paz', 'el alto', 'elalto', 'viacha', 'achocalla', 'murillo'];
+  }
+  if (norm === 'elalto' || norm === 'el alto') {
+    return ['elalto', 'el alto', 'lapaz', 'la paz', 'viacha'];
+  }
+  return [norm];
+};
+
 window.inferMainCityFromCoords = function(lat, lng) {
   if (lat == null || lng == null || isNaN(lat) || isNaN(lng)) return 'cochabamba';
   const cities = Object.values(window.BOLIVIA_CITIES);
@@ -575,20 +593,24 @@ function renderOrderRadarsOnMap(orders) {
 function renderNeighborOrdersDetailed(orders) {
   if (!map || typeof L === 'undefined') return;
 
-  const currentActiveOrderId = (() => {
+  const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
+  const isDriver = (u.role === 'repartidor') || ((typeof AppState !== 'undefined') && AppState.get('appMode') === 'driver');
+
+  const currentActiveOrderId = (!isDriver) ? (() => {
     try {
       const raw = (typeof AppState !== 'undefined') ? AppState.get('activeOrder') : null;
       if (!raw) return null;
       const ao = (typeof raw === 'string') ? JSON.parse(raw) : raw;
       return String(ao?.id || '');
     } catch(e){ return null; }
-  })();
+  })() : null;
 
   const activeKeys = new Set();
 
   (orders || []).forEach(order => {
     const orderId = String(order.id || '');
-    if (!orderId || orderId === 'mi_pedido_activo' || orderId === currentActiveOrderId) return;
+    if (!orderId || orderId === 'mi_pedido_activo') return;
+    if (currentActiveOrderId && orderId === currentActiveOrderId) return;
     activeKeys.add(orderId);
 
     // Si ya existe el pin, reutilizarlo sin disparar reflows
@@ -908,9 +930,12 @@ function actualizarRepartidorEnMapa(data) {
 
 function agregarPedidoVecinoEnMapa(order) {
   if (!map || !order) return;
+  const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
+  let userRole = u.role || ((typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver') ? 'repartidor' : 'vecino');
+  const isDriverView = (userRole === 'repartidor');
   const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
 
-  if (order.user_id === localUserId) return; // Skip own orders
+  if (!isDriverView && order.user_id && order.user_id === localUserId) return; // Skip own orders only in buyer view
 
   const orderId = order.id;
   if (neighborOrderMarkers[orderId]) {
@@ -1635,37 +1660,29 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
         } catch (_) {}
       }
 
+      const cityKeys = (typeof window.getCityMetroKeys === 'function')
+        ? window.getCityMetroKeys(activeCity)
+        : (normCity && normCity !== 'todos' && normCity !== 'all' ? [normCity] : null);
+
       // 1. Consulta de Camiones en vivo (común para ambos roles con límite de seguridad)
       let trucksQuery = window.supabaseClient
         .from('rutas_repartidores_publicas')
         .select(TRUCK_COLUMNS)
         .gte('last_active', tenMinsAgo)
         .limit(100);
-      if (bbox) {
-        trucksQuery = trucksQuery
-          .gte('latitude', bbox.minLat)
-          .lte('latitude', bbox.maxLat)
-          .gte('longitude', bbox.minLng)
-          .lte('longitude', bbox.maxLng);
-      } else if (normCity && normCity !== 'todos' && normCity !== 'all') {
-        trucksQuery = trucksQuery.ilike('ciudad', `%${normCity}%`);
+      if (cityKeys && cityKeys.length > 0) {
+        trucksQuery = trucksQuery.in('ciudad', cityKeys);
       }
 
-      // 2. Consulta de Pedidos Públicos (filtrados por viewport visible y con límite)
+      // 2. Consulta de Pedidos Públicos (disponibles para radar y mapa en la zona metropolitana)
       let pubQuery = window.supabaseClient
         .from('pedidos_publicos')
         .select(ORDER_COLUMNS)
         .gte('created_at', activeWindow)
         .in('estado', ['pendiente', 'visto'])
-        .limit(150);
-      if (bbox) {
-        pubQuery = pubQuery
-          .gte('latitude', bbox.minLat)
-          .lte('latitude', bbox.maxLat)
-          .gte('longitude', bbox.minLng)
-          .lte('longitude', bbox.maxLng);
-      } else if (normCity && normCity !== 'todos' && normCity !== 'all') {
-        pubQuery = pubQuery.ilike('ciudad', `%${normCity}%`);
+        .limit(200);
+      if (cityKeys && cityKeys.length > 0) {
+        pubQuery = pubQuery.in('ciudad', cityKeys);
       }
 
       // 3. Consulta de Pedidos Asignados (sólo para repartidor autenticado)
@@ -1683,8 +1700,8 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
             .eq('estado', 'asignado')
             .gte('created_at', activeWindow)
             .limit(50);
-          if (!bbox && normCity && normCity !== 'todos' && normCity !== 'all') {
-            assignedQuery = assignedQuery.ilike('ciudad', `%${normCity}%`);
+          if (cityKeys && cityKeys.length > 0) {
+            assignedQuery = assignedQuery.in('ciudad', cityKeys);
           }
           assignedPromise = assignedQuery;
         }
