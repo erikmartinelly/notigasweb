@@ -2657,8 +2657,23 @@ button:active, .tab-btn:active, .cat-chip:active {
 }
 
 .map-base-layer .leaflet-tile {
-  filter: none;
-  -webkit-filter: none;
+  /* Bordes de calles más oscuros, nítidos y definidos */
+  filter: contrast(135%) brightness(95%) saturate(105%);
+  -webkit-filter: contrast(135%) brightness(95%) saturate(105%);
+  transition: opacity 0.2s ease;
+}
+
+/* CAPA DE NOMBRES DE CALLES Y ETIQUETAS (Texto en Azul Oscuro Profundo / Navy) */
+.map-labels-layer {
+  pointer-events: none !important;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+.map-labels-layer .leaflet-tile {
+  /* Filtro de matriz calibrado: transforma las letras de las calles en azul oscuro nítido */
+  filter: contrast(160%) brightness(85%) sepia(100%) hue-rotate(185deg) saturate(340%);
+  -webkit-filter: contrast(160%) brightness(85%) sepia(100%) hue-rotate(185deg) saturate(340%);
   transition: opacity 0.2s ease;
 }
 

@@ -1872,10 +1872,10 @@ function initNotigasMap() {
     zoomOutTitle: 'Alejar'
   }).addTo(map);
 
-  // Mapa base optimizado de alta velocidad (CartoDB Voyager + OSM Fallback, sin rate-limit 429)
+  // Mapa base optimizado de alta velocidad (CartoDB Voyager sin etiquetas + Capa independiente de etiquetas)
   const mapAttribution = '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>';
   const baseTileLayer = L.tileLayer(
-    'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png',
     {
       maxZoom: 20,
       maxNativeZoom: 19,
@@ -1883,6 +1883,18 @@ function initNotigasMap() {
       attribution: mapAttribution,
       className: 'map-base-layer',
       crossOrigin: true
+    }
+  );
+
+  const labelsTileLayer = L.tileLayer(
+    'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png',
+    {
+      maxZoom: 20,
+      maxNativeZoom: 19,
+      subdomains: ['a', 'b', 'c', 'd'],
+      className: 'map-labels-layer',
+      crossOrigin: true,
+      zIndex: 450
     }
   );
 
@@ -1897,7 +1909,9 @@ function initNotigasMap() {
   });
 
   baseTileLayer.addTo(map);
+  labelsTileLayer.addTo(map);
   mapTileLayers['osm_base'] = baseTileLayer;
+  mapTileLayers['osm_labels'] = labelsTileLayer;
   if (map.attributionControl) map.attributionControl.setPrefix(false);
 
   // Ajustes de tamaño inmediatos y periódicos para asegurar renderizado completo
