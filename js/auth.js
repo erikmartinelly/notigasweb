@@ -1595,6 +1595,7 @@ async function procesarSesionExitosa(user, isInteractive = false) {
       }
 
       if (typeof setAppMode === 'function') setAppMode('buyer');
+      if (typeof syncBuyerActiveOrderFromCloud === 'function') syncBuyerActiveOrderFromCloud();
       if (isInteractive && typeof showToast === 'function') {
         const welcomedKey = `notigas_welcomed_${user.id}`;
         if (!sessionStorage.getItem(welcomedKey)) {

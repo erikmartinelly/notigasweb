@@ -517,6 +517,39 @@ async function syncActiveOrderStatusFromDatabase(order) {
   }
 }
 
+async function syncBuyerActiveOrderFromCloud() {
+  if (!window.supabaseClient) return;
+  try {
+    const localUserId = (typeof getAuthenticatedUserId === 'function')
+      ? await getAuthenticatedUserId()
+      : ((typeof getCurrentUserId === 'function') ? getCurrentUserId() : null);
+
+    if (!localUserId) return;
+
+    const { data: activeOrders, error } = await window.supabaseClient
+      .from('pedidos')
+      .select('*')
+      .eq('user_id', localUserId)
+      .in('estado', ['pendiente', 'visto', 'asignado'])
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (!error && activeOrders && activeOrders.length > 0) {
+      AppState.set('activeOrder', activeOrders[0]);
+      checkActiveOrderStatus();
+    } else if (!error && (!activeOrders || activeOrders.length === 0)) {
+      const current = AppState.get('activeOrder');
+      if (current) {
+        AppState.set('activeOrder', null);
+        checkActiveOrderStatus();
+      }
+    }
+  } catch (e) {
+    console.warn('Error sincronizando pedido activo del comprador:', e);
+  }
+}
+window.syncBuyerActiveOrderFromCloud = syncBuyerActiveOrderFromCloud;
+
 function checkActiveOrderStatus() {
   ejecutarPurgaBaseDeDatosAuto();
 
@@ -528,43 +561,50 @@ function checkActiveOrderStatus() {
 
   const activeOrder = AppState.get('activeOrder');
   const isAdmin = AppState.get('isAdmin');
+  const appMode = (typeof AppState !== 'undefined' ? AppState.get('appMode') : 'buyer') || 'buyer';
 
-  if (activeOrder && !isAdmin) {
+  if (activeOrder && !isAdmin && appMode === 'buyer') {
     try {
-      const order = activeOrder;
+      const order = (typeof activeOrder === 'string') ? JSON.parse(activeOrder) : activeOrder;
       const estado = String(order.estado || 'pendiente').toLowerCase();
 
-      if (btnMain) btnMain.style.display = 'none';
-      if (buyerActions) buyerActions.style.display = 'flex';
-
-      if (estado === 'asignado') {
-        // En camino: el comprador puede confirmar que ya lo recibió o cancelar
-        if (btnReceived) btnReceived.style.display = 'flex';
-        if (btnCancel) btnCancel.style.display = 'flex';
+      if (estado === 'entregado' || estado === 'cancelado') {
+        AppState.set('activeOrder', null);
       } else {
-        // Pendiente o Visto: sólo cancelar permitido, no confirmar antes de asignación
-        if (btnReceived) btnReceived.style.display = 'none';
-        if (btnCancel) btnCancel.style.display = 'flex';
+        if (btnMain) btnMain.style.display = 'none';
+        if (buyerActions) buyerActions.style.display = 'flex';
+
+        if (estado === 'asignado') {
+          // En camino: el comprador puede confirmar que ya lo recibió o cancelar
+          if (btnReceived) btnReceived.style.display = 'flex';
+          if (btnCancel) btnCancel.style.display = 'flex';
+        } else {
+          // Pendiente o Visto: sólo cancelar permitido, no confirmar antes de asignación
+          if (btnReceived) btnReceived.style.display = 'none';
+          if (btnCancel) btnCancel.style.display = 'flex';
+        }
+
+        renderActiveOrderNotice(order);
+        actualizarFaviconSegunPedido(order.categoria, order.estado);
+        syncActiveOrderStatusFromDatabase(order);
+
+        if (typeof renderActiveOrdersMap === 'function') {
+          renderActiveOrdersMap();
+        }
+
+        return;
       }
-
-      renderActiveOrderNotice(order);
-      actualizarFaviconSegunPedido(order.categoria, order.estado);
-      syncActiveOrderStatusFromDatabase(order);
-
-      if (typeof renderActiveOrdersMap === 'function') {
-        renderActiveOrdersMap();
-      }
-
-      return;
-    } catch(e){}
+    } catch(e){
+      console.warn('Error procesando activeOrder en checkActiveOrderStatus:', e);
+    }
   }
 
   if (btnReceived) btnReceived.style.display = 'none';
   if (btnCancel) btnCancel.style.display = 'none';
-  if (btnMain) btnMain.style.display = 'flex'; // Restaurar Hacer Pedido
+  if (btnMain && appMode === 'buyer') btnMain.style.display = 'flex'; // Restaurar Hacer Pedido
 
   if (tripCard) tripCard.style.display = 'none';
-  if (buyerActions) buyerActions.style.display = 'flex';
+  if (buyerActions && appMode === 'buyer') buyerActions.style.display = 'flex';
 
   actualizarFaviconSegunPedido(null);
 

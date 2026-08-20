@@ -187,6 +187,8 @@ function setAppMode(mode, refreshData = true) {
     if (refreshData && typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
     if (typeof renderActiveOrdersMap === 'function') renderActiveOrdersMap();
     if (typeof renderReportedTrucksBuffer === 'function') renderReportedTrucksBuffer();
+    if (typeof checkActiveOrderStatus === 'function') checkActiveOrderStatus();
+    if (typeof syncBuyerActiveOrderFromCloud === 'function') syncBuyerActiveOrderFromCloud();
   }
 }
 window.setAppMode = setAppMode;

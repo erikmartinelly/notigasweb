@@ -257,7 +257,7 @@ window.loadAdsModule = async function() {
         }
 
         // Pedido Activo (Consultar a Supabase para sincronizar con la nube)
-        if (data && data.session && data.session.user && _state['userRole'] !== 'repartidor') {
+        if (data && data.session && data.session.user) {
            const { data: activeOrders, error: orderErr } = await window.supabaseClient
              .from('pedidos')
              .select('*')
