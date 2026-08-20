@@ -965,11 +965,9 @@ function agregarPedidoVecinoEnMapa(order) {
   }
 
   // Si el usuario actual es REPARTIDOR, solo ver pedidos de SU MISMA CATEGORÍA
-  const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
-  let userRole = u.role || ((typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver') ? 'repartidor' : 'vecino');
-  let driverCategoria = u.categoria || 'todos';
+  const driverCategoria = u.categoria || 'todos';
 
-  if (userRole === 'repartidor' && typeof isOrderCategoryMatchingDriver === 'function' && !isOrderCategoryMatchingDriver(order.categoria, driverCategoria)) {
+  if (isDriverView && typeof isOrderCategoryMatchingDriver === 'function' && !isOrderCategoryMatchingDriver(order.categoria, driverCategoria)) {
      return; // Ignore orders outside of their category
   }
 
@@ -977,7 +975,6 @@ function agregarPedidoVecinoEnMapa(order) {
   const lng = parseFloat(order.longitude || order.lng);
   if (isNaN(lat) || isNaN(lng)) return; // Evita que Leaflet falle si un pedido no tiene coordenadas
 
-  const isDriverView = userRole === 'repartidor';
   const marker = L.marker([lat, lng], {
     icon: currentIcon,
     zIndexOffset: 8000,
