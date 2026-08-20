@@ -356,11 +356,6 @@ async function confirmarEntregaPedido(id) {
       }
     } catch(e) {
       hideLoadingOverlay();
-      console.error("Error inesperado en confirmarEntregaPedido:", e);
-      showToast('Error', 'Error inesperado al confirmar entrega.', 'error', 4000);
-    }
-  }, 'Volver');
-}
 window.confirmarEntregaPedido = confirmarEntregaPedido;
 
 function ejecutarPurgaBaseDeDatosAuto() {
@@ -370,7 +365,8 @@ function ejecutarPurgaBaseDeDatosAuto() {
   try {
     const order = AppState.get('activeOrder');
     if (order) {
-      if (order.timestamp && (now - order.timestamp) > expirationMs) {
+      const orderTime = order.timestamp || (order.created_at ? new Date(order.created_at).getTime() : null);
+      if (orderTime && (now - orderTime) > expirationMs) {
         AppState.set('activeOrder', null);
       }
     }
@@ -411,52 +407,58 @@ const ORDER_STATUS_PRESENTATION = {
     shadow: 'rgba(255, 143, 0, 0.18)'
   },
   asignado: {
-    title: 'Pedido en camino',
-    label: 'ASIGNADO',
-    owner: 'REPARTIDOR ASIGNADO',
-    info: 'Un repartidor aceptó tu pedido.',
-    detail: 'El chofer ya puede ver el destino y navegar hacia la entrega.',
-    color: '#D32F2F',
-    shadow: 'rgba(211, 47, 47, 0.18)'
+    title: '¡En camino!',
+    label: 'EN CAMINO',
+    owner: 'REPARTIDOR EN RUTA',
+    info: 'Un repartidor tomó tu pedido y se dirige a tu ubicación.',
+    detail: 'Mantente atento a tu timbre o teléfono.',
+    color: '#00E676',
+    shadow: 'rgba(0, 230, 118, 0.22)'
   },
   entregado: {
-    title: 'Pedido entregado',
+    title: '¡Pedido Entregado!',
     label: 'ENTREGADO',
-    owner: 'PEDIDO COMPLETADO',
-    info: 'La entrega fue confirmada correctamente.',
-    detail: 'Gracias por usar la red vecinal NOTIGAS.',
-    color: '#15803D',
-    shadow: 'rgba(21, 128, 61, 0.18)'
+    owner: 'FINALIZADO',
+    info: 'Tu pedido fue completado exitosamente.',
+    detail: '¡Gracias por usar NOTIGAS!',
+    color: '#00C853',
+    shadow: 'rgba(0, 200, 83, 0.22)'
   },
   cancelado: {
-    title: 'Pedido cancelado',
+    title: 'Pedido Cancelado',
     label: 'CANCELADO',
-    owner: 'PEDIDO CERRADO',
-    info: 'El pedido ya no forma parte de la demanda vecinal.',
-    detail: 'Puedes crear una nueva solicitud cuando la necesites.',
-    color: '#B71C1C',
-    shadow: 'rgba(183, 28, 28, 0.18)'
+    owner: 'CERRADO',
+    info: 'Este pedido fue cancelado.',
+    detail: 'Puedes solicitar uno nuevo cuando gustes.',
+    color: '#EF4444',
+    shadow: 'rgba(239, 68, 68, 0.22)'
   }
 };
 
 function renderActiveOrderNotice(order) {
   const tripCard = document.getElementById('notigasTripCard');
-  if (!tripCard || !order) return;
+  if (!tripCard) return;
 
-  const estado = String(order.estado || 'pendiente').toLowerCase();
+  if (!order || !order.estado) {
+    tripCard.style.display = 'none';
+    return;
+  }
+
+  const estado = String(order.estado).toLowerCase();
   const view = ORDER_STATUS_PRESENTATION[estado] || ORDER_STATUS_PRESENTATION.pendiente;
-  const title = document.getElementById('tripCardTitle');
-  const info = document.getElementById('tripCardInfo');
-  const statusText = document.getElementById('tripCardStatusText');
-  const driverName = document.getElementById('tripCardDriverName');
-  const timeEst = document.getElementById('tripCardTime');
-  const statusIndicator = document.getElementById('tripCardStatusIndicator');
-  const tripBtnReceived = tripCard.querySelector('.trip-btn-received');
-  const tripBtnCancel = tripCard.querySelector('.trip-btn-cancel');
 
-  tripCard.dataset.orderState = estado;
+  tripCard.dataset.state = estado;
   tripCard.style.display = 'block';
-  tripCard.setAttribute('aria-label', `${view.title}. ${view.info}`);
+
+  const title = document.getElementById('notigasTripTitle');
+  const info = document.getElementById('notigasTripInfo');
+  const statusText = document.getElementById('notigasTripStatusText');
+  const driverName = document.getElementById('notigasTripDriverName');
+  const timeEst = document.getElementById('notigasTripTimeEst');
+  const statusIndicator = document.getElementById('notigasTripStatusIndicator');
+  const tripBtnReceived = document.getElementById('tripBtnReceived');
+  const tripBtnCancel = document.getElementById('tripBtnCancel');
+
   if (title) title.textContent = view.title;
   if (info) info.textContent = view.info;
   if (statusText) {
@@ -534,14 +536,23 @@ async function syncBuyerActiveOrderFromCloud() {
       .order('created_at', { ascending: false })
       .limit(1);
 
-    if (!error && activeOrders && activeOrders.length > 0) {
+    if (!error && Array.isArray(activeOrders) && activeOrders.length > 0) {
       AppState.set('activeOrder', activeOrders[0]);
       checkActiveOrderStatus();
-    } else if (!error && (!activeOrders || activeOrders.length === 0)) {
+    } else if (!error) {
+      // Protección anti-intermitencia: no borrar si hay un pedido recién emitido en memoria
       const current = AppState.get('activeOrder');
-      if (current) {
-        AppState.set('activeOrder', null);
-        checkActiveOrderStatus();
+      if (current && current.id) {
+        const { data: checkSpecific } = await window.supabaseClient
+          .from('pedidos')
+          .select('id, estado')
+          .eq('id', current.id)
+          .maybeSingle();
+
+        if (!checkSpecific || checkSpecific.estado === 'entregado' || checkSpecific.estado === 'cancelado') {
+          AppState.set('activeOrder', null);
+          checkActiveOrderStatus();
+        }
       }
     }
   } catch (e) {
@@ -571,17 +582,15 @@ function checkActiveOrderStatus() {
       if (estado === 'entregado' || estado === 'cancelado') {
         AppState.set('activeOrder', null);
       } else {
+        // MODO PEDIDO ACTIVO: Fijar firmemente "Cancelar Pedido" y tarjeta informativa
         if (btnMain) btnMain.style.display = 'none';
+        if (btnCancel) btnCancel.style.display = 'flex';
         if (buyerActions) buyerActions.style.display = 'flex';
 
         if (estado === 'asignado') {
-          // En camino: el comprador puede confirmar que ya lo recibió o cancelar
           if (btnReceived) btnReceived.style.display = 'flex';
-          if (btnCancel) btnCancel.style.display = 'flex';
         } else {
-          // Pendiente o Visto: sólo cancelar permitido, no confirmar antes de asignación
           if (btnReceived) btnReceived.style.display = 'none';
-          if (btnCancel) btnCancel.style.display = 'flex';
         }
 
         renderActiveOrderNotice(order);
@@ -599,9 +608,10 @@ function checkActiveOrderStatus() {
     }
   }
 
+  // MODO NORMAL (Sin pedido activo)
   if (btnReceived) btnReceived.style.display = 'none';
   if (btnCancel) btnCancel.style.display = 'none';
-  if (btnMain && appMode === 'buyer') btnMain.style.display = 'flex'; // Restaurar Hacer Pedido
+  if (btnMain && appMode === 'buyer') btnMain.style.display = 'flex';
 
   if (tripCard) tripCard.style.display = 'none';
   if (buyerActions && appMode === 'buyer') buyerActions.style.display = 'flex';
