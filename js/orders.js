@@ -103,6 +103,17 @@ async function renderDriverOrdersList() {
   const orders = [...assignedOrders, ...pubOrders];
 
   if (!orders || orders.length === 0) {
+    if (pubRes.error || assignedRes.error) {
+      const errDetail = pubRes.error?.message || assignedRes.error?.message || 'Error de conexión o permisos';
+      const safeErr = typeof escapeHtmlStr === 'function' ? escapeHtmlStr(errDetail) : errDetail;
+      container.innerHTML = `
+        <div style="padding:22px; text-align:center; color:#F87171; font-size:12px; background:rgba(239, 68, 68, 0.08); border-radius:8px; border:1px solid rgba(239, 68, 68, 0.25);">
+          <i class="fa-solid fa-triangle-exclamation" style="font-size:24px; margin-bottom:8px; display:block; color:#EF4444;"></i>
+          <strong style="display:block; margin-bottom:4px; font-size:13px;">Error cargando pedidos</strong>
+          <span style="font-size:11px; color:#FECACA; word-break:break-word;">${safeErr}</span>
+        </div>`;
+      return;
+    }
     container.innerHTML = '<div style="padding:25px; text-align:center; color:#94A3B8; font-size:12px;"><i class="fa-solid fa-clipboard-check" style="font-size:24px; margin-bottom:8px; display:block;"></i>No hay pedidos pendientes en esta zona.</div>';
     return;
   }
@@ -665,10 +676,14 @@ function confirmarPedido() {
         return;
       }
 
+      const catName = orderData.categoria ? (orderData.categoria.charAt(0).toUpperCase() + orderData.categoria.slice(1)) : 'Gas';
+      const orderTitle = `Pedido de ${catName}`;
+
       const { data, error } = await window.supabaseClient
         .from('pedidos')
         .insert([{
           user_id: userId,
+          titulo: orderTitle,
           categoria: orderData.categoria,
           cantidad: orderData.cantidad,
           direccion: orderData.direccion,

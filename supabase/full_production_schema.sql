@@ -1770,7 +1770,7 @@ REVOKE SELECT ON public.pedidos FROM anon;
 REVOKE SELECT ON public.rutas_repartidores FROM anon;
 GRANT SELECT ON public.profiles TO authenticated;
 GRANT SELECT ON public.choferes_habilitados TO authenticated;
-GRANT SELECT ON public.pedidos TO authenticated;
+GRANT SELECT, INSERT ON public.pedidos TO authenticated;
 GRANT SELECT ON public.rutas_repartidores TO authenticated;
 GRANT SELECT ON public.configuracion_publicidad TO anon, authenticated;
 GRANT INSERT, UPDATE, DELETE ON public.configuracion_publicidad TO authenticated;
@@ -1830,12 +1830,19 @@ BEGIN
   NEW.estado := 'pendiente';
   NEW.driver_id := NULL;
   NEW.visto := false;
-  NEW.titulo := LEFT(REGEXP_REPLACE(COALESCE(NEW.titulo, ''), '<[^>]*>', '', 'g'), 120);
+  NEW.categoria := LEFT(LOWER(TRIM(COALESCE(NEW.categoria, 'gas'))), 60);
+
+  -- Auto-asignar título por defecto si viene vacío o nulo
+  IF NEW.titulo IS NULL OR TRIM(NEW.titulo) = '' THEN
+    NEW.titulo := 'Pedido de ' || INITCAP(COALESCE(NEW.categoria, 'Gas'));
+  ELSE
+    NEW.titulo := LEFT(REGEXP_REPLACE(NEW.titulo, '<[^>]*>', '', 'g'), 120);
+  END IF;
+
   NEW.descripcion := LEFT(REGEXP_REPLACE(COALESCE(NEW.descripcion, ''), '<[^>]*>', '', 'g'), 2000);
   NEW.cantidad := LEFT(REGEXP_REPLACE(COALESCE(NEW.cantidad, '1 unidad'), '<[^>]*>', '', 'g'), 60);
   NEW.direccion := LEFT(REGEXP_REPLACE(COALESCE(NEW.direccion, ''), '<[^>]*>', '', 'g'), 240);
   NEW.telefono := LEFT(REGEXP_REPLACE(COALESCE(NEW.telefono, ''), '[^0-9+ ()-]', '', 'g'), 24);
-  NEW.categoria := LEFT(LOWER(TRIM(COALESCE(NEW.categoria, 'gas'))), 60);
   NEW.ciudad := LEFT(LOWER(TRIM(COALESCE(NEW.ciudad, ''))), 80);
 
   IF NEW.titulo = ''
