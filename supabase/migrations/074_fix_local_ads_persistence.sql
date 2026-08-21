@@ -1,15 +1,15 @@
 -- ==============================================================================
--- MIGRACIÓN 074: PERSISTENCIA ROBUSTA DE PROPAGANDAS LOCALES (MAPA, REPARTIDORES, AVISOS)
+-- MIGRACIÓN 074: PERSISTENCIA ROBUSTA DE PROPAGANDAS LOCALES Y GLOBALES (MAPA, REPARTIDORES, AVISOS)
 -- ==============================================================================
 
 -- 1. Eliminar la sobrecarga obsoleta de 6 parámetros para evitar colisiones
 DROP FUNCTION IF EXISTS public.rpc_save_local_ad(text, text, text, text, text, boolean);
 
--- 2. Índice único para garantizar que cada ciudad tenga exactamente 1 anuncio por posición
+-- 2. Índice único para garantizar que cada ciudad/ámbito global tenga exactamente 1 anuncio por posición
 CREATE UNIQUE INDEX IF NOT EXISTS idx_anuncios_globales_ciudad_posicion
 ON public.anuncios_globales (LOWER(TRIM(ciudad)), LOWER(TRIM(COALESCE(posicion, 'mapa'))));
 
--- 3. Función RPC definitiva para guardar anuncios por ciudad y posición
+-- 3. Función RPC definitiva para guardar anuncios por ciudad/global y posición
 CREATE OR REPLACE FUNCTION public.rpc_save_local_ad(
     p_titulo text,
     p_descripcion text,
@@ -34,9 +34,9 @@ BEGIN
         RETURN jsonb_build_object('success', false, 'error', 'No autorizado: requiere cuenta administradora');
     END IF;
 
-    v_norm_ciudad := LOWER(TRIM(COALESCE(p_ciudad, 'cochabamba')));
-    IF v_norm_ciudad = '' THEN
-        v_norm_ciudad := 'cochabamba';
+    v_norm_ciudad := LOWER(TRIM(COALESCE(p_ciudad, 'global')));
+    IF v_norm_ciudad IN ('', 'todas', 'todos', 'all', 'todas las ciudades', 'todas_las_ciudades', 'nacional') THEN
+        v_norm_ciudad := 'global';
     END IF;
 
     v_norm_pos := LOWER(TRIM(COALESCE(p_posicion, 'mapa')));

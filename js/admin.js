@@ -206,33 +206,35 @@ window.switchAdSubTab = function(tabName) {
   if (paneAvisos) paneAvisos.style.display = (normTab === 'avisos') ? 'block' : 'none';
 };
 
-async function cargarConfiguracionPublicidadEnAdmin() {
-  const activeCity = (typeof AppState !== 'undefined') ? AppState.get('city') : 'cochabamba';
-  if (!activeCity || !window.supabaseClient) return;
+async function cargarConfiguracionPublicidadEnAdmin(targetCity = null) {
+  const citySelector = document.getElementById('adminSelectAdCiudad');
+  const rawCity = targetCity || (citySelector ? citySelector.value : null) || (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba') || 'cochabamba';
+  if (!window.supabaseClient) return;
 
   try {
-    const normCity = String(activeCity).toLowerCase().trim();
+    const normCity = String(rawCity).toLowerCase().trim();
     let { data, error } = await window.supabaseClient
       .from('anuncios_globales')
       .select('id, titulo, url, image_url, activo, posicion')
       .eq('ciudad', normCity)
       .order('created_at', { ascending: false });
 
-    // Si para esa ciudad aún no hay anuncios específicos, traer los más recientes guardados en la BD
-    if (!error && (!data || data.length === 0)) {
-      const { data: fallbackData } = await window.supabaseClient
+    // Si no hay datos específicos para esta ciudad y no se buscó 'global', intentar traer global
+    if (!error && (!data || data.length === 0) && normCity !== 'global') {
+      const { data: globalData } = await window.supabaseClient
         .from('anuncios_globales')
         .select('id, titulo, url, image_url, activo, posicion')
+        .eq('ciudad', 'global')
         .order('created_at', { ascending: false });
-      if (fallbackData && fallbackData.length > 0) {
-        data = fallbackData;
+      if (globalData && globalData.length > 0) {
+        data = globalData;
       }
     }
 
     if (!error && data) {
       const positions = ['mapa', 'repartidores', 'avisos'];
       positions.forEach(pos => {
-        const ad = data.find(a => (a.posicion || 'mapa') === pos);
+        const ad = (data && data.length > 0) ? data.find(a => (a.posicion || 'mapa') === pos) : null;
         const inputTitle = document.getElementById(`inputAdText_${pos}`);
         const inputUrl = document.getElementById(`inputAdUrl_${pos}`);
         const selectState = document.getElementById(`selectAdState_${pos}`);
@@ -253,6 +255,8 @@ async function cargarConfiguracionPublicidadEnAdmin() {
             window.pendingUploadUrls[pos] = null;
           }
         } else {
+          if (inputTitle) inputTitle.value = '';
+          if (inputUrl) inputUrl.value = '';
           if (selectState) selectState.value = 'activo';
           if (preview) preview.src = '';
           if (previewBox) previewBox.style.display = 'none';
@@ -264,6 +268,13 @@ async function cargarConfiguracionPublicidadEnAdmin() {
     console.warn('Error precargando propaganda local en admin:', e);
   }
 }
+
+// Listener para recargar inputs al cambiar la ciudad en el panel admin
+document.addEventListener('change', (e) => {
+  if (e.target && e.target.id === 'adminSelectAdCiudad') {
+    cargarConfiguracionPublicidadEnAdmin(e.target.value);
+  }
+});
 
 async function renderAdminAdsAndPostsList() {
   const container = document.getElementById('adminAdsListContainer');
@@ -1050,7 +1061,8 @@ async function guardarPropagandaTab(tabName, silent = false) {
     return false;
   }
 
-  const activeCity = (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba') || 'cochabamba';
+  const citySelector = document.getElementById('adminSelectAdCiudad');
+  const activeCity = (citySelector ? citySelector.value : null) || (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba') || 'cochabamba';
   const normCity = String(activeCity).toLowerCase().trim();
   const imgUrl = window.pendingUploadUrls ? window.pendingUploadUrls[pos] : null;
 
@@ -1147,9 +1159,11 @@ async function guardarSubmenuAnuncios() {
     if (typeof renderVendorsList === 'function') renderVendorsList();
     if (typeof renderForumFeed === 'function') renderForumFeed();
 
-    const activeCity = (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba') || 'cochabamba';
+    const citySelector = document.getElementById('adminSelectAdCiudad');
+    const activeCity = (citySelector ? citySelector.value : null) || (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba') || 'cochabamba';
+    const displayCity = (activeCity === 'global') ? 'TODAS LAS CIUDADES (GLOBAL)' : activeCity.toUpperCase();
     if (typeof showToast === 'function') {
-      showToast('✅ Propaganda Guardada', `La propaganda de la pestaña ${currentTab.toUpperCase()} quedó actualizada en ${activeCity.toUpperCase()}.`, 'success', 4500);
+      showToast('✅ Propaganda Guardada', `La propaganda de la pestaña ${currentTab.toUpperCase()} quedó actualizada para ${displayCity}.`, 'success', 4500);
     }
   }
 }
@@ -1169,10 +1183,12 @@ async function guardarTodasLasPropagandas() {
   if (typeof renderVendorsList === 'function') renderVendorsList();
   if (typeof renderForumFeed === 'function') renderForumFeed();
 
-  const activeCity = (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba') || 'cochabamba';
+  const citySelector = document.getElementById('adminSelectAdCiudad');
+  const activeCity = (citySelector ? citySelector.value : null) || (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba') || 'cochabamba';
+  const displayCity = (activeCity === 'global') ? 'TODAS LAS CIUDADES (GLOBAL)' : activeCity.toUpperCase();
   if (ok1 && ok2 && ok3) {
     if (typeof showToast === 'function') {
-      showToast('✅ 3 Pestañas Actualizadas', `Las propagandas para Mapa, Repartidores y Avisos Gratis quedaron activas en ${activeCity.toUpperCase()}.`, 'success', 5000);
+      showToast('✅ 3 Pestañas Actualizadas', `Las propagandas para Mapa, Repartidores y Avisos Gratis quedaron activas para ${displayCity}.`, 'success', 5000);
     }
   } else {
     if (typeof showToast === 'function') {
