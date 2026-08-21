@@ -186,11 +186,37 @@ window.iniciarSuscripcionesRealtime = function() {
         .on('postgres_changes', pedidosOpts, payload => {
             const activeOrder = (typeof AppState !== 'undefined') ? AppState.get('activeOrder') : null;
             const changedOrder = payload.new || payload.old;
+            const localUserId = (typeof getCurrentUserId === 'function')
+                ? getCurrentUserId()
+                : ((typeof AppState !== 'undefined' ? AppState.get('userData')?.id : null) || window._tempAuthUser?.id);
+            const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
+            const isDriver = (u.role === 'repartidor') || ((typeof AppState !== 'undefined') && (AppState.get('appMode') === 'driver' || AppState.get('userRole') === 'repartidor'));
+
+            // 1. Si el pedido pertenecía al comprador actual
             if (activeOrder?.id && changedOrder?.id === activeOrder.id) {
                 if (payload.eventType === 'DELETE' || changedOrder.estado === 'cancelado' || changedOrder.estado === 'entregado') {
                     AppState.set('activeOrder', null);
                 } else {
                     AppState.set('activeOrder', { ...activeOrder, ...payload.new });
+                }
+            }
+
+            // 2. Si el usuario actual es repartidor y se canceló un pedido asignado a él
+            if (isDriver && changedOrder) {
+                const wasAssigned = (changedOrder.driver_id && String(changedOrder.driver_id) === String(localUserId)) ||
+                    (window.driverDemandMapState?.assignedOrders?.some(o => String(o.id) === String(changedOrder.id)));
+
+                if (changedOrder.estado === 'cancelado' && wasAssigned) {
+                    const loc = changedOrder.direccion || changedOrder.barrio_otb || 'la ubicación indicada';
+                    if (typeof mostrarPopupAlertaRepartidor === 'function') {
+                        mostrarPopupAlertaRepartidor('⛔ PEDIDO CANCELADO POR EL VECINO', `El comprador ha cancelado su pedido en ${loc}. Se retiró de tus rutas asignadas.`, 9000);
+                    }
+                    if (typeof showToast === 'function') {
+                        showToast('⛔ Pedido Cancelado', `El pedido asignado en ${loc} fue cancelado por el comprador.`, 'warning', 8000);
+                    }
+                    try {
+                        if (navigator.vibrate) navigator.vibrate([300, 150, 300, 150, 400]);
+                    } catch (_) {}
                 }
             }
 

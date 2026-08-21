@@ -1,7 +1,7 @@
 -- ==============================================================================
 -- NOTIGAS - CONSOLIDATED FULL PRODUCTION DATABASE SCHEMA
 -- Compatible con PostgreSQL 15+ y Supabase Auth / Storage / Realtime
--- Versión Oficial Consolidada de Producción (Incluye Migraciones 001 hasta 082)
+-- Versión Oficial Consolidada de Producción (Incluye Migraciones 001 hasta 083)
 -- ==============================================================================
 
 -- ==============================================================================
@@ -1556,6 +1556,52 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION public.rpc_actualizar_aviso_propio(
+    p_aviso_id uuid,
+    p_titulo text,
+    p_descripcion text,
+    p_categoria text
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public', 'auth'
+AS $$
+DECLARE
+    v_uid text := auth.uid()::text;
+    v_aviso record;
+BEGIN
+    IF v_uid IS NULL THEN
+        RETURN jsonb_build_object('ok', false, 'error', 'Usuario no autenticado');
+    END IF;
+
+    IF is_banned() THEN
+        RETURN jsonb_build_object('ok', false, 'error', 'Usuario suspendido');
+    END IF;
+
+    SELECT * INTO v_aviso
+    FROM public.avisos
+    WHERE id = p_aviso_id
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RETURN jsonb_build_object('ok', false, 'error', 'Aviso no encontrado');
+    END IF;
+
+    IF v_aviso.user_id <> v_uid AND NOT public.is_admin_email() THEN
+        RETURN jsonb_build_object('ok', false, 'error', 'Solo el autor o administrador puede editar este aviso');
+    END IF;
+
+    UPDATE public.avisos
+    SET titulo = TRIM(p_titulo),
+        descripcion = TRIM(p_descripcion),
+        categoria = UPPER(TRIM(p_categoria))
+    WHERE id = p_aviso_id;
+
+    RETURN jsonb_build_object('ok', true, 'id', p_aviso_id);
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION public.rpc_agregar_comentario_aviso(p_aviso_id uuid, p_autor text, p_texto text)
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -1908,8 +1954,9 @@ GRANT EXECUTE ON FUNCTION public.rpc_admin_delete_user(text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.rpc_admin_delete_driver_by_id(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.rpc_admin_renew_order(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.rpc_crear_aviso_vecinal(text, text, text, text, text, text, text, text, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.rpc_actualizar_aviso_propio(uuid, text, text, text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.rpc_agregar_comentario_aviso(uuid, text, text) TO authenticated;
 
 -- ==============================================================================
--- FIN DEL ESQUEMA CONSOLIDADO OFICIAL DE PRODUCCIÓN (NOTIGAS v082)
+-- FIN DEL ESQUEMA CONSOLIDADO OFICIAL DE PRODUCCIÓN (NOTIGAS v083)
 -- ==============================================================================

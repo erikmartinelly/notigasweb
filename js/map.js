@@ -1247,20 +1247,31 @@ window.actualizarPedidoEnMapa = function(order, eventType = 'UPDATE') {
   if (!map || !order || !order.id) return;
   const state = window.driverDemandMapState = window.driverDemandMapState || { availableOrders: [], assignedOrders: [] };
   const orderId = String(order.id);
-  const localUserId = (typeof getCurrentUserId === 'function')
-    ? getCurrentUserId()
-    : ((typeof AppState !== 'undefined' ? AppState.get('userData')?.id : null) || window._tempAuthUser?.id);
-
-  // 1. Si el pedido fue cancelado o entregado, removerlo del mapa
-  if (eventType === 'DELETE' || order.estado === 'cancelado' || order.estado === 'entregado') {
-    window.removerPedidoDeMapa(orderId);
-    return;
-  }
-
-  // 2. Actualizar estado en memoria
   const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
   const isDriverUser = (u.role === 'repartidor') || ((typeof AppState !== 'undefined') && (AppState.get('appMode') === 'driver' || AppState.get('userRole') === 'repartidor'));
   const driverCategoria = u.categoria || 'todos';
+
+  // 1. Si el pedido fue cancelado o entregado, removerlo del mapa y alertar al chofer si estaba asignado
+  if (eventType === 'DELETE' || order.estado === 'cancelado' || order.estado === 'entregado') {
+    const wasAssignedToMe = (state.assignedOrders || []).some(o => String(o.id) === orderId) || (order.driver_id && String(order.driver_id) === String(localUserId));
+    
+    if (order.estado === 'cancelado' && wasAssignedToMe && isDriverUser) {
+      const locStr = order.direccion || order.barrio_otb || 'la ubicación indicada';
+      if (typeof mostrarPopupAlertaRepartidor === 'function') {
+        mostrarPopupAlertaRepartidor('⛔ PEDIDO CANCELADO POR EL VECINO', `El comprador ha cancelado su pedido en ${locStr}. Se retiró de tus rutas asignadas.`, 9000);
+      }
+      if (typeof showToast === 'function') {
+        showToast('⛔ Pedido Cancelado', `El pedido que tenías asignado en ${locStr} fue cancelado por el comprador.`, 'warning', 8000);
+      }
+      try {
+        if (navigator.vibrate) navigator.vibrate([300, 150, 300, 150, 400]);
+      } catch(_) {}
+    }
+
+    window.removerPedidoDeMapa(orderId);
+    if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
+    return;
+  }
 
   if (order.estado === 'asignado') {
     state.availableOrders = (state.availableOrders || []).filter(o => String(o.id) !== orderId);

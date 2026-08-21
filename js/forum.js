@@ -70,10 +70,21 @@ async function renderForumFeed() {
     }
 
     let currentUserId = null;
-    try {
-      const sessionData = await window.supabaseClient.auth.getSession();
-      currentUserId = sessionData?.data?.session?.user?.id || (userData?.id) || null;
-    } catch (_) {}
+    if (typeof getAuthenticatedUserId === 'function') {
+      currentUserId = await getAuthenticatedUserId();
+    }
+    if (!currentUserId && typeof getCurrentUserId === 'function') {
+      currentUserId = getCurrentUserId();
+    }
+    if (!currentUserId && userData) {
+      currentUserId = userData.id || userData.user_id;
+    }
+    if (!currentUserId && window.supabaseClient) {
+      try {
+        const { data: s } = await window.supabaseClient.auth.getSession();
+        currentUserId = s?.session?.user?.id || null;
+      } catch (_) {}
+    }
 
     let html = '';
     const adInsertAfterIndex = Math.max(0, Math.ceil(localPosts.length / 2) - 1);
@@ -84,7 +95,10 @@ async function renderForumFeed() {
       const safeDesc = encodeURIComponent(post.descripcion || '').replace(/'/g, "%27");
       const safeCat = encodeURIComponent(post.categoria || '').replace(/'/g, "%27");
       const authorName = post.autor || 'Vecino de la OTB';
-      const isAuthor = currentUserId && post.user_id && String(post.user_id) === String(currentUserId);
+      const isAuthor = Boolean(
+        currentUserId && post.user_id &&
+        String(post.user_id).trim().toLowerCase() === String(currentUserId).trim().toLowerCase()
+      );
       const canManage = isAuthor || isAdmin;
 
       html += `
@@ -97,7 +111,7 @@ async function renderForumFeed() {
           <div class="forum-body">
             <div class="forum-meta-header">
               <span class="forum-cat"><i class="fa-solid fa-comments"></i> ${escapeHtmlStr(post.categoria)}</span>
-              <span class="forum-author"><i class="fa-solid fa-user"></i> ${escapeHtmlStr(authorName)}</span>
+              <span class="forum-author"><i class="fa-solid fa-user"></i> ${escapeHtmlStr(authorName)} ${isAuthor ? '<span style="font-size:10px; background:#0284C7; color:white; padding:2px 6px; border-radius:4px; margin-left:4px; font-weight:800;">TU AVISO</span>' : ''}</span>
             </div>
             <div class="forum-title">${escapeHtmlStr(post.titulo)}</div>
             <div class="forum-desc">${escapeHtmlStr(post.descripcion)}</div>
@@ -107,10 +121,10 @@ async function renderForumFeed() {
               </button>
               <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
                 ${canManage ? `
-                  <button data-action="abrirModalEditarPost" data-id="${post.id}" data-title="${safeTitle}" data-desc="${safeDesc}" data-cat="${safeCat}" style="background: rgba(14,165,233,0.15); color: #38BDF8; border: 1px solid rgba(14,165,233,0.3); border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" title="Editar este aviso">
-                    <i class="fa-solid fa-pen-to-square"></i> Editar
+                  <button data-action="abrirModalEditarPost" data-id="${post.id}" data-title="${safeTitle}" data-desc="${safeDesc}" data-cat="${safeCat}" style="background: rgba(14,165,233,0.2); color: #38BDF8; border: 1.5px solid #0284C7; border-radius: 6px; padding: 5px 12px; font-size: 11.5px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; box-shadow:0 2px 6px rgba(2,132,199,0.2);" title="Editar tu aviso">
+                    <i class="fa-solid fa-pen-to-square"></i> EDITAR
                   </button>
-                  <button data-action="borrarPostPropio" data-id="${post.id}" style="background: rgba(239,68,68,0.15); color: #EF4444; border: 1px solid rgba(239,68,68,0.3); border-radius: 6px; padding: 4px 8px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" title="Eliminar este aviso">
+                  <button data-action="borrarPostPropio" data-id="${post.id}" style="background: rgba(239,68,68,0.15); color: #EF4444; border: 1px solid rgba(239,68,68,0.3); border-radius: 6px; padding: 5px 8px; font-size: 11.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" title="Eliminar este aviso">
                     <i class="fa-solid fa-trash"></i>
                   </button>
                 ` : `
@@ -176,26 +190,46 @@ async function guardarEdicionPost() {
   if (!window.supabaseClient) return;
 
   try {
-    const { error } = await window.supabaseClient
-      .from('avisos')
-      .update({
-        titulo: newTitle,
-        descripcion: newDesc,
-        categoria: newCat
-      })
-      .eq('id', postId);
+    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Guardando cambios...');
 
-    if (error) {
-      console.error('Error editando aviso:', error);
-      if (typeof showToast === 'function') showToast('Error al editar', error.message || 'No se pudo actualizar el aviso.', 'error', 4000);
+    // 1. Intentar RPC atómico
+    const { data: rpcData, error: rpcError } = await window.supabaseClient.rpc('rpc_actualizar_aviso_propio', {
+      p_aviso_id: postId,
+      p_titulo: newTitle,
+      p_descripcion: newDesc,
+      p_categoria: newCat
+    });
+
+    if (rpcError) {
+      // 2. Fallback a UPDATE directo
+      const { error: directErr } = await window.supabaseClient
+        .from('avisos')
+        .update({
+          titulo: newTitle,
+          descripcion: newDesc,
+          categoria: newCat
+        })
+        .eq('id', postId);
+
+      if (directErr) {
+        if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+        console.error('Error editando aviso:', directErr);
+        if (typeof showToast === 'function') showToast('Error al editar', directErr.message || 'No se pudo actualizar el aviso.', 'error', 4000);
+        return;
+      }
+    } else if (rpcData && !rpcData.ok) {
+      if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+      if (typeof showToast === 'function') showToast('Error al editar', rpcData.error || 'No se pudo actualizar el aviso.', 'error', 4000);
       return;
     }
 
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
     if (typeof showToast === 'function') showToast('✅ Publicación Actualizada', 'Los cambios en tu aviso fueron guardados con éxito.', 'success', 3500);
     cerrarModalEditarPost();
     if (typeof renderForumFeed === 'function') renderForumFeed();
     if (typeof renderAdminAvisosFeedList === 'function') renderAdminAvisosFeedList();
   } catch (err) {
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
     console.error('Excepción al guardar edición:', err);
   }
 }
