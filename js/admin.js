@@ -715,14 +715,19 @@ async function renderAdminOrdersList() {
 
   `;
 
-  // 1. Pedidos en Vivo desde Supabase
-
+  // 1. Pedidos en Vivo desde Supabase (Solo pedidos activos, excluyendo basura entregada/cancelada)
   if (window.supabaseClient) {
+    try {
+      // Disparar purga silenciosa de registros terminales
+      window.supabaseClient.rpc('rpc_purge_old_records').then(() => {}).catch(() => {});
+    } catch (_) {}
+
     const { data: pedidos, error } = await window.supabaseClient
-
       .from('pedidos')
-
-      .select('*').order('created_at', { ascending: false }).limit(500);
+      .select('*')
+      .in('estado', ['pendiente', 'visto', 'asignado'])
+      .order('created_at', { ascending: false })
+      .limit(250);
 
     if (error) {
       console.error('Error cargando pedidos para administración:', error);

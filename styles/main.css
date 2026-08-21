@@ -3875,6 +3875,76 @@ button:active, .tab-btn:active, .cat-chip:active {
   }
 }
 
+/* CLUSTERS DE CONCENTRACIÓN Y RADAR DE DEMANDA AGRUPADA */
+.demand-cluster-icon-wrapper {
+  background: transparent !important;
+  border: none !important;
+  overflow: visible !important;
+}
+
+.demand-radar-cluster {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.demand-cluster-badge {
+  position: absolute;
+  top: -12px;
+  right: -10px;
+  padding: 3px 7px;
+  border-radius: 12px;
+  font-family: 'Roboto', -apple-system, sans-serif;
+  font-size: 11px;
+  font-weight: 900;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+  z-index: 20;
+  pointer-events: none;
+  animation: badgePopIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.demand-cluster-badge.badge-fire {
+  background: linear-gradient(135deg, #FF1744 0%, #D50000 100%);
+  border: 1.5px solid #FF8A80;
+  box-shadow: 0 0 12px rgba(255, 23, 68, 0.6), 0 3px 8px rgba(0, 0, 0, 0.4);
+}
+
+.demand-cluster-badge.badge-amber {
+  background: linear-gradient(135deg, #FF6D00 0%, #E65100 100%);
+  border: 1.5px solid #FFD180;
+  box-shadow: 0 0 10px rgba(255, 109, 0, 0.5), 0 3px 8px rgba(0, 0, 0, 0.4);
+}
+
+.demand-cluster-badge.badge-single {
+  background: linear-gradient(135deg, #F57F17 0%, #E65100 100%);
+  border: 1.5px solid #FFE082;
+}
+
+.notigas-cluster-tooltip {
+  background: #0F172A !important;
+  color: #F8FAFC !important;
+  border: 1px solid #FF6D00 !important;
+  border-radius: 8px !important;
+  padding: 6px 10px !important;
+  font-family: 'Roboto', sans-serif !important;
+  font-size: 11.5px !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5) !important;
+}
+
+@keyframes badgePopIn {
+  0% { transform: scale(0.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
 /* ONDAS DE RADAR AZUL PARA CAMIONES REPARTIDORES AL HACER ZOOM OUT */
 .driver-truck-radar-container {
   background: transparent !important;

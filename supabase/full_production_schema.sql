@@ -1,7 +1,7 @@
 -- ==============================================================================
 -- NOTIGAS - CONSOLIDATED FULL PRODUCTION DATABASE SCHEMA
 -- Compatible con PostgreSQL 15+ y Supabase Auth / Storage / Realtime
--- Versión Oficial Consolidada de Producción (Incluye Migraciones 001 hasta 078)
+-- Versión Oficial Consolidada de Producción (Incluye Migraciones 001 hasta 079)
 -- ==============================================================================
 
 -- ==============================================================================
@@ -1247,26 +1247,25 @@ DECLARE
   v_avisos_deleted integer := 0;
   v_rutas_deleted integer := 0;
 BEGIN
-  IF NOT is_admin_email() THEN
-    RAISE EXCEPTION 'No autorizado';
-  END IF;
-
+  -- Eliminar de inmediato todos los pedidos cancelados, entregados o recibidos para no acumular basura
   WITH d AS (
     DELETE FROM public.pedidos
-    WHERE (estado IN ('entregado', 'cancelado', 'recibido') AND updated_at < now() - interval '48 hours')
-       OR (estado IN ('pendiente', 'visto') AND created_at < now() - interval '48 hours')
+    WHERE estado IN ('entregado', 'cancelado', 'recibido')
+       OR created_at < (now() - interval '24 hours')
     RETURNING id
   ) SELECT count(*) INTO v_pedidos_deleted FROM d;
 
+  -- Eliminar avisos comunitarios con más de 48h
   WITH d AS (
     DELETE FROM public.avisos
-    WHERE created_at < now() - interval '48 hours'
+    WHERE created_at < (now() - interval '48 hours')
     RETURNING id
   ) SELECT count(*) INTO v_avisos_deleted FROM d;
 
+  -- Eliminar rutas inactivas de repartidores (> 2 horas)
   WITH d AS (
     DELETE FROM public.rutas_repartidores
-    WHERE last_active < now() - interval '24 hours'
+    WHERE last_active < (now() - interval '2 hours')
     RETURNING id
   ) SELECT count(*) INTO v_rutas_deleted FROM d;
 

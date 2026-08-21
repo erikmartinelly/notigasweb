@@ -279,12 +279,12 @@ window.isOrderCategoryMatchingDriver = function(orderCategory, driverCatInput) {
     const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
     if (u.categoria) driverCat = u.categoria;
   }
-  if (!driverCat || driverCat === 'todos' || driverCat === 'all') return true; // Si no tiene categoría configurada, ve todo
+  if (!driverCat) return false;
 
   const normDriver = window.normalizeCategoryCode(driverCat);
   const normOrder = window.normalizeCategoryCode(orderCategory);
 
-  return normDriver === normOrder || normDriver === 'otros' || normOrder === 'otros' || normDriver === 'todos';
+  return normDriver === normOrder;
 };
 
 function isOrderCategoryMatchingDriver(orderCategory, driverCatInput) {
@@ -537,7 +537,7 @@ function actualizarIconosRepartidoresPorZoom() {
   }
 }
 
-// Reconciliación eficiente de radares individuales (DOM Diffing sin destruir elementos activos)
+// Algoritmo de Clustering Espacial y Radar de Concentración de Demanda
 function renderOrderRadarsOnMap(orders) {
   if (!map || typeof L === 'undefined') return;
   if (map.getZoom() > DRIVER_RADAR_MAX_ZOOM) {
@@ -546,11 +546,18 @@ function renderOrderRadarsOnMap(orders) {
   }
 
   const activeKeys = new Set();
-  const bounds = (typeof map.getBounds === 'function') ? map.getBounds().pad(0.1) : null;
-  const maxRadars = 35; // Límite estricto de elementos para garantizar 60 FPS y bajo consumo en Android
+  const bounds = (typeof map.getBounds === 'function') ? map.getBounds().pad(0.15) : null;
+  const currentZoom = map.getZoom();
 
-  // 1. Filtrar solo pedidos dentro del viewport visible
-  let visibleOrders = (orders || []).filter(order => {
+  // Radio de agrupación según nivel de zoom
+  let clusterRadiusMeters = 850;
+  if (currentZoom <= 10) clusterRadiusMeters = 3000;
+  else if (currentZoom <= 12) clusterRadiusMeters = 1600;
+  else if (currentZoom <= 13) clusterRadiusMeters = 1000;
+  else clusterRadiusMeters = 600;
+
+  // 1. Filtrar pedidos válidos dentro del viewport visible
+  const visibleOrders = (orders || []).filter(order => {
     const lat = Number(order.latitude ?? order.lat);
     const lng = Number(order.longitude ?? order.lng);
     if (!Number.isFinite(lat) || !Number.isFinite(lng) || !order?.id) return false;
@@ -558,20 +565,99 @@ function renderOrderRadarsOnMap(orders) {
     return true;
   });
 
-  // 2. Limitar cantidad máxima de radares en pantalla
-  if (visibleOrders.length > maxRadars) {
-    visibleOrders = visibleOrders.slice(0, maxRadars);
-  }
-
+  // 2. Agrupación por proximidad espacial (Centroid Clustering)
+  const clusters = [];
   visibleOrders.forEach(order => {
     const lat = Number(order.latitude ?? order.lat);
     const lng = Number(order.longitude ?? order.lng);
-    const key = String(order.id);
+    const orderUnits = parseInt(order.cantidad, 10) || 1;
+    const orderCat = order.categoria || 'Gas GLP';
+    const orderBarrio = order.barrio_otb || order.direccion || '';
+
+    let matchedCluster = null;
+    for (const cl of clusters) {
+      let dist = 999999;
+      if (typeof L.latLng === 'function') {
+        dist = L.latLng(lat, lng).distanceTo(L.latLng(cl.lat, cl.lng));
+      } else {
+        const dLat = (lat - cl.lat) * 111320;
+        const dLng = (lng - cl.lng) * 111320 * Math.cos(cl.lat * (Math.PI / 180));
+        dist = Math.sqrt(dLat * dLat + dLng * dLng);
+      }
+
+      if (dist <= clusterRadiusMeters) {
+        matchedCluster = cl;
+        break;
+      }
+    }
+
+    if (matchedCluster) {
+      const prevTotal = matchedCluster.totalUnits;
+      matchedCluster.lat = (matchedCluster.lat * prevTotal + lat * orderUnits) / (prevTotal + orderUnits);
+      matchedCluster.lng = (matchedCluster.lng * prevTotal + lng * orderUnits) / (prevTotal + orderUnits);
+      matchedCluster.totalCount += 1;
+      matchedCluster.totalUnits += orderUnits;
+      matchedCluster.orders.push(order);
+      if (orderBarrio) matchedCluster.barrios.push(orderBarrio);
+    } else {
+      clusters.push({
+        id: `cl_${order.id}`,
+        lat,
+        lng,
+        totalCount: 1,
+        totalUnits: orderUnits,
+        categoria: orderCat,
+        orders: [order],
+        barrios: orderBarrio ? [orderBarrio] : []
+      });
+    }
+  });
+
+  // 3. Ordenar clusters por volumen y densidad (los racimos más grandes y rentables primero)
+  clusters.sort((a, b) => b.totalUnits - a.totalUnits || b.totalCount - a.totalCount);
+
+  // 4. Renderizar hasta 35 clusters de mayor concentración
+  const maxClustersToRender = 35;
+  const topClusters = clusters.slice(0, maxClustersToRender);
+
+  topClusters.forEach((cl, idx) => {
+    const key = `cluster_${cl.orders.map(o => o.id).sort().join('_').slice(0, 40)}_${idx}`;
     activeKeys.add(key);
+
+    const lat = cl.lat;
+    const lng = cl.lng;
+    const count = cl.totalCount;
+    const units = cl.totalUnits;
+    const cat = cl.categoria;
+    const topBarrio = cl.barrios.length > 0 ? cl.barrios[0] : 'Zona Vecinal';
+
+    let densityClass = 'density-single';
+    let densityBadge = '';
+    let radarPulseColor = '#FF8F00';
+    let ringSize = 65;
+
+    if (units >= 8 || count >= 5) {
+      densityClass = 'density-high';
+      densityBadge = `<div class="demand-cluster-badge badge-fire">🔥 <strong>${units}</strong> <small>un</small></div>`;
+      radarPulseColor = '#FF1744';
+      ringSize = 90;
+    } else if (units >= 3 || count >= 2) {
+      densityClass = 'density-med';
+      densityBadge = `<div class="demand-cluster-badge badge-amber">⚡ <strong>${units}</strong> <small>un</small></div>`;
+      radarPulseColor = '#FF6D00';
+      ringSize = 80;
+    } else {
+      densityClass = 'density-single';
+      densityBadge = `<div class="demand-cluster-badge badge-single">📦 <strong>${units}</strong></div>`;
+      radarPulseColor = '#FF9100';
+      ringSize = 65;
+    }
+
+    const safeCat = typeof escapeHtmlStr === 'function' ? escapeHtmlStr(cat) : cat;
+    const safeBarrio = typeof escapeHtmlStr === 'function' ? escapeHtmlStr(topBarrio) : topBarrio;
 
     const existingMarker = window.orderRadarMarkers[key];
     if (existingMarker) {
-      // Reutilizar marcador existente en el DOM: solo mover si cambió posición
       const currentPos = existingMarker.getLatLng();
       if (Math.abs(currentPos.lat - lat) > 0.00001 || Math.abs(currentPos.lng - lng) > 0.00001) {
         existingMarker.setLatLng([lat, lng]);
@@ -579,15 +665,22 @@ function renderOrderRadarsOnMap(orders) {
       return;
     }
 
-    // Creación única para nuevos pedidos con estructura DOM ligera
-    const safeCategory = typeof escapeHtmlStr === 'function'
-      ? escapeHtmlStr(order.categoria || 'Gas')
-      : 'Gas';
+    const clusterHtml = `
+      <div class="demand-radar-cluster ${densityClass}" title="Concentración: ${units} ${safeCat} (${count} pedidos en ${safeBarrio}). Haz clic para acercar.">
+        <div class="demand-radar" style="width:${ringSize}px; height:${ringSize}px; border-color:${radarPulseColor};">
+          <span style="border-color:${radarPulseColor};"></span>
+          <span style="border-color:${radarPulseColor};"></span>
+          <i style="background:${radarPulseColor};"></i>
+        </div>
+        ${densityBadge}
+      </div>
+    `;
+
     const icon = L.divIcon({
-      className: 'demand-order-radar-icon',
-      html: `<div class="demand-radar" title="Pedido Activo de ${safeCategory} (Haz clic para ver)"><span></span><i></i></div>`,
-      iconSize: [60, 60],
-      iconAnchor: [30, 30]
+      className: 'demand-cluster-icon-wrapper',
+      html: clusterHtml,
+      iconSize: [ringSize, ringSize],
+      iconAnchor: [ringSize / 2, ringSize / 2]
     });
 
     const marker = L.marker([lat, lng], {
@@ -595,17 +688,23 @@ function renderOrderRadarsOnMap(orders) {
       interactive: true,
       bubblingMouseEvents: false,
       keyboard: false,
-      zIndexOffset: 12000
+      zIndexOffset: 12000 + (units * 10)
     }).addTo(map);
 
+    marker.bindTooltip(`<strong>🔥 ${units} un. (${count} pedidos)</strong><br><span style="font-size:10px;">${safeBarrio} · ${safeCat}</span>`, {
+      direction: 'top',
+      offset: [0, -20],
+      className: 'notigas-cluster-tooltip'
+    });
+
     marker.on('click', () => {
-      map.flyTo([lat, lng], 16, { duration: 0.8 });
+      map.flyTo([lat, lng], 16, { duration: 0.85 });
     });
 
     window.orderRadarMarkers[key] = marker;
   });
 
-  // Eliminar únicamente radares de pedidos fuera de vista o inactivos
+  // Eliminar únicamente radares de clusters fuera de vista o disueltos
   Object.keys(window.orderRadarMarkers).forEach(key => {
     if (!activeKeys.has(key)) {
       const marker = window.orderRadarMarkers[key];

@@ -82,8 +82,8 @@ NOTIGAS bridges this gap by democratizing access to modern geospatial logistics 
 ├── styles/
 │   └── main.css            # Application design tokens, responsive layouts, and Google Maps-inspired UI
 ├── supabase/
-│   ├── full_production_schema.sql # CONSOLIDATED PRODUCTION SCHEMA (1-Click Database Deployment - v078)
-│   └── migrations/         # Historical incremental migrations (001 through 078)
+│   ├── full_production_schema.sql # CONSOLIDATED PRODUCTION SCHEMA (1-Click Database Deployment - v079)
+│   └── migrations/         # Historical incremental migrations (001 through 079)
 └── .github/
     └── workflows/ci.yml    # CI automated syntax & integrity verification
 ```
@@ -100,8 +100,8 @@ cd notigasweb
 
 ### 2. Configure Database & Backend (Supabase)
 * Create a new project at [Supabase](https://supabase.com/).
-* **Option A (Recommended - 1-Click Deployment):** Execute [`supabase/full_production_schema.sql`](supabase/full_production_schema.sql) in the Supabase SQL Editor. This single script provisions all tables, PostGIS extensions, public views, performance indexes, automated triggers, strict category/city isolation, atomic RPC functions, and Row Level Security (RLS) policies through version `078`.
-* **Option B (Incremental Migrations):** Run the migration files inside `supabase/migrations/` in sequential order through `078`.
+* **Option A (Recommended - 1-Click Deployment):** Execute [`supabase/full_production_schema.sql`](supabase/full_production_schema.sql) in the Supabase SQL Editor. This single script provisions all tables, PostGIS extensions, public views, spatial clustering, automated triggers, strict category/city isolation, atomic RPC functions, and Row Level Security (RLS) policies through version `079`.
+* **Option B (Incremental Migrations):** Run the migration files inside `supabase/migrations/` in sequential order through `079`.
 * Open `js/supabase-config.js` and input your `supabaseUrl` and `supabaseAnonKey`.
 
 ### 3. Configure Google Identity Services & Auth
@@ -126,17 +126,25 @@ node server.js
 
 ---
 
-## 🏗️ Production Architecture & Security
+## 🏗️ Production Architecture & Core Logistics Model
+
+### 📡 Collective Demand Aggregation Philosophy
+* **Demand Aggregation & Delivery Beacons:** NOTIGAS is fundamentally designed around **collective neighborhood demand aggregation**. Individual customer orders act as live **geospatial demand beacons and delivery waypoints**.
+* **Spatial Density Sonar for Drivers:** When zoomed out (`zoom <= 14`), NOTIGAS clusters active neighborhood orders into weighted concentration zones with real-time sonar pulses (`🔥 18 un`, `⚡ 5 un`, etc.). Authorized delivery drivers examine the collective demand map in real time to locate profitable delivery routes and fulfill clustered neighborhood demand efficiently.
+* **Turn-by-Turn Navigation via Reference Orders:** Drivers select an active order as a reference waypoint to trigger external turn-by-turn routing with Google Maps, serving that primary beacon and all neighboring buyers clustered along that street.
+* **Strict Category & City Isolation:** Drivers exclusively access orders and telemetry matching their registered category (`Gas GLP` $\leftrightarrow$ `Gas GLP`, `Agua Potable` $\leftrightarrow$ `Agua Potable`) and their registered operational city, preventing cross-category interference.
 
 ### Database & Row Level Security (RLS)
-* **Strict Row Level Security:** RLS is enforced across all tables in the `public` schema. Buyers can only modify their own orders, and drivers can only interact with unassigned available orders or orders assigned to them.
-* **5-State Finite State Machine:** Enforces order transitions (`pendiente` → `visto` → `asignado` → `entregado` / `cancelado`) strictly protected by database-level triggers (`trg_check_pedido_transition`).
-* **Live GPS Telemetry (`rutas_repartidores`):** Atomic upserts per driver (`user_id`, `last_active`) with automated pruning of positions inactive for more than 12 hours.
-* **Role-Based Data Privacy:** The public map layer receives privacy-fuzzed coordinates and never exposes buyer phone numbers or street addresses publicly. Drivers only receive complete contact details once an order is officially assigned to their account.
+* **Strict Row Level Security:** RLS is enforced across all tables in the `public` schema. Buyers can only modify their own orders, and verified drivers only access active demand points within their category and city.
+* **5-State Finite State Machine:** Enforces order transitions (`pendiente` → `visto` → `asignado` → `entregado` / `cancelado`) strictly protected by database triggers (`trg_check_pedido_transition` & `guard_pedido_mutation`).
+* **Automated Terminal Record Purge:** Cancelled and delivered orders are automatically swept by `rpc_purge_old_records()`, keeping PostgreSQL clean, optimized, and free of obsolete clutter.
+* **Live GPS Telemetry (`rutas_repartidores`):** Atomic upserts per driver (`user_id`, `last_active`) with automated pruning of inactive telemetry.
 * **Atomic RPC Functions (`SECURITY DEFINER` with `search_path = public`):**
-  * `rpc_assign_order`: Atomic single-driver order assignment protected with `FOR UPDATE` row locking.
-  * `rpc_mark_order_seen`: Atomic status update marking orders as viewed by nearby drivers.
-  * `rpc_get_my_assigned_orders`: Secure retrieval of contact information exclusively for driver-assigned orders.
+  * `rpc_assign_order`: Atomic single-driver order assignment with `FOR UPDATE` row locking.
+  * `rpc_mark_order_seen`: Atomic status transition updating `estado = 'visto'` and `visto = true`.
+  * `rpc_update_order_location`: Relocate active order GPS coordinates with trigger-compliant validation.
+  * `rpc_get_my_assigned_orders`: Secure retrieval of assigned order contact details for the active driver.
+  * `rpc_purge_old_records`: Automated garbage collection purging delivered/cancelled orders and stale telemetry.
   * `rpc_admin_list_users`: Administrative listing of buyers and drivers linked to authentic Supabase Auth UUIDs.
   * `rpc_admin_delete_user`: Complete administrative purge of non-admin accounts and associated relational records.
   * `rpc_admin_renew_order`: Administrative order renewal resetting state to `pendiente`.
