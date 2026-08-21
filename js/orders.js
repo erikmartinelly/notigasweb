@@ -153,10 +153,10 @@ async function renderDriverOrdersList() {
             ${tel ? `<div>📞 <strong>Tel:</strong> <a href="tel:${tel}" style="color:#38BDF8;">${tel}</a></div>` : ''}
           </div>
           <div class="demand-card-actions" style="margin-top:8px; display:flex; gap:6px;">
-            <button type="button" class="btn-action" style="background:#0284C7; color:white; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:700; border:none; cursor:pointer; flex:1;" data-action="centrarPedidoEnMapa" data-lat="${lat}" data-lng="${lng}" data-order-id="${o.id}">
-              <i class="fa-solid fa-map-location-dot"></i> Ver Mapa
+            <button type="button" class="btn-action" style="background:#0284C7; color:white; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:700; border:none; cursor:pointer; flex:1; display:inline-flex; align-items:center; justify-content:center; gap:5px;" data-action="centrarPedidoEnMapa" data-lat="${lat}" data-lng="${lng}" data-order-id="${o.id}">
+              <i class="fa-solid fa-map-location-dot"></i> VER EN EL MAPA
             </button>
-            <button type="button" class="btn-action" style="background:#10B981; color:white; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:700; border:none; cursor:pointer; flex:1;" data-action="confirmarEntregaPedido" data-id="${o.id}">
+            <button type="button" class="btn-action" style="background:#10B981; color:white; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:700; border:none; cursor:pointer; flex:1; display:inline-flex; align-items:center; justify-content:center; gap:5px;" data-action="confirmarEntregaPedido" data-id="${o.id}">
               <i class="fa-solid fa-circle-check"></i> Entregado
             </button>
           </div>
@@ -194,16 +194,16 @@ async function renderDriverOrdersList() {
             const lng = o.longitude || 0;
             const buyer = 'Vecino';
             return `
-              <div style="display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px dashed rgba(255,255,255,0.04); font-size:11px;">
-                <div>
-                  <span style="color:#F8FAFC; font-weight:700;">${st}</span> (${o.cantidad || '1 un'})
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px dashed rgba(255,255,255,0.06); font-size:11px; gap:8px;">
+                <div style="flex:1; min-width:0;">
+                  <span style="color:#F8FAFC; font-weight:700; word-break:break-word;">${st}</span> (${o.cantidad || '1 un'})
                   <div style="font-size:9.5px; color:#64748B;">${buyer}</div>
                 </div>
-                <div style="display:flex; gap:4px;">
-                  <button type="button" style="background:#334155; color:#F8FAFC; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:700; cursor:pointer;" data-action="centrarPedidoEnMapa" data-lat="${lat}" data-lng="${lng}" data-order-id="${o.id}" title="Ver en mapa">
-                    <i class="fa-solid fa-location-crosshairs"></i>
+                <div style="display:flex; gap:6px; align-items:center; flex-shrink:0;">
+                  <button type="button" style="background:#0284C7; color:#F8FAFC; border:none; padding:5px 9px; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;" data-action="centrarPedidoEnMapa" data-lat="${lat}" data-lng="${lng}" data-order-id="${o.id}" title="Ver en el mapa">
+                    <i class="fa-solid fa-map-location-dot"></i> VER EN EL MAPA
                   </button>
-                  <button type="button" style="background:#FF6D00; color:white; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:800; cursor:pointer;" data-action="aceptarPedidoRepartidor" data-id="${o.id}" data-lat="${lat}" data-lng="${lng}" data-address="${escapeHtmlStr(o.direccion || '')}">
+                  <button type="button" style="background:#FF6D00; color:white; border:none; padding:5px 9px; border-radius:6px; font-size:10px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;" data-action="aceptarPedidoRepartidor" data-id="${o.id}" data-lat="${lat}" data-lng="${lng}" data-address="${escapeHtmlStr(o.direccion || '')}">
                     <i class="fa-solid fa-truck"></i> Tomar
                   </button>
                 </div>
@@ -220,6 +220,13 @@ async function renderDriverOrdersList() {
 
 window.centrarPedidoEnMapa = function(lat, lng, id) {
   if (typeof closeDriverOrdersModal === 'function') closeDriverOrdersModal();
+  const modalPan = document.getElementById('modalPanoramicaPedidos');
+  if (modalPan) modalPan.style.display = 'none';
+
+  if (typeof switchTab === 'function') {
+    switchTab(0);
+  }
+
   if (lat && lng && !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0 && typeof map !== 'undefined' && map) {
     map.flyTo([lat, lng], 17, { duration: 1.2 });
     setTimeout(() => {
@@ -990,8 +997,8 @@ async function abrirPanoramicaPedidos() {
                 <div style="font-size:11px; color:#94A3B8;">📍 ${escapeHtmlStr(p.direccion || 'Ubicación GPS en Mapa')}</div>
                 <div style="font-size:10px; color:#64748B;">⏱️ ${antiguedad}</div>
               </div>
-              <button type="button" data-action="centrarPedidoEnMapa" data-lat="${p.latitude}" data-lng="${p.longitude}" data-order-id="${p.id}" style="background:#334155; color:#F8FAFC; border:none; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;">
-                <i class="fa-solid fa-crosshairs"></i>
+              <button type="button" data-action="centrarPedidoEnMapa" data-lat="${p.latitude}" data-lng="${p.longitude}" data-order-id="${p.id}" style="background:#0284C7; color:#F8FAFC; border:none; padding:6px 10px; border-radius:6px; font-size:10.5px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;">
+                <i class="fa-solid fa-map-location-dot"></i> VER EN EL MAPA
               </button>
             </div>
           `;

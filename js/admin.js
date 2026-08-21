@@ -162,37 +162,88 @@ function switchModalTab(idx) {
   if (idx === 4) renderAdminReports();
 }
 
+window.adminActiveAdTab = 'mapa';
+window.pendingUploadUrls = {
+  mapa: null,
+  repartidores: null,
+  avisos: null
+};
+
+window.switchAdSubTab = function(tabName) {
+  const normTab = (tabName === 'repartidores' || tabName === 'avisos') ? tabName : 'mapa';
+  window.adminActiveAdTab = normTab;
+
+  const btnMapa = document.getElementById('btnAdSubTabMapa');
+  const btnRepartidores = document.getElementById('btnAdSubTabRepartidores');
+  const btnAvisos = document.getElementById('btnAdSubTabAvisos');
+
+  const paneMapa = document.getElementById('adSubPaneMapa');
+  const paneRepartidores = document.getElementById('adSubPaneRepartidores');
+  const paneAvisos = document.getElementById('adSubPaneAvisos');
+
+  if (btnMapa) {
+    btnMapa.style.background = (normTab === 'mapa') ? '#FF6D00' : 'transparent';
+    btnMapa.style.color = (normTab === 'mapa') ? 'white' : '#94A3B8';
+    btnMapa.classList.toggle('active', normTab === 'mapa');
+  }
+  if (btnRepartidores) {
+    btnRepartidores.style.background = (normTab === 'repartidores') ? '#00E676' : 'transparent';
+    btnRepartidores.style.color = (normTab === 'repartidores') ? '#0F172A' : '#94A3B8';
+    btnRepartidores.classList.toggle('active', normTab === 'repartidores');
+  }
+  if (btnAvisos) {
+    btnAvisos.style.background = (normTab === 'avisos') ? '#F59E0B' : 'transparent';
+    btnAvisos.style.color = (normTab === 'avisos') ? '#0F172A' : '#94A3B8';
+    btnAvisos.classList.toggle('active', normTab === 'avisos');
+  }
+
+  if (paneMapa) paneMapa.style.display = (normTab === 'mapa') ? 'block' : 'none';
+  if (paneRepartidores) paneRepartidores.style.display = (normTab === 'repartidores') ? 'block' : 'none';
+  if (paneAvisos) paneAvisos.style.display = (normTab === 'avisos') ? 'block' : 'none';
+};
+
 async function cargarConfiguracionPublicidadEnAdmin() {
-  const modeSelect = document.getElementById('selectAdsMode');
-  const inputAdText = document.getElementById('inputAdText');
-  const inputAdUrl = document.getElementById('inputAdUrl');
-  const adImagePreview = document.getElementById('adImagePreview');
-  const adImagePreviewBox = document.getElementById('adImagePreviewBox');
-
-  const currentMode = localStorage.getItem('notigas_ads_mode') || window.ADS_CONFIG?.mode || 'local';
-  if (modeSelect) modeSelect.value = (currentMode === 'disabled') ? 'disabled' : 'local';
-
-  const activeCity = (typeof AppState !== 'undefined') ? AppState.get('city') : null;
+  const activeCity = (typeof AppState !== 'undefined') ? AppState.get('city') : 'cochabamba';
   if (!activeCity || !window.supabaseClient) return;
 
   try {
     const normCity = String(activeCity).toLowerCase().trim();
-    const { data } = await window.supabaseClient
+    const { data, error } = await window.supabaseClient
       .from('anuncios_globales')
-      .select('titulo, url, image_url, activo')
+      .select('id, titulo, url, image_url, activo, posicion')
       .eq('ciudad', normCity)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .order('created_at', { ascending: false });
 
-    if (data) {
-      if (inputAdText && data.titulo) inputAdText.value = data.titulo;
-      if (inputAdUrl && data.url) inputAdUrl.value = data.url;
-      if (data.image_url && adImagePreview && adImagePreviewBox) {
-        adImagePreview.src = data.image_url;
-        adImagePreviewBox.style.display = 'flex';
-        window.pendingUploadUrl = data.image_url;
-      }
+    if (!error && data) {
+      const positions = ['mapa', 'repartidores', 'avisos'];
+      positions.forEach(pos => {
+        const ad = data.find(a => (a.posicion || 'mapa') === pos);
+        const inputTitle = document.getElementById(`inputAdText_${pos}`);
+        const inputUrl = document.getElementById(`inputAdUrl_${pos}`);
+        const selectState = document.getElementById(`selectAdState_${pos}`);
+        const preview = document.getElementById(`adImagePreview_${pos}`);
+        const previewBox = document.getElementById(`adImagePreviewBox_${pos}`);
+
+        if (ad) {
+          if (inputTitle) inputTitle.value = ad.titulo || '';
+          if (inputUrl) inputUrl.value = ad.url || '';
+          if (selectState) selectState.value = (ad.activo === false) ? 'inactivo' : 'activo';
+          if (ad.image_url && preview && previewBox) {
+            preview.src = ad.image_url;
+            previewBox.style.display = 'flex';
+            window.pendingUploadUrls[pos] = ad.image_url;
+          } else {
+            if (preview) preview.src = '';
+            if (previewBox) previewBox.style.display = 'none';
+            window.pendingUploadUrls[pos] = null;
+          }
+        } else {
+          if (selectState) selectState.value = 'activo';
+          if (preview) preview.src = '';
+          if (previewBox) previewBox.style.display = 'none';
+          window.pendingUploadUrls[pos] = null;
+        }
+      });
     }
   } catch(e) {
     console.warn('Error precargando propaganda local en admin:', e);
@@ -201,53 +252,59 @@ async function cargarConfiguracionPublicidadEnAdmin() {
 
 async function renderAdminAdsAndPostsList() {
   const container = document.getElementById('adminAdsListContainer');
-
   if (!container || !window.supabaseClient) return;
 
   container.innerHTML = '<div style="color:#94A3B8; text-align:center;">Cargando...</div>';
-
   let html = '';
-
   let count = 0;
 
-  // 1. Anuncio Local Personalizado
+  // 1. Anuncios Locales por Pestaña
   const { data: adData, error: adsError } = await window.supabaseClient
     .from('anuncios_globales')
-    .select('id, titulo, url, ciudad, created_at')
+    .select('id, titulo, url, image_url, ciudad, posicion, activo, created_at')
     .order('created_at', { ascending: false })
     .limit(50);
+
   if (adsError) { console.error('Error cargando anuncios_globales:', adsError); return; }
 
   if (adData && adData.length > 0) {
     adData.forEach(ad => {
       count++;
+      const pos = ad.posicion || 'mapa';
+      let posBadge = '🗺️ 1ª MAPA (Banner)';
+      let badgeBg = 'rgba(56,189,248,0.2)';
+      let badgeColor = '#38BDF8';
+
+      if (pos === 'repartidores') {
+        posBadge = '🚚 2ª REPARTIDORES (Feed)';
+        badgeBg = 'rgba(0,230,118,0.2)';
+        badgeColor = '#00E676';
+      } else if (pos === 'avisos') {
+        posBadge = '📢 3ª AVISOS GRATIS (Muro)';
+        badgeBg = 'rgba(245,158,11,0.2)';
+        badgeColor = '#F59E0B';
+      }
+
+      const estadoText = (ad.activo !== false) ? '🟢 ACTIVO' : '🔴 DESACTIVADO';
 
       html += `
-
-        <div style="background:#1E293B; padding:10px; border-radius:8px; border:1px solid #F59E0B; margin-bottom:8px;">
-
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-
-            <strong style="color:#F59E0B; font-size:11.5px;"><i class="fa-solid fa-rectangle-ad"></i> Anuncio en ${window.escapeHtmlStr(ad.ciudad)}</strong>
-
-            <button data-action="borrarAnuncioLocalAdmin" data-id="${ad.id}" style="background:#D32F2F; color:white; border:none; padding:3px 8px; border-radius:4px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Borrar Anuncio</button>
-
+        <div style="background:#1E293B; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.12); margin-bottom:8px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="background:${badgeBg}; color:${badgeColor}; font-size:9.5px; font-weight:800; padding:2px 6px; border-radius:4px;">${posBadge}</span>
+              <strong style="color:white; font-size:11px;">📍 ${window.escapeHtmlStr(String(ad.ciudad || '').toUpperCase())}</strong>
+              <span style="font-size:9.5px; color:#94A3B8;">${estadoText}</span>
+            </div>
+            <button data-action="borrarAnuncioLocalAdmin" data-id="${ad.id}" style="background:#D32F2F; color:white; border:none; padding:3px 8px; border-radius:4px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Eliminar</button>
           </div>
-
-          <div style="font-size:11px; color:white; margin-top:4px;">
-
-            <strong>Texto:</strong> ${window.escapeHtmlStr(ad.titulo || '')}<br>
-
-            <strong>URL:</strong> ${window.escapeHtmlStr(ad.url || '')}<br>
-
+          <div style="font-size:11px; color:#E2E8F0; margin-top:6px; line-height:1.35;">
+            <strong>Título:</strong> ${window.escapeHtmlStr(ad.titulo || '')}<br>
+            ${ad.url ? `<strong>Enlace:</strong> <a href="${window.escapeHtmlStr(ad.url)}" target="_blank" rel="noopener noreferrer" style="color:#38BDF8; text-decoration:underline;">${window.escapeHtmlStr(ad.url)}</a><br>` : ''}
+            ${ad.image_url ? `<strong>Imagen:</strong> <span style="color:#00E676;">Sí (Cargada)</span>` : ''}
           </div>
-
         </div>
-
       `;
-
     });
-
   }
 
   // 2. Avisos y Noticias de la OTB
@@ -952,50 +1009,50 @@ async function ejecutarLimpiezaTotalPedidos() {
   }
 }
 
-async function guardarSubmenuAnuncios() {
+async function guardarPropagandaTab(tabName, silent = false) {
   const currentAdmin = getVerifiedAdminEmail();
-
   if (!currentAdmin) {
-    if (typeof showToast === 'function') {
+    if (!silent && typeof showToast === 'function') {
       showToast('⛔ Acceso Restringido', 'Debes iniciar sesión con tu cuenta administradora para modificar anuncios.', 'error', 4500);
     }
-    return;
+    return false;
   }
 
-  const inputAd = (document.getElementById('inputAdText')?.value || '').trim();
-  const inputUrl = (document.getElementById('inputAdUrl')?.value || '').trim();
-  const adsMode = document.getElementById('selectAdsMode')?.value || 'local';
+  const pos = (tabName === 'repartidores' || tabName === 'avisos') ? tabName : 'mapa';
+  const inputTitleEl = document.getElementById(`inputAdText_${pos}`);
+  const inputUrlEl = document.getElementById(`inputAdUrl_${pos}`);
+  const selectStateEl = document.getElementById(`selectAdState_${pos}`);
+
+  const inputAd = (inputTitleEl?.value || '').trim();
+  const inputUrl = (inputUrlEl?.value || '').trim();
+  const adState = selectStateEl?.value || 'activo';
+  const isActivo = (adState !== 'inactivo');
 
   if (inputUrl && typeof getSafeExternalUrl === 'function' && !getSafeExternalUrl(inputUrl)) {
-    if (typeof showToast === 'function') {
+    if (!silent && typeof showToast === 'function') {
       showToast('⚠️ Enlace inválido', 'El enlace debe comenzar con https:// o http://', 'warning', 4000);
     }
-    return;
+    return false;
   }
 
   const activeCity = (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba') || 'cochabamba';
   const normCity = String(activeCity).toLowerCase().trim();
-  const isActivo = (adsMode !== 'disabled');
-  const imgUrl = window.pendingUploadUrl || null;
-
-  localStorage.setItem('notigas_ads_mode', adsMode);
-  if (window.ADS_CONFIG) window.ADS_CONFIG.mode = adsMode;
+  const imgUrl = window.pendingUploadUrls ? window.pendingUploadUrls[pos] : null;
 
   if (window.supabaseClient) {
-    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Guardando propaganda local en Supabase...');
-
     try {
       let isSaved = false;
 
-      // 1. Guardar a través de la función RPC con permisos definidos
+      // 1. Guardar a través de RPC con p_posicion
       try {
         const { data: rpcRes, error: rpcErr } = await window.supabaseClient.rpc('rpc_save_local_ad', {
-          p_titulo: inputAd || 'Promociona tu negocio o servicio profesional directamente en tu OTB',
-          p_descripcion: 'Propaganda Local',
+          p_titulo: inputAd || (pos === 'mapa' ? 'Promociona tu negocio o servicio profesional directamente en tu OTB' : (pos === 'repartidores' ? 'Distribución mayorista, repuestos y accesorios autorizados' : 'Servicios técnicos, gasistas matriculados y comercios de barrio')),
+          p_descripcion: `Propaganda Local - ${pos.toUpperCase()}`,
           p_url: inputUrl || '',
           p_image_url: imgUrl || '',
           p_ciudad: normCity,
-          p_activo: isActivo
+          p_activo: isActivo,
+          p_posicion: pos
         });
 
         if (!rpcErr && rpcRes && rpcRes.success) {
@@ -1013,17 +1070,23 @@ async function guardarSubmenuAnuncios() {
           .from('anuncios_globales')
           .select('id')
           .eq('ciudad', normCity)
+          .eq('posicion', pos)
           .limit(1);
 
         const payload = {
-          titulo: inputAd || 'Promociona tu negocio o servicio profesional directamente en tu OTB',
-          descripcion: 'Propaganda Local',
+          titulo: inputAd || (pos === 'mapa' ? 'Promociona tu negocio o servicio profesional directamente en tu OTB' : (pos === 'repartidores' ? 'Distribución mayorista, repuestos y accesorios autorizados' : 'Servicios técnicos, gasistas matriculados y comercios de barrio')),
+          descripcion: `Propaganda Local - ${pos.toUpperCase()}`,
           url: inputUrl || '',
           activo: isActivo,
           ciudad: normCity,
+          posicion: pos,
           created_at: new Date().toISOString()
         };
-        if (imgUrl) payload.image_url = imgUrl;
+        if (imgUrl === '__REMOVE__') {
+          payload.image_url = null;
+        } else if (imgUrl) {
+          payload.image_url = imgUrl;
+        }
 
         let opError = null;
         if (existingAds && existingAds.length > 0) {
@@ -1043,122 +1106,173 @@ async function guardarSubmenuAnuncios() {
         else throw opError;
       }
 
-      if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-      closeAdminModal();
-
-      // Recargar banners y feeds
-      if (typeof cargarAnunciosGuardados === 'function') {
-        await cargarAnunciosGuardados();
-      }
-      if (typeof renderVendorsList === 'function') renderVendorsList();
-      if (typeof renderForumFeed === 'function') renderForumFeed();
-
-      if (typeof showToast === 'function') {
-        showToast('✅ Propaganda Local Guardada', `La propaganda quedó activa en los 3 espacios de ${normCity.toUpperCase()}.`, 'success', 5000);
-      }
+      return true;
     } catch (e) {
-      if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-      console.error("Error al guardar anuncio:", e);
-      if (typeof showToast === 'function') {
-        showToast('❌ Error al guardar', e.message || 'No se pudo guardar la propaganda en Supabase.', 'error', 5000);
+      console.error(`Error al guardar anuncio para ${pos}:`, e);
+      if (!silent && typeof showToast === 'function') {
+        showToast('❌ Error al guardar', e.message || `No se pudo guardar la propaganda de ${pos} en Supabase.`, 'error', 5000);
       }
+      return false;
     }
-  } else {
-    closeAdminModal();
+  }
+  return true;
+}
+window.guardarPropagandaTab = guardarPropagandaTab;
+
+async function guardarSubmenuAnuncios() {
+  const currentTab = window.adminActiveAdTab || 'mapa';
+  if (typeof showLoadingOverlay === 'function') showLoadingOverlay(`Guardando propaganda de ${currentTab.toUpperCase()}...`);
+
+  const ok = await guardarPropagandaTab(currentTab, false);
+  if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+
+  if (ok) {
+    if (typeof cargarAnunciosGuardados === 'function') await cargarAnunciosGuardados();
+    if (typeof renderAdminAdsAndPostsList === 'function') renderAdminAdsAndPostsList();
+    if (typeof renderVendorsList === 'function') renderVendorsList();
+    if (typeof renderForumFeed === 'function') renderForumFeed();
+
+    const activeCity = (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba') || 'cochabamba';
     if (typeof showToast === 'function') {
-      showToast('Guardado Local', 'Configuración guardada en el dispositivo.', 'info', 3500);
+      showToast('✅ Propaganda Guardada', `La propaganda de la pestaña ${currentTab.toUpperCase()} quedó actualizada en ${activeCity.toUpperCase()}.`, 'success', 4500);
     }
   }
 }
+window.guardarSubmenuAnuncios = guardarSubmenuAnuncios;
+
+async function guardarTodasLasPropagandas() {
+  if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Guardando propaganda de las 3 pestañas...');
+
+  const ok1 = await guardarPropagandaTab('mapa', true);
+  const ok2 = await guardarPropagandaTab('repartidores', true);
+  const ok3 = await guardarPropagandaTab('avisos', true);
+
+  if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+
+  if (typeof cargarAnunciosGuardados === 'function') await cargarAnunciosGuardados();
+  if (typeof renderAdminAdsAndPostsList === 'function') renderAdminAdsAndPostsList();
+  if (typeof renderVendorsList === 'function') renderVendorsList();
+  if (typeof renderForumFeed === 'function') renderForumFeed();
+
+  const activeCity = (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba') || 'cochabamba';
+  if (ok1 && ok2 && ok3) {
+    if (typeof showToast === 'function') {
+      showToast('✅ 3 Pestañas Actualizadas', `Las propagandas para Mapa, Repartidores y Avisos Gratis quedaron activas en ${activeCity.toUpperCase()}.`, 'success', 5000);
+    }
+  } else {
+    if (typeof showToast === 'function') {
+      showToast('⚠️ Aviso de Guardado', 'Se procesó la propaganda de las 3 pestañas. Revisa la lista inferior para confirmar.', 'info', 4000);
+    }
+  }
+}
+window.guardarTodasLasPropagandas = guardarTodasLasPropagandas;
 
 // ---------------------------------------------------------
-
-// FUNCIONES DE ADMINISTRACIÓN DE ANUNCIOS
-
+// FUNCIONES DE ADMINISTRACIÓN DE ANUNCIOS E IMÁGENES
 // ---------------------------------------------------------
 
-window.pendingUploadUrl = null;
-
-window.previewUploadAdImage = async function(event) {
+window.previewUploadAdImage = async function(event, specificTab) {
+  const pos = specificTab || window.adminActiveAdTab || 'mapa';
   const file = event.target.files && event.target.files[0];
-
   if (!file) return;
 
   if (file.size > 2 * 1024 * 1024) {
     if (typeof showToast === 'function') showToast('⚠️ Imagen Pesada', 'La imagen supera los 2 MB. Elige una más ligera.', 'warning', 3000);
-
     return;
-
   }
 
   if (window.supabaseClient) {
-    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Subiendo imagen...');
+    if (typeof showLoadingOverlay === 'function') showLoadingOverlay(`Subiendo imagen para ${pos}...`);
 
-    const fileName = `banner_${Date.now()}.${file.name.split('.').pop()}`;
+    const ext = file.name.split('.').pop() || 'png';
+    const fileName = `banner_${pos}_${Date.now()}.${ext}`;
 
     const { data, error } = await window.supabaseClient.storage
-
       .from('anuncios-media')
-
       .upload(fileName, file, { upsert: true, contentType: file.type });
 
     if (error) {
       console.error('Error al subir imagen:', error);
-
-      if (typeof showToast === 'function') showToast('Error', 'No se pudo subir la imagen.', 'error');
-
+      if (typeof showToast === 'function') showToast('Error', 'No se pudo subir la imagen: ' + error.message, 'error');
     } else {
       const { data: publicUrlData } = window.supabaseClient.storage.from('anuncios-media').getPublicUrl(fileName);
+      const publicUrl = publicUrlData?.publicUrl || '';
 
-      window.pendingUploadUrl = publicUrlData.publicUrl;
+      if (!window.pendingUploadUrls) {
+        window.pendingUploadUrls = { mapa: null, repartidores: null, avisos: null };
+      }
+      window.pendingUploadUrls[pos] = publicUrl;
 
-      const preview = document.getElementById('adImagePreview');
-
-      const box = document.getElementById('adImagePreviewBox');
-
+      const preview = document.getElementById(`adImagePreview_${pos}`);
+      const box = document.getElementById(`adImagePreviewBox_${pos}`);
       if (preview && box) {
-        preview.src = window.pendingUploadUrl;
-
+        preview.src = publicUrl;
         box.style.display = 'flex';
-
       }
 
-      if (typeof showToast === 'function') showToast('Éxito', 'Imagen subida al servidor.', 'success');
-
+      if (typeof showToast === 'function') showToast('Éxito', `Imagen cargada para pestaña ${pos.toUpperCase()}.`, 'success', 3000);
     }
 
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-
   }
 };
 
-window.eliminarImagenAnuncio = async function() {
-  // Try to delete from storage if there is a pending URL
+window.eliminarImagenAnuncio = async function(specificTab) {
+  const pos = specificTab || window.adminActiveAdTab || 'mapa';
 
-  if (window.pendingUploadUrl && window.supabaseClient) {
-     const urlParts = window.pendingUploadUrl.split('/');
-
-     const fileName = urlParts[urlParts.length - 1];
-
-     await window.supabaseClient.storage.from('anuncios-media').remove([fileName]);
-
+  if (window.pendingUploadUrls && window.pendingUploadUrls[pos] && window.supabaseClient) {
+    try {
+      const urlParts = window.pendingUploadUrls[pos].split('/');
+      const fileName = urlParts[urlParts.length - 1];
+      if (fileName) {
+        await window.supabaseClient.storage.from('anuncios-media').remove([fileName]);
+      }
+    } catch (_) {}
   }
 
-  window.pendingUploadUrl = null;
+  if (!window.pendingUploadUrls) {
+    window.pendingUploadUrls = { mapa: null, repartidores: null, avisos: null };
+  }
+  window.pendingUploadUrls[pos] = '__REMOVE__';
 
-  const preview = document.getElementById('adImagePreview');
-
-  const box = document.getElementById('adImagePreviewBox');
-
-  const input = document.getElementById('inputAdImageFile');
+  const preview = document.getElementById(`adImagePreview_${pos}`);
+  const box = document.getElementById(`adImagePreviewBox_${pos}`);
+  const input = document.getElementById(`inputAdImageFile_${pos}`);
 
   if (preview) preview.src = '';
-
   if (box) box.style.display = 'none';
-
   if (input) input.value = '';
 
-  if (typeof showToast === 'function') showToast('Eliminada', 'La imagen ha sido descartada.', 'info');
+  if (typeof showToast === 'function') showToast('Eliminada', `Imagen descartada para la pestaña ${pos.toUpperCase()}.`, 'info', 3000);
+};
+
+window.borrarAnuncioLocalAdmin = async function(adId) {
+  const currentAdmin = getVerifiedAdminEmail();
+  if (!currentAdmin) {
+    if (typeof showToast === 'function') showToast('⛔ Acceso Restringido', 'Debes iniciar sesión con tu cuenta administradora.', 'error', 4000);
+    return;
+  }
+
+  if (!confirm('🗑️ ¿Deseas eliminar permanentemente esta propaganda local?')) return;
+
+  if (window.supabaseClient && adId) {
+    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Eliminando propaganda...');
+    const { error } = await window.supabaseClient
+      .from('anuncios_globales')
+      .delete()
+      .eq('id', adId);
+
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+
+    if (error) {
+      if (typeof showToast === 'function') showToast('Error', 'No se pudo eliminar: ' + error.message, 'error', 4000);
+    } else {
+      if (typeof showToast === 'function') showToast('✅ Eliminada', 'Propaganda eliminada correctamente.', 'success', 3500);
+      await cargarConfiguracionPublicidadEnAdmin();
+      renderAdminAdsAndPostsList();
+      if (typeof cargarAnunciosGuardados === 'function') await cargarAnunciosGuardados();
+    }
+  }
 };
 
 function guardarAdminConfig() {

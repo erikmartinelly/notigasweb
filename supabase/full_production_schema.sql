@@ -135,6 +135,7 @@ CREATE TABLE IF NOT EXISTS public.anuncios_globales (
     imagen_url text,
     image_url text,
     activo boolean DEFAULT true,
+    posicion text NOT NULL DEFAULT 'mapa' CHECK (posicion IN ('mapa', 'repartidores', 'avisos')),
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
