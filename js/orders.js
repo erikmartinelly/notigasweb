@@ -604,10 +604,9 @@ function checkActiveOrderStatus() {
   const buyerActions = document.getElementById('buyerFloatingActions');
 
   const activeOrder = AppState.get('activeOrder');
-  const isAdmin = AppState.get('isAdmin');
   const appMode = (typeof AppState !== 'undefined' ? AppState.get('appMode') : 'buyer') || 'buyer';
 
-  if (activeOrder && !isAdmin && appMode === 'buyer') {
+  if (activeOrder && appMode === 'buyer') {
     try {
       const order = (typeof activeOrder === 'string') ? JSON.parse(activeOrder) : activeOrder;
       const estado = String(order.estado || 'pendiente').toLowerCase();
@@ -797,7 +796,10 @@ function confirmarPedido() {
         return;
       }
 
+      clearTimeout(_activeOrderFinalTimer);
+      _activeOrderFinalTimer = null;
       orderData.id = data.id;
+      orderData.user_id = userId;
       AppState.set('activeOrder', orderData);
       closePedidoModal();
       showToast('¡Pedido Publicado!', 'Tu pedido ya está visible para los repartidores en el mapa.', 'success', 5000);
