@@ -111,6 +111,13 @@ function abrirConfiguracionSegunRol() {
     }
   }
 
+  // Visibilidad del botón de acceso a Administrador exclusiva para administradores autenticados
+  const btnAdmin = document.getElementById('btnAdminAccessQuick');
+  if (btnAdmin) {
+    const isAdmin = (typeof AppState !== 'undefined') && AppState.get('isAdmin') === true;
+    btnAdmin.style.display = isAdmin ? 'flex' : 'none';
+  }
+
   const modal = document.getElementById('modalUserSettings');
   if (modal) modal.style.display = 'flex';
 }

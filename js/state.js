@@ -184,11 +184,12 @@ window.loadAdsModule = async function() {
             if (!bootErr && bootData) {
               driverData = bootData.driver || null;
               profileData = bootData.profile || null;
-              if (bootData.is_admin) {
-                _state['isAdmin'] = true;
-                window._cachedIsAdmin = true;
-                window._cachedAdminEmail = (user.email || '').toLowerCase().trim();
-              }
+              const isAdm = Boolean(bootData.is_admin);
+              _state['isAdmin'] = isAdm;
+              window._cachedIsAdmin = isAdm;
+              window._cachedAdminEmail = isAdm ? (user.email || '').toLowerCase().trim() : null;
+              const btnAdmin = document.getElementById('btnAdminAccessQuick');
+              if (btnAdmin) btnAdmin.style.display = isAdm ? 'flex' : 'none';
             }
           } catch (_) {}
 

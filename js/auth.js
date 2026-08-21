@@ -1052,6 +1052,11 @@ async function ejecutarCierreSesionUsuario() {
     AppState.set('activeOrder', null);
     AppState.set('isAdmin', false);
     AppState.set('userRole', 'vecino');
+    window._cachedIsAdmin = false;
+    window._cachedAdminEmail = null;
+    window._verifiedAdminEmail = null;
+    const btnAdmin = document.getElementById('btnAdminAccessQuick');
+    if (btnAdmin) btnAdmin.style.display = 'none';
 
     closeUserSettingsModal();
     if (typeof closeDriverModal === 'function') closeDriverModal();
