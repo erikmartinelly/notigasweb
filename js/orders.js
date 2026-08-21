@@ -68,6 +68,9 @@ async function renderDriverOrdersList() {
     ? window.normalizeCategoryCode(driverCategoria)
     : String(driverCategoria).toLowerCase().trim();
 
+  const expirationMs = (window.NOTIGAS && window.NOTIGAS.ORDER_EXPIRATION_MS) ? window.NOTIGAS.ORDER_EXPIRATION_MS : 48 * 60 * 60 * 1000;
+  const activeWindow = new Date(Date.now() - expirationMs).toISOString();
+
   // 1. Pedidos disponibles desde la vista pública (filtrado estricto por ciudad y categoría del chofer)
   let pubQuery = window.supabaseClient
     .from('pedidos_publicos')
