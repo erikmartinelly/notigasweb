@@ -2,13 +2,13 @@
 
 NOTIGAS is a dynamic, high-performance Progressive Web Application (PWA) for community-driven logistics and real-time geolocation. It is designed to connect neighborhood buyers with local delivery drivers and distributors via a live interactive map. The browser receives web assets directly from hosting, while all dynamic real-time operations are powered by Supabase (Auth, PostgreSQL, PostGIS, and Realtime WebSockets).
 
-Engineered with **Vanilla JavaScript**, **Supabase PostgreSQL with PostGIS**, and Google developer technologies. Approximately **80% of the application was built and refined using Google Antigravity**.
+Engineered with **Vanilla JavaScript**, **Supabase PostgreSQL with PostGIS**, and Google developer technologies. Over **80% of the application was built, architected, and continuously refined using the Gemini 3.7 Flash AI model** (powered via Google Antigravity).
 
 ---
 
 ## 🌟 Project Identity & Google Technologies
 
-* 🤖 **80% Developed with Google Antigravity:** The core architecture, iterative refactoring, and technical hardening of NOTIGAS were built with **Google Antigravity**, tailored to a neighborhood-scale real-time logistics model.
+* 🤖 **80% Built with Gemini 3.7 Flash & Google Antigravity:** The core architecture, full-stack database triggers, real-time spatial algorithms, iterative refactoring, and technical hardening of NOTIGAS were built with the **Gemini 3.7 Flash** model through **Google Antigravity**, tailored to a neighborhood-scale real-time logistics model.
 * 🔑 **Google Identity Services (Google Sign-In & OAuth 2.0):** Rapid, secure, frictionless authentication using Google accounts for buyers and drivers, seamlessly integrated with Supabase Auth and JWT verification.
 * 🗺️ **Turn-by-Turn Navigation with Google Maps:** Once a driver selects and is assigned an order, the system launches **Google Maps** with pre-configured coordinates for direct turn-by-turn routing to the destination.
 * 🎨 **Google Maps Visual Aesthetics:** The in-app map interface features a clean, high-contrast visual layout, crisp white floating controls, and a subtle cartographic palette inspired by the Google Maps user experience.
@@ -45,7 +45,7 @@ NOTIGAS bridges this gap by democratizing access to modern geospatial logistics 
 
 | Layer | Technology |
 | :--- | :--- |
-| **Engineering & AI** | **Google Antigravity (AGY)** (Agentic software development, refactoring, and code generation) |
+| **Engineering & AI Model** | **Gemini 3.7 Flash** (via Google Antigravity - Autonomous software engineering, architecture, and code generation for 80%+ of the project) |
 | **Authentication** | **Google Identity Services** (Google OAuth 2.0 & One-Tap) + Supabase Auth |
 | **Navigation** | **Google Maps** (External route guidance for assigned delivery drivers) |
 | **Web Platform** | Google Chrome, PWA, HTML5, CSS3, and Vanilla JavaScript |

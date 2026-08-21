@@ -98,12 +98,38 @@ const truckSvgMarkerHtml = `
   </div>
 `;
 
-// PUNTO AZUL DE UBICACIÓN GPS AUTÉNTICO DE GOOGLE MAPS
+// MARCADOR DE UBICACIÓN CASA DEL COMPRADOR (PUNTO DE ENTREGA CON CASA)
 const userLocationSvgHtml = `
-  <div class="google-blue-dot-marker" title="Tu ubicación. Arrastra para moverla manualmente">
-    <div class="google-blue-dot-pulse"></div>
-    <div class="google-blue-dot-core"></div>
-    <span class="manual-location-handle" aria-hidden="true"><i class="fa-solid fa-hand-pointer"></i></span>
+  <div class="buyer-house-marker" title="Tu casa / Lugar de entrega. Arrastra a tu puerta exacta">
+    <div class="buyer-house-pulse"></div>
+    <div class="buyer-house-pin">
+      <svg viewBox="0 0 48 58" width="48" height="58" class="buyer-house-svg">
+        <defs>
+          <filter id="housePinShadow" x="-30%" y="-20%" width="160%" height="150%">
+            <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#0F172A" flood-opacity="0.45"/>
+          </filter>
+          <linearGradient id="housePinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#0284C7"/>
+            <stop offset="50%" stop-color="#0369A1"/>
+            <stop offset="100%" stop-color="#075985"/>
+          </linearGradient>
+        </defs>
+        <!-- Forma de Pin apuntando a coordenada exacta (24, 56) -->
+        <path d="M 24 56 C 24 56 6 36 6 22 C 6 11 14 3 24 3 C 34 3 42 11 42 22 C 42 36 24 56 24 56 Z" fill="url(#housePinGrad)" filter="url(#housePinShadow)"/>
+        <!-- Círculo interior blanco -->
+        <circle cx="24" cy="22" r="14" fill="#FFFFFF"/>
+        <!-- Silueta de Casa en Azul Notigas -->
+        <!-- Techo y Fachada -->
+        <path d="M 24 12.5 L 14.5 20.5 L 17 20.5 L 17 29.5 L 31 29.5 L 31 20.5 L 33.5 20.5 Z" fill="#0284C7"/>
+        <!-- Chimenea -->
+        <rect x="28.5" y="13.5" width="2.5" height="4.5" fill="#0369A1"/>
+        <!-- Puerta -->
+        <rect x="22" y="23" width="4" height="6.5" rx="0.8" fill="#F8FAFC"/>
+        <!-- Ventana -->
+        <rect x="27" y="21.5" width="3" height="3" rx="0.6" fill="#F8FAFC"/>
+      </svg>
+      <span class="manual-location-handle" aria-hidden="true"><i class="fa-solid fa-hand-pointer"></i></span>
+    </div>
   </div>
 `;
 
@@ -1483,16 +1509,16 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
     }
 
     userMarker.bindPopup(`
-      <div class="google-infowindow-content">
-        <strong style="color:#EA4335; font-size:13px;">📍 Ubicación de Entrega</strong><br>
+      <div class="google-infowindow-content" style="text-align:center; padding:4px;">
+        <strong style="color:#0284C7; font-size:13px;">🏠 Mi Casa (Punto de Entrega)</strong><br>
         <span style="font-size:11px; color:#5F6368;">Arrastra el marcador a la puerta exacta de tu casa</span>
       </div>
     `);
     const isMobileDevice = (typeof navigator !== 'undefined' && navigator.userAgent) ? /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) : false;
-    const tooltipMsg = isMobileDevice ? 'Arrástrame a tu puerta' : '📍 Clic en el mapa o arrastra a tu puerta';
+    const tooltipMsg = isMobileDevice ? '🏠 Arrástrame a tu puerta' : '🏠 Clic en el mapa o arrastra a tu puerta';
     userMarker.bindTooltip(tooltipMsg, {
       direction: 'top',
-      offset: [0, -22],
+      offset: [0, -54],
       className: 'manual-location-tooltip'
     });
 
@@ -1943,8 +1969,10 @@ function initNotigasMap() {
   userLocationIcon = L.divIcon({
     className: 'user-location-marker-container',
     html: userLocationSvgHtml,
-    iconSize: [56, 56],
-    iconAnchor: [28, 28]
+    iconSize: [48, 58],
+    iconAnchor: [24, 56],
+    popupAnchor: [0, -52],
+    tooltipAnchor: [0, -52]
   });
 
   deliveryPinIcon = L.divIcon({
