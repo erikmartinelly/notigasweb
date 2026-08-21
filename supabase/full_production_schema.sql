@@ -1,7 +1,7 @@
 -- ==============================================================================
 -- NOTIGAS - CONSOLIDATED FULL PRODUCTION DATABASE SCHEMA
 -- Compatible con PostgreSQL 15+ y Supabase Auth / Storage / Realtime
--- Versión Oficial Consolidada de Producción (Incluye Migraciones 001 hasta 079)
+-- Versión Oficial Consolidada de Producción (Incluye Migraciones 001 hasta 080)
 -- ==============================================================================
 
 -- ==============================================================================
@@ -267,6 +267,10 @@ SELECT
         WHEN p.user_id = (SELECT auth.uid())::text OR p.driver_id = (SELECT auth.uid())::text OR public.is_admin_email() THEN p.titulo
         ELSE 'Pedido Vecinal'::text
     END AS titulo,
+    CASE
+        WHEN p.user_id = (SELECT auth.uid())::text OR p.driver_id = (SELECT auth.uid())::text OR public.is_admin_email() OR public.is_current_enabled_driver(p.ciudad, p.categoria) THEN p.descripcion
+        ELSE NULL::text
+    END AS descripcion,
     p.cantidad,
     CASE
         WHEN p.user_id = (SELECT auth.uid())::text OR p.driver_id = (SELECT auth.uid())::text OR public.is_admin_email() THEN p.direccion
