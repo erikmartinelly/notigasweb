@@ -1737,7 +1737,15 @@ async function cambiarCiudadCapital(cityKey) {
     renderDriverOrdersList();
   }
 
-  if (typeof showToast === 'function') {
+  const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
+  const isDriver = (u.role === 'repartidor') || ((typeof AppState !== 'undefined') && AppState.get('appMode') === 'driver');
+  const driverCity = (u.ciudad) ? String(u.ciudad).toLowerCase().trim() : null;
+
+  if (isDriver && driverCity && mun.key !== driverCity) {
+    if (typeof showToast === 'function') {
+      showToast('📍 Explorando Mapa', `Visualizando ${mun.nombre || mun.key}. Tus pedidos y radar de entrega operan en tu ciudad registrada (${u.ciudad}).`, 'warning', 4000);
+    }
+  } else if (typeof showToast === 'function') {
     showToast('📍 Ciudad Actualizada', `Operando en ${mun.nombre || mun.key}`, 'info', 2500);
   }
 }

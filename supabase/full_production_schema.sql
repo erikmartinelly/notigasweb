@@ -1,7 +1,7 @@
 -- ==============================================================================
 -- NOTIGAS - CONSOLIDATED FULL PRODUCTION DATABASE SCHEMA
 -- Compatible con PostgreSQL 15+ y Supabase Auth / Storage / Realtime
--- Versión Oficial Consolidada de Producción (Incluye Migraciones 001 hasta 080)
+-- Versión Oficial Consolidada de Producción (Incluye Migraciones 001 hasta 081)
 -- ==============================================================================
 
 -- ==============================================================================
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS public.pedidos (
     descripcion text,
     cantidad text DEFAULT '1 unidad',
     direccion text NOT NULL,
-    telefono text NOT NULL,
+    telefono text DEFAULT '',
     estado text NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'visto', 'asignado', 'entregado', 'cancelado', 'recibido')),
     driver_id text,
     ciudad text NOT NULL DEFAULT 'cochabamba',
@@ -264,20 +264,36 @@ SELECT
     END AS user_id,
     p.categoria,
     CASE
-        WHEN p.user_id = (SELECT auth.uid())::text OR p.driver_id = (SELECT auth.uid())::text OR public.is_admin_email() THEN p.titulo
+        WHEN p.user_id = (SELECT auth.uid())::text 
+          OR p.driver_id = (SELECT auth.uid())::text 
+          OR public.is_admin_email() 
+          OR public.is_current_enabled_driver(p.ciudad, p.categoria) 
+        THEN p.titulo
         ELSE 'Pedido Vecinal'::text
     END AS titulo,
     CASE
-        WHEN p.user_id = (SELECT auth.uid())::text OR p.driver_id = (SELECT auth.uid())::text OR public.is_admin_email() OR public.is_current_enabled_driver(p.ciudad, p.categoria) THEN p.descripcion
+        WHEN p.user_id = (SELECT auth.uid())::text 
+          OR p.driver_id = (SELECT auth.uid())::text 
+          OR public.is_admin_email() 
+          OR public.is_current_enabled_driver(p.ciudad, p.categoria) 
+        THEN p.descripcion
         ELSE NULL::text
     END AS descripcion,
     p.cantidad,
     CASE
-        WHEN p.user_id = (SELECT auth.uid())::text OR p.driver_id = (SELECT auth.uid())::text OR public.is_admin_email() THEN p.direccion
+        WHEN p.user_id = (SELECT auth.uid())::text 
+          OR p.driver_id = (SELECT auth.uid())::text 
+          OR public.is_admin_email() 
+          OR public.is_current_enabled_driver(p.ciudad, p.categoria) 
+        THEN p.direccion
         ELSE COALESCE(p.barrio_otb, 'Zona indicada en el mapa')
     END AS direccion,
     CASE
-        WHEN p.user_id = (SELECT auth.uid())::text OR p.driver_id = (SELECT auth.uid())::text OR public.is_admin_email() THEN p.telefono
+        WHEN p.user_id = (SELECT auth.uid())::text 
+          OR p.driver_id = (SELECT auth.uid())::text 
+          OR public.is_admin_email() 
+          OR public.is_current_enabled_driver(p.ciudad, p.categoria) 
+        THEN p.telefono
         ELSE NULL::text
     END AS telefono,
     p.estado,
@@ -358,7 +374,7 @@ AS $$
   );
 $$;
 
--- C. Verificación de Repartidor Habilitado en Ciudad/Categoría Específica
+-- C. Verificación de Repartidor Habilitado en Ciudad/Categoría Específica (Estricta sin comodines)
 CREATE OR REPLACE FUNCTION public.is_current_enabled_driver(p_ciudad text DEFAULT NULL, p_categoria text DEFAULT NULL)
 RETURNS boolean
 LANGUAGE sql
@@ -372,11 +388,12 @@ AS $$
       AND LOWER(TRIM(COALESCE(ch.estado_verificacion, ''))) = 'aprobado'
       AND (p_ciudad IS NULL OR LOWER(TRIM(ch.ciudad)) = LOWER(TRIM(p_ciudad)))
       AND (
-        p_categoria IS NULL
-        OR LOWER(TRIM(ch.categoria)) IN ('todos', 'otros')
-        OR LOWER(TRIM(ch.categoria)) = LOWER(TRIM(p_categoria))
-        OR (LOWER(TRIM(ch.categoria)) IN ('gas', 'gas glp') AND LOWER(TRIM(p_categoria)) IN ('gas', 'gas glp', 'garrafa'))
-        OR (LOWER(TRIM(ch.categoria)) IN ('agua', 'agua potable') AND LOWER(TRIM(p_categoria)) IN ('agua', 'agua potable', 'botellon'))
+        p_categoria IS NOT NULL
+        AND (
+          LOWER(TRIM(ch.categoria)) = LOWER(TRIM(p_categoria))
+          OR (LOWER(TRIM(ch.categoria)) IN ('gas', 'gas glp', 'garrafa', 'glp') AND LOWER(TRIM(p_categoria)) IN ('gas', 'gas glp', 'garrafa', 'glp'))
+          OR (LOWER(TRIM(ch.categoria)) IN ('agua', 'agua potable', 'botellon') AND LOWER(TRIM(p_categoria)) IN ('agua', 'agua potable', 'botellon'))
+        )
       )
       AND NOT EXISTS (
         SELECT 1 FROM public.usuarios_baneados ub WHERE ub.user_id = ch.user_id
@@ -877,7 +894,7 @@ BEGIN
         v_driver_cat := 'agua';
     END IF;
 
-    IF v_order_cat <> v_driver_cat AND v_driver_cat <> 'otros' AND v_order_cat <> 'otros' THEN
+    IF v_order_cat <> v_driver_cat THEN
         RAISE EXCEPTION 'El pedido no corresponde a la categoría del repartidor';
     END IF;
 

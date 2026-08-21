@@ -777,7 +777,7 @@ function confirmarPedido() {
     cantidad: cantidad ? `${cantidad} un` : '1 un',
     direccion: calle || 'Ubicación GPS indicada en el mapa',
     callePrincipal: calle || 'Ubicación GPS indicada en el mapa',
-    telefono: telefono || null,
+    telefono: telefono || '',
     latitude: lat,
     longitude: lng,
     lat,
