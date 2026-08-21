@@ -1,7 +1,7 @@
 -- ==============================================================================
 -- NOTIGAS - CONSOLIDATED FULL PRODUCTION DATABASE SCHEMA
 -- Compatible con PostgreSQL 15+ y Supabase Auth / Storage / Realtime
--- Versión Oficial Consolidada de Producción (Incluye Migraciones 001 hasta 081)
+-- Versión Oficial Consolidada de Producción (Incluye Migraciones 001 hasta 082)
 -- ==============================================================================
 
 -- ==============================================================================
@@ -1085,7 +1085,10 @@ BEGIN
 END;
 $$;
 
--- H. Listar Pedidos Disponibles para Chofer (Protección Estricta de Privacidad)
+-- H. Listar Pedidos Disponibles para Chofer (Demanda Colectiva y Categoría Estricta)
+DROP FUNCTION IF EXISTS public.rpc_get_driver_available_orders(text, text);
+DROP FUNCTION IF EXISTS public.rpc_get_driver_available_orders();
+
 CREATE OR REPLACE FUNCTION public.rpc_get_driver_available_orders(
     p_ciudad text DEFAULT NULL::text,
     p_categoria text DEFAULT NULL::text
@@ -1097,6 +1100,8 @@ RETURNS TABLE(
     categoria text,
     cantidad text,
     direccion text,
+    telefono text,
+    descripcion text,
     barrio_otb text,
     latitude double precision,
     longitude double precision,
@@ -1136,7 +1141,9 @@ BEGIN
         p.titulo,
         p.categoria,
         COALESCE(NULLIF(TRIM(p.cantidad), ''), '1 unidad'),
-        COALESCE(NULLIF(TRIM(p.barrio_otb), ''), 'Zona indicada en el mapa') AS direccion,
+        p.direccion,
+        p.telefono,
+        p.descripcion,
         COALESCE(NULLIF(TRIM(p.barrio_otb), ''), 'Zona indicada en el mapa') AS barrio_otb,
         p.latitude,
         p.longitude,
@@ -1147,13 +1154,7 @@ BEGIN
     WHERE p.estado IN ('pendiente', 'visto')
       AND p.driver_id IS NULL
       AND LOWER(TRIM(p.ciudad)) = LOWER(TRIM(v_driver.ciudad))
-      AND (
-          v_driver.categoria IS NULL
-          OR LOWER(TRIM(v_driver.categoria)) IN ('todos', 'otros')
-          OR LOWER(TRIM(p.categoria)) = LOWER(TRIM(v_driver.categoria))
-          OR (LOWER(TRIM(v_driver.categoria)) IN ('gas', 'gas glp') AND LOWER(TRIM(p.categoria)) IN ('gas', 'gas glp', 'garrafa'))
-          OR (LOWER(TRIM(v_driver.categoria)) IN ('agua', 'agua potable') AND LOWER(TRIM(p.categoria)) IN ('agua', 'agua potable', 'botellon'))
-      )
+      AND public.is_current_enabled_driver(p.ciudad, p.categoria)
       AND NOT EXISTS (
           SELECT 1 FROM public.usuarios_baneados ub WHERE ub.user_id = p.user_id
       )
@@ -1910,5 +1911,5 @@ GRANT EXECUTE ON FUNCTION public.rpc_crear_aviso_vecinal(text, text, text, text,
 GRANT EXECUTE ON FUNCTION public.rpc_agregar_comentario_aviso(uuid, text, text) TO authenticated;
 
 -- ==============================================================================
--- FIN DEL ESQUEMA CONSOLIDADO OFICIAL DE PRODUCCIÓN (NOTIGAS v078)
+-- FIN DEL ESQUEMA CONSOLIDADO OFICIAL DE PRODUCCIÓN (NOTIGAS v082)
 -- ==============================================================================

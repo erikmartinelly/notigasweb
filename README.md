@@ -82,8 +82,8 @@ NOTIGAS bridges this gap by democratizing access to modern geospatial logistics 
 ├── styles/
 │   └── main.css            # Application design tokens, responsive layouts, and Google Maps-inspired UI
 ├── supabase/
-│   ├── full_production_schema.sql # CONSOLIDATED PRODUCTION SCHEMA (1-Click Database Deployment - v081)
-│   └── migrations/         # Historical incremental migrations (001 through 081)
+│   ├── full_production_schema.sql # CONSOLIDATED PRODUCTION SCHEMA (1-Click Database Deployment - v082)
+│   └── migrations/         # Historical incremental migrations (001 through 082)
 └── .github/
     └── workflows/ci.yml    # CI automated syntax & integrity verification
 ```
@@ -100,8 +100,8 @@ cd notigasweb
 
 ### 2. Configure Database & Backend (Supabase)
 * Create a new project at [Supabase](https://supabase.com/).
-* **Option A (Recommended - 1-Click Deployment):** Execute [`supabase/full_production_schema.sql`](supabase/full_production_schema.sql) in the Supabase SQL Editor. This single script provisions all tables, PostGIS extensions, public views, spatial clustering, automated triggers, strict category/city isolation, atomic RPC functions, and Row Level Security (RLS) policies through version `081`.
-* **Option B (Incremental Migrations):** Run the migration files inside `supabase/migrations/` in sequential order through `081`.
+* **Option A (Recommended - 1-Click Deployment):** Execute [`supabase/full_production_schema.sql`](supabase/full_production_schema.sql) in the Supabase SQL Editor. This single script provisions all tables, PostGIS extensions, public views, spatial clustering, automated triggers, strict category/city isolation, atomic RPC functions, and Row Level Security (RLS) policies through version `082`.
+* **Option B (Incremental Migrations):** Run the migration files inside `supabase/migrations/` in sequential order through `082`.
 * Open `js/supabase-config.js` and input your `supabaseUrl` and `supabaseAnonKey`.
 
 ### 3. Configure Google Identity Services & Auth
@@ -136,7 +136,7 @@ node server.js
 
 ### Database & Row Level Security (RLS)
 * **Strict Row Level Security:** RLS is enforced across all tables in the `public` schema. Buyers can only modify their own orders, and verified drivers only access active demand points within their category and city.
-* **5-State Finite State Machine:** Enforces order transitions (`pendiente` → `visto` → `asignado` → `entregado` / `cancelado`) strictly protected by database triggers (`trg_check_pedido_transition` & `guard_pedido_mutation`).
+* **6-State Finite State Machine:** Enforces canonical order lifecycle transitions (`pendiente` → `visto` → `asignado` → `entregado` / `recibido` / `cancelado`) strictly validated by database triggers (`trg_check_pedido_transition` & `guard_pedido_mutation`).
 * **Automated Terminal Record Purge:** Cancelled and delivered orders are automatically swept by `rpc_purge_old_records()`, keeping PostgreSQL clean, optimized, and free of obsolete clutter.
 * **Live GPS Telemetry (`rutas_repartidores`):** Atomic upserts per driver (`user_id`, `last_active`) with automated pruning of inactive telemetry.
 * **Atomic RPC Functions (`SECURITY DEFINER` with `search_path = public`):**
