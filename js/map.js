@@ -1041,7 +1041,7 @@ function agregarPedidoVecinoEnMapa(order) {
   let currentIcon = null;
   if (order.estado === 'entregado') {
      currentIcon = garrafaGreenIcon;
-  } else if (order.visto === true) {
+  } else if (order.visto === true || order.estado === 'visto') {
      currentIcon = garrafaYellowIcon;
   } else if (typeof obtenerIconoCategoriaMapa === 'function') {
      currentIcon = obtenerIconoCategoriaMapa(order.categoria);

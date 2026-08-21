@@ -1,7 +1,7 @@
 -- ==============================================================================
 -- NOTIGAS - CONSOLIDATED FULL PRODUCTION DATABASE SCHEMA
 -- Compatible con PostgreSQL 15+ y Supabase Auth / Storage / Realtime
--- Versión Oficial Consolidada de Producción (Incluye Migraciones 001 hasta 075)
+-- Versión Oficial Consolidada de Producción (Incluye Migraciones 001 hasta 078)
 -- ==============================================================================
 
 -- ==============================================================================
@@ -264,16 +264,16 @@ SELECT
     END AS user_id,
     p.categoria,
     CASE
-        WHEN p.user_id = (SELECT auth.uid())::text OR public.is_current_enabled_driver(p.ciudad, NULL) THEN p.titulo
+        WHEN p.user_id = (SELECT auth.uid())::text OR p.driver_id = (SELECT auth.uid())::text OR public.is_admin_email() THEN p.titulo
         ELSE 'Pedido Vecinal'::text
     END AS titulo,
     p.cantidad,
     CASE
-        WHEN p.user_id = (SELECT auth.uid())::text OR public.is_current_enabled_driver(p.ciudad, NULL) THEN p.direccion
-        ELSE NULL::text
+        WHEN p.user_id = (SELECT auth.uid())::text OR p.driver_id = (SELECT auth.uid())::text OR public.is_admin_email() THEN p.direccion
+        ELSE COALESCE(p.barrio_otb, 'Zona indicada en el mapa')
     END AS direccion,
     CASE
-        WHEN p.user_id = (SELECT auth.uid())::text OR public.is_current_enabled_driver(p.ciudad, NULL) THEN p.telefono
+        WHEN p.user_id = (SELECT auth.uid())::text OR p.driver_id = (SELECT auth.uid())::text OR public.is_admin_email() THEN p.telefono
         ELSE NULL::text
     END AS telefono,
     p.estado,
@@ -284,11 +284,11 @@ SELECT
     p.ciudad,
     COALESCE(p.barrio_otb, 'Zona indicada en el mapa') AS barrio_otb,
     CASE
-        WHEN p.user_id = (SELECT auth.uid())::text OR public.is_current_enabled_driver(p.ciudad, NULL) THEN p.latitude
+        WHEN p.user_id = (SELECT auth.uid())::text OR p.driver_id = (SELECT auth.uid())::text OR public.is_current_enabled_driver(p.ciudad, p.categoria) THEN p.latitude
         ELSE round(p.latitude::numeric, 3)::double precision
     END AS latitude,
     CASE
-        WHEN p.user_id = (SELECT auth.uid())::text OR public.is_current_enabled_driver(p.ciudad, NULL) THEN p.longitude
+        WHEN p.user_id = (SELECT auth.uid())::text OR p.driver_id = (SELECT auth.uid())::text OR public.is_current_enabled_driver(p.ciudad, p.categoria) THEN p.longitude
         ELSE round(p.longitude::numeric, 3)::double precision
     END AS longitude,
     p.visto,
@@ -354,7 +354,7 @@ AS $$
   );
 $$;
 
--- C. Verificación de Repartidor Habilitado en Ciudad/Categoría
+-- C. Verificación de Repartidor Habilitado en Ciudad/Categoría Específica
 CREATE OR REPLACE FUNCTION public.is_current_enabled_driver(p_ciudad text DEFAULT NULL, p_categoria text DEFAULT NULL)
 RETURNS boolean
 LANGUAGE sql
@@ -369,9 +369,10 @@ AS $$
       AND (p_ciudad IS NULL OR LOWER(TRIM(ch.ciudad)) = LOWER(TRIM(p_ciudad)))
       AND (
         p_categoria IS NULL
+        OR LOWER(TRIM(ch.categoria)) IN ('todos', 'otros')
         OR LOWER(TRIM(ch.categoria)) = LOWER(TRIM(p_categoria))
-        OR (LOWER(TRIM(p_categoria)) IN ('gas', 'gas glp') AND LOWER(TRIM(ch.categoria)) IN ('gas', 'gas glp', 'garrafa'))
-        OR (LOWER(TRIM(p_categoria)) IN ('agua', 'agua potable') AND LOWER(TRIM(ch.categoria)) IN ('agua', 'agua potable', 'botellon'))
+        OR (LOWER(TRIM(ch.categoria)) IN ('gas', 'gas glp') AND LOWER(TRIM(p_categoria)) IN ('gas', 'gas glp', 'garrafa'))
+        OR (LOWER(TRIM(ch.categoria)) IN ('agua', 'agua potable') AND LOWER(TRIM(p_categoria)) IN ('agua', 'agua potable', 'botellon'))
       )
       AND NOT EXISTS (
         SELECT 1 FROM public.usuarios_baneados ub WHERE ub.user_id = ch.user_id
@@ -515,7 +516,7 @@ BEGIN
   IF OLD.user_id = v_uid THEN
     IF OLD.estado IN ('pendiente', 'visto') THEN
       IF NEW.estado NOT IN (OLD.estado, 'cancelado', 'recibido') THEN
-        RAISE EXCEPTION 'El comprador solo puede cancelar o marcar recibido un pedido pendiente';
+        RAISE EXCEPTION 'El comprador solo puede cambiar estado a cancelado o recibido en pedidos activos';
       END IF;
 
       IF (to_jsonb(NEW) - ARRAY['estado', 'latitude', 'longitude', 'direccion', 'barrio_otb', 'updated_at'])
@@ -567,11 +568,11 @@ BEGIN
   IF OLD.driver_id IS NULL
      AND NEW.driver_id IS NULL
      AND OLD.estado = 'pendiente'
-     AND NEW.estado = OLD.estado
+     AND NEW.estado IN ('pendiente', 'visto')
      AND NEW.visto = true
      AND public.is_current_enabled_driver(OLD.ciudad, OLD.categoria)
-     AND (to_jsonb(NEW) - ARRAY['visto', 'updated_at'])
-         IS NOT DISTINCT FROM (to_jsonb(OLD) - ARRAY['visto', 'updated_at']) THEN
+     AND (to_jsonb(NEW) - ARRAY['visto', 'estado', 'updated_at'])
+         IS NOT DISTINCT FROM (to_jsonb(OLD) - ARRAY['visto', 'estado', 'updated_at']) THEN
     RETURN NEW;
   END IF;
 
@@ -608,6 +609,12 @@ BEGIN
   IF NEW.estado = 'asignado' AND OLD.estado NOT IN ('pendiente', 'visto', 'asignado') THEN
     IF NOT is_admin_email() THEN
       RAISE EXCEPTION 'Transición de estado no válida para asignación desde %', OLD.estado;
+    END IF;
+  END IF;
+
+  IF NEW.estado = 'visto' AND OLD.estado NOT IN ('pendiente', 'visto') THEN
+    IF NOT is_admin_email() THEN
+      RAISE EXCEPTION 'Transición de estado no válida para visto desde %', OLD.estado;
     END IF;
   END IF;
 
@@ -903,19 +910,46 @@ SET search_path = public, auth
 AS $$
 DECLARE
   v_driver_id text := auth.uid()::text;
+  v_driver record;
+  v_order record;
 BEGIN
   IF v_driver_id IS NULL THEN
     RETURN jsonb_build_object('ok', false, 'error', 'No autenticado');
   END IF;
 
+  SELECT * INTO v_driver
+  FROM public.choferes_habilitados
+  WHERE user_id = v_driver_id
+  LIMIT 1;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'El usuario no es un repartidor habilitado');
+  END IF;
+
+  SELECT * INTO v_order
+  FROM public.pedidos
+  WHERE id = p_order_id;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'Pedido no encontrado');
+  END IF;
+
+  IF LOWER(TRIM(COALESCE(v_order.ciudad, ''))) <> LOWER(TRIM(COALESCE(v_driver.ciudad, ''))) THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'El pedido no pertenece a la ciudad del repartidor');
+  END IF;
+
+  IF NOT public.is_current_enabled_driver(v_order.ciudad, v_order.categoria) THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'Categoría no coincide con el repartidor');
+  END IF;
+
   UPDATE public.pedidos
   SET visto = true,
+      estado = 'visto',
       updated_at = now()
   WHERE id = p_order_id
-    AND estado = 'pendiente'
-    AND public.is_current_enabled_driver(ciudad, categoria);
+    AND estado = 'pendiente';
 
-  RETURN jsonb_build_object('ok', true);
+  RETURN jsonb_build_object('ok', true, 'order_id', p_order_id, 'estado', 'visto', 'visto', true);
 END;
 $$;
 
@@ -1030,57 +1064,77 @@ BEGIN
 END;
 $$;
 
--- H. Listar Pedidos Disponibles para Chofer
-CREATE OR REPLACE FUNCTION public.rpc_get_driver_available_orders(p_ciudad text DEFAULT NULL::text, p_categoria text DEFAULT NULL::text)
-RETURNS TABLE(id uuid, buyer_email text, buyer_name text, titulo text, categoria text, cantidad text, direccion text, telefono text, barrio_otb text, latitude double precision, longitude double precision, created_at timestamp with time zone, estado text, visto boolean)
+-- H. Listar Pedidos Disponibles para Chofer (Protección Estricta de Privacidad)
+CREATE OR REPLACE FUNCTION public.rpc_get_driver_available_orders(
+    p_ciudad text DEFAULT NULL::text,
+    p_categoria text DEFAULT NULL::text
+)
+RETURNS TABLE(
+    id uuid,
+    buyer_name text,
+    titulo text,
+    categoria text,
+    cantidad text,
+    direccion text,
+    barrio_otb text,
+    latitude double precision,
+    longitude double precision,
+    created_at timestamp with time zone,
+    estado text,
+    visto boolean
+)
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path TO 'public', 'auth'
 AS $function$
 DECLARE
     v_driver_id text := auth.uid()::text;
-    v_norm_city text := NULLIF(LOWER(TRIM(COALESCE(p_ciudad, ''))), '');
-    v_norm_cat text := NULLIF(LOWER(TRIM(COALESCE(p_categoria, ''))), '');
+    v_driver record;
 BEGIN
     IF v_driver_id IS NULL THEN
         RAISE EXCEPTION 'Usuario no autenticado';
     END IF;
-    IF NOT EXISTS (
-        SELECT 1 FROM public.choferes_habilitados ch
-        WHERE ch.user_id = v_driver_id
-          AND NOT EXISTS (
-              SELECT 1 FROM public.usuarios_baneados ub
-              WHERE ub.user_id = v_driver_id
-          )
-    ) THEN
+
+    SELECT * INTO v_driver
+    FROM public.choferes_habilitados ch
+    WHERE ch.user_id = v_driver_id
+      AND LOWER(TRIM(COALESCE(ch.estado_verificacion, ''))) = 'aprobado'
+      AND NOT EXISTS (
+          SELECT 1 FROM public.usuarios_baneados ub WHERE ub.user_id = v_driver_id
+      )
+    LIMIT 1;
+
+    IF NOT FOUND THEN
         RAISE EXCEPTION 'Repartidor no habilitado o cuenta suspendida';
     END IF;
 
     RETURN QUERY
     SELECT
         p.id,
-        COALESCE(u.email::text, 'vecino@notigas.app'),
-        COALESCE(NULLIF(TRIM(p.titulo), ''), split_part(COALESCE(u.email::text, 'vecino@notigas.app'), '@', 1)),
+        'Vecino'::text AS buyer_name,
         p.titulo,
         p.categoria,
         COALESCE(NULLIF(TRIM(p.cantidad), ''), '1 unidad'),
-        COALESCE(NULLIF(TRIM(p.direccion), ''), 'Ubicacion fijada en mapa GPS (opcional)'),
-        NULLIF(TRIM(p.telefono), ''),
-        COALESCE(NULLIF(TRIM(p.barrio_otb), ''), 'Zona indicada en el mapa'),
+        COALESCE(NULLIF(TRIM(p.barrio_otb), ''), 'Zona indicada en el mapa') AS direccion,
+        COALESCE(NULLIF(TRIM(p.barrio_otb), ''), 'Zona indicada en el mapa') AS barrio_otb,
         p.latitude,
         p.longitude,
         p.created_at,
         p.estado,
         COALESCE(p.visto, false)
     FROM public.pedidos p
-    LEFT JOIN auth.users u ON u.id::text = p.user_id
     WHERE p.estado IN ('pendiente', 'visto')
-      AND (v_norm_city IS NULL OR LOWER(TRIM(p.ciudad)) = v_norm_city)
+      AND p.driver_id IS NULL
+      AND LOWER(TRIM(p.ciudad)) = LOWER(TRIM(v_driver.ciudad))
       AND (
-          v_norm_cat IS NULL
-          OR LOWER(TRIM(p.categoria)) = v_norm_cat
-          OR (v_norm_cat IN ('gas', 'gas glp') AND LOWER(TRIM(p.categoria)) IN ('gas', 'gas glp', 'garrafa'))
-          OR (v_norm_cat IN ('agua', 'agua potable') AND LOWER(TRIM(p.categoria)) IN ('agua', 'agua potable', 'botellon'))
+          v_driver.categoria IS NULL
+          OR LOWER(TRIM(v_driver.categoria)) IN ('todos', 'otros')
+          OR LOWER(TRIM(p.categoria)) = LOWER(TRIM(v_driver.categoria))
+          OR (LOWER(TRIM(v_driver.categoria)) IN ('gas', 'gas glp') AND LOWER(TRIM(p.categoria)) IN ('gas', 'gas glp', 'garrafa'))
+          OR (LOWER(TRIM(v_driver.categoria)) IN ('agua', 'agua potable') AND LOWER(TRIM(p.categoria)) IN ('agua', 'agua potable', 'botellon'))
+      )
+      AND NOT EXISTS (
+          SELECT 1 FROM public.usuarios_baneados ub WHERE ub.user_id = p.user_id
       )
     ORDER BY p.created_at ASC;
 END;
@@ -1119,9 +1173,23 @@ BEGIN
 END;
 $$;
 
--- J. Pedidos Asignados a Mi Cuenta (Repartidor)
+-- J. Pedidos Asignados a Mi Cuenta (Repartidor - Contacto Completo Autorizado)
 CREATE OR REPLACE FUNCTION public.rpc_get_my_assigned_orders()
-RETURNS SETOF public.pedidos
+RETURNS TABLE(
+    id uuid,
+    buyer_email text,
+    buyer_name text,
+    titulo text,
+    categoria text,
+    cantidad text,
+    direccion text,
+    telefono text,
+    barrio_otb text,
+    latitude double precision,
+    longitude double precision,
+    created_at timestamp with time zone,
+    estado text
+)
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public, auth
@@ -1130,14 +1198,40 @@ DECLARE
   v_driver_id text := auth.uid()::text;
 BEGIN
   IF v_driver_id IS NULL THEN
-    RAISE EXCEPTION 'No autenticado';
+    RAISE EXCEPTION 'Usuario no autenticado';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM public.choferes_habilitados ch
+    WHERE ch.user_id = v_driver_id
+      AND NOT EXISTS (
+          SELECT 1 FROM public.usuarios_baneados ub WHERE ub.user_id = v_driver_id
+      )
+  ) THEN
+    RAISE EXCEPTION 'Repartidor no habilitado o baneado';
   END IF;
 
   RETURN QUERY
-  SELECT * FROM public.pedidos
-  WHERE driver_id = v_driver_id
-    AND estado = 'asignado'
-  ORDER BY created_at DESC;
+  SELECT
+      p.id,
+      u.email::text AS buyer_email,
+      COALESCE(NULLIF(TRIM(p.titulo), ''), split_part(COALESCE(u.email::text, 'vecino@notigas.app'), '@', 1)) AS buyer_name,
+      p.titulo,
+      p.categoria,
+      p.cantidad,
+      p.direccion,
+      p.telefono,
+      p.barrio_otb,
+      p.latitude,
+      p.longitude,
+      p.created_at,
+      p.estado
+  FROM public.pedidos p
+  LEFT JOIN auth.users u ON u.id::text = p.user_id
+  WHERE p.driver_id = v_driver_id
+    AND p.estado = 'asignado'
+  ORDER BY p.created_at ASC;
 END;
 $$;
 
@@ -1593,25 +1687,34 @@ DROP POLICY IF EXISTS "choferes_delete_own_or_admin" ON public.choferes_habilita
 CREATE POLICY "choferes_delete_own_or_admin" ON public.choferes_habilitados FOR DELETE TO authenticated
 USING (user_id = (SELECT auth.uid())::text OR is_admin_email());
 
--- Pedidos
+-- Pedidos (Blindaje Estricto de Acceso por Ciudad y Categoría)
+DROP POLICY IF EXISTS "pedidos_select_strict" ON public.pedidos;
 DROP POLICY IF EXISTS "pedidos_select_own_or_driver_or_admin" ON public.pedidos;
-CREATE POLICY "pedidos_select_own_or_driver_or_admin" ON public.pedidos FOR SELECT TO authenticated
+DROP POLICY IF EXISTS "pedidos_select" ON public.pedidos;
+
+CREATE POLICY "pedidos_select_strict" ON public.pedidos FOR SELECT TO authenticated
 USING (
   user_id = (SELECT auth.uid())::text
   OR driver_id = (SELECT auth.uid())::text
   OR is_admin_email()
   OR (
-    estado IN ('pendiente', 'visto', 'asignado')
+    estado IN ('pendiente', 'visto')
+    AND driver_id IS NULL
     AND public.is_current_enabled_driver(ciudad, categoria)
   )
 );
 
 DROP POLICY IF EXISTS "pedidos_insert_own" ON public.pedidos;
+DROP POLICY IF EXISTS "pedidos_insert" ON public.pedidos;
 CREATE POLICY "pedidos_insert_own" ON public.pedidos FOR INSERT TO authenticated
 WITH CHECK (user_id = (SELECT auth.uid())::text AND NOT is_banned());
 
+DROP POLICY IF EXISTS "pedidos_update_strict" ON public.pedidos;
 DROP POLICY IF EXISTS "pedidos_update_own_or_driver_or_admin" ON public.pedidos;
-CREATE POLICY "pedidos_update_own_or_driver_or_admin" ON public.pedidos FOR UPDATE TO authenticated
+DROP POLICY IF EXISTS "pedidos_update_own" ON public.pedidos;
+DROP POLICY IF EXISTS "Pedidos Actualizar admin" ON public.pedidos;
+
+CREATE POLICY "pedidos_update_strict" ON public.pedidos FOR UPDATE TO authenticated
 USING (
   user_id = (SELECT auth.uid())::text
   OR driver_id = (SELECT auth.uid())::text
@@ -1638,6 +1741,7 @@ WITH CHECK (
 );
 
 DROP POLICY IF EXISTS "pedidos_delete_own_or_admin" ON public.pedidos;
+DROP POLICY IF EXISTS "Pedidos Borrar admin" ON public.pedidos;
 CREATE POLICY "pedidos_delete_own_or_admin" ON public.pedidos FOR DELETE TO authenticated
 USING (user_id = (SELECT auth.uid())::text OR is_admin_email());
 
@@ -1786,5 +1890,5 @@ GRANT EXECUTE ON FUNCTION public.rpc_crear_aviso_vecinal(text, text, text, text,
 GRANT EXECUTE ON FUNCTION public.rpc_agregar_comentario_aviso(uuid, text, text) TO authenticated;
 
 -- ==============================================================================
--- FIN DEL ESQUEMA CONSOLIDADO OFICIAL DE PRODUCCIÓN (NOTIGAS v075)
+-- FIN DEL ESQUEMA CONSOLIDADO OFICIAL DE PRODUCCIÓN (NOTIGAS v078)
 -- ==============================================================================

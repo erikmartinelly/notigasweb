@@ -102,7 +102,16 @@ async function renderDriverOrdersList() {
 
   const pubOrders = pubRes.data || [];
   const assignedOrders = assignedRes.data || [];
-  const orders = [...assignedOrders, ...pubOrders];
+  const allOrders = [...assignedOrders, ...pubOrders];
+
+  const driverCategoria = (userData && userData.categoria) ? userData.categoria : 'gas';
+
+  // Filtrar estrictamente: un repartidor SOLO ve pedidos de su categoría en su ciudad
+  const orders = allOrders.filter(o => {
+    if (o.estado === 'asignado' && o.driver_id === localUserId) return true;
+    return (typeof window.isOrderCategoryMatchingDriver !== 'function') ||
+           window.isOrderCategoryMatchingDriver(o.categoria, driverCategoria);
+  });
 
   if (!orders || orders.length === 0) {
     if (pubRes.error || assignedRes.error) {
@@ -116,7 +125,7 @@ async function renderDriverOrdersList() {
         </div>`;
       return;
     }
-    container.innerHTML = '<div style="padding:25px; text-align:center; color:#94A3B8; font-size:12px;"><i class="fa-solid fa-clipboard-check" style="font-size:24px; margin-bottom:8px; display:block;"></i>No hay pedidos pendientes en esta zona.</div>';
+    container.innerHTML = '<div style="padding:25px; text-align:center; color:#94A3B8; font-size:12px;"><i class="fa-solid fa-clipboard-check" style="font-size:24px; margin-bottom:8px; display:block;"></i>No hay pedidos pendientes para tu categoría en esta ciudad.</div>';
     return;
   }
 
@@ -478,10 +487,13 @@ function renderActiveOrderNotice(order) {
     return;
   }
 
-  const estado = String(order.estado).toLowerCase();
-  const view = ORDER_STATUS_PRESENTATION[estado] || ORDER_STATUS_PRESENTATION.pendiente;
+  let effectiveState = String(order.estado || 'pendiente').toLowerCase();
+  if (effectiveState === 'pendiente' && order.visto === true) {
+    effectiveState = 'visto';
+  }
+  const view = ORDER_STATUS_PRESENTATION[effectiveState] || ORDER_STATUS_PRESENTATION.pendiente;
 
-  tripCard.dataset.state = estado;
+  tripCard.dataset.state = effectiveState;
   tripCard.style.display = 'block';
 
   const title = document.getElementById('notigasTripTitle');
@@ -522,7 +534,7 @@ async function syncActiveOrderStatusFromDatabase(order) {
 
   _activeOrderStatusRequest = window.supabaseClient
     .from('pedidos')
-    .select('estado, driver_id, updated_at')
+    .select('estado, driver_id, visto, updated_at')
     .eq('id', order.id)
     .maybeSingle();
 
@@ -531,6 +543,7 @@ async function syncActiveOrderStatusFromDatabase(order) {
     if (error || !data) return;
 
     const changed = data.estado !== order.estado ||
+      data.visto !== order.visto ||
       data.driver_id !== order.driver_id ||
       data.updated_at !== order.updated_at;
     if (!changed) return;
