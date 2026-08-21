@@ -35,13 +35,10 @@ async function renderForumFeed() {
     } else {
       rawCity = ciudadSelector || (typeof AppState !== 'undefined' && AppState.get('city')) || (userData && userData.ciudad) || 'cochabamba';
     }
-    const ciudadReal = String(rawCity || 'cochabamba').toLowerCase().trim();
-
-    // Consultar avisos de las últimas 48 horas para la ciudad (insensible a mayúsculas)
+    // Consultar avisos activos para la ciudad (insensible a mayúsculas)
     const { data: localPosts, error } = await window.supabaseClient.from('avisos')
       .select('*, comentarios_avisos(count)')
       .ilike('ciudad', ciudadReal)
-      .gte('created_at', dosDiasAtras)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -526,18 +523,22 @@ async function crearNuevoPost() {
     // Intento 1: Llamar al RPC seguro rpc_crear_aviso_vecinal
     try {
       const { data: rpcData, error: rpcErr } = await window.supabaseClient.rpc('rpc_crear_aviso_vecinal', {
+        p_ciudad: ciudadReal,
+        p_barrio: 'Global',
+        p_autor: authorName,
+        p_tipo: 'aviso',
         p_categoria: cat,
         p_titulo: title,
         p_descripcion: desc,
-        p_ciudad: ciudadReal,
-        p_barrio_otb: 'Global',
-        p_autor: authorName
+        p_mensaje: desc,
+        p_imagen: '',
+        p_barrio_otb: 'Global'
       });
 
-      if (!rpcErr && rpcData) {
+      if (!rpcErr && rpcData && (rpcData.ok || rpcData.success)) {
         pubSuccess = true;
       } else {
-        pubError = rpcErr;
+        pubError = rpcErr || new Error(rpcData?.error || 'Error al guardar aviso');
       }
     } catch(rpcException) {
       pubError = rpcException;

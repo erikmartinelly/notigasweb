@@ -1,7 +1,7 @@
 -- ==============================================================================
 -- NOTIGAS - CONSOLIDATED FULL PRODUCTION DATABASE SCHEMA
 -- Compatible con PostgreSQL 15+ y Supabase Auth / Storage / Realtime
--- Versión Oficial Consolidada de Producción (Incluye Migraciones 001 hasta 084)
+-- Versión Oficial Consolidada de Producción (Incluye Migraciones 001 hasta 085)
 -- ==============================================================================
 
 -- ==============================================================================
@@ -1266,23 +1266,19 @@ SET search_path = public, auth
 AS $$
 DECLARE
   v_pedidos_deleted integer := 0;
-  v_avisos_deleted integer := 0;
   v_rutas_deleted integer := 0;
 BEGIN
-  -- Eliminar de inmediato todos los pedidos cancelados, entregados o recibidos para no acumular basura
+  IF NOT public.is_admin_email() THEN
+    RETURN jsonb_build_object('success', false, 'error', 'No autorizado');
+  END IF;
+
+  -- Eliminar pedidos completados o cancelados (o con más de 24 horas)
   WITH d AS (
     DELETE FROM public.pedidos
     WHERE estado IN ('entregado', 'cancelado', 'recibido')
        OR created_at < (now() - interval '24 hours')
     RETURNING id
   ) SELECT count(*) INTO v_pedidos_deleted FROM d;
-
-  -- Eliminar avisos comunitarios con más de 48h
-  WITH d AS (
-    DELETE FROM public.avisos
-    WHERE created_at < (now() - interval '48 hours')
-    RETURNING id
-  ) SELECT count(*) INTO v_avisos_deleted FROM d;
 
   -- Eliminar rutas inactivas de repartidores (> 2 horas)
   WITH d AS (
@@ -1294,7 +1290,6 @@ BEGIN
   RETURN jsonb_build_object(
     'success', true,
     'pedidos_eliminados', v_pedidos_deleted,
-    'avisos_eliminados', v_avisos_deleted,
     'rutas_eliminadas', v_rutas_deleted
   );
 END;
@@ -1549,15 +1544,16 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.rpc_crear_aviso_vecinal(
-  p_ciudad text,
-  p_barrio text,
-  p_autor text,
-  p_tipo text,
-  p_categoria text,
-  p_titulo text,
-  p_descripcion text,
-  p_mensaje text,
-  p_imagen text
+  p_ciudad text DEFAULT 'cochabamba',
+  p_barrio text DEFAULT 'Global',
+  p_autor text DEFAULT 'Vecino',
+  p_tipo text DEFAULT 'aviso',
+  p_categoria text DEFAULT 'COMENTARIO',
+  p_titulo text DEFAULT '',
+  p_descripcion text DEFAULT '',
+  p_mensaje text DEFAULT '',
+  p_imagen text DEFAULT '',
+  p_barrio_otb text DEFAULT NULL
 )
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -1567,27 +1563,32 @@ AS $$
 DECLARE
   v_uid text := auth.uid()::text;
   v_id uuid;
+  v_barrio_final text;
+  v_ciudad_final text;
 BEGIN
   IF v_uid IS NULL THEN
-    RAISE EXCEPTION 'No autenticado';
+    RETURN jsonb_build_object('ok', false, 'success', false, 'error', 'Usuario no autenticado');
   END IF;
   IF is_banned() THEN
-    RAISE EXCEPTION 'Usuario suspendido';
+    RETURN jsonb_build_object('ok', false, 'success', false, 'error', 'Usuario suspendido');
   END IF;
+
+  v_barrio_final := COALESCE(NULLIF(TRIM(p_barrio_otb), ''), NULLIF(TRIM(p_barrio), ''), 'Global');
+  v_ciudad_final := COALESCE(NULLIF(LOWER(TRIM(p_ciudad)), ''), 'cochabamba');
 
   INSERT INTO public.avisos (
     user_id, ciudad, barrio_otb, autor, tipo, categoria, titulo, descripcion, mensaje, imagen_url, activo, votos, created_at
   )
   VALUES (
     v_uid,
-    COALESCE(NULLIF(LOWER(TRIM(p_ciudad)), ''), 'cochabamba'),
-    COALESCE(NULLIF(TRIM(p_barrio), ''), 'Global'),
-    COALESCE(NULLIF(TRIM(p_autor), ''), 'Vecino'),
+    v_ciudad_final,
+    v_barrio_final,
+    COALESCE(NULLIF(TRIM(p_autor), ''), 'Vecino de la OTB'),
     COALESCE(NULLIF(TRIM(p_tipo), ''), 'aviso'),
-    COALESCE(NULLIF(TRIM(p_categoria), ''), 'COMENTARIO'),
-    NULLIF(TRIM(p_titulo), ''),
-    NULLIF(TRIM(p_descripcion), ''),
-    NULLIF(TRIM(p_mensaje), ''),
+    COALESCE(NULLIF(UPPER(TRIM(p_categoria)), ''), 'COMENTARIO'),
+    COALESCE(NULLIF(TRIM(p_titulo), ''), 'Aviso Vecinal'),
+    COALESCE(NULLIF(TRIM(p_descripcion), ''), NULLIF(TRIM(p_mensaje), ''), 'Publicación vecinal'),
+    COALESCE(NULLIF(TRIM(p_mensaje), ''), NULLIF(TRIM(p_descripcion), ''), ''),
     NULLIF(TRIM(p_imagen), ''),
     true,
     1,
@@ -1599,7 +1600,7 @@ BEGIN
   VALUES (v_uid, v_id, 'aviso', 1)
   ON CONFLICT DO NOTHING;
 
-  RETURN jsonb_build_object('success', true, 'id', v_id);
+  RETURN jsonb_build_object('ok', true, 'success', true, 'id', v_id);
 END;
 $$;
 
@@ -2001,10 +2002,10 @@ GRANT EXECUTE ON FUNCTION public.rpc_admin_delete_user(text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.rpc_admin_delete_driver_by_id(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.rpc_admin_renew_order(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.rpc_admin_get_metrics() TO authenticated;
-GRANT EXECUTE ON FUNCTION public.rpc_crear_aviso_vecinal(text, text, text, text, text, text, text, text, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.rpc_crear_aviso_vecinal(text, text, text, text, text, text, text, text, text, text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.rpc_actualizar_aviso_propio(uuid, text, text, text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.rpc_agregar_comentario_aviso(uuid, text, text) TO authenticated;
 
 -- ==============================================================================
--- FIN DEL ESQUEMA CONSOLIDADO OFICIAL DE PRODUCCIÓN (NOTIGAS v084)
+-- FIN DEL ESQUEMA CONSOLIDADO OFICIAL DE PRODUCCIÓN (NOTIGAS v085)
 -- ==============================================================================
