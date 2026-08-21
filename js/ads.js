@@ -107,7 +107,7 @@ function getDefaultLocalAds(city) {
       activo: true
     },
     avisos: {
-      titulo: 'Servicios técnicos, gasistas matriculados y comercios de barrio en ' + normCity,
+      titulo: 'Promociona tu negocio o servicio en ' + normCity,
       url: 'https://wa.me/59170000000?text=Hola%20quiero%20anunciar%20en%20NOTIGAS%20Avisos',
       image_url: null,
       ciudad: city,
@@ -252,16 +252,13 @@ window.getAdSenseFeedMarkup = function(placement) {
 
   let ad = null;
   let placementTitle = 'PROPAGANDA LOCAL';
-  let placementSub = 'Comercio & Servicios de Barrio Verificados • Apoya lo local';
 
   if (placement === 'vendors') {
     ad = window._localAds?.repartidores;
     placementTitle = 'PROPAGANDA LOCAL • REPARTIDORES';
-    placementSub = 'Distribuidores y Repuestos Autorizados en tu Barrio';
   } else if (placement === 'forum') {
     ad = window._localAds?.avisos;
-    placementTitle = 'PROPAGANDA LOCAL • AVISOS GRATIS';
-    placementSub = 'Servicios Técnicos y Comercios Barriales Verificados';
+    placementTitle = 'PROPAGANDA LOCAL • AVISOS';
   } else {
     ad = window._localAds?.mapa || window._currentLocalAdData;
   }
@@ -298,7 +295,6 @@ window.getAdSenseFeedMarkup = function(placement) {
       </div>
       <div class="local-ad-body">
         <h4 class="local-ad-title">${safeTitle}</h4>
-        <p class="local-ad-sub">${placementSub}</p>
         <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="btn-local-ad-action">
           <i class="fa-solid fa-arrow-up-right-from-square"></i> Contactar / Ver Información
         </a>

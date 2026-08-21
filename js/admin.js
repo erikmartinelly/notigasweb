@@ -1046,7 +1046,7 @@ async function guardarPropagandaTab(tabName, silent = false) {
       // 1. Guardar a través de RPC con p_posicion
       try {
         const { data: rpcRes, error: rpcErr } = await window.supabaseClient.rpc('rpc_save_local_ad', {
-          p_titulo: inputAd || (pos === 'mapa' ? 'Promociona tu negocio o servicio profesional directamente en tu OTB' : (pos === 'repartidores' ? 'Distribución mayorista, repuestos y accesorios autorizados' : 'Servicios técnicos, gasistas matriculados y comercios de barrio')),
+          p_titulo: inputAd || (pos === 'mapa' ? 'Promociona tu negocio o servicio profesional directamente en tu OTB' : (pos === 'repartidores' ? 'Distribución mayorista, repuestos y accesorios autorizados' : 'Promociona tu negocio o servicio en tu barrio')),
           p_descripcion: `Propaganda Local - ${pos.toUpperCase()}`,
           p_url: inputUrl || '',
           p_image_url: imgUrl || '',
@@ -1074,7 +1074,7 @@ async function guardarPropagandaTab(tabName, silent = false) {
           .limit(1);
 
         const payload = {
-          titulo: inputAd || (pos === 'mapa' ? 'Promociona tu negocio o servicio profesional directamente en tu OTB' : (pos === 'repartidores' ? 'Distribución mayorista, repuestos y accesorios autorizados' : 'Servicios técnicos, gasistas matriculados y comercios de barrio')),
+          titulo: inputAd || (pos === 'mapa' ? 'Promociona tu negocio o servicio profesional directamente en tu OTB' : (pos === 'repartidores' ? 'Distribución mayorista, repuestos y accesorios autorizados' : 'Promociona tu negocio o servicio en tu barrio')),
           descripcion: `Propaganda Local - ${pos.toUpperCase()}`,
           url: inputUrl || '',
           activo: isActivo,
