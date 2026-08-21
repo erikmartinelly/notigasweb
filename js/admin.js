@@ -381,46 +381,73 @@ async function renderAdminDashboardKPIs() {
   const elUsers = document.getElementById('adminKpiUsers');
   const elVendors = document.getElementById('adminKpiVendors');
   const elOrders = document.getElementById('adminKpiOrders');
+  const elDelivered = document.getElementById('adminKpiDelivered');
+  const elCancelled = document.getElementById('adminKpiCancelled');
+  const elAvisos = document.getElementById('adminKpiAvisos');
   const elReports = document.getElementById('adminKpiReports');
+  const elReportedUsers = document.getElementById('adminKpiReportedUsers');
 
   let usersCount = 0;
   let vendorsCount = 0;
   let ordersCount = 0;
+  let deliveredCount = 0;
+  let cancelledCount = 0;
+  let avisosCount = 0;
   let reportsCount = 0;
+  let reportedEntitiesCount = 0;
 
   if (window.supabaseClient) {
     try {
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
-      const hoyIsoStart = todayStart.toISOString();
+      // 1. Intentar RPC optimizado de métricas administrativas
+      const { data: rpcMetrics, error: rpcErr } = await window.supabaseClient.rpc('rpc_admin_get_metrics');
 
-      // CONSULTAS AGREGADAS DIRECTAS EN POSTGRESQL (Cero filas descargadas, máxima velocidad)
-      const [
-        resVendors,
-        resProfiles,
-        resActiveOrders,
-        resTodayOrders,
-        resTodayDelivered,
-        resReports
-      ] = await Promise.all([
-        window.supabaseClient.from('choferes_habilitados').select('*', { count: 'exact', head: true }),
-        window.supabaseClient.from('profiles').select('*', { count: 'exact', head: true }),
-        window.supabaseClient.from('pedidos').select('*', { count: 'exact', head: true }).in('estado', ['pendiente', 'visto', 'asignado']),
-        window.supabaseClient.from('pedidos').select('*', { count: 'exact', head: true }).gte('created_at', hoyIsoStart),
-        window.supabaseClient.from('pedidos').select('*', { count: 'exact', head: true }).eq('estado', 'entregado').gte('created_at', hoyIsoStart),
-        window.supabaseClient.from('denuncias').select('*', { count: 'exact', head: true })
-      ]);
+      if (!rpcErr && rpcMetrics && rpcMetrics.ok) {
+        usersCount = rpcMetrics.users_count || 0;
+        vendorsCount = rpcMetrics.vendors_count || 0;
+        ordersCount = rpcMetrics.orders_active || 0;
+        deliveredCount = rpcMetrics.orders_delivered || 0;
+        cancelledCount = rpcMetrics.orders_cancelled || 0;
+        avisosCount = rpcMetrics.avisos_count || 0;
+        reportsCount = rpcMetrics.reports_count || 0;
+        reportedEntitiesCount = rpcMetrics.reported_entities_count || 0;
+      } else {
+        // 2. Fallback de consultas directas agregadas en PostgreSQL
+        const [
+          resVendors,
+          resProfiles,
+          resActiveOrders,
+          resDeliveredOrders,
+          resCancelledOrders,
+          resAvisos,
+          resReports,
+          resDenunciasRows
+        ] = await Promise.all([
+          window.supabaseClient.from('choferes_habilitados').select('*', { count: 'exact', head: true }).eq('estado_verificacion', 'aprobado'),
+          window.supabaseClient.from('profiles').select('*', { count: 'exact', head: true }),
+          window.supabaseClient.from('pedidos').select('*', { count: 'exact', head: true }).in('estado', ['pendiente', 'visto', 'asignado']),
+          window.supabaseClient.from('pedidos').select('*', { count: 'exact', head: true }).in('estado', ['entregado', 'recibido']),
+          window.supabaseClient.from('pedidos').select('*', { count: 'exact', head: true }).eq('estado', 'cancelado'),
+          window.supabaseClient.from('avisos').select('*', { count: 'exact', head: true }),
+          window.supabaseClient.from('denuncias').select('*', { count: 'exact', head: true }),
+          window.supabaseClient.from('denuncias').select('denunciado_id, user_id')
+        ]);
 
-      vendorsCount = resVendors.count || 0;
-      usersCount = resProfiles.count || 0;
-      ordersCount = resActiveOrders.count || 0;
-      const creadosHoy = resTodayOrders.count || 0;
-      const entregadosHoy = resTodayDelivered.count || 0;
-      reportsCount = resReports.count || 0;
+        vendorsCount = resVendors.count || 0;
+        usersCount = resProfiles.count || 0;
+        ordersCount = resActiveOrders.count || 0;
+        deliveredCount = resDeliveredOrders.count || 0;
+        cancelledCount = resCancelledOrders.count || 0;
+        avisosCount = resAvisos.count || 0;
+        reportsCount = resReports.count || 0;
 
-      const elOrdersTitle = document.getElementById('adminKpiOrders')?.parentElement?.firstElementChild;
-      if (elOrdersTitle) {
-        elOrdersTitle.innerHTML = `📦 PEDIDOS ACTIVOS <span style="display:block; font-size:9px; color:#56BC37; font-weight:700; margin-top:2px;">${creadosHoy} Hoy • ${entregadosHoy} Entregados</span>`;
+        if (resDenunciasRows && resDenunciasRows.data) {
+          const uniqueReported = new Set();
+          resDenunciasRows.data.forEach(d => {
+            const target = (d.denunciado_id || d.user_id || '').trim();
+            if (target) uniqueReported.add(target);
+          });
+          reportedEntitiesCount = uniqueReported.size;
+        }
       }
     } catch(e) {
       console.error('Error cargando KPIs agregados del dashboard de administración:', e);
@@ -430,7 +457,11 @@ async function renderAdminDashboardKPIs() {
   if (elUsers) elUsers.innerText = usersCount;
   if (elVendors) elVendors.innerText = vendorsCount;
   if (elOrders) elOrders.innerText = ordersCount;
+  if (elDelivered) elDelivered.innerText = deliveredCount;
+  if (elCancelled) elCancelled.innerText = cancelledCount;
+  if (elAvisos) elAvisos.innerText = avisosCount;
   if (elReports) elReports.innerText = reportsCount;
+  if (elReportedUsers) elReportedUsers.innerText = reportedEntitiesCount;
 }
 
 async function emitirAlertaOficialAdmin(mensaje) {
@@ -1484,32 +1515,34 @@ function descargarEstadisticasGeneralesCSV() {
   }
 
   const elUsers = document.getElementById('adminKpiUsers');
-
   const elVendors = document.getElementById('adminKpiVendors');
-
   const elOrders = document.getElementById('adminKpiOrders');
-
+  const elDelivered = document.getElementById('adminKpiDelivered');
+  const elCancelled = document.getElementById('adminKpiCancelled');
+  const elAvisos = document.getElementById('adminKpiAvisos');
   const elReports = document.getElementById('adminKpiReports');
+  const elReportedUsers = document.getElementById('adminKpiReportedUsers');
 
   const usersCount = elUsers ? elUsers.innerText : '0';
-
   const vendorsCount = elVendors ? elVendors.innerText : '0';
-
   const ordersCount = elOrders ? elOrders.innerText : '0';
-
+  const deliveredCount = elDelivered ? elDelivered.innerText : '0';
+  const cancelledCount = elCancelled ? elCancelled.innerText : '0';
+  const avisosCount = elAvisos ? elAvisos.innerText : '0';
   const reportsCount = elReports ? elReports.innerText : '0';
+  const reportedUsersCount = elReportedUsers ? elReportedUsers.innerText : '0';
 
   const fechaHoy = new Date().toISOString().split('T')[0];
 
   let csvRows = ["Metrica,Valor,Fecha"];
-
   csvRows.push(`"Usuarios Totales","${usersCount}","${fechaHoy}"`);
-
-  csvRows.push(`"Repartidores Activos","${vendorsCount}","${fechaHoy}"`);
-
-  csvRows.push(`"Pedidos del Dia","${ordersCount}","${fechaHoy}"`);
-
-  csvRows.push(`"Denuncias Emitidas","${reportsCount}","${fechaHoy}"`);
+  csvRows.push(`"Repartidores Habilitados","${vendorsCount}","${fechaHoy}"`);
+  csvRows.push(`"Pedidos Activos","${ordersCount}","${fechaHoy}"`);
+  csvRows.push(`"Pedidos Entregados","${deliveredCount}","${fechaHoy}"`);
+  csvRows.push(`"Pedidos Cancelados","${cancelledCount}","${fechaHoy}"`);
+  csvRows.push(`"Avisos Publicados","${avisosCount}","${fechaHoy}"`);
+  csvRows.push(`"Denuncias Totales","${reportsCount}","${fechaHoy}"`);
+  csvRows.push(`"Usuarios/Repartidores Denunciados","${reportedUsersCount}","${fechaHoy}"`);
 
   const csvString = "\uFEFF" + csvRows.join("\n");
 
@@ -1684,32 +1717,34 @@ function descargarEstadisticasGeneralesCSV() {
   }
 
   const elUsers = document.getElementById('adminKpiUsers');
-
   const elVendors = document.getElementById('adminKpiVendors');
-
   const elOrders = document.getElementById('adminKpiOrders');
-
+  const elDelivered = document.getElementById('adminKpiDelivered');
+  const elCancelled = document.getElementById('adminKpiCancelled');
+  const elAvisos = document.getElementById('adminKpiAvisos');
   const elReports = document.getElementById('adminKpiReports');
+  const elReportedUsers = document.getElementById('adminKpiReportedUsers');
 
   const usersCount = elUsers ? elUsers.innerText : '0';
-
   const vendorsCount = elVendors ? elVendors.innerText : '0';
-
   const ordersCount = elOrders ? elOrders.innerText : '0';
-
+  const deliveredCount = elDelivered ? elDelivered.innerText : '0';
+  const cancelledCount = elCancelled ? elCancelled.innerText : '0';
+  const avisosCount = elAvisos ? elAvisos.innerText : '0';
   const reportsCount = elReports ? elReports.innerText : '0';
+  const reportedUsersCount = elReportedUsers ? elReportedUsers.innerText : '0';
 
   const fechaHoy = new Date().toISOString().split('T')[0];
 
   let csvRows = ["Metrica,Valor,Fecha"];
-
   csvRows.push(`"Usuarios Totales","${usersCount}","${fechaHoy}"`);
-
-  csvRows.push(`"Repartidores Activos","${vendorsCount}","${fechaHoy}"`);
-
-  csvRows.push(`"Pedidos del Dia","${ordersCount}","${fechaHoy}"`);
-
-  csvRows.push(`"Denuncias Emitidas","${reportsCount}","${fechaHoy}"`);
+  csvRows.push(`"Repartidores Habilitados","${vendorsCount}","${fechaHoy}"`);
+  csvRows.push(`"Pedidos Activos","${ordersCount}","${fechaHoy}"`);
+  csvRows.push(`"Pedidos Entregados","${deliveredCount}","${fechaHoy}"`);
+  csvRows.push(`"Pedidos Cancelados","${cancelledCount}","${fechaHoy}"`);
+  csvRows.push(`"Avisos Publicados","${avisosCount}","${fechaHoy}"`);
+  csvRows.push(`"Denuncias Totales","${reportsCount}","${fechaHoy}"`);
+  csvRows.push(`"Usuarios/Repartidores Denunciados","${reportedUsersCount}","${fechaHoy}"`);
 
   const csvString = "\uFEFF" + csvRows.join("\n");
 

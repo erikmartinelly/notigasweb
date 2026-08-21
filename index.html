@@ -1572,38 +1572,46 @@
 
           <div class="modal-tab-pane active" id="modalPane0">
 
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-bottom: 16px;">
 
-              <div style="background: rgba(14,165,233,0.15); border: 1px solid rgba(14,165,233,0.3); border-radius: 10px; padding: 12px; text-align: center;">
-
-                <div style="font-size: 10px; color: #38BDF8; font-weight: 700; margin-bottom: 4px;">👥 VECINOS / USUARIOS</div>
-
-                <div id="adminKpiUsers" style="font-size: 24px; font-weight: 900; color: white;">0</div>
-
+              <div style="background: rgba(14,165,233,0.15); border: 1px solid rgba(14,165,233,0.3); border-radius: 10px; padding: 10px; text-align: center;">
+                <div style="font-size: 9.5px; color: #38BDF8; font-weight: 800; margin-bottom: 3px;">👥 USUARIOS / VECINOS</div>
+                <div id="adminKpiUsers" style="font-size: 22px; font-weight: 900; color: white;">0</div>
               </div>
 
-              <div style="background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); border-radius: 10px; padding: 12px; text-align: center;">
-
-                <div style="font-size: 10px; color: #FBBF24; font-weight: 700; margin-bottom: 4px;">🚚 REPARTIDORES</div>
-
-                <div id="adminKpiVendors" style="font-size: 24px; font-weight: 900; color: white;">0</div>
-
+              <div style="background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); border-radius: 10px; padding: 10px; text-align: center;">
+                <div style="font-size: 9.5px; color: #FBBF24; font-weight: 800; margin-bottom: 3px;">🚚 REPARTIDORES</div>
+                <div id="adminKpiVendors" style="font-size: 22px; font-weight: 900; color: white;">0</div>
               </div>
 
-              <div style="background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); border-radius: 10px; padding: 12px; text-align: center;">
-
-                <div style="font-size: 10px; color: #34D399; font-weight: 700; margin-bottom: 4px;">📦 PEDIDOS ACTIVOS</div>
-
-                <div id="adminKpiOrders" style="font-size: 24px; font-weight: 900; color: white;">0</div>
-
+              <div style="background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); border-radius: 10px; padding: 10px; text-align: center;">
+                <div style="font-size: 9.5px; color: #34D399; font-weight: 800; margin-bottom: 3px;">📦 PEDIDOS ACTIVOS</div>
+                <div id="adminKpiOrders" style="font-size: 22px; font-weight: 900; color: white;">0</div>
               </div>
 
-              <div style="background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); border-radius: 10px; padding: 12px; text-align: center;">
+              <div style="background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3); border-radius: 10px; padding: 10px; text-align: center;">
+                <div style="font-size: 9.5px; color: #4ADE80; font-weight: 800; margin-bottom: 3px;">✅ PEDIDOS ENTREGADOS</div>
+                <div id="adminKpiDelivered" style="font-size: 22px; font-weight: 900; color: white;">0</div>
+              </div>
 
-                <div style="font-size: 10px; color: #F87171; font-weight: 700; margin-bottom: 4px;">🚨 DENUNCIAS OPEN</div>
+              <div style="background: rgba(148,163,184,0.15); border: 1px solid rgba(148,163,184,0.3); border-radius: 10px; padding: 10px; text-align: center;">
+                <div style="font-size: 9.5px; color: #CBD5E1; font-weight: 800; margin-bottom: 3px;">⛔ PEDIDOS CANCELADOS</div>
+                <div id="adminKpiCancelled" style="font-size: 22px; font-weight: 900; color: white;">0</div>
+              </div>
 
-                <div id="adminKpiReports" style="font-size: 24px; font-weight: 900; color: white;">0</div>
+              <div style="background: rgba(168,85,247,0.15); border: 1px solid rgba(168,85,247,0.3); border-radius: 10px; padding: 10px; text-align: center;">
+                <div style="font-size: 9.5px; color: #C084FC; font-weight: 800; margin-bottom: 3px;">📢 AVISOS PUBLICADOS</div>
+                <div id="adminKpiAvisos" style="font-size: 22px; font-weight: 900; color: white;">0</div>
+              </div>
 
+              <div style="background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); border-radius: 10px; padding: 10px; text-align: center;">
+                <div style="font-size: 9.5px; color: #F87171; font-weight: 800; margin-bottom: 3px;">🚨 TOTAL DENUNCIAS</div>
+                <div id="adminKpiReports" style="font-size: 22px; font-weight: 900; color: white;">0</div>
+              </div>
+
+              <div style="background: rgba(225,29,72,0.15); border: 1px solid rgba(225,29,72,0.3); border-radius: 10px; padding: 10px; text-align: center;">
+                <div style="font-size: 9.5px; color: #FB7185; font-weight: 800; margin-bottom: 3px;">⚠️ DENUNCIADOS (USERS/CHOFERES)</div>
+                <div id="adminKpiReportedUsers" style="font-size: 22px; font-weight: 900; color: white;">0</div>
               </div>
 
             </div>
