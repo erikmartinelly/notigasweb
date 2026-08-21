@@ -64,7 +64,7 @@ async function renderDriverOrdersList() {
   // 1. Pedidos disponibles desde la vista pública (evita bloqueo por RLS de pedidos no asignados)
   let pubQuery = window.supabaseClient
     .from('pedidos_publicos')
-    .select('id, user_id, categoria, titulo, cantidad, direccion, telefono, latitude, longitude, created_at, estado, driver_id, ciudad')
+    .select('id, user_id, categoria, titulo, cantidad, direccion, telefono, descripcion, barrio_otb, latitude, longitude, created_at, estado, driver_id, ciudad')
     .in('estado', ['pendiente', 'visto'])
     .gte('created_at', activeWindow)
     .order('created_at', { ascending: false });
@@ -78,7 +78,7 @@ async function renderDriverOrdersList() {
   if (localUserId) {
     let assignedQuery = window.supabaseClient
       .from('pedidos')
-      .select('id, user_id, categoria, titulo, cantidad, direccion, telefono, latitude, longitude, created_at, estado, driver_id, ciudad')
+      .select('id, user_id, categoria, titulo, cantidad, direccion, telefono, descripcion, barrio_otb, latitude, longitude, created_at, estado, driver_id, ciudad')
       .eq('driver_id', localUserId)
       .eq('estado', 'asignado')
       .gte('created_at', activeWindow)
@@ -134,23 +134,25 @@ async function renderDriverOrdersList() {
     html += '<div class="demand-section-title" style="color:#10B981; margin-bottom:8px;"><i class="fa-solid fa-truck-fast"></i> Mis Pedidos en Camino</div>';
     myAssigned.forEach(o => {
       const antiguedad = formatearAntiguedadPedido(o.created_at);
-      const street = o.direccion ? escapeHtmlStr(o.direccion) : 'Ubicación GPS en Mapa';
+      const street = o.direccion ? escapeHtmlStr(o.direccion) : (o.barrio_otb ? escapeHtmlStr(o.barrio_otb) : 'Ubicación GPS en Mapa');
       const lat = o.latitude || 0;
       const lng = o.longitude || 0;
       const tel = o.telefono ? escapeHtmlStr(o.telefono) : '';
+      const desc = o.descripcion ? escapeHtmlStr(o.descripcion) : '';
 
       html += `
-        <div class="assigned-order-card" style="margin-bottom:10px; border-left:4px solid #10B981;">
-          <div class="demand-card-header">
+        <div class="assigned-order-card" style="margin-bottom:10px; border-left:4px solid #10B981; background:rgba(16,185,129,0.06); padding:10px; border-radius:8px; border:1px solid rgba(16,185,129,0.2);">
+          <div class="demand-card-header" style="display:flex; justify-content:space-between; align-items:flex-start;">
             <div>
               <span style="font-size:9px; background:#10B981; color:white; padding:2px 6px; border-radius:4px; font-weight:800;">EN ENTREGA</span>
-              <div style="font-size:13px; font-weight:800; color:#F8FAFC; margin-top:2px;">${escapeHtmlStr(o.categoria)} (${o.cantidad})</div>
+              <div style="font-size:13px; font-weight:800; color:#F8FAFC; margin-top:2px;">${escapeHtmlStr(o.categoria || 'Pedido')} (${escapeHtmlStr(o.cantidad || '1 un')})</div>
             </div>
             <div style="font-size:10px; color:#94A3B8;">${antiguedad}</div>
           </div>
-          <div class="demand-card-meta" style="margin-top:6px;">
-            <div>📍 <strong>Destino:</strong> ${street}</div>
-            ${tel ? `<div>📞 <strong>Tel:</strong> <a href="tel:${tel}" style="color:#38BDF8;">${tel}</a></div>` : ''}
+          <div class="demand-card-meta" style="margin-top:6px; font-size:11px;">
+            <div style="color:#CBD5E1;">📍 <strong>Dirección:</strong> ${street}</div>
+            ${tel ? `<div style="margin-top:3px;">📞 <strong>Teléfono:</strong> <a href="tel:${tel}" style="color:#38BDF8; font-weight:700; text-decoration:underline;">${tel}</a></div>` : '<div style="color:#64748B; font-size:10px; margin-top:2px;">📞 Teléfono: No indicado</div>'}
+            ${desc ? `<div style="margin-top:3px; font-size:10.5px; color:#94A3B8; font-style:italic;">📝 ${desc}</div>` : ''}
           </div>
           <div class="demand-card-actions" style="margin-top:8px; display:flex; gap:6px;">
             <button type="button" class="btn-action" style="background:#0284C7; color:white; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:700; border:none; cursor:pointer; flex:1; display:inline-flex; align-items:center; justify-content:center; gap:5px;" data-action="centrarPedidoEnMapa" data-lat="${lat}" data-lng="${lng}" data-order-id="${o.id}">
@@ -189,21 +191,39 @@ async function renderDriverOrdersList() {
         </div>
         <div style="margin-top:8px; border-top:1px solid rgba(255,255,255,0.06); padding-top:8px;">
           ${list.map(o => {
-            const st = o.direccion ? escapeHtmlStr(o.direccion) : 'Ubicación GPS en Mapa';
+            const st = o.direccion ? escapeHtmlStr(o.direccion) : (o.barrio_otb ? escapeHtmlStr(o.barrio_otb) : 'Ubicación GPS en Mapa');
             const lat = o.latitude || 0;
             const lng = o.longitude || 0;
-            const buyer = 'Vecino';
+            const tel = o.telefono ? escapeHtmlStr(o.telefono) : '';
+            const desc = o.descripcion ? escapeHtmlStr(o.descripcion) : '';
+            const buyer = o.titulo || 'Pedido Vecinal';
             return `
-              <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px dashed rgba(255,255,255,0.06); font-size:11px; gap:8px;">
-                <div style="flex:1; min-width:0;">
-                  <span style="color:#F8FAFC; font-weight:700; word-break:break-word;">${st}</span> (${o.cantidad || '1 un'})
-                  <div style="font-size:9.5px; color:#64748B;">${buyer}</div>
+              <div style="padding:8px 0; border-bottom:1px dashed rgba(255,255,255,0.08); font-size:11px;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:6px;">
+                  <div style="flex:1; min-width:0;">
+                    <div style="font-size:12px; font-weight:800; color:#F8FAFC; margin-bottom:2px;">
+                      📦 ${escapeHtmlStr(o.categoria || cat)} <span style="color:#FF6D00;">(${escapeHtmlStr(o.cantidad || '1 un')})</span>
+                    </div>
+                    <div style="color:#CBD5E1; font-size:11px; margin-top:2px;">
+                      📍 <strong>Dirección:</strong> ${st}
+                    </div>
+                    ${tel ? `
+                      <div style="margin-top:3px; font-size:11px; color:#38BDF8;">
+                        📞 <strong>Teléfono:</strong> <a href="tel:${tel}" style="color:#38BDF8; font-weight:700; text-decoration:underline;">${tel}</a>
+                      </div>
+                    ` : ''}
+                    ${desc ? `
+                      <div style="margin-top:3px; font-size:10.5px; color:#94A3B8; font-style:italic;">
+                        📝 ${desc}
+                      </div>
+                    ` : ''}
+                  </div>
                 </div>
-                <div style="display:flex; gap:6px; align-items:center; flex-shrink:0;">
+                <div style="display:flex; gap:6px; align-items:center; justify-content:flex-end;">
                   <button type="button" style="background:#0284C7; color:#F8FAFC; border:none; padding:5px 9px; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;" data-action="centrarPedidoEnMapa" data-lat="${lat}" data-lng="${lng}" data-order-id="${o.id}" title="Ver en el mapa">
                     <i class="fa-solid fa-map-location-dot"></i> VER EN EL MAPA
                   </button>
-                  <button type="button" style="background:#FF6D00; color:white; border:none; padding:5px 9px; border-radius:6px; font-size:10px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;" data-action="aceptarPedidoRepartidor" data-id="${o.id}" data-lat="${lat}" data-lng="${lng}" data-address="${escapeHtmlStr(o.direccion || '')}">
+                  <button type="button" style="background:#FF6D00; color:white; border:none; padding:5px 12px; border-radius:6px; font-size:10px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;" data-action="aceptarPedidoRepartidor" data-id="${o.id}" data-lat="${lat}" data-lng="${lng}" data-address="${escapeHtmlStr(o.direccion || '')}">
                     <i class="fa-solid fa-truck"></i> Tomar
                   </button>
                 </div>
@@ -552,16 +572,17 @@ async function syncBuyerActiveOrderFromCloud() {
       AppState.set('activeOrder', activeOrders[0]);
       checkActiveOrderStatus();
     } else if (!error) {
-      // Protección anti-intermitencia: no borrar si hay un pedido recién emitido en memoria
+      // Protección anti-intermitencia estricta: NUNCA borrar si checkSpecific falla o viene null por delay de red/RLS.
+      // SOLO borrar si la base de datos confirma de forma inequívoca que fue entregado o cancelado.
       const current = AppState.get('activeOrder');
       if (current && current.id) {
-        const { data: checkSpecific } = await window.supabaseClient
+        const { data: checkSpecific, error: specErr } = await window.supabaseClient
           .from('pedidos')
           .select('id, estado')
           .eq('id', current.id)
           .maybeSingle();
 
-        if (!checkSpecific || checkSpecific.estado === 'entregado' || checkSpecific.estado === 'cancelado') {
+        if (!specErr && checkSpecific && (checkSpecific.estado === 'entregado' || checkSpecific.estado === 'cancelado')) {
           AppState.set('activeOrder', null);
           checkActiveOrderStatus();
         }

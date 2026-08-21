@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (typeof window[fnName] === 'function') {
         return window[fnName](...args);
       }
-      if (fnName.includes('Admin') || fnName.includes('Denuncia') || fnName.includes('FichaAdmin')) {
+      if (fnName.includes('Admin') || fnName.includes('Denuncia') || fnName.includes('FichaAdmin') || fnName.includes('Ad') || fnName.includes('Propaganda') || fnName.includes('Anuncio') || fnName.includes('switchAdSubTab')) {
         if (typeof window.loadAdminModules === 'function') await window.loadAdminModules();
         if (typeof window[fnName] === 'function') return window[fnName](...args);
       }
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof window.loadForumModule === 'function') await window.loadForumModule();
         if (typeof window[fnName] === 'function') return window[fnName](...args);
       }
-      if (fnName.includes('Anuncio')) {
+      if (fnName.includes('Anuncio') || fnName.includes('AdSense')) {
         if (typeof window.loadAdsModule === 'function') await window.loadAdsModule();
         if (typeof window[fnName] === 'function') return window[fnName](...args);
       }
@@ -505,8 +505,27 @@ document.addEventListener('click', async (e) => {
         window.abrirRutaGoogleMaps(lat, lng, id, address);
       }
     }
+    else if (action === 'switchAdSubTab') {
+      const tab = btn.getAttribute('data-tab') || 'mapa';
+      if (typeof window.loadAdminModules === 'function') await window.loadAdminModules();
+      if (typeof window.switchAdSubTab === 'function') window.switchAdSubTab(tab);
+    }
+    else if (action === 'guardarSubmenuAnuncios') {
+      if (typeof window.loadAdminModules === 'function') await window.loadAdminModules();
+      if (typeof window.guardarSubmenuAnuncios === 'function') window.guardarSubmenuAnuncios();
+    }
+    else if (action === 'guardarTodasLasPropagandas') {
+      if (typeof window.loadAdminModules === 'function') await window.loadAdminModules();
+      if (typeof window.guardarTodasLasPropagandas === 'function') window.guardarTodasLasPropagandas();
+    }
+    else if (action === 'eliminarImagenAnuncio') {
+      const tab = btn.getAttribute('data-tab') || window.adminActiveAdTab || 'mapa';
+      if (typeof window.loadAdminModules === 'function') await window.loadAdminModules();
+      if (typeof window.eliminarImagenAnuncio === 'function') window.eliminarImagenAnuncio(tab);
+    }
     else if (action === 'borrarAnuncioLocalAdmin') {
       const id = btn.getAttribute('data-id');
+      if (typeof window.loadAdminModules === 'function') await window.loadAdminModules();
       if (typeof window.borrarAnuncioLocalAdmin === 'function') window.borrarAnuncioLocalAdmin(id);
     }
     else if (action === 'desbanearRepartidorAdmin') {
