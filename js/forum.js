@@ -69,6 +69,12 @@ async function renderForumFeed() {
       return;
     }
 
+    let currentUserId = null;
+    try {
+      const sessionData = await window.supabaseClient.auth.getSession();
+      currentUserId = sessionData?.data?.session?.user?.id || (userData?.id) || null;
+    } catch (_) {}
+
     let html = '';
     const adInsertAfterIndex = Math.max(0, Math.ceil(localPosts.length / 2) - 1);
     localPosts.forEach((post, index) => {
@@ -78,6 +84,8 @@ async function renderForumFeed() {
       const safeDesc = encodeURIComponent(post.descripcion || '').replace(/'/g, "%27");
       const safeCat = encodeURIComponent(post.categoria || '').replace(/'/g, "%27");
       const authorName = post.autor || 'Vecino de la OTB';
+      const isAuthor = currentUserId && post.user_id && String(post.user_id) === String(currentUserId);
+      const canManage = isAuthor || isAdmin;
 
       html += `
         <div class="forum-card">
@@ -93,13 +101,21 @@ async function renderForumFeed() {
             </div>
             <div class="forum-title">${escapeHtmlStr(post.titulo)}</div>
             <div class="forum-desc">${escapeHtmlStr(post.descripcion)}</div>
-            <div class="forum-footer" style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="forum-footer" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
               <button data-action="abrirComentariosPost" data-id="${post.id}" data-title="${safeTitle}" data-desc="${safeDesc}" data-cat="${safeCat}" style="background: rgba(255,109,0,0.15); color: #FF6D00; border: 1px solid rgba(255,109,0,0.3); border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;">
                 <i class="fa-regular fa-comment"></i> <span class="comment-count-num">${commentCount}</span> Comentar
               </button>
-              <div style="display:flex; gap:6px; align-items:center;">
-                <button class="btn-report" data-action="abrirModalDenuncia" data-title="${safeTitle}"><i class="fa-solid fa-flag"></i> Denunciar</button>
-                ${isAdmin ? `<button data-action="borrarPostForumAdmin" data-id="${post.id}" style="background:#D32F2F; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; font-weight:700; cursor:pointer;" title="Borrar como Admin"><i class="fa-solid fa-trash"></i> Borrar (Admin)</button>` : ''}
+              <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                ${canManage ? `
+                  <button data-action="abrirModalEditarPost" data-id="${post.id}" data-title="${safeTitle}" data-desc="${safeDesc}" data-cat="${safeCat}" style="background: rgba(14,165,233,0.15); color: #38BDF8; border: 1px solid rgba(14,165,233,0.3); border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" title="Editar este aviso">
+                    <i class="fa-solid fa-pen-to-square"></i> Editar
+                  </button>
+                  <button data-action="borrarPostPropio" data-id="${post.id}" style="background: rgba(239,68,68,0.15); color: #EF4444; border: 1px solid rgba(239,68,68,0.3); border-radius: 6px; padding: 4px 8px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" title="Eliminar este aviso">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                ` : `
+                  <button class="btn-report" data-action="abrirModalDenuncia" data-title="${safeTitle}"><i class="fa-solid fa-flag"></i> Denunciar</button>
+                `}
               </div>
             </div>
           </div>
@@ -120,18 +136,86 @@ async function renderForumFeed() {
 
 document.addEventListener('notigas_ads_config_ready', renderForumFeed);
 
-async function borrarPostForumAdmin(postId) {
-  if (confirm("🗑️ ¿Deseas eliminar permanentemente esta publicación del Tablón Vecinal?")) {
-      const { error } = await window.supabaseClient.from('avisos').delete().eq('id', postId);
-      if (error) {
-          if (typeof showToast === 'function') { showToast('Notificación', 'Error borrando el post: ' + error.message, 'error', 4000); } else { alert('Error borrando el post'); };
-          return;
-      }
-      if (typeof showToast === 'function') {
-        showToast('🗑️ Publicación Borrada', 'El aviso o anuncio de la OTB fue eliminado del sistema.', 'info', 4000);
-      }
-      await renderForumFeed();
+function abrirModalEditarPost(postId, title, desc, cat) {
+  const modal = document.getElementById('modalEditPost');
+  if (!modal) return;
+  const inputId = document.getElementById('editPostId');
+  const inputTitle = document.getElementById('editPostTitulo');
+  const inputDesc = document.getElementById('editPostDesc');
+  const selectCat = document.getElementById('editPostCategoria');
+
+  if (inputId) inputId.value = postId || '';
+  if (inputTitle) inputTitle.value = decodeURIComponent(title || '');
+  if (inputDesc) inputDesc.value = decodeURIComponent(desc || '');
+  if (selectCat) selectCat.value = decodeURIComponent(cat || 'COMENTARIO');
+
+  modal.style.display = 'flex';
+}
+
+function cerrarModalEditarPost() {
+  const modal = document.getElementById('modalEditPost');
+  if (modal) modal.style.display = 'none';
+}
+
+async function guardarEdicionPost() {
+  const inputId = document.getElementById('editPostId');
+  const inputTitle = document.getElementById('editPostTitulo');
+  const inputDesc = document.getElementById('editPostDesc');
+  const selectCat = document.getElementById('editPostCategoria');
+
+  const postId = inputId?.value;
+  const newTitle = (inputTitle?.value || '').trim();
+  const newDesc = (inputDesc?.value || '').trim();
+  const newCat = selectCat?.value || 'COMENTARIO';
+
+  if (!postId || !newTitle || !newDesc) {
+    if (typeof showToast === 'function') showToast('Campos requeridos', 'Ingresa un título y una descripción.', 'warning', 3000);
+    return;
   }
+
+  if (!window.supabaseClient) return;
+
+  try {
+    const { error } = await window.supabaseClient
+      .from('avisos')
+      .update({
+        titulo: newTitle,
+        descripcion: newDesc,
+        categoria: newCat
+      })
+      .eq('id', postId);
+
+    if (error) {
+      console.error('Error editando aviso:', error);
+      if (typeof showToast === 'function') showToast('Error al editar', error.message || 'No se pudo actualizar el aviso.', 'error', 4000);
+      return;
+    }
+
+    if (typeof showToast === 'function') showToast('✅ Publicación Actualizada', 'Los cambios en tu aviso fueron guardados con éxito.', 'success', 3500);
+    cerrarModalEditarPost();
+    if (typeof renderForumFeed === 'function') renderForumFeed();
+    if (typeof renderAdminAvisosFeedList === 'function') renderAdminAvisosFeedList();
+  } catch (err) {
+    console.error('Excepción al guardar edición:', err);
+  }
+}
+
+async function borrarPostPropio(postId) {
+  if (!postId || !window.supabaseClient) return;
+  if (confirm('🗑️ ¿Deseas eliminar permanentemente esta publicación del Tablón Vecinal?')) {
+    const { error } = await window.supabaseClient.from('avisos').delete().eq('id', postId);
+    if (error) {
+      if (typeof showToast === 'function') showToast('Error', 'No se pudo eliminar el aviso: ' + error.message, 'error', 4000);
+      return;
+    }
+    if (typeof showToast === 'function') showToast('🗑️ Aviso Eliminado', 'La publicación ha sido eliminada con éxito.', 'info', 3500);
+    if (typeof renderForumFeed === 'function') renderForumFeed();
+    if (typeof renderAdminAvisosFeedList === 'function') renderAdminAvisosFeedList();
+  }
+}
+
+async function borrarPostForumAdmin(postId) {
+  return borrarPostPropio(postId);
 }
 
 async function votarPost(el, delta, postId) {
@@ -735,3 +819,7 @@ window.closeNuevoPostModal = closeNuevoPostModal;
 window.crearNuevoPost = crearNuevoPost;
 window.agregarComentarioPost = agregarComentarioPost;
 window.borrarPostForumAdmin = borrarPostForumAdmin;
+window.abrirModalEditarPost = abrirModalEditarPost;
+window.cerrarModalEditarPost = cerrarModalEditarPost;
+window.guardarEdicionPost = guardarEdicionPost;
+window.borrarPostPropio = borrarPostPropio;

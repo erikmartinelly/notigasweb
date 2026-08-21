@@ -441,7 +441,7 @@
 
         <div style="font-weight: 900; font-size: 13px; color: #FF6D00; display: flex; align-items: center; justify-content: space-between;">
 
-          <span><i class="fa-solid fa-bullhorn"></i> 📣 AVISOS GRATIS DE TU BARRIO</span>
+          <span><i class="fa-solid fa-bullhorn"></i> 📣 AVISOS GRATIS DE TU CIUDAD</span>
 
           <button class="btn-new-post" style="padding: 4px 10px; font-size: 11px;"  id="auto-event-21" ><i class="fa-solid fa-plus"></i> Publicar Aviso</button>
 
@@ -1426,6 +1426,47 @@
 
   </div>
 
+  <!-- MODAL EDITAR AVISO VECINAL (AUTOR O ADMINISTRADOR) -->
+  <div class="modal" id="modalEditPost" style="display:none; z-index: 10000;">
+    <div class="modal-content" style="max-width: 500px; width: 92%;">
+      <div class="modal-title">
+        <span><i class="fa-solid fa-pen-to-square"></i> Editar Publicación</span>
+        <button class="btn-close" data-action="cerrarModalEditarPost">✖</button>
+      </div>
+      <form id="formEditPost" onsubmit="event.preventDefault(); if(typeof guardarEdicionPost === 'function') guardarEdicionPost();">
+        <input type="hidden" id="editPostId">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label style="font-size: 11.5px; color: #CBD5E1;">Tipo / Categoría de Publicación:</label>
+          <select id="editPostCategoria" style="width:100%; padding:9px; border-radius:8px; background:#0F172A; color:white; border:1px solid #334155; font-size:12px;">
+            <option value="COMENTARIO">💬 COMENTARIO</option>
+            <option value="PIDO AYUDA">🤝 PIDO AYUDA</option>
+            <option value="SUGERENCIA">🚛 SUGERENCIA</option>
+            <option value="INTERCAMBIO">🔄 INTERCAMBIO / COMPRA VECINAL</option>
+            <option value="AVISO VECINAL">📢 AVISO VECINAL</option>
+            <option value="ALERTA / SEGURIDAD">🚨 ALERTA / SEGURIDAD</option>
+            <option value="OFERTA / VENTA">🏷️ OFERTA / VENTA</option>
+            <option value="EMPLEO / SERVICIO">💼 EMPLEO / SERVICIO</option>
+            <option value="MASCOTA / PERDIDO">🐾 MASCOTA / PERDIDO</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label style="font-size: 11.5px; color: #CBD5E1;">Título del Anuncio:</label>
+          <input type="text" id="editPostTitulo" required maxlength="120" placeholder="Título del aviso..." style="width:100%; padding:9px; border-radius:8px; background:#0F172A; color:white; border:1px solid #334155; font-size:12px;">
+        </div>
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label style="font-size: 11.5px; color: #CBD5E1;">Descripción / Mensaje Detallado:</label>
+          <textarea id="editPostDesc" rows="4" required placeholder="Escribe el mensaje actualizado..." style="width:100%; padding:9px; border-radius:8px; background:#0F172A; color:white; border:1px solid #334155; font-size:12px; resize:vertical;"></textarea>
+        </div>
+        <div style="display: flex; gap: 8px; justify-content: flex-end;">
+          <button type="button" class="btn-cancel" data-action="cerrarModalEditarPost" style="background:#334155; color:white; border:none; padding:9px 16px; border-radius:6px; font-size:12px; cursor:pointer;">Cancelar</button>
+          <button type="submit" class="btn-submit" style="background: linear-gradient(135deg, #0284C7, #0369A1); color:white; border:none; padding:9px 18px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer;">
+            <i class="fa-solid fa-floppy-disk"></i> Guardar Cambios
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- SISTEMA DE NOTIFICACIONES TOAST (ESTILO RAPPI / UBER EATS) -->
 
   <div id="toastContainer" aria-live="polite" aria-atomic="true"></div>
@@ -1517,6 +1558,8 @@
           <button class="modal-tab-btn" style="text-align:left; width:100%; justify-content:flex-start;"  id="auto-event-57" ><i class="fa-solid fa-boxes-packing" style="width:20px;"></i> Pedidos</button>
 
           <button class="modal-tab-btn" style="text-align:left; width:100%; justify-content:flex-start;"  id="auto-event-58" ><i class="fa-solid fa-rectangle-ad" style="width:20px;"></i> Anuncios</button>
+
+          <button class="modal-tab-btn" style="text-align:left; width:100%; justify-content:flex-start;"  id="btnAdminTabAvisos" data-action="switchAdminTabAvisos"><i class="fa-solid fa-bullhorn" style="width:20px; color:#F59E0B;"></i> Avisos Gratis</button>
 
           <button class="modal-tab-btn" style="text-align:left; width:100%; justify-content:flex-start;"  id="auto-event-59" ><i class="fa-solid fa-shield-halved" style="width:20px;"></i> Moderación</button>
 
@@ -1777,6 +1820,32 @@
               </div>
             </div>
 
+          </div>
+
+          <!-- SUBMENÚ 4: GESTIÓN DE AVISOS GRATIS (PESTAÑA 3) -->
+          <div class="modal-tab-pane" id="modalPaneAvisosAdmin">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+              <div>
+                <h4 style="font-size: 13px; color: #F59E0B; margin: 0;"><i class="fa-solid fa-bullhorn"></i> Control de Publicaciones - Avisos Gratis</h4>
+                <span style="font-size: 10.5px; color: #94A3B8;">Moderación, edición y eliminación de publicaciones vecinales</span>
+              </div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <button type="button" data-action="refrescarAvisosAdmin" style="background: #1E293B; border: 1px solid rgba(255,255,255,0.2); color: white; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                  <i class="fa-solid fa-rotate"></i> Actualizar
+                </button>
+                <button type="button" data-action="purgarAvisosExpiradosAdmin" style="background: #D32F2F; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                  <i class="fa-solid fa-broom"></i> Purgar Vencidos (+48h)
+                </button>
+              </div>
+            </div>
+
+            <div style="margin-bottom: 12px;">
+              <input type="text" id="adminAvisosSearchInput" placeholder="🔍 Buscar avisos por título, autor, ciudad o contenido..." style="width: 100%; padding: 8px 12px; font-size: 11.5px; border-radius: 6px; background: #0F172A; border: 1px solid #334155; color: white;">
+            </div>
+
+            <div id="adminAvisosListContainer" style="max-height: 52vh; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; font-size: 11px;">
+              <div style="text-align:center; padding: 20px; color:#94A3B8;">Cargando avisos comunitarios...</div>
+            </div>
           </div>
 
           <!-- SUBMENÚ 4: MODERACIÓN, DENUNCIAS Y BANEOS -->

@@ -159,7 +159,11 @@ function switchModalTab(idx) {
     renderAdminAdsAndPostsList();
   }
 
-  if (idx === 4) renderAdminReports();
+  if (idx === 4) {
+    renderAdminAvisosFeedList();
+  }
+
+  if (idx === 5) renderAdminReports();
 }
 
 window.adminActiveAdTab = 'mapa';
@@ -1974,6 +1978,151 @@ async function enviarDenuncia() {
     alert('⚠️ Denuncia registrada de forma segura. El equipo de administración revisará al usuario.');
   }
 }
+
+// ==========================================================================
+// GESTIÓN Y MODERACIÓN DE AVISOS GRATIS (PESTAÑA 3) EN PANEL DE ADMINISTRACIÓN
+// ==========================================================================
+
+let _adminAvisosCache = [];
+
+async function renderAdminAvisosFeedList(filtro = '') {
+  const container = document.getElementById('adminAvisosListContainer');
+  if (!container || !window.supabaseClient) return;
+
+  container.innerHTML = '<div style="text-align:center; padding: 20px; color:#94A3B8;"><i class="fa-solid fa-circle-notch fa-spin"></i> Cargando avisos comunitarios...</div>';
+
+  try {
+    const { data: posts, error } = await window.supabaseClient
+      .from('avisos')
+      .select('*, comentarios_avisos(count)')
+      .order('created_at', { ascending: false })
+      .limit(150);
+
+    if (error) {
+      container.innerHTML = `<div style="color:#EF4444; padding:12px; text-align:center;">Error al cargar avisos: ${error.message}</div>`;
+      return;
+    }
+
+    _adminAvisosCache = posts || [];
+
+    filtrarYRenderizarAvisosAdmin(filtro);
+  } catch (err) {
+    console.error('Error cargando lista de avisos admin:', err);
+    container.innerHTML = `<div style="color:#EF4444; padding:12px; text-align:center;">Error interno: ${err.message}</div>`;
+  }
+}
+
+function filtrarYRenderizarAvisosAdmin(filtro = '') {
+  const container = document.getElementById('adminAvisosListContainer');
+  if (!container) return;
+
+  if (!_adminAvisosCache || _adminAvisosCache.length === 0) {
+    container.innerHTML = '<div style="color:#94A3B8; padding:20px; text-align:center;">No hay avisos registrados en la base de datos.</div>';
+    return;
+  }
+
+  const term = (filtro || '').toLowerCase().trim();
+  const filtered = term ? _adminAvisosCache.filter(p => {
+    const t = (p.titulo || '').toLowerCase();
+    const d = (p.descripcion || '').toLowerCase();
+    const a = (p.autor || '').toLowerCase();
+    const c = (p.ciudad || '').toLowerCase();
+    const k = (p.categoria || '').toLowerCase();
+    return t.includes(term) || d.includes(term) || a.includes(term) || c.includes(term) || k.includes(term);
+  }) : _adminAvisosCache;
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div style="color:#94A3B8; padding:20px; text-align:center;">No se encontraron avisos que coincidan con "${escapeHtmlStr(filtro)}".</div>`;
+    return;
+  }
+
+  let html = '';
+  filtered.forEach(p => {
+    const commentCount = (p.comentarios_avisos && p.comentarios_avisos[0]) ? p.comentarios_avisos[0].count : 0;
+    const safeTitle = encodeURIComponent(p.titulo || '').replace(/'/g, "%27");
+    const safeDesc = encodeURIComponent(p.descripcion || '').replace(/'/g, "%27");
+    const safeCat = encodeURIComponent(p.categoria || '').replace(/'/g, "%27");
+    const timeStr = p.created_at ? new Date(p.created_at).toLocaleString('es-BO') : 'N/A';
+    const isExpired = p.created_at ? ((Date.now() - new Date(p.created_at).getTime()) > 48 * 3600 * 1000) : false;
+
+    html += `
+      <div style="background:#1E293B; border-radius:8px; padding:10px 12px; border:1px solid rgba(255,255,255,0.08); display:flex; flex-direction:column; gap:6px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+          <div style="display:flex; gap:6px; align-items:center;">
+            <span style="font-size:10px; font-weight:800; background:rgba(245,158,11,0.2); color:#F59E0B; padding:2px 7px; border-radius:4px;">${escapeHtmlStr(p.categoria || 'AVISO')}</span>
+            <span style="font-size:10px; font-weight:700; background:rgba(56,189,248,0.15); color:#38BDF8; padding:2px 7px; border-radius:4px;">📍 ${escapeHtmlStr(String(p.ciudad || 'Global').toUpperCase())}</span>
+            ${isExpired ? '<span style="font-size:9.5px; background:rgba(239,68,68,0.2); color:#F87171; padding:2px 5px; border-radius:4px;">⚠️ Expirado (+48h)</span>' : ''}
+          </div>
+          <div style="font-size:10px; color:#94A3B8;">
+            <i class="fa-regular fa-clock"></i> ${escapeHtmlStr(timeStr)}
+          </div>
+        </div>
+
+        <div style="font-weight:800; font-size:12.5px; color:white;">
+          ${escapeHtmlStr(p.titulo || 'Sin título')}
+        </div>
+
+        <div style="font-size:11px; color:#CBD5E1; line-height:1.4;">
+          ${escapeHtmlStr(p.descripcion || '')}
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(255,255,255,0.05); padding-top:6px; margin-top:2px;">
+          <div style="font-size:10.5px; color:#94A3B8; display:flex; gap:10px; align-items:center;">
+            <span>👤 <strong>${escapeHtmlStr(p.autor || 'Vecino')}</strong></span>
+            <span>👍 ${p.votos ?? 1} votos</span>
+            <span>💬 ${commentCount} comentarios</span>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button type="button" data-action="abrirModalEditarPost" data-id="${p.id}" data-title="${safeTitle}" data-desc="${safeDesc}" data-cat="${safeCat}" style="background:rgba(14,165,233,0.2); color:#38BDF8; border:1px solid rgba(14,165,233,0.4); padding:4px 8px; border-radius:4px; font-size:10.5px; font-weight:700; cursor:pointer;">
+              <i class="fa-solid fa-pen-to-square"></i> Editar
+            </button>
+            <button type="button" data-action="borrarPostForumAdmin" data-id="${p.id}" style="background:rgba(239,68,68,0.2); color:#F87171; border:1px solid rgba(239,68,68,0.4); padding:4px 8px; border-radius:4px; font-size:10.5px; font-weight:700; cursor:pointer;">
+              <i class="fa-solid fa-trash"></i> Borrar
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+async function purgarAvisosExpiradosAdmin() {
+  if (!confirm('🧹 ¿Deseas purgar y eliminar todos los avisos comunitarios con más de 48 horas de antigüedad?')) return;
+  if (!window.supabaseClient) return;
+
+  const dosDiasAtras = new Date(Date.now() - 48 * 3600 * 1000).toISOString();
+  try {
+    const { error } = await window.supabaseClient
+      .from('avisos')
+      .delete()
+      .lt('created_at', dosDiasAtras);
+
+    if (error) {
+      if (typeof showToast === 'function') showToast('Error', 'No se pudo purgar: ' + error.message, 'error', 4000);
+      return;
+    }
+
+    if (typeof showToast === 'function') showToast('🧹 Purga Completa', 'Se eliminaron los avisos vencidos (+48h).', 'success', 3500);
+    renderAdminAvisosFeedList();
+    if (typeof renderForumFeed === 'function') renderForumFeed();
+  } catch (ex) {
+    console.error(ex);
+  }
+}
+
+// Búsqueda en vivo de avisos admin
+document.addEventListener('input', (e) => {
+  if (e.target && e.target.id === 'adminAvisosSearchInput') {
+    filtrarYRenderizarAvisosAdmin(e.target.value);
+  }
+});
+
+window.renderAdminAvisosFeedList = renderAdminAvisosFeedList;
+window.purgarAvisosExpiradosAdmin = purgarAvisosExpiradosAdmin;
+window.filtrarYRenderizarAvisosAdmin = filtrarYRenderizarAvisosAdmin;
+
 window.banearUsuarioAdmin = (typeof banearUsuarioAdmin !== 'undefined') ? banearUsuarioAdmin : (typeof window.banearUsuarioAdmin !== 'undefined' ? window.banearUsuarioAdmin : undefined);
 window.desbanearUsuarioAdmin = (typeof desbanearUsuarioAdmin !== 'undefined') ? desbanearUsuarioAdmin : (typeof window.desbanearUsuarioAdmin !== 'undefined' ? window.desbanearUsuarioAdmin : undefined);
 window.borrarDenunciaAdmin = (typeof borrarDenunciaAdmin !== 'undefined') ? borrarDenunciaAdmin : undefined;

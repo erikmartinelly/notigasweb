@@ -302,11 +302,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_auto_event_58 = document.getElementById('auto-event-58');
     if (el_auto_event_58) el_auto_event_58.addEventListener('click', () => { safeCall('switchModalTab', 3); });
 
+    const el_btnAdminTabAvisos = document.getElementById('btnAdminTabAvisos');
+    if (el_btnAdminTabAvisos) el_btnAdminTabAvisos.addEventListener('click', () => { safeCall('switchModalTab', 4); });
+
     const el_auto_event_59 = document.getElementById('auto-event-59');
-    if (el_auto_event_59) el_auto_event_59.addEventListener('click', () => { safeCall('switchModalTab', 4); });
+    if (el_auto_event_59) el_auto_event_59.addEventListener('click', () => { safeCall('switchModalTab', 5); });
 
     const el_auto_event_60 = document.getElementById('auto-event-60');
-    if (el_auto_event_60) el_auto_event_60.addEventListener('click', () => { safeCall('switchModalTab', 5); });
+    if (el_auto_event_60) el_auto_event_60.addEventListener('click', () => { safeCall('switchModalTab', 6); });
 
     const el_auto_event_61 = document.getElementById('auto-event-61');
     if (el_auto_event_61) el_auto_event_61.addEventListener('click', () => { safeCall('emitirAlertaOficialAdmin'); });
@@ -466,10 +469,43 @@ document.addEventListener('click', async (e) => {
         window.abrirModalDenuncia('Pedido Falso', `Pedido ${id} | Comprador: ${buyer} | Correo: ${email}`, true);
       }
     }
-    else if (action === 'borrarPostForumAdmin') {
+    else if (action === 'borrarPostForumAdmin' || action === 'borrarPostPropio') {
       const id = btn.getAttribute('data-id');
+      if (typeof window.loadForumModule === 'function') await window.loadForumModule();
+      if (typeof window.borrarPostPropio === 'function') {
+        window.borrarPostPropio(id);
+      } else if (typeof window.borrarPostForumAdmin === 'function') {
+        window.borrarPostForumAdmin(id);
+      }
+    }
+    else if (action === 'abrirModalEditarPost') {
+      const id = btn.getAttribute('data-id');
+      const title = btn.getAttribute('data-title') || '';
+      const desc = btn.getAttribute('data-desc') || '';
+      const cat = btn.getAttribute('data-cat') || '';
+      if (typeof window.loadForumModule === 'function') await window.loadForumModule();
+      if (typeof window.abrirModalEditarPost === 'function') {
+        window.abrirModalEditarPost(id, title, desc, cat);
+      }
+    }
+    else if (action === 'cerrarModalEditarPost') {
+      if (typeof window.cerrarModalEditarPost === 'function') window.cerrarModalEditarPost();
+    }
+    else if (action === 'guardarEdicionPost') {
+      if (typeof window.loadForumModule === 'function') await window.loadForumModule();
+      if (typeof window.guardarEdicionPost === 'function') window.guardarEdicionPost();
+    }
+    else if (action === 'switchAdminTabAvisos') {
       if (typeof window.loadAdminModules === 'function') await window.loadAdminModules();
-      if (typeof window.borrarPostForumAdmin === 'function') window.borrarPostForumAdmin(id);
+      if (typeof window.switchModalTab === 'function') window.switchModalTab(4);
+    }
+    else if (action === 'refrescarAvisosAdmin') {
+      if (typeof window.loadAdminModules === 'function') await window.loadAdminModules();
+      if (typeof window.renderAdminAvisosFeedList === 'function') window.renderAdminAvisosFeedList();
+    }
+    else if (action === 'purgarAvisosExpiradosAdmin') {
+      if (typeof window.loadAdminModules === 'function') await window.loadAdminModules();
+      if (typeof window.purgarAvisosExpiradosAdmin === 'function') window.purgarAvisosExpiradosAdmin();
     }
     else if (action === 'abrirAnuncioWhatsApp') {
       if (typeof window.loadAdsModule === 'function') await window.loadAdsModule();
