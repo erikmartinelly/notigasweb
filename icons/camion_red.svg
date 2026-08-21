@@ -1,208 +1,82 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="160" height="160">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
   <defs>
-    <!-- Sombra suave en el suelo -->
-    <filter id="condorGroundShadow2" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="4" result="blur"/>
-      <feColorMatrix type="matrix" values="0 0 0 0 0.04   0 0 0 0 0.06   0 0 0 0 0.1   0 0 0 0.55 0"/>
+    <!-- Sombra sutil y elegante en el suelo -->
+    <filter id="cleanShadow2" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="2.5" flood-color="#0F172A" flood-opacity="0.3"/>
     </filter>
-
-    <!-- Resplandor Faros LED -->
-    <filter id="condorLedGlow2" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="2.5" result="glow"/>
-      <feComposite in="SourceGraphic" in2="glow" operator="over"/>
-    </filter>
-
-    <!-- Gradientes Rojo Nissan Condor -->
-    <linearGradient id="condorRedTop2" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FF3B56"/>
-      <stop offset="45%" stop-color="#E11D48"/>
-      <stop offset="100%" stop-color="#9F1239"/>
-    </linearGradient>
-
-    <linearGradient id="condorRedSide2" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#FF2E56"/>
-      <stop offset="30%" stop-color="#E11D48"/>
-      <stop offset="70%" stop-color="#BE123C"/>
-      <stop offset="100%" stop-color="#700C28"/>
-    </linearGradient>
-
-    <linearGradient id="condorRedFront2" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#BE123C"/>
-      <stop offset="50%" stop-color="#9F1239"/>
-      <stop offset="100%" stop-color="#4C0519"/>
-    </linearGradient>
-
-    <!-- Deflector de viento superior -->
-    <linearGradient id="condorSpoilerGrad2" x1="0%" y1="0%" x2="100%" y2="80%">
-      <stop offset="0%" stop-color="#FF6B8B"/>
-      <stop offset="50%" stop-color="#E11D48"/>
-      <stop offset="100%" stop-color="#881337"/>
-    </linearGradient>
-
-    <!-- Furgón Trasero Blanco / Plata -->
-    <linearGradient id="cargoBoxSide2" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#F8FAFC"/>
-      <stop offset="60%" stop-color="#E2E8F0"/>
-      <stop offset="100%" stop-color="#CBD5E1"/>
-    </linearGradient>
-    <linearGradient id="cargoBoxTop2" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FFFFFF"/>
-      <stop offset="100%" stop-color="#E2E8F0"/>
-    </linearGradient>
-
-    <!-- Cristales y Parabrisas Tintados -->
-    <linearGradient id="condorWindshield2" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#E0F2FE"/>
-      <stop offset="25%" stop-color="#38BDF8"/>
-      <stop offset="70%" stop-color="#0284C7"/>
-      <stop offset="100%" stop-color="#0C4A6E"/>
-    </linearGradient>
-
-    <!-- Cilindros Garrafas GLP -->
-    <linearGradient id="lpgCylinderGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#FF9E80"/>
-      <stop offset="40%" stop-color="#FF6D00"/>
-      <stop offset="85%" stop-color="#D84315"/>
-      <stop offset="100%" stop-color="#BF360C"/>
-    </linearGradient>
-
-    <!-- Neumáticos y Llantas -->
-    <linearGradient id="condorTireGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#334155"/>
-      <stop offset="60%" stop-color="#1E293B"/>
-      <stop offset="100%" stop-color="#0F172A"/>
-    </linearGradient>
-    <linearGradient id="condorRimGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FFFFFF"/>
-      <stop offset="50%" stop-color="#94A3B8"/>
-      <stop offset="100%" stop-color="#475569"/>
-    </linearGradient>
   </defs>
 
-  <!-- 1. SOMBRA BASE EN EL SUELO -->
-  <ellipse cx="80" cy="138" rx="66" ry="15" fill="#020617" filter="url(#condorGroundShadow2)"/>
+  <!-- Sombra en el suelo -->
+  <ellipse cx="64" cy="112" rx="48" ry="7" fill="#0F172A" opacity="0.22"/>
 
-  <!-- 2. CHASIS Y BAJOS DEL CAMIÓN -->
-  <path d="M 18 108 L 30 120 L 130 128 L 146 118 L 136 106 Z" fill="#0F172A"/>
+  <g id="simpleElegantTruck2" filter="url(#cleanShadow2)">
+    <!-- 1. CHASIS Y BASE -->
+    <rect x="14" y="90" width="100" height="8" rx="2" fill="#1E293B"/>
 
-  <!-- 3. FURGÓN / CARROCERÍA DE REPARTO TRASERA (NISSAN CONDOR) -->
-  <!-- Techo Furgón -->
-  <path d="M 20 48 L 56 30 L 98 38 L 62 58 Z" fill="url(#cargoBoxTop2)"/>
-  <!-- Lateral Furgón -->
-  <path d="M 20 48 L 62 58 L 62 110 L 20 100 Z" fill="url(#cargoBoxSide2)"/>
-  <path d="M 20 48 L 62 58" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- 2. CARROCERÍA / FURGÓN TRASERO (Blanco Claro con Borde Sutil) -->
+    <rect x="14" y="44" width="56" height="48" rx="4" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="2"/>
+    
+    <!-- Garrafas / Cilindros de Gas GLP en la Caja -->
+    <g id="cylinders2">
+      <!-- Garrafa 1 -->
+      <rect x="20" y="52" width="10" height="26" rx="4" fill="#FF6D00"/>
+      <rect x="23" y="48" width="4" height="4" rx="1" fill="#475569"/>
+      <ellipse cx="25" cy="52" rx="4" ry="1.5" fill="#FFA040"/>
 
-  <!-- Garrafas / Cilindros GLP Visibles en Furgón -->
-  <g id="lpgCylindersInBox2">
-    <!-- Garrafa 1 -->
-    <rect x="26" y="62" width="9" height="28" rx="3.5" fill="url(#lpgCylinderGrad2)"/>
-    <ellipse cx="30.5" cy="62" rx="3.5" ry="1.5" fill="#FFAB91"/>
-    <rect x="29" y="58" width="3" height="4" rx="1" fill="#475569"/>
-    <!-- Garrafa 2 -->
-    <rect x="38" y="66" width="9" height="28" rx="3.5" fill="url(#lpgCylinderGrad2)"/>
-    <ellipse cx="42.5" cy="66" rx="3.5" ry="1.5" fill="#FFAB91"/>
-    <rect x="41" y="62" width="3" height="4" rx="1" fill="#475569"/>
-    <!-- Garrafa 3 -->
-    <rect x="50" y="70" width="8" height="26" rx="3.5" fill="url(#lpgCylinderGrad2)"/>
-    <ellipse cx="54" cy="70" rx="3.5" ry="1.5" fill="#FFAB91"/>
-    <rect x="52.5" y="67" width="3" height="3.5" rx="1" fill="#475569"/>
+      <!-- Garrafa 2 -->
+      <rect x="34" y="52" width="10" height="26" rx="4" fill="#FF6D00"/>
+      <rect x="37" y="48" width="4" height="4" rx="1" fill="#475569"/>
+      <ellipse cx="39" cy="52" rx="4" ry="1.5" fill="#FFA040"/>
 
-    <!-- Reja de seguridad metálica del furgón -->
-    <line x1="22" y1="76" x2="60" y2="85" stroke="#0F172A" stroke-width="2" opacity="0.6"/>
-    <line x1="22" y1="92" x2="60" y2="101" stroke="#0F172A" stroke-width="2" opacity="0.6"/>
-    <line x1="36" y1="60" x2="36" y2="104" stroke="#0F172A" stroke-width="1.5" opacity="0.5"/>
-    <line x1="48" y1="63" x2="48" y2="107" stroke="#0F172A" stroke-width="1.5" opacity="0.5"/>
+      <!-- Garrafa 3 -->
+      <rect x="48" y="52" width="10" height="26" rx="4" fill="#FF6D00"/>
+      <rect x="51" y="48" width="4" height="4" rx="1" fill="#475569"/>
+      <ellipse cx="53" cy="52" rx="4" ry="1.5" fill="#FFA040"/>
+
+      <!-- Reja / Baranda de Protección Metálica -->
+      <line x1="14" y1="68" x2="70" y2="68" stroke="#334155" stroke-width="2" stroke-linecap="round"/>
+      <line x1="14" y1="82" x2="70" y2="82" stroke="#334155" stroke-width="2" stroke-linecap="round"/>
+    </g>
+
+    <!-- 3. CABINA NISSAN CONDOR (Rojo Clásico Elegante) -->
+    <!-- Estructura de Cabina -->
+    <path d="M 70 48 L 94 48 C 104 48 112 56 112 66 L 112 92 L 70 92 Z" fill="#E11D48"/>
+    
+    <!-- Deflector de Techo Suave (Estilo Nissan Condor) -->
+    <path d="M 70 48 C 76 40 88 40 96 48 Z" fill="#BE123C"/>
+
+    <!-- Parabrisas / Ventana Frontal y Lateral -->
+    <path d="M 74 54 L 94 54 C 100 54 105 58 106 64 L 106 68 L 74 68 Z" fill="#38BDF8"/>
+    <!-- Reflejo blanco elegante en ventana -->
+    <path d="M 76 56 L 86 56 L 82 66 L 76 66 Z" fill="#FFFFFF" opacity="0.6"/>
+
+    <!-- Parrilla y Frente Delantero -->
+    <path d="M 108 72 L 114 74 C 115 75 115 78 114 79 L 108 81 Z" fill="#1E293B"/>
+    <!-- Faro Delantero Blanco Cálido -->
+    <rect x="108" y="82" width="4" height="6" rx="1" fill="#FEF08A"/>
+
+    <!-- Parachoques Frontal -->
+    <rect x="106" y="89" width="10" height="6" rx="2" fill="#334155"/>
+
+    <!-- 4. MEDALLÓN LATERAL 'R' (Elegante y Limpio) -->
+    <g id="badgeR2">
+      <circle cx="88" cy="79" r="8.5" fill="#FFFFFF"/>
+      <circle cx="88" cy="79" r="7.5" fill="#FFFFFF" stroke="#E11D48" stroke-width="1.2"/>
+      <text x="88" y="83" font-family="'Arial Black', 'Trebuchet MS', sans-serif" font-weight="900" font-size="10" fill="#E11D48" text-anchor="middle">R</text>
+    </g>
+
+    <!-- Manilla de Puerta -->
+    <rect x="74" y="76" width="4" height="1.5" rx="0.75" fill="#4C0519"/>
+
+    <!-- 5. RUEDAS CLÁSICAS LIMPIAS -->
+    <!-- Rueda Delantera -->
+    <circle cx="94" cy="98" r="12" fill="#0F172A"/>
+    <circle cx="94" cy="98" r="6" fill="#94A3B8"/>
+    <circle cx="94" cy="98" r="2.5" fill="#0F172A"/>
+
+    <!-- Rueda Trasera -->
+    <circle cx="34" cy="98" r="12" fill="#0F172A"/>
+    <circle cx="34" cy="98" r="6" fill="#94A3B8"/>
+    <circle cx="34" cy="98" r="2.5" fill="#0F172A"/>
   </g>
-
-  <!-- 4. CABINA NISSAN CONDOR (COE ROJA MODERNA) -->
-  <!-- Alerón / Deflector aerodinámico superior del Condor -->
-  <path d="M 60 52 L 96 34 L 108 42 L 78 60 Z" fill="url(#condorSpoilerGrad2)"/>
-  <path d="M 60 52 C 65 42 78 35 96 34 L 108 42 C 90 44 78 50 78 60 Z" fill="#FF4D6D" opacity="0.5"/>
-
-  <!-- Techo de Cabina -->
-  <path d="M 62 58 L 98 42 L 112 50 L 80 67 Z" fill="url(#condorRedTop2)"/>
-
-  <!-- Parabrisas Delantero Panorámico Inclinado -->
-  <path d="M 112 50 L 142 78 L 126 89 L 80 67 Z" fill="url(#condorWindshield2)"/>
-  <!-- Reflejo blanco nítido en el cristal -->
-  <path d="M 114 53 L 139 77 L 133 81 L 107 57 Z" fill="#FFFFFF" opacity="0.6"/>
-  <!-- Limpiaparabrisas -->
-  <line x1="94" y1="71" x2="108" y2="60" stroke="#0F172A" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="116" y1="81" x2="130" y2="70" stroke="#0F172A" stroke-width="1.5" stroke-linecap="round"/>
-
-  <!-- Ventanilla Lateral del Conductor -->
-  <path d="M 65 62 L 78 67 L 78 84 L 65 79 Z" fill="url(#condorWindshield2)"/>
-  <path d="M 67 64 L 75 67 L 73 75 L 67 71 Z" fill="#FFFFFF" opacity="0.45"/>
-
-  <!-- PUERTA LATERAL DE CABINA CON LA LETRA 'R' OFICIAL -->
-  <path d="M 62 58 L 80 67 L 80 114 L 62 108 Z" fill="url(#condorRedSide2)"/>
-  
-  <!-- INSIGNIA 'R' EN EL COSTADO DE LA PUERTA -->
-  <g id="badgeCondorR2">
-    <!-- Placa circular de soporte -->
-    <circle cx="71" cy="91" r="9" fill="#0F172A" opacity="0.35"/>
-    <circle cx="71" cy="90" r="8" fill="#FFFFFF" opacity="0.95"/>
-    <!-- Letra R en Rojo Fuerte -->
-    <text x="71" y="94.5" font-family="'Impact', 'Arial Black', sans-serif" font-weight="900" font-size="12" fill="#E11D48" text-anchor="middle">R</text>
-  </g>
-
-  <!-- Manilla de la Puerta -->
-  <rect x="66" y="86" width="4" height="1.6" rx="0.8" fill="#0F172A"/>
-
-  <!-- Espejo Retrovisor 3D Gran Angular -->
-  <path d="M 80 68 L 86 67 L 86 76 L 80 75 Z" fill="#0F172A"/>
-  <ellipse cx="83.5" cy="71.5" rx="1.5" ry="3" fill="#38BDF8"/>
-
-  <!-- CAPÓ / FRONTAL Y PARRILLA NISSAN CONDOR -->
-  <!-- Lateral frontal -->
-  <path d="M 80 67 L 126 89 L 126 115 L 80 114 Z" fill="url(#condorRedFront2)"/>
-  <!-- Frontal delantero -->
-  <path d="M 126 89 L 148 98 L 148 119 L 126 115 Z" fill="url(#condorRedFront2)"/>
-
-  <!-- PARRILLA CROMADA EMBLEMÁTICA CONDOR -->
-  <path d="M 132 101 L 145 106 L 145 116 L 132 112 Z" fill="#0F172A"/>
-  <!-- Barras Horizontales Cromadas -->
-  <line x1="134" y1="103.5" x2="143" y2="107" stroke="#F1F5F9" stroke-width="1.8" stroke-linecap="round"/>
-  <line x1="134" y1="107.5" x2="143" y2="111" stroke="#F1F5F9" stroke-width="1.8" stroke-linecap="round"/>
-  <line x1="134" y1="111.5" x2="143" y2="115" stroke="#CBD5E1" stroke-width="1.5" stroke-linecap="round"/>
-  
-  <!-- Emblema Nissan Condor Frontal -->
-  <circle cx="138.5" cy="107" r="2.4" fill="#E11D48" stroke="#FFFFFF" stroke-width="0.8"/>
-
-  <!-- FAROS DELANTEROS LED CRISTALINOS CON RESPLANDOR -->
-  <g filter="url(#condorLedGlow2)">
-    <path d="M 127 95 L 132 97 L 132 103 L 127 101 Z" fill="#FFFFFF"/>
-    <path d="M 144 102 L 148 104 L 148 110 L 144 108 Z" fill="#38BDF8"/>
-  </g>
-
-  <!-- Parachoques Frontal Metálico Reforzado -->
-  <path d="M 125 114 L 149 119 L 149 125 L 125 120 Z" fill="#1E293B"/>
-  <line x1="126" y1="115" x2="148" y2="120" stroke="#475569" stroke-width="1"/>
-
-  <!-- 5. RUEDAS 3D NISSAN CONDOR -->
-  <!-- Rueda Delantera -->
-  <g id="frontWheelCondor2">
-    <ellipse cx="102" cy="118" rx="11" ry="16" fill="url(#condorTireGrad2)"/>
-    <ellipse cx="102" cy="118" rx="7" ry="11" fill="url(#condorRimGrad2)"/>
-    <ellipse cx="102" cy="118" rx="3.5" ry="5.5" fill="#0F172A"/>
-    <circle cx="102" cy="115" r="0.8" fill="#F8FAFC"/>
-    <circle cx="104" cy="118" r="0.8" fill="#F8FAFC"/>
-    <circle cx="100" cy="118" r="0.8" fill="#F8FAFC"/>
-    <circle cx="102" cy="121" r="0.8" fill="#F8FAFC"/>
-  </g>
-
-  <!-- Rueda Trasera (Doble Rodado) -->
-  <g id="rearWheelCondor2">
-    <ellipse cx="36" cy="108" rx="11" ry="16" fill="url(#condorTireGrad2)"/>
-    <ellipse cx="36" cy="108" rx="7" ry="11" fill="url(#condorRimGrad2)"/>
-    <ellipse cx="36" cy="108" rx="3.5" ry="5.5" fill="#0F172A"/>
-    <circle cx="36" cy="105" r="0.8" fill="#F8FAFC"/>
-    <circle cx="38" cy="108" r="0.8" fill="#F8FAFC"/>
-    <circle cx="34" cy="108" r="0.8" fill="#F8FAFC"/>
-    <circle cx="36" cy="111" r="0.8" fill="#F8FAFC"/>
-  </g>
-
-  <!-- Guardabarros 3D -->
-  <path d="M 26 106 C 26 98 46 98 46 106" stroke="#4C0519" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-  <path d="M 92 116 C 92 108 112 108 112 116" stroke="#4C0519" stroke-width="3.5" fill="none" stroke-linecap="round"/>
 </svg>
