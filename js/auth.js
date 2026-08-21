@@ -183,10 +183,15 @@ window.checkAndApplyAdminStatus = async function(user) {
 
 window.getVerifiedAdminEmail = function() {
   try {
-    const isAdmin = (typeof AppState !== 'undefined') && AppState.get('isAdmin') === true;
-    if (!isAdmin) return null;
-    if (window._verifiedAdminEmail) return window._verifiedAdminEmail.toLowerCase().trim();
-    if (window._tempAuthUser && window._tempAuthUser.email) return window._tempAuthUser.email.toLowerCase().trim();
+    if (window._verifiedAdminEmail) return String(window._verifiedAdminEmail).toLowerCase().trim();
+    if (typeof AppState !== 'undefined' && AppState.get('isAdmin') === true) {
+      if (window._tempAuthUser && window._tempAuthUser.email) return window._tempAuthUser.email.toLowerCase().trim();
+      const data = AppState.get('userData');
+      if (data && (data.gmail || data.email)) return (data.gmail || data.email).toLowerCase().trim();
+    }
+    if (window._tempAuthUser && window._tempAuthUser.email) {
+      return window._tempAuthUser.email.toLowerCase().trim();
+    }
     const data = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
     return data && (data.gmail || data.email) ? (data.gmail || data.email).toLowerCase().trim() : null;
   } catch(e) { return null; }

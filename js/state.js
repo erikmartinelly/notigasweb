@@ -54,7 +54,7 @@ window.loadScriptAsync = function(src) {
       return;
     }
     const script = document.createElement('script');
-    script.src = `${src}?v=104`;
+    script.src = `${src}?v=105`;
     script.async = true;
     script.onload = () => {
       window._loadedDynamicModules[src] = true;

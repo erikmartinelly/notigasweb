@@ -9,10 +9,15 @@ const ADMIN_SESSION_MAX_MS = 30 * 60 * 1000;
 
 window.getVerifiedAdminEmail = function() {
   try {
-    const isAdmin = (typeof AppState !== 'undefined') && AppState.get('isAdmin') === true;
-    if (!isAdmin) return null;
-    if (window._verifiedAdminEmail) return window._verifiedAdminEmail.toLowerCase().trim();
-    if (window._tempAuthUser && window._tempAuthUser.email) return window._tempAuthUser.email.toLowerCase().trim();
+    if (window._verifiedAdminEmail) return String(window._verifiedAdminEmail).toLowerCase().trim();
+    if (typeof AppState !== 'undefined' && AppState.get('isAdmin') === true) {
+      if (window._tempAuthUser && window._tempAuthUser.email) return window._tempAuthUser.email.toLowerCase().trim();
+      const data = AppState.get('userData');
+      if (data && (data.gmail || data.email)) return (data.gmail || data.email).toLowerCase().trim();
+    }
+    if (window._tempAuthUser && window._tempAuthUser.email) {
+      return window._tempAuthUser.email.toLowerCase().trim();
+    }
     const data = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
     return data && (data.gmail || data.email) ? (data.gmail || data.email).toLowerCase().trim() : null;
   } catch(e) { return null; }
@@ -1085,15 +1090,21 @@ async function guardarPropagandaTab(tabName, silent = false) {
   const selectStateEl = document.getElementById(`selectAdState_${pos}`);
 
   const inputAd = (inputTitleEl?.value || '').trim();
-  const inputUrl = (inputUrlEl?.value || '').trim();
+  const rawUrl = (inputUrlEl?.value || '').trim();
+  const safeUrl = rawUrl ? (typeof formatExternalUrl === 'function' ? formatExternalUrl(rawUrl) : (typeof getSafeExternalUrl === 'function' ? getSafeExternalUrl(rawUrl) : rawUrl)) : '';
   const adState = selectStateEl?.value || 'activo';
   const isActivo = (adState !== 'inactivo');
 
-  if (inputUrl && typeof getSafeExternalUrl === 'function' && !getSafeExternalUrl(inputUrl)) {
+  if (rawUrl && typeof getSafeExternalUrl === 'function' && !getSafeExternalUrl(safeUrl || rawUrl)) {
     if (!silent && typeof showToast === 'function') {
-      showToast('⚠️ Enlace inválido', 'El enlace debe comenzar con https:// o http://', 'warning', 4000);
+      showToast('⚠️ Enlace inválido', 'Por favor ingresa un enlace web o de WhatsApp válido.', 'warning', 4000);
     }
     return false;
+  }
+
+  // Actualizar el valor en el input si se formateó (ej. agregar https:// o wa.me)
+  if (inputUrlEl && safeUrl && safeUrl !== rawUrl) {
+    inputUrlEl.value = safeUrl;
   }
 
   const citySelector = document.getElementById('adminSelectAdCiudad');
@@ -1104,41 +1115,51 @@ async function guardarPropagandaTab(tabName, silent = false) {
   if (window.supabaseClient) {
     try {
       let isSaved = false;
+      let lastErrMsg = '';
 
-      // 1. Guardar a través de RPC con p_posicion
+      // 1. Guardar a través de RPC atómico con p_admin_email y p_posicion
       try {
         const { data: rpcRes, error: rpcErr } = await window.supabaseClient.rpc('rpc_save_local_ad', {
           p_titulo: inputAd || (pos === 'mapa' ? 'Promociona tu negocio o servicio profesional directamente en tu OTB' : (pos === 'repartidores' ? 'Distribución mayorista, repuestos y accesorios autorizados' : 'Promociona tu negocio o servicio en tu barrio')),
           p_descripcion: `Propaganda Local - ${pos.toUpperCase()}`,
-          p_url: inputUrl || '',
+          p_url: safeUrl || rawUrl || '',
           p_image_url: imgUrl || '',
           p_ciudad: normCity,
           p_activo: isActivo,
-          p_posicion: pos
+          p_posicion: pos,
+          p_admin_email: currentAdmin
         });
 
         if (!rpcErr && rpcRes && rpcRes.success) {
           isSaved = true;
+          if (imgUrl === '__REMOVE__') {
+            if (window.pendingUploadUrls) window.pendingUploadUrls[pos] = null;
+          }
         } else if (rpcErr) {
+          lastErrMsg = rpcErr.message;
           console.warn('Advertencia en RPC rpc_save_local_ad:', rpcErr.message);
+        } else if (rpcRes && !rpcRes.success) {
+          lastErrMsg = rpcRes.error || 'Error al procesar el anuncio';
+          console.warn('RPC rpc_save_local_ad devolvió error:', lastErrMsg);
         }
       } catch(rpcEx) {
+        lastErrMsg = rpcEx?.message || String(rpcEx);
         console.warn('Excepción llamando a rpc_save_local_ad:', rpcEx);
       }
 
-      // 2. Fallback directo a la tabla anuncios_globales
+      // 2. Fallback directo a la tabla anuncios_globales si RPC no pudo completar
       if (!isSaved) {
         const { data: existingAds } = await window.supabaseClient
           .from('anuncios_globales')
           .select('id')
-          .eq('ciudad', normCity)
+          .ilike('ciudad', normCity)
           .eq('posicion', pos)
           .limit(1);
 
         const payload = {
           titulo: inputAd || (pos === 'mapa' ? 'Promociona tu negocio o servicio profesional directamente en tu OTB' : (pos === 'repartidores' ? 'Distribución mayorista, repuestos y accesorios autorizados' : 'Promociona tu negocio o servicio en tu barrio')),
           descripcion: `Propaganda Local - ${pos.toUpperCase()}`,
-          url: inputUrl || '',
+          url: safeUrl || rawUrl || '',
           activo: isActivo,
           ciudad: normCity,
           posicion: pos,
@@ -1164,8 +1185,14 @@ async function guardarPropagandaTab(tabName, silent = false) {
           opError = error;
         }
 
-        if (!opError) isSaved = true;
-        else throw opError;
+        if (!opError) {
+          isSaved = true;
+          if (imgUrl === '__REMOVE__') {
+            if (window.pendingUploadUrls) window.pendingUploadUrls[pos] = null;
+          }
+        } else {
+          throw new Error(opError.message || lastErrMsg || 'Error al persistir en Supabase');
+        }
       }
 
       return true;
@@ -1225,9 +1252,9 @@ async function guardarTodasLasPropagandas() {
   try {
     if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Guardando propaganda de las 3 pestañas...');
 
-    const ok1 = await guardarPropagandaTab('mapa', true);
-    const ok2 = await guardarPropagandaTab('repartidores', true);
-    const ok3 = await guardarPropagandaTab('avisos', true);
+    const ok1 = await guardarPropagandaTab('mapa', false);
+    const ok2 = await guardarPropagandaTab('repartidores', false);
+    const ok3 = await guardarPropagandaTab('avisos', false);
 
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
 
@@ -1245,7 +1272,7 @@ async function guardarTodasLasPropagandas() {
       }
     } else {
       if (typeof showToast === 'function') {
-        showToast('⚠️ Aviso de Guardado', 'Se procesó la propaganda de las 3 pestañas. Revisa la lista inferior para confirmar.', 'info', 4000);
+        showToast('⚠️ Guardado Parcial', 'Algunas pestañas se guardaron. Revisa la lista inferior para confirmar.', 'warning', 4500);
       }
     }
   } finally {
@@ -1345,15 +1372,36 @@ window.borrarAnuncioLocalAdmin = async function(adId) {
 
   if (window.supabaseClient && adId) {
     if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Eliminando propaganda...');
-    const { error } = await window.supabaseClient
-      .from('anuncios_globales')
-      .delete()
-      .eq('id', adId);
+    let deleted = false;
+    let delError = null;
+
+    try {
+      const { data: rpcRes, error: rpcErr } = await window.supabaseClient.rpc('rpc_delete_local_ad', {
+        p_ad_id: adId,
+        p_admin_email: currentAdmin
+      });
+      if (!rpcErr && rpcRes && rpcRes.success) {
+        deleted = true;
+      } else if (rpcErr) {
+        delError = rpcErr;
+      }
+    } catch (e) {
+      delError = e;
+    }
+
+    if (!deleted) {
+      const { error } = await window.supabaseClient
+        .from('anuncios_globales')
+        .delete()
+        .eq('id', adId);
+      if (!error) deleted = true;
+      else delError = error;
+    }
 
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
 
-    if (error) {
-      if (typeof showToast === 'function') showToast('Error', 'No se pudo eliminar: ' + error.message, 'error', 4000);
+    if (!deleted) {
+      if (typeof showToast === 'function') showToast('Error', 'No se pudo eliminar: ' + (delError?.message || 'Error desconocido'), 'error', 4000);
     } else {
       if (typeof showToast === 'function') showToast('✅ Eliminada', 'Propaganda eliminada correctamente.', 'success', 3500);
       await cargarConfiguracionPublicidadEnAdmin();

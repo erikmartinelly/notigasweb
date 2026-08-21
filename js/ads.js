@@ -20,14 +20,44 @@ window._localAds = {
 window._currentLocalAdData = null; // Retrocompatibilidad
 let currentAdUrl = 'https://wa.me/59170000000?text=Hola';
 
+function formatExternalUrl(value) {
+  if (!value || typeof value !== 'string') return '';
+  let str = value.trim();
+  if (!str) return '';
+
+  // Si es un número telefónico (e.g. 70000000 o 59170000000)
+  const digitsOnly = str.replace(/[^0-9]/g, '');
+  if (/^(\+?591)?[67][0-9]{7}$/.test(str) || (/^[0-9]{8,12}$/.test(digitsOnly) && !str.includes('.') && !str.includes('/'))) {
+    const cleanNum = digitsOnly.startsWith('591') ? digitsOnly : ('591' + digitsOnly);
+    return `https://wa.me/${cleanNum}`;
+  }
+
+  // Si ya tiene protocolo http/https
+  if (/^https?:\/\//i.test(str)) {
+    return str;
+  }
+
+  // Si empieza con //
+  if (str.startsWith('//')) {
+    return 'https:' + str;
+  }
+
+  // Si empieza con wa.me, t.me, api.whatsapp.com, www., o cualquier dominio
+  return 'https://' + str;
+}
+window.formatExternalUrl = formatExternalUrl;
+
 function getSafeExternalUrl(value) {
+  if (!value) return '';
+  const formatted = formatExternalUrl(value);
   try {
-    const parsed = new URL(String(value || '').trim(), window.location.origin);
+    const parsed = new URL(formatted);
     return (parsed.protocol === 'https:' || parsed.protocol === 'http:') ? parsed.href : '';
   } catch (_) {
     return '';
   }
 }
+window.getSafeExternalUrl = getSafeExternalUrl;
 
 function getSafeAdImageUrl(value) {
   const safe = getSafeExternalUrl(value);
@@ -213,8 +243,8 @@ async function cargarAnunciosGuardados() {
     }
 
     // Refrescar feeds si ya estaban cargados
-    if (typeof renderVendorsCardsOnly === 'function') renderVendorsCardsOnly();
-    if (typeof renderForumFeedCardsOnly === 'function') renderForumFeedCardsOnly();
+    if (typeof renderVendorCards === 'function') renderVendorCards();
+    if (typeof renderForumFeed === 'function') renderForumFeed();
 
   } catch (e) {
     console.error("Error cargando anuncios locales:", e);

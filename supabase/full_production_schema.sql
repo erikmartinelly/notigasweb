@@ -332,28 +332,56 @@ GRANT SELECT ON public.pedidos_publicos TO anon, authenticated;
 -- ==============================================================================
 
 -- A. Verificación de Administrador
-CREATE OR REPLACE FUNCTION public.is_admin_email()
+CREATE OR REPLACE FUNCTION public.is_admin_email(p_email text DEFAULT NULL)
 RETURNS boolean
-LANGUAGE sql
+LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, auth
-STABLE
+SET search_path TO 'public', 'auth'
 AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.usuarios_roles
-    WHERE email = LOWER(TRIM(COALESCE(
-      (auth.jwt() ->> 'email'),
-      (SELECT email FROM auth.users WHERE id = auth.uid())
-    )))
-    AND rol = 'administrador'
-    AND baneado = false
-  ) OR EXISTS (
-    SELECT 1 FROM public.admin_credentials
-    WHERE email = LOWER(TRIM(COALESCE(
-      (auth.jwt() ->> 'email'),
-      (SELECT email FROM auth.users WHERE id = auth.uid())
-    )))
-  );
+DECLARE
+  v_jwt_email text := LOWER(TRIM(COALESCE(
+    auth.jwt() ->> 'email',
+    auth.jwt() -> 'user_metadata' ->> 'email',
+    auth.jwt() -> 'app_metadata' ->> 'email',
+    ''
+  )));
+  v_user_id uuid := auth.uid();
+  v_user_email text := '';
+  v_check_email text := LOWER(TRIM(COALESCE(p_email, '')));
+BEGIN
+  -- Permiso total a roles administrativos de PostgreSQL / Supabase
+  IF current_user IN ('postgres', 'service_role', 'supabase_admin') THEN
+    RETURN true;
+  END IF;
+
+  -- 1. Validar por email en JWT
+  IF v_jwt_email <> '' AND EXISTS (
+    SELECT 1 FROM public.admin_credentials WHERE LOWER(TRIM(email)) = v_jwt_email
+  ) THEN
+    RETURN true;
+  END IF;
+
+  -- 2. Validar por UID en auth.users
+  IF v_user_id IS NOT NULL THEN
+    SELECT LOWER(TRIM(COALESCE(email, raw_user_meta_data->>'email', ''))) INTO v_user_email
+    FROM auth.users WHERE id = v_user_id;
+
+    IF v_user_email <> '' AND EXISTS (
+      SELECT 1 FROM public.admin_credentials WHERE LOWER(TRIM(email)) = v_user_email
+    ) THEN
+      RETURN true;
+    END IF;
+  END IF;
+
+  -- 3. Validar por email administrativo explícito verificado contra admin_credentials
+  IF v_check_email <> '' AND EXISTS (
+    SELECT 1 FROM public.admin_credentials WHERE LOWER(TRIM(email)) = v_check_email
+  ) THEN
+    RETURN true;
+  END IF;
+
+  RETURN false;
+END;
 $$;
 
 -- B. Verificación de Usuario Baneado
@@ -689,7 +717,7 @@ $$;
 -- 5. PROCEDIMIENTOS ALMACENADOS (RPCS ATÓMICOS DE PRODUCCIÓN)
 -- ==============================================================================
 
--- A. Guardar
+-- A. Guardar Anuncio Local
 CREATE OR REPLACE FUNCTION public.rpc_save_local_ad(
     p_titulo text,
     p_descripcion text,
@@ -697,7 +725,8 @@ CREATE OR REPLACE FUNCTION public.rpc_save_local_ad(
     p_image_url text,
     p_ciudad text,
     p_activo boolean DEFAULT true,
-    p_posicion text DEFAULT 'mapa'::text
+    p_posicion text DEFAULT 'mapa'::text,
+    p_admin_email text DEFAULT NULL
 )
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -708,9 +737,10 @@ DECLARE
     v_ad_id UUID;
     v_norm_ciudad TEXT;
     v_norm_pos TEXT;
+    v_clean_url TEXT;
 BEGIN
-    IF NOT public.is_admin_email() THEN
-        RETURN jsonb_build_object('success', false, 'error', 'No autorizado: requiere cuenta administradora');
+    IF NOT public.is_admin_email(p_admin_email) THEN
+        RETURN jsonb_build_object('success', false, 'error', 'No autorizado: requiere cuenta administradora activa');
     END IF;
 
     v_norm_ciudad := LOWER(TRIM(COALESCE(p_ciudad, 'global')));
@@ -722,6 +752,8 @@ BEGIN
     IF v_norm_pos NOT IN ('mapa', 'repartidores', 'avisos') THEN
         v_norm_pos := 'mapa';
     END IF;
+
+    v_clean_url := NULLIF(TRIM(p_url), '');
 
     INSERT INTO public.anuncios_globales (
         titulo,
@@ -735,15 +767,15 @@ BEGIN
     )
     VALUES (
         COALESCE(NULLIF(TRIM(p_titulo), ''), 'Auspiciador Oficial NOTIGAS'),
-        COALESCE(p_descripcion, 'Propaganda Local - ' || UPPER(v_norm_pos)),
-        NULLIF(TRIM(p_url), ''),
+        COALESCE(NULLIF(TRIM(p_descripcion), ''), 'Propaganda Local - ' || UPPER(v_norm_pos)),
+        v_clean_url,
         CASE WHEN p_image_url = '__REMOVE__' THEN NULL ELSE NULLIF(TRIM(p_image_url), '') END,
         v_norm_ciudad,
         v_norm_pos,
         COALESCE(p_activo, true),
         now()
     )
-    ON CONFLICT (ciudad, posicion)
+    ON CONFLICT (LOWER(TRIM(COALESCE(ciudad, 'global'))), LOWER(TRIM(COALESCE(posicion, 'mapa'))))
     DO UPDATE SET
         titulo = EXCLUDED.titulo,
         descripcion = EXCLUDED.descripcion,
@@ -763,6 +795,28 @@ BEGIN
         'ciudad', v_norm_ciudad,
         'posicion', v_norm_pos
     );
+END;
+$$;
+
+-- A.2 Eliminar Anuncio Local
+CREATE OR REPLACE FUNCTION public.rpc_delete_local_ad(
+    p_ad_id uuid,
+    p_admin_email text DEFAULT NULL
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public', 'auth'
+AS $$
+BEGIN
+    IF NOT public.is_admin_email(p_admin_email) THEN
+        RETURN jsonb_build_object('success', false, 'error', 'No autorizado: requiere cuenta administradora activa');
+    END IF;
+
+    DELETE FROM public.anuncios_globales
+    WHERE id = p_ad_id;
+
+    RETURN jsonb_build_object('success', true, 'id', p_ad_id);
 END;
 $$;
 
@@ -1966,11 +2020,12 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.profiles, public.choferes_habilit
   public.pedidos, public.rutas_repartidores, public.avisos, public.comentarios_avisos,
   public.votos_registro, public.denuncias, public.reportes_spam, public.anuncios_globales TO authenticated;
 
-GRANT EXECUTE ON FUNCTION public.is_admin_email() TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.is_admin_email(text) TO anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.is_banned() TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.is_current_enabled_driver(text, text) TO anon, authenticated;
 
-GRANT EXECUTE ON FUNCTION public.rpc_save_local_ad(text, text, text, text, text, boolean, text) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.rpc_save_local_ad(text, text, text, text, text, boolean, text, text) TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.rpc_delete_local_ad(uuid, text) TO anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.rpc_update_order_location(uuid, double precision, double precision) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.rpc_assign_order(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.rpc_mark_order_seen(uuid) TO authenticated;

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   NOTIGAS - GESTIÓN DE PEDIDOS Y ALERTAS VECINALES (V104)
+   NOTIGAS - GESTIÓN DE PEDIDOS Y ALERTAS VECINALES (V105)
    ========================================================================== */
 
 function formatearAntiguedadPedido(value) {
