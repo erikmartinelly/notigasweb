@@ -63,7 +63,12 @@ async function renderDriverOrdersList() {
     driverCity = (rawCity && rawCity !== 'todos' && rawCity !== 'all') ? String(rawCity).toLowerCase().trim() : null;
   }
 
-  // 1. Pedidos disponibles desde la vista pública (filtrado estricto por ciudad del chofer)
+  const driverCategoria = (userData && userData.categoria) ? userData.categoria : 'gas';
+  const normDriverCat = (typeof window.normalizeCategoryCode === 'function')
+    ? window.normalizeCategoryCode(driverCategoria)
+    : String(driverCategoria).toLowerCase().trim();
+
+  // 1. Pedidos disponibles desde la vista pública (filtrado estricto por ciudad y categoría del chofer)
   let pubQuery = window.supabaseClient
     .from('pedidos_publicos')
     .select('id, user_id, categoria, titulo, cantidad, direccion, telefono, descripcion, barrio_otb, latitude, longitude, created_at, estado, driver_id, ciudad')
@@ -73,6 +78,17 @@ async function renderDriverOrdersList() {
 
   if (driverCity) {
     pubQuery = pubQuery.eq('ciudad', driverCity);
+  }
+
+  // Filtrado a nivel de base de datos para categoría
+  if (normDriverCat && normDriverCat !== 'todos' && normDriverCat !== 'otros') {
+    if (normDriverCat === 'gas') {
+      pubQuery = pubQuery.in('categoria', ['gas', 'Gas', 'GAS', 'Gas GLP', 'gas glp', 'garrafa', 'Garrafa', 'GLP']);
+    } else if (normDriverCat === 'agua') {
+      pubQuery = pubQuery.in('categoria', ['agua', 'Agua', 'AGUA', 'Agua Potable', 'agua potable', 'botellon', 'Botellón', 'botellón']);
+    } else {
+      pubQuery = pubQuery.eq('categoria', driverCategoria);
+    }
   }
 
   // 2. Pedidos ya asignados a este repartidor desde la tabla pedidos
@@ -103,8 +119,6 @@ async function renderDriverOrdersList() {
   const pubOrders = pubRes.data || [];
   const assignedOrders = assignedRes.data || [];
   const allOrders = [...assignedOrders, ...pubOrders];
-
-  const driverCategoria = (userData && userData.categoria) ? userData.categoria : 'gas';
 
   // Filtrar estrictamente: un repartidor SOLO ve pedidos de su categoría en su ciudad
   const orders = allOrders.filter(o => {
@@ -1014,7 +1028,7 @@ async function abrirPanoramicaPedidos() {
 
       let query = window.supabaseClient
         .from('pedidos_publicos')
-        .select('id, categoria, cantidad, direccion, created_at, estado, latitude, longitude')
+        .select('id, categoria, cantidad, direccion, created_at, estado, visto, latitude, longitude')
         .in('estado', ['pendiente', 'visto'])
         .gte('created_at', activeWindow)
         .order('created_at', { ascending: false })

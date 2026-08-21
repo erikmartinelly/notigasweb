@@ -1775,8 +1775,8 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
       const normCity = String(activeCity || '').toLowerCase().trim();
       const tenMinsAgo = new Date(Date.now() - 10 * 60000).toISOString();
 
-      // Proyección explícita de columnas necesarias (elimina el overhead masivo de select *)
-      const ORDER_COLUMNS = 'id, user_id, categoria, titulo, cantidad, direccion, telefono, estado, driver_id, ciudad, latitude, longitude, created_at';
+      // Proyección explícita de columnas necesarias incluyendo visto
+      const ORDER_COLUMNS = 'id, user_id, categoria, titulo, cantidad, direccion, telefono, estado, driver_id, ciudad, latitude, longitude, visto, created_at, updated_at';
       const TRUCK_COLUMNS = 'id, user_id, distribuidor_nombre, categoria, titulo, ciudad, latitude, longitude, garrafas_agotadas, last_active, telefono, placa, productos';
 
       // Obtener Bounding Box del viewport visible con margen de 25% para pre-carga suave
@@ -1829,7 +1829,28 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
         .gte('created_at', activeWindow)
         .in('estado', ['pendiente', 'visto'])
         .limit(200);
-      if (cityKeys && cityKeys.length > 0) {
+      if (isDriverUser) {
+        const driverCity = (u.ciudad && u.ciudad !== 'todos' && u.ciudad !== 'all') ? String(u.ciudad).toLowerCase().trim() : null;
+        if (driverCity) {
+          pubQuery = pubQuery.eq('ciudad', driverCity);
+        } else if (cityKeys && cityKeys.length > 0) {
+          pubQuery = pubQuery.in('ciudad', cityKeys);
+        }
+
+        const normDriverCat = (typeof window.normalizeCategoryCode === 'function')
+          ? window.normalizeCategoryCode(driverCategoria)
+          : String(driverCategoria).toLowerCase().trim();
+
+        if (normDriverCat && normDriverCat !== 'todos' && normDriverCat !== 'otros') {
+          if (normDriverCat === 'gas') {
+            pubQuery = pubQuery.in('categoria', ['gas', 'Gas', 'GAS', 'Gas GLP', 'gas glp', 'garrafa', 'Garrafa', 'GLP']);
+          } else if (normDriverCat === 'agua') {
+            pubQuery = pubQuery.in('categoria', ['agua', 'Agua', 'AGUA', 'Agua Potable', 'agua potable', 'botellon', 'Botellón', 'botellón']);
+          } else {
+            pubQuery = pubQuery.eq('categoria', driverCategoria);
+          }
+        }
+      } else if (cityKeys && cityKeys.length > 0) {
         pubQuery = pubQuery.in('ciudad', cityKeys);
       }
       if (shouldUseBbox) {
