@@ -7,7 +7,7 @@ ALTER TABLE public.pedidos ALTER COLUMN telefono DROP NOT NULL;
 ALTER TABLE public.pedidos ALTER COLUMN telefono SET DEFAULT '';
 
 -- 2. Función de verificación de chofer habilitado con categoría estricta (sin comodines otros/todos)
-CREATE OR REPLACE FUNCTION public.is_current_enabled_driver(p_ciudad text, p_categoria text)
+CREATE OR REPLACE FUNCTION public.is_current_enabled_driver(p_ciudad text DEFAULT NULL, p_categoria text DEFAULT NULL)
 RETURNS boolean
 LANGUAGE sql
 SECURITY DEFINER
