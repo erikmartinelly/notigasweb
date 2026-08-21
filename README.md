@@ -82,8 +82,8 @@ NOTIGAS bridges this gap by democratizing access to modern geospatial logistics 
 ├── styles/
 │   └── main.css            # Application design tokens, responsive layouts, and Google Maps-inspired UI
 ├── supabase/
-│   ├── full_production_schema.sql # CONSOLIDATED PRODUCTION SCHEMA (1-Click Database Deployment)
-│   └── migrations/         # Historical incremental migrations (001 through 066)
+│   ├── full_production_schema.sql # CONSOLIDATED PRODUCTION SCHEMA (1-Click Database Deployment - v075)
+│   └── migrations/         # Historical incremental migrations (001 through 075)
 └── .github/
     └── workflows/ci.yml    # CI automated syntax & integrity verification
 ```
@@ -100,8 +100,8 @@ cd notigasweb
 
 ### 2. Configure Database & Backend (Supabase)
 * Create a new project at [Supabase](https://supabase.com/).
-* **Option A (Recommended - 1-Click Deployment):** Execute [`supabase/full_production_schema.sql`](supabase/full_production_schema.sql) in the Supabase SQL Editor. This single script provisions all tables, PostGIS extensions, public views, performance indexes, automated triggers, atomic RPC functions, and Row Level Security (RLS) policies.
-* **Option B (Incremental Migrations):** Run the migration files inside `supabase/migrations/` in sequential order through `066`.
+* **Option A (Recommended - 1-Click Deployment):** Execute [`supabase/full_production_schema.sql`](supabase/full_production_schema.sql) in the Supabase SQL Editor. This single script provisions all tables, PostGIS extensions, public views, performance indexes, automated triggers (including dynamic GPS relocation and strict driver city scoping), atomic RPC functions (`rpc_update_order_location`, `rpc_save_local_ad`, etc.), and Row Level Security (RLS) policies through version `075`.
+* **Option B (Incremental Migrations):** Run the migration files inside `supabase/migrations/` in sequential order through `075`.
 * Open `js/supabase-config.js` and input your `supabaseUrl` and `supabaseAnonKey`.
 
 ### 3. Configure Google Identity Services & Auth

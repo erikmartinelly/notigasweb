@@ -49,19 +49,21 @@ async function renderDriverOrdersList() {
     return;
   }
 
-  const activeCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || '') : '';
-  const now = Date.now();
-  const expirationMs = (window.NOTIGAS && window.NOTIGAS.ORDER_EXPIRATION_MS) ? window.NOTIGAS.ORDER_EXPIRATION_MS : 48 * 60 * 60 * 1000;
-  const activeWindow = new Date(now - expirationMs).toISOString();
+  const userData = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
   const localUserId = (typeof getAuthenticatedUserId === 'function')
     ? await getAuthenticatedUserId()
     : ((typeof getCurrentUserId === 'function') ? getCurrentUserId() : null);
 
-  const cityKeys = (typeof window.getCityMetroKeys === 'function')
-    ? window.getCityMetroKeys(activeCity)
-    : (activeCity && activeCity !== 'todos' && activeCity !== 'all' ? [String(activeCity).toLowerCase().trim()] : null);
+  // Regla estricta: un repartidor SOLO ve y toma pedidos de la ciudad donde se registró
+  let driverCity = null;
+  if (userData && userData.ciudad) {
+    driverCity = String(userData.ciudad).toLowerCase().trim();
+  } else {
+    const rawCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || '') : '';
+    driverCity = (rawCity && rawCity !== 'todos' && rawCity !== 'all') ? String(rawCity).toLowerCase().trim() : null;
+  }
 
-  // 1. Pedidos disponibles desde la vista pública (evita bloqueo por RLS de pedidos no asignados)
+  // 1. Pedidos disponibles desde la vista pública (filtrado estricto por ciudad del chofer)
   let pubQuery = window.supabaseClient
     .from('pedidos_publicos')
     .select('id, user_id, categoria, titulo, cantidad, direccion, telefono, descripcion, barrio_otb, latitude, longitude, created_at, estado, driver_id, ciudad')
@@ -69,8 +71,8 @@ async function renderDriverOrdersList() {
     .gte('created_at', activeWindow)
     .order('created_at', { ascending: false });
 
-  if (cityKeys && cityKeys.length > 0) {
-    pubQuery = pubQuery.in('ciudad', cityKeys);
+  if (driverCity) {
+    pubQuery = pubQuery.eq('ciudad', driverCity);
   }
 
   // 2. Pedidos ya asignados a este repartidor desde la tabla pedidos
@@ -83,8 +85,8 @@ async function renderDriverOrdersList() {
       .eq('estado', 'asignado')
       .gte('created_at', activeWindow)
       .order('created_at', { ascending: false });
-    if (cityKeys && cityKeys.length > 0) {
-      assignedQuery = assignedQuery.in('ciudad', cityKeys);
+    if (driverCity) {
+      assignedQuery = assignedQuery.eq('ciudad', driverCity);
     }
     assignedPromise = assignedQuery;
   }
