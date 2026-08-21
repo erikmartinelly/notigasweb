@@ -351,12 +351,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_btnDeleteAdImg_avisos = document.getElementById('btnDeleteAdImg_avisos');
     if (el_btnDeleteAdImg_avisos) el_btnDeleteAdImg_avisos.addEventListener('click', () => { safeCall('eliminarImagenAnuncio', 'avisos'); });
 
-    const el_btnSaveCurrentAdTab = document.getElementById('btnSaveCurrentAdTab');
-    if (el_btnSaveCurrentAdTab) el_btnSaveCurrentAdTab.addEventListener('click', () => { safeCall('guardarSubmenuAnuncios'); });
-
-    const el_btnSaveAllAdsAdmin = document.getElementById('btnSaveAllAdsAdmin');
-    if (el_btnSaveAllAdsAdmin) el_btnSaveAllAdsAdmin.addEventListener('click', () => { safeCall('guardarTodasLasPropagandas'); });
-
     const el_auto_event_67 = document.getElementById('auto-event-67');
     if (el_auto_event_67) el_auto_event_67.addEventListener('click', () => { safeCall('banearUsuarioAdmin'); });
 

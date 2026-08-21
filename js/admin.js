@@ -213,28 +213,27 @@ async function cargarConfiguracionPublicidadEnAdmin(targetCity = null) {
 
   try {
     const normCity = String(rawCity).toLowerCase().trim();
+    const citiesToQuery = (normCity && normCity !== 'global') ? [normCity, 'global'] : ['global'];
+
     let { data, error } = await window.supabaseClient
       .from('anuncios_globales')
-      .select('id, titulo, url, image_url, activo, posicion')
-      .eq('ciudad', normCity)
+      .select('id, titulo, url, image_url, activo, posicion, ciudad')
+      .in('ciudad', citiesToQuery)
       .order('created_at', { ascending: false });
 
-    // Si no hay datos específicos para esta ciudad y no se buscó 'global', intentar traer global
-    if (!error && (!data || data.length === 0) && normCity !== 'global') {
-      const { data: globalData } = await window.supabaseClient
-        .from('anuncios_globales')
-        .select('id, titulo, url, image_url, activo, posicion')
-        .eq('ciudad', 'global')
-        .order('created_at', { ascending: false });
-      if (globalData && globalData.length > 0) {
-        data = globalData;
-      }
-    }
-
     if (!error && data) {
+      const cityAds = data.filter(a => String(a.ciudad || '').toLowerCase().trim() === normCity);
+      const globalAds = data.filter(a => String(a.ciudad || '').toLowerCase().trim() === 'global');
+
       const positions = ['mapa', 'repartidores', 'avisos'];
       positions.forEach(pos => {
-        const ad = (data && data.length > 0) ? data.find(a => (a.posicion || 'mapa') === pos) : null;
+        // Prioridad 1: Configuración específica para esta ciudad
+        let ad = cityAds.find(a => (a.posicion || 'mapa') === pos);
+        // Fallback: Si no tiene configuración para esta ciudad y no es 'global', mostrar la global como base
+        if (!ad && normCity !== 'global') {
+          ad = globalAds.find(a => (a.posicion || 'mapa') === pos);
+        }
+
         const inputTitle = document.getElementById(`inputAdText_${pos}`);
         const inputUrl = document.getElementById(`inputAdUrl_${pos}`);
         const selectState = document.getElementById(`selectAdState_${pos}`);
@@ -1182,14 +1181,56 @@ async function guardarPropagandaTab(tabName, silent = false) {
 }
 window.guardarPropagandaTab = guardarPropagandaTab;
 
+let _isSavingAdsMutex = false;
+
 async function guardarSubmenuAnuncios() {
-  const currentTab = window.adminActiveAdTab || 'mapa';
-  if (typeof showLoadingOverlay === 'function') showLoadingOverlay(`Guardando propaganda de ${currentTab.toUpperCase()}...`);
+  if (_isSavingAdsMutex) return;
+  _isSavingAdsMutex = true;
+  const btn = document.getElementById('btnSaveCurrentAdTab');
+  if (btn) btn.disabled = true;
 
-  const ok = await guardarPropagandaTab(currentTab, false);
-  if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+  try {
+    const currentTab = window.adminActiveAdTab || 'mapa';
+    if (typeof showLoadingOverlay === 'function') showLoadingOverlay(`Guardando propaganda de ${currentTab.toUpperCase()}...`);
 
-  if (ok) {
+    const ok = await guardarPropagandaTab(currentTab, false);
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+
+    if (ok) {
+      if (typeof cargarAnunciosGuardados === 'function') await cargarAnunciosGuardados();
+      if (typeof renderAdminAdsAndPostsList === 'function') renderAdminAdsAndPostsList();
+      if (typeof renderVendorsList === 'function') renderVendorsList();
+      if (typeof renderForumFeed === 'function') renderForumFeed();
+
+      const citySelector = document.getElementById('adminSelectAdCiudad');
+      const activeCity = (citySelector ? citySelector.value : null) || (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba') || 'cochabamba';
+      const displayCity = (activeCity === 'global') ? 'TODAS LAS CIUDADES (GLOBAL)' : activeCity.toUpperCase();
+      if (typeof showToast === 'function') {
+        showToast('✅ Propaganda Guardada', `La propaganda de la pestaña ${currentTab.toUpperCase()} quedó actualizada para ${displayCity}.`, 'success', 4500);
+      }
+    }
+  } finally {
+    _isSavingAdsMutex = false;
+    if (btn) btn.disabled = false;
+  }
+}
+window.guardarSubmenuAnuncios = guardarSubmenuAnuncios;
+
+async function guardarTodasLasPropagandas() {
+  if (_isSavingAdsMutex) return;
+  _isSavingAdsMutex = true;
+  const btn = document.getElementById('btnSaveAllAdsAdmin');
+  if (btn) btn.disabled = true;
+
+  try {
+    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Guardando propaganda de las 3 pestañas...');
+
+    const ok1 = await guardarPropagandaTab('mapa', true);
+    const ok2 = await guardarPropagandaTab('repartidores', true);
+    const ok3 = await guardarPropagandaTab('avisos', true);
+
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+
     if (typeof cargarAnunciosGuardados === 'function') await cargarAnunciosGuardados();
     if (typeof renderAdminAdsAndPostsList === 'function') renderAdminAdsAndPostsList();
     if (typeof renderVendorsList === 'function') renderVendorsList();
@@ -1198,38 +1239,18 @@ async function guardarSubmenuAnuncios() {
     const citySelector = document.getElementById('adminSelectAdCiudad');
     const activeCity = (citySelector ? citySelector.value : null) || (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba') || 'cochabamba';
     const displayCity = (activeCity === 'global') ? 'TODAS LAS CIUDADES (GLOBAL)' : activeCity.toUpperCase();
-    if (typeof showToast === 'function') {
-      showToast('✅ Propaganda Guardada', `La propaganda de la pestaña ${currentTab.toUpperCase()} quedó actualizada para ${displayCity}.`, 'success', 4500);
+    if (ok1 && ok2 && ok3) {
+      if (typeof showToast === 'function') {
+        showToast('✅ 3 Pestañas Actualizadas', `Las propagandas para Mapa, Repartidores y Avisos Gratis quedaron activas para ${displayCity}.`, 'success', 5000);
+      }
+    } else {
+      if (typeof showToast === 'function') {
+        showToast('⚠️ Aviso de Guardado', 'Se procesó la propaganda de las 3 pestañas. Revisa la lista inferior para confirmar.', 'info', 4000);
+      }
     }
-  }
-}
-window.guardarSubmenuAnuncios = guardarSubmenuAnuncios;
-
-async function guardarTodasLasPropagandas() {
-  if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Guardando propaganda de las 3 pestañas...');
-
-  const ok1 = await guardarPropagandaTab('mapa', true);
-  const ok2 = await guardarPropagandaTab('repartidores', true);
-  const ok3 = await guardarPropagandaTab('avisos', true);
-
-  if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-
-  if (typeof cargarAnunciosGuardados === 'function') await cargarAnunciosGuardados();
-  if (typeof renderAdminAdsAndPostsList === 'function') renderAdminAdsAndPostsList();
-  if (typeof renderVendorsList === 'function') renderVendorsList();
-  if (typeof renderForumFeed === 'function') renderForumFeed();
-
-  const citySelector = document.getElementById('adminSelectAdCiudad');
-  const activeCity = (citySelector ? citySelector.value : null) || (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba') || 'cochabamba';
-  const displayCity = (activeCity === 'global') ? 'TODAS LAS CIUDADES (GLOBAL)' : activeCity.toUpperCase();
-  if (ok1 && ok2 && ok3) {
-    if (typeof showToast === 'function') {
-      showToast('✅ 3 Pestañas Actualizadas', `Las propagandas para Mapa, Repartidores y Avisos Gratis quedaron activas para ${displayCity}.`, 'success', 5000);
-    }
-  } else {
-    if (typeof showToast === 'function') {
-      showToast('⚠️ Aviso de Guardado', 'Se procesó la propaganda de las 3 pestañas. Revisa la lista inferior para confirmar.', 'info', 4000);
-    }
+  } finally {
+    _isSavingAdsMutex = false;
+    if (btn) btn.disabled = false;
   }
 }
 window.guardarTodasLasPropagandas = guardarTodasLasPropagandas;

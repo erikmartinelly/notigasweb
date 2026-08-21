@@ -150,26 +150,15 @@ async function cargarAnunciosGuardados() {
   }
 
   try {
-    // 1. Consultar primero si hay anuncios específicos para la ciudad activa
+    // 1. Consultar anuncios de la ciudad activa Y anuncios globales en una sola consulta
+    const citiesToQuery = (normCity && normCity !== 'global') ? [normCity, 'global'] : ['global'];
     let { data, error } = await window.supabaseClient
       .from('anuncios_globales')
       .select('id, titulo, descripcion, url, image_url, ciudad, posicion, activo, created_at')
-      .eq('ciudad', normCity)
+      .in('ciudad', citiesToQuery)
       .order('created_at', { ascending: false });
 
-    // 2. Si no hay anuncios para esa ciudad, consultar anuncios de alcance global ('global')
-    if (!error && (!data || data.length === 0) && normCity !== 'global') {
-      const { data: globalData } = await window.supabaseClient
-        .from('anuncios_globales')
-        .select('id, titulo, descripcion, url, image_url, ciudad, posicion, activo, created_at')
-        .eq('ciudad', 'global')
-        .order('created_at', { ascending: false });
-      if (globalData && globalData.length > 0) {
-        data = globalData;
-      }
-    }
-
-    // 3. Si aún no hay, traer los anuncios más recientes guardados en la BD
+    // 2. Si no hay datos, consultar cualquier registro existente como último recurso
     if (!error && (!data || data.length === 0)) {
       const { data: fallbackData } = await window.supabaseClient
         .from('anuncios_globales')
@@ -181,14 +170,31 @@ async function cargarAnunciosGuardados() {
     }
 
     if (!error && data && data.length > 0) {
-      const mapaAd = data.find(a => (a.posicion || 'mapa') === 'mapa');
-      const repartidoresAd = data.find(a => a.posicion === 'repartidores');
-      const avisosAd = data.find(a => a.posicion === 'avisos');
+      const cityAds = data.filter(a => String(a.ciudad || '').toLowerCase().trim() === normCity);
+      const globalAds = data.filter(a => String(a.ciudad || '').toLowerCase().trim() === 'global');
+      const allAds = data;
+
+      const resolveAdForPos = (pos) => {
+        // 1. Prioridad: Anuncio de la ciudad específica para esta posición
+        const cityAd = cityAds.find(a => (a.posicion || 'mapa') === pos);
+        if (cityAd) return cityAd;
+
+        // 2. Fallback: Anuncio global para esta posición
+        const globalAd = globalAds.find(a => (a.posicion || 'mapa') === pos);
+        if (globalAd) return globalAd;
+
+        // 3. Fallback: Cualquier anuncio en la BD para esta posición
+        const anyAd = allAds.find(a => (a.posicion || 'mapa') === pos);
+        if (anyAd) return anyAd;
+
+        // 4. Default
+        return defaults[pos];
+      };
 
       window._localAds = {
-        mapa: mapaAd ? { ...mapaAd } : { ...defaults.mapa },
-        repartidores: repartidoresAd ? { ...repartidoresAd } : { ...defaults.repartidores },
-        avisos: avisosAd ? { ...avisosAd } : { ...defaults.avisos }
+        mapa: { ...resolveAdForPos('mapa') },
+        repartidores: { ...resolveAdForPos('repartidores') },
+        avisos: { ...resolveAdForPos('avisos') }
       };
     } else {
       window._localAds = defaults;

@@ -1,7 +1,7 @@
 -- ==============================================================================
 -- NOTIGAS - CONSOLIDATED FULL PRODUCTION DATABASE SCHEMA
 -- Compatible con PostgreSQL 15+ y Supabase Auth / Storage / Realtime
--- Versión Oficial Consolidada de Producción (Incluye Migraciones 001 hasta 085)
+-- Versión Oficial Consolidada de Producción (Incluye Migraciones 001 hasta 086)
 -- ==============================================================================
 
 -- ==============================================================================
@@ -689,7 +689,7 @@ $$;
 -- 5. PROCEDIMIENTOS ALMACENADOS (RPCS ATÓMICOS DE PRODUCCIÓN)
 -- ==============================================================================
 
--- A. Guardar Propaganda Local y Global (3 Pestañas)
+-- A. Guardar
 CREATE OR REPLACE FUNCTION public.rpc_save_local_ad(
     p_titulo text,
     p_descripcion text,
@@ -703,12 +703,11 @@ RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path TO 'public', 'auth'
-AS $function$
+AS $$
 DECLARE
     v_ad_id UUID;
     v_norm_ciudad TEXT;
     v_norm_pos TEXT;
-    v_existing_id UUID;
 BEGIN
     IF NOT public.is_admin_email() THEN
         RETURN jsonb_build_object('success', false, 'error', 'No autorizado: requiere cuenta administradora');
@@ -724,60 +723,48 @@ BEGIN
         v_norm_pos := 'mapa';
     END IF;
 
-    SELECT id INTO v_existing_id
-    FROM public.anuncios_globales
-    WHERE LOWER(TRIM(ciudad)) = v_norm_ciudad
-      AND LOWER(TRIM(COALESCE(posicion, 'mapa'))) = v_norm_pos
-    ORDER BY created_at DESC
-    LIMIT 1;
-
-    IF v_existing_id IS NOT NULL THEN
-        UPDATE public.anuncios_globales
-        SET titulo = COALESCE(NULLIF(TRIM(p_titulo), ''), 'Auspiciador Oficial NOTIGAS'),
-            descripcion = COALESCE(p_descripcion, 'Propaganda Local - ' || UPPER(v_norm_pos)),
-            url = NULLIF(TRIM(p_url), ''),
-            image_url = CASE 
-                WHEN p_image_url = '__REMOVE__' THEN NULL
-                WHEN p_image_url IS NOT NULL AND TRIM(p_image_url) <> '' THEN p_image_url
-                ELSE image_url 
-            END,
-            activo = COALESCE(p_activo, true),
-            posicion = v_norm_pos,
-            created_at = now()
-        WHERE id = v_existing_id
-        RETURNING id INTO v_ad_id;
-    ELSE
-        INSERT INTO public.anuncios_globales (
-            titulo, descripcion, url, image_url, ciudad, posicion, activo, created_at
-        )
-        VALUES (
-            COALESCE(NULLIF(TRIM(p_titulo), ''), 'Auspiciador Oficial NOTIGAS'),
-            COALESCE(p_descripcion, 'Propaganda Local - ' || UPPER(v_norm_pos)),
-            NULLIF(TRIM(p_url), ''),
-            CASE WHEN p_image_url = '__REMOVE__' THEN NULL ELSE NULLIF(TRIM(p_image_url), '') END,
-            v_norm_ciudad,
-            v_norm_pos,
-            COALESCE(p_activo, true),
-            now()
-        )
-        RETURNING id INTO v_ad_id;
-    END IF;
-
-    UPDATE public.configuracion_publicidad
-    SET modo = 'local',
-        updated_at = now()
-    WHERE id = 1;
+    INSERT INTO public.anuncios_globales (
+        titulo,
+        descripcion,
+        url,
+        image_url,
+        ciudad,
+        posicion,
+        activo,
+        created_at
+    )
+    VALUES (
+        COALESCE(NULLIF(TRIM(p_titulo), ''), 'Auspiciador Oficial NOTIGAS'),
+        COALESCE(p_descripcion, 'Propaganda Local - ' || UPPER(v_norm_pos)),
+        NULLIF(TRIM(p_url), ''),
+        CASE WHEN p_image_url = '__REMOVE__' THEN NULL ELSE NULLIF(TRIM(p_image_url), '') END,
+        v_norm_ciudad,
+        v_norm_pos,
+        COALESCE(p_activo, true),
+        now()
+    )
+    ON CONFLICT (ciudad, posicion)
+    DO UPDATE SET
+        titulo = EXCLUDED.titulo,
+        descripcion = EXCLUDED.descripcion,
+        url = EXCLUDED.url,
+        image_url = CASE
+            WHEN p_image_url = '__REMOVE__' THEN NULL
+            WHEN p_image_url IS NOT NULL AND TRIM(p_image_url) <> '' THEN p_image_url
+            ELSE public.anuncios_globales.image_url
+        END,
+        activo = EXCLUDED.activo,
+        created_at = now()
+    RETURNING id INTO v_ad_id;
 
     RETURN jsonb_build_object(
-        'success', true, 
-        'ad_id', v_ad_id, 
+        'success', true,
+        'id', v_ad_id,
         'ciudad', v_norm_ciudad,
-        'posicion', v_norm_pos,
-        'titulo', p_titulo,
-        'url', p_url
+        'posicion', v_norm_pos
     );
 END;
-$function$;
+$$;
 
 -- B. Mover Ubicación de Pedido Activo en Vivo
 CREATE OR REPLACE FUNCTION public.rpc_update_order_location(
@@ -2007,5 +1994,5 @@ GRANT EXECUTE ON FUNCTION public.rpc_actualizar_aviso_propio(uuid, text, text, t
 GRANT EXECUTE ON FUNCTION public.rpc_agregar_comentario_aviso(uuid, text, text) TO authenticated;
 
 -- ==============================================================================
--- FIN DEL ESQUEMA CONSOLIDADO OFICIAL DE PRODUCCIÓN (NOTIGAS v085)
+-- FIN DEL ESQUEMA CONSOLIDADO OFICIAL DE PRODUCCIÓN (NOTIGAS v086)
 -- ==============================================================================
