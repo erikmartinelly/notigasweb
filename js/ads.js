@@ -150,11 +150,23 @@ async function cargarAnunciosGuardados() {
   }
 
   try {
-    const { data, error } = await window.supabaseClient
+    // 1. Consultar primero si hay anuncios para la ciudad activa
+    let { data, error } = await window.supabaseClient
       .from('anuncios_globales')
       .select('id, titulo, descripcion, url, image_url, ciudad, posicion, activo, created_at')
       .eq('ciudad', normCity)
       .order('created_at', { ascending: false });
+
+    // 2. Si no hay anuncios específicos para esa ciudad, usar los últimos anuncios guardados en la BD
+    if (!error && (!data || data.length === 0)) {
+      const { data: fallbackData } = await window.supabaseClient
+        .from('anuncios_globales')
+        .select('id, titulo, descripcion, url, image_url, ciudad, posicion, activo, created_at')
+        .order('created_at', { ascending: false });
+      if (fallbackData && fallbackData.length > 0) {
+        data = fallbackData;
+      }
+    }
 
     if (!error && data && data.length > 0) {
       const mapaAd = data.find(a => (a.posicion || 'mapa') === 'mapa');

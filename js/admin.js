@@ -212,11 +212,22 @@ async function cargarConfiguracionPublicidadEnAdmin() {
 
   try {
     const normCity = String(activeCity).toLowerCase().trim();
-    const { data, error } = await window.supabaseClient
+    let { data, error } = await window.supabaseClient
       .from('anuncios_globales')
       .select('id, titulo, url, image_url, activo, posicion')
       .eq('ciudad', normCity)
       .order('created_at', { ascending: false });
+
+    // Si para esa ciudad aún no hay anuncios específicos, traer los más recientes guardados en la BD
+    if (!error && (!data || data.length === 0)) {
+      const { data: fallbackData } = await window.supabaseClient
+        .from('anuncios_globales')
+        .select('id, titulo, url, image_url, activo, posicion')
+        .order('created_at', { ascending: false });
+      if (fallbackData && fallbackData.length > 0) {
+        data = fallbackData;
+      }
+    }
 
     if (!error && data) {
       const positions = ['mapa', 'repartidores', 'avisos'];
