@@ -135,4 +135,9 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.rpc_save_local_ad(TEXT, TEXT, TEXT, TEXT, TEXT, BOOLEAN, TEXT) TO authenticated;
 
+-- Registrar migración
+INSERT INTO supabase_migrations.schema_migrations(version, name) 
+VALUES ('073', 'tri_tab_local_ads') 
+ON CONFLICT (version) DO NOTHING;
+
 COMMIT;
