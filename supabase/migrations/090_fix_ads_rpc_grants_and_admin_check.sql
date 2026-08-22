@@ -108,5 +108,9 @@ GRANT EXECUTE ON FUNCTION public.is_admin_email_for(text) TO anon, authenticated
 GRANT EXECUTE ON FUNCTION public.rpc_save_local_ad(text, text, text, text, text, boolean, text, text) TO anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.rpc_delete_local_ad(uuid, text) TO anon, authenticated, service_role;
 
--- 4. Notificar a PostgREST
+-- 4. Asegurar acceso a vistas públicas enmascaradas
+ALTER VIEW public.pedidos_publicos SET (security_invoker = false);
+GRANT SELECT ON public.pedidos_publicos TO anon, authenticated;
+
+-- 5. Notificar a PostgREST
 NOTIFY pgrst, 'reload schema';
