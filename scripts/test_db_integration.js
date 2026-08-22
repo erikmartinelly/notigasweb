@@ -129,13 +129,33 @@ async function runDatabaseIntegrationTests() {
         p_admin_email: 'hacker@example.com'
       })
     });
-    // Si anon está revocado -> HTTP 401/403/404; si pasa a body -> { success: false, error: ... }
     if (res.status === 200 && res.data) {
       if (res.data.success === true) {
         throw new Error('rpc_save_local_ad permitió guardado sin credenciales administrativas válidas');
       }
     } else if (res.status >= 500) {
       throw new Error(`Error de servidor o función ambigua HTTP ${res.status}: ${JSON.stringify(res.data)}`);
+    }
+  });
+
+  // TEST 6.1: RPC rpc_save_local_ad guarda y persiste correctamente para administrador verificado
+  await test('RPC rpc_save_local_ad guarda y persiste propaganda para administrador verificado', async () => {
+    const res = await request('rpc/rpc_save_local_ad', {
+      method: 'POST',
+      body: JSON.stringify({
+        p_titulo: 'Publicidad Integrada Test Suite',
+        p_descripcion: 'Propaganda Local - MAPA',
+        p_url: 'https://notigas.com',
+        p_image_url: '',
+        p_ciudad: 'cochabamba',
+        p_activo: true,
+        p_posicion: 'mapa',
+        p_admin_email: 'erikmartinelly@gmail.com'
+      })
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${JSON.stringify(res.data)}`);
+    if (!res.data || res.data.success !== true) {
+      throw new Error(`Fallo al guardar propaganda como administrador: ${JSON.stringify(res.data)}`);
     }
   });
 
