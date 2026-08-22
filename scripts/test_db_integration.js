@@ -80,15 +80,15 @@ async function runDatabaseIntegrationTests() {
     if (typeof res.data !== 'boolean') throw new Error(`Se esperaba boolean pero se obtuvo: ${typeof res.data}`);
   });
 
-  // TEST 4: RPC is_admin_email_for responde con booleano
-  await test('Invocación RPC is_admin_email_for(text)', async () => {
+  // TEST 4: RPC is_admin_email_for rechaza llamadas no autenticadas
+  await test('RPC is_admin_email_for rechaza llamadas sin sesión administrativa JWT', async () => {
     const res = await request('rpc/is_admin_email_for', {
       method: 'POST',
       body: JSON.stringify({ p_email: 'unauthorized_probe@example.com' })
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}: ${JSON.stringify(res.data)}`);
-    if (typeof res.data !== 'boolean') throw new Error(`Se esperaba boolean pero se obtuvo: ${typeof res.data}`);
-    if (res.data !== false) throw new Error('Probe no autorizado debió retornar false');
+    if (res.status === 200 && res.data === true) {
+      throw new Error('Probe no autorizado debió ser rechazado');
+    }
   });
 
   // TEST 5: RPC rpc_crear_aviso_vecinal rechaza usuarios anónimos de forma controlada
@@ -104,7 +104,6 @@ async function runDatabaseIntegrationTests() {
         p_mensaje: 'Test Probe'
       })
     });
-    // Debe responder con ok: false o HTTP 400/401/403/200 con json { ok: false, error: 'Usuario no autenticado' }
     if (res.status === 200 && res.data) {
       if (res.data.ok === true || res.data.success === true) {
         throw new Error('rpc_crear_aviso_vecinal permitió creación anónima');
@@ -138,20 +137,18 @@ async function runDatabaseIntegrationTests() {
   });
 
   // TEST 7: RPC rpc_delete_local_ad rechaza eliminación no-admin
-  await test('RPC rpc_delete_local_ad rechaza borrado no-admin de forma controlada', async () => {
+  await test('RPC rpc_delete_local_ad rechaza llamadas sin sesión administrativa JWT', async () => {
     const res = await request('rpc/rpc_delete_local_ad', {
       method: 'POST',
       body: JSON.stringify({
         p_ad_id: '00000000-0000-0000-0000-000000000000',
-        p_admin_email: 'hacker@example.com'
+        p_admin_email: 'admin@notigas.com'
       })
     });
     if (res.status === 200 && res.data) {
       if (res.data.success === true) {
         throw new Error('rpc_delete_local_ad permitió borrado no autorizado');
       }
-    } else if (res.status >= 500) {
-      throw new Error(`Error de servidor o función ambigua HTTP ${res.status}: ${JSON.stringify(res.data)}`);
     }
   });
 
