@@ -2104,6 +2104,10 @@ DROP POLICY IF EXISTS "rate_limits_system_policy" ON public.security_rate_limits
 CREATE POLICY "rate_limits_system_policy" ON public.security_rate_limits FOR ALL TO authenticated
 USING (user_id = (SELECT auth.uid())) WITH CHECK (user_id = (SELECT auth.uid()));
 
+DROP POLICY IF EXISTS "pedidos_archivo_admin_all" ON public.pedidos_archivo;
+CREATE POLICY "pedidos_archivo_admin_all" ON public.pedidos_archivo FOR ALL TO authenticated, service_role
+USING (is_admin_email()) WITH CHECK (is_admin_email());
+
 -- ==============================================================================
 -- 9. PERMISOS Y PRIVILEGIOS GLOBALES (GRANTS)
 -- ==============================================================================
@@ -2114,15 +2118,16 @@ GRANT SELECT ON public.avisos, public.comentarios_avisos, public.anuncios_global
   public.configuracion_publicidad, public.rutas_repartidores, public.usuarios_roles TO anon, authenticated;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.profiles, public.choferes_habilitados,
-  public.pedidos, public.rutas_repartidores, public.avisos, public.comentarios_avisos,
-  public.votos_registro, public.denuncias, public.reportes_spam, public.anuncios_globales TO authenticated;
+  public.pedidos, public.pedidos_archivo, public.rutas_repartidores, public.avisos, public.comentarios_avisos,
+  public.votos_registro, public.denuncias, public.reportes_spam, public.anuncios_globales TO authenticated, service_role;
 
-GRANT EXECUTE ON FUNCTION public.is_admin_email(text) TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.is_admin_email() TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.is_admin_email_for(text) TO anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.is_banned() TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.is_current_enabled_driver(text, text) TO anon, authenticated;
 
-GRANT EXECUTE ON FUNCTION public.rpc_save_local_ad(text, text, text, text, text, boolean, text, text) TO anon, authenticated, service_role;
-GRANT EXECUTE ON FUNCTION public.rpc_delete_local_ad(uuid, text) TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.rpc_save_local_ad(text, text, text, text, text, boolean, text, text) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.rpc_delete_local_ad(uuid, text) TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.rpc_update_order_location(uuid, double precision, double precision) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.rpc_assign_order(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.rpc_mark_order_seen(uuid) TO authenticated;
@@ -2132,7 +2137,7 @@ GRANT EXECUTE ON FUNCTION public.rpc_cancel_own_order(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.rpc_get_driver_available_orders(text, text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.rpc_get_user_bootstrap_data() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.rpc_get_my_assigned_orders() TO authenticated;
-GRANT EXECUTE ON FUNCTION public.rpc_purge_old_records() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.rpc_purge_old_records() TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.incrementar_votos_aviso(uuid, integer) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.incrementar_votos_comentario(uuid, integer) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.delete_user_account() TO authenticated;
@@ -2146,5 +2151,5 @@ GRANT EXECUTE ON FUNCTION public.rpc_actualizar_aviso_propio(uuid, text, text, t
 GRANT EXECUTE ON FUNCTION public.rpc_agregar_comentario_aviso(uuid, text, text) TO authenticated;
 
 -- ==============================================================================
--- FIN DEL ESQUEMA CONSOLIDADO OFICIAL DE PRODUCCIÓN (NOTIGAS v086)
+-- FIN DEL ESQUEMA CONSOLIDADO OFICIAL DE PRODUCCIÓN (NOTIGAS v089)
 -- ==============================================================================

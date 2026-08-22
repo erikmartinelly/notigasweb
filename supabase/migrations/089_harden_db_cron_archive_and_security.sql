@@ -25,6 +25,13 @@ CREATE TABLE IF NOT EXISTS public.pedidos_archivo (
 );
 
 ALTER TABLE public.pedidos_archivo ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Admins full access pedidos_archivo"
+ON public.pedidos_archivo
+FOR ALL
+TO authenticated, service_role
+USING (public.is_admin_email())
+WITH CHECK (public.is_admin_email());
+
 GRANT ALL ON public.pedidos_archivo TO authenticated, service_role;
 
 -- 2. Eliminar la sobrecarga redundante de rpc_admin_delete_user(uuid)
