@@ -211,13 +211,21 @@ window.switchAdSubTab = function(tabName) {
   if (paneAvisos) paneAvisos.style.display = (normTab === 'avisos') ? 'block' : 'none';
 };
 
+function normalizeAdCity(city) {
+  const norm = String(city || 'cochabamba').toLowerCase().trim();
+  if (!norm || ['', 'todas', 'todos', 'all', 'todas las ciudades', 'todas_las_ciudades', 'nacional', 'global'].includes(norm)) {
+    return 'global';
+  }
+  return norm;
+}
+
 async function cargarConfiguracionPublicidadEnAdmin(targetCity = null) {
   const citySelector = document.getElementById('adminSelectAdCiudad');
   const rawCity = targetCity || (citySelector ? citySelector.value : null) || (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba') || 'cochabamba';
   if (!window.supabaseClient) return;
 
   try {
-    const normCity = String(rawCity).toLowerCase().trim();
+    const normCity = normalizeAdCity(rawCity);
     const citiesToQuery = (normCity && normCity !== 'global') ? [normCity, 'global'] : ['global'];
 
     let { data, error } = await window.supabaseClient
@@ -1109,7 +1117,7 @@ async function guardarPropagandaTab(tabName, silent = false) {
 
   const citySelector = document.getElementById('adminSelectAdCiudad');
   const activeCity = (citySelector ? citySelector.value : null) || (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba') || 'cochabamba';
-  const normCity = String(activeCity).toLowerCase().trim();
+  const normCity = normalizeAdCity(activeCity);
   const imgUrl = window.pendingUploadUrls ? window.pendingUploadUrls[pos] : null;
 
   if (window.supabaseClient) {
@@ -1231,7 +1239,8 @@ async function guardarSubmenuAnuncios() {
 
       const citySelector = document.getElementById('adminSelectAdCiudad');
       const activeCity = (citySelector ? citySelector.value : null) || (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba') || 'cochabamba';
-      const displayCity = (activeCity === 'global') ? 'TODAS LAS CIUDADES (GLOBAL)' : activeCity.toUpperCase();
+      const normCity = normalizeAdCity(activeCity);
+      const displayCity = (normCity === 'global') ? 'TODAS LAS CIUDADES (GLOBAL)' : normCity.toUpperCase();
       if (typeof showToast === 'function') {
         showToast('✅ Propaganda Guardada', `La propaganda de la pestaña ${currentTab.toUpperCase()} quedó actualizada para ${displayCity}.`, 'success', 4500);
       }
@@ -1265,7 +1274,8 @@ async function guardarTodasLasPropagandas() {
 
     const citySelector = document.getElementById('adminSelectAdCiudad');
     const activeCity = (citySelector ? citySelector.value : null) || (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba') || 'cochabamba';
-    const displayCity = (activeCity === 'global') ? 'TODAS LAS CIUDADES (GLOBAL)' : activeCity.toUpperCase();
+    const normCity = normalizeAdCity(activeCity);
+    const displayCity = (normCity === 'global') ? 'TODAS LAS CIUDADES (GLOBAL)' : normCity.toUpperCase();
     if (ok1 && ok2 && ok3) {
       if (typeof showToast === 'function') {
         showToast('✅ 3 Pestañas Actualizadas', `Las propagandas para Mapa, Repartidores y Avisos Gratis quedaron activas para ${displayCity}.`, 'success', 5000);

@@ -35,6 +35,8 @@ async function renderForumFeed() {
     } else {
       rawCity = ciudadSelector || (typeof AppState !== 'undefined' && AppState.get('city')) || (userData && userData.ciudad) || 'cochabamba';
     }
+    const ciudadReal = String(rawCity || 'cochabamba').toLowerCase().trim();
+
     // Consultar avisos activos para la ciudad (insensible a mayúsculas)
     const { data: localPosts, error } = await window.supabaseClient.from('avisos')
       .select('*, comentarios_avisos(count)')
