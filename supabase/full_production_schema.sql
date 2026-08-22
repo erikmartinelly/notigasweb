@@ -369,22 +369,21 @@ DECLARE
   )));
   v_user_id uuid := auth.uid();
   v_user_email text := '';
-  v_check_email text := LOWER(TRIM(COALESCE(p_email, '')));
   v_role text := COALESCE(auth.jwt() ->> 'role', session_user);
 BEGIN
-  -- 1. Si el llamador tiene rol service_role o superuser
+  -- Permiso total a superuser / service_role
   IF session_user IN ('postgres', 'supabase_admin') OR v_role = 'service_role' THEN
     RETURN true;
   END IF;
 
-  -- 2. Validar por email en JWT si existe sesión activa
+  -- 1. Validar por email en JWT (sesión real autenticada)
   IF v_jwt_email <> '' AND EXISTS (
     SELECT 1 FROM public.admin_credentials WHERE LOWER(TRIM(email)) = v_jwt_email
   ) THEN
     RETURN true;
   END IF;
 
-  -- 3. Validar por UID en auth.users si existe sesión activa
+  -- 2. Validar por UID en auth.users (sesión real autenticada)
   IF v_user_id IS NOT NULL THEN
     SELECT LOWER(TRIM(COALESCE(email, raw_user_meta_data->>'email', ''))) INTO v_user_email
     FROM auth.users WHERE id = v_user_id;
@@ -394,13 +393,6 @@ BEGIN
     ) THEN
       RETURN true;
     END IF;
-  END IF;
-
-  -- 4. Validar por email explícito si coincide con admin_credentials
-  IF v_check_email <> '' AND EXISTS (
-    SELECT 1 FROM public.admin_credentials WHERE LOWER(TRIM(email)) = v_check_email
-  ) THEN
-    RETURN true;
   END IF;
 
   RETURN false;
@@ -426,19 +418,19 @@ DECLARE
   v_user_email text := '';
   v_role text := COALESCE(auth.jwt() ->> 'role', session_user);
 BEGIN
-  -- 1. Si el llamador real es service_role o postgres en session_user
+  -- Permiso total a superuser / service_role
   IF session_user IN ('postgres', 'supabase_admin') OR v_role = 'service_role' THEN
     RETURN true;
   END IF;
 
-  -- 2. Validar por email en JWT
+  -- 1. Validar por email en JWT (sesión real autenticada)
   IF v_jwt_email <> '' AND EXISTS (
     SELECT 1 FROM public.admin_credentials WHERE LOWER(TRIM(email)) = v_jwt_email
   ) THEN
     RETURN true;
   END IF;
 
-  -- 3. Validar por UID en auth.users
+  -- 2. Validar por UID en auth.users (sesión real autenticada)
   IF v_user_id IS NOT NULL THEN
     SELECT LOWER(TRIM(COALESCE(email, raw_user_meta_data->>'email', ''))) INTO v_user_email
     FROM auth.users WHERE id = v_user_id;
@@ -2124,12 +2116,12 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.profiles, public.choferes_habilit
   public.votos_registro, public.denuncias, public.reportes_spam, public.anuncios_globales TO authenticated, service_role;
 
 GRANT EXECUTE ON FUNCTION public.is_admin_email() TO anon, authenticated, service_role;
-GRANT EXECUTE ON FUNCTION public.is_admin_email_for(text) TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.is_admin_email_for(text) TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.is_banned() TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.is_current_enabled_driver(text, text) TO anon, authenticated;
 
-GRANT EXECUTE ON FUNCTION public.rpc_save_local_ad(text, text, text, text, text, boolean, text, text) TO anon, authenticated, service_role;
-GRANT EXECUTE ON FUNCTION public.rpc_delete_local_ad(uuid, text) TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.rpc_save_local_ad(text, text, text, text, text, boolean, text, text) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.rpc_delete_local_ad(uuid, text) TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.rpc_update_order_location(uuid, double precision, double precision) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.rpc_assign_order(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.rpc_mark_order_seen(uuid) TO authenticated;
