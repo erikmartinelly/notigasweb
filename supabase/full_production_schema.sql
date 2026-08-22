@@ -67,6 +67,28 @@ CREATE TABLE IF NOT EXISTS public.pedidos (
     updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- C.1 Archivo Histórico de Pedidos Purgados
+CREATE TABLE IF NOT EXISTS public.pedidos_archivo (
+    id uuid PRIMARY KEY,
+    user_id text NOT NULL,
+    categoria text,
+    titulo text,
+    descripcion text,
+    cantidad text,
+    direccion text,
+    telefono text,
+    estado text,
+    driver_id text,
+    ciudad text,
+    barrio_otb text,
+    latitude double precision,
+    longitude double precision,
+    visto boolean,
+    created_at timestamp with time zone,
+    updated_at timestamp with time zone,
+    archived_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
 -- D. Rutas y Telemetría en Vivo de Repartidores
 CREATE TABLE IF NOT EXISTS public.rutas_repartidores (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1344,22 +1366,50 @@ BEGIN
 END;
 $$;
 
--- K. Purga Automática de Registros Viejos
+-- K. Purga Automática de Registros Viejos con Archivador Histórico
 CREATE OR REPLACE FUNCTION public.rpc_purge_old_records()
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, auth
+SET search_path = public, auth, pg_temp
 AS $$
 DECLARE
+  v_pedidos_archived integer := 0;
   v_pedidos_deleted integer := 0;
   v_rutas_deleted integer := 0;
 BEGIN
-  IF NOT public.is_admin_email() THEN
-    RETURN jsonb_build_object('success', false, 'error', 'No autorizado');
+  -- Permiso total si es llamado desde cron (superuser/postgres) o administrador
+  IF current_user NOT IN ('postgres', 'service_role', 'supabase_admin') AND NOT public.is_admin_email() THEN
+    RETURN jsonb_build_object('success', false, 'error', 'No autorizado: requiere privilegios administrativos');
   END IF;
 
-  -- Eliminar pedidos completados o cancelados (o con más de 24 horas)
+  -- A. Archivar pedidos terminados o antiguos (> 24h) antes del borrado
+  WITH to_archive AS (
+    SELECT * FROM public.pedidos
+    WHERE estado IN ('entregado', 'cancelado', 'recibido')
+       OR created_at < (now() - interval '24 hours')
+  ),
+  ins AS (
+    INSERT INTO public.pedidos_archivo (
+      id, user_id, categoria, titulo, descripcion, cantidad, direccion,
+      telefono, estado, driver_id, ciudad, barrio_otb, latitude, longitude,
+      visto, created_at, updated_at, archived_at
+    )
+    SELECT 
+      id, user_id, categoria, titulo, descripcion, cantidad, direccion,
+      telefono, estado, driver_id, ciudad, barrio_otb, latitude, longitude,
+      visto, created_at, updated_at, now()
+    FROM to_archive
+    ON CONFLICT (id) DO UPDATE SET
+      estado = EXCLUDED.estado,
+      driver_id = EXCLUDED.driver_id,
+      updated_at = EXCLUDED.updated_at,
+      archived_at = now()
+    RETURNING id
+  )
+  SELECT count(*) INTO v_pedidos_archived FROM ins;
+
+  -- B. Borrar pedidos archivados
   WITH d AS (
     DELETE FROM public.pedidos
     WHERE estado IN ('entregado', 'cancelado', 'recibido')
@@ -1367,7 +1417,7 @@ BEGIN
     RETURNING id
   ) SELECT count(*) INTO v_pedidos_deleted FROM d;
 
-  -- Eliminar rutas inactivas de repartidores (> 2 horas)
+  -- C. Eliminar rutas inactivas de repartidores (> 2 horas)
   WITH d AS (
     DELETE FROM public.rutas_repartidores
     WHERE last_active < (now() - interval '2 hours')
@@ -1376,6 +1426,7 @@ BEGIN
 
   RETURN jsonb_build_object(
     'success', true,
+    'pedidos_archivados', v_pedidos_archived,
     'pedidos_eliminados', v_pedidos_deleted,
     'rutas_eliminadas', v_rutas_deleted
   );

@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node scripts/check_syntax.js && node scripts/check_runtime.js && node scripts/test_rls_security.js",
+    "test": "node scripts/check_syntax.js && node scripts/check_runtime.js && node scripts/test_rls_security.js && node scripts/test_db_integration.js",
+    "test:integration": "node scripts/test_db_integration.js",
     "build": "node scripts/check_syntax.js && node scripts/check_runtime.js && node scripts/test_rls_security.js"
   },
   "keywords": [
