@@ -126,7 +126,7 @@ async function runDatabaseIntegrationTests() {
         p_ciudad: 'cochabamba',
         p_activo: true,
         p_posicion: 'mapa',
-        p_admin_email: 'erikmartinelly@gmail.com'
+        p_admin_email: 'admin@notigas.com'
       })
     });
     // Debe rechazar por falta de JWT administrativo (HTTP 401, 403, 404 o ok=false)
