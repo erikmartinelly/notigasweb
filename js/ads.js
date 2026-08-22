@@ -85,6 +85,8 @@ function iniciarSuscripcionAnuncios() {
 
   window.adsSubscriptionChannel = window.supabaseClient.channel('custom-all-channel-ads-' + activeCity)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'anuncios_globales' }, () => {
+        // Skip reload if the admin is actively saving (prevents race condition with form fields)
+        if (window._isSavingAdsMutex) return;
         cargarAnunciosGuardados();
     })
     .subscribe();

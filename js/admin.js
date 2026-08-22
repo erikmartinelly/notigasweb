@@ -1216,11 +1216,11 @@ async function guardarPropagandaTab(tabName, silent = false) {
 }
 window.guardarPropagandaTab = guardarPropagandaTab;
 
-let _isSavingAdsMutex = false;
+window._isSavingAdsMutex = false;
 
 async function guardarSubmenuAnuncios() {
-  if (_isSavingAdsMutex) return;
-  _isSavingAdsMutex = true;
+  if (window._isSavingAdsMutex) return;
+  window._isSavingAdsMutex = true;
   const btn = document.getElementById('btnSaveCurrentAdTab');
   if (btn) btn.disabled = true;
 
@@ -1233,6 +1233,7 @@ async function guardarSubmenuAnuncios() {
 
     if (ok) {
       if (typeof cargarAnunciosGuardados === 'function') await cargarAnunciosGuardados();
+      await cargarConfiguracionPublicidadEnAdmin();
       if (typeof renderAdminAdsAndPostsList === 'function') renderAdminAdsAndPostsList();
       if (typeof renderVendorsList === 'function') renderVendorsList();
       if (typeof renderForumFeed === 'function') renderForumFeed();
@@ -1246,15 +1247,15 @@ async function guardarSubmenuAnuncios() {
       }
     }
   } finally {
-    _isSavingAdsMutex = false;
+    window._isSavingAdsMutex = false;
     if (btn) btn.disabled = false;
   }
 }
 window.guardarSubmenuAnuncios = guardarSubmenuAnuncios;
 
 async function guardarTodasLasPropagandas() {
-  if (_isSavingAdsMutex) return;
-  _isSavingAdsMutex = true;
+  if (window._isSavingAdsMutex) return;
+  window._isSavingAdsMutex = true;
   const btn = document.getElementById('btnSaveAllAdsAdmin');
   if (btn) btn.disabled = true;
 
@@ -1268,6 +1269,7 @@ async function guardarTodasLasPropagandas() {
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
 
     if (typeof cargarAnunciosGuardados === 'function') await cargarAnunciosGuardados();
+    await cargarConfiguracionPublicidadEnAdmin();
     if (typeof renderAdminAdsAndPostsList === 'function') renderAdminAdsAndPostsList();
     if (typeof renderVendorsList === 'function') renderVendorsList();
     if (typeof renderForumFeed === 'function') renderForumFeed();
@@ -1286,7 +1288,7 @@ async function guardarTodasLasPropagandas() {
       }
     }
   } finally {
-    _isSavingAdsMutex = false;
+    window._isSavingAdsMutex = false;
     if (btn) btn.disabled = false;
   }
 }

@@ -2044,11 +2044,11 @@ CREATE POLICY "comentarios_delete_own_or_admin" ON public.comentarios_avisos FOR
 USING (user_id = (SELECT auth.uid())::text OR is_admin_email());
 
 -- Anuncios Globales y Configuración
-DROP POLICY IF EXISTS "anuncios_select_public" ON public.anuncios_globales;
-CREATE POLICY "anuncios_select_public" ON public.anuncios_globales FOR SELECT TO public USING (true);
+DROP POLICY IF EXISTS "Anuncios Public SELECT" ON public.anuncios_globales;
+CREATE POLICY "Anuncios Public SELECT" ON public.anuncios_globales FOR SELECT TO public USING (true);
 
-DROP POLICY IF EXISTS "anuncios_admin_all" ON public.anuncios_globales;
-CREATE POLICY "anuncios_admin_all" ON public.anuncios_globales FOR ALL TO authenticated
+DROP POLICY IF EXISTS "Anuncios Admin ALL" ON public.anuncios_globales;
+CREATE POLICY "Anuncios Admin ALL" ON public.anuncios_globales FOR ALL TO authenticated
 USING (is_admin_email()) WITH CHECK (is_admin_email());
 
 DROP POLICY IF EXISTS "config_publicidad_select_public" ON public.configuracion_publicidad;
