@@ -331,12 +331,12 @@ GRANT SELECT ON public.pedidos_publicos TO anon, authenticated;
 -- 4. FUNCIONES DE SEGURIDAD Y REGLAS DE NEGOCIO
 -- ==============================================================================
 
--- A. Verificación de Administrador
-CREATE OR REPLACE FUNCTION public.is_admin_email(p_email text DEFAULT NULL)
+-- A. Verificación de Administrador por Email Explícito o Sesión
+CREATE OR REPLACE FUNCTION public.is_admin_email_for(p_email text)
 RETURNS boolean
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path TO 'public', 'auth'
+SET search_path TO 'public', 'auth', 'pg_temp'
 AS $$
 DECLARE
   v_jwt_email text := LOWER(TRIM(COALESCE(
@@ -378,6 +378,52 @@ BEGIN
     SELECT 1 FROM public.admin_credentials WHERE LOWER(TRIM(email)) = v_check_email
   ) THEN
     RETURN true;
+  END IF;
+
+  RETURN false;
+END;
+$$;
+
+-- A.1 Verificación de Administrador en Sesión Actual (0 argumentos para RLS y Triggers)
+CREATE OR REPLACE FUNCTION public.is_admin_email()
+RETURNS boolean
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path TO 'public', 'auth', 'pg_temp'
+AS $$
+DECLARE
+  v_jwt_email text := LOWER(TRIM(COALESCE(
+    auth.jwt() ->> 'email',
+    auth.jwt() -> 'user_metadata' ->> 'email',
+    auth.jwt() -> 'app_metadata' ->> 'email',
+    ''
+  )));
+  v_user_id uuid := auth.uid();
+  v_user_email text := '';
+BEGIN
+  -- Permiso total a roles administrativos de PostgreSQL / Supabase
+  IF current_user IN ('postgres', 'service_role', 'supabase_admin') THEN
+    RETURN true;
+  END IF;
+
+  -- 1. Validar por email en JWT
+  IF v_jwt_email <> '' AND EXISTS (
+    SELECT 1 FROM public.admin_credentials WHERE LOWER(TRIM(email)) = v_jwt_email
+  ) THEN
+    RETURN true;
+  END IF;
+
+  -- 2. Validar por UID en auth.users
+  IF v_user_id IS NOT NULL THEN
+    SELECT LOWER(TRIM(COALESCE(email, raw_user_meta_data->>'email', ''))) INTO v_user_email
+    FROM auth.users WHERE id = v_user_id;
+
+    IF v_user_email <> '' AND EXISTS (
+      SELECT 1 FROM public.admin_credentials WHERE LOWER(TRIM(email)) = v_user_email
+    ) THEN
+      RETURN true;
+    END IF;
   END IF;
 
   RETURN false;
@@ -739,7 +785,7 @@ DECLARE
     v_norm_pos TEXT;
     v_clean_url TEXT;
 BEGIN
-    IF NOT public.is_admin_email(p_admin_email) THEN
+    IF NOT public.is_admin_email_for(p_admin_email) THEN
         RETURN jsonb_build_object('success', false, 'error', 'No autorizado: requiere cuenta administradora activa');
     END IF;
 
@@ -809,7 +855,7 @@ SECURITY DEFINER
 SET search_path TO 'public', 'auth'
 AS $$
 BEGIN
-    IF NOT public.is_admin_email(p_admin_email) THEN
+    IF NOT public.is_admin_email_for(p_admin_email) THEN
         RETURN jsonb_build_object('success', false, 'error', 'No autorizado: requiere cuenta administradora activa');
     END IF;
 
