@@ -542,21 +542,21 @@ document.addEventListener('click', async (e) => {
     }
     else if (action === 'guardarSubmenuAnuncios') {
       if (typeof window.loadAdminModules === 'function') await window.loadAdminModules();
-      if (typeof window.guardarSubmenuAnuncios === 'function') window.guardarSubmenuAnuncios();
+      if (typeof window.guardarSubmenuAnuncios === 'function') await window.guardarSubmenuAnuncios();
     }
     else if (action === 'guardarTodasLasPropagandas') {
       if (typeof window.loadAdminModules === 'function') await window.loadAdminModules();
-      if (typeof window.guardarTodasLasPropagandas === 'function') window.guardarTodasLasPropagandas();
+      if (typeof window.guardarTodasLasPropagandas === 'function') await window.guardarTodasLasPropagandas();
     }
     else if (action === 'eliminarImagenAnuncio') {
       const tab = btn.getAttribute('data-tab') || window.adminActiveAdTab || 'mapa';
       if (typeof window.loadAdminModules === 'function') await window.loadAdminModules();
-      if (typeof window.eliminarImagenAnuncio === 'function') window.eliminarImagenAnuncio(tab);
+      if (typeof window.eliminarImagenAnuncio === 'function') await window.eliminarImagenAnuncio(tab);
     }
     else if (action === 'borrarAnuncioLocalAdmin') {
       const id = btn.getAttribute('data-id');
       if (typeof window.loadAdminModules === 'function') await window.loadAdminModules();
-      if (typeof window.borrarAnuncioLocalAdmin === 'function') window.borrarAnuncioLocalAdmin(id);
+      if (typeof window.borrarAnuncioLocalAdmin === 'function') await window.borrarAnuncioLocalAdmin(id);
     }
     else if (action === 'desbanearRepartidorAdmin') {
       const userId = decodeURIComponent(btn.getAttribute('data-user-id') || '');
