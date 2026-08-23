@@ -7,7 +7,7 @@
 // La lista quemada de emails ha sido eliminada. La validación se hace contra Supabase `admin_credentials`.
 const ADMIN_SESSION_MAX_MS = 30 * 60 * 1000;
 
-window.getVerifiedAdminEmail = function() {
+window.getVerifiedAdminEmail = async function() {
   try {
     if (window._verifiedAdminEmail) return String(window._verifiedAdminEmail).toLowerCase().trim();
     if (typeof AppState !== 'undefined' && AppState.get('isAdmin') === true) {
@@ -18,9 +18,21 @@ window.getVerifiedAdminEmail = function() {
     if (window._tempAuthUser && window._tempAuthUser.email) {
       return window._tempAuthUser.email.toLowerCase().trim();
     }
+    
+    // 🆕 ÚLTIMO RECURSO: Consultar directamente la sesión de Supabase si todo lo demás falla
+    if (window.supabaseClient) {
+      const { data: sessionData } = await window.supabaseClient.auth.getSession();
+      if (sessionData?.session?.user?.email) {
+        return sessionData.session.user.email.toLowerCase().trim();
+      }
+    }
+
     const data = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
     return data && (data.gmail || data.email) ? (data.gmail || data.email).toLowerCase().trim() : null;
-  } catch(e) { return null; }
+  } catch(e) { 
+    console.warn('Error obteniendo email de admin:', e);
+    return null; 
+  }
 };
 
 window.abrirModalAdminDashboard = async function() {
@@ -1096,7 +1108,7 @@ async function ejecutarLimpiezaTotalPedidos() {
 }
 
 async function guardarPropagandaTab(tabName, silent = false) {
-  const currentAdmin = getVerifiedAdminEmail();
+  const currentAdmin = await getVerifiedAdminEmail();
   if (!currentAdmin) {
     if (!silent && typeof showToast === 'function') {
       showToast('⛔ Acceso Restringido', 'Debes iniciar sesión con tu cuenta administradora para modificar anuncios.', 'error', 4500);
@@ -1391,7 +1403,7 @@ window.eliminarImagenAnuncio = async function(specificTab) {
 };
 
 window.borrarAnuncioLocalAdmin = async function(adId) {
-  const currentAdmin = getVerifiedAdminEmail();
+  const currentAdmin = await getVerifiedAdminEmail();
   if (!currentAdmin) {
     if (typeof showToast === 'function') showToast('⛔ Acceso Restringido', 'Debes iniciar sesión con tu cuenta administradora.', 'error', 4000);
     return;
@@ -1458,8 +1470,8 @@ function cerrarSesionAdminControl() {
 
 /* DESCARGA COMPLETA DE CORREOS ELECTRONICOS REGISTRADOS (.CSV DE USUARIOS) */
 
-function descargarListaCorreosCSV() {
-  let currentAdmin = getVerifiedAdminEmail();
+async function descargarListaCorreosCSV() {
+  let currentAdmin = await getVerifiedAdminEmail();
 
   if (!currentAdmin) {
     if (typeof showToast === 'function') { showToast('Notificación', "⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña.", 'info', 4000); } else { alert("⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña."); };
@@ -1538,7 +1550,7 @@ function descargarListaCorreosCSV() {
 /* DESCARGA COMPLETA DE FICHAS DE REPARTIDORES REGISTRADOS (.CSV DE REPARTIDORES) */
 
 async function descargarFichasRepartidoresCSV() {
-  let currentAdmin = getVerifiedAdminEmail();
+  let currentAdmin = await getVerifiedAdminEmail();
 
   if (!currentAdmin) {
     if (typeof showToast === 'function') { showToast('Notificación', "⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña.", 'info', 4000); } else { alert("⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña."); };
@@ -1600,8 +1612,8 @@ async function descargarFichasRepartidoresCSV() {
 
 /* DESCARGA COMPLETA DE ESTADÍSTICAS GENERALES (.CSV) */
 
-function descargarEstadisticasGeneralesCSV() {
-  let currentAdmin = getVerifiedAdminEmail();
+async function descargarEstadisticasGeneralesCSV() {
+  let currentAdmin = await getVerifiedAdminEmail();
 
   if (!currentAdmin) {
     if (typeof showToast === 'function') { showToast('Notificación', "⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña.", 'info', 4000); } else { alert("⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña."); };
@@ -1802,8 +1814,8 @@ async function banearUsuarioAdmin(identifier) {
 
 /* DESCARGA COMPLETA DE ESTADÍSTICAS GENERALES (.CSV) */
 
-function descargarEstadisticasGeneralesCSV() {
-  let currentAdmin = getVerifiedAdminEmail();
+async function descargarEstadisticasGeneralesCSV() {
+  let currentAdmin = await getVerifiedAdminEmail();
 
   if (!currentAdmin) {
     if (typeof showToast === 'function') { showToast('Notificación', "⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña.", 'info', 4000); } else { alert("⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña."); };
