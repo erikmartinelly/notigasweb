@@ -33,7 +33,7 @@ window.showLoadingOverlay = function(message = "Procesando...") {
 
     // Botón de escape rápido tras 3.5 segundos
     window.globalLoadingTimeout = setTimeout(() => {
-      msgEl.innerText = "La conexión está tardando más de lo normal...";
+      msgEl.innerText = "Espere un momento por favor, mientras guardamos sus datos,";
       btn.style.display = 'inline-flex';
     }, 3500);
 
