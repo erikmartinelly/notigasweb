@@ -744,6 +744,18 @@ async function renderAdminOrdersList() {
 
   if (!container) return;
 
+  const formatTimeStr = (totalMins) => {
+    if (totalMins < 60) return `${totalMins} min`;
+    if (totalMins < 1440) {
+      const h = Math.floor(totalMins / 60);
+      const m = totalMins % 60;
+      return `${h} h ${m} min`;
+    }
+    const d = Math.floor(totalMins / 1440);
+    const h = Math.floor((totalMins % 1440) / 60);
+    return `${d} d ${h} h`;
+  };
+
   let totalCount = 0;
 
   let html = `
@@ -812,7 +824,7 @@ async function renderAdminOrdersList() {
 
             <div style="font-size:11.5px; color:#2F3C45; margin-top:6px;">
 
-              <strong>Estado DB:</strong> ${escapeHtmlStr(order.estado || 'Sin estado')} • Hace ${mins} min<br>
+              <strong>Estado DB:</strong> ${escapeHtmlStr(order.estado || 'Sin estado')} • Hace ${formatTimeStr(mins)}<br>
 
               <strong>Producto:</strong> ${escapeHtmlStr(order.categoria || 'Gas')} (${escapeHtmlStr(order.cantidad || '1 un')})<br>
 
@@ -864,7 +876,7 @@ async function renderAdminOrdersList() {
 
             <span style="font-size:12.5px; font-weight:900; color:#56BC37;"><i class="fa-solid fa-box"></i> Pedido Local (Caché)</span>
 
-            <span style="font-size:10px; background:rgba(86,188,55,0.2); color:#56BC37; padding:2px 6px; border-radius:4px; font-weight:700;">⏱ Hace ${mins} min</span>
+            <span style="font-size:10px; background:rgba(86,188,55,0.2); color:#56BC37; padding:2px 6px; border-radius:4px; font-weight:700;">⏱ Hace ${formatTimeStr(mins)}</span>
 
           </div>
 
@@ -918,7 +930,7 @@ async function renderAdminOrdersList() {
 
           <span style="font-size:12px; font-weight:800; color:#56BC37;"><i class="fa-solid fa-bell"></i> Alerta Camión Oído / Visto</span>
 
-          <span style="font-size:10px; background:rgba(86,188,55,0.15); color:#56BC37; padding:2px 6px; border-radius:4px; font-weight:700;">Hace ${mins} min</span>
+          <span style="font-size:10px; background:rgba(86,188,55,0.15); color:#56BC37; padding:2px 6px; border-radius:4px; font-weight:700;">Hace ${formatTimeStr(mins)}</span>
 
         </div>
 
