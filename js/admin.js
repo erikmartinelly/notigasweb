@@ -297,6 +297,9 @@ async function cargarConfiguracionPublicidadEnAdmin(targetCity = null) {
 document.addEventListener('change', (e) => {
   if (e.target && e.target.id === 'adminSelectAdCiudad') {
     cargarConfiguracionPublicidadEnAdmin(e.target.value);
+    if (typeof renderAdminAdsAndPostsList === 'function') {
+      renderAdminAdsAndPostsList();
+    }
   }
 });
 
@@ -308,13 +311,22 @@ async function renderAdminAdsAndPostsList() {
   let html = '';
   let count = 0;
 
+  const citySelector = document.getElementById('adminSelectAdCiudad');
+  const activeCity = citySelector ? citySelector.value : (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba');
+  const normCity = activeCity ? String(activeCity).toLowerCase().trim() : 'cochabamba';
+  
   // 1. Anuncios Locales por Pestaña
-  const { data: adData, error: adsError } = await window.supabaseClient
+  let adsQuery = window.supabaseClient
     .from('anuncios_globales')
     .select('id, titulo, url, image_url, ciudad, posicion, activo, created_at')
     .order('created_at', { ascending: false })
     .limit(50);
+    
+  if (normCity && normCity !== 'todos' && normCity !== 'all') {
+    adsQuery = adsQuery.eq('ciudad', normCity);
+  }
 
+  const { data: adData, error: adsError } = await adsQuery;
   if (adsError) { console.error('Error cargando anuncios_globales:', adsError); return; }
 
   if (adData && adData.length > 0) {
@@ -358,11 +370,17 @@ async function renderAdminAdsAndPostsList() {
   }
 
   // 2. Avisos y Noticias de la OTB
-  const { data: localPosts, error: postsError } = await window.supabaseClient
+  let postsQuery = window.supabaseClient
     .from('avisos')
     .select('id, titulo, categoria, ciudad, created_at, user_nombre')
     .order('created_at', { ascending: false })
     .limit(100);
+    
+  if (normCity && normCity !== 'todos' && normCity !== 'all') {
+    postsQuery = postsQuery.eq('ciudad', normCity);
+  }
+
+  const { data: localPosts, error: postsError } = await postsQuery;
   if (postsError) { console.error('Error cargando avisos:', postsError); return; }
 
   if (localPosts && localPosts.length > 0) {
