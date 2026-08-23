@@ -20,11 +20,13 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
 
   try {
     const cityNormalized = city.trim().toLowerCase();
+    const cityKeys = typeof window.getCityMetroKeys === 'function' ? window.getCityMetroKeys(cityNormalized) : [cityNormalized];
+
     // Consultar exclusivamente de la vista pública autorizada
     const { data, error } = await window.supabaseClient
       .from('choferes_publicos')
       .select('id, nombre_completo, categoria, ciudad, telefono, descripcion, foto_url, estado_verificacion, created_at')
-      .eq('ciudad', cityNormalized);
+      .in('ciudad', cityKeys);
 
     if (error) {
       console.error("Error descargando choferes desde choferes_publicos:", error);
