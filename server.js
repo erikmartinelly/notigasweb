@@ -109,6 +109,33 @@ app.get('/sw.js', (req, res) => {
   res.sendFile(path.join(__dirname, 'sw.js'));
 });
 
+// Bloquear el acceso a archivos y carpetas sensibles del backend
+const blacklistedPaths = [
+  '/server.js',
+  '/package.json',
+  '/package-lock.json',
+  '/pnpm-lock.yaml',
+  '/readme.md',
+  '/.env',
+  '/.htaccess',
+  '/.gitignore',
+  '/supabase',
+  '/scripts',
+  '/node_modules',
+  '/.git',
+  '/.agents'
+];
+
+app.use((req, res, next) => {
+  const reqPath = req.path.toLowerCase();
+  for (const item of blacklistedPaths) {
+    if (reqPath === item || reqPath.startsWith(`${item}/`)) {
+      return res.status(403).json({ error: 'Acceso denegado a recursos del sistema.' });
+    }
+  }
+  next();
+});
+
 // Servir archivos estáticos del proyecto
 app.use(express.static(__dirname));
 

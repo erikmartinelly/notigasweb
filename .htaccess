@@ -21,7 +21,7 @@ DirectoryIndex index.html
 </IfModule>
 
 <IfModule mod_authz_core.c>
-  <FilesMatch "(^\.|\.(?:sql|md|sh|log|lock|ini|bak|dist)$)">
+  <FilesMatch "(^\.|package\.json|package-lock\.json|pnpm-lock\.yaml|server\.js|node_modules|\.(?:sql|md|sh|log|lock|ini|bak|dist|env)$)">
     Require all denied
   </FilesMatch>
 </IfModule>

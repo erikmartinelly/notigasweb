@@ -73,13 +73,13 @@ function getSafeAdImageUrl(value) {
 /**
  * Inicializar suscripción Realtime para anuncios locales por ciudad
  */
-function iniciarSuscripcionAnuncios() {
+async function iniciarSuscripcionAnuncios() {
   if (!window.supabaseClient) return;
   const activeCity = (typeof AppState !== 'undefined') ? AppState.get('city') : null;
   if (!activeCity) return;
 
   if (window.adsSubscriptionChannel) {
-    try { window.supabaseClient.removeChannel(window.adsSubscriptionChannel); } catch(e){}
+    try { await window.supabaseClient.removeChannel(window.adsSubscriptionChannel); } catch(e){}
     window.adsSubscriptionChannel = null;
   }
 

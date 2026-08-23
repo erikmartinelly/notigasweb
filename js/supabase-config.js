@@ -119,7 +119,7 @@ window.iniciarSuscripcionAvisos = function() {
 };
 
 // 2. Suscripciones generales multiplexadas (Pedidos, Rutas, Comentarios, Avisos, Broadcasts)
-window.iniciarSuscripcionesRealtime = function() {
+window.iniciarSuscripcionesRealtime = async function() {
     if (!window.supabaseClient) return;
 
     const rawCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || 'cochabamba') : 'cochabamba';
@@ -139,7 +139,7 @@ window.iniciarSuscripcionesRealtime = function() {
         const oldGlobalChannel = window.notigasGlobalChannel;
         window.notigasGlobalChannel = null;
         _activeRealtimeCity = null;
-        try { window.supabaseClient.removeChannel(oldGlobalChannel); } catch(e) {}
+        try { await window.supabaseClient.removeChannel(oldGlobalChannel); } catch(e) {}
     }
 
     console.log(`📡 Suscripción Realtime global multiplexada iniciando para ${activeCity}... (intento ${_realtimeRetryCount + 1})`);

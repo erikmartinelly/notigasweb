@@ -1218,7 +1218,7 @@ window.guardarPropagandaTab = guardarPropagandaTab;
 
 window._isSavingAdsMutex = false;
 
-async function guardarSubmenuAnuncios() {
+window.guardarSubmenuAnuncios = async function() {
   if (window._isSavingAdsMutex) return;
   window._isSavingAdsMutex = true;
   const btn = document.getElementById('btnSaveCurrentAdTab');
@@ -1250,49 +1250,54 @@ async function guardarSubmenuAnuncios() {
     window._isSavingAdsMutex = false;
     if (btn) btn.disabled = false;
   }
-}
-window.guardarSubmenuAnuncios = guardarSubmenuAnuncios;
+};
 
-async function guardarTodasLasPropagandas() {
+window.guardarTodasLasPropagandas = async function() {
   if (window._isSavingAdsMutex) return;
   window._isSavingAdsMutex = true;
   const btn = document.getElementById('btnSaveAllAdsAdmin');
   if (btn) btn.disabled = true;
 
   try {
-    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Guardando propaganda de las 3 pestañas...');
+    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Guardando las 3 pestañas de propaganda...');
 
-    const ok1 = await guardarPropagandaTab('mapa', false);
-    const ok2 = await guardarPropagandaTab('repartidores', false);
-    const ok3 = await guardarPropagandaTab('avisos', false);
+    const tabs = ['mapa', 'repartidores', 'avisos'];
+    let allOk = true;
+
+    for (const tab of tabs) {
+      window.adminActiveAdTab = tab; // Actualiza la pestaña activa para leer los inputs correctos
+      const ok = await guardarPropagandaTab(tab, true); // silent = true para no saturar con notificaciones
+      if (!ok) {
+        allOk = false;
+        break;
+      }
+    }
 
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
 
-    if (typeof cargarAnunciosGuardados === 'function') await cargarAnunciosGuardados();
-    await cargarConfiguracionPublicidadEnAdmin();
-    if (typeof renderAdminAdsAndPostsList === 'function') renderAdminAdsAndPostsList();
-    if (typeof renderVendorsList === 'function') renderVendorsList();
-    if (typeof renderForumFeed === 'function') renderForumFeed();
-
-    const citySelector = document.getElementById('adminSelectAdCiudad');
-    const activeCity = (citySelector ? citySelector.value : null) || (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba') || 'cochabamba';
-    const normCity = normalizeAdCity(activeCity);
-    const displayCity = (normCity === 'global') ? 'TODAS LAS CIUDADES (GLOBAL)' : normCity.toUpperCase();
-    if (ok1 && ok2 && ok3) {
+    if (allOk) {
+      if (typeof cargarAnunciosGuardados === 'function') await cargarAnunciosGuardados();
+      await cargarConfiguracionPublicidadEnAdmin();
+      if (typeof renderAdminAdsAndPostsList === 'function') renderAdminAdsAndPostsList();
+      
+      const citySelector = document.getElementById('adminSelectAdCiudad');
+      const activeCity = (citySelector ? citySelector.value : null) || (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba') || 'cochabamba';
+      const normCity = normalizeAdCity(activeCity);
+      const displayCity = (normCity === 'global') ? 'TODAS LAS CIUDADES (GLOBAL)' : normCity.toUpperCase();
+      
       if (typeof showToast === 'function') {
-        showToast('✅ 3 Pestañas Actualizadas', `Las propagandas para Mapa, Repartidores y Avisos Gratis quedaron activas para ${displayCity}.`, 'success', 5000);
+        showToast('✅ Propaganda Guardada', `Las 3 pestañas quedaron actualizadas para ${displayCity}.`, 'success', 4500);
       }
     } else {
       if (typeof showToast === 'function') {
-        showToast('⚠️ Guardado Parcial', 'Algunas pestañas se guardaron. Revisa la lista inferior para confirmar.', 'warning', 4500);
+        showToast('❌ Error al guardar', 'No se pudieron guardar todas las pestañas. Revisa tu conexión o permisos.', 'error', 5000);
       }
     }
   } finally {
     window._isSavingAdsMutex = false;
     if (btn) btn.disabled = false;
   }
-}
-window.guardarTodasLasPropagandas = guardarTodasLasPropagandas;
+};
 
 // ---------------------------------------------------------
 // FUNCIONES DE ADMINISTRACIÓN DE ANUNCIOS E IMÁGENES
@@ -2289,13 +2294,11 @@ window.renderAdminVendorsList = (typeof renderAdminVendorsList !== 'undefined') 
 window.renderAdminOrdersList = (typeof renderAdminOrdersList !== 'undefined') ? renderAdminOrdersList : undefined;
 window.renderAdminAdsAndPostsList = (typeof renderAdminAdsAndPostsList !== 'undefined') ? renderAdminAdsAndPostsList : undefined;
 window.renderAdminReports = (typeof renderAdminReports !== 'undefined') ? renderAdminReports : undefined;
-window.guardarSubmenuAnuncios = (typeof guardarSubmenuAnuncios !== 'undefined') ? guardarSubmenuAnuncios : undefined;
 window.cerrarSesionAdminControl = (typeof cerrarSesionAdminControl !== 'undefined') ? cerrarSesionAdminControl : undefined;
 window.descargarListaCorreosCSV = (typeof descargarListaCorreosCSV !== 'undefined') ? descargarListaCorreosCSV : undefined;
 window.descargarFichasRepartidoresCSV = (typeof descargarFichasRepartidoresCSV !== 'undefined') ? descargarFichasRepartidoresCSV : undefined;
 window.switchAdSubTab = (typeof switchAdSubTab !== 'undefined') ? switchAdSubTab : undefined;
 window.guardarPropagandaTab = (typeof guardarPropagandaTab !== 'undefined') ? guardarPropagandaTab : undefined;
-window.guardarTodasLasPropagandas = (typeof guardarTodasLasPropagandas !== 'undefined') ? guardarTodasLasPropagandas : undefined;
 window.previewUploadAdImage = (typeof previewUploadAdImage !== 'undefined') ? previewUploadAdImage : undefined;
 window.eliminarImagenAnuncio = (typeof eliminarImagenAnuncio !== 'undefined') ? eliminarImagenAnuncio : undefined;
 window.borrarAnuncioLocalAdmin = (typeof borrarAnuncioLocalAdmin !== 'undefined') ? borrarAnuncioLocalAdmin : undefined;
