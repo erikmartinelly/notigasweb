@@ -56,9 +56,10 @@ async function renderDriverOrdersList() {
 
   // Regla estricta: un repartidor SOLO ve y toma pedidos de la ciudad donde se registró
   let driverCity = null;
-  if (userData && userData.ciudad) {
+  if (userData && userData.ciudad && userData.ciudad !== 'todos' && userData.ciudad !== 'all') {
     driverCity = String(userData.ciudad).toLowerCase().trim();
   } else {
+    // Si no está registrado en una ciudad, usar la ciudad del GPS (o la seleccionada) para restringir
     const rawCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || '') : '';
     driverCity = (rawCity && rawCity !== 'todos' && rawCity !== 'all') ? String(rawCity).toLowerCase().trim() : null;
   }
@@ -80,7 +81,8 @@ async function renderDriverOrdersList() {
     .order('created_at', { ascending: false });
 
   if (driverCity) {
-    pubQuery = pubQuery.eq('ciudad', driverCity);
+    const cityKeys = typeof window.getCityMetroKeys === 'function' ? window.getCityMetroKeys(driverCity) : [driverCity];
+    pubQuery = pubQuery.in('ciudad', cityKeys);
   }
 
   // Filtrado a nivel de base de datos para categoría
@@ -105,7 +107,8 @@ async function renderDriverOrdersList() {
       .gte('created_at', activeWindow)
       .order('created_at', { ascending: false });
     if (driverCity) {
-      assignedQuery = assignedQuery.eq('ciudad', driverCity);
+      const cityKeys = typeof window.getCityMetroKeys === 'function' ? window.getCityMetroKeys(driverCity) : [driverCity];
+      assignedQuery = assignedQuery.in('ciudad', cityKeys);
     }
     assignedPromise = assignedQuery;
   }

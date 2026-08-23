@@ -789,12 +789,22 @@ async function renderAdminOrdersList() {
       window.supabaseClient.rpc('rpc_purge_old_records').then(() => {}).catch(() => {});
     } catch (_) {}
 
-    const { data: pedidos, error } = await window.supabaseClient
+    const activeCity = (typeof AppState !== 'undefined') ? AppState.get('city') : null;
+    const normCity = activeCity ? String(activeCity).toLowerCase().trim() : null;
+
+    let query = window.supabaseClient
       .from('pedidos')
       .select('*')
       .in('estado', ['pendiente', 'visto', 'asignado'])
       .order('created_at', { ascending: false })
       .limit(250);
+      
+    if (normCity && normCity !== 'todos' && normCity !== 'all') {
+      const cityKeys = typeof window.getCityMetroKeys === 'function' ? window.getCityMetroKeys(activeCity) : [normCity];
+      query = query.in('ciudad', cityKeys);
+    }
+
+    const { data: pedidos, error } = await query;
 
     if (error) {
       console.error('Error cargando pedidos para administración:', error);
