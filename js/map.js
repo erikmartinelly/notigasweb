@@ -1950,7 +1950,8 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
       if (isDriverUser) {
         const driverCity = (u.ciudad && u.ciudad !== 'todos' && u.ciudad !== 'all') ? String(u.ciudad).toLowerCase().trim() : null;
         if (driverCity) {
-          pubQuery = pubQuery.eq('ciudad', driverCity);
+          const dCityKeys = (typeof window.getCityMetroKeys === 'function') ? window.getCityMetroKeys(driverCity) : [driverCity];
+          pubQuery = pubQuery.in('ciudad', dCityKeys);
         } else if (cityKeys && cityKeys.length > 0) {
           pubQuery = pubQuery.in('ciudad', cityKeys);
         }
