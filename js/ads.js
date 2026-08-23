@@ -117,39 +117,6 @@ function abrirAnuncioWhatsApp(posicion) {
 window.abrirAnuncioWhatsApp = abrirAnuncioWhatsApp;
 
 /**
- * Retorna las propagandas por defecto si no existen en la base de datos
- */
-function getDefaultLocalAds(city) {
-  const normCity = String(city || 'Tu Ciudad').toUpperCase();
-  return {
-    mapa: {
-      titulo: 'Promociona tu negocio o servicio profesional directamente en tu OTB',
-      url: 'https://wa.me/59170000000?text=Hola%20quiero%20anunciar%20en%20NOTIGAS%20Mapa',
-      image_url: null,
-      ciudad: city,
-      posicion: 'mapa',
-      activo: true
-    },
-    repartidores: {
-      titulo: 'Distribución mayorista, repuestos y accesorios autorizados en ' + normCity,
-      url: 'https://wa.me/59170000000?text=Hola%20quiero%20anunciar%20en%20NOTIGAS%20Repartidores',
-      image_url: null,
-      ciudad: city,
-      posicion: 'repartidores',
-      activo: true
-    },
-    avisos: {
-      titulo: 'Promociona tu negocio o servicio en ' + normCity,
-      url: 'https://wa.me/59170000000?text=Hola%20quiero%20anunciar%20en%20NOTIGAS%20Avisos',
-      image_url: null,
-      ciudad: city,
-      posicion: 'avisos',
-      activo: true
-    }
-  };
-}
-
-/**
  * Cargar las 3 propagandas locales desde Supabase
  */
 async function cargarAnunciosGuardados() {
@@ -159,30 +126,29 @@ async function cargarAnunciosGuardados() {
   const localAdContent = document.getElementById('localAdContent');
   const activeCity = (typeof AppState !== 'undefined') ? AppState.get('city') : 'cochabamba';
   const normCity = String(activeCity || 'cochabamba').toLowerCase().trim();
-  const defaults = getDefaultLocalAds(normCity);
-
   if (mode === 'disabled') {
     if (localAdContent) localAdContent.style.display = 'none';
     window._localAds = {
-      mapa: { ...defaults.mapa, activo: false },
-      repartidores: { ...defaults.repartidores, activo: false },
-      avisos: { ...defaults.avisos, activo: false }
+      mapa: { activo: false },
+      repartidores: { activo: false },
+      avisos: { activo: false }
     };
     window._currentLocalAdData = window._localAds.mapa;
     return;
   }
 
   if (!window.supabaseClient) {
-    window._localAds = defaults;
-    window._currentLocalAdData = defaults.mapa;
-    if (localAdContent) localAdContent.style.display = 'flex';
-    actualizarBannerConImagen(null);
-    actualizarAnunciosEnVivo(defaults.mapa.titulo, defaults.mapa.url);
+    window._localAds = {
+      mapa: { activo: false },
+      repartidores: { activo: false },
+      avisos: { activo: false }
+    };
+    window._currentLocalAdData = window._localAds.mapa;
+    if (localAdContent) localAdContent.style.display = 'none';
     return;
   }
 
   try {
-    // 1. Consultar anuncios de la ciudad activa Y anuncios globales en una sola consulta
     const citiesToQuery = (normCity && normCity !== 'global') ? [normCity, 'global'] : ['global'];
     let { data, error } = await window.supabaseClient
       .from('anuncios_globales')
@@ -190,21 +156,9 @@ async function cargarAnunciosGuardados() {
       .in('ciudad', citiesToQuery)
       .order('created_at', { ascending: false });
 
-    // 2. Si no hay datos, consultar cualquier registro existente como último recurso
-    if (!error && (!data || data.length === 0)) {
-      const { data: fallbackData } = await window.supabaseClient
-        .from('anuncios_globales')
-        .select('id, titulo, descripcion, url, image_url, ciudad, posicion, activo, created_at')
-        .order('created_at', { ascending: false });
-      if (fallbackData && fallbackData.length > 0) {
-        data = fallbackData;
-      }
-    }
-
-    if (!error && data && data.length > 0) {
+    if (!error && data) {
       const cityAds = data.filter(a => String(a.ciudad || '').toLowerCase().trim() === normCity);
       const globalAds = data.filter(a => String(a.ciudad || '').toLowerCase().trim() === 'global');
-      const allAds = data;
 
       const resolveAdForPos = (pos) => {
         // 1. Prioridad: Anuncio de la ciudad específica para esta posición
@@ -215,21 +169,22 @@ async function cargarAnunciosGuardados() {
         const globalAd = globalAds.find(a => (a.posicion || 'mapa') === pos);
         if (globalAd) return globalAd;
 
-        // 3. Fallback: Cualquier anuncio en la BD para esta posición
-        const anyAd = allAds.find(a => (a.posicion || 'mapa') === pos);
-        if (anyAd) return anyAd;
-
-        // 4. Default
-        return defaults[pos];
+        // 3. Si no existe en la ciudad ni en global, no se muestra nada
+        return { activo: false, posicion: pos };
       };
 
       window._localAds = {
-        mapa: { ...resolveAdForPos('mapa') },
-        repartidores: { ...resolveAdForPos('repartidores') },
-        avisos: { ...resolveAdForPos('avisos') }
+        mapa: resolveAdForPos('mapa'),
+        repartidores: resolveAdForPos('repartidores'),
+        avisos: resolveAdForPos('avisos')
       };
     } else {
-      window._localAds = defaults;
+      // Error o sin conexión a Supabase, ocultar todo
+      window._localAds = {
+        mapa: { activo: false, posicion: 'mapa' },
+        repartidores: { activo: false, posicion: 'repartidores' },
+        avisos: { activo: false, posicion: 'avisos' }
+      };
     }
 
     window._currentLocalAdData = window._localAds.mapa;
@@ -325,14 +280,7 @@ window.getAdSenseFeedMarkup = function(placement) {
     ad = window._localAds?.mapa || window._currentLocalAdData;
   }
 
-  if (!ad) {
-    const activeCity = (typeof AppState !== 'undefined') ? AppState.get('city') : 'Tu Ciudad';
-    const defaults = getDefaultLocalAds(activeCity);
-    ad = (placement === 'vendors') ? defaults.repartidores : defaults.avisos;
-  }
-
-  // Si la propaganda de esta pestaña específica fue desactivada por el admin
-  if (ad.activo === false) {
+  if (!ad || ad.activo === false) {
     return '';
   }
 
