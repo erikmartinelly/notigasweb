@@ -7,7 +7,7 @@
    ========================================================================== */
 
 window.ADS_CONFIG = {
-  mode: localStorage.getItem('notigas_ads_mode') || 'local', // 'local' | 'disabled'
+  mode: 'local',
   adSenseLoaded: false
 };
 
@@ -120,8 +120,7 @@ window.abrirAnuncioWhatsApp = abrirAnuncioWhatsApp;
  * Cargar las 3 propagandas locales desde Supabase
  */
 async function cargarAnunciosGuardados() {
-  const mode = localStorage.getItem('notigas_ads_mode') || window.ADS_CONFIG.mode || 'local';
-  window.ADS_CONFIG.mode = mode;
+  const mode = window.ADS_CONFIG.mode || 'local';
 
   const localAdContent = document.getElementById('localAdContent');
   const activeCity = (typeof AppState !== 'undefined') ? AppState.get('city') : 'cochabamba';
@@ -162,15 +161,14 @@ async function cargarAnunciosGuardados() {
 
       const resolveAdForPos = (pos) => {
         // 1. Prioridad: Anuncio de la ciudad específica para esta posición
-        const cityAd = cityAds.find(a => (a.posicion || 'mapa') === pos);
+        const cityAd = cityAds.find(a => String(a.posicion || 'mapa').toLowerCase() === pos);
         if (cityAd) return cityAd;
 
         // 2. Fallback: Anuncio global para esta posición
-        const globalAd = globalAds.find(a => (a.posicion || 'mapa') === pos);
+        const globalAd = globalAds.find(a => String(a.posicion || 'mapa').toLowerCase() === pos);
         if (globalAd) return globalAd;
 
-        // 3. Si no existe en la ciudad ni en global, no se muestra nada
-        return { activo: false, posicion: pos };
+        return null;
       };
 
       window._localAds = {
@@ -204,10 +202,16 @@ async function cargarAnunciosGuardados() {
     if (typeof renderForumFeed === 'function') renderForumFeed();
 
   } catch (e) {
-    console.error("Error cargando anuncios locales:", e);
-    window._localAds = defaults;
-    window._currentLocalAdData = defaults.mapa;
-    if (localAdContent) localAdContent.style.display = 'flex';
+    console.error("Error cargando anuncios desde Supabase:", e);
+    window._localAds = {
+      mapa: null,
+      repartidores: null,
+      avisos: null
+    };
+    window._currentLocalAdData = null;
+    if (localAdContent) {
+      localAdContent.style.display = 'none';
+    }
   }
 }
 window.cargarAnunciosGuardados = cargarAnunciosGuardados;
@@ -331,7 +335,6 @@ async function cargarConfiguracionPublicidadGlobal() {
 
     if (data && data.modo) {
       window.ADS_CONFIG.mode = data.modo;
-      localStorage.setItem('notigas_ads_mode', data.modo);
     }
   } catch(_) {}
   cargarAnunciosGuardados();
