@@ -333,31 +333,74 @@ window.activateAdSenseIn = function(container) {
   // No-op para compatibilidad de interfaces
 };
 
-function inicializarGoogleAdSense() {
-  cargarAnunciosGuardados();
-}
+let _adsInitializationPromise = null;
+let _adsInitialized = false;
 
 async function cargarConfiguracionPublicidadGlobal() {
-  if (!window.supabaseClient) return;
+  if (!window.supabaseClient) return false;
   try {
-    const { data } = await window.supabaseClient
+    const { data, error } = await window.supabaseClient
       .from('configuracion_publicidad')
       .select('modo')
       .eq('id', 1)
       .maybeSingle();
-
-    if (data && data.modo) {
+      
+    if (error) throw error;
+    if (data?.modo) {
       window.ADS_CONFIG.mode = data.modo;
     }
-  } catch(_) {}
-  cargarAnunciosGuardados();
+  } catch (error) {
+    console.warn('No se pudo cargar configuracion_publicidad:', error);
+  }
+  await cargarAnunciosGuardados();
+  return true;
 }
 
-document.addEventListener('notigas_auth_ready', async () => {
-  await cargarConfiguracionPublicidadGlobal();
-  iniciarSuscripcionAnuncios();
-});
+async function initializeAdsModule() {
+  if (_adsInitialized) {
+    await cargarAnunciosGuardados();
+    return true;
+  }
+  if (_adsInitializationPromise) {
+    return _adsInitializationPromise;
+  }
+  _adsInitializationPromise = (async () => {
+    if (!window.supabaseClient) return false;
+    await cargarConfiguracionPublicidadGlobal();
+    await iniciarSuscripcionAnuncios();
+    _adsInitialized = true;
+    document.dispatchEvent(
+      new CustomEvent('notigas_ads_config_ready', {
+        detail: { city: typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba' }
+      })
+    );
+    return true;
+  })();
+  try {
+    return await _adsInitializationPromise;
+  } finally {
+    _adsInitializationPromise = null;
+  }
+}
 
-document.addEventListener('DOMContentLoaded', () => {
-  cargarAnunciosGuardados();
-});
+window.cargarConfiguracionPublicidadGlobal = cargarConfiguracionPublicidadGlobal;
+window.initializeAdsModule = initializeAdsModule;
+
+function requestAdsInitialization() {
+  initializeAdsModule().catch((error) => {
+    console.error('Error inicializando anuncios publicitarios:', error);
+  });
+}
+
+document.addEventListener('notigas_auth_ready', requestAdsInitialization);
+
+/*
+ * ads.js se carga de forma diferida. Para entonces DOMContentLoaded
+ * y notigas_auth_ready pueden haber ocurrido, por eso se inicializa
+ * inmediatamente cuando Supabase ya está disponible.
+ */
+if (window.supabaseClient) {
+  requestAdsInitialization();
+} else {
+  document.addEventListener('supabase_ready', requestAdsInitialization, { once: true });
+}

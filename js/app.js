@@ -379,8 +379,20 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
 }
 
 async function switchTab(index) {
-  document.querySelectorAll('.tab-btn').forEach((btn, i) => btn.classList.toggle('active', i === index));
-  document.querySelectorAll('.tab-content').forEach((tab, i) => tab.classList.toggle('active', i === index));
+  document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', i === index);
+  });
+  document.querySelectorAll('.tab-content').forEach((tab, i) => {
+    tab.classList.toggle('active', i === index);
+  });
+
+  // Los anuncios pueden aparecer en mapa, repartidores y muro.
+  if (typeof window.loadAdsModule === 'function') {
+    await window.loadAdsModule();
+  }
+  if (typeof window.cargarAnunciosGuardados === 'function') {
+    await window.cargarAnunciosGuardados();
+  }
 
   if (index === 0) {
     const activeMap = window.notigasMap || window.map || (typeof map !== 'undefined' ? map : null);
@@ -388,14 +400,16 @@ async function switchTab(index) {
       setTimeout(() => activeMap.invalidateSize(), 200);
     }
   } else if (index === 1) {
-    // Carga bajo demanda del directorio de repartidores y publicidad
-    if (typeof window.loadAdsModule === 'function') await window.loadAdsModule();
-    if (typeof descargarChoferesYRenderizar === 'function') descargarChoferesYRenderizar('TODOS');
-    if (typeof cargarAnunciosGuardados === 'function') cargarAnunciosGuardados();
+    if (typeof descargarChoferesYRenderizar === 'function') {
+      await descargarChoferesYRenderizar('TODOS');
+    }
   } else if (index === 2) {
-    // Carga bajo demanda del muro vecinal / foro
-    if (typeof window.loadForumModule === 'function') await window.loadForumModule();
-    if (typeof renderForumFeed === 'function') renderForumFeed();
+    if (typeof window.loadForumModule === 'function') {
+      await window.loadForumModule();
+    }
+    if (typeof renderForumFeed === 'function') {
+      await renderForumFeed();
+    }
   }
 }
 window.switchTab = switchTab;

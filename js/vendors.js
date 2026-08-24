@@ -111,6 +111,10 @@ function renderVendorCards(filterCat) {
         <button class="btn-driver" style="margin: 0 auto; padding: 10px 16px; font-size: 12px;" data-action="abrirModalDriver">🚚 Publicar Mi Mini Página de Negocio</button>
       </div>
     `;
+    const adMarkup = typeof window.getAdSenseFeedMarkup === 'function' ? window.getAdSenseFeedMarkup('vendors') : '';
+    if (adMarkup) {
+      container.insertAdjacentHTML('afterbegin', adMarkup);
+    }
     return;
   }
 

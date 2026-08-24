@@ -33,7 +33,7 @@ window.NOTIGAS.GPS_TIMEOUT_MS        = 12000;                  // 12 segundos (t
 window.NOTIGAS.MIN_MOVEMENT_METERS   = 15;                     // 15 metros (movimiento mínimo GPS)
 window.NOTIGAS.IDLE_THRESHOLD_MS     = 3 * 60 * 1000;         // 3 minutos (repartidor inactivo)
 window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño máximo imagen)
-window.NOTIGAS.CACHE_VERSION         = '107';
+window.NOTIGAS.CACHE_VERSION         = '108';
 
 // Contrato de datos: la publicidad y los avisos comunitarios son módulos distintos.
 window.NOTIGAS.AD_TABLE = 'anuncios_globales';
@@ -95,9 +95,23 @@ window.loadForumModule = async function() {
   await window.loadScriptAsync('js/forum.js');
 };
 
-window.loadAdsModule = async function() {
-  if (typeof window.cargarAnunciosGuardados === 'function') return;
-  await window.loadScriptAsync('js/ads.js');
+window._adsModuleLoadPromise = null; 
+window.loadAdsModule = async function () { 
+  if (typeof window.cargarAnunciosGuardados !== 'function') { 
+    if (!window._adsModuleLoadPromise) { 
+      window._adsModuleLoadPromise = window.loadScriptAsync(`js/ads.js`).catch((error) => { 
+        window._adsModuleLoadPromise = null; 
+        throw error; 
+      }); 
+    } 
+    await window._adsModuleLoadPromise; 
+  } 
+  if (typeof window.initializeAdsModule === 'function') { 
+    return window.initializeAdsModule(); 
+  } 
+  if (typeof window.cargarAnunciosGuardados === 'function') { 
+    return window.cargarAnunciosGuardados(); 
+  } 
 };
 
 (function() {
