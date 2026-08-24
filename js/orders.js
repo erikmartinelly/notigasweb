@@ -657,6 +657,10 @@ function checkActiveOrderStatus() {
         actualizarFaviconSegunPedido(order.categoria, order.estado);
         syncActiveOrderStatusFromDatabase(order);
 
+        if (order.lat && order.lng && typeof window.setManualUserLocation === 'function') {
+          window.setManualUserLocation(parseFloat(order.lat), parseFloat(order.lng));
+        }
+
         if (typeof renderActiveOrdersMap === 'function') {
           renderActiveOrdersMap();
         }

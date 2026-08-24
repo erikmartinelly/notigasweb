@@ -197,6 +197,17 @@ let manualLocationSyncTimer = null;
 let isMapInteractedByUser = false;
 let currentActiveOrderMarker = null;
 
+window.setManualUserLocation = function(lat, lng) {
+  isUserMarkerDraggedManually = true;
+  currentGpsLat = lat;
+  window.currentGpsLat = lat;
+  currentGpsLng = lng;
+  window.currentGpsLng = lng;
+  if (userMarker && typeof userMarker.setLatLng === 'function') {
+    userMarker.setLatLng([lat, lng]);
+  }
+};
+
 // Promesa activa y throttling para pedidos en vivo
 let _activeFetchOrdersPromise = null;
 let _lastCargarPedidosTime = 0;
