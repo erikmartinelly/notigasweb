@@ -6,6 +6,19 @@
    3. Pestaña 3 (Avisos Gratis): Tarjeta Patrocinador en Feed de Avisos Gratis
    ========================================================================== */
 
+const _ADS_AD_TABLE = window.NOTIGAS?.AD_TABLE || 'anuncios_globales';
+const _ADS_PLACEMENTS = window.NOTIGAS?.AD_PLACEMENTS || Object.freeze({
+  MAPA: 'mapa',
+  REPARTIDORES: 'repartidores',
+  MURO_AVISOS: 'muro_avisos'
+});
+
+function normalizeStoredAdPlacement(value) {
+  const normalized = String(value || _ADS_PLACEMENTS.MAPA).toLowerCase().trim();
+  if (normalized === 'avisos') return _ADS_PLACEMENTS.MURO_AVISOS;
+  return Object.values(_ADS_PLACEMENTS).includes(normalized) ? normalized : _ADS_PLACEMENTS.MAPA;
+}
+
 window.ADS_CONFIG = {
   mode: 'local',
   adSenseLoaded: false
@@ -15,7 +28,7 @@ window.adsSubscriptionChannel = null;
 window._localAds = {
   mapa: null,
   repartidores: null,
-  avisos: null
+  muro_avisos: null
 };
 window._currentLocalAdData = null; // Retrocompatibilidad
 let currentAdUrl = 'https://wa.me/59170000000?text=Hola';
@@ -84,7 +97,7 @@ async function iniciarSuscripcionAnuncios() {
   }
 
   window.adsSubscriptionChannel = window.supabaseClient.channel('custom-all-channel-ads-' + activeCity)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'anuncios_globales' }, () => {
+    .on('postgres_changes', { event: '*', schema: 'public', table: _ADS_AD_TABLE }, () => {
         // Skip reload if the admin is actively saving (prevents race condition with form fields)
         if (window._isSavingAdsMutex) return;
         cargarAnunciosGuardados();
@@ -130,7 +143,7 @@ async function cargarAnunciosGuardados() {
     window._localAds = {
       mapa: { activo: false },
       repartidores: { activo: false },
-      avisos: { activo: false }
+      muro_avisos: { activo: false }
     };
     window._currentLocalAdData = window._localAds.mapa;
     return;
@@ -140,7 +153,7 @@ async function cargarAnunciosGuardados() {
     window._localAds = {
       mapa: { activo: false },
       repartidores: { activo: false },
-      avisos: { activo: false }
+      muro_avisos: { activo: false }
     };
     window._currentLocalAdData = window._localAds.mapa;
     if (localAdContent) localAdContent.style.display = 'none';
@@ -150,7 +163,7 @@ async function cargarAnunciosGuardados() {
   try {
     const citiesToQuery = (normCity && normCity !== 'global') ? [normCity, 'global'] : ['global'];
     let { data, error } = await window.supabaseClient
-      .from('anuncios_globales')
+      .from(_ADS_AD_TABLE)
       .select('id, titulo, descripcion, url, image_url, ciudad, posicion, activo, created_at')
       .in('ciudad', citiesToQuery)
       .order('created_at', { ascending: false });
@@ -161,11 +174,11 @@ async function cargarAnunciosGuardados() {
 
       const resolveAdForPos = (pos) => {
         // 1. Prioridad: Anuncio de la ciudad específica para esta posición
-        const cityAd = cityAds.find(a => String(a.posicion || 'mapa').toLowerCase() === pos);
+        const cityAd = cityAds.find(a => normalizeStoredAdPlacement(a.posicion) === pos);
         if (cityAd) return cityAd;
 
         // 2. Fallback: Anuncio global para esta posición
-        const globalAd = globalAds.find(a => String(a.posicion || 'mapa').toLowerCase() === pos);
+        const globalAd = globalAds.find(a => normalizeStoredAdPlacement(a.posicion) === pos);
         if (globalAd) return globalAd;
 
         return null;
@@ -174,14 +187,14 @@ async function cargarAnunciosGuardados() {
       window._localAds = {
         mapa: resolveAdForPos('mapa'),
         repartidores: resolveAdForPos('repartidores'),
-        avisos: resolveAdForPos('avisos')
+        muro_avisos: resolveAdForPos(_ADS_PLACEMENTS.MURO_AVISOS)
       };
     } else {
       // Error o sin conexión a Supabase, ocultar todo
       window._localAds = {
         mapa: { activo: false, posicion: 'mapa' },
         repartidores: { activo: false, posicion: 'repartidores' },
-        avisos: { activo: false, posicion: 'avisos' }
+        muro_avisos: { activo: false, posicion: _ADS_PLACEMENTS.MURO_AVISOS }
       };
     }
 
@@ -206,7 +219,7 @@ async function cargarAnunciosGuardados() {
     window._localAds = {
       mapa: null,
       repartidores: null,
-      avisos: null
+      muro_avisos: null
     };
     window._currentLocalAdData = null;
     if (localAdContent) {
@@ -268,7 +281,7 @@ function actualizarBannerConImagen(imageUrl) {
  * Generador de tarjeta independiente para los feeds (Repartidores y Avisos Gratis)
  */
 window.getAdSenseFeedMarkup = function(placement) {
-  const mode = window.ADS_CONFIG.mode || localStorage.getItem('notigas_ads_mode') || 'local';
+  const mode = window.ADS_CONFIG.mode || 'local';
   if (mode === 'disabled') return '';
 
   let ad = null;
@@ -278,8 +291,8 @@ window.getAdSenseFeedMarkup = function(placement) {
     ad = window._localAds?.repartidores;
     placementTitle = 'PROPAGANDA LOCAL • REPARTIDORES';
   } else if (placement === 'forum') {
-    ad = window._localAds?.avisos;
-    placementTitle = 'PROPAGANDA LOCAL • AVISOS';
+    ad = window._localAds?.muro_avisos;
+    placementTitle = 'ANUNCIO PUBLICITARIO • MURO DE AVISOS';
   } else {
     ad = window._localAds?.mapa || window._currentLocalAdData;
   }

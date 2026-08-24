@@ -104,7 +104,7 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="styles/main.css?v=105">
+  <link rel="stylesheet" href="styles/main.css?v=107">
 
   <!-- SERVICIOS EXTERNOS -->
 
@@ -1720,8 +1720,8 @@
                 <button type="button" class="ad-subtab-btn" id="btnAdSubTabRepartidores" data-action="switchAdSubTab" data-tab="repartidores" style="flex: 1; padding: 7px 4px; font-size: 10.5px; font-weight: 800; border-radius: 6px; border: none; cursor: pointer; background: transparent; color: #94A3B8; transition: all 0.2s;">
                   🚚 2ª Repartidores
                 </button>
-                <button type="button" class="ad-subtab-btn" id="btnAdSubTabAvisos" data-action="switchAdSubTab" data-tab="avisos" style="flex: 1; padding: 7px 4px; font-size: 10.5px; font-weight: 800; border-radius: 6px; border: none; cursor: pointer; background: transparent; color: #94A3B8; transition: all 0.2s;">
-                  📢 3ª Avisos Gratis
+                <button type="button" class="ad-subtab-btn" id="btnAdSubTabMuroAvisos" data-action="switchAdSubTab" data-tab="muro_avisos" style="flex: 1; padding: 7px 4px; font-size: 10.5px; font-weight: 800; border-radius: 6px; border: none; cursor: pointer; background: transparent; color: #94A3B8; transition: all 0.2s;">
+                  📢 3ª Anuncio en Avisos
                 </button>
               </div>
 
@@ -1795,16 +1795,16 @@
                 </div>
               </div>
 
-              <!-- CONTENIDO OPCIÓN 3: PESTAÑA AVISOS GRATIS -->
-              <div class="ad-subtab-pane" id="adSubPaneAvisos" style="display: none;">
+              <!-- CONTENIDO OPCIÓN 3: ANUNCIO PUBLICITARIO DENTRO DEL MURO DE AVISOS -->
+              <div class="ad-subtab-pane" id="adSubPaneMuroAvisos" style="display: none;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                  <strong style="font-size: 11.5px; color: #F59E0B;"><i class="fa-solid fa-bullhorn"></i> Propaganda en Pestaña 3: Avisos Gratis</strong>
+                  <strong style="font-size: 11.5px; color: #F59E0B;"><i class="fa-solid fa-bullhorn"></i> Anuncio publicitario dentro de Avisos Gratis</strong>
                   <span style="font-size: 9.5px; background: rgba(245,158,11,0.15); color: #F59E0B; padding: 2px 6px; border-radius: 4px;">Tarjeta en Muro</span>
                 </div>
 
                 <div class="form-group" style="margin-bottom: 10px;">
-                  <label style="font-size: 11px;">Estado en Avisos Gratis:</label>
-                  <select id="selectAdState_avisos" style="font-size: 11px; background: #1E293B; color: white; border: 1px solid #334155; padding: 6px; border-radius: 6px; width: 100%;">
+                  <label style="font-size: 11px;">Estado del anuncio en el muro:</label>
+                  <select id="selectAdState_muro_avisos" style="font-size: 11px; background: #1E293B; color: white; border: 1px solid #334155; padding: 6px; border-radius: 6px; width: 100%;">
                     <option value="activo">✅ Habilitada (Visible en Muro de Avisos Gratis)</option>
                     <option value="inactivo">🚫 Desactivada (Oculta en Avisos Gratis)</option>
                   </select>
@@ -1812,22 +1812,23 @@
 
                 <div class="form-group" style="margin-bottom: 10px;">
                   <label style="font-size: 11px;">📸 Subir Banner/Imagen para Avisos Gratis (PNG/JPG/WebP):</label>
-                  <input type="file" id="inputAdImageFile_avisos" accept="image/*" style="font-size:11px; background:#1E293B; padding:6px; border-radius:6px; color:white; width:100%;">
-                  <div id="adImagePreviewBox_avisos" style="margin-top:8px; display:none; align-items:center; gap:10px;">
-                    <img id="adImagePreview_avisos" alt="Vista previa avisos" style="max-height:60px; max-width:200px; border-radius:6px; border:1px solid #F59E0B; object-fit:cover;">
-                    <button type="button" id="btnDeleteAdImg_avisos" data-action="eliminarImagenAnuncio" data-tab="avisos" style="background:#D32F2F; color:white; border:none; padding:4px 8px; border-radius:4px; font-weight:700; font-size:10px; cursor:pointer;">✖ Eliminar Imagen</button>
+                  <input type="file" id="inputAdImageFile_muro_avisos" accept="image/*" style="font-size:11px; background:#1E293B; padding:6px; border-radius:6px; color:white; width:100%;">
+                  <div id="adImagePreviewBox_muro_avisos" style="margin-top:8px; display:none; align-items:center; gap:10px;">
+                    <img id="adImagePreview_muro_avisos" alt="Vista previa del anuncio en el muro" style="max-height:60px; max-width:200px; border-radius:6px; border:1px solid #F59E0B; object-fit:cover;">
+                    <button type="button" id="btnDeleteAdImg_muro_avisos" data-action="eliminarImagenAnuncio" data-tab="muro_avisos" style="background:#D32F2F; color:white; border:none; padding:4px 8px; border-radius:4px; font-weight:700; font-size:10px; cursor:pointer;">✖ Eliminar Imagen</button>
                   </div>
                 </div>
 
                 <div class="form-group" style="margin-bottom: 10px;">
                   <label style="font-size: 11px;">Texto / Título de la Propaganda:</label>
-                  <input type="text" id="inputAdText_avisos" placeholder="Ej: Anuncio promocional de tu negocio o servicio" style="font-size: 11px; background: #0F172A; border: 1px solid #334155; color: white; width: 100%; padding: 6px; border-radius: 6px;">
+                  <input type="text" id="inputAdText_muro_avisos" placeholder="Ej: Anuncio promocional de tu negocio o servicio" style="font-size: 11px; background: #0F172A; border: 1px solid #334155; color: white; width: 100%; padding: 6px; border-radius: 6px;">
                 </div>
 
                 <div class="form-group" style="margin-bottom: 10px;">
                   <label style="font-size: 11px;">Enlace WhatsApp / Web de Contacto:</label>
-                  <input type="text" id="inputAdUrl_avisos" placeholder="https://wa.me/59170000000?text=Hola" style="font-size: 11px; background: #0F172A; border: 1px solid #334155; color: white; width: 100%; padding: 6px; border-radius: 6px;">
+                  <input type="text" id="inputAdUrl_muro_avisos" placeholder="https://wa.me/59170000000?text=Hola" style="font-size: 11px; background: #0F172A; border: 1px solid #334155; color: white; width: 100%; padding: 6px; border-radius: 6px;">
                 </div>
+                <p style="font-size:10px; color:#FBBF24; margin:8px 0 0;"><strong>Importante:</strong> este registro es un anuncio publicitario de <code>anuncios_globales</code>; no es un Aviso Gratis de <code>avisos</code> y no se elimina con su ciclo de 48 horas.</p>
               </div>
 
               <!-- BOTONES DE GUARDADO -->
@@ -1949,17 +1950,17 @@
   <!-- SCRIPTS AL FINAL DEL BODY CON CARGA ASÍNCRONA/DEFER Y CODE-SPLITTING POR MÓDULOS -->
   <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3/dist/umd/supabase.min.js"></script>
-  <script defer src="js/state.js?v=105"></script>
-  <script defer src="js/ui.js?v=105"></script>
-  <script defer src="js/supabase-config.js?v=105"></script>
-  <script defer src="js/auth.js?v=105"></script>
-  <script defer src="js/vendors.js?v=105"></script>
-  <script defer src="js/map.js?v=105"></script>
-  <script defer src="js/map_search.js?v=105"></script>
-  <script defer src="js/map_gps.js?v=105"></script>
-  <script defer src="js/orders.js?v=105"></script>
-  <script defer src="js/app.js?v=105"></script>
-  <script defer src="js/events.js?v=105"></script>
+  <script defer src="js/state.js?v=107"></script>
+  <script defer src="js/ui.js?v=107"></script>
+  <script defer src="js/supabase-config.js?v=107"></script>
+  <script defer src="js/auth.js?v=107"></script>
+  <script defer src="js/vendors.js?v=107"></script>
+  <script defer src="js/map.js?v=107"></script>
+  <script defer src="js/map_search.js?v=107"></script>
+  <script defer src="js/map_gps.js?v=107"></script>
+  <script defer src="js/orders.js?v=107"></script>
+  <script defer src="js/app.js?v=107"></script>
+  <script defer src="js/events.js?v=107"></script>
 
 </body>
 

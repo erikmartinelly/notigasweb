@@ -6,31 +6,49 @@
 
 // La lista quemada de emails ha sido eliminada. La validación se hace contra Supabase `admin_credentials`.
 const ADMIN_SESSION_MAX_MS = 30 * 60 * 1000;
+const _ADMIN_AD_TABLE = window.NOTIGAS?.AD_TABLE || 'anuncios_globales';
+const _ADMIN_NOTICE_TABLE = window.NOTIGAS?.NOTICE_TABLE || 'avisos';
+const _ADMIN_AD_PLACEMENTS = window.NOTIGAS?.AD_PLACEMENTS || Object.freeze({
+  MAPA: 'mapa',
+  REPARTIDORES: 'repartidores',
+  MURO_AVISOS: 'muro_avisos'
+});
+
+function normalizeAdPlacement(value) {
+  const normalized = String(value || _ADMIN_AD_PLACEMENTS.MAPA).toLowerCase().trim();
+  // Compatibilidad transitoria con registros anteriores a la migración 092.
+  if (normalized === 'avisos') return _ADMIN_AD_PLACEMENTS.MURO_AVISOS;
+  if (Object.values(_ADMIN_AD_PLACEMENTS).includes(normalized)) return normalized;
+  return _ADMIN_AD_PLACEMENTS.MAPA;
+}
 
 window.getVerifiedAdminEmail = async function() {
   try {
-    if (window._verifiedAdminEmail) return String(window._verifiedAdminEmail).toLowerCase().trim();
-    if (typeof AppState !== 'undefined' && AppState.get('isAdmin') === true) {
-      if (window._tempAuthUser && window._tempAuthUser.email) return window._tempAuthUser.email.toLowerCase().trim();
-      const data = AppState.get('userData');
-      if (data && (data.gmail || data.email)) return (data.gmail || data.email).toLowerCase().trim();
-    }
-    if (window._tempAuthUser && window._tempAuthUser.email) {
-      return window._tempAuthUser.email.toLowerCase().trim();
-    }
-    
-    // 🆕 ÚLTIMO RECURSO: Consultar directamente la sesión de Supabase si todo lo demás falla
-    if (window.supabaseClient) {
-      const { data: sessionData } = await window.supabaseClient.auth.getSession();
-      if (sessionData?.session?.user?.email) {
-        return sessionData.session.user.email.toLowerCase().trim();
-      }
-    }
+    if (!window.supabaseClient?.auth) return null;
 
-    const data = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
-    return data && (data.gmail || data.email) ? (data.gmail || data.email).toLowerCase().trim() : null;
+    // Toda escritura administrativa debe estar respaldada por una sesión JWT vigente.
+    const { data: authData, error: authError } = await window.supabaseClient.auth.getUser();
+    const email = String(authData?.user?.email || '').toLowerCase().trim();
+    if (authError || !email) throw new Error('La sesión de administrador expiró. Inicia sesión nuevamente.');
+
+    const { data: adminData, error: adminError } = await window.supabaseClient
+      .from('admin_credentials')
+      .select('email')
+      .ilike('email', email)
+      .limit(1)
+      .maybeSingle();
+
+    if (adminError || !adminData) throw new Error('La cuenta autenticada no tiene permisos de administrador.');
+
+    window._verifiedAdminEmail = email;
+    window._adminVerificationError = '';
+    if (typeof AppState !== 'undefined') AppState.set('isAdmin', true);
+    return email;
   } catch(e) { 
     console.warn('Error obteniendo email de admin:', e);
+    window._verifiedAdminEmail = null;
+    window._adminVerificationError = e?.message || 'No se pudo validar la sesión administrativa.';
+    if (typeof AppState !== 'undefined') AppState.set('isAdmin', false);
     return null; 
   }
 };
@@ -53,12 +71,7 @@ window.abrirModalAdminDashboard = async function() {
   if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Verificando credenciales de administrador...');
 
   try {
-    let email = window._tempAuthUser?.email || (typeof AppState !== 'undefined' ? AppState.get('userData')?.gmail : '') || '';
-    if (!email) {
-      const { data: sessionData } = await window.supabaseClient.auth.getSession();
-      email = sessionData?.session?.user?.email || '';
-    }
-    email = email.toLowerCase().trim();
+    const email = await window.getVerifiedAdminEmail();
 
     if (!email) {
       if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
@@ -72,30 +85,9 @@ window.abrirModalAdminDashboard = async function() {
       return;
     }
 
-    // Comprobar contra admin_credentials en PostgreSQL
-    const { data: adminData, error } = await window.supabaseClient
-      .from('admin_credentials')
-      .select('email')
-      .ilike('email', email)
-      .limit(1)
-      .maybeSingle();
-
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
 
-    if (error || !adminData) {
-      console.warn('Acceso denegado a admin:', email, error);
-      if (typeof showToast === 'function') {
-        showToast('⛔ Acceso Denegado', `El correo "${email}" no está registrado como Administrador.`, 'error', 5000);
-      } else {
-        alert(`❌ Acceso Denegado. El correo ${email} no es administrador.`);
-      }
-      return;
-    }
-
     // Administrador verificado
-    window._verifiedAdminEmail = email;
-    if (typeof AppState !== 'undefined') AppState.set('isAdmin', true);
-
     modalAdmin.style.display = 'flex';
     if (typeof switchModalTab === 'function') switchModalTab(0);
     if (typeof renderAdminDashboardKPIs === 'function') renderAdminDashboardKPIs();
@@ -187,20 +179,20 @@ window.adminActiveAdTab = 'mapa';
 window.pendingUploadUrls = {
   mapa: null,
   repartidores: null,
-  avisos: null
+  muro_avisos: null
 };
 
 window.switchAdSubTab = function(tabName) {
-  const normTab = (tabName === 'repartidores' || tabName === 'avisos') ? tabName : 'mapa';
+  const normTab = normalizeAdPlacement(tabName);
   window.adminActiveAdTab = normTab;
 
   const btnMapa = document.getElementById('btnAdSubTabMapa');
   const btnRepartidores = document.getElementById('btnAdSubTabRepartidores');
-  const btnAvisos = document.getElementById('btnAdSubTabAvisos');
+  const btnMuroAvisos = document.getElementById('btnAdSubTabMuroAvisos');
 
   const paneMapa = document.getElementById('adSubPaneMapa');
   const paneRepartidores = document.getElementById('adSubPaneRepartidores');
-  const paneAvisos = document.getElementById('adSubPaneAvisos');
+  const paneMuroAvisos = document.getElementById('adSubPaneMuroAvisos');
 
   if (btnMapa) {
     btnMapa.style.background = (normTab === 'mapa') ? '#FF6D00' : 'transparent';
@@ -212,15 +204,15 @@ window.switchAdSubTab = function(tabName) {
     btnRepartidores.style.color = (normTab === 'repartidores') ? '#0F172A' : '#94A3B8';
     btnRepartidores.classList.toggle('active', normTab === 'repartidores');
   }
-  if (btnAvisos) {
-    btnAvisos.style.background = (normTab === 'avisos') ? '#F59E0B' : 'transparent';
-    btnAvisos.style.color = (normTab === 'avisos') ? '#0F172A' : '#94A3B8';
-    btnAvisos.classList.toggle('active', normTab === 'avisos');
+  if (btnMuroAvisos) {
+    btnMuroAvisos.style.background = (normTab === 'muro_avisos') ? '#F59E0B' : 'transparent';
+    btnMuroAvisos.style.color = (normTab === 'muro_avisos') ? '#0F172A' : '#94A3B8';
+    btnMuroAvisos.classList.toggle('active', normTab === 'muro_avisos');
   }
 
   if (paneMapa) paneMapa.style.display = (normTab === 'mapa') ? 'block' : 'none';
   if (paneRepartidores) paneRepartidores.style.display = (normTab === 'repartidores') ? 'block' : 'none';
-  if (paneAvisos) paneAvisos.style.display = (normTab === 'avisos') ? 'block' : 'none';
+  if (paneMuroAvisos) paneMuroAvisos.style.display = (normTab === 'muro_avisos') ? 'block' : 'none';
 };
 
 function normalizeAdCity(city) {
@@ -241,7 +233,7 @@ async function cargarConfiguracionPublicidadEnAdmin(targetCity = null) {
     const citiesToQuery = (normCity && normCity !== 'global') ? [normCity, 'global'] : ['global'];
 
     let { data, error } = await window.supabaseClient
-      .from('anuncios_globales')
+      .from(_ADMIN_AD_TABLE)
       .select('id, titulo, url, image_url, activo, posicion, ciudad')
       .in('ciudad', citiesToQuery)
       .order('created_at', { ascending: false });
@@ -250,13 +242,13 @@ async function cargarConfiguracionPublicidadEnAdmin(targetCity = null) {
       const cityAds = data.filter(a => String(a.ciudad || '').toLowerCase().trim() === normCity);
       const globalAds = data.filter(a => String(a.ciudad || '').toLowerCase().trim() === 'global');
 
-      const positions = ['mapa', 'repartidores', 'avisos'];
+      const positions = Object.values(_ADMIN_AD_PLACEMENTS);
       positions.forEach(pos => {
         // Prioridad 1: Configuración específica para esta ciudad
-        let ad = cityAds.find(a => (a.posicion || 'mapa') === pos);
+        let ad = cityAds.find(a => normalizeAdPlacement(a.posicion) === pos);
         // Fallback: Si no tiene configuración para esta ciudad y no es 'global', mostrar la global como base
         if (!ad && normCity !== 'global') {
-          ad = globalAds.find(a => (a.posicion || 'mapa') === pos);
+          ad = globalAds.find(a => normalizeAdPlacement(a.posicion) === pos);
         }
 
         const inputTitle = document.getElementById(`inputAdText_${pos}`);
@@ -317,7 +309,7 @@ async function renderAdminAdsAndPostsList() {
   
   // 1. Anuncios Locales por Pestaña
   let adsQuery = window.supabaseClient
-    .from('anuncios_globales')
+    .from(_ADMIN_AD_TABLE)
     .select('id, titulo, url, image_url, ciudad, posicion, activo, created_at')
     .order('created_at', { ascending: false })
     .limit(50);
@@ -332,7 +324,7 @@ async function renderAdminAdsAndPostsList() {
   if (adData && adData.length > 0) {
     adData.forEach(ad => {
       count++;
-      const pos = ad.posicion || 'mapa';
+      const pos = normalizeAdPlacement(ad.posicion);
       let posBadge = '🗺️ 1ª MAPA (Banner)';
       let badgeBg = 'rgba(56,189,248,0.2)';
       let badgeColor = '#38BDF8';
@@ -341,8 +333,8 @@ async function renderAdminAdsAndPostsList() {
         posBadge = '🚚 2ª REPARTIDORES (Feed)';
         badgeBg = 'rgba(0,230,118,0.2)';
         badgeColor = '#00E676';
-      } else if (pos === 'avisos') {
-        posBadge = '📢 3ª AVISOS GRATIS (Muro)';
+      } else if (pos === 'muro_avisos') {
+        posBadge = '📢 3ª ANUNCIO EN AVISOS (Muro)';
         badgeBg = 'rgba(245,158,11,0.2)';
         badgeColor = '#F59E0B';
       }
@@ -371,7 +363,7 @@ async function renderAdminAdsAndPostsList() {
 
   // 2. Avisos y Noticias de la OTB
   let postsQuery = window.supabaseClient
-    .from('avisos')
+    .from(_ADMIN_NOTICE_TABLE)
     .select('id, titulo, categoria, ciudad, created_at, user_nombre')
     .order('created_at', { ascending: false })
     .limit(100);
@@ -469,7 +461,7 @@ async function renderAdminDashboardKPIs() {
           window.supabaseClient.from('pedidos').select('*', { count: 'exact', head: true }).in('estado', ['pendiente', 'visto', 'asignado']),
           window.supabaseClient.from('pedidos').select('*', { count: 'exact', head: true }).in('estado', ['entregado', 'recibido']),
           window.supabaseClient.from('pedidos').select('*', { count: 'exact', head: true }).eq('estado', 'cancelado'),
-          window.supabaseClient.from('avisos').select('*', { count: 'exact', head: true }),
+          window.supabaseClient.from(_ADMIN_NOTICE_TABLE).select('*', { count: 'exact', head: true }),
           window.supabaseClient.from('denuncias').select('*', { count: 'exact', head: true }),
           window.supabaseClient.from('denuncias').select('denunciado_id, user_id')
         ]);
@@ -533,7 +525,7 @@ async function emitirAlertaOficialAdmin(mensaje) {
     const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : (userData ? userData.id : null);
 
     const { data, error } = await window.supabaseClient
-      .from('avisos')
+      .from(_ADMIN_NOTICE_TABLE)
       .insert({
         ciudad: ciudad,
         mensaje: texto,
@@ -1139,12 +1131,12 @@ async function guardarPropagandaTab(tabName, silent = false) {
   const currentAdmin = await getVerifiedAdminEmail();
   if (!currentAdmin) {
     if (!silent && typeof showToast === 'function') {
-      showToast('⛔ Acceso Restringido', 'Debes iniciar sesión con tu cuenta administradora para modificar anuncios.', 'error', 4500);
+      showToast('⛔ Acceso Restringido', window._adminVerificationError || 'Debes iniciar sesión con tu cuenta administradora para modificar anuncios.', 'error', 4500);
     }
     return false;
   }
 
-  const pos = (tabName === 'repartidores' || tabName === 'avisos') ? tabName : 'mapa';
+  const pos = normalizeAdPlacement(tabName);
   const inputTitleEl = document.getElementById(`inputAdText_${pos}`);
   const inputUrlEl = document.getElementById(`inputAdUrl_${pos}`);
   const selectStateEl = document.getElementById(`selectAdState_${pos}`);
@@ -1174,7 +1166,6 @@ async function guardarPropagandaTab(tabName, silent = false) {
 
   if (window.supabaseClient) {
     try {
-      let isSaved = false;
       let lastErrMsg = '';
 
       // 1. Guardar a través de RPC atómico con p_admin_email y p_posicion
@@ -1191,10 +1182,10 @@ async function guardarPropagandaTab(tabName, silent = false) {
         });
 
         if (!rpcErr && rpcRes && rpcRes.success) {
-          isSaved = true;
           if (imgUrl === '__REMOVE__') {
             if (window.pendingUploadUrls) window.pendingUploadUrls[pos] = null;
           }
+          return true;
         } else if (rpcErr) {
           lastErrMsg = rpcErr.message;
           console.warn('Advertencia en RPC rpc_save_local_ad:', rpcErr.message);
@@ -1207,55 +1198,9 @@ async function guardarPropagandaTab(tabName, silent = false) {
         console.warn('Excepción llamando a rpc_save_local_ad:', rpcEx);
       }
 
-      // 2. Fallback directo a la tabla anuncios_globales si RPC no pudo completar
-      if (!isSaved) {
-        const { data: existingAds } = await window.supabaseClient
-          .from('anuncios_globales')
-          .select('id')
-          .ilike('ciudad', normCity)
-          .eq('posicion', pos)
-          .limit(1);
-
-        const payload = {
-          titulo: inputAd || (pos === 'mapa' ? 'Promociona tu negocio o servicio profesional directamente en tu OTB' : (pos === 'repartidores' ? 'Distribución mayorista, repuestos y accesorios autorizados' : 'Promociona tu negocio o servicio en tu barrio')),
-          descripcion: `Propaganda Local - ${pos.toUpperCase()}`,
-          url: safeUrl || rawUrl || '',
-          activo: isActivo,
-          ciudad: normCity,
-          posicion: pos,
-          created_at: new Date().toISOString()
-        };
-        if (imgUrl === '__REMOVE__') {
-          payload.image_url = null;
-        } else if (imgUrl) {
-          payload.image_url = imgUrl;
-        }
-
-        let opError = null;
-        if (existingAds && existingAds.length > 0) {
-          const { error } = await window.supabaseClient
-            .from('anuncios_globales')
-            .update(payload)
-            .eq('id', existingAds[0].id);
-          opError = error;
-        } else {
-          const { error } = await window.supabaseClient
-            .from('anuncios_globales')
-            .insert([payload]);
-          opError = error;
-        }
-
-        if (!opError) {
-          isSaved = true;
-          if (imgUrl === '__REMOVE__') {
-            if (window.pendingUploadUrls) window.pendingUploadUrls[pos] = null;
-          }
-        } else {
-          throw new Error(opError.message || lastErrMsg || 'Error al persistir en Supabase');
-        }
-      }
-
-      return true;
+      // No se usa un fallback SELECT→UPDATE/INSERT: el RPC es la única escritura
+      // autorizada y atómica para anuncios publicitarios.
+      throw new Error(lastErrMsg || 'No se pudo guardar el anuncio publicitario. Verifica tu sesión de administrador.');
     } catch (e) {
       console.error(`Error al guardar anuncio para ${pos}:`, e);
       if (!silent && typeof showToast === 'function') {
@@ -1264,7 +1209,10 @@ async function guardarPropagandaTab(tabName, silent = false) {
       return false;
     }
   }
-  return true;
+  if (!silent && typeof showToast === 'function') {
+    showToast('Sin conexión', 'No existe conexión con Supabase; el anuncio no fue guardado.', 'error', 4500);
+  }
+  return false;
 }
 window.guardarPropagandaTab = guardarPropagandaTab;
 
@@ -1277,7 +1225,7 @@ window.guardarSubmenuAnuncios = async function() {
   if (btn) btn.disabled = true;
 
   try {
-    const currentTab = window.adminActiveAdTab || 'mapa';
+    const currentTab = normalizeAdPlacement(window.adminActiveAdTab);
     if (typeof showLoadingOverlay === 'function') showLoadingOverlay(`Guardando propaganda de ${currentTab.toUpperCase()}...`);
 
     const ok = await guardarPropagandaTab(currentTab, false);
@@ -1308,16 +1256,16 @@ window.guardarTodasLasPropagandas = async function() {
   if (window._isSavingAdsMutex) return;
   window._isSavingAdsMutex = true;
   const btn = document.getElementById('btnSaveAllAdsAdmin');
+  const originalTab = normalizeAdPlacement(window.adminActiveAdTab);
   if (btn) btn.disabled = true;
 
   try {
     if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Guardando las 3 pestañas de propaganda...');
 
-    const tabs = ['mapa', 'repartidores', 'avisos'];
+    const tabs = Object.values(_ADMIN_AD_PLACEMENTS);
     let allOk = true;
 
     for (const tab of tabs) {
-      window.adminActiveAdTab = tab; // Actualiza la pestaña activa para leer los inputs correctos
       const ok = await guardarPropagandaTab(tab, true); // silent = true para no saturar con notificaciones
       if (!ok) {
         allOk = false;
@@ -1346,6 +1294,7 @@ window.guardarTodasLasPropagandas = async function() {
       }
     }
   } finally {
+    window.switchAdSubTab(originalTab);
     window._isSavingAdsMutex = false;
     if (btn) btn.disabled = false;
   }
@@ -1356,7 +1305,7 @@ window.guardarTodasLasPropagandas = async function() {
 // ---------------------------------------------------------
 
 window.previewUploadAdImage = async function(event, specificTab) {
-  const pos = specificTab || window.adminActiveAdTab || 'mapa';
+  const pos = normalizeAdPlacement(specificTab || window.adminActiveAdTab);
   const file = event.target.files && event.target.files[0];
   if (!file) return;
 
@@ -1366,6 +1315,11 @@ window.previewUploadAdImage = async function(event, specificTab) {
   }
 
   if (window.supabaseClient) {
+    const currentAdmin = await getVerifiedAdminEmail();
+    if (!currentAdmin) {
+      if (typeof showToast === 'function') showToast('Sesión vencida', 'Inicia sesión nuevamente como administrador antes de subir imágenes.', 'error', 4500);
+      return;
+    }
     if (typeof showLoadingOverlay === 'function') showLoadingOverlay(`Subiendo imagen para ${pos}...`);
 
     const ext = file.name.split('.').pop() || 'png';
@@ -1373,7 +1327,7 @@ window.previewUploadAdImage = async function(event, specificTab) {
 
     const { data, error } = await window.supabaseClient.storage
       .from('anuncios-media')
-      .upload(fileName, file, { upsert: true, contentType: file.type });
+      .upload(fileName, file, { upsert: false, contentType: file.type });
 
     if (error) {
       console.error('Error al subir imagen:', error);
@@ -1383,7 +1337,7 @@ window.previewUploadAdImage = async function(event, specificTab) {
       const publicUrl = publicUrlData?.publicUrl || '';
 
       if (!window.pendingUploadUrls) {
-        window.pendingUploadUrls = { mapa: null, repartidores: null, avisos: null };
+        window.pendingUploadUrls = { mapa: null, repartidores: null, muro_avisos: null };
       }
       window.pendingUploadUrls[pos] = publicUrl;
 
@@ -1402,7 +1356,7 @@ window.previewUploadAdImage = async function(event, specificTab) {
 };
 
 window.eliminarImagenAnuncio = async function(specificTab) {
-  const pos = specificTab || window.adminActiveAdTab || 'mapa';
+  const pos = normalizeAdPlacement(specificTab || window.adminActiveAdTab);
 
   if (window.pendingUploadUrls && window.pendingUploadUrls[pos] && window.supabaseClient) {
     try {
@@ -1415,7 +1369,7 @@ window.eliminarImagenAnuncio = async function(specificTab) {
   }
 
   if (!window.pendingUploadUrls) {
-    window.pendingUploadUrls = { mapa: null, repartidores: null, avisos: null };
+    window.pendingUploadUrls = { mapa: null, repartidores: null, muro_avisos: null };
   }
   window.pendingUploadUrls[pos] = '__REMOVE__';
 
@@ -1456,15 +1410,6 @@ window.borrarAnuncioLocalAdmin = async function(adId) {
       }
     } catch (e) {
       delError = e;
-    }
-
-    if (!deleted) {
-      const { error } = await window.supabaseClient
-        .from('anuncios_globales')
-        .delete()
-        .eq('id', adId);
-      if (!error) deleted = true;
-      else delError = error;
     }
 
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
@@ -2198,7 +2143,7 @@ async function renderAdminAvisosFeedList(filtro = '') {
 
   try {
     const { data: posts, error } = await window.supabaseClient
-      .from('avisos')
+      .from(_ADMIN_NOTICE_TABLE)
       .select('*, comentarios_avisos(count)')
       .order('created_at', { ascending: false })
       .limit(150);
@@ -2300,7 +2245,7 @@ async function purgarAvisosExpiradosAdmin() {
   const dosDiasAtras = new Date(Date.now() - 48 * 3600 * 1000).toISOString();
   try {
     const { error } = await window.supabaseClient
-      .from('avisos')
+      .from(_ADMIN_NOTICE_TABLE)
       .delete()
       .lt('created_at', dosDiasAtras);
 

@@ -33,6 +33,16 @@ window.NOTIGAS.GPS_TIMEOUT_MS        = 12000;                  // 12 segundos (t
 window.NOTIGAS.MIN_MOVEMENT_METERS   = 15;                     // 15 metros (movimiento mínimo GPS)
 window.NOTIGAS.IDLE_THRESHOLD_MS     = 3 * 60 * 1000;         // 3 minutos (repartidor inactivo)
 window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño máximo imagen)
+window.NOTIGAS.CACHE_VERSION         = '107';
+
+// Contrato de datos: la publicidad y los avisos comunitarios son módulos distintos.
+window.NOTIGAS.AD_TABLE = 'anuncios_globales';
+window.NOTIGAS.NOTICE_TABLE = 'avisos';
+window.NOTIGAS.AD_PLACEMENTS = Object.freeze({
+  MAPA: 'mapa',
+  REPARTIDORES: 'repartidores',
+  MURO_AVISOS: 'muro_avisos'
+});
 
 window.ORDER_STATES = Object.freeze({
   PENDIENTE: 'pendiente',
@@ -54,7 +64,7 @@ window.loadScriptAsync = function(src) {
       return;
     }
     const script = document.createElement('script');
-    script.src = `${src}?v=105`;
+    script.src = `${src}?v=${window.NOTIGAS.CACHE_VERSION}`;
     script.async = true;
     script.onload = () => {
       window._loadedDynamicModules[src] = true;
