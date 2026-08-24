@@ -361,51 +361,9 @@ async function renderAdminAdsAndPostsList() {
     });
   }
 
-  // 2. Avisos y Noticias de la OTB
-  let postsQuery = window.supabaseClient
-    .from(_ADMIN_NOTICE_TABLE)
-    .select('id, titulo, categoria, ciudad, created_at, user_nombre')
-    .order('created_at', { ascending: false })
-    .limit(100);
-    
-  if (normCity && normCity !== 'todos' && normCity !== 'all') {
-    postsQuery = postsQuery.eq('ciudad', normCity);
-  }
-
-  const { data: localPosts, error: postsError } = await postsQuery;
-  if (postsError) { console.error('Error cargando avisos:', postsError); return; }
-
-  if (localPosts && localPosts.length > 0) {
-    localPosts.forEach(p => {
-      count++;
-
-      html += `
-
-        <div style="background:#1E293B; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.08); margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
-
-          <div>
-
-            <span style="font-size:9px; background:rgba(255,109,0,0.2); color:#FF8F00; padding:1px 5px; border-radius:4px; font-weight:700;">${escapeHtmlStr(p.categoria || 'Aviso')}</span>
-
-            <strong style="color:white; font-size:11px; margin-left:4px;">${escapeHtmlStr(p.titulo || 'Sin Título')}</strong>
-
-          </div>
-
-          <button data-action="borrarPostForumAdmin" data-id="${p.id}" style="background:#D32F2F; color:white; border:none; padding:3px 8px; border-radius:4px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Borrar</button>
-
-        </div>
-
-      `;
-
-    });
-
-  }
-
   if (count === 0) {
-    container.innerHTML = '<div style="color:#64748B; font-style:italic; font-size:11px; text-align:center; padding:12px;">No hay anuncios ni publicaciones activas en Tab 3.</div>';
-
+    container.innerHTML = '<div style="color:#64748B; font-style:italic; font-size:11px; text-align:center; padding:12px;">No hay anuncios registrados para esta ciudad.</div>';
     return;
-
   }
 
   container.innerHTML = html;
