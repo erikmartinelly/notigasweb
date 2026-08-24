@@ -268,6 +268,14 @@ function calcularAnguloMovimiento(lat1, lon1, lat2, lon2) {
   return (brng + 360) % 360;
 }
 
+/* EVITAR GIROS INCONTROLABLES (Elegir la rotación más corta y acumular) */
+function suavizarAnguloRotacion(currentAngle, targetAngle) {
+  let diff = (targetAngle - (currentAngle % 360)) % 360;
+  if (diff < -180) diff += 360;
+  if (diff > 180) diff -= 360;
+  return currentAngle + diff;
+}
+
 function formatearDistanciaTriangulada(distMetros) {
   if (distMetros === null || isNaN(distMetros)) return 'Cerca de ti';
   if (distMetros < 1000) return `${distMetros}m de distancia`;
@@ -1083,8 +1091,9 @@ function actualizarRepartidorEnMapa(data) {
     const oldLatLng = existingMarker.getLatLng();
     if (oldLatLng) {
       const dist = calcularDistanciaMetros(oldLatLng.lat, oldLatLng.lng, lat, lng);
-      if (dist > 2) {
-        newAngle = calcularAnguloMovimiento(oldLatLng.lat, oldLatLng.lng, lat, lng);
+      if (dist > 8) {
+        const rawAngle = calcularAnguloMovimiento(oldLatLng.lat, oldLatLng.lng, lat, lng);
+        newAngle = suavizarAnguloRotacion(existingMarker._notigasHeading || 0, rawAngle);
         existingMarker._notigasHeading = newAngle;
       }
     }
@@ -1700,8 +1709,9 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
     const oldLatLng = userMarker.getLatLng();
     if (oldLatLng && isDriver) {
       const dist = calcularDistanciaMetros(oldLatLng.lat, oldLatLng.lng, activeLat, activeLng);
-      if (dist > 2) {
-        newAngle = calcularAnguloMovimiento(oldLatLng.lat, oldLatLng.lng, activeLat, activeLng);
+      if (dist > 8) {
+        const rawAngle = calcularAnguloMovimiento(oldLatLng.lat, oldLatLng.lng, activeLat, activeLng);
+        newAngle = suavizarAnguloRotacion(userMarker._notigasHeading || 0, rawAngle);
         userMarker._notigasHeading = newAngle;
       }
     }
