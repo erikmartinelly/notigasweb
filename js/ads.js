@@ -278,6 +278,25 @@ function actualizarBannerConImagen(imageUrl) {
 }
 
 /**
+ * Redirige al telegram de soporte/ventas guardado en los anuncios
+ */
+window.abrirContactoPublicidad = function() {
+  let url = '';
+  // Intenta sacar la url de Telegram guardada en algún anuncio activo localmente
+  if (window._localAds) {
+    if (window._localAds.mapa && window._localAds.mapa.url && window._localAds.mapa.url.includes('t.me')) url = window._localAds.mapa.url;
+    else if (window._localAds.repartidores && window._localAds.repartidores.url && window._localAds.repartidores.url.includes('t.me')) url = window._localAds.repartidores.url;
+    else if (window._localAds.muro_avisos && window._localAds.muro_avisos.url && window._localAds.muro_avisos.url.includes('t.me')) url = window._localAds.muro_avisos.url;
+  }
+  // Fallback si no hay url t.me pero hay alguna url de anuncio
+  if (!url && window._localAds?.mapa?.url) url = window._localAds.mapa.url;
+  // Fallback final
+  if (!url) url = 'https://t.me/NotiGas_Soporte';
+  
+  window.open(url, '_blank');
+};
+
+/**
  * Generador de tarjeta independiente para los feeds (Repartidores y Avisos Gratis)
  */
 window.getAdSenseFeedMarkup = function(placement) {

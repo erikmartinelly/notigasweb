@@ -256,6 +256,18 @@ function calcularDistanciaMetros(lat1, lon1, lat2, lon2) {
   return Math.round(R * c);
 }
 
+/* CALCULAR ÁNGULO DE DIRECCIÓN (BEARING) ENTRE DOS COORDENADAS */
+function calcularAnguloMovimiento(lat1, lon1, lat2, lon2) {
+  if (lat1 === undefined || lon1 === undefined || lat2 === undefined || lon2 === undefined) return 0;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const lat1Rad = lat1 * Math.PI / 180;
+  const lat2Rad = lat2 * Math.PI / 180;
+  const y = Math.sin(dLon) * Math.cos(lat2Rad);
+  const x = Math.cos(lat1Rad) * Math.sin(lat2Rad) - Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLon);
+  const brng = Math.atan2(y, x) * 180 / Math.PI;
+  return (brng + 360) % 360;
+}
+
 function formatearDistanciaTriangulada(distMetros) {
   if (distMetros === null || isNaN(distMetros)) return 'Cerca de ti';
   if (distMetros < 1000) return `${distMetros}m de distancia`;
@@ -1067,6 +1079,16 @@ function actualizarRepartidorEnMapa(data) {
   if (!canonicalKey) return;
 
   if (existingMarker) {
+    let newAngle = existingMarker._notigasHeading || 0;
+    const oldLatLng = existingMarker.getLatLng();
+    if (oldLatLng) {
+      const dist = calcularDistanciaMetros(oldLatLng.lat, oldLatLng.lng, lat, lng);
+      if (dist > 2) {
+        newAngle = calcularAnguloMovimiento(oldLatLng.lat, oldLatLng.lng, lat, lng);
+        existingMarker._notigasHeading = newAngle;
+      }
+    }
+
     existingMarker.setLatLng([lat, lng]);
     existingMarker._notigasRouteId = routeId || existingMarker._notigasRouteId;
     existingMarker._notigasUserId = userId || existingMarker._notigasUserId;
@@ -1094,6 +1116,7 @@ function actualizarRepartidorEnMapa(data) {
     marker._notigasRouteId = routeId;
     marker._notigasUserId = userId;
     marker._notigasDriverName = driverName;
+    marker._notigasHeading = 0;
     marker.bindPopup(popupHtml);
     marker.on('click', () => {
       if (map && map.getZoom() <= DRIVER_RADAR_MAX_ZOOM) {
@@ -1101,6 +1124,21 @@ function actualizarRepartidorEnMapa(data) {
       }
     });
     activeTruckMarkers[canonicalKey] = marker;
+  }
+
+  const theMarker = activeTruckMarkers[canonicalKey];
+  if (!isZoomOut && theMarker) {
+    const currentAngle = theMarker._notigasHeading || 0;
+    setTimeout(() => {
+      const el = theMarker.getElement();
+      if (el) {
+        const img = el.querySelector('.driver-3d-truck-img');
+        if (img) {
+          img.style.transform = `rotate(${currentAngle}deg)`;
+          img.style.transition = 'transform 0.5s ease-out';
+        }
+      }
+    }, 50);
   }
 
   // Eliminar camiones fantasma sin actualización en 10 minutos
@@ -1658,11 +1696,35 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
       programarSincronizacionUbicacionManual(newPos.lat, newPos.lng);
     });
   } else if (userMarker) {
+    let newAngle = userMarker._notigasHeading || 0;
+    const oldLatLng = userMarker.getLatLng();
+    if (oldLatLng && isDriver) {
+      const dist = calcularDistanciaMetros(oldLatLng.lat, oldLatLng.lng, activeLat, activeLng);
+      if (dist > 2) {
+        newAngle = calcularAnguloMovimiento(oldLatLng.lat, oldLatLng.lng, activeLat, activeLng);
+        userMarker._notigasHeading = newAngle;
+      }
+    }
+
     userMarker.setLatLng([activeLat, activeLng]);
     if (activeIcon) userMarker.setIcon(activeIcon);
     if (userMarker.dragging && !userMarker.dragging.enabled()) {
       userMarker.dragging.enable();
     }
+  }
+
+  if (isDriver && userMarker && !isZoomOut) {
+    const currentAngle = userMarker._notigasHeading || 0;
+    setTimeout(() => {
+      const el = userMarker.getElement();
+      if (el) {
+        const img = el.querySelector('.driver-3d-truck-img');
+        if (img) {
+          img.style.transform = `rotate(${currentAngle}deg)`;
+          img.style.transition = 'transform 0.5s ease-out';
+        }
+      }
+    }, 50);
   }
 
   const banner = document.getElementById('gpsMandatoryBanner');
