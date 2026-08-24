@@ -435,14 +435,7 @@ function ejecutarPurgaBaseDeDatosAuto() {
     }
   } catch(e) {}
 
-  try {
-    const rawPosts = localStorage.getItem('notigas_forum_posts');
-    if (rawPosts) {
-      let posts = JSON.parse(rawPosts);
-      const cleanPosts = posts.filter(p => (now - p.timestamp) < (72 * 60 * 60 * 1000));
-      localStorage.setItem('notigas_forum_posts', JSON.stringify(cleanPosts));
-    }
-  } catch(e){}
+  // El código de localStorage para notigas_forum_posts ha sido removido
 }
 
 let _activeOrderStatusRequest = null;
