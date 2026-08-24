@@ -1093,11 +1093,14 @@ function coordenadasValidasAlerta(pos) {
 
 async function transmitirAlertaVecinal(payload) {
   if (!window.supabaseClient || !payload) return false;
+  if (!window.notigasGlobalChannel) {
+    console.warn('No hay un canal global activo para emitir la alerta.');
+    return false;
+  }
   try {
-    const channel = window.supabaseClient.channel('alertas_vecinales_realtime');
-    await channel.send({
+    await window.notigasGlobalChannel.send({
       type: 'broadcast',
-      event: 'alerta_vecinal',
+      event: 'vecinos_alert',
       payload
     });
     return true;
@@ -1218,6 +1221,26 @@ window.recibirAlertaVecinalBroadcast = function(payload) {
   if (userPos && userPos.lat && userPos.lng && typeof calcularDistanciaMetros === 'function') {
     const dist = calcularDistanciaMetros(userPos.lat, userPos.lng, payload.lat, payload.lng);
     if (dist > 3000) return;
+  }
+  // Guardar en el buffer local para que aparezca en el mapa
+  try {
+    let buffer = [];
+    const raw = localStorage.getItem('notigas_reported_trucks_buffer');
+    if (raw) buffer = JSON.parse(raw);
+    buffer.push({
+      id: 'alerta_' + Date.now(),
+      lat: payload.lat,
+      lng: payload.lng,
+      tipo: payload.tipo,
+      timestamp: payload.timestamp || Date.now(),
+      reporter: payload.tipo === 'esperame' ? 'Vecino (Espérame)' : 'Vecino (Escuchó Camión)'
+    });
+    localStorage.setItem('notigas_reported_trucks_buffer', JSON.stringify(buffer));
+    if (typeof renderReportedTrucks === 'function') {
+      renderReportedTrucks();
+    }
+  } catch(e) {
+    console.warn("Error guardando alerta vecinal en buffer local:", e);
   }
 
   if (payload.tipo === 'escuche_camion') {
