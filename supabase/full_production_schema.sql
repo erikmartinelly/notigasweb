@@ -123,6 +123,9 @@ CREATE TABLE IF NOT EXISTS public.avisos (
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+COMMENT ON TABLE public.avisos IS
+  'Avisos comunitarios creados por usuarios. Son distintos de la publicidad y conservan su ciclo de vida de 48 horas.';
+
 -- F. Comentarios en Avisos Comunitarios
 CREATE TABLE IF NOT EXISTS public.comentarios_avisos (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -143,9 +146,14 @@ CREATE TABLE IF NOT EXISTS public.anuncios_globales (
     image_url text,
     activo boolean DEFAULT true,
     ciudad text NOT NULL DEFAULT 'cochabamba',
-    posicion text NOT NULL DEFAULT 'mapa' CHECK (posicion IN ('mapa', 'repartidores', 'avisos')),
+    posicion text NOT NULL DEFAULT 'mapa' CHECK (posicion IN ('mapa', 'repartidores', 'muro_avisos')),
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+COMMENT ON TABLE public.anuncios_globales IS
+  'Anuncios publicitarios administrados. Son persistentes y no pertenecen al ciclo de purga de Avisos Gratis.';
+COMMENT ON COLUMN public.anuncios_globales.posicion IS
+  'Ubicación publicitaria: mapa, repartidores o muro_avisos. muro_avisos no es una fila de public.avisos.';
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_anuncios_globales_ciudad_posicion
 ON public.anuncios_globales (LOWER(TRIM(ciudad)), LOWER(TRIM(COALESCE(posicion, 'mapa'))));
@@ -793,7 +801,7 @@ CREATE OR REPLACE FUNCTION public.rpc_save_local_ad(
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path TO 'public', 'auth'
+SET search_path TO 'public', 'auth', 'pg_temp'
 AS $$
 DECLARE
     v_ad_id UUID;
@@ -811,7 +819,10 @@ BEGIN
     END IF;
 
     v_norm_pos := LOWER(TRIM(COALESCE(p_posicion, 'mapa')));
-    IF v_norm_pos NOT IN ('mapa', 'repartidores', 'avisos') THEN
+    IF v_norm_pos = 'avisos' THEN
+        v_norm_pos := 'muro_avisos';
+    END IF;
+    IF v_norm_pos NOT IN ('mapa', 'repartidores', 'muro_avisos') THEN
         v_norm_pos := 'mapa';
     END IF;
 
@@ -2120,6 +2131,8 @@ GRANT EXECUTE ON FUNCTION public.is_admin_email_for(text) TO authenticated, serv
 GRANT EXECUTE ON FUNCTION public.is_banned() TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.is_current_enabled_driver(text, text) TO anon, authenticated;
 
+REVOKE EXECUTE ON FUNCTION public.rpc_save_local_ad(text, text, text, text, text, boolean, text, text) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.rpc_delete_local_ad(uuid, text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.rpc_save_local_ad(text, text, text, text, text, boolean, text, text) TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.rpc_delete_local_ad(uuid, text) TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.rpc_update_order_location(uuid, double precision, double precision) TO authenticated;
@@ -2144,6 +2157,40 @@ GRANT EXECUTE ON FUNCTION public.rpc_crear_aviso_vecinal(text, text, text, text,
 GRANT EXECUTE ON FUNCTION public.rpc_actualizar_aviso_propio(uuid, text, text, text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.rpc_agregar_comentario_aviso(uuid, text, text) TO authenticated;
 
+-- Storage de anuncios: lectura pública, escrituras solo para administradores.
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'anuncios-media',
+  'anuncios-media',
+  true,
+  2097152,
+  ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+)
+ON CONFLICT (id) DO UPDATE SET
+  public = EXCLUDED.public,
+  file_size_limit = EXCLUDED.file_size_limit,
+  allowed_mime_types = EXCLUDED.allowed_mime_types;
+
+DROP POLICY IF EXISTS "storage_anuncios_read" ON storage.objects;
+DROP POLICY IF EXISTS "storage_anuncios_admin_insert" ON storage.objects;
+DROP POLICY IF EXISTS "storage_anuncios_admin_update" ON storage.objects;
+DROP POLICY IF EXISTS "storage_anuncios_admin_delete" ON storage.objects;
+DROP POLICY IF EXISTS "Insercion anuncios-media para admin" ON storage.objects;
+DROP POLICY IF EXISTS "Eliminacion anuncios-media para admin" ON storage.objects;
+DROP POLICY IF EXISTS "Lectura publica anuncios-media" ON storage.objects;
+DROP POLICY IF EXISTS "storage_anuncios_upload" ON storage.objects;
+DROP POLICY IF EXISTS "storage_anuncios_delete" ON storage.objects;
+
+CREATE POLICY "storage_anuncios_read" ON storage.objects FOR SELECT TO public
+USING (bucket_id = 'anuncios-media');
+CREATE POLICY "storage_anuncios_admin_insert" ON storage.objects FOR INSERT TO authenticated
+WITH CHECK (bucket_id = 'anuncios-media' AND public.is_admin_email());
+CREATE POLICY "storage_anuncios_admin_update" ON storage.objects FOR UPDATE TO authenticated
+USING (bucket_id = 'anuncios-media' AND public.is_admin_email())
+WITH CHECK (bucket_id = 'anuncios-media' AND public.is_admin_email());
+CREATE POLICY "storage_anuncios_admin_delete" ON storage.objects FOR DELETE TO authenticated
+USING (bucket_id = 'anuncios-media' AND public.is_admin_email());
+
 -- ==============================================================================
--- FIN DEL ESQUEMA CONSOLIDADO OFICIAL DE PRODUCCIÓN (NOTIGAS v090)
+-- FIN DEL ESQUEMA CONSOLIDADO OFICIAL DE PRODUCCIÓN (NOTIGAS v092)
 -- ==============================================================================

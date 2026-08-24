@@ -323,33 +323,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_auto_event_64 = document.getElementById('auto-event-64');
     if (el_auto_event_64) el_auto_event_64.addEventListener('click', () => { safeCall('activarMapaCalorAdminLive'); });
 
-    // Eventos del Submenú de Propaganda Local (3 Pestañas Independientes)
-    const el_btnAdSubTabMapa = document.getElementById('btnAdSubTabMapa');
-    if (el_btnAdSubTabMapa) el_btnAdSubTabMapa.addEventListener('click', () => { safeCall('switchAdSubTab', 'mapa'); });
-
-    const el_btnAdSubTabRepartidores = document.getElementById('btnAdSubTabRepartidores');
-    if (el_btnAdSubTabRepartidores) el_btnAdSubTabRepartidores.addEventListener('click', () => { safeCall('switchAdSubTab', 'repartidores'); });
-
-    const el_btnAdSubTabAvisos = document.getElementById('btnAdSubTabAvisos');
-    if (el_btnAdSubTabAvisos) el_btnAdSubTabAvisos.addEventListener('click', () => { safeCall('switchAdSubTab', 'avisos'); });
-
+    // Los botones con data-action se atienden en el listener delegado de este módulo.
     const el_inputAdImageFile_mapa = document.getElementById('inputAdImageFile_mapa');
     if (el_inputAdImageFile_mapa) el_inputAdImageFile_mapa.addEventListener('change', (event) => { safeCall('previewUploadAdImage', event, 'mapa'); });
 
     const el_inputAdImageFile_repartidores = document.getElementById('inputAdImageFile_repartidores');
     if (el_inputAdImageFile_repartidores) el_inputAdImageFile_repartidores.addEventListener('change', (event) => { safeCall('previewUploadAdImage', event, 'repartidores'); });
 
-    const el_inputAdImageFile_avisos = document.getElementById('inputAdImageFile_avisos');
-    if (el_inputAdImageFile_avisos) el_inputAdImageFile_avisos.addEventListener('change', (event) => { safeCall('previewUploadAdImage', event, 'avisos'); });
-
-    const el_btnDeleteAdImg_mapa = document.getElementById('btnDeleteAdImg_mapa');
-    if (el_btnDeleteAdImg_mapa) el_btnDeleteAdImg_mapa.addEventListener('click', () => { safeCall('eliminarImagenAnuncio', 'mapa'); });
-
-    const el_btnDeleteAdImg_repartidores = document.getElementById('btnDeleteAdImg_repartidores');
-    if (el_btnDeleteAdImg_repartidores) el_btnDeleteAdImg_repartidores.addEventListener('click', () => { safeCall('eliminarImagenAnuncio', 'repartidores'); });
-
-    const el_btnDeleteAdImg_avisos = document.getElementById('btnDeleteAdImg_avisos');
-    if (el_btnDeleteAdImg_avisos) el_btnDeleteAdImg_avisos.addEventListener('click', () => { safeCall('eliminarImagenAnuncio', 'avisos'); });
+    const el_inputAdImageFile_muroAvisos = document.getElementById('inputAdImageFile_muro_avisos');
+    if (el_inputAdImageFile_muroAvisos) el_inputAdImageFile_muroAvisos.addEventListener('change', (event) => { safeCall('previewUploadAdImage', event, 'muro_avisos'); });
 
     const el_auto_event_67 = document.getElementById('auto-event-67');
     if (el_auto_event_67) el_auto_event_67.addEventListener('click', () => { safeCall('banearUsuarioAdmin'); });

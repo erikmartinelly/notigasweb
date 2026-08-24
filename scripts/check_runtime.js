@@ -453,6 +453,21 @@ try {
       throw new Error(`ORDER_STATES no contiene el estado requerido: ${s}`);
     }
   }
+
+  const notigasContract = context.window.NOTIGAS || {};
+  if (notigasContract.AD_TABLE !== 'anuncios_globales') {
+    throw new Error('La publicidad debe usar exclusivamente la tabla anuncios_globales.');
+  }
+  if (notigasContract.NOTICE_TABLE !== 'avisos') {
+    throw new Error('Los Avisos Gratis deben usar exclusivamente la tabla avisos.');
+  }
+  if (notigasContract.AD_PLACEMENTS?.MURO_AVISOS !== 'muro_avisos') {
+    throw new Error('El anuncio del tercer feed debe usar la posición muro_avisos.');
+  }
+  if (Object.values(notigasContract.AD_PLACEMENTS || {}).includes('avisos')) {
+    throw new Error('La posición publicitaria no puede llamarse avisos.');
+  }
+  console.log('  ✅ Contrato anuncios_globales / avisos verificado');
   console.log('  ✅ ORDER_STATES verificado (5 estados canónicos estrictos)');
 
   console.log('\n--------------------------------------------------');
