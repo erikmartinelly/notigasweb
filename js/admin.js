@@ -169,7 +169,7 @@ function switchModalTab(idx) {
     renderAdminAdsAndPostsList();
   }
 
-  if (idx === 4) {
+  if (idx === 5) {
     renderAdminAvisosFeedList();
   }
 
