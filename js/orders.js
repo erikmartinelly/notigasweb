@@ -15,14 +15,6 @@ function formatearAntiguedadPedido(value) {
 }
 window.formatearAntiguedadPedido = formatearAntiguedadPedido;
 
-window.ORDER_STATES = window.ORDER_STATES || Object.freeze({
-  PENDIENTE: 'pendiente',
-  VISTO: 'visto',
-  ASIGNADO: 'asignado',
-  ENTREGADO: 'entregado',
-  CANCELADO: 'cancelado'
-});
-
 function abrirModalDriverOrders() {
   const modal = document.getElementById('modalDriverOrders');
   if (modal) {

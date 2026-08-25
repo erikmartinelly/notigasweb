@@ -239,15 +239,17 @@ async function guardarEdicionPost() {
 
 async function borrarPostPropio(postId) {
   if (!postId || !window.supabaseClient) return;
-  if (confirm('🗑️ ¿Deseas eliminar permanentemente esta publicación del Tablón Vecinal?')) {
-    const { error } = await window.supabaseClient.from('avisos').delete().eq('id', postId);
-    if (error) {
-      if (typeof showToast === 'function') showToast('Error', 'No se pudo eliminar el aviso: ' + error.message, 'error', 4000);
-      return;
-    }
-    if (typeof showToast === 'function') showToast('🗑️ Aviso Eliminado', 'La publicación ha sido eliminada con éxito.', 'info', 3500);
-    if (typeof renderForumFeed === 'function') renderForumFeed();
-    if (typeof renderAdminAvisosFeedList === 'function') renderAdminAvisosFeedList();
+  if (typeof showConfirmModal === 'function') {
+    showConfirmModal('Eliminar Aviso', '🗑️ ¿Deseas eliminar permanentemente esta publicación del Tablón Vecinal?', 'Eliminar', async () => {
+      const { error } = await window.supabaseClient.from('avisos').delete().eq('id', postId);
+      if (error) {
+        if (typeof showToast === 'function') showToast('Error', 'No se pudo eliminar el aviso: ' + error.message, 'error', 4000);
+        return;
+      }
+      if (typeof showToast === 'function') showToast('🗑️ Aviso Eliminado', 'La publicación ha sido eliminada con éxito.', 'info', 3500);
+      if (typeof renderForumFeed === 'function') renderForumFeed();
+      if (typeof renderAdminAvisosFeedList === 'function') renderAdminAvisosFeedList();
+    });
   }
 }
 

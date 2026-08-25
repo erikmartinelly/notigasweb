@@ -96,6 +96,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_auto_event_10 = document.getElementById('auto-event-10');
     if (el_auto_event_10) el_auto_event_10.addEventListener('click', () => { safeCall('abrirModalDriverOrders'); });
 
+    const el_btnContratarPublicidad = document.getElementById('btnContratarPublicidad');
+    if (el_btnContratarPublicidad) el_btnContratarPublicidad.addEventListener('click', () => { safeCall('abrirContactoPublicidad'); });
+
     const el_auto_event_12 = document.getElementById('auto-event-12');
     if (el_auto_event_12) el_auto_event_12.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'TODOS', e.currentTarget); });
 

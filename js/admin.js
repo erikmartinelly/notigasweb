@@ -968,21 +968,25 @@ async function renderAdminOrdersList() {
 
 async function borrarPedidoFantasmaAdmin(tipo, param = null) {
   if (tipo === 'supabase' && window.supabaseClient && param) {
-    if (!confirm('⚠️ ¿Eliminar permanentemente este pedido? Esta acción no se puede deshacer.')) return;
-    const { error } = await window.supabaseClient.from('pedidos').delete().eq('id', param);
-
-    if (error) {
-      console.error("Error borrando pedido supabase:", error);
-
-      if (typeof showToast === 'function') showToast('❌ Error', 'No se pudo borrar de Supabase.', 'error', 3000);
-
-      return;
-
+    if (typeof showConfirmModal === 'function') {
+      showConfirmModal('⚠️ Eliminar Pedido', '¿Eliminar permanentemente este pedido? Esta acción no se puede deshacer.', 'Eliminar', async () => {
+        const { error } = await window.supabaseClient.from('pedidos').delete().eq('id', param);
+        if (error) {
+          console.error("Error borrando pedido supabase:", error);
+          if (typeof showToast === 'function') showToast('❌ Error', 'No se pudo borrar de Supabase.', 'error', 3000);
+          return;
+        }
+        if (typeof checkActiveOrderStatus === 'function') checkActiveOrderStatus();
+        if (typeof renderActiveOrdersMap === 'function') renderActiveOrdersMap();
+        if (typeof renderAdminActiveOrders === 'function') renderAdminActiveOrders();
+        if (typeof renderAdminOrdersList === 'function') renderAdminOrdersList();
+        if (typeof renderAdminDashboardKPIs === 'function') renderAdminDashboardKPIs();
+        if (typeof showToast === 'function') showToast('🗑️ Pedido/Alerta Removido', 'Eliminado correctamente del sistema.', 'info', 4000);
+      });
     }
-
+    return;
   } else if (tipo === 'active_order') {
     AppState.set('activeOrder', null);
-
   } else if (tipo === 'truck_report' && param !== null) {
     try {
       const raw = localStorage.getItem('notigas_reported_trucks_buffer');
@@ -1018,22 +1022,24 @@ async function borrarPedidoFantasmaAdmin(tipo, param = null) {
 
 async function renovarPedidoAdmin(orderId) {
   if (!orderId || !window.supabaseClient) return;
-  if (!confirm('¿Renovar este pedido? Volverá a estado pendiente, quedará sin repartidor asignado y comenzará un nuevo plazo.')) return;
+  if (typeof showConfirmModal === 'function') {
+    showConfirmModal('Renovar Pedido', '¿Renovar este pedido? Volverá a estado pendiente, quedará sin repartidor asignado y comenzará un nuevo plazo.', 'Renovar', async () => {
+      const { error } = await window.supabaseClient.rpc('rpc_admin_renew_order', { p_order_id: orderId });
+      if (error) {
+        console.error('Error renovando pedido:', error);
+        if (typeof showToast === 'function') {
+          showToast('❌ No se pudo renovar', error.message || 'Verifica que la migración 044 esté aplicada en Supabase.', 'error', 5500);
+        }
+        return;
+      }
 
-  const { error } = await window.supabaseClient.rpc('rpc_admin_renew_order', { p_order_id: orderId });
-  if (error) {
-    console.error('Error renovando pedido:', error);
-    if (typeof showToast === 'function') {
-      showToast('❌ No se pudo renovar', error.message || 'Verifica que la migración 044 esté aplicada en Supabase.', 'error', 5500);
-    }
-    return;
-  }
-
-  await renderAdminOrdersList();
-  if (typeof renderActiveOrdersMap === 'function') renderActiveOrdersMap();
-  if (typeof renderAdminDashboardKPIs === 'function') renderAdminDashboardKPIs();
-  if (typeof showToast === 'function') {
-    showToast('🔄 Pedido renovado', 'El pedido volvió a estado pendiente y ya puede ser tomado por un repartidor.', 'success', 4500);
+      await renderAdminOrdersList();
+      if (typeof renderActiveOrdersMap === 'function') renderActiveOrdersMap();
+      if (typeof renderAdminDashboardKPIs === 'function') renderAdminDashboardKPIs();
+      if (typeof showToast === 'function') {
+        showToast('🔄 Pedido renovado', 'El pedido volvió a estado pendiente y ya puede ser tomado por un repartidor.', 'success', 4500);
+      }
+    });
   }
 }
 
@@ -1041,9 +1047,7 @@ function limpiarTodosLosPedidosFantasmaAdmin() {
   if (typeof showConfirmModal === 'function') {
     showConfirmModal('🧹', '¿Limpiar Pedidos de Prueba/Caché?', 'Se eliminarán de inmediato todos los pedidos activos en caché y reportes del mapa. No afectará los pedidos reales.', 'Sí, limpiar', () => {
       ejecutarLimpiezaTotalPedidos();
-
     });
-
   } else {
     if (confirm('🧹 ¿Borrar TODOS los pedidos y reportes del mapa?')) {
       ejecutarLimpiezaTotalPedidos();
@@ -1349,37 +1353,39 @@ window.borrarAnuncioLocalAdmin = async function(adId) {
     return;
   }
 
-  if (!confirm('🗑️ ¿Deseas eliminar permanentemente esta propaganda local?')) return;
+  if (typeof showConfirmModal === 'function') {
+    showConfirmModal('Eliminar Propaganda', '🗑️ ¿Deseas eliminar permanentemente esta propaganda local?', 'Eliminar', async () => {
+      if (window.supabaseClient && adId) {
+        if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Eliminando propaganda...');
+        let deleted = false;
+        let delError = null;
 
-  if (window.supabaseClient && adId) {
-    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Eliminando propaganda...');
-    let deleted = false;
-    let delError = null;
+        try {
+          const { data: rpcRes, error: rpcErr } = await window.supabaseClient.rpc('rpc_delete_local_ad', {
+            p_ad_id: adId,
+            p_admin_email: currentAdmin
+          });
+          if (!rpcErr && rpcRes && rpcRes.success) {
+            deleted = true;
+          } else if (rpcErr) {
+            delError = rpcErr;
+          }
+        } catch (e) {
+          delError = e;
+        }
 
-    try {
-      const { data: rpcRes, error: rpcErr } = await window.supabaseClient.rpc('rpc_delete_local_ad', {
-        p_ad_id: adId,
-        p_admin_email: currentAdmin
-      });
-      if (!rpcErr && rpcRes && rpcRes.success) {
-        deleted = true;
-      } else if (rpcErr) {
-        delError = rpcErr;
+        if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+
+        if (!deleted) {
+          if (typeof showToast === 'function') showToast('Error', 'No se pudo eliminar: ' + (delError?.message || 'Error desconocido'), 'error', 4000);
+        } else {
+          if (typeof showToast === 'function') showToast('✅ Eliminada', 'Propaganda eliminada correctamente.', 'success', 3500);
+          await cargarConfiguracionPublicidadEnAdmin();
+          renderAdminAdsAndPostsList();
+          if (typeof cargarAnunciosGuardados === 'function') await cargarAnunciosGuardados();
+        }
       }
-    } catch (e) {
-      delError = e;
-    }
-
-    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-
-    if (!deleted) {
-      if (typeof showToast === 'function') showToast('Error', 'No se pudo eliminar: ' + (delError?.message || 'Error desconocido'), 'error', 4000);
-    } else {
-      if (typeof showToast === 'function') showToast('✅ Eliminada', 'Propaganda eliminada correctamente.', 'success', 3500);
-      await cargarConfiguracionPublicidadEnAdmin();
-      renderAdminAdsAndPostsList();
-      if (typeof cargarAnunciosGuardados === 'function') await cargarAnunciosGuardados();
-    }
+    });
   }
 };
 
@@ -2197,26 +2203,28 @@ function filtrarYRenderizarAvisosAdmin(filtro = '') {
 }
 
 async function purgarAvisosExpiradosAdmin() {
-  if (!confirm('🧹 ¿Deseas purgar y eliminar todos los avisos comunitarios con más de 24 horas de antigüedad?')) return;
   if (!window.supabaseClient) return;
+  if (typeof showConfirmModal === 'function') {
+    showConfirmModal('Purgar Avisos', '🧹 ¿Deseas purgar y eliminar todos los avisos comunitarios con más de 24 horas de antigüedad?', 'Purgar', async () => {
+      const dosDiasAtras = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+      try {
+        const { error } = await window.supabaseClient
+          .from(_ADMIN_NOTICE_TABLE)
+          .delete()
+          .lt('created_at', dosDiasAtras);
 
-  const dosDiasAtras = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
-  try {
-    const { error } = await window.supabaseClient
-      .from(_ADMIN_NOTICE_TABLE)
-      .delete()
-      .lt('created_at', dosDiasAtras);
+        if (error) {
+          if (typeof showToast === 'function') showToast('Error', 'No se pudo purgar: ' + error.message, 'error', 4000);
+          return;
+        }
 
-    if (error) {
-      if (typeof showToast === 'function') showToast('Error', 'No se pudo purgar: ' + error.message, 'error', 4000);
-      return;
-    }
-
-    if (typeof showToast === 'function') showToast('🧹 Purga Completa', 'Se eliminaron los avisos vencidos (+24h).', 'success', 3500);
-    renderAdminAvisosFeedList();
-    if (typeof renderForumFeed === 'function') renderForumFeed();
-  } catch (ex) {
-    console.error(ex);
+        if (typeof showToast === 'function') showToast('🧹 Purga Completa', 'Se eliminaron los avisos vencidos (+24h).', 'success', 3500);
+        renderAdminAvisosFeedList();
+        if (typeof renderForumFeed === 'function') renderForumFeed();
+      } catch (ex) {
+        console.error(ex);
+      }
+    });
   }
 }
 

@@ -4,7 +4,7 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || process.env.SERVER_PORT || 3000;
 const RATE_LIMIT_WINDOW_MS = 60 * 1000;
-const RATE_LIMIT_MAX_REQUESTS = 1500;
+const RATE_LIMIT_MAX_REQUESTS = 200;
 const requestCounters = new Map();
 
 app.disable('x-powered-by');
@@ -62,7 +62,7 @@ app.use((req, res, next) => {
     "object-src 'none'",
     "frame-ancestors 'self'",
     "form-action 'self' https://accounts.google.com",
-    "script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://partner.googleadservices.com https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com https://*.google.com https://*.gstatic.com https://*.googlesyndication.com",
+    "script-src 'self' https://accounts.google.com https://apis.google.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://partner.googleadservices.com https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com https://*.google.com https://*.gstatic.com https://*.googlesyndication.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com",
     "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net",
     "img-src 'self' data: blob: https:",

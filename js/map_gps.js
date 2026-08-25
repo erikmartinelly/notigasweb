@@ -131,19 +131,19 @@ async function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
         })
     ];
 
-    for (const provider of providers) {
-        try {
+    try {
+        item = await Promise.any(providers.map(async provider => {
             const res = await provider();
             if (res && Number.isFinite(res.lat) && Number.isFinite(res.lng)) {
                 const country = String(res.countryCode || '').toUpperCase();
                 const inBolivia = res.lat >= -23.5 && res.lat <= -9.5 && res.lng >= -70 && res.lng <= -57;
                 if (inBolivia && (!country || country === 'BO')) {
-                    item = res;
-                    break;
+                    return res;
                 }
             }
-        } catch (_) {}
-    }
+            throw new Error('Invalid IP location');
+        }));
+    } catch (_) {}
 
     if (!item) {
         // Fallback seguro a Cochabamba por defecto

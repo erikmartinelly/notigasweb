@@ -32,16 +32,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // dado que causaba bloqueos falsos por VPNs o lentitud de red.
   // console.log('GeoIP desactivado');
 
-  const btnUserSettings = document.getElementById('btnOpenUserSettings');
-  const modalUserSettings = document.getElementById('modalUserSettings');
-
-  if (btnUserSettings && modalUserSettings) {
-    btnUserSettings.addEventListener('click', () => {
-      abrirConfiguracionSegunRol();
-    });
-  }
-
-
   // PURGA AUTOMÁTICA DE CACHÉ LOCAL (Limpia pedidos antiguos del localStorage, no de la BD)
   // verificarGPSObligatorio() eliminada para no causar doble petición y bloquear PC
   if (typeof ejecutarPurgaBaseDeDatosAuto === 'function') ejecutarPurgaBaseDeDatosAuto();
@@ -464,11 +454,6 @@ window.getActiveUserLocation = getActiveUserLocation;
    NOTIGAS - APLICACIÓN PRINCIPAL (CARRITO, GEOLOCALIZACIÓN Y NOTIFICACIONES)
    ========================================================================== */
 
-// notigasTrack stub hasta configurar GA real
-window.notigasTrack = window.notigasTrack || function(event, params) {
-  console.log('[Analytics stub]', event, params || {});
-};
-
 // 1. Registro del Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -496,9 +481,11 @@ document.addEventListener('DOMContentLoaded', () => {
             clearInterval(window.notigasRealtimeFallbackInterval);
         }
         window.notigasRealtimeFallbackInterval = setInterval(() => {
-            if (AppState && AppState.get('realtimeConnected') === false) {
-                if (typeof cargarPedidosVecinalesEnVivo === 'function') {
-                    cargarPedidosVecinalesEnVivo();
+            if (document.visibilityState === 'visible') {
+                if (AppState && AppState.get('realtimeConnected') === false) {
+                    if (typeof cargarPedidosVecinalesEnVivo === 'function') {
+                        cargarPedidosVecinalesEnVivo();
+                    }
                 }
             }
         }, 30000);
