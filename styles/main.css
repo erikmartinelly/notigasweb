@@ -3571,3 +3571,224 @@ button:active, .tab-btn:active, .cat-chip:active {
   cursor: grabbing !important;
   transform: scale(1.18) translateY(-8px) !important;
 }
+
+/* ESTILOS INLINE EXTRAIDOS AUTOMATICAMENTE */
+.ng-inline-1 { display:none; position:relative; background: linear-gradient(135deg, #D32F2F, #B71C1C); color: white; padding: 8px 30px 8px 12px; font-size: 11px; font-weight: 700; text-align: center; z-index: 2000; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+.ng-inline-2 { background: white; color: #D32F2F; border: none; padding: 2px 8px; border-radius: 4px; font-weight: 900; margin-left: 6px; cursor: pointer; }
+.ng-inline-3 { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: white; font-size: 16px; font-weight: bold; cursor: pointer; }
+.ng-inline-4 { display:flex; align-items:center; gap:6px; }
+.ng-inline-5 { display:none; position:fixed; top:70px; left:50%; transform:translateX(-50%); z-index:9999; width:calc(100% - 24px); max-width:440px; background:linear-gradient(135deg, #1E293B, #0F172A); border:2px solid #FF6D00; border-radius:16px; padding:14px 16px; box-shadow:0 10px 30px rgba(0,0,0,0.85); text-align:center; }
+.ng-inline-6 { font-size:32px; margin-bottom:4px; }
+.ng-inline-7 { font-size:14px; font-weight:900; color:#FF6D00; font-family:'Roboto',sans-serif; margin-bottom:4px; }
+.ng-inline-8 { font-size:12px; color:#CBD5E1; line-height:1.4; margin-bottom:12px; font-family:'Roboto',sans-serif; }
+.ng-inline-9 { width:100%; background:linear-gradient(135deg, #FF6D00, #E65100); color:white; border:none; padding:12px; border-radius:10px; font-weight:900; font-size:13px; cursor:pointer; box-shadow:0 4px 14px rgba(255,109,0,0.5); display:flex; align-items:center; justify-content:center; gap:8px; }
+.ng-inline-10 { display:none; position:fixed; top:70px; left:50%; transform:translateX(-50%); z-index:9998; width:calc(100% - 24px); max-width:400px; background:linear-gradient(135deg, #1E293B, #0F172A); border:2px solid #FF6D00; border-radius:12px; padding:12px 16px; box-shadow:0 8px 25px rgba(0,0,0,0.8); color:#F8FAFC; font-size:12px; font-family:'Roboto',sans-serif; text-align:center; }
+.ng-inline-11 { color: #FFD600; font-size: 10px; }
+.ng-inline-12 { color:#FF6D00; font-size:11px; }
+.ng-inline-13 { display:inline-flex; align-items:center; gap:8px; }
+.ng-inline-14 { width:34px; height:34px; object-fit:contain; filter:drop-shadow(0 0 6px rgba(255,23,68,0.9)); }
+.ng-inline-15 { display:flex; gap:8px; margin-bottom:8px; }
+.ng-inline-16 { display:flex; gap:8px; }
+.ng-inline-17 { background: linear-gradient(135deg, rgba(255,109,0,0.15), rgba(230,81,0,0.15)); border: 1px solid rgba(255,109,0,0.3); border-radius: 12px; padding: 10px 14px; margin-bottom: 12px; }
+.ng-inline-18 { font-weight: 900; font-size: 13px; color: #FF6D00; display: flex; align-items: center; justify-content: space-between; }
+.ng-inline-19 { padding: 4px 10px; font-size: 11px; }
+.ng-inline-20 { font-size: 11px; color: #CBD5E1; margin-top: 4px; }
+.ng-inline-21 { flex: 1; overflow-y: auto; }
+.ng-inline-22 { max-width: 580px; }
+.ng-inline-23 { background: rgba(0,230,118,0.08); border: 1px solid rgba(0,230,118,0.2); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; font-size: 11.5px; color: #00E676; font-weight: 700; }
+.ng-inline-24 { border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 14px 0; }
+.ng-inline-25 { margin-top:10px; }
+.ng-inline-26 { width:100%; background: linear-gradient(135deg, #0088CC, #0077B5); color: white; border: 1px solid #0088CC; padding: 12px; border-radius: 10px; font-weight: 800; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,136,204,0.35); }
+.ng-inline-27 { font-size: 16px; }
+.ng-inline-28 { background: rgba(255,109,0,0.12); border: 1px solid rgba(255,109,0,0.3); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; font-size: 11.5px; color: #FF6D00; font-weight: 700; }
+.ng-inline-29 { color:#FFFFFF; }
+.ng-inline-30 { width:100%; background: linear-gradient(135deg, #FF6D00, #E65100); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 10px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.ng-inline-31 { width:100%; background: linear-gradient(135deg, #DC2626, #991B1B); color: white; border: 1px solid #EF4444; padding: 10px; border-radius: 10px; font-weight: 800; cursor: pointer; margin-top: 10px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(220,38,38,0.35); }
+.ng-inline-32 { width:100%; background: linear-gradient(135deg, #37474F, #263238); color: #CFD8DC; border: 1px solid rgba(255,255,255,0.15); padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 10px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.ng-inline-33 { display:none; width:100%; background: linear-gradient(135deg, #10B981, #059669); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-bottom: 8px; font-size: 12px; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(16,185,129,0.4); }
+.ng-inline-34 { width:100%; background: linear-gradient(135deg, #D32F2F, #B71C1C); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 4px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(211,47,47,0.4); }
+.ng-inline-35 { margin-top: 14px; background: rgba(15, 23, 42, 0.8); border: 1.5px solid rgba(255, 109, 0, 0.4); border-radius: 12px; padding: 10px 14px; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,0.4); }
+.ng-inline-36 { font-size: 13px; font-weight: 900; color: #FF6D00; display: flex; align-items: center; justify-content: space-between; outline: none; user-select: none; }
+.ng-inline-37 { font-size: 10px; color: #94A3B8; font-weight: 700; }
+.ng-inline-38 { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+.ng-inline-39 { width:100%; background: linear-gradient(135deg, #0288D1, #0277BD); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 800; cursor: pointer; font-size: 11.5px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(2,136,209,0.5); }
+.ng-inline-40 { width:100%; background: linear-gradient(135deg, #FF6D00, #E65100); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 800; cursor: pointer; font-size: 11.5px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(255,109,0,0.4); }
+.ng-inline-41 { width:100%; background: linear-gradient(135deg, #B71C1C, #880E0E); color: #FF8A80; border: 1px solid #D32F2F; padding: 10px; border-radius: 10px; font-weight: 800; cursor: pointer; font-size: 11.5px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(183,28,28,0.5); }
+.ng-inline-42 { font-size:11px; color:#94A3B8; margin-bottom:12px; }
+.ng-inline-43 { max-width: 460px; min-height: 250px; }
+.ng-inline-44 { justify-content: center; text-align: center; font-size: 18px; margin-bottom: 4px; }
+.ng-inline-45 { font-size: 11px; color: #94A3B8; text-align: center; margin-bottom: 14px; }
+.ng-inline-46 { display:flex; flex-direction:column; gap:12px; align-items:center; }
+.ng-inline-47 { width:100%; background: linear-gradient(135deg, #0288D1, #0277BD); padding: 12px; border-radius: 10px; color: white; text-align: center; font-weight: 800; text-decoration: none; }
+.ng-inline-48 { margin-right: 8px; }
+.ng-inline-49 { width:100%; background: linear-gradient(135deg, #10B981, #059669); padding: 12px; border-radius: 10px; color: white; text-align: center; font-weight: 800; text-decoration: none; }
+.ng-inline-50 { display: block; }
+.ng-inline-51 { font-size: 11px; color: #CBD5E1; margin: 14px 0; text-align: center; }
+.ng-inline-52 { display: flex; justify-content: center; margin-bottom: 10px; }
+.ng-inline-53 { width:100%; }
+.ng-inline-54 { margin-top: 15px; background: none; border: none; color: #94A3B8; cursor: pointer; width: 100%; text-align: center; font-size: 12px; }
+.ng-inline-55 { display: flex; gap: 10px; padding: 0 10px; margin-bottom: 12px; }
+.ng-inline-56 { flex: 1; }
+.ng-inline-57 { font-size: 11px; color: #94A3B8; font-weight: 700; margin-bottom: 4px; display: block; }
+.ng-inline-58 { width: 100%; padding: 10px; background: #1E293B; border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 8px; font-size: 12px; }
+.ng-inline-59 { margin-bottom: 16px; padding: 0 10px; }
+.ng-inline-60 { width: 100%; padding: 10px; background: #1E293B; border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 8px; font-size: 12px; cursor: pointer; }
+.ng-inline-61 { font-size: 11px; color: #94A3B8; margin-bottom: 10px; }
+.ng-inline-62 { display:none; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 10px; margin-bottom: 12px; }
+.ng-inline-63 { color: #F87171; font-weight: 800; font-size: 11.5px; display: block; margin-bottom: 5px; }
+.ng-inline-64 { width: 100%; padding: 9px; background: #0F172A; border: 1.5px solid #EF4444; color: white; border-radius: 8px; font-size: 12px; box-sizing: border-box; }
+.ng-inline-65 { background-color: #D32F2F; }
+.ng-inline-66 { max-width: 620px; max-height: 85vh; overflow-y: auto; }
+.ng-inline-67 { font-size: 12px; line-height: 1.6; color: #E2E8F0; display: flex; flex-direction: column; gap: 14px; margin-top: 8px; }
+.ng-inline-68 { background: rgba(255, 109, 0, 0.1); border-left: 4px solid #FF6D00; padding: 10px 14px; border-radius: 6px; }
+.ng-inline-69 { color: #FF6D00; font-size: 13px; }
+.ng-inline-70 { margin: 4px 0 0 0; color: #CBD5E1; font-size: 11.5px; }
+.ng-inline-71 { background: rgba(2, 136, 209, 0.1); border-left: 4px solid #0288D1; padding: 10px 14px; border-radius: 6px; }
+.ng-inline-72 { color: #38BDF8; font-size: 13px; }
+.ng-inline-73 { margin: 6px 0 0 16px; padding: 0; font-size: 11.5px; color: #CBD5E1; }
+.ng-inline-74 { background: rgba(16, 185, 129, 0.1); border-left: 4px solid #10B981; padding: 10px 14px; border-radius: 6px; }
+.ng-inline-75 { color: #34D399; font-size: 13px; }
+.ng-inline-76 { background: rgba(211, 47, 47, 0.12); border-left: 4px solid #D32F2F; padding: 10px 14px; border-radius: 6px; }
+.ng-inline-77 { color: #EF4444; font-size: 13px; }
+.ng-inline-78 { margin: 4px 0 0 0; color: #FCA5A5; font-size: 11.5px; }
+.ng-inline-79 { margin-top: 6px; width: 100%; background: linear-gradient(135deg, #FF6D00, #E65100); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 900; font-size: 13px; cursor: pointer; box-shadow: 0 4px 14px rgba(255,109,0,0.4); }
+.ng-inline-80 { max-width: 480px; }
+.ng-inline-81 { font-size: 11px; color: #94A3B8; margin-bottom: 12px; }
+.ng-inline-82 { width: 38px; height: 42px; object-fit: contain; filter: drop-shadow(0 0 6px rgba(255, 23, 68, 0.7)); margin-bottom: 4px; }
+.ng-inline-83 { color: #0288D1; }
+.ng-inline-84 { color: #00E676; }
+.ng-inline-85 { color: #4FC3F7; }
+.ng-inline-86 { color: #E040FB; }
+.ng-inline-87 { color: #FF9100; }
+.ng-inline-88 { color: #FFC107; }
+.ng-inline-89 { color:#F59E0B; }
+.ng-inline-90 { width:22px; height:22px; vertical-align:middle; filter:drop-shadow(0 0 4px rgba(255, 23, 68, 0.7)); }
+.ng-inline-91 { max-width: 500px; }
+.ng-inline-92 { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; background: #0F172A; padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(245, 158, 11, 0.3); }
+.ng-inline-93 { font-size: 11px; font-weight: 700; color: #F59E0B; display: flex; align-items: center; gap: 6px; }
+.ng-inline-94 { flex: 1; max-width: 220px; background: #1E293B; color: #F8FAFC; border: 1px solid #334155; border-radius: 6px; padding: 5px 8px; font-size: 11px; font-weight: 700; outline: none; cursor: pointer; }
+.ng-inline-95 { max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+.ng-inline-96 { max-height: 85vh; display: flex; flex-direction: column; }
+.ng-inline-97 { background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 12px; display: flex; gap: 12px; align-items: center; }
+.ng-inline-98 { min-width: 32px; }
+.ng-inline-99 { color:#FF6D00; }
+.ng-inline-100 { font-weight: 700; font-size: 13px; color: white; }
+.ng-inline-101 { font-size: 11px; color: #94A3B8; margin-top: 4px; }
+.ng-inline-102 { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; max-height: 250px; }
+.ng-inline-103 { display: flex; gap: 8px; }
+.ng-inline-104 { flex:1; padding: 10px; border-radius: 8px; background: #0F172A; border: 1px solid rgba(255,255,255,0.15); color: white; font-size: 12px; outline: none; }
+.ng-inline-105 { background-color: #FF6D00; color: white; border: none; padding: 10px 14px; border-radius: 8px; font-weight: 700; cursor: pointer; }
+.ng-inline-106 { font-size: 11px; color: #38BDF8; margin-bottom: 12px; background: rgba(56,189,248,0.1); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(56,189,248,0.25); display: flex; align-items: center; gap: 6px; }
+.ng-inline-107 { color: #FFFFFF; text-transform: capitalize; }
+.ng-inline-108 { display: flex; gap: 10px; margin-bottom: 12px; }
+.ng-inline-109 { width: 100%; padding: 9px 10px; background: #1E293B; border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 8px; font-size: 12px; }
+.ng-inline-110 { display:none; z-index: 10000; }
+.ng-inline-111 { max-width: 500px; width: 92%; }
+.ng-inline-112 { margin-bottom: 12px; }
+.ng-inline-113 { font-size: 11.5px; color: #CBD5E1; }
+.ng-inline-114 { width:100%; padding:9px; border-radius:8px; background:#0F172A; color:white; border:1px solid #334155; font-size:12px; }
+.ng-inline-115 { margin-bottom: 14px; }
+.ng-inline-116 { width:100%; padding:9px; border-radius:8px; background:#0F172A; color:white; border:1px solid #334155; font-size:12px; resize:vertical; }
+.ng-inline-117 { display: flex; gap: 8px; justify-content: flex-end; }
+.ng-inline-118 { background:#334155; color:white; border:none; padding:9px 16px; border-radius:6px; font-size:12px; cursor:pointer; }
+.ng-inline-119 { background: linear-gradient(135deg, #0284C7, #0369A1); color:white; border:none; padding:9px 18px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; }
+.ng-inline-120 { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:#0F172A; z-index:999999; flex-direction:column; align-items:center; justify-content:center; padding:28px; text-align:center; }
+.ng-inline-121 { font-size:56px; margin-bottom:16px; }
+.ng-inline-122 { color:#EF4444; font-size:22px; font-weight:900; margin-bottom:10px; font-family:'Roboto',sans-serif; }
+.ng-inline-123 { color:#CBD5E1; font-size:13px; max-width:380px; line-height:1.6; margin-bottom:24px; font-family:'Roboto',sans-serif; }
+.ng-inline-124 { font-size:11px; color:#64748B; font-family:'Roboto',sans-serif; }
+.ng-inline-125 { display:none; position:fixed; z-index:999999; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.9); flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); }
+.ng-inline-126 { font-size:40px; color:#FF6D00; margin-bottom:15px; }
+.ng-inline-127 { color:white; font-size:14px; font-weight:700; text-align:center; max-width:80%; margin-bottom: 20px; }
+.ng-inline-128 { display:none; background:#D32F2F; color:white; border:none; padding:10px 20px; border-radius:10px; font-weight:800; cursor:pointer; font-size:12px; box-shadow:0 4px 12px rgba(211,47,47,0.4); }
+.ng-inline-129 { max-width: 850px; width: 95%; }
+.ng-inline-130 { display: flex; flex-direction: row; gap: 15px; align-items: stretch; margin-top: 10px; }
+.ng-inline-131 { flex: 0 0 160px; display: flex; flex-direction: column; gap: 8px; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 12px; }
+.ng-inline-132 { text-align:left; width:100%; justify-content:flex-start; }
+.ng-inline-133 { width:20px; }
+.ng-inline-134 { width:20px; color:#F59E0B; }
+.ng-inline-135 { flex: 1; overflow-y: auto; max-height: 65vh; padding-right: 8px; }
+.ng-inline-136 { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-bottom: 16px; }
+.ng-inline-137 { background: rgba(14,165,233,0.15); border: 1px solid rgba(14,165,233,0.3); border-radius: 10px; padding: 10px; text-align: center; }
+.ng-inline-138 { font-size: 9.5px; color: #38BDF8; font-weight: 800; margin-bottom: 3px; }
+.ng-inline-139 { font-size: 22px; font-weight: 900; color: white; }
+.ng-inline-140 { background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); border-radius: 10px; padding: 10px; text-align: center; }
+.ng-inline-141 { font-size: 9.5px; color: #FBBF24; font-weight: 800; margin-bottom: 3px; }
+.ng-inline-142 { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); border-radius: 10px; padding: 10px; text-align: center; }
+.ng-inline-143 { font-size: 9.5px; color: #34D399; font-weight: 800; margin-bottom: 3px; }
+.ng-inline-144 { background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3); border-radius: 10px; padding: 10px; text-align: center; }
+.ng-inline-145 { font-size: 9.5px; color: #4ADE80; font-weight: 800; margin-bottom: 3px; }
+.ng-inline-146 { background: rgba(148,163,184,0.15); border: 1px solid rgba(148,163,184,0.3); border-radius: 10px; padding: 10px; text-align: center; }
+.ng-inline-147 { font-size: 9.5px; color: #CBD5E1; font-weight: 800; margin-bottom: 3px; }
+.ng-inline-148 { background: rgba(168,85,247,0.15); border: 1px solid rgba(168,85,247,0.3); border-radius: 10px; padding: 10px; text-align: center; }
+.ng-inline-149 { font-size: 9.5px; color: #C084FC; font-weight: 800; margin-bottom: 3px; }
+.ng-inline-150 { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); border-radius: 10px; padding: 10px; text-align: center; }
+.ng-inline-151 { font-size: 9.5px; color: #F87171; font-weight: 800; margin-bottom: 3px; }
+.ng-inline-152 { background: rgba(225,29,72,0.15); border: 1px solid rgba(225,29,72,0.3); border-radius: 10px; padding: 10px; text-align: center; }
+.ng-inline-153 { font-size: 9.5px; color: #FB7185; font-weight: 800; margin-bottom: 3px; }
+.ng-inline-154 { background: #0F172A; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 10px; }
+.ng-inline-155 { font-size: 11px; font-weight: 700; color: #FF6D00; }
+.ng-inline-156 { display: flex; gap: 6px; margin-top: 6px; }
+.ng-inline-157 { flex: 1; padding: 8px; font-size: 11px; border-radius: 6px; background: #1E293B; border: 1px solid rgba(255,255,255,0.1); color: white; }
+.ng-inline-158 { background: #FF6D00; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: 700; font-size: 11px; cursor: pointer; }
+.ng-inline-159 { width: 100%; background: rgba(239,68,68,0.2); color: #F87171; border: 1px solid rgba(239,68,68,0.4); padding: 8px; border-radius: 8px; font-weight: 700; font-size: 11px; cursor: pointer; margin-bottom: 8px; }
+.ng-inline-160 { width: 100%; background: #991B1B; color: white; border: none; padding: 8px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer; }
+.ng-inline-161 { font-size: 11px; color: #94A3B8; margin-bottom: 8px; }
+.ng-inline-162 { max-height: 350px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 11px; }
+.ng-inline-163 { width: 100%; background: linear-gradient(135deg, #FF6D00, #E65100); color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 900; font-size: 12px; cursor: pointer; box-shadow: 0 4px 14px rgba(255,109,0,0.5); display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px; }
+.ng-inline-164 { max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 11px; }
+.ng-inline-165 { background: rgba(255, 109, 0, 0.08); border: 1px solid rgba(255, 109, 0, 0.35); border-radius: 10px; padding: 14px; margin-bottom: 14px; }
+.ng-inline-166 { font-size: 13px; color: #FF6D00; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+.ng-inline-167 { font-size: 10.5px; color: #CBD5E1; margin-bottom: 12px; line-height: 1.4; }
+.ng-inline-168 { background: #0F172A; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.ng-inline-169 { font-size: 11.5px; font-weight: 800; color: #F59E0B; display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+.ng-inline-170 { font-size: 10px; color: #94A3B8; }
+.ng-inline-171 { flex: 1; min-width: 180px; max-width: 260px; background: #1E293B; color: white; border: 1px solid #FF6D00; padding: 7px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 700; cursor: pointer; }
+.ng-inline-172 { display: flex; gap: 4px; background: #0F172A; padding: 4px; border-radius: 8px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.1); }
+.ng-inline-173 { flex: 1; padding: 7px 4px; font-size: 10.5px; font-weight: 800; border-radius: 6px; border: none; cursor: pointer; background: #FF6D00; color: white; transition: all 0.2s; }
+.ng-inline-174 { flex: 1; padding: 7px 4px; font-size: 10.5px; font-weight: 800; border-radius: 6px; border: none; cursor: pointer; background: transparent; color: #94A3B8; transition: all 0.2s; }
+.ng-inline-175 { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.ng-inline-176 { font-size: 11.5px; color: #38BDF8; }
+.ng-inline-177 { font-size: 9.5px; background: rgba(56,189,248,0.15); color: #38BDF8; padding: 2px 6px; border-radius: 4px; }
+.ng-inline-178 { margin-bottom: 10px; }
+.ng-inline-179 { font-size: 11px; }
+.ng-inline-180 { font-size: 11px; background: #1E293B; color: white; border: 1px solid #334155; padding: 6px; border-radius: 6px; width: 100%; }
+.ng-inline-181 { font-size:11px; background:#1E293B; padding:6px; border-radius:6px; color:white; width:100%; }
+.ng-inline-182 { margin-top:8px; display:none; align-items:center; gap:10px; }
+.ng-inline-183 { max-height:60px; max-width:200px; border-radius:6px; border:1px solid #38BDF8; object-fit:cover; }
+.ng-inline-184 { background:#D32F2F; color:white; border:none; padding:4px 8px; border-radius:4px; font-weight:700; font-size:10px; cursor:pointer; }
+.ng-inline-185 { font-size: 11px; background: #0F172A; border: 1px solid #334155; color: white; width: 100%; padding: 6px; border-radius: 6px; }
+.ng-inline-186 { font-size: 11.5px; color: #00E676; }
+.ng-inline-187 { font-size: 9.5px; background: rgba(0,230,118,0.15); color: #00E676; padding: 2px 6px; border-radius: 4px; }
+.ng-inline-188 { max-height:60px; max-width:200px; border-radius:6px; border:1px solid #00E676; object-fit:cover; }
+.ng-inline-189 { font-size: 11.5px; color: #F59E0B; }
+.ng-inline-190 { font-size: 9.5px; background: rgba(245,158,11,0.15); color: #F59E0B; padding: 2px 6px; border-radius: 4px; }
+.ng-inline-191 { max-height:60px; max-width:200px; border-radius:6px; border:1px solid #F59E0B; object-fit:cover; }
+.ng-inline-192 { font-size:10px; color:#FBBF24; margin:8px 0 0; }
+.ng-inline-193 { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.ng-inline-194 { flex: 1; min-width: 160px; background: linear-gradient(135deg, #FF6D00, #E65100); padding: 9px; font-size: 11.5px; }
+.ng-inline-195 { flex: 1; min-width: 160px; background: linear-gradient(135deg, #10B981, #059669); padding: 9px; font-size: 11.5px; }
+.ng-inline-196 { background-color: #0F172A; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.08); margin-top: 12px; }
+.ng-inline-197 { font-size: 12px; color: #FF6D00; margin-bottom: 8px; }
+.ng-inline-198 { max-height: 160px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 11px; }
+.ng-inline-199 { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+.ng-inline-200 { font-size: 13px; color: #F59E0B; margin: 0; }
+.ng-inline-201 { font-size: 10.5px; color: #94A3B8; }
+.ng-inline-202 { display: flex; gap: 6px; flex-wrap: wrap; }
+.ng-inline-203 { background: #1E293B; border: 1px solid rgba(255,255,255,0.2); color: white; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+.ng-inline-204 { background: #D32F2F; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+.ng-inline-205 { width: 100%; padding: 8px 12px; font-size: 11.5px; border-radius: 6px; background: #0F172A; border: 1px solid #334155; color: white; }
+.ng-inline-206 { max-height: 52vh; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; font-size: 11px; }
+.ng-inline-207 { text-align:center; padding: 20px; color:#94A3B8; }
+.ng-inline-208 { background-color: #0F172A; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 12px; }
+.ng-inline-209 { max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 11px; }
+.ng-inline-210 { background-color: #0F172A; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.08); }
+.ng-inline-211 { font-size: 12px; color: #EF4444; margin-bottom: 8px; }
+.ng-inline-212 { display: flex; gap: 6px; margin-bottom: 8px; }
+.ng-inline-213 { flex:1; padding: 8px; font-size: 11px; border-radius: 6px; background: #1E293B; border: 1px solid rgba(255,255,255,0.1); color: white; }
+.ng-inline-214 { background-color: #D32F2F; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: 700; font-size: 11px; cursor: pointer; }
+.ng-inline-215 { max-height: 100px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; font-size: 10px; color: #94A3B8; }
+.ng-inline-216 { width:100%; text-align:left; background: linear-gradient(135deg, #475569, #334155); margin-bottom: 8px; }
+.ng-inline-217 { width:100%; text-align:left; background: linear-gradient(135deg, #059669, #10B981); margin-bottom: 8px; }
+.ng-inline-218 { width:100%; text-align:left; background: linear-gradient(135deg, #2563EB, #1D4ED8); margin-bottom: 8px; }
+.ng-inline-219 { width:100%; background:none; border:1px solid rgba(255,255,255,0.15); color:#94A3B8; padding:8px; border-radius:8px; margin-top:14px; cursor:pointer; font-size:11px; }
