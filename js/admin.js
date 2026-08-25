@@ -613,7 +613,14 @@ function renderFinalVendors(defaultVendors, deletedIds, buyersList = [], usersLo
 
   const finalVendors = defaultVendors.filter(v => !deletedIds.includes(v.id));
 
-  let html = `<div style="font-weight:900; color:#FF6D00; margin-bottom:6px; font-size:11.5px;"><i class="fa-solid fa-truck-fast"></i> 🚛 REPARTIDORES Y NEGOCIOS DEL SISTEMA:</div>`;
+  let html = `
+    <div style="display:flex; gap:8px; margin-bottom: 12px;">
+      <button onclick="document.getElementById('admin_view_vendors').style.display='block'; document.getElementById('admin_view_buyers').style.display='none'; this.style.background='#FF6D00'; document.getElementById('btn_toggle_buyers').style.background='#334155';" id="btn_toggle_vendors" style="flex:1; padding:8px; border-radius:6px; border:none; cursor:pointer; font-weight:800; font-size:11px; background:#FF6D00; color:white;"><i class="fa-solid fa-truck-fast"></i> REPARTIDORES</button>
+      <button onclick="document.getElementById('admin_view_vendors').style.display='none'; document.getElementById('admin_view_buyers').style.display='block'; this.style.background='#38BDF8'; document.getElementById('btn_toggle_vendors').style.background='#334155';" id="btn_toggle_buyers" style="flex:1; padding:8px; border-radius:6px; border:none; cursor:pointer; font-weight:800; font-size:11px; background:#334155; color:white;"><i class="fa-solid fa-users"></i> COMPRADORES</button>
+    </div>
+  `;
+  
+  html += `<div id="admin_view_vendors">`;
 
   if (finalVendors.length === 0) {
     html += '<div style="color:#64748B; font-style:italic; font-size:10.5px; margin-bottom:8px;">No hay repartidores registrados.</div>';
@@ -662,9 +669,7 @@ function renderFinalVendors(defaultVendors, deletedIds, buyersList = [], usersLo
 
   });
 
-  // SECCIÓN COMPRADORES REGISTRADOS
-
-  html += `<div style="font-weight:900; color:#38BDF8; margin:12px 0 6px; font-size:11.5px;"><i class="fa-solid fa-users"></i> 👤 COMPRADORES Y USUARIOS VECINALES:</div>`;
+  html += `</div><div id="admin_view_buyers" style="display:none;">`;
 
   if (usersLoadError) {
     html += '<div style="color:#FCA5A5; background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.3); border-radius:8px; padding:8px; font-size:10.5px;">No se pudo consultar la lista real de compradores. Ejecuta la migración 044 en Supabase y vuelve a abrir el panel.</div>';
@@ -701,6 +706,7 @@ function renderFinalVendors(defaultVendors, deletedIds, buyersList = [], usersLo
 
   }
 
+  html += `</div>`;
   container.innerHTML = html;
 }
 
