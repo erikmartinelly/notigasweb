@@ -512,7 +512,7 @@ async function emitirAlertaOficialAdmin(mensaje) {
 
 async function ejecutarPurgaBaseDeDatosManual() {
   if (typeof showConfirmModal === 'function') {
-    showConfirmModal('🧹', '¿Ejecutar Purga de Base de Datos?', 'Se eliminarán de PostgreSQL pedidos mayores a 48h y avisos mayores a 48h, además de limpiar el caché local.', 'Sí, purgar BD', async () => {
+    showConfirmModal('🧹', '¿Ejecutar Purga de Base de Datos?', 'Se eliminarán de PostgreSQL pedidos mayores a 24h y avisos mayores a 24h, además de limpiar el caché local.', 'Sí, purgar BD', async () => {
       if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Ejecutando purga en PostgreSQL...');
       try {
         if (window.supabaseClient) {
@@ -2088,7 +2088,7 @@ async function enviarDenuncia() {
 }
 
 // ==========================================================================
-// GESTIÓN Y MODERACIÓN DE AVISOS GRATIS (PESTAÑA 3) EN PANEL DE ADMINISTRACIÓN
+// GESTIÓN Y MODERACIÓN DE MURO DE COMENTARIOS (PESTAÑA 3) EN PANEL DE ADMINISTRACIÓN
 // ==========================================================================
 
 let _adminAvisosCache = [];
@@ -2151,7 +2151,7 @@ function filtrarYRenderizarAvisosAdmin(filtro = '') {
     const safeDesc = encodeURIComponent(p.descripcion || '').replace(/'/g, "%27");
     const safeCat = encodeURIComponent(p.categoria || '').replace(/'/g, "%27");
     const timeStr = p.created_at ? new Date(p.created_at).toLocaleString('es-BO') : 'N/A';
-    const isExpired = p.created_at ? ((Date.now() - new Date(p.created_at).getTime()) > 48 * 3600 * 1000) : false;
+    const isExpired = p.created_at ? ((Date.now() - new Date(p.created_at).getTime()) > 24 * 3600 * 1000) : false;
 
     html += `
       <div style="background:#1E293B; border-radius:8px; padding:10px 12px; border:1px solid rgba(255,255,255,0.08); display:flex; flex-direction:column; gap:6px;">
@@ -2159,7 +2159,7 @@ function filtrarYRenderizarAvisosAdmin(filtro = '') {
           <div style="display:flex; gap:6px; align-items:center;">
             <span style="font-size:10px; font-weight:800; background:rgba(245,158,11,0.2); color:#F59E0B; padding:2px 7px; border-radius:4px;">${escapeHtmlStr(p.categoria || 'AVISO')}</span>
             <span style="font-size:10px; font-weight:700; background:rgba(56,189,248,0.15); color:#38BDF8; padding:2px 7px; border-radius:4px;">📍 ${escapeHtmlStr(String(p.ciudad || 'Global').toUpperCase())}</span>
-            ${isExpired ? '<span style="font-size:9.5px; background:rgba(239,68,68,0.2); color:#F87171; padding:2px 5px; border-radius:4px;">⚠️ Expirado (+48h)</span>' : ''}
+            ${isExpired ? '<span style="font-size:9.5px; background:rgba(239,68,68,0.2); color:#F87171; padding:2px 5px; border-radius:4px;">⚠️ Expirado (+24h)</span>' : ''}
           </div>
           <div style="font-size:10px; color:#94A3B8;">
             <i class="fa-regular fa-clock"></i> ${escapeHtmlStr(timeStr)}
@@ -2197,10 +2197,10 @@ function filtrarYRenderizarAvisosAdmin(filtro = '') {
 }
 
 async function purgarAvisosExpiradosAdmin() {
-  if (!confirm('🧹 ¿Deseas purgar y eliminar todos los avisos comunitarios con más de 48 horas de antigüedad?')) return;
+  if (!confirm('🧹 ¿Deseas purgar y eliminar todos los avisos comunitarios con más de 24 horas de antigüedad?')) return;
   if (!window.supabaseClient) return;
 
-  const dosDiasAtras = new Date(Date.now() - 48 * 3600 * 1000).toISOString();
+  const dosDiasAtras = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
   try {
     const { error } = await window.supabaseClient
       .from(_ADMIN_NOTICE_TABLE)
@@ -2212,7 +2212,7 @@ async function purgarAvisosExpiradosAdmin() {
       return;
     }
 
-    if (typeof showToast === 'function') showToast('🧹 Purga Completa', 'Se eliminaron los avisos vencidos (+48h).', 'success', 3500);
+    if (typeof showToast === 'function') showToast('🧹 Purga Completa', 'Se eliminaron los avisos vencidos (+24h).', 'success', 3500);
     renderAdminAvisosFeedList();
     if (typeof renderForumFeed === 'function') renderForumFeed();
   } catch (ex) {

@@ -1,9 +1,4 @@
--- ==============================================================================
--- MIGRACIÓN 079: PURGA AUTOMÁTICA DE PEDIDOS TERMINALES Y CIERRE ESTRICTO DE CATEGORÍAS
--- ==============================================================================
-
--- 1. Actualizar rpc_purge_old_records para limpiar de inmediato pedidos cancelados y entregados
-CREATE OR REPLACE FUNCTION public.rpc_purge_old_records()
+﻿CREATE OR REPLACE FUNCTION public.rpc_purge_old_records()
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -14,7 +9,6 @@ DECLARE
   v_avisos_deleted integer := 0;
   v_rutas_deleted integer := 0;
 BEGIN
-  -- Eliminar de inmediato todos los pedidos cancelados, entregados o recibidos para no acumular basura
   WITH d AS (
     DELETE FROM public.pedidos
     WHERE estado IN ('entregado', 'cancelado', 'recibido')
@@ -22,14 +16,12 @@ BEGIN
     RETURNING id
   ) SELECT count(*) INTO v_pedidos_deleted FROM d;
 
-  -- Eliminar avisos comunitarios con más de 24h
   WITH d AS (
     DELETE FROM public.avisos
     WHERE created_at < (now() - interval '24 hours')
     RETURNING id
   ) SELECT count(*) INTO v_avisos_deleted FROM d;
 
-  -- Eliminar rutas inactivas de repartidores (> 2 horas)
   WITH d AS (
     DELETE FROM public.rutas_repartidores
     WHERE last_active < (now() - interval '2 hours')
@@ -45,8 +37,16 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION public.rpc_purge_old_records() TO anon, authenticated;
+CREATE OR REPLACE FUNCTION public.purge_old_records()
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+    DELETE FROM public.pedidos 
+    WHERE created_at < NOW() - INTERVAL '24 hours';
 
--- 2. Limpieza inmediata de pedidos terminales huérfanos acumulados en la base de datos
-DELETE FROM public.pedidos
-WHERE estado IN ('entregado', 'cancelado', 'recibido');
+    DELETE FROM public.avisos 
+    WHERE created_at < NOW() - INTERVAL '24 hours';
+END;
+$$;

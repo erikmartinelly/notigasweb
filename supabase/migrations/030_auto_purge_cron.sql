@@ -11,11 +11,11 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 BEGIN
-    -- Eliminar pedidos mayores a 48 horas
+    -- Eliminar pedidos mayores a 24 horas
     DELETE FROM public.pedidos 
     WHERE created_at < NOW() - INTERVAL '48 hours';
 
-    -- Eliminar avisos del foro mayores a 72 horas
+    -- Eliminar avisos del foro mayores a 24 horas
     DELETE FROM public.avisos 
     WHERE created_at < NOW() - INTERVAL '72 hours';
 

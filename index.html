@@ -181,7 +181,7 @@
 
     <button class="tab-btn"  id="auto-event-4" ><i class="fa-solid fa-store"></i> LISTA DE REPARTIDORES</button>
 
-    <button class="tab-btn"  id="auto-event-5" ><i class="fa-solid fa-bullhorn"></i> AVISOS GRATIS</button>
+    <button class="tab-btn"  id="auto-event-5" ><i class="fa-solid fa-bullhorn"></i> MURO DE COMENTARIOS</button>
 
   </nav>
 
@@ -428,25 +428,25 @@
 
     </div>
 
-    <!-- PESTAÑA 3: AVISOS GRATIS (AVISOS, ALERTAS & OFERTAS CON EXPIRACIÓN A 48 HORAS) -->
+    <!-- PESTAÑA 3: MURO DE COMENTARIOS (AVISOS, ALERTAS & OFERTAS CON EXPIRACIÓN A 48 HORAS) -->
 
     <div class="tab-content" id="tab2">
 
-      <!-- AVISO DESTACADO SUPERIOR DE AVISOS GRATIS -->
+      <!-- AVISO DESTACADO SUPERIOR DE MURO DE COMENTARIOS -->
 
       <div style="background: linear-gradient(135deg, rgba(255,109,0,0.15), rgba(230,81,0,0.15)); border: 1px solid rgba(255,109,0,0.3); border-radius: 12px; padding: 10px 14px; margin-bottom: 12px;">
 
         <div style="font-weight: 900; font-size: 13px; color: #FF6D00; display: flex; align-items: center; justify-content: space-between;">
 
-          <span><i class="fa-solid fa-bullhorn"></i> 📣 AVISOS GRATIS DE TU CIUDAD</span>
+          <span><i class="fa-solid fa-bullhorn"></i> 📣 VOCES DEL BARRIO Y DE TU CIUDAD</span>
 
-          <button class="btn-new-post" style="padding: 4px 10px; font-size: 11px;"  id="auto-event-21" ><i class="fa-solid fa-plus"></i> Publicar Aviso</button>
+          <button class="btn-new-post" style="padding: 4px 10px; font-size: 11px;"  id="auto-event-21" ><i class="fa-solid fa-plus"></i> Publicar Comentario</button>
 
         </div>
 
         <div style="font-size: 11px; color: #CBD5E1; margin-top: 4px;">
 
-          ⚠️ <strong>Aviso Comunitario:</strong> Todas las publicaciones se borran automáticamente en <strong>48 horas</strong> para mantener la velocidad de la aplicación.
+          ⚠️ <strong>Aviso Comunitario:</strong> Todas las publicaciones se borran automáticamente en <strong>24 horas</strong> para mantener la velocidad de la aplicación.
 
         </div>
 
@@ -454,7 +454,7 @@
 
       <div class="forum-container" id="forumFeed" style="flex: 1; overflow-y: auto;">
 
-        <!-- Renderizado dinámico desde js/forum.js con expiración a las 48h -->
+        <!-- Renderizado dinámico desde js/forum.js con expiración a las 24h -->
 
       </div>
 
@@ -464,23 +464,23 @@
 
   <!-- BANNER INFERIOR DE PUBLICIDAD DISCRETA -->
 
-  <footer class="ad-banner-container">
+  <footer class="promo-banner-container">
 
     <!-- PUBLICIDAD LOCAL: permanece siempre en la franja inferior -->
 
-    <div id="localAdContent" class="ad-banner-content" style="display:none;">
+    <div id="localPromoContent" class="promo-banner-content" style="display:none;">
 
-      <span class="ad-badge"><i class="fa-solid fa-rectangle-ad"></i> AD</span>
+      <span class="promo-badge"><i class="fa-solid fa-rectangle-ad"></i> AD</span>
 
-      <div class="ad-text-box">
+      <div class="promo-text-box">
 
-        <div class="ad-title" id="adTitleText" style="display:none;"></div>
+        <div class="ad-title" id="promoTitleText" style="display:none;"></div>
 
-        <div class="ad-subtext" id="adText">Espacio publicitario disponible en NOTIGAS • Haz clic para contactar</div>
+        <div class="ad-subtext" id="promoText">Espacio publicitario disponible en NOTIGAS • Haz clic para contactar</div>
 
       </div>
 
-      <button type="button" id="btnLocalAdContact" class="btn-ad-contact"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver</button>
+      <button type="button" id="btnLocalPromoContact" class="btn-promo-contact"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver</button>
 
     </div>
 
@@ -1419,17 +1419,17 @@
 
         <label>Descripción / Detalle:</label>
 
-        <textarea id="inputPostDesc" rows="3" placeholder="Escribe tu mensaje para los vecinos (dura 48 horas)..."></textarea>
+        <textarea id="inputPostDesc" rows="3" placeholder="Escribe tu mensaje para los vecinos (dura 24 horas)..."></textarea>
 
       </div>
 
-      <button class="btn-submit"  id="auto-event-53" ><i class="fa-solid fa-paper-plane"></i> Publicar Anuncio Gratis (48 horas)</button>
+      <button class="btn-submit"  id="auto-event-53" ><i class="fa-solid fa-paper-plane"></i> Publicar Anuncio Gratis (24 horas)</button>
 
     </div>
 
   </div>
 
-  <!-- MODAL EDITAR AVISO VECINAL (AUTOR O ADMINISTRADOR) -->
+  <!-- MODAL EDITAR COMENTARIO VECINAL (AUTOR O ADMINISTRADOR) -->
   <div class="modal" id="modalEditPost" style="display:none; z-index: 10000;">
     <div class="modal-content" style="max-width: 500px; width: 92%;">
       <div class="modal-title">
@@ -1445,7 +1445,7 @@
             <option value="PIDO AYUDA">🤝 PIDO AYUDA</option>
             <option value="SUGERENCIA">🚛 SUGERENCIA</option>
             <option value="INTERCAMBIO">🔄 INTERCAMBIO / COMPRA VECINAL</option>
-            <option value="AVISO VECINAL">📢 AVISO VECINAL</option>
+            <option value="COMENTARIO VECINAL">📢 COMENTARIO VECINAL</option>
             <option value="ALERTA / SEGURIDAD">🚨 ALERTA / SEGURIDAD</option>
             <option value="OFERTA / VENTA">🏷️ OFERTA / VENTA</option>
             <option value="EMPLEO / SERVICIO">💼 EMPLEO / SERVICIO</option>
@@ -1562,7 +1562,7 @@
 
           <button class="modal-tab-btn" style="text-align:left; width:100%; justify-content:flex-start;"  id="auto-event-58" ><i class="fa-solid fa-rectangle-ad" style="width:20px;"></i> Anuncios</button>
 
-          <button class="modal-tab-btn" style="text-align:left; width:100%; justify-content:flex-start;"  id="btnAdminTabAvisos" data-action="switchAdminTabAvisos"><i class="fa-solid fa-bullhorn" style="width:20px; color:#F59E0B;"></i> Avisos Gratis</button>
+          <button class="modal-tab-btn" style="text-align:left; width:100%; justify-content:flex-start;"  id="btnAdminTabAvisos" data-action="switchAdminTabAvisos"><i class="fa-solid fa-bullhorn" style="width:20px; color:#F59E0B;"></i> Muro de Comentarios</button>
 
           <button class="modal-tab-btn" style="text-align:left; width:100%; justify-content:flex-start;"  id="auto-event-59" ><i class="fa-solid fa-shield-halved" style="width:20px;"></i> Moderación</button>
 
@@ -1692,7 +1692,7 @@
                 <i class="fa-solid fa-rectangle-ad"></i> Propaganda Local por Pestaña
               </h4>
               <p style="font-size: 10.5px; color: #CBD5E1; margin-bottom: 12px; line-height: 1.4;">
-                Configura propaganda independiente para cada una de las <strong>3 pestañas</strong> de NOTIGAS: 1) Mapa en Vivo, 2) Lista de Repartidores, y 3) Avisos Gratis. Cada una con su propia imagen, texto y enlace WhatsApp/Web.
+                Configura propaganda independiente para cada una de las <strong>3 pestañas</strong> de NOTIGAS: 1) Mapa en Vivo, 2) Lista de Repartidores, y 3) Muro de Comentarios. Cada una con su propia imagen, texto y enlace WhatsApp/Web.
               </p>
 
               <!-- SELECTOR DE CIUDAD OBJETIVO PARA LA PROPAGANDA -->
@@ -1804,20 +1804,20 @@
               <!-- CONTENIDO OPCIÓN 3: ANUNCIO PUBLICITARIO DENTRO DEL MURO DE AVISOS -->
               <div class="ad-subtab-pane" id="adSubPaneMuroAvisos" style="display: none;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                  <strong style="font-size: 11.5px; color: #F59E0B;"><i class="fa-solid fa-bullhorn"></i> Anuncio publicitario dentro de Avisos Gratis</strong>
+                  <strong style="font-size: 11.5px; color: #F59E0B;"><i class="fa-solid fa-bullhorn"></i> Anuncio publicitario dentro de Muro de Comentarios</strong>
                   <span style="font-size: 9.5px; background: rgba(245,158,11,0.15); color: #F59E0B; padding: 2px 6px; border-radius: 4px;">Tarjeta en Muro</span>
                 </div>
 
                 <div class="form-group" style="margin-bottom: 10px;">
                   <label style="font-size: 11px;">Estado del anuncio en el muro:</label>
                   <select id="selectAdState_muro_avisos" style="font-size: 11px; background: #1E293B; color: white; border: 1px solid #334155; padding: 6px; border-radius: 6px; width: 100%;">
-                    <option value="activo">✅ Habilitada (Visible en Muro de Avisos Gratis)</option>
-                    <option value="inactivo">🚫 Desactivada (Oculta en Avisos Gratis)</option>
+                    <option value="activo">✅ Habilitada (Visible en Muro de Comentarios)</option>
+                    <option value="inactivo">🚫 Desactivada (Oculta en Muro de Comentarios)</option>
                   </select>
                 </div>
 
                 <div class="form-group" style="margin-bottom: 10px;">
-                  <label style="font-size: 11px;">📸 Subir Banner/Imagen para Avisos Gratis (PNG/JPG/WebP):</label>
+                  <label style="font-size: 11px;">📸 Subir Banner/Imagen para Muro de Comentarios (PNG/JPG/WebP):</label>
                   <input type="file" id="inputAdImageFile_muro_avisos" accept="image/*" style="font-size:11px; background:#1E293B; padding:6px; border-radius:6px; color:white; width:100%;">
                   <div id="adImagePreviewBox_muro_avisos" style="margin-top:8px; display:none; align-items:center; gap:10px;">
                     <img id="adImagePreview_muro_avisos" alt="Vista previa del anuncio en el muro" style="max-height:60px; max-width:200px; border-radius:6px; border:1px solid #F59E0B; object-fit:cover;">
@@ -1834,7 +1834,7 @@
                   <label style="font-size: 11px;">Enlace WhatsApp / Web de Contacto:</label>
                   <input type="text" id="inputAdUrl_muro_avisos" placeholder="https://wa.me/59170000000?text=Hola" style="font-size: 11px; background: #0F172A; border: 1px solid #334155; color: white; width: 100%; padding: 6px; border-radius: 6px;">
                 </div>
-                <p style="font-size:10px; color:#FBBF24; margin:8px 0 0;"><strong>Importante:</strong> este registro es un anuncio publicitario de <code>anuncios_globales</code>; no es un Aviso Gratis de <code>avisos</code> y no se elimina con su ciclo de 48 horas.</p>
+                <p style="font-size:10px; color:#FBBF24; margin:8px 0 0;"><strong>Importante:</strong> este registro es un anuncio publicitario de <code>anuncios_globales</code>; no es un Aviso Gratis de <code>avisos</code> y no se elimina con su ciclo de 24 horas.</p>
               </div>
 
               <!-- BOTONES DE GUARDADO -->
@@ -1857,11 +1857,11 @@
 
           </div>
 
-          <!-- SUBMENÚ 4: GESTIÓN DE AVISOS GRATIS (PESTAÑA 3) -->
+          <!-- SUBMENÚ 4: GESTIÓN DE MURO DE COMENTARIOS (PESTAÑA 3) -->
           <div class="modal-tab-pane" id="modalPaneAvisosAdmin">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
               <div>
-                <h4 style="font-size: 13px; color: #F59E0B; margin: 0;"><i class="fa-solid fa-bullhorn"></i> Control de Publicaciones - Avisos Gratis</h4>
+                <h4 style="font-size: 13px; color: #F59E0B; margin: 0;"><i class="fa-solid fa-bullhorn"></i> Control de Publicaciones - Muro de Comentarios</h4>
                 <span style="font-size: 10.5px; color: #94A3B8;">Moderación, edición y eliminación de publicaciones vecinales</span>
               </div>
               <div style="display: flex; gap: 6px; flex-wrap: wrap;">
@@ -1869,7 +1869,7 @@
                   <i class="fa-solid fa-rotate"></i> Actualizar
                 </button>
                 <button type="button" data-action="purgarAvisosExpiradosAdmin" style="background: #D32F2F; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;">
-                  <i class="fa-solid fa-broom"></i> Purgar Vencidos (+48h)
+                  <i class="fa-solid fa-broom"></i> Purgar Vencidos (+24h)
                 </button>
               </div>
             </div>

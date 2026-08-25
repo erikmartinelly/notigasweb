@@ -1,9 +1,9 @@
 /* ==========================================================================
    NOTIGAS - MÓDULO DE PROPAGANDA LOCAL (3 PESTAÑAS INDEPENDIENTES)
    Espacios Habilitados:
-   1. Pestaña 1 (Mapa en Vivo): Banner Inferior Fijo (#localAdContent)
+   1. Pestaña 1 (Mapa en Vivo): Banner Inferior Fijo (#localPromoContent)
    2. Pestaña 2 (Repartidores): Tarjeta Patrocinador en Feed de Repartidores
-   3. Pestaña 3 (Avisos Gratis): Tarjeta Patrocinador en Feed de Avisos Gratis
+   3. Pestaña 3 (Muro de Comentarios): Tarjeta Patrocinador en Feed de Muro de Comentarios
    ========================================================================== */
 
 const _ADS_AD_TABLE = window.NOTIGAS?.AD_TABLE || 'anuncios_globales';
@@ -135,11 +135,11 @@ window.abrirAnuncioWhatsApp = abrirAnuncioWhatsApp;
 async function cargarAnunciosGuardados() {
   const mode = window.ADS_CONFIG.mode || 'local';
 
-  const localAdContent = document.getElementById('localAdContent');
+  const localPromoContent = document.getElementById('localPromoContent');
   const activeCity = (typeof AppState !== 'undefined') ? AppState.get('city') : 'cochabamba';
   const normCity = String(activeCity || 'cochabamba').toLowerCase().trim();
   if (mode === 'disabled') {
-    if (localAdContent) localAdContent.style.display = 'none';
+    if (localPromoContent) localPromoContent.style.display = 'none';
     window._localAds = {
       mapa: { activo: false },
       repartidores: { activo: false },
@@ -156,7 +156,7 @@ async function cargarAnunciosGuardados() {
       muro_avisos: { activo: false }
     };
     window._currentLocalAdData = window._localAds.mapa;
-    if (localAdContent) localAdContent.style.display = 'none';
+    if (localPromoContent) localPromoContent.style.display = 'none';
     return;
   }
 
@@ -205,9 +205,9 @@ async function cargarAnunciosGuardados() {
       actualizarAnunciosEnVivo(window._localAds.mapa.titulo, window._localAds.mapa.url);
       actualizarBannerConImagen(window._localAds.mapa.image_url);
       currentAdUrl = getSafeExternalUrl(window._localAds.mapa.url) || currentAdUrl;
-      if (localAdContent) localAdContent.style.display = 'flex';
+      if (localPromoContent) localPromoContent.style.display = 'flex';
     } else {
-      if (localAdContent) localAdContent.style.display = 'none';
+      if (localPromoContent) localPromoContent.style.display = 'none';
     }
 
     // Refrescar feeds si ya estaban cargados
@@ -222,8 +222,8 @@ async function cargarAnunciosGuardados() {
       muro_avisos: null
     };
     window._currentLocalAdData = null;
-    if (localAdContent) {
-      localAdContent.style.display = 'none';
+    if (localPromoContent) {
+      localPromoContent.style.display = 'none';
     }
   }
 }
@@ -234,8 +234,8 @@ window.cargarAnunciosGuardados = cargarAnunciosGuardados;
  */
 function actualizarAnunciosEnVivo(texto, url) {
   if (texto) {
-    const adTextEl = document.getElementById('adText');
-    if (adTextEl) adTextEl.innerText = texto;
+    const promoTextEl = document.getElementById('promoText');
+    if (promoTextEl) promoTextEl.innerText = texto;
   }
   if (url) {
     currentAdUrl = getSafeExternalUrl(url) || currentAdUrl;
@@ -246,30 +246,30 @@ function actualizarAnunciosEnVivo(texto, url) {
  * Actualizar imagen de fondo del banner local inferior
  */
 function actualizarBannerConImagen(imageUrl) {
-  const localAdContent = document.getElementById('localAdContent');
-  if (!localAdContent) return;
+  const localPromoContent = document.getElementById('localPromoContent');
+  if (!localPromoContent) return;
 
   if (window.ADS_CONFIG.mode === 'disabled' || (window._localAds && window._localAds.mapa && !window._localAds.mapa.activo)) {
-    localAdContent.style.display = 'none';
+    localPromoContent.style.display = 'none';
     return;
   }
 
   const safeImageUrl = getSafeAdImageUrl(imageUrl);
   if (safeImageUrl) {
-    localAdContent.style.backgroundImage = `url("${safeImageUrl.replace(/"/g, '%22')}")`;
-    localAdContent.style.backgroundSize = 'cover';
-    localAdContent.style.backgroundPosition = 'center';
-    localAdContent.style.display = 'flex';
-    const sub = localAdContent.querySelector('.ad-subtext');
+    localPromoContent.style.backgroundImage = `url("${safeImageUrl.replace(/"/g, '%22')}")`;
+    localPromoContent.style.backgroundSize = 'cover';
+    localPromoContent.style.backgroundPosition = 'center';
+    localPromoContent.style.display = 'flex';
+    const sub = localPromoContent.querySelector('.ad-subtext');
     if (sub) {
       sub.style.background = 'rgba(0,0,0,0.72)';
       sub.style.padding = '4px 8px';
       sub.style.borderRadius = '4px';
     }
   } else {
-    localAdContent.style.backgroundImage = 'none';
-    localAdContent.style.display = 'flex';
-    const sub = localAdContent.querySelector('.ad-subtext');
+    localPromoContent.style.backgroundImage = 'none';
+    localPromoContent.style.display = 'flex';
+    const sub = localPromoContent.querySelector('.ad-subtext');
     if (sub) {
       sub.style.background = 'transparent';
       sub.style.padding = '0';
@@ -297,7 +297,7 @@ window.abrirContactoPublicidad = function() {
 };
 
 /**
- * Generador de tarjeta independiente para los feeds (Repartidores y Avisos Gratis)
+ * Generador de tarjeta independiente para los feeds (Repartidores y Muro de Comentarios)
  */
 window.getAdSenseFeedMarkup = function(placement) {
   const mode = window.ADS_CONFIG.mode || 'local';
@@ -336,7 +336,7 @@ window.getAdSenseFeedMarkup = function(placement) {
   return `
     <div class="local-propaganda-feed-card" data-ad-placement="${placement}" style="${bgStyle}">
       <div class="local-ad-header">
-        <span class="local-ad-badge"><i class="fa-solid fa-bullhorn"></i> ${placementTitle}</span>
+        <span class="local-promo-badge"><i class="fa-solid fa-bullhorn"></i> ${placementTitle}</span>
         <span class="local-ad-city">📍 ${safeCity}</span>
       </div>
       <div class="local-ad-body">

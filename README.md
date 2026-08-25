@@ -135,7 +135,7 @@ node server.js
 * **Strict Category & City Isolation:** Drivers exclusively access orders and telemetry matching their registered category (`Gas GLP` $\leftrightarrow$ `Gas GLP`, `Agua Potable` $\leftrightarrow$ `Agua Potable`) and their registered operational city, preventing cross-category interference.
 
 ### Database & Row Level Security (RLS)
-* **Publicidad separada de Avisos Gratis:** `public.anuncios_globales` contiene anuncios publicitarios persistentes administrados; `public.avisos` contiene publicaciones comunitarias con ciclo de vida de 48 horas. El espacio publicitario del tercer feed usa `posicion = 'muro_avisos'`, nunca una fila de `avisos`.
+* **Publicidad separada de Muro de Comentarios:** `public.anuncios_globales` contiene anuncios publicitarios persistentes administrados; `public.avisos` contiene publicaciones comunitarias con ciclo de vida de 48 horas. El espacio publicitario del tercer feed usa `posicion = 'muro_avisos'`, nunca una fila de `avisos`.
 * **Strict Row Level Security:** RLS is enforced across all tables in the `public` schema. Buyers can only modify their own orders, and verified drivers only access active demand points within their category and city.
 * **6-State Finite State Machine:** Enforces canonical order lifecycle transitions (`pendiente` → `visto` → `asignado` → `entregado` / `recibido` / `cancelado`) strictly validated by database triggers (`trg_check_pedido_transition` & `guard_pedido_mutation`).
 * **Automated Terminal Record Purge:** Cancelled and delivered orders are automatically swept by `rpc_purge_old_records()`, keeping PostgreSQL clean, optimized, and free of obsolete clutter.

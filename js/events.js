@@ -126,11 +126,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_auto_event_21 = document.getElementById('auto-event-21');
     if (el_auto_event_21) el_auto_event_21.addEventListener('click', () => { safeCall('abrirModalNuevoPost'); });
 
-    const el_localAdContent = document.getElementById('localAdContent');
-    if (el_localAdContent) el_localAdContent.addEventListener('click', () => { safeCall('abrirAnuncioWhatsApp'); });
+    const el_localPromoContent = document.getElementById('localPromoContent');
+    if (el_localPromoContent) el_localPromoContent.addEventListener('click', () => { safeCall('abrirAnuncioWhatsApp'); });
 
-    const el_btnLocalAdContact = document.getElementById('btnLocalAdContact');
-    if (el_btnLocalAdContact) el_btnLocalAdContact.addEventListener('click', (event) => {
+    const el_btnLocalPromoContact = document.getElementById('btnLocalPromoContact');
+    if (el_btnLocalPromoContact) el_btnLocalPromoContact.addEventListener('click', (event) => {
       event.stopPropagation();
       safeCall('abrirAnuncioWhatsApp');
     });

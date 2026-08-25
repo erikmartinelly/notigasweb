@@ -346,7 +346,7 @@ SELECT
     p.updated_at
 FROM public.pedidos p
 WHERE p.estado IN ('pendiente', 'visto', 'asignado')
-  AND p.created_at >= (now() - interval '48 hours')
+  AND p.created_at >= (now() - interval '24 hours')
   AND NOT EXISTS (
       SELECT 1
       FROM public.usuarios_baneados ub

@@ -355,7 +355,7 @@ const allModules = [
   'js/app.js',
   'js/events.js',
   'js/forum.js',
-  'js/ads.js',
+  'js/promo.js',
   'js/admin.js',
   'js/admin_users.js'
 ];
@@ -459,7 +459,7 @@ try {
     throw new Error('La publicidad debe usar exclusivamente la tabla anuncios_globales.');
   }
   if (notigasContract.NOTICE_TABLE !== 'avisos') {
-    throw new Error('Los Avisos Gratis deben usar exclusivamente la tabla avisos.');
+    throw new Error('Los Muro de Comentarios deben usar exclusivamente la tabla avisos.');
   }
   if (notigasContract.AD_PLACEMENTS?.MURO_AVISOS !== 'muro_avisos') {
     throw new Error('El anuncio del tercer feed debe usar la posición muro_avisos.');
