@@ -2248,3 +2248,60 @@ window.borrarAnuncioLocalAdmin = (typeof borrarAnuncioLocalAdmin !== 'undefined'
 window.abrirModalDenuncia = (typeof abrirModalDenuncia !== 'undefined') ? abrirModalDenuncia : undefined;
 window.closeReportModal = (typeof closeReportModal !== 'undefined') ? closeReportModal : undefined;
 window.enviarDenuncia = (typeof enviarDenuncia !== 'undefined') ? enviarDenuncia : undefined;
+
+
+// Funciones para gestin de compradores
+async function banearCompradorAdmin(userId, email, name) {
+  if (typeof showConfirmModal === 'function') {
+    showConfirmModal('🚫', `¿Banear al comprador ${name}?`, 'El usuario no podrá hacer pedidos y su acceso será bloqueado.', 'Sí, Banear', async () => {
+      const target = email || userId;
+      if (!target) return;
+      const { error } = await window.supabaseClient.from('usuarios_baneados').insert([{
+        user_id: userId || null,
+        email: email || null,
+        nombre: name || null,
+        motivo: 'Comprador Baneado por Admin'
+      }]);
+      if (error) {
+         console.error('Error al banear comprador:', error);
+         if (typeof showToast === 'function') showToast('Error', error.message, 'error', 4000);
+         return;
+      }
+      if (typeof showToast === 'function') showToast('🚫 Baneo', `Comprador ${name} ha sido baneado.`, 'success', 3000);
+      if (typeof renderAdminVendorsList === 'function') renderAdminVendorsList();
+    });
+  } else {
+    if(confirm(`¿Banear al comprador ${name}?`)) {
+      await window.supabaseClient.from('usuarios_baneados').insert([{ user_id: userId || null, email: email || null, nombre: name || null, motivo: 'Comprador Baneado por Admin' }]);
+      if (typeof renderAdminVendorsList === 'function') renderAdminVendorsList();
+    }
+  }
+}
+
+async function borrarCompradorPermanente(userId, email, name) {
+  if (typeof showConfirmModal === 'function') {
+    showConfirmModal('⚠️ ELIMINAR CUENTA', `¿Borrar permanentemente a ${name}?`, 'Esta acción eliminará su cuenta de Autenticación, su perfil público y todos sus pedidos. Es irreversible.', 'Eliminar Cuenta', async () => {
+      if (userId) {
+         const { error } = await window.supabaseClient.rpc('rpc_admin_delete_user', { p_user_id: userId, p_email: email });
+         if (error) {
+             console.error('Error eliminando comprador:', error);
+             if (typeof showToast === 'function') showToast('Error', error.message, 'error', 4000);
+             return;
+         }
+      }
+      if (typeof showToast === 'function') showToast('✅ Eliminado', `Comprador ${name} eliminado permanentemente.`, 'success', 3000);
+      if (typeof renderAdminVendorsList === 'function') renderAdminVendorsList();
+    });
+  } else {
+    if(confirm(`¿Borrar permanentemente a ${name}? Esta acción es irreversible.`)) {
+      if (userId) {
+        await window.supabaseClient.rpc('rpc_admin_delete_user', { p_user_id: userId, p_email: email });
+      }
+      if (typeof renderAdminVendorsList === 'function') renderAdminVendorsList();
+    }
+  }
+}
+
+window.banearCompradorAdmin = (typeof banearCompradorAdmin !== 'undefined') ? banearCompradorAdmin : undefined;
+window.borrarCompradorPermanente = (typeof borrarCompradorPermanente !== 'undefined') ? borrarCompradorPermanente : undefined;
+
