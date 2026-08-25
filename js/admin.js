@@ -175,24 +175,24 @@ function switchModalTab(idx) {
   if (idx === 5) renderAdminReports();
 }
 
-window.adminActiveAdTab = 'mapa';
+window.adminActivePromoTab = 'mapa';
 window.pendingUploadUrls = {
   mapa: null,
   repartidores: null,
   muro_avisos: null
 };
 
-window.switchAdSubTab = function(tabName) {
+window.switchPromoSubTab = function(tabName) {
   const normTab = normalizeAdPlacement(tabName);
-  window.adminActiveAdTab = normTab;
+  window.adminActivePromoTab = normTab;
 
-  const btnMapa = document.getElementById('btnAdSubTabMapa');
-  const btnRepartidores = document.getElementById('btnAdSubTabRepartidores');
-  const btnMuroAvisos = document.getElementById('btnAdSubTabMuroAvisos');
+  const btnMapa = document.getElementById('btnPromoSubTabMapa');
+  const btnRepartidores = document.getElementById('btnPromoSubTabRepartidores');
+  const btnMuroAvisos = document.getElementById('btnPromoSubTabMuroAvisos');
 
-  const paneMapa = document.getElementById('adSubPaneMapa');
-  const paneRepartidores = document.getElementById('adSubPaneRepartidores');
-  const paneMuroAvisos = document.getElementById('adSubPaneMuroAvisos');
+  const paneMapa = document.getElementById('promoSubPaneMapa');
+  const paneRepartidores = document.getElementById('promoSubPaneRepartidores');
+  const paneMuroAvisos = document.getElementById('promoSubPaneMuroAvisos');
 
   if (btnMapa) {
     btnMapa.style.background = (normTab === 'mapa') ? '#FF6D00' : 'transparent';
@@ -224,7 +224,7 @@ function normalizeAdCity(city) {
 }
 
 async function cargarConfiguracionPublicidadEnAdmin(targetCity = null) {
-  const citySelector = document.getElementById('adminSelectAdCiudad');
+  const citySelector = document.getElementById('adminSelectPromoCiudad');
   const rawCity = targetCity || (citySelector ? citySelector.value : null) || (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba') || 'cochabamba';
   if (!window.supabaseClient) return;
 
@@ -251,11 +251,11 @@ async function cargarConfiguracionPublicidadEnAdmin(targetCity = null) {
           ad = globalAds.find(a => normalizeAdPlacement(a.posicion) === pos);
         }
 
-        const inputTitle = document.getElementById(`inputAdText_${pos}`);
-        const inputUrl = document.getElementById(`inputAdUrl_${pos}`);
-        const selectState = document.getElementById(`selectAdState_${pos}`);
-        const preview = document.getElementById(`adImagePreview_${pos}`);
-        const previewBox = document.getElementById(`adImagePreviewBox_${pos}`);
+        const inputTitle = document.getElementById(`inputPromoText_${pos}`);
+        const inputUrl = document.getElementById(`inputPromoUrl_${pos}`);
+        const selectState = document.getElementById(`selectPromoState_${pos}`);
+        const preview = document.getElementById(`promoImagePreview_${pos}`);
+        const previewBox = document.getElementById(`promoImagePreviewBox_${pos}`);
 
         if (ad) {
           if (inputTitle) inputTitle.value = ad.titulo || '';
@@ -287,7 +287,7 @@ async function cargarConfiguracionPublicidadEnAdmin(targetCity = null) {
 
 // Listener para recargar inputs al cambiar la ciudad en el panel admin
 document.addEventListener('change', (e) => {
-  if (e.target && e.target.id === 'adminSelectAdCiudad') {
+  if (e.target && e.target.id === 'adminSelectPromoCiudad') {
     cargarConfiguracionPublicidadEnAdmin(e.target.value);
     if (typeof renderAdminAdsAndPostsList === 'function') {
       renderAdminAdsAndPostsList();
@@ -296,14 +296,14 @@ document.addEventListener('change', (e) => {
 });
 
 async function renderAdminAdsAndPostsList() {
-  const container = document.getElementById('adminAdsListContainer');
+  const container = document.getElementById('adminPromoListContainer');
   if (!container || !window.supabaseClient) return;
 
   container.innerHTML = '<div style="color:#94A3B8; text-align:center;">Cargando...</div>';
   let html = '';
   let count = 0;
 
-  const citySelector = document.getElementById('adminSelectAdCiudad');
+  const citySelector = document.getElementById('adminSelectPromoCiudad');
   const activeCity = citySelector ? citySelector.value : (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba');
   const normCity = activeCity ? String(activeCity).toLowerCase().trim() : 'cochabamba';
   
@@ -1095,9 +1095,9 @@ async function guardarPropagandaTab(tabName, silent = false) {
   }
 
   const pos = normalizeAdPlacement(tabName);
-  const inputTitleEl = document.getElementById(`inputAdText_${pos}`);
-  const inputUrlEl = document.getElementById(`inputAdUrl_${pos}`);
-  const selectStateEl = document.getElementById(`selectAdState_${pos}`);
+  const inputTitleEl = document.getElementById(`inputPromoText_${pos}`);
+  const inputUrlEl = document.getElementById(`inputPromoUrl_${pos}`);
+  const selectStateEl = document.getElementById(`selectPromoState_${pos}`);
 
   const inputAd = (inputTitleEl?.value || '').trim();
   const rawUrl = (inputUrlEl?.value || '').trim();
@@ -1117,7 +1117,7 @@ async function guardarPropagandaTab(tabName, silent = false) {
     inputUrlEl.value = safeUrl;
   }
 
-  const citySelector = document.getElementById('adminSelectAdCiudad');
+  const citySelector = document.getElementById('adminSelectPromoCiudad');
   const activeCity = (citySelector ? citySelector.value : null) || (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba') || 'cochabamba';
   const normCity = normalizeAdCity(activeCity);
   const imgUrl = window.pendingUploadUrls ? window.pendingUploadUrls[pos] : null;
@@ -1183,7 +1183,7 @@ window.guardarSubmenuAnuncios = async function() {
   if (btn) btn.disabled = true;
 
   try {
-    const currentTab = normalizeAdPlacement(window.adminActiveAdTab);
+    const currentTab = normalizeAdPlacement(window.adminActivePromoTab);
     if (typeof showLoadingOverlay === 'function') showLoadingOverlay(`Guardando propaganda de ${currentTab.toUpperCase()}...`);
 
     const ok = await guardarPropagandaTab(currentTab, false);
@@ -1196,7 +1196,7 @@ window.guardarSubmenuAnuncios = async function() {
       if (typeof renderVendorsList === 'function') renderVendorsList();
       if (typeof renderForumFeed === 'function') renderForumFeed();
 
-      const citySelector = document.getElementById('adminSelectAdCiudad');
+      const citySelector = document.getElementById('adminSelectPromoCiudad');
       const activeCity = (citySelector ? citySelector.value : null) || (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba') || 'cochabamba';
       const normCity = normalizeAdCity(activeCity);
       const displayCity = (normCity === 'global') ? 'TODAS LAS CIUDADES (GLOBAL)' : normCity.toUpperCase();
@@ -1213,8 +1213,8 @@ window.guardarSubmenuAnuncios = async function() {
 window.guardarTodasLasPropagandas = async function() {
   if (window._isSavingAdsMutex) return;
   window._isSavingAdsMutex = true;
-  const btn = document.getElementById('btnSaveAllAdsAdmin');
-  const originalTab = normalizeAdPlacement(window.adminActiveAdTab);
+  const btn = document.getElementById('btnSaveAllPromoAdmin');
+  const originalTab = normalizeAdPlacement(window.adminActivePromoTab);
   if (btn) btn.disabled = true;
 
   try {
@@ -1238,7 +1238,7 @@ window.guardarTodasLasPropagandas = async function() {
       await cargarConfiguracionPublicidadEnAdmin();
       if (typeof renderAdminAdsAndPostsList === 'function') renderAdminAdsAndPostsList();
       
-      const citySelector = document.getElementById('adminSelectAdCiudad');
+      const citySelector = document.getElementById('adminSelectPromoCiudad');
       const activeCity = (citySelector ? citySelector.value : null) || (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba') || 'cochabamba';
       const normCity = normalizeAdCity(activeCity);
       const displayCity = (normCity === 'global') ? 'TODAS LAS CIUDADES (GLOBAL)' : normCity.toUpperCase();
@@ -1252,7 +1252,7 @@ window.guardarTodasLasPropagandas = async function() {
       }
     }
   } finally {
-    window.switchAdSubTab(originalTab);
+    window.switchPromoSubTab(originalTab);
     window._isSavingAdsMutex = false;
     if (btn) btn.disabled = false;
   }
@@ -1263,7 +1263,7 @@ window.guardarTodasLasPropagandas = async function() {
 // ---------------------------------------------------------
 
 window.previewUploadAdImage = async function(event, specificTab) {
-  const pos = normalizeAdPlacement(specificTab || window.adminActiveAdTab);
+  const pos = normalizeAdPlacement(specificTab || window.adminActivePromoTab);
   const file = event.target.files && event.target.files[0];
   if (!file) return;
 
@@ -1299,8 +1299,8 @@ window.previewUploadAdImage = async function(event, specificTab) {
       }
       window.pendingUploadUrls[pos] = publicUrl;
 
-      const preview = document.getElementById(`adImagePreview_${pos}`);
-      const box = document.getElementById(`adImagePreviewBox_${pos}`);
+      const preview = document.getElementById(`promoImagePreview_${pos}`);
+      const box = document.getElementById(`promoImagePreviewBox_${pos}`);
       if (preview && box) {
         preview.src = publicUrl;
         box.style.display = 'flex';
@@ -1314,7 +1314,7 @@ window.previewUploadAdImage = async function(event, specificTab) {
 };
 
 window.eliminarImagenAnuncio = async function(specificTab) {
-  const pos = normalizeAdPlacement(specificTab || window.adminActiveAdTab);
+  const pos = normalizeAdPlacement(specificTab || window.adminActivePromoTab);
 
   if (window.pendingUploadUrls && window.pendingUploadUrls[pos] && window.supabaseClient) {
     try {
@@ -1331,8 +1331,8 @@ window.eliminarImagenAnuncio = async function(specificTab) {
   }
   window.pendingUploadUrls[pos] = '__REMOVE__';
 
-  const preview = document.getElementById(`adImagePreview_${pos}`);
-  const box = document.getElementById(`adImagePreviewBox_${pos}`);
+  const preview = document.getElementById(`promoImagePreview_${pos}`);
+  const box = document.getElementById(`promoImagePreviewBox_${pos}`);
   const input = document.getElementById(`inputAdImageFile_${pos}`);
 
   if (preview) preview.src = '';
@@ -2252,7 +2252,7 @@ window.renderAdminReports = (typeof renderAdminReports !== 'undefined') ? render
 window.cerrarSesionAdminControl = (typeof cerrarSesionAdminControl !== 'undefined') ? cerrarSesionAdminControl : undefined;
 window.descargarListaCorreosCSV = (typeof descargarListaCorreosCSV !== 'undefined') ? descargarListaCorreosCSV : undefined;
 window.descargarFichasRepartidoresCSV = (typeof descargarFichasRepartidoresCSV !== 'undefined') ? descargarFichasRepartidoresCSV : undefined;
-window.switchAdSubTab = (typeof switchAdSubTab !== 'undefined') ? switchAdSubTab : undefined;
+window.switchPromoSubTab = (typeof switchPromoSubTab !== 'undefined') ? switchPromoSubTab : undefined;
 window.guardarPropagandaTab = (typeof guardarPropagandaTab !== 'undefined') ? guardarPropagandaTab : undefined;
 window.previewUploadAdImage = (typeof previewUploadAdImage !== 'undefined') ? previewUploadAdImage : undefined;
 window.eliminarImagenAnuncio = (typeof eliminarImagenAnuncio !== 'undefined') ? eliminarImagenAnuncio : undefined;

@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (typeof window[fnName] === 'function') {
         return window[fnName](...args);
       }
-      if (fnName.includes('Admin') || fnName.includes('Denuncia') || fnName.includes('FichaAdmin') || fnName.includes('Ad') || fnName.includes('Propaganda') || fnName.includes('Anuncio') || fnName.includes('switchAdSubTab')) {
+      if (fnName.includes('Admin') || fnName.includes('Denuncia') || fnName.includes('FichaAdmin') || fnName.includes('Ad') || fnName.includes('Propaganda') || fnName.includes('Anuncio') || fnName.includes('switchPromoSubTab')) {
         if (typeof window.loadAdminModules === 'function') await window.loadAdminModules();
         if (typeof window[fnName] === 'function') return window[fnName](...args);
       }
@@ -517,10 +517,10 @@ document.addEventListener('click', async (e) => {
         window.abrirRutaGoogleMaps(lat, lng, id, address);
       }
     }
-    else if (action === 'switchAdSubTab') {
+    else if (action === 'switchPromoSubTab') {
       const tab = btn.getAttribute('data-tab') || 'mapa';
       if (typeof window.loadAdminModules === 'function') await window.loadAdminModules();
-      if (typeof window.switchAdSubTab === 'function') window.switchAdSubTab(tab);
+      if (typeof window.switchPromoSubTab === 'function') window.switchPromoSubTab(tab);
     }
     else if (action === 'guardarSubmenuAnuncios') {
       if (typeof window.loadAdminModules === 'function') await window.loadAdminModules();
@@ -531,7 +531,7 @@ document.addEventListener('click', async (e) => {
       if (typeof window.guardarTodasLasPropagandas === 'function') await window.guardarTodasLasPropagandas();
     }
     else if (action === 'eliminarImagenAnuncio') {
-      const tab = btn.getAttribute('data-tab') || window.adminActiveAdTab || 'mapa';
+      const tab = btn.getAttribute('data-tab') || window.adminActivePromoTab || 'mapa';
       if (typeof window.loadAdminModules === 'function') await window.loadAdminModules();
       if (typeof window.eliminarImagenAnuncio === 'function') await window.eliminarImagenAnuncio(tab);
     }
