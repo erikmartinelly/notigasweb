@@ -309,15 +309,11 @@ async function renderAdminAdsAndPostsList() {
   const normCity = activeCity ? String(activeCity).toLowerCase().trim() : 'cochabamba';
   
   // 1. Anuncios Locales por Pestaña
-  let adsQuery = window.supabaseClient
-    .from(_ADMIN_AD_TABLE)
-    .select('id, titulo, url, image_url, ciudad, posicion, activo, created_at')
-    .order('created_at', { ascending: false })
-    .limit(50);
-    
+  let adsQuery = window.supabaseClient.from(_ADMIN_AD_TABLE).select('*');
   if (normCity && normCity !== 'todos' && normCity !== 'all') {
-    adsQuery = adsQuery.eq('ciudad', normCity);
+    adsQuery = adsQuery.or('ciudad.eq.' + normCity + ',ciudad.eq.global');
   }
+  adsQuery = adsQuery.order('created_at', { ascending: false }).limit(50);
 
   const { data: adData, error: adsError } = await adsQuery;
   if (adsError) { console.error('Error cargando anuncios_globales:', adsError); return; }
@@ -1084,6 +1080,12 @@ async function guardarPropagandaTab(tabName, silent = false) {
   const selectStateEl = document.getElementById(`selectPromoState_${pos}`);
 
   const inputAd = (inputTitleEl?.value || '').trim();
+  if (!inputAd) {
+    if (!silent && typeof showToast === 'function') {
+      showToast('Título Requerido', 'Debes ingresar un título para la propaganda.', 'warning');
+    }
+    return false;
+  }
   const rawUrl = (inputUrlEl?.value || '').trim();
   const safeUrl = rawUrl ? (typeof formatExternalUrl === 'function' ? formatExternalUrl(rawUrl) : (typeof getSafeExternalUrl === 'function' ? getSafeExternalUrl(rawUrl) : rawUrl)) : '';
   const adState = selectStateEl?.value || 'activo';
@@ -1161,6 +1163,10 @@ window.guardarPropagandaTab = guardarPropagandaTab;
 window._isSavingAdsMutex = false;
 
 window.guardarSubmenuAnuncios = async function() {
+  if (window._isUploadingAdImage) {
+    if (typeof showToast === 'function') showToast('Carga en progreso', 'Espera a que termine de subir la imagen antes de guardar.', 'warning', 3000);
+    return;
+  }
   if (window._isSavingAdsMutex) return;
   window._isSavingAdsMutex = true;
   const btn = document.getElementById('btnSaveCurrentAdTab');
@@ -1246,54 +1252,69 @@ window.guardarTodasLasPropagandas = async function() {
 // FUNCIONES DE ADMINISTRACIÓN DE ANUNCIOS E IMÁGENES
 // ---------------------------------------------------------
 
+window._isUploadingAdImage = false;
+
 window.previewUploadAdImage = async function(event, specificTab) {
   const pos = normalizeAdPlacement(specificTab || window.adminActivePromoTab);
+  const inputEl = document.getElementById(`inputAdImageFile_${pos}`);
   const file = event.target.files && event.target.files[0];
   if (!file) return;
 
   if (file.size > 2 * 1024 * 1024) {
     if (typeof showToast === 'function') showToast('⚠️ Imagen Pesada', 'La imagen supera los 2 MB. Elige una más ligera.', 'warning', 3000);
+    if (inputEl) inputEl.value = '';
     return;
   }
 
-  if (window.supabaseClient) {
-    const currentAdmin = await getVerifiedAdminEmail();
-    if (!currentAdmin) {
-      if (typeof showToast === 'function') showToast('Sesión vencida', 'Inicia sesión nuevamente como administrador antes de subir imágenes.', 'error', 4500);
-      return;
-    }
-    if (typeof showLoadingOverlay === 'function') showLoadingOverlay(`Subiendo imagen para ${pos}...`);
+  const btn = document.getElementById('btnSaveCurrentAdTab');
+  if (btn) btn.disabled = true;
+  window._isUploadingAdImage = true;
 
-    const ext = file.name.split('.').pop() || 'png';
-    const fileName = `banner_${pos}_${Date.now()}.${ext}`;
-
-    const { data, error } = await window.supabaseClient.storage
-      .from('anuncios-media')
-      .upload(fileName, file, { upsert: false, contentType: file.type });
-
-    if (error) {
-      console.error('Error al subir imagen:', error);
-      if (typeof showToast === 'function') showToast('Error', 'No se pudo subir la imagen: ' + error.message, 'error');
-    } else {
-      const { data: publicUrlData } = window.supabaseClient.storage.from('anuncios-media').getPublicUrl(fileName);
-      const publicUrl = publicUrlData?.publicUrl || '';
-
-      if (!window.pendingUploadUrls) {
-        window.pendingUploadUrls = { mapa: null, repartidores: null, muro_avisos: null };
+  try {
+    if (window.supabaseClient) {
+      const currentAdmin = await getVerifiedAdminEmail();
+      if (!currentAdmin) {
+        if (typeof showToast === 'function') showToast('Sesión vencida', 'Inicia sesión nuevamente como administrador antes de subir imágenes.', 'error', 4500);
+        if (inputEl) inputEl.value = '';
+        return;
       }
-      window.pendingUploadUrls[pos] = publicUrl;
+      if (typeof showLoadingOverlay === 'function') showLoadingOverlay(`Subiendo imagen para ${pos}...`);
 
-      const preview = document.getElementById(`promoImagePreview_${pos}`);
-      const box = document.getElementById(`promoImagePreviewBox_${pos}`);
-      if (preview && box) {
-        preview.src = publicUrl;
-        box.style.display = 'flex';
+      const ext = file.name.split('.').pop() || 'png';
+      const fileName = `banner_${pos}_${Date.now()}.${ext}`;
+
+      const { data, error } = await window.supabaseClient.storage
+        .from('anuncios-media')
+        .upload(fileName, file, { upsert: false, contentType: file.type });
+
+      if (error) {
+        console.error('Error al subir imagen:', error);
+        if (typeof showToast === 'function') showToast('Error', 'No se pudo subir la imagen: ' + error.message, 'error');
+        if (inputEl) inputEl.value = '';
+      } else {
+        const { data: publicUrlData } = window.supabaseClient.storage.from('anuncios-media').getPublicUrl(fileName);
+        const publicUrl = publicUrlData?.publicUrl || '';
+
+        if (!window.pendingUploadUrls) {
+          window.pendingUploadUrls = { mapa: null, repartidores: null, muro_avisos: null };
+        }
+        window.pendingUploadUrls[pos] = publicUrl;
+
+        const preview = document.getElementById(`promoImagePreview_${pos}`);
+        const box = document.getElementById(`promoImagePreviewBox_${pos}`);
+        if (preview && box) {
+          preview.src = publicUrl;
+          box.style.display = 'flex';
+        }
+
+        if (typeof showToast === 'function') showToast('Éxito', `Imagen cargada para pestaña ${pos.toUpperCase()}.`, 'success', 3000);
       }
 
-      if (typeof showToast === 'function') showToast('Éxito', `Imagen cargada para pestaña ${pos.toUpperCase()}.`, 'success', 3000);
+      if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
     }
-
-    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+  } finally {
+    window._isUploadingAdImage = false;
+    if (btn) btn.disabled = false;
   }
 };
 
@@ -1731,208 +1752,6 @@ async function banearUsuarioAdmin(identifier) {
 
 /* DESCARGA COMPLETA DE ESTADÍSTICAS GENERALES (.CSV) */
 
-async function descargarEstadisticasGeneralesCSV() {
-  let currentAdmin = await getVerifiedAdminEmail();
-
-  if (!currentAdmin) {
-    if (typeof showToast === 'function') { showToast('Notificación', "⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña.", 'info', 4000); } else { alert("⛔ ACCESO DENEGADO\nDebes desbloquear el Área de Administración con tu usuario y contraseña."); };
-
-    if (typeof showToast === 'function') showToast('Acceso Denegado', 'Inicia sesión con tu cuenta de administrador Google para realizar esta acción.', 'error');
-
-    return;
-
-  }
-
-  const elUsers = document.getElementById('adminKpiUsers');
-  const elVendors = document.getElementById('adminKpiVendors');
-  const elOrders = document.getElementById('adminKpiOrders');
-  const elDelivered = document.getElementById('adminKpiDelivered');
-  const elCancelled = document.getElementById('adminKpiCancelled');
-  const elAvisos = document.getElementById('adminKpiAvisos');
-  const elReports = document.getElementById('adminKpiReports');
-  const elReportedUsers = document.getElementById('adminKpiReportedUsers');
-
-  const usersCount = elUsers ? elUsers.innerText : '0';
-  const vendorsCount = elVendors ? elVendors.innerText : '0';
-  const ordersCount = elOrders ? elOrders.innerText : '0';
-  const deliveredCount = elDelivered ? elDelivered.innerText : '0';
-  const cancelledCount = elCancelled ? elCancelled.innerText : '0';
-  const avisosCount = elAvisos ? elAvisos.innerText : '0';
-  const reportsCount = elReports ? elReports.innerText : '0';
-  const reportedUsersCount = elReportedUsers ? elReportedUsers.innerText : '0';
-
-  const fechaHoy = new Date().toISOString().split('T')[0];
-
-  let csvRows = ["Metrica,Valor,Fecha"];
-  csvRows.push(`"Usuarios Totales","${usersCount}","${fechaHoy}"`);
-  csvRows.push(`"Repartidores Habilitados","${vendorsCount}","${fechaHoy}"`);
-  csvRows.push(`"Pedidos Activos","${ordersCount}","${fechaHoy}"`);
-  csvRows.push(`"Pedidos Entregados","${deliveredCount}","${fechaHoy}"`);
-  csvRows.push(`"Pedidos Cancelados","${cancelledCount}","${fechaHoy}"`);
-  csvRows.push(`"Avisos Publicados","${avisosCount}","${fechaHoy}"`);
-  csvRows.push(`"Denuncias Totales","${reportsCount}","${fechaHoy}"`);
-  csvRows.push(`"Usuarios/Repartidores Denunciados","${reportedUsersCount}","${fechaHoy}"`);
-
-  const csvString = "\uFEFF" + csvRows.join("\n");
-
-  const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
-
-  const url = URL.createObjectURL(blob);
-
-  const link = document.createElement("a");
-
-  link.setAttribute("href", url);
-
-  link.setAttribute("download", `estadisticas_generales_notigas_${fechaHoy}.csv`);
-
-  document.body.appendChild(link);
-
-  link.click();
-
-  document.body.removeChild(link);
-
-  alert(`📥 DESCARGA COMPLETADA EN FORMATO .CSV\n\nSe exportaron las estadísticas generales del panel de administración.`);
-}
-
-async function renderAdminReports() {
-  const container = document.getElementById('adminReportsContainer');
-
-  const bannedContainer = document.getElementById('adminBannedList');
-
-  if (!container || !bannedContainer || !window.supabaseClient) return;
-
-  // 1. Fetch Denuncias
-  const { data: reports, error: reportsError } = await window.supabaseClient
-    .from('denuncias')
-    .select('id, denunciado_id, motivo, detalles, created_at')
-    .order('created_at', { ascending: false })
-    .limit(100);
-  if (reportsError) { console.error('Error cargando denuncias:', reportsError); return; }
-
-  if (!reports || reports.length === 0) {
-    container.innerHTML = '<div style="color:#64748B; font-style:italic;">No hay denuncias pendientes de revisión.</div>';
-
-  } else {
-    let html = '';
-
-    reports.forEach((rep) => {
-      html += `
-
-        <div style="background:#1E293B; padding:6px 8px; border-radius:6px; border-left:3px solid #EF4444; display:flex; justify-content:space-between; align-items:center;">
-
-          <div>
-
-            <strong>${escapeHtmlStr(rep.denunciado_id || 'Publicación')}</strong>: ${escapeHtmlStr(rep.motivo)}
-
-            <div style="font-size:9px; color:#94A3B8;">${escapeHtmlStr(rep.detalles || 'Sin detalle')}</div>
-
-          </div>
-
-          <div style="display:flex; gap:4px;">
-
-            <button data-action="borrarDenunciaAdmin" data-id="${rep.id}" style="background:#0288D1; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; cursor:pointer;" title="Desestimar">👍 Ok</button>
-
-            <button data-action="banearUsuarioAdmin" data-id="${escapeHtmlStr(rep.denunciado_id)}" style="background:#D32F2F; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; cursor:pointer;" title="Banear Usuario">🚫 Banear</button>
-
-          </div>
-
-        </div>
-
-      `;
-
-    });
-
-    container.innerHTML = html;
-
-  }
-
-  // 2. Fetch Baneados
-  const { data: banned, error: bannedError } = await window.supabaseClient
-    .from('usuarios_baneados')
-    .select('id, user_id, email, nombre, motivo, created_at')
-    .limit(100);
-  if (bannedError) { console.error('Error cargando usuarios_baneados:', bannedError); return; }
-
-  if (!banned || banned.length === 0) {
-    bannedContainer.innerHTML = '<div style="color:#64748B; font-style:italic;">No hay usuarios baneados actualmente.</div>';
-
-  } else {
-    let html = '';
-
-    banned.forEach((u) => {
-      let uIdentificador = u.email || u.nombre || u.user_id || u.motivo || 'Desconocido';
-
-      html += `
-
-        <div style="display:flex; justify-content:space-between; align-items:center; background:#1E293B; padding:4px 8px; border-radius:4px; margin-bottom:4px;">
-
-          <span style="font-size:11px;">🚫 ${escapeHtmlStr(uIdentificador)}</span>
-
-          <button data-action="desbanearUsuarioAdmin" data-id="${u.id}" style="background:#00E676; color:#0F172A; border:none; padding:2px 6px; border-radius:4px; font-weight:700; font-size:9px; cursor:pointer;">Desbanear</button>
-
-        </div>
-
-      `;
-
-    });
-
-    bannedContainer.innerHTML = html;
-
-  }
-}
-
-async function banearUsuarioAdmin(identifier) {
-  const target = (identifier || document.getElementById('inputBanIdentifier')?.value || '').trim();
-  if (!target || !window.supabaseClient) {
-    if (!target && typeof showToast === 'function') {
-      showToast('⚠️ Campo Requerido', 'Ingresa un correo, nombre o placa a banear.', 'warning', 3000);
-    }
-    return;
-  }
-
-  const isEmail = target.includes('@');
-
-  const { error } = await window.supabaseClient.from('usuarios_baneados').insert([{
-    user_id: !isEmail ? target : null,
-    email: isEmail ? target : null,
-    nombre: !isEmail ? target : null,
-    motivo: 'Baneado por Administrador'
-  }]);
-
-  if (typeof descargarBaneadosDeSupabase === 'function') await descargarBaneadosDeSupabase();
-
-  if (!error) {
-    const inputEl = document.getElementById('inputBanIdentifier');
-    if (inputEl) inputEl.value = '';
-    if (typeof showToast === 'function') {
-      showToast('🚫 Usuario Baneado', `"${target}" ha sido restringido de publicar en NOTIGAS.`, 'error', 4000);
-    } else {
-      alert(`🚫 USUARIO BANEADO\nEl usuario (${target}) ha sido restringido de publicar en NOTIGAS.`);
-    }
-  } else {
-    console.error("Error al banear:", error);
-    if (typeof showToast === 'function') showToast('Error', error.message || 'No se pudo registrar el baneo.', 'error', 4000);
-  }
-
-  if (typeof renderAdminReports === 'function') renderAdminReports();
-  if (typeof renderAdminVendorsList === 'function') renderAdminVendorsList();
-}
-
-async function desbanearUsuarioAdmin(idOrEmail) {
-  if (!idOrEmail || !window.supabaseClient) return;
-
-  const target = String(idOrEmail).trim();
-  const isEmail = target.includes('@');
-  let query = window.supabaseClient.from('usuarios_baneados').delete();
-  if (isEmail) {
-    query = query.ilike('email', target);
-  } else {
-    query = query.or(`id.eq.${target},user_id.eq.${target}`);
-  }
-
-  const { error } = await query;
-
-  if (typeof descargarBaneadosDeSupabase === 'function') {
     await descargarBaneadosDeSupabase();
   }
 

@@ -100,6 +100,8 @@ async function iniciarSuscripcionAnuncios() {
     .on('postgres_changes', { event: '*', schema: 'public', table: _ADS_AD_TABLE }, () => {
         // Skip reload if the admin is actively saving (prevents race condition with form fields)
         if (window._isSavingAdsMutex) return;
+        const adminModal = document.getElementById('modalAdmin');
+        if (adminModal && adminModal.style.display === 'flex') return;
         cargarAnunciosGuardados();
     })
     .subscribe();
