@@ -160,10 +160,11 @@ function switchModalTab(idx) {
   if (idx === 0) renderAdminDashboardKPIs();
 
   if (idx === 1) renderAdminVendorsList();
+  if (idx === 2) renderAdminVendorsList();
 
-  if (idx === 2) renderAdminOrdersList();
+  if (idx === 3) renderAdminOrdersList();
 
-  if (idx === 3) {
+  if (idx === 4) {
     cargarConfiguracionPublicidadEnAdmin();
     renderAdminAdsAndPostsList();
   }
@@ -172,7 +173,7 @@ function switchModalTab(idx) {
     renderAdminAvisosFeedList();
   }
 
-  if (idx === 5) renderAdminReports();
+  if (idx === 6) renderAdminReports();
 }
 
 window.adminActivePromoTab = 'mapa';
@@ -594,120 +595,93 @@ async function renderAdminVendorsList() {
     };
   });
   const buyersList = users
-    .filter(user => !user.is_driver)
-    .map(user => ({
-      user_id: user.user_id,
-      gmail: user.email || '',
-      nombre: user.nombre || user.email || 'Usuario',
-      role: user.role || 'vecino',
-      is_banned: !!user.is_banned
-    }));
+      .filter(user => !user.is_driver)
+      .map(user => ({
+        user_id: user.user_id,
+        gmail: user.email || '',
+        nombre: user.nombre || user.email || 'Usuario',
+        role: user.role || 'vecino',
+        is_banned: !!user.is_banned,
+        ciudad: user.ciudad || 'No especificada'
+      }));
 
   renderFinalVendors(defaultVendors, deletedIds, buyersList, usersResult.error);
 }
 
 function renderFinalVendors(defaultVendors, deletedIds, buyersList = [], usersLoadError = null) {
   const container = document.getElementById('adminVendorsListContainer');
-
-  if (!container) return;
-
-  const finalVendors = defaultVendors.filter(v => !deletedIds.includes(v.id));
-
-  let html = `
-    <div style="display:flex; gap:8px; margin-bottom: 12px;">
-      <button onclick="document.getElementById('admin_view_vendors').style.display='block'; document.getElementById('admin_view_buyers').style.display='none'; this.style.background='#FF6D00'; document.getElementById('btn_toggle_buyers').style.background='#334155';" id="btn_toggle_vendors" style="flex:1; padding:8px; border-radius:6px; border:none; cursor:pointer; font-weight:800; font-size:11px; background:#FF6D00; color:white;"><i class="fa-solid fa-truck-fast"></i> REPARTIDORES</button>
-      <button onclick="document.getElementById('admin_view_vendors').style.display='none'; document.getElementById('admin_view_buyers').style.display='block'; this.style.background='#38BDF8'; document.getElementById('btn_toggle_vendors').style.background='#334155';" id="btn_toggle_buyers" style="flex:1; padding:8px; border-radius:6px; border:none; cursor:pointer; font-weight:800; font-size:11px; background:#334155; color:white;"><i class="fa-solid fa-users"></i> COMPRADORES</button>
-    </div>
-  `;
+  const buyersContainer = document.getElementById('adminBuyersListContainer');
   
-  html += `<div id="admin_view_vendors">`;
-
-  if (finalVendors.length === 0) {
-    html += '<div style="color:#64748B; font-style:italic; font-size:10.5px; margin-bottom:8px;">No hay repartidores registrados.</div>';
-  }
-
-  finalVendors.forEach((v) => {
-    const isBanned = v.is_banned || esRepartidorBaneado(v.name, v.plate, v.whatsapp, v.user_id);
-
-    const safeName = encodeURIComponent(v.name || '').replace(/'/g, "%27");
-
-    const safePlate = encodeURIComponent(v.plate || '').replace(/'/g, "%27");
-
-    html += `
-
-      <div style="background:#1E293B; padding:10px 12px; border-radius:10px; border:1px solid ${isBanned ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.08)'}; display:flex; justify-content:space-between; align-items:center; opacity: ${isBanned ? '0.7' : '1'}; margin-bottom:6px;">
-
-        <div>
-
-          <strong style="color:${isBanned ? '#EF4444' : '#FF6D00'}; font-size:12px;">${isBanned ? '🚫 [BLOQUEADO/BANEADO] ' : '🚚 '}${escapeHtmlStr(v.name)}</strong>
-
-          <span style="font-size:10.5px; color:#CBD5E1;"> (${escapeHtmlStr(v.category)})</span>
-
-          <div style="font-size:10px; color:#94A3B8; margin-top:2px;">Placa: ${escapeHtmlStr(v.plate)} • Estado: ${isBanned ? '<span style="color:#EF4444; font-weight:700;">ACCESO BLOQUEADO</span>' : '<span style="color:#00B0FF; font-weight:700;">ACTIVO (REGISTRO AUTOMÁTICO)</span>'}</div>
-
-        </div>
-
-        <div style="display:flex; gap:4px;">
-
-          ${isBanned ? `
-
-            <button data-action="desbanearRepartidorAdmin" data-id="${v.id}" data-user-id="${encodeURIComponent(v.user_id || '')}" data-name="${safeName}" style="background:#0288D1; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-lock-open"></i> Desbanear</button>
-
-          ` : `
-
-            <button data-action="banearRepartidorAdmin" data-id="${v.id}" data-user-id="${encodeURIComponent(v.user_id || '')}" data-name="${safeName}" data-plate="${safePlate}" style="background:#E65100; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-user-slash"></i> Banear</button>
-
-          `}
-
-          <button data-action="borrarRepartidorPermanente" data-id="${v.id}" data-user-id="${escapeHtmlStr(v.user_id || '')}" data-gmail="${escapeHtmlStr(v.gmail || '')}" data-name="${safeName}" style="background:#D32F2F; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Eliminar</button>
-
-        </div>
-
-      </div>
-
-    `;
-
-  });
-
-  html += `</div><div id="admin_view_buyers" style="display:none;">`;
-
-  if (usersLoadError) {
-    html += '<div style="color:#FCA5A5; background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.3); border-radius:8px; padding:8px; font-size:10.5px;">No se pudo consultar la lista real de compradores. Ejecuta la migración 044 en Supabase y vuelve a abrir el panel.</div>';
-  } else if (buyersList.length === 0) {
-    html += '<div style="color:#64748B; font-style:italic; font-size:10.5px;">No hay compradores registrados aún.</div>';
-
-  } else {
-    buyersList.forEach(b => {
-      const isBanned = b.is_banned || esRepartidorBaneado(b.nombre || '', '', '', b.user_id || b.gmail);
-      const safeBuyerName = encodeURIComponent(b.nombre || b.gmail || 'Usuario').replace(/'/g, '%27');
-
+  if (container) {
+    const finalVendors = defaultVendors.filter(v => !deletedIds.includes(v.id));
+    let html = '';
+    if (finalVendors.length === 0) {
+      html += '<div style="color:#64748B; font-style:italic; font-size:10.5px; margin-bottom:8px;">No hay repartidores registrados.</div>';
+    }
+    finalVendors.forEach((v) => {
+      const isBanned = v.is_banned || (typeof esRepartidorBaneado === 'function' ? esRepartidorBaneado(v.name, v.plate, v.whatsapp, v.user_id) : false);
+      const safeName = encodeURIComponent(v.name || '').replace(/'/g, "%27");
+      const safePlate = encodeURIComponent(v.plate || '').replace(/'/g, "%27");
       html += `
-
-        <div style="background:#1E293B; padding:8px 10px; border-radius:8px; border:1px solid ${isBanned ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.08)'}; display:flex; justify-content:space-between; align-items:center; opacity: ${isBanned ? '0.7' : '1'}; margin-bottom:4px;">
-
+        <div style="background:#1E293B; padding:10px 12px; border-radius:10px; border:1px solid ${isBanned ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.08)'}; display:flex; justify-content:space-between; align-items:center; opacity: ${isBanned ? '0.7' : '1'}; margin-bottom:6px;">
           <div>
-
-            <strong style="color:${isBanned ? '#EF4444' : '#38BDF8'}; font-size:11.5px;">${isBanned ? '🚫 [BLOQUEADO] ' : '👤 '}${escapeHtmlStr(b.nombre || b.gmail)}</strong>
-
-            <div style="font-size:9.5px; color:#94A3B8;">${escapeHtmlStr(b.gmail)} • ${isBanned ? '<span style="color:#EF4444; font-weight:700;">ACCESO BLOQUEADO</span>' : '<span style="color:#00B0FF;">Activo</span>'}</div>
-
+            <strong style="color:${isBanned ? '#EF4444' : '#FF6D00'}; font-size:12px;">${isBanned ? '⛔ [BLOQUEADO/BANEADO] ' : '🏍️ '}${escapeHtmlStr(v.name)}</strong>
+            <span style="font-size:10.5px; color:#CBD5E1;"> (${escapeHtmlStr(v.category)})</span>
+            <div style="font-size:10px; color:#94A3B8; margin-top:2px;">Placa: ${escapeHtmlStr(v.plate)} • Estado: ${isBanned ? '<span style="color:#EF4444; font-weight:700;">ACCESO BLOQUEADO</span>' : '<span style="color:#00B0FF; font-weight:700;">ACTIVO (REGISTRO AUTOMÁTICO)</span>'}</div>
           </div>
-
           <div style="display:flex; gap:4px;">
-            <button data-action="${isBanned ? 'desbanearUsuarioAdmin' : 'banearCompradorAdmin'}" data-gmail="${escapeHtmlStr(b.gmail)}" data-id="${escapeHtmlStr(b.user_id || '')}" data-name="${safeBuyerName}" style="background:${isBanned ? '#0288D1' : '#E65100'}; color:white; border:none; padding:4px 8px; border-radius:6px; font-weight:800; font-size:9px; cursor:pointer;">${isBanned ? '🔓 Desbanear' : '🚫 Banear'}</button>
-            <button data-action="borrarCompradorPermanente" data-user-id="${escapeHtmlStr(b.user_id || '')}" data-gmail="${escapeHtmlStr(b.gmail)}" data-name="${safeBuyerName}" style="background:#D32F2F; color:white; border:none; padding:4px 8px; border-radius:6px; font-weight:800; font-size:9px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Eliminar</button>
+            ${isBanned ? `
+              <button data-action="desbanearRepartidorAdmin" data-id="${v.id}" data-user-id="${encodeURIComponent(v.user_id || '')}" data-name="${safeName}" style="background:#0288D1; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-lock-open"></i> Desbanear</button>
+            ` : `
+              <button data-action="banearRepartidorAdmin" data-id="${v.id}" data-user-id="${encodeURIComponent(v.user_id || '')}" data-name="${safeName}" data-plate="${safePlate}" style="background:#E65100; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-user-slash"></i> Banear</button>
+            `}
+            <button data-action="borrarRepartidorPermanente" data-id="${v.id}" data-user-id="${escapeHtmlStr(v.user_id || '')}" data-gmail="${escapeHtmlStr(v.gmail || '')}" data-name="${safeName}" style="background:#D32F2F; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Eliminar</button>
           </div>
-
         </div>
-
       `;
-
     });
-
+    container.innerHTML = html;
   }
 
-  html += `</div>`;
-  container.innerHTML = html;
+  if (buyersContainer) {
+    let buyersHtml = '';
+    if (usersLoadError) {
+      buyersHtml += '<div style="color:#FCA5A5; background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.3); border-radius:8px; padding:8px; font-size:10.5px;">Error al cargar.</div>';
+    } else if (buyersList.length === 0) {
+      buyersHtml += '<div style="color:#64748B; font-style:italic; font-size:10.5px;">No hay compradores registrados aún.</div>';
+    } else {
+      const grouped = {};
+      buyersList.forEach(b => {
+        let c = b.ciudad || 'No especificada';
+        c = c.trim() === '' ? 'No especificada' : c;
+        if (!grouped[c]) grouped[c] = [];
+        grouped[c].push(b);
+      });
+
+      for (const [ciudad, buyers] of Object.entries(grouped).sort((a,b)=>a[0].localeCompare(b[0]))) {
+        buyersHtml += `<div style="font-weight:900; color:#CBD5E1; margin:16px 0 8px; font-size:11px; text-transform:uppercase; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:4px;">📍 ${escapeHtmlStr(ciudad)} <span style="color:#64748B; font-size:9px;">(${buyers.length})</span></div>`;
+        
+        buyers.forEach(b => {
+          const isBanned = b.is_banned || (typeof esRepartidorBaneado === 'function' ? esRepartidorBaneado(b.nombre || '', '', '', b.user_id || b.gmail) : false);
+          const safeBuyerName = encodeURIComponent(b.nombre || b.gmail || 'Usuario').replace(/'/g, '%27');
+
+          buyersHtml += `
+            <div style="background:#1E293B; padding:8px 10px; border-radius:8px; border:1px solid ${isBanned ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.08)'}; display:flex; justify-content:space-between; align-items:center; opacity: ${isBanned ? '0.7' : '1'}; margin-bottom:4px;">
+              <div>
+                <strong style="color:${isBanned ? '#EF4444' : '#38BDF8'}; font-size:11.5px;">${isBanned ? '⛔ [BLOQUEADO] ' : '👤 '}${escapeHtmlStr(b.nombre || b.gmail)}</strong>
+                <div style="font-size:9.5px; color:#94A3B8;">${escapeHtmlStr(b.gmail)} • ${isBanned ? '<span style="color:#EF4444; font-weight:700;">ACCESO BLOQUEADO</span>' : '<span style="color:#00B0FF;">Activo</span>'}</div>
+              </div>
+              <div style="display:flex; gap:4px;">
+                <button data-action="${isBanned ? 'desbanearUsuarioAdmin' : 'banearCompradorAdmin'}" data-gmail="${escapeHtmlStr(b.gmail)}" data-id="${escapeHtmlStr(b.user_id || '')}" data-name="${safeBuyerName}" style="background:${isBanned ? '#0288D1' : '#E65100'}; color:white; border:none; padding:4px 8px; border-radius:6px; font-weight:800; font-size:9px; cursor:pointer;">${isBanned ? '🔓 Desbanear' : '🚫 Banear'}</button>
+                <button data-action="borrarCompradorPermanente" data-user-id="${escapeHtmlStr(b.user_id || '')}" data-gmail="${escapeHtmlStr(b.gmail)}" data-name="${safeBuyerName}" style="background:#D32F2F; color:white; border:none; padding:4px 8px; border-radius:6px; font-weight:800; font-size:9px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Eliminar</button>
+              </div>
+            </div>
+          `;
+        });
+      }
+    }
+    buyersContainer.innerHTML = buyersHtml;
+  }
 }
 
 function activarBloqueoPantallaCompletaApp() {

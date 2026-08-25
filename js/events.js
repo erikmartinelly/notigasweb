@@ -299,20 +299,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_auto_event_56 = document.getElementById('auto-event-56');
     if (el_auto_event_56) el_auto_event_56.addEventListener('click', () => { safeCall('switchModalTab', 1); });
 
+    const el_btnTabCompradores = document.getElementById('btnTabCompradores');
+    if (el_btnTabCompradores) el_btnTabCompradores.addEventListener('click', () => { safeCall('switchModalTab', 2); });
+
     const el_auto_event_57 = document.getElementById('auto-event-57');
-    if (el_auto_event_57) el_auto_event_57.addEventListener('click', () => { safeCall('switchModalTab', 2); });
+    if (el_auto_event_57) el_auto_event_57.addEventListener('click', () => { safeCall('switchModalTab', 3); });
 
     const el_auto_event_58 = document.getElementById('auto-event-58');
-    if (el_auto_event_58) el_auto_event_58.addEventListener('click', () => { safeCall('switchModalTab', 3); });
+    if (el_auto_event_58) el_auto_event_58.addEventListener('click', () => { safeCall('switchModalTab', 4); });
 
     const el_btnAdminTabAvisos = document.getElementById('btnAdminTabAvisos');
-    if (el_btnAdminTabAvisos) el_btnAdminTabAvisos.addEventListener('click', () => { safeCall('switchModalTab', 4); });
+    if (el_btnAdminTabAvisos) el_btnAdminTabAvisos.addEventListener('click', () => { safeCall('switchModalTab', 5); });
 
     const el_auto_event_59 = document.getElementById('auto-event-59');
-    if (el_auto_event_59) el_auto_event_59.addEventListener('click', () => { safeCall('switchModalTab', 5); });
+    if (el_auto_event_59) el_auto_event_59.addEventListener('click', () => { safeCall('switchModalTab', 6); });
 
     const el_auto_event_60 = document.getElementById('auto-event-60');
-    if (el_auto_event_60) el_auto_event_60.addEventListener('click', () => { safeCall('switchModalTab', 6); });
+    if (el_auto_event_60) el_auto_event_60.addEventListener('click', () => { safeCall('switchModalTab', 7); });
 
     const el_auto_event_61 = document.getElementById('auto-event-61');
     if (el_auto_event_61) el_auto_event_61.addEventListener('click', () => { safeCall('emitirAlertaOficialAdmin'); });
@@ -476,7 +479,7 @@ document.addEventListener('click', async (e) => {
     }
     else if (action === 'switchAdminTabAvisos') {
       if (typeof window.loadAdminModules === 'function') await window.loadAdminModules();
-      if (typeof window.switchModalTab === 'function') window.switchModalTab(4);
+      if (typeof window.switchModalTab === 'function') window.switchModalTab(5);
     }
     else if (action === 'refrescarAvisosAdmin') {
       if (typeof window.loadAdminModules === 'function') await window.loadAdminModules();
