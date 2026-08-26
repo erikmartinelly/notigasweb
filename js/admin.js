@@ -1355,7 +1355,7 @@ window.borrarAnuncioLocalAdmin = async function(adId) {
   }
 
   if (typeof showConfirmModal === 'function') {
-    showConfirmModal('Eliminar Propaganda', '🗑️ ¿Deseas eliminar permanentemente esta propaganda local?', 'Eliminar', async () => {
+    showConfirmModal('🗑️', 'Eliminar Propaganda', '¿Deseas eliminar permanentemente esta propaganda local?', 'Eliminar', async () => {
       if (window.supabaseClient && adId) {
         if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Eliminando propaganda...');
         let deleted = false;
