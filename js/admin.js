@@ -1750,25 +1750,6 @@ async function banearUsuarioAdmin(identifier) {
   alert(`📥 DESCARGA COMPLETADA EN FORMATO .CSV\n\nSe exportaron ${driversList.length} Fichas de Repartidores registradas para el panel de administración.`);
 }
 
-/* DESCARGA COMPLETA DE ESTADÍSTICAS GENERALES (.CSV) */
-
-    await descargarBaneadosDeSupabase();
-  }
-
-  if (!error) {
-    if (typeof showToast === 'function') {
-      showToast('🔓 Usuario Desbaneado', 'Se ha retirado el bloqueo correctamente.', 'success', 3500);
-    } else {
-      alert(`✅ USUARIO DESBANEADO\nSe ha retirado el bloqueo.`);
-    }
-  } else {
-    console.error('Error desbaneando usuario:', error);
-    if (typeof showToast === 'function') showToast('Error', 'No se pudo retirar el baneo.', 'error');
-  }
-
-  if (typeof renderAdminReports === 'function') renderAdminReports();
-  if (typeof renderAdminVendorsList === 'function') renderAdminVendorsList();
-}
 
 async function borrarDenunciaAdmin(indexId) {
   if (!window.supabaseClient) return;
