@@ -308,8 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_auto_event_58 = document.getElementById('auto-event-58');
     if (el_auto_event_58) el_auto_event_58.addEventListener('click', () => { safeCall('switchModalTab', 4); });
 
-    const el_btnAdminTabAvisos = document.getElementById('btnAdminTabAvisos');
-    if (el_btnAdminTabAvisos) el_btnAdminTabAvisos.addEventListener('click', () => { safeCall('switchModalTab', 5); });
+
 
     const el_auto_event_59 = document.getElementById('auto-event-59');
     if (el_auto_event_59) el_auto_event_59.addEventListener('click', () => { safeCall('switchModalTab', 6); });

@@ -141,12 +141,16 @@ async function renderDriverOrdersList() {
     return;
   }
 
-  // Agrupar pedidos por categoría
+  // Agrupar pedidos por categoría y zona
   const groups = {};
   orders.forEach(o => {
     const cat = o.categoria || 'Gas GLP';
-    if (!groups[cat]) groups[cat] = [];
-    groups[cat].push(o);
+    const zone = (o.barrio_otb || 'Sin Zona').trim();
+    const groupKey = `${cat}|${zone}`;
+    if (!groups[groupKey]) {
+      groups[groupKey] = { cat: cat, zone: zone, items: [] };
+    }
+    groups[groupKey].items.push(o);
   });
 
   let html = '';
@@ -192,8 +196,8 @@ async function renderDriverOrdersList() {
 
   // Grupos de demanda disponibles
   html += '<div class="demand-section-title" style="margin-top:12px; margin-bottom:8px;"><i class="fa-solid fa-layer-group"></i> Demanda Vecinal Acumulada</div>';
-  Object.keys(groups).forEach(cat => {
-    const list = groups[cat].filter(o => o.estado === 'pendiente' || o.estado === 'visto');
+  Object.values(groups).forEach(g => {
+    const list = g.items.filter(o => o.estado === 'pendiente' || o.estado === 'visto');
     if (list.length === 0) return;
 
     const totalGarrafas = list.reduce((acc, cur) => acc + (parseInt(cur.cantidad, 10) || 1), 0);
@@ -204,7 +208,7 @@ async function renderDriverOrdersList() {
       <div class="demand-group-card" style="margin-bottom:10px;">
         <div class="demand-card-header">
           <div>
-            <div style="font-size:13px; font-weight:800; color:#F8FAFC;">${escapeHtmlStr(cat)}</div>
+            <div style="font-size:13px; font-weight:800; color:#F8FAFC;">${escapeHtmlStr(g.cat)} <span style="font-size:11px; color:#38BDF8; font-weight:700;">- ${escapeHtmlStr(g.zone)}</span></div>
             <div style="font-size:10px; color:#94A3B8;">${list.length} ${list.length === 1 ? 'vecino esperando' : 'vecinos esperando'}</div>
           </div>
           <div class="demand-card-count">${totalGarrafas} <span style="font-size:10px; color:#94A3B8;">pedidos</span></div>
@@ -225,7 +229,7 @@ async function renderDriverOrdersList() {
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:6px;">
                   <div style="flex:1; min-width:0;">
                     <div style="font-size:12px; font-weight:800; color:#F8FAFC; margin-bottom:2px;">
-                      📦 ${escapeHtmlStr(o.categoria || cat)} <span style="color:#FF6D00;">(${escapeHtmlStr(o.cantidad || '1 un')})</span>
+                      📦 ${escapeHtmlStr(o.categoria || g.cat)} <span style="color:#FF6D00;">(${escapeHtmlStr(o.cantidad || '1 un')})</span>
                     </div>
                     <div style="color:#CBD5E1; font-size:11px; margin-top:2px;">
                       📍 <strong>Dirección:</strong> ${st}
@@ -524,10 +528,10 @@ function renderActiveOrderNotice(order) {
   }
 
   if (tripBtnReceived) {
-    tripBtnReceived.style.display = (estado === 'asignado') ? 'flex' : 'none';
+    tripBtnReceived.style.display = (effectiveState === 'asignado') ? 'flex' : 'none';
   }
   if (tripBtnCancel) {
-    tripBtnCancel.style.display = (estado === 'entregado' || estado === 'cancelado') ? 'none' : 'flex';
+    tripBtnCancel.style.display = (effectiveState === 'entregado' || effectiveState === 'cancelado') ? 'none' : 'flex';
   }
 }
 

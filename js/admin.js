@@ -945,7 +945,7 @@ async function renderAdminOrdersList() {
 async function borrarPedidoFantasmaAdmin(tipo, param = null) {
   if (tipo === 'supabase' && window.supabaseClient && param) {
     if (typeof showConfirmModal === 'function') {
-      showConfirmModal('⚠️ Eliminar Pedido', '¿Eliminar permanentemente este pedido? Esta acción no se puede deshacer.', 'Eliminar', async () => {
+      showConfirmModal('⚠️', 'Eliminar Pedido', '¿Eliminar permanentemente este pedido? Esta acción no se puede deshacer.', 'Eliminar', async () => {
         const { error } = await window.supabaseClient.from('pedidos').delete().eq('id', param);
         if (error) {
           console.error("Error borrando pedido supabase:", error);
@@ -999,7 +999,7 @@ async function borrarPedidoFantasmaAdmin(tipo, param = null) {
 async function renovarPedidoAdmin(orderId) {
   if (!orderId || !window.supabaseClient) return;
   if (typeof showConfirmModal === 'function') {
-    showConfirmModal('Renovar Pedido', '¿Renovar este pedido? Volverá a estado pendiente, quedará sin repartidor asignado y comenzará un nuevo plazo.', 'Renovar', async () => {
+    showConfirmModal('🔄', 'Renovar Pedido', '¿Renovar este pedido? Volverá a estado pendiente, quedará sin repartidor asignado y comenzará un nuevo plazo.', 'Renovar', async () => {
       const { error } = await window.supabaseClient.rpc('rpc_admin_renew_order', { p_order_id: orderId });
       if (error) {
         console.error('Error renovando pedido:', error);
@@ -2004,7 +2004,7 @@ function filtrarYRenderizarAvisosAdmin(filtro = '') {
 async function purgarAvisosExpiradosAdmin() {
   if (!window.supabaseClient) return;
   if (typeof showConfirmModal === 'function') {
-    showConfirmModal('Purgar Avisos', '🧹 ¿Deseas purgar y eliminar todos los avisos comunitarios con más de 24 horas de antigüedad?', 'Purgar', async () => {
+    showConfirmModal('🧹', 'Purgar Avisos', '🧹 ¿Deseas purgar y eliminar todos los avisos comunitarios con más de 24 horas de antigüedad?', 'Purgar', async () => {
       const dosDiasAtras = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
       try {
         const { error } = await window.supabaseClient

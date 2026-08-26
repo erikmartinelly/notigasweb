@@ -240,7 +240,7 @@ async function guardarEdicionPost() {
 async function borrarPostPropio(postId) {
   if (!postId || !window.supabaseClient) return;
   if (typeof showConfirmModal === 'function') {
-    showConfirmModal('Eliminar Aviso', '🗑️ ¿Deseas eliminar permanentemente esta publicación del Tablón Vecinal?', 'Eliminar', async () => {
+    showConfirmModal('🗑️', 'Eliminar Aviso', '¿Deseas eliminar permanentemente esta publicación del Tablón Vecinal?', 'Eliminar', async () => {
       const { error } = await window.supabaseClient.from('avisos').delete().eq('id', postId);
       if (error) {
         if (typeof showToast === 'function') showToast('Error', 'No se pudo eliminar el aviso: ' + error.message, 'error', 4000);
