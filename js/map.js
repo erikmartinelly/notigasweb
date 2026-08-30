@@ -92,7 +92,7 @@ const garrafaGreenSvgMarkerHtml = `
 // Marcador único de repartidor: Camión 3D Rojo Moderno + insignia R Oficial
 const truckSvgMarkerHtml = `
   <div class="driver-map-marker" title="Repartidor Oficial NOTIGAS en Vivo">
-    <img src="icons/camion_3d_rojo.svg" class="driver-3d-truck-img" alt="Camión Repartidor 3D">
+    <img src="icons/nissan_condor_topdown.svg" class="driver-3d-truck-img" alt="Camión Repartidor 3D">
     <span class="driver-marker-badge" aria-hidden="true">R</span>
     <span class="driver-marker-online" title="GPS en Tiempo Real"></span>
   </div>
@@ -2229,8 +2229,8 @@ function initNotigasMap() {
   truckIcon = L.divIcon({
     className: 'notigas-driver-marker',
     html: truckSvgMarkerHtml,
-    iconSize: [52, 62],
-    iconAnchor: [26, 31]
+    iconSize: [40, 72],
+    iconAnchor: [20, 36]
   });
 
   truckRadarBlueIcon = L.divIcon({
