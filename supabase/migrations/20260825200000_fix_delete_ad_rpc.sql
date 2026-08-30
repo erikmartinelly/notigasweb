@@ -9,7 +9,7 @@ RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path TO 'public', 'auth'
-AS 
+AS $$
 BEGIN
     IF NOT public.is_admin_email_for(p_admin_email) THEN
         RETURN jsonb_build_object('success', false, 'error', 'No autorizado: requiere cuenta administradora activa');
@@ -19,5 +19,5 @@ BEGIN
     WHERE id = p_ad_id;
 
     RETURN jsonb_build_object('success', true, 'id', p_ad_id);
-END;
+END;$$
 ;
