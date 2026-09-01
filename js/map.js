@@ -2279,31 +2279,22 @@ function initNotigasMap() {
     zoomOutTitle: 'Alejar'
   }).addTo(map);
 
-  // Mapa base optimizado de alta velocidad (CartoDB Voyager sin etiquetas + Capa independiente de etiquetas)
-  const mapAttribution = '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>';
+  // Mapa base Google Maps Roadmap (apariencia 100% idéntica a Google Maps, colores predeterminados)
+  const mapAttribution = '&copy; Google Maps';
   const baseTileLayer = L.tileLayer(
-    'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png',
+    'https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
     {
       maxZoom: 20,
-      maxNativeZoom: 19,
-      subdomains: ['a', 'b', 'c', 'd'],
+      maxNativeZoom: 20,
+      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
       attribution: mapAttribution,
       className: 'map-base-layer',
       crossOrigin: true
     }
   );
 
-  const labelsTileLayer = L.tileLayer(
-    'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png',
-    {
-      maxZoom: 20,
-      maxNativeZoom: 19,
-      subdomains: ['a', 'b', 'c', 'd'],
-      className: 'map-labels-layer',
-      crossOrigin: true,
-      zIndex: 450
-    }
-  );
+  // Ya no necesitamos capa de etiquetas separada
+  const labelsTileLayer = L.layerGroup(); // Grupo vacío para no romper referencias
 
   baseTileLayer.on('tileerror', function(error) {
     if (error && error.tile && !error.tile._fallbackDone) {
