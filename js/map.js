@@ -2279,14 +2279,13 @@ function initNotigasMap() {
     zoomOutTitle: 'Alejar'
   }).addTo(map);
 
-  // Mapa base Google Maps Roadmap (apariencia 100% idéntica a Google Maps, colores predeterminados)
-  const mapAttribution = '&copy; Google Maps';
+  // Mapa base OpenStreetMap 100% libre (sin bloqueos)
+  const mapAttribution = '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors';
   const baseTileLayer = L.tileLayer(
-    'https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
     {
       maxZoom: 20,
-      maxNativeZoom: 20,
-      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+      maxNativeZoom: 19,
       attribution: mapAttribution,
       className: 'map-base-layer',
       crossOrigin: true

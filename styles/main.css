@@ -4832,9 +4832,11 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 .map-base-layer .leaflet-tile {
 
-  filter: contrast(106%) brightness(101%) saturate(104%);
+  /* Filtro para imitar los colores de Google Maps en OpenStreetMap (desaturado, más claro, tono ajustado) */
 
-  -webkit-filter: contrast(106%) brightness(101%) saturate(104%);
+  filter: grayscale(15%) contrast(90%) brightness(105%) saturate(75%) hue-rotate(345deg);
+
+  -webkit-filter: grayscale(15%) contrast(90%) brightness(105%) saturate(75%) hue-rotate(345deg);
 
   transition: opacity 0.2s ease;
 
