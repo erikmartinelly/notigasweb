@@ -17,43 +17,26 @@
       <stop offset="0%" stop-color="#9e9e9e"/>
       <stop offset="100%" stop-color="#616161"/>
     </linearGradient>
-    <linearGradient id="gasCylinder" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#ef5350"/>
-      <stop offset="50%" stop-color="#e53935"/>
-      <stop offset="100%" stop-color="#c62828"/>
+    <linearGradient id="boxGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e0e0e0"/>
     </linearGradient>
-    
-    <g id="cylinder">
-      <rect x="0" y="4" width="8" height="14" rx="2" fill="url(#gasCylinder)"/>
-      <path d="M 2 4 Q 4 1 6 4" fill="none" stroke="#e53935" stroke-width="1.5"/>
-    </g>
   </defs>
 
   <!-- Chasis (Bed and undercarriage) -->
   <rect x="10" y="40" width="75" height="4" fill="url(#chassisMetal)" rx="1"/>
   <rect x="15" y="38" width="65" height="2" fill="#757575"/>
 
-  <!-- Estructura de la carrocería trasera (Cage) -->
-  <path d="M 12 18 L 12 40 M 35 18 L 35 40 M 58 18 L 58 40 M 80 18 L 80 40" stroke="#757575" stroke-width="1.5"/>
-  <path d="M 12 18 L 80 18 M 12 25 L 80 25 M 12 32 L 80 32" stroke="#757575" stroke-width="1.5"/>
+  <!-- Tolva cerrada (Closed cargo box) -->
+  <rect x="12" y="12" width="66" height="26" fill="url(#boxGradient)" rx="2" stroke="#bdbdbd" stroke-width="1"/>
+  
+  <!-- Detalles de la tolva -->
+  <rect x="14" y="14" width="62" height="22" fill="none" stroke="#eeeeee" stroke-width="1"/>
+  <!-- Línea inferior decorativa de la tolva -->
+  <rect x="12" y="32" width="66" height="4" fill="#e53935" rx="0"/>
 
-  <!-- Cilindros de Gas (Garrafas) en la parte trasera -->
-  <!-- Fila inferior -->
-  <use href="#cylinder" x="14" y="22"/>
-  <use href="#cylinder" x="24" y="22"/>
-  <use href="#cylinder" x="34" y="22"/>
-  <use href="#cylinder" x="44" y="22"/>
-  <use href="#cylinder" x="54" y="22"/>
-  <use href="#cylinder" x="64" y="22"/>
-  <use href="#cylinder" x="74" y="22"/>
-  <!-- Fila superior -->
-  <use href="#cylinder" x="14" y="8"/>
-  <use href="#cylinder" x="24" y="8"/>
-  <use href="#cylinder" x="34" y="8"/>
-  <use href="#cylinder" x="44" y="8"/>
-  <use href="#cylinder" x="54" y="8"/>
-  <use href="#cylinder" x="64" y="8"/>
-  <use href="#cylinder" x="74" y="8"/>
+  <!-- Letra R en el centro de la tolva -->
+  <text x="45" y="29" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#e53935" text-anchor="middle">R</text>
 
   <!-- Cabina del Nissan Condor (Modern Truck Cab) -->
   <path d="M 80 15 L 102 15 C 105 15, 108 17, 110 22 L 115 35 C 115 38, 116 42, 116 45 L 116 46 L 80 46 Z" fill="url(#redCab)"/>
@@ -76,5 +59,4 @@
   <circle cx="98" cy="46" r="8" fill="url(#wheelTire)"/>
   <circle cx="98" cy="46" r="4" fill="#9e9e9e"/>
   <circle cx="98" cy="46" r="2" fill="#424242"/>
-
 </svg>
