@@ -92,7 +92,7 @@ const garrafaGreenSvgMarkerHtml = `
 // Marcador único de repartidor: Camión 3D Rojo Moderno + insignia R Oficial
 const truckSvgMarkerHtml = `
   <div class="driver-map-marker" title="Repartidor Oficial NOTIGAS en Vivo">
-    <img src="icons/nissan_condor_topdown.svg" class="driver-3d-truck-img" alt="Camión Repartidor 3D">
+    <img src="icons/nissan_condor_side.svg" class="driver-3d-truck-img" alt="Camión Repartidor">
     <span class="driver-marker-badge" aria-hidden="true">R</span>
     <span class="driver-marker-online" title="GPS en Tiempo Real"></span>
   </div>
@@ -1154,8 +1154,14 @@ function actualizarRepartidorEnMapa(data) {
       if (el) {
         const img = el.querySelector('.driver-3d-truck-img');
         if (img) {
-          img.style.transform = `rotate(${currentAngle}deg)`;
-          img.style.transition = 'transform 0.5s ease-out';
+          // Normalizar ángulo para saber si va a la izquierda o derecha
+          const ang = ((currentAngle % 360) + 360) % 360;
+          if (ang > 180 && ang < 360) {
+            img.style.transform = `scaleX(-1)`;
+          } else {
+            img.style.transform = `scaleX(1)`;
+          }
+          img.style.transition = 'transform 0.3s ease-out';
         }
       }
     }, 50);
@@ -1741,8 +1747,14 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
       if (el) {
         const img = el.querySelector('.driver-3d-truck-img');
         if (img) {
-          img.style.transform = `rotate(${currentAngle}deg)`;
-          img.style.transition = 'transform 0.5s ease-out';
+          // Normalizar ángulo para saber si va a la izquierda o derecha
+          const ang = ((currentAngle % 360) + 360) % 360;
+          if (ang > 180 && ang < 360) {
+            img.style.transform = `scaleX(-1)`;
+          } else {
+            img.style.transform = `scaleX(1)`;
+          }
+          img.style.transition = 'transform 0.3s ease-out';
         }
       }
     }, 50);

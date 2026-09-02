@@ -5687,9 +5687,9 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 .driver-3d-truck-img {
 
-  width: 50px;
+  width: 70px;
 
-  height: 60px;
+  height: 45px;
 
   object-fit: contain;
 
@@ -7372,8 +7372,8 @@ button:active, .tab-btn:active, .cat-chip:active {
 }
 
 .driver-3d-truck-img {
-  width: 40px !important;
-  height: 72px !important;
+  width: 60px !important;
+  height: 40px !important;
   transform-origin: center center !important;
 }
 
