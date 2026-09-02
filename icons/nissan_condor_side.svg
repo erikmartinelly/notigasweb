@@ -38,8 +38,8 @@
   <!-- Línea inferior decorativa de la tolva -->
   <rect x="12" y="32" width="66" height="4" fill="#d32f2f" rx="0"/>
 
-  <!-- Letra R resaltada en el centro de la tolva -->
-  <text x="45" y="29" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#ff1744" stroke="#ffffff" stroke-width="0.8" text-anchor="middle">R</text>
+  <!-- Letra R resaltada en el centro de la tolva (Tipografía moderna y dinámica) -->
+  <text x="45" y="29.5" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="22" font-weight="900" font-style="italic" fill="#ff1744" stroke="#ffffff" stroke-width="1" text-anchor="middle">R</text>
 
   <!-- Cabina del Nissan Condor (Modern Truck Cab) -->
   <path d="M 80 15 L 102 15 C 105 15, 108 17, 110 22 L 115 35 C 115 38, 116 42, 116 45 L 116 46 L 80 46 Z" fill="url(#redCab)"/>
