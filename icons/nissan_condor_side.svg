@@ -18,8 +18,11 @@
       <stop offset="100%" stop-color="#616161"/>
     </linearGradient>
     <linearGradient id="boxGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#ffee58"/>
-      <stop offset="100%" stop-color="#fbc02d"/>
+      <stop offset="0%" stop-color="#fff59d"/>
+      <stop offset="25%" stop-color="#ffeb3b"/>
+      <stop offset="50%" stop-color="#fbc02d"/>
+      <stop offset="75%" stop-color="#ffeb3b"/>
+      <stop offset="100%" stop-color="#f57f17"/>
     </linearGradient>
   </defs>
 
@@ -31,12 +34,12 @@
   <rect x="12" y="12" width="66" height="26" fill="url(#boxGradient)" rx="2" stroke="#f57f17" stroke-width="1"/>
   
   <!-- Detalles de la tolva -->
-  <rect x="14" y="14" width="62" height="22" fill="none" stroke="#fff59d" stroke-width="1"/>
+  <rect x="14" y="14" width="62" height="22" fill="none" stroke="#fff9c4" stroke-width="1"/>
   <!-- Línea inferior decorativa de la tolva -->
-  <rect x="12" y="32" width="66" height="4" fill="#e53935" rx="0"/>
+  <rect x="12" y="32" width="66" height="4" fill="#d32f2f" rx="0"/>
 
-  <!-- Letra R en el centro de la tolva -->
-  <text x="45" y="29" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#e53935" text-anchor="middle">R</text>
+  <!-- Letra R resaltada en el centro de la tolva -->
+  <text x="45" y="29" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#ff1744" stroke="#ffffff" stroke-width="0.8" text-anchor="middle">R</text>
 
   <!-- Cabina del Nissan Condor (Modern Truck Cab) -->
   <path d="M 80 15 L 102 15 C 105 15, 108 17, 110 22 L 115 35 C 115 38, 116 42, 116 45 L 116 46 L 80 46 Z" fill="url(#redCab)"/>
