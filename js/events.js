@@ -165,6 +165,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_btnDeleteMyAccount = document.getElementById('btnDeleteMyAccount');
     if (el_btnDeleteMyAccount) el_btnDeleteMyAccount.addEventListener('click', () => { safeCall('eliminarMiCuentaCompleta'); });
 
+    const el_btnCloseWelcomeAuth = document.getElementById('btnCloseWelcomeAuth');
+    if (el_btnCloseWelcomeAuth) el_btnCloseWelcomeAuth.addEventListener('click', () => { safeCall('closeWelcomeAuthModal'); });
+
+    const el_modalWelcomeAuth = document.getElementById('modalWelcomeAuth');
+    if (el_modalWelcomeAuth) {
+      el_modalWelcomeAuth.addEventListener('click', (e) => {
+        if (e.target === el_modalWelcomeAuth) {
+          safeCall('closeWelcomeAuthModal');
+        }
+      });
+    }
+
+    const el_btnMenuLogin = document.getElementById('btnMenuLogin');
+    if (el_btnMenuLogin) el_btnMenuLogin.addEventListener('click', () => {
+      safeCall('closeUserSettingsModal');
+      const modal = document.getElementById('modalWelcomeAuth');
+      if (modal) {
+        safeCall('showAuthStep', 1);
+        modal.style.display = 'flex';
+      }
+    });
+
+    const el_btnRegistroRepartidoresMenu = document.getElementById('btnRegistroRepartidoresMenu');
+    if (el_btnRegistroRepartidoresMenu) el_btnRegistroRepartidoresMenu.addEventListener('click', () => {
+      safeCall('abrirRegistroRepartidores');
+    });
+
     const el_auto_event_29 = document.getElementById('auto-event-29');
     if (el_auto_event_29) el_auto_event_29.addEventListener('click', () => { safeCall('closeDriverModal'); });
 

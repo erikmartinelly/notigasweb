@@ -687,10 +687,22 @@ if (typeof AppState !== 'undefined' && typeof AppState.on === 'function') {
   AppState.on('activeOrder', () => checkActiveOrderStatus());
 }
 
-function abrirSubmenuPedidos() {
+async function abrirSubmenuPedidos() {
+  const userId = (typeof getAuthenticatedUserId === 'function') ? await getAuthenticatedUserId() : null;
+  const userData = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
+  const isLoggedIn = Boolean(userId || userData?.user_id || userData?.gmail);
+
+  if (!isLoggedIn) {
+    if (typeof window.abrirModalRegistroPedido === 'function') {
+      window.abrirModalRegistroPedido();
+    }
+    return;
+  }
+
   const modalSubmenu = document.getElementById('modalSubmenu');
   if (modalSubmenu) modalSubmenu.style.display = 'flex';
 }
+window.abrirSubmenuPedidos = abrirSubmenuPedidos;
 
 function closeSubmenuModal() {
   const modalSubmenu = document.getElementById('modalSubmenu');
@@ -712,7 +724,19 @@ window.centrarMapaEnMiPedido = function() {
   }
 };
 
-function seleccionarYPedirDirecto(catNombre) {
+async function seleccionarYPedirDirecto(catNombre) {
+  const userId = (typeof getAuthenticatedUserId === 'function') ? await getAuthenticatedUserId() : null;
+  const userData = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
+  const isLoggedIn = Boolean(userId || userData?.user_id || userData?.gmail);
+
+  if (!isLoggedIn) {
+    closeSubmenuModal();
+    if (typeof window.abrirModalRegistroPedido === 'function') {
+      window.abrirModalRegistroPedido();
+    }
+    return;
+  }
+
   closeSubmenuModal();
 
   const sel = document.getElementById('selectCategoria');
@@ -737,6 +761,7 @@ function seleccionarYPedirDirecto(catNombre) {
   const modalPedido = document.getElementById('modalPedido');
   if (modalPedido) modalPedido.style.display = 'flex';
 }
+window.seleccionarYPedirDirecto = seleccionarYPedirDirecto;
 
 function closePedidoModal() {
   const modalPedido = document.getElementById('modalPedido');

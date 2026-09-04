@@ -89,17 +89,26 @@ function abrirConfiguracionSegunRol() {
       const userData = AppState.get('userData') || {};
       const yaTieneFicha = Boolean(userData.hasDriverProfile || userData.placa || userData.whatsapp);
       buyerToDriverContainer.innerHTML = `
-        <button type="button" id="btnActivateDriverMode" style="width:100%; background:linear-gradient(135deg,#FF6D00,#E65100); color:white; border:none; padding:10px; border-radius:10px; font-weight:800; cursor:pointer; font-size:12px;">
-          <i class="fa-solid fa-truck-fast"></i> ${yaTieneFicha ? 'Volver al modo Repartidor' : 'Registrarme como Repartidor'}
+        <button type="button" id="btnRegistroRepartidoresMenu" style="width:100%; background:linear-gradient(135deg,#FF6D00,#E65100); color:white; border:none; padding:12px; border-radius:10px; font-weight:800; cursor:pointer; font-size:13px; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 12px rgba(255,109,0,0.25);">
+          <i class="fa-solid fa-truck-fast"></i> ${yaTieneFicha ? 'Volver al modo Repartidor' : 'Registro Repartidores'}
         </button>`;
-      const activateButton = document.getElementById('btnActivateDriverMode');
+      const activateButton = document.getElementById('btnRegistroRepartidoresMenu');
       if (activateButton) activateButton.addEventListener('click', () => {
-        if (typeof window.migrarDatosAntiguosARepartidor === 'function') {
+        if (typeof window.abrirRegistroRepartidores === 'function') {
+          window.abrirRegistroRepartidores();
+        } else if (typeof window.migrarDatosAntiguosARepartidor === 'function') {
           window.migrarDatosAntiguosARepartidor();
         }
       });
     }
   }
+
+  // Alternar botón Cerrar Sesión vs Iniciar Sesión según si hay usuario autenticado
+  const btnLogout = document.getElementById('auto-event-27');
+  const btnLogin = document.getElementById('btnMenuLogin');
+  const hasUser = Boolean(AppState.get('userData')?.user_id || window._tempAuthUser?.id);
+  if (btnLogout) btnLogout.style.display = hasUser ? 'block' : 'none';
+  if (btnLogin) btnLogin.style.display = hasUser ? 'none' : 'block';
 
   // Visibilidad del botón de acceso a Administrador exclusiva para administradores autenticados
   const btnAdmin = document.getElementById('btnAdminAccessQuick');

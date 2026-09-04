@@ -2,6 +2,7 @@
 
 # Dependencias Node.js
 node_modules/
+node-v20.11.1-win-x64/
 npm-debug.log*
 
 # Archivos de Entorno y Claves Sensibles

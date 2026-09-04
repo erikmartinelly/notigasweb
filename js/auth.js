@@ -86,10 +86,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      // 2. Si no hay sesión, mostrar el modal de bienvenida/ingreso
+      // 2. Si no hay sesión, mantener oculto el modal de bienvenida:
+      // Cualquier visitante puede explorar la página libremente sin registrarse.
       const modalAuth = document.getElementById('modalWelcomeAuth');
       if (modalAuth) {
-        modalAuth.style.display = hasSession ? 'none' : 'flex';
+        modalAuth.style.display = 'none';
       }
 
       // 3. Notificar al resto de la app que Auth terminó su validación inicial
@@ -923,6 +924,136 @@ function closeUserSettingsModal() {
   const modal = document.getElementById('modalUserSettings');
   if (modal) modal.style.display = 'none';
 }
+
+function closeWelcomeAuthModal() {
+  const modal = document.getElementById('modalWelcomeAuth');
+  if (modal) modal.style.display = 'none';
+  const titleEl = document.getElementById('welcomeAuthTitleText');
+  if (titleEl) titleEl.textContent = '👋 Bienvenido a NOTIGAS';
+  const descEl = document.getElementById('welcomeAuthDescText');
+  if (descEl) descEl.textContent = '¿Qué deseas hacer?';
+}
+window.closeWelcomeAuthModal = closeWelcomeAuthModal;
+
+window.abrirModalRegistroPedido = function() {
+  if (typeof closeSubmenuModal === 'function') closeSubmenuModal();
+  if (typeof closeUserSettingsModal === 'function') closeUserSettingsModal();
+
+  window._pendingActionAfterAuth = 'abrirSubmenuPedidos';
+  window._targetAuthRole = 'buyer';
+  currentSelectedRole = 'buyer';
+
+  const modalAuth = document.getElementById('modalWelcomeAuth');
+  if (!modalAuth) return;
+
+  const titleEl = document.getElementById('welcomeAuthTitleText');
+  if (titleEl) {
+    titleEl.textContent = '📝 Registro para Pedidos';
+  }
+  const descEl = document.getElementById('welcomeAuthDescText');
+  if (descEl) {
+    descEl.textContent = 'Para realizar un pedido a domicilio, por favor regístrate o inicia sesión con tu cuenta.';
+  }
+
+  if (typeof setAuthAction === 'function') setAuthAction('register');
+  if (typeof showAuthStep === 'function') showAuthStep(1);
+
+  modalAuth.style.display = 'flex';
+
+  if (typeof showToast === 'function') {
+    showToast('📝 Registro Requerido', 'Por favor regístrate o inicia sesión para hacer tu pedido a domicilio.', 'info', 4500);
+  }
+};
+
+window.abrirRegistroRepartidores = async function() {
+  if (typeof closeUserSettingsModal === 'function') closeUserSettingsModal();
+
+  const userId = (typeof getAuthenticatedUserId === 'function') ? await getAuthenticatedUserId() : null;
+  const userData = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
+  const isLoggedIn = Boolean(userId || userData?.user_id || userData?.gmail);
+
+  if (isLoggedIn) {
+    let hasDriverProfile = Boolean(userData?.role === 'repartidor' || userData?.hasDriverProfile || userData?.placa);
+
+    if (!hasDriverProfile && window.supabaseClient && userId) {
+      try {
+        const { data: driverRow } = await window.supabaseClient
+          .from('choferes_habilitados')
+          .select('id, nombre_completo, placa, categoria, telefono_whatsapp, ciudad, schedule, productos')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (driverRow) {
+          hasDriverProfile = true;
+          const u = AppState.get('userData') || {};
+          AppState.set('userData', {
+            ...u,
+            role: 'repartidor',
+            hasDriverProfile: true,
+            nombre: driverRow.nombre_completo || u.nombre,
+            whatsapp: driverRow.telefono_whatsapp || u.whatsapp,
+            placa: driverRow.placa,
+            categoria: driverRow.categoria,
+            productos: driverRow.productos,
+            schedule: driverRow.schedule,
+            ciudad: driverRow.ciudad
+          });
+        }
+      } catch (e) {
+        console.warn("Error verificando repartidor en BD:", e);
+      }
+    }
+
+    if (hasDriverProfile) {
+      if (typeof setAppMode === 'function') setAppMode('driver');
+      if (typeof showToast === 'function') {
+        showToast('🟢 Modo Repartidor', '¡Sesión de repartidor activada!', 'success', 3000);
+      }
+    } else {
+      const modalDriver = document.getElementById('modalDriver');
+      if (modalDriver) {
+        const inputDriverNombre = document.getElementById('inputDriverNombre');
+        if (inputDriverNombre && userData?.nombre) {
+          inputDriverNombre.value = `${userData.nombre} ${userData.apellido || ''}`.trim();
+        }
+        const inputDriverCiudad = document.getElementById('inputDriverCiudad');
+        if (inputDriverCiudad && userData?.ciudad) {
+          inputDriverCiudad.value = userData.ciudad;
+        }
+        const titleEl = document.getElementById('driverModalTitleText');
+        const subtitleEl = document.getElementById('driverModalSubtitle');
+        if (titleEl) titleEl.textContent = 'Registro de Repartidor';
+        if (subtitleEl) subtitleEl.textContent = 'Completa tu ficha de negocio. Aparecerá en la lista de repartidores de la OTB.';
+        modalDriver.style.display = 'flex';
+      }
+    }
+    return;
+  }
+
+  // Si NO está autenticado:
+  window._targetAuthRole = 'driver';
+  currentSelectedRole = 'driver';
+
+  const modalAuth = document.getElementById('modalWelcomeAuth');
+  if (modalAuth) {
+    const titleEl = document.getElementById('welcomeAuthTitleText');
+    if (titleEl) {
+      titleEl.textContent = '🚛 Registro de Repartidores';
+    }
+    const descEl = document.getElementById('welcomeAuthDescText');
+    if (descEl) {
+      descEl.textContent = 'Para registrar tu camión o negocio de reparto, por favor regístrate o inicia sesión.';
+    }
+
+    if (typeof setAuthAction === 'function') setAuthAction('register');
+    if (typeof showAuthStep === 'function') showAuthStep(1);
+    modalAuth.style.display = 'flex';
+
+    if (typeof showToast === 'function') {
+      showToast('🚛 Registro de Repartidor', 'Inicia sesión o regístrate para activar tu ficha de repartidor.', 'info', 4500);
+    }
+  }
+};
 function guardarPrefUsuario() {
   // Detectar si es repartidor
   const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
@@ -1069,7 +1200,7 @@ async function ejecutarCierreSesionUsuario() {
 
     const modalAuth = document.getElementById('modalWelcomeAuth');
     if (modalAuth) {
-      modalAuth.style.display = 'flex';
+      modalAuth.style.display = 'none';
       selectAuthRole('buyer');
     }
 
@@ -1511,9 +1642,13 @@ async function procesarSesionExitosa(user, isInteractive = false) {
         }
 
         if (!window._roleSelectedNow) {
-          currentSelectedRole = esRepartidorDB && existingProfile?.role !== 'vecino'
-            ? 'driver'
-            : ((existingProfile?.role === 'repartidor') ? 'driver' : 'buyer');
+          if (window._targetAuthRole === 'driver') {
+            currentSelectedRole = 'driver';
+          } else {
+            currentSelectedRole = esRepartidorDB && existingProfile?.role !== 'vecino'
+              ? 'driver'
+              : ((existingProfile?.role === 'repartidor') ? 'driver' : 'buyer');
+          }
         }
       } catch(e) {
         console.error("Error verificando usuario en BD:", e);
@@ -1522,19 +1657,23 @@ async function procesarSesionExitosa(user, isInteractive = false) {
 
     // 2. Si es un usuario 100% NUEVO (no existe chofer ni perfil, y no ha seleccionado rol aún)
     if (!esRepartidorDB && !existingProfile && !window._roleSelectedNow) {
-      if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-      if (modalAuth) modalAuth.style.display = 'none';
+      if (window._targetAuthRole === 'driver') {
+        currentSelectedRole = 'driver';
+      } else {
+        if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+        if (modalAuth) modalAuth.style.display = 'none';
 
-      window._tempAuthUser = user;
+        window._tempAuthUser = user;
 
-      const inputName = document.getElementById('newUserName');
-      const inputLastName = document.getElementById('newUserLastName');
-      if (inputName && !inputName.value) inputName.value = userNombre;
-      if (inputLastName && !inputLastName.value) inputLastName.value = userApellido;
+        const inputName = document.getElementById('newUserName');
+        const inputLastName = document.getElementById('newUserLastName');
+        if (inputName && !inputName.value) inputName.value = userNombre;
+        if (inputLastName && !inputLastName.value) inputLastName.value = userApellido;
 
-      const modalRole = document.getElementById('modalRoleSelection');
-      if (modalRole) modalRole.style.display = 'flex';
-      return;
+        const modalRole = document.getElementById('modalRoleSelection');
+        if (modalRole) modalRole.style.display = 'flex';
+        return;
+      }
     }
 
     const resolvedCity = (choferData?.ciudad || existingProfile?.ciudad || AppState.get('city') || 'cochabamba').toLowerCase().trim();
@@ -1628,6 +1767,16 @@ async function procesarSesionExitosa(user, isInteractive = false) {
         }
       }
     }
+
+    if (window._pendingActionAfterAuth === 'abrirSubmenuPedidos') {
+      window._pendingActionAfterAuth = null;
+      setTimeout(() => {
+        if (typeof window.abrirSubmenuPedidos === 'function') {
+          window.abrirSubmenuPedidos();
+        }
+      }, 500);
+    }
+    window._targetAuthRole = null;
   } catch (err) {
     console.error('Error procesando sesión exitosa:', err);
   } finally {
