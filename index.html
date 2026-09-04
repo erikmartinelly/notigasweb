@@ -126,7 +126,7 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="styles/main.css?v=116">
+  <link rel="stylesheet" href="styles/main.css?v=117">
 
   <!-- SERVICIOS EXTERNOS -->
 
@@ -185,6 +185,34 @@
     <button class="tab-btn"  id="auto-event-5" ><i class="fa-solid fa-bullhorn"></i> MURO DE COMENTARIOS</button>
 
   </nav>
+
+  <!-- BARRA DE ACCESO PARA VISITANTES (DEBAJO DEL MENÚ) -->
+
+  <div id="topGuestAuthBanner" style="display:none; background:#0F172A; border-bottom:1px solid #1E293B; padding:6px 14px; align-items:center; justify-content:space-between; font-size:12px; z-index:800; position:relative;">
+
+    <div style="color:#94A3B8; font-weight:600; display:flex; align-items:center; gap:6px;">
+
+      <i class="fa-solid fa-circle-user" style="color:#38BDF8;"></i> ¿Tienes cuenta?
+
+    </div>
+
+    <div style="display:flex; gap:8px;">
+
+      <button type="button" id="btnTopIngresar" style="background:#0288D1; color:white; border:none; padding:5px 12px; border-radius:6px; font-weight:700; font-size:11.5px; cursor:pointer; display:flex; align-items:center; gap:4px;">
+
+        <i class="fa-solid fa-right-to-bracket"></i> Ingresar
+
+      </button>
+
+      <button type="button" id="btnTopRegistrarse" style="background:#10B981; color:white; border:none; padding:5px 12px; border-radius:6px; font-weight:700; font-size:11.5px; cursor:pointer; display:flex; align-items:center; gap:4px;">
+
+        <i class="fa-solid fa-user-plus"></i> Registrarse
+
+      </button>
+
+    </div>
+
+  </div>
 
   <main>
 
@@ -636,11 +664,31 @@
 
       </button>
 
-      <button type="button" class="btn-submit" id="btnMenuLogin" style="display:none; width:100%; background:linear-gradient(135deg, #0288D1, #01579B); color:white; border:none; padding:10px; border-radius:10px; font-weight:800; cursor:pointer; font-size:12px; margin-top:8px;">
+      <div id="menuAuthGuestBlock" style="margin-top: 10px; padding: 12px; background: rgba(30, 41, 59, 0.7); border: 1px solid #334155; border-radius: 10px; text-align: center;">
 
-        <i class="fa-solid fa-right-to-bracket"></i> Iniciar Sesión / Registrarse
+        <div style="font-size: 12px; color: #94A3B8; margin-bottom: 8px; font-weight: 600;">
 
-      </button>
+          Accede a tu cuenta de NOTIGAS:
+
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+
+          <button type="button" id="btnMenuIngresar" style="flex: 1; background: linear-gradient(135deg, #0288D1, #01579B); color: white; border: none; padding: 10px 12px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 12.5px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+
+            <i class="fa-solid fa-right-to-bracket"></i> Ingresar
+
+          </button>
+
+          <button type="button" id="btnMenuRegistrarse" style="flex: 1; background: linear-gradient(135deg, #10B981, #059669); color: white; border: none; padding: 10px 12px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 12.5px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+
+            <i class="fa-solid fa-user-plus"></i> Registrarse
+
+          </button>
+
+        </div>
+
+      </div>
 
       <!-- MENÚ DE CONFIGURACIÓN -->
 
@@ -796,7 +844,7 @@
 
   <!-- MODAL DE INGRESO / AUTENTICACIÓN MEJORADO CON SELECCIÓN DE ROL Y MÉTODOS DE INGRESO -->
 
-  <div class="modal" id="modalWelcomeAuth">
+  <div class="modal" id="modalWelcomeAuth" style="display: none;">
 
     <div class="modal-content ng-inline-43">
 
@@ -930,7 +978,7 @@
 
   <!-- NUEVO MODAL DE SELECCIÓN DE ROL (MOSTRADO DESPUÉS DE AUTENTICAR SI ES NECESARIO) -->
 
-  <div class="modal" id="modalRoleSelection">
+  <div class="modal" id="modalRoleSelection" style="display: none;">
 
     <div class="modal-content ng-inline-43">
 
@@ -2268,25 +2316,25 @@
 
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3/dist/umd/supabase.min.js"></script>
 
-  <script defer src="js/state.js?v=116"></script>
+  <script defer src="js/state.js?v=117"></script>
 
-  <script defer src="js/ui.js?v=116"></script>
+  <script defer src="js/ui.js?v=117"></script>
 
-  <script defer src="js/supabase-config.js?v=116"></script>
+  <script defer src="js/supabase-config.js?v=117"></script>
 
-  <script defer src="js/auth.js?v=116"></script>
+  <script defer src="js/auth.js?v=117"></script>
 
-  <script defer src="js/map.js?v=116"></script>
+  <script defer src="js/map.js?v=117"></script>
 
-  <script defer src="js/map_search.js?v=116"></script>
+  <script defer src="js/map_search.js?v=117"></script>
 
-  <script defer src="js/map_gps.js?v=116"></script>
+  <script defer src="js/map_gps.js?v=117"></script>
 
-  <script defer src="js/orders.js?v=116"></script>
+  <script defer src="js/orders.js?v=117"></script>
 
-  <script defer src="js/app.js?v=116"></script>
+  <script defer src="js/app.js?v=117"></script>
 
-  <script defer src="js/events.js?v=116"></script>
+  <script defer src="js/events.js?v=117"></script>
 
 </body>
 

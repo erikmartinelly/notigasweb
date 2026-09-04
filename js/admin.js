@@ -109,8 +109,8 @@ function cerrarSesionRepartidorActivarComprador() {
       if (typeof closeUserSettingsModal === 'function') closeUserSettingsModal();
       if (typeof setAppMode === 'function') setAppMode('buyer');
       const modalAuth = document.getElementById('modalWelcomeAuth');
-      if (modalAuth) modalAuth.style.display = 'flex';
-      if (typeof showToast === 'function') showToast('🛒 Modo Comprador', 'Modo Repartidor cerrado. Puedes ingresar como Comprador.', 'info', 2000);
+      if (modalAuth) modalAuth.style.display = 'none';
+      if (typeof showToast === 'function') showToast('🛒 Modo Comprador', 'Modo Repartidor cerrado. Navegando como Comprador.', 'info', 2000);
     });
   }
 }

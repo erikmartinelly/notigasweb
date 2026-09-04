@@ -177,15 +177,17 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    const el_btnMenuLogin = document.getElementById('btnMenuLogin');
-    if (el_btnMenuLogin) el_btnMenuLogin.addEventListener('click', () => {
-      safeCall('closeUserSettingsModal');
-      const modal = document.getElementById('modalWelcomeAuth');
-      if (modal) {
-        safeCall('showAuthStep', 1);
-        modal.style.display = 'flex';
-      }
-    });
+    const el_btnMenuIngresar = document.getElementById('btnMenuIngresar');
+    if (el_btnMenuIngresar) el_btnMenuIngresar.addEventListener('click', () => { safeCall('abrirLoginModal'); });
+
+    const el_btnMenuRegistrarse = document.getElementById('btnMenuRegistrarse');
+    if (el_btnMenuRegistrarse) el_btnMenuRegistrarse.addEventListener('click', () => { safeCall('abrirRegistroModal'); });
+
+    const el_btnTopIngresar = document.getElementById('btnTopIngresar');
+    if (el_btnTopIngresar) el_btnTopIngresar.addEventListener('click', () => { safeCall('abrirLoginModal'); });
+
+    const el_btnTopRegistrarse = document.getElementById('btnTopRegistrarse');
+    if (el_btnTopRegistrarse) el_btnTopRegistrarse.addEventListener('click', () => { safeCall('abrirRegistroModal'); });
 
     const el_btnRegistroRepartidoresMenu = document.getElementById('btnRegistroRepartidoresMenu');
     if (el_btnRegistroRepartidoresMenu) el_btnRegistroRepartidoresMenu.addEventListener('click', () => {

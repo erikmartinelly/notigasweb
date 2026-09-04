@@ -58,9 +58,6 @@ window._cachedAdminEmail = null;
 window._cachedIsAdmin = false;
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Iniciar One Tap en segundo plano
-  initGoogleOneTap();
-
   const initAuthSession = async () => {
     if (_authInitPromise) return _authInitPromise;
     _authInitPromise = (async () => {
@@ -86,11 +83,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      // 2. Si no hay sesión, mantener oculto el modal de bienvenida:
-      // Cualquier visitante puede explorar la página libremente sin registrarse.
+      // Si no hay sesión, mantener ocultos TODOS los modales de autenticación.
+      // Cero pantallas de login/registro iniciales: el usuario navega 100% libre.
       const modalAuth = document.getElementById('modalWelcomeAuth');
-      if (modalAuth) {
-        modalAuth.style.display = 'none';
+      if (modalAuth) modalAuth.style.display = 'none';
+      const modalRole = document.getElementById('modalRoleSelection');
+      if (modalRole) modalRole.style.display = 'none';
+
+      if (typeof window.actualizarVisibilidadBotonesAuth === 'function') {
+        window.actualizarVisibilidadBotonesAuth(hasSession);
       }
 
       // 3. Notificar al resto de la app que Auth terminó su validación inicial
@@ -528,7 +529,7 @@ function tryInitGoogleGis() {
   }
 }
 
-window.addEventListener('load', tryInitGoogleGis);
+window.tryInitGoogleGis = tryInitGoogleGis;
 
 function parseGoogleJwt(token) {
   try {
@@ -935,6 +936,47 @@ function closeWelcomeAuthModal() {
 }
 window.closeWelcomeAuthModal = closeWelcomeAuthModal;
 
+window.actualizarVisibilidadBotonesAuth = function(isLoggedIn) {
+  const isLogged = (typeof isLoggedIn === 'boolean')
+    ? isLoggedIn
+    : Boolean(AppState?.get('userData')?.user_id || window._tempAuthUser?.id);
+
+  const menuGuestBlock = document.getElementById('menuAuthGuestBlock');
+  if (menuGuestBlock) menuGuestBlock.style.display = isLogged ? 'none' : 'block';
+
+  const topGuestBanner = document.getElementById('topGuestAuthBanner');
+  if (topGuestBanner) topGuestBanner.style.display = isLogged ? 'none' : 'flex';
+
+  const btnLogout = document.getElementById('auto-event-27');
+  if (btnLogout) btnLogout.style.display = isLogged ? 'block' : 'none';
+};
+
+window.abrirLoginModal = function() {
+  if (typeof closeUserSettingsModal === 'function') closeUserSettingsModal();
+  const modal = document.getElementById('modalWelcomeAuth');
+  if (!modal) return;
+  const titleEl = document.getElementById('welcomeAuthTitleText');
+  if (titleEl) titleEl.textContent = '👋 Iniciar Sesión en NOTIGAS';
+  const descEl = document.getElementById('welcomeAuthDescText');
+  if (descEl) descEl.textContent = 'Ingresa con tu correo o tu cuenta de Google:';
+  if (typeof setAuthAction === 'function') setAuthAction('login');
+  if (typeof showAuthStep === 'function') showAuthStep(2);
+  modal.style.display = 'flex';
+};
+
+window.abrirRegistroModal = function() {
+  if (typeof closeUserSettingsModal === 'function') closeUserSettingsModal();
+  const modal = document.getElementById('modalWelcomeAuth');
+  if (!modal) return;
+  const titleEl = document.getElementById('welcomeAuthTitleText');
+  if (titleEl) titleEl.textContent = '📝 Crear Cuenta en NOTIGAS';
+  const descEl = document.getElementById('welcomeAuthDescText');
+  if (descEl) descEl.textContent = 'Regístrate gratis con Google o con tu correo:';
+  if (typeof setAuthAction === 'function') setAuthAction('register');
+  if (typeof showAuthStep === 'function') showAuthStep(2);
+  modal.style.display = 'flex';
+};
+
 window.abrirModalRegistroPedido = function() {
   if (typeof closeSubmenuModal === 'function') closeSubmenuModal();
   if (typeof closeUserSettingsModal === 'function') closeUserSettingsModal();
@@ -1205,6 +1247,9 @@ async function ejecutarCierreSesionUsuario() {
     }
 
     if (typeof checkActiveOrderStatus === 'function') checkActiveOrderStatus();
+    if (typeof window.actualizarVisibilidadBotonesAuth === 'function') {
+      window.actualizarVisibilidadBotonesAuth(false);
+    }
     if (typeof showToast === 'function') {
       showToast('🚪 Sesión cerrada', 'La sesión se cerró correctamente en este dispositivo.', 'info', 2200);
     }
@@ -1776,6 +1821,9 @@ async function procesarSesionExitosa(user, isInteractive = false) {
         }
       }, 500);
     }
+    if (typeof window.actualizarVisibilidadBotonesAuth === 'function') {
+      window.actualizarVisibilidadBotonesAuth(true);
+    }
     window._targetAuthRole = null;
   } catch (err) {
     console.error('Error procesando sesión exitosa:', err);
@@ -1874,6 +1922,9 @@ window.showAuthStep = function(step) {
   if (step2) step2.style.display = (step === 2) ? 'block' : 'none';
 
   if (step === 2) {
+    if (typeof initGoogleOneTap === 'function') {
+      try { initGoogleOneTap(); } catch(_) {}
+    }
     if (namesGroup) {
       namesGroup.style.display = (currentAuthAction === 'register') ? 'block' : 'none';
     }

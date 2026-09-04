@@ -103,12 +103,10 @@ function abrirConfiguracionSegunRol() {
     }
   }
 
-  // Alternar botón Cerrar Sesión vs Iniciar Sesión según si hay usuario autenticado
-  const btnLogout = document.getElementById('auto-event-27');
-  const btnLogin = document.getElementById('btnMenuLogin');
-  const hasUser = Boolean(AppState.get('userData')?.user_id || window._tempAuthUser?.id);
-  if (btnLogout) btnLogout.style.display = hasUser ? 'block' : 'none';
-  if (btnLogin) btnLogin.style.display = hasUser ? 'none' : 'block';
+  // Alternar botón Cerrar Sesión vs bloque de acceso (Ingresar / Registrarse)
+  if (typeof window.actualizarVisibilidadBotonesAuth === 'function') {
+    window.actualizarVisibilidadBotonesAuth();
+  }
 
   // Visibilidad del botón de acceso a Administrador exclusiva para administradores autenticados
   const btnAdmin = document.getElementById('btnAdminAccessQuick');
