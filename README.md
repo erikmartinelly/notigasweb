@@ -31,13 +31,18 @@ Engineered with **Vanilla JavaScript**, **Supabase PostgreSQL with PostGIS**, an
 
 ---
 
-## 🌍 Social Impact & Purpose (The "Why")
+## 🌍 Social Impact, Market Evolution & Purpose (The "Why")
 
-NOTIGAS was created with a clear social mission focused on vulnerable communities across Bolivia.
+### The Origin: Bolivia and the Challenge of State Monopoly
+NOTIGAS was initially conceived with a deep social mission to serve vulnerable households in **Bolivia**, where thousands of families rely on liquefied petroleum gas (LPG) cylinders for daily cooking and essential heating. However, retail gas distribution in Bolivia is governed under a centralized state monopoly (controlled by YPFB). Under this monopolistic framework, strict government quotas, fixed distribution channels, and administrative bottlenecks hindered open market modernization, preventing direct peer-to-peer driver competition, innovation, and technological transparency.
 
-In Bolivia, thousands of families depend on liquefied petroleum gas (LPG) cylinders for daily cooking and survival. When gas runs out, traveling to distant distribution depots incurs substantial transportation expenses that many households cannot easily afford. Purchasing directly from neighborhood delivery trucks is significantly more affordable, but historically required waiting and hoping to hear the truck's bell as it drove past.
+### The Strategic Pivot: Expansion to Peru (Open, Competitive Free Market)
+Recognizing that open technology thrives best in an open economy, NOTIGAS evolved and transitioned its operational footprint to **Peru**—a dynamic, free-market economy with private retail energy distribution and independent delivery entrepreneurs (*baloneros*):
+* **Free Market Logistics:** Peru operates without state retail monopolies in LPG distribution. Private companies, independent distributors, and local delivery trucks compete transparently based on speed, customer satisfaction, and coverage across 26 department capitals (with Lima as the primary hub).
+* **Peer-to-Peer (1-to-1) Driver Competition:** In Peru, NOTIGAS connects buyers directly with independent drivers. While a demand beacon is available, drivers inspect buyer contact information; once a driver accepts, atomic locking assigns the order exclusively, fostering healthy competition.
+* **Instant Direct Coordination:** Drivers utilize 1-touch status updates (*"En camino"*, *"Estoy en su puerta"*, 1-click WhatsApp direct coordination, and atomic release) alongside external Google Maps turn-by-turn routing, cutting intermediary costs and delivering immediate social value.
 
-NOTIGAS bridges this gap by democratizing access to modern geospatial logistics in real time. By connecting neighbors directly with local distributors through intelligent mapping and demand visualization, delivery trucks reach households quickly and reliably, lowering living costs and transforming everyday technology into a catalyst for social equity.
+By shifting from a state-monopolized market to Peru's competitive free market, NOTIGAS transformed everyday technology into a truly democratic catalyst for social equity, accessibility, and lower living costs.
 
 ---
 
@@ -82,8 +87,8 @@ NOTIGAS bridges this gap by democratizing access to modern geospatial logistics 
 ├── styles/
 │   └── main.css            # Application design tokens, responsive layouts, and Google Maps-inspired UI
 ├── supabase/
-│   ├── full_production_schema.sql # CONSOLIDATED PRODUCTION SCHEMA (1-Click Database Deployment - v092)
-│   └── migrations/         # Historical incremental migrations (001 through 092)
+│   ├── full_production_schema.sql # CONSOLIDATED PRODUCTION SCHEMA (1-Click Database Deployment - v094)
+│   └── migrations/         # Historical incremental migrations (001 through 094)
 └── .github/
     └── workflows/ci.yml    # CI automated syntax & integrity verification
 ```
@@ -100,8 +105,8 @@ cd notigasweb
 
 ### 2. Configure Database & Backend (Supabase)
 * Create a new project at [Supabase](https://supabase.com/).
-* **Option A (Recommended - 1-Click Deployment):** Execute [`supabase/full_production_schema.sql`](supabase/full_production_schema.sql) in the Supabase SQL Editor. This single script provisions all tables, PostGIS extensions, public views, spatial clustering, automated triggers, strict category/city isolation, atomic RPC functions, and Row Level Security (RLS) policies through version `092`.
-* **Option B (Incremental Migrations):** Run the migration files inside `supabase/migrations/` in sequential order through `092`.
+* **Option A (Recommended - 1-Click Deployment):** Execute [`supabase/full_production_schema.sql`](supabase/full_production_schema.sql) in the Supabase SQL Editor. This single script provisions all tables, PostGIS extensions, public views, spatial clustering, automated triggers, strict category/city isolation, atomic RPC functions, and Row Level Security (RLS) policies through version `094`.
+* **Option B (Incremental Migrations):** Run the migration files inside `supabase/migrations/` in sequential order through `094`.
 * Open `js/supabase-config.js` and input your `supabaseUrl` and `supabaseAnonKey`.
 
 ### 3. Configure Google Identity Services & Auth

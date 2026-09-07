@@ -1,7 +1,7 @@
 -- ==============================================================================
 -- NOTIGAS - CONSOLIDATED FULL PRODUCTION DATABASE SCHEMA
 -- Compatible con PostgreSQL 15+ y Supabase Auth / Storage / Realtime
--- Versión Oficial Consolidada de Producción (Incluye Migraciones 001 hasta 086)
+-- Versión Oficial Consolidada de Producción (Incluye Migraciones 001 hasta 094)
 -- ==============================================================================
 
 -- ==============================================================================
@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     user_id text UNIQUE,
     nombre text,
     role text DEFAULT 'vecino' CHECK (role IN ('vecino', 'repartidor', 'admin')),
-    ciudad text DEFAULT 'cochabamba',
+    ciudad text DEFAULT 'lima',
     latitude double precision,
     longitude double precision,
     direccion text,
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS public.choferes_habilitados (
     productos text NOT NULL,
     zonas text,
     schedule text,
-    ciudad text NOT NULL DEFAULT 'cochabamba',
+    ciudad text NOT NULL DEFAULT 'lima',
     estado_verificacion text NOT NULL DEFAULT 'aprobado',
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -57,8 +57,9 @@ CREATE TABLE IF NOT EXISTS public.pedidos (
     direccion text NOT NULL,
     telefono text DEFAULT '',
     estado text NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'visto', 'asignado', 'entregado', 'cancelado', 'recibido')),
+    subestado text DEFAULT NULL,
     driver_id text,
-    ciudad text NOT NULL DEFAULT 'cochabamba',
+    ciudad text NOT NULL DEFAULT 'lima',
     barrio_otb text,
     latitude double precision NOT NULL,
     longitude double precision NOT NULL,
@@ -78,6 +79,7 @@ CREATE TABLE IF NOT EXISTS public.pedidos_archivo (
     direccion text,
     telefono text,
     estado text,
+    subestado text,
     driver_id text,
     ciudad text,
     barrio_otb text,
@@ -96,10 +98,11 @@ CREATE TABLE IF NOT EXISTS public.rutas_repartidores (
     distribuidor_nombre text,
     categoria text DEFAULT 'gas',
     titulo text,
-    ciudad text DEFAULT 'cochabamba',
+    ciudad text DEFAULT 'lima',
     latitude double precision NOT NULL,
     longitude double precision NOT NULL,
     garrafas_agotadas boolean DEFAULT false,
+    balones_agotados boolean DEFAULT false,
     telefono text,
     last_active timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
@@ -109,7 +112,7 @@ CREATE TABLE IF NOT EXISTS public.rutas_repartidores (
 CREATE TABLE IF NOT EXISTS public.avisos (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id text NOT NULL,
-    ciudad text NOT NULL DEFAULT 'cochabamba',
+    ciudad text NOT NULL DEFAULT 'lima',
     barrio_otb text DEFAULT 'Global',
     autor text NOT NULL DEFAULT 'Vecino',
     tipo text NOT NULL DEFAULT 'aviso',
@@ -145,7 +148,7 @@ CREATE TABLE IF NOT EXISTS public.anuncios_globales (
     url text,
     image_url text,
     activo boolean DEFAULT true,
-    ciudad text NOT NULL DEFAULT 'cochabamba',
+    ciudad text NOT NULL DEFAULT 'lima',
     posicion text NOT NULL DEFAULT 'mapa' CHECK (posicion IN ('mapa', 'repartidores', 'muro_avisos')),
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -2191,6 +2194,120 @@ WITH CHECK (bucket_id = 'anuncios-media' AND public.is_admin_email());
 CREATE POLICY "storage_anuncios_admin_delete" ON storage.objects FOR DELETE TO authenticated
 USING (bucket_id = 'anuncios-media' AND public.is_admin_email());
 
+CREATE OR REPLACE FUNCTION public.rpc_driver_set_quick_status(p_order_id uuid, p_quick_status text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+    v_driver_id text := auth.uid()::text;
+    v_order record;
+    v_clean_status text;
+BEGIN
+    IF v_driver_id IS NULL THEN
+        RAISE EXCEPTION 'Usuario no autenticado';
+    END IF;
+
+    IF is_banned() THEN
+        RAISE EXCEPTION 'El usuario está suspendido';
+    END IF;
+
+    v_clean_status := LOWER(TRIM(COALESCE(p_quick_status, '')));
+    IF v_clean_status NOT IN ('en_camino', 'en_puerta') THEN
+        RAISE EXCEPTION 'Estado rápido no válido. Use en_camino o en_puerta';
+    END IF;
+
+    SELECT * INTO v_order
+    FROM public.pedidos
+    WHERE id = p_order_id
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Pedido no encontrado';
+    END IF;
+
+    IF v_order.driver_id <> v_driver_id AND NOT is_admin_email() THEN
+        RAISE EXCEPTION 'Acceso denegado: este pedido no está asignado a tu cuenta';
+    END IF;
+
+    IF v_order.estado <> 'asignado' AND NOT is_admin_email() THEN
+        RAISE EXCEPTION 'El pedido no se encuentra en estado asignado';
+    END IF;
+
+    UPDATE public.pedidos
+    SET subestado = v_clean_status,
+        updated_at = now()
+    WHERE id = p_order_id;
+
+    RETURN jsonb_build_object(
+        'ok', true,
+        'order_id', p_order_id,
+        'subestado', v_clean_status,
+        'updated_at', now()
+    );
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.rpc_driver_release_order(p_order_id uuid, p_motivo text DEFAULT 'no_podre_llegar')
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+    v_driver_id text := auth.uid()::text;
+    v_order record;
+BEGIN
+    IF v_driver_id IS NULL THEN
+        RAISE EXCEPTION 'Usuario no autenticado';
+    END IF;
+
+    IF is_banned() THEN
+        RAISE EXCEPTION 'El usuario está suspendido';
+    END IF;
+
+    SELECT * INTO v_order
+    FROM public.pedidos
+    WHERE id = p_order_id
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Pedido no encontrado';
+    END IF;
+
+    IF v_order.driver_id <> v_driver_id AND NOT is_admin_email() THEN
+        RAISE EXCEPTION 'Acceso denegado: este pedido no está asignado a tu cuenta';
+    END IF;
+
+    IF v_order.estado <> 'asignado' AND NOT is_admin_email() THEN
+        RAISE EXCEPTION 'Solo se pueden liberar pedidos en estado asignado';
+    END IF;
+
+    UPDATE public.pedidos
+    SET estado = 'pendiente',
+        driver_id = NULL,
+        subestado = NULL,
+        visto = false,
+        updated_at = now()
+    WHERE id = p_order_id;
+
+    RETURN jsonb_build_object(
+        'ok', true,
+        'order_id', p_order_id,
+        'estado', 'pendiente',
+        'released', true,
+        'message', 'Pedido liberado correctamente para otros repartidores'
+    );
+END;
+$function$;
+
+REVOKE EXECUTE ON FUNCTION public.rpc_driver_set_quick_status(uuid, text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.rpc_driver_set_quick_status(uuid, text) TO authenticated;
+
+REVOKE EXECUTE ON FUNCTION public.rpc_driver_release_order(uuid, text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.rpc_driver_release_order(uuid, text) TO authenticated;
+
 -- ==============================================================================
--- FIN DEL ESQUEMA CONSOLIDADO OFICIAL DE PRODUCCIÓN (NOTIGAS v092)
+-- FIN DEL ESQUEMA CONSOLIDADO OFICIAL DE PRODUCCIÓN (NOTIGAS v094)
 -- ==============================================================================
