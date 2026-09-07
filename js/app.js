@@ -1,3 +1,52 @@
+
+/* CONTROL ESTRICTO DE OPERACIÓN POR CIUDAD REGISTRADA */
+window.verificarPermisoOperarEnCiudad = function(accionNombre) {
+  const userData = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
+  const userRole = userData.role || (typeof AppState !== 'undefined' ? AppState.get('userRole') : 'vecino');
+  const ciudadUsuario = (userData.ciudad || '').toLowerCase().trim();
+  const ciudadActiva = (typeof AppState !== 'undefined' ? AppState.get('city') || 'lima' : 'lima').toLowerCase().trim();
+
+  // Si no está autenticado, permitir que el flujo estándar de login lo maneje
+  const uid = userData.user_id || (typeof getCurrentUserId === 'function' ? getCurrentUserId() : null);
+  if (!uid) {
+    return true;
+  }
+
+  // Si no tiene ciudad registrada o coincide con la ciudad que está viendo, puede operar
+  if (!ciudadUsuario || ciudadUsuario === ciudadActiva) {
+    return true;
+  }
+
+  // Si está explorando otra ciudad distinta a la suya, bloquear la operación y sugerir editar ficha
+  const getCityLabel = (key) => (window.PERU_CITIES && (window.PERU_CITIES[key]?.nombre || window.PERU_CITIES[key]?.name)) || (key ? key.toUpperCase() : 'LIMA');
+  const esDriver = (userRole === 'repartidor' || userData.hasDriverProfile);
+  const tipoFicha = esDriver ? 'repartidor' : 'comprador';
+
+  if (typeof showToast === 'function') {
+    showToast(
+      '📍 Ciudad Diferente a tu Ficha',
+      `Estás viendo ${getCityLabel(ciudadActiva)}, pero tu ficha de ${tipoFicha} está registrada en ${getCityLabel(ciudadUsuario)}. Para ${accionNombre} aquí, edita tu ficha y cambia tu ciudad habitual.`,
+      'warning',
+      6000
+    );
+  } else {
+    alert(`Estás viendo ${getCityLabel(ciudadActiva)}, pero tu ficha está registrada en ${getCityLabel(ciudadUsuario)}. Para ${accionNombre}, edita tu ficha.`);
+  }
+
+  // Abrir automáticamente la edición de ficha correspondiente
+  if (esDriver) {
+    if (typeof window.abrirFichaRepartidorEdicion === 'function') {
+      window.abrirFichaRepartidorEdicion();
+    }
+  } else {
+    if (typeof window.abrirEdicionFichaComprador === 'function') {
+      window.abrirEdicionFichaComprador();
+    }
+  }
+
+  return false;
+};
+
 /* ==========================================================================
    NOTIGAS - MÓDULO PRINCIPAL DE NAVEGACIÓN,
    FAVICON DINÁMICO POR CATEGORÍA Y MODO REPARTIDOR EN RUTA
@@ -526,3 +575,17 @@ window.navegarA = function(vista) {
 };
 
 // 6. Sistema de notificaciones global
+
+
+// Purga automática preventiva en segundo plano al iniciar la app
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    if (window.supabaseClient && typeof window.supabaseClient.rpc === 'function') {
+      window.supabaseClient.rpc('rpc_purge_old_records').then(({ data }) => {
+        if (data && (data.pedidos_eliminados > 0 || data.avisos_eliminados > 0)) {
+          console.info('Purga automática preventiva realizada:', data);
+        }
+      }).catch(() => {});
+    }
+  }, 3000);
+});

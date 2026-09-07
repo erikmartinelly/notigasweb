@@ -1079,12 +1079,16 @@ async function guardarPropagandaTab(tabName, silent = false) {
   const inputUrlEl = document.getElementById(`inputPromoUrl_${pos}`);
   const selectStateEl = document.getElementById(`selectPromoState_${pos}`);
 
-  const inputAd = (inputTitleEl?.value || '').trim();
+  let inputAd = (inputTitleEl?.value || '').trim();
   if (!inputAd) {
-    if (!silent && typeof showToast === 'function') {
-      showToast('Título Requerido', 'Debes ingresar un título para la propaganda.', 'warning');
-    }
-    return false;
+    // Proporcionar título por defecto si el usuario lo dejó en blanco para permitir guardado múltiple
+    const defaultTitles = {
+      mapa: 'Promociona tu negocio o servicio profesional directamente en tu zona',
+      repartidores: 'Distribución mayorista, repuestos y accesorios autorizados',
+      muro_avisos: 'Promociona tu negocio o servicio en tu barrio'
+    };
+    inputAd = defaultTitles[pos] || 'Promociona tu negocio o servicio';
+    if (inputTitleEl) inputTitleEl.value = inputAd;
   }
   const rawUrl = (inputUrlEl?.value || '').trim();
   const safeUrl = rawUrl ? (typeof formatExternalUrl === 'function' ? formatExternalUrl(rawUrl) : (typeof getSafeExternalUrl === 'function' ? getSafeExternalUrl(rawUrl) : rawUrl)) : '';
@@ -1211,34 +1215,45 @@ window.guardarTodasLasPropagandas = async function() {
     if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Guardando las 3 pestañas de propaganda...');
 
     const tabs = Object.values(_ADMIN_AD_PLACEMENTS);
-    let allOk = true;
+    let savedCount = 0;
+    let failedTabs = [];
 
     for (const tab of tabs) {
-      const ok = await guardarPropagandaTab(tab, true); // silent = true para no saturar con notificaciones
-      if (!ok) {
-        allOk = false;
-        break;
+      window.switchPromoSubTab(tab);
+      const ok = await guardarPropagandaTab(tab, true);
+      if (ok) {
+        savedCount++;
+      } else {
+        failedTabs.push(tab);
       }
     }
 
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
 
-    if (allOk) {
+    if (savedCount > 0) {
       if (typeof cargarAnunciosGuardados === 'function') await cargarAnunciosGuardados();
       await cargarConfiguracionPublicidadEnAdmin();
       if (typeof renderAdminAdsAndPostsList === 'function') renderAdminAdsAndPostsList();
-      
+      if (typeof renderVendorsList === 'function') renderVendorsList();
+      if (typeof renderForumFeed === 'function') renderForumFeed();
+
       const citySelector = document.getElementById('adminSelectPromoCiudad');
       const activeCity = (citySelector ? citySelector.value : null) || (typeof AppState !== 'undefined' ? AppState.get('city') : 'lima') || 'lima';
       const normCity = normalizeAdCity(activeCity);
       const displayCity = (normCity === 'global') ? 'TODAS LAS CIUDADES (GLOBAL)' : normCity.toUpperCase();
-      
-      if (typeof showToast === 'function') {
-        showToast('✅ Propaganda Guardada', `Las 3 pestañas quedaron actualizadas para ${displayCity}.`, 'success', 4500);
+
+      if (failedTabs.length === 0) {
+        if (typeof showToast === 'function') {
+          showToast('✅ 3 Pestañas Guardadas', `Las 3 pestañas de propaganda quedaron actualizadas para ${displayCity}.`, 'success', 4500);
+        }
+      } else {
+        if (typeof showToast === 'function') {
+          showToast('⚠️ Guardado Parcial', `Se guardaron ${savedCount} de 3 pestañas para ${displayCity}. Pestañas pendientes: ${failedTabs.join(', ')}.`, 'warning', 5000);
+        }
       }
     } else {
       if (typeof showToast === 'function') {
-        showToast('❌ Error al guardar', 'No se pudieron guardar todas las pestañas. Revisa tu conexión o permisos.', 'error', 5000);
+        showToast('❌ Error al guardar', 'No se pudo guardar ninguna pestaña. Revisa tu sesión de administrador o conexión.', 'error', 5000);
       }
     }
   } finally {

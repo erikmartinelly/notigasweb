@@ -37,10 +37,11 @@ async function renderForumFeed() {
     }
     const ciudadReal = String(rawCity || 'lima').toLowerCase().trim();
 
-    // Consultar avisos activos para la ciudad (insensible a mayúsculas)
+    // Consultar avisos activos para la ciudad (insensible a mayúsculas) y estrictamente últimas 24h
     const { data: localPosts, error } = await window.supabaseClient.from('avisos')
       .select('*, comentarios_avisos(count)')
       .ilike('ciudad', ciudadReal)
+      .gte('created_at', dosDiasAtras)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -394,6 +395,9 @@ function closeNuevoPostModal() {
 }
 
 async function crearNuevoPost() {
+  if (typeof window.verificarPermisoOperarEnCiudad === 'function' && !window.verificarPermisoOperarEnCiudad('publicar avisos')) {
+    return;
+  }
   try {
     const titleEl = document.getElementById('inputPostTitulo') || document.getElementById('inputPostTitle');
     const descEl = document.getElementById('inputPostDesc');
@@ -778,6 +782,9 @@ function closeCommentsModal() {
  * FIX W-01: Agrega comentario insertando una fila nueva en 'comentarios_avisos'.
  */
 async function agregarComentarioPost() {
+  if (typeof window.verificarPermisoOperarEnCiudad === 'function' && !window.verificarPermisoOperarEnCiudad('comentar avisos')) {
+    return;
+  }
   if (!activePostCommentsRef) return;
   const input = document.getElementById('inputNewComment') || document.getElementById('inputNuevoComentario');
   const text = (input?.value || '').trim();

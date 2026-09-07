@@ -1,3 +1,22 @@
+
+function sincronizarSelectCiudadesPeruEnModal(selectEl, selectedVal) {
+  if (!selectEl) return;
+  const currentVal = (selectedVal || selectEl.value || (typeof AppState !== 'undefined' ? AppState.get('city') : 'lima') || 'lima').toLowerCase().trim();
+  
+  if (window.PERU_CITIES && Object.keys(window.PERU_CITIES).length > 0) {
+    selectEl.innerHTML = '';
+    Object.keys(window.PERU_CITIES).forEach(key => {
+      const c = window.PERU_CITIES[key];
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = `📍 ${c.nombre || c.name || key}`;
+      if (key === currentVal) opt.selected = true;
+      selectEl.appendChild(opt);
+    });
+  }
+}
+window.sincronizarSelectCiudadesPeruEnModal = sincronizarSelectCiudadesPeruEnModal;
+
 /* ==========================================================================
    NOTIGAS - GESTIÓN DE PEDIDOS Y ALERTAS VECINALES (V105)
    ========================================================================== */
@@ -18,6 +37,14 @@ window.formatearAntiguedadPedido = formatearAntiguedadPedido;
 function abrirModalDriverOrders() {
   const modal = document.getElementById('modalDriverOrders');
   if (modal) {
+    const selCity = document.getElementById('selectDriverModalCity');
+    const curCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || 'lima') : 'lima';
+    if (selCity) {
+      if (typeof sincronizarSelectCiudadesPeruEnModal === 'function') {
+        sincronizarSelectCiudadesPeruEnModal(selCity, curCity);
+      }
+      selCity.value = curCity;
+    }
     modal.style.display = 'flex';
     if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
   }
@@ -911,6 +938,9 @@ window.centrarMapaEnMiPedido = function() {
 };
 
 async function seleccionarYPedirDirecto(catNombre) {
+  if (typeof window.verificarPermisoOperarEnCiudad === 'function' && !window.verificarPermisoOperarEnCiudad('crear un pedido')) {
+    return;
+  }
   const userId = (typeof getAuthenticatedUserId === 'function') ? await getAuthenticatedUserId() : null;
   const userData = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
   const isLoggedIn = Boolean(userId || userData?.user_id || userData?.gmail);
@@ -944,6 +974,13 @@ async function seleccionarYPedirDirecto(catNombre) {
     }
   }
 
+  // Auto-completar teléfono registrado del cliente en Perú
+  const inputTel = document.getElementById('inputTelefonoComprador');
+  if (inputTel && !inputTel.value) {
+    const curPhone = (typeof AppState !== 'undefined') ? (AppState.get('userData')?.telefono || '') : '';
+    if (curPhone) inputTel.value = curPhone;
+  }
+
   const modalPedido = document.getElementById('modalPedido');
   if (modalPedido) modalPedido.style.display = 'flex';
 }
@@ -955,6 +992,9 @@ function closePedidoModal() {
 }
 
 function confirmarPedido() {
+  if (typeof window.verificarPermisoOperarEnCiudad === 'function' && !window.verificarPermisoOperarEnCiudad('crear un pedido')) {
+    return;
+  }
   const selectCategoria = document.getElementById('selectCategoria');
   const inputCantidad = document.getElementById('inputCantidad');
   const inputCalle = document.getElementById('inputCallePrincipal');

@@ -1,3 +1,34 @@
+
+// VALIDACIONES PERUANAS PARA DNI Y WHATSAPP
+function validarDniPeru(dni) {
+  const clean = (dni || '').toString().replace(/\D/g, '');
+  return clean.length === 8;
+}
+window.validarDniPeru = validarDniPeru;
+
+function normalizarDniPeru(dni) {
+  return (dni || '').toString().replace(/\D/g, '').slice(0, 8);
+}
+window.normalizarDniPeru = normalizarDniPeru;
+
+function validarTelefonoPeru(tel) {
+  let clean = (tel || '').toString().replace(/\D/g, '');
+  if (clean.startsWith('51') && clean.length === 11) {
+    clean = clean.slice(2);
+  }
+  return clean.length === 9 && clean.startsWith('9');
+}
+window.validarTelefonoPeru = validarTelefonoPeru;
+
+function normalizarTelefonoPeru(tel) {
+  let clean = (tel || '').toString().replace(/\D/g, '');
+  if (clean.startsWith('51') && clean.length === 11) {
+    clean = clean.slice(2);
+  }
+  return clean.slice(0, 9);
+}
+window.normalizarTelefonoPeru = normalizarTelefonoPeru;
+
 /* ==========================================================================
    NOTIGAS - MÓDULO DE AUTENTICACIÓN & GOOGLE IDENTITY SERVICES (1-TAP SIGN-IN)
    ========================================================================== */
@@ -479,6 +510,9 @@ function selectAuthMethod(method) {
     } else {
       paneGoogle.style.display = 'block';
       paneEmail.style.display = 'none';
+      if (typeof initGoogleOneTap === 'function') {
+        try { initGoogleOneTap(); } catch(_) {}
+      }
     }
   }
 }
@@ -1545,18 +1579,45 @@ async function registrarEmail() {
 
   const nombreEl = document.getElementById('authNombre');
   const apellidoEl = document.getElementById('authApellido');
+  const telefonoEl = document.getElementById('authTelefono');
+  const dniEl = document.getElementById('authDni');
   const emailEl = document.getElementById('authEmail');
   const passwordEl = document.getElementById('authPassword');
 
   const nombre = nombreEl ? nombreEl.value.trim() : '';
   const apellido = apellidoEl ? apellidoEl.value.trim() : '';
+  const rawTelefono = telefonoEl ? telefonoEl.value.trim() : '';
+  const rawDni = dniEl ? dniEl.value.trim() : '';
   const email = emailEl ? emailEl.value.trim() : '';
   const password = passwordEl ? passwordEl.value : '';
 
   if (!nombre || !apellido) {
-    if (typeof showToast === 'function') showToast('Campos requeridos', 'Por favor ingresa tu Nombre y Apellido para registrarte.', 'warning', 4000);
+    if (typeof showToast === 'function') showToast('Campos requeridos', 'Por favor ingresa tu Nombre y Apellido completos.', 'warning', 4000);
     return;
   }
+
+  if (!validarTelefonoPeru(rawTelefono)) {
+    if (typeof showToast === 'function') {
+      showToast('⚠️ Teléfono Inválido', 'En Perú el número de WhatsApp debe tener 9 dígitos y comenzar con 9 (Ej: 987654321).', 'warning', 5000);
+    } else {
+      alert('En Perú el número de WhatsApp debe tener 9 dígitos y comenzar con 9.');
+    }
+    if (telefonoEl) telefonoEl.focus();
+    return;
+  }
+
+  if (!validarDniPeru(rawDni)) {
+    if (typeof showToast === 'function') {
+      showToast('⚠️ DNI Inválido', 'En Perú el DNI consta de exactamente 8 dígitos numéricos (Ej: 12345678).', 'warning', 5000);
+    } else {
+      alert('En Perú el DNI consta de exactamente 8 dígitos numéricos.');
+    }
+    if (dniEl) dniEl.focus();
+    return;
+  }
+
+  const telefono = normalizarTelefonoPeru(rawTelefono);
+  const dni = normalizarDniPeru(rawDni);
 
   if (!email || !password) {
     if (typeof showToast === 'function') showToast('Error', 'Ingresa correo y contraseña', 'error');
@@ -1570,7 +1631,7 @@ async function registrarEmail() {
   if (emailAuthRequestInFlight) return;
 
   emailAuthRequestInFlight = true;
-  if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Registrando...');
+  if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Registrando cuenta en NOTIGAS Perú...');
   try {
     const { data, error } = await window.supabaseClient.auth.signUp({
       email,
@@ -1580,7 +1641,9 @@ async function registrarEmail() {
         data: {
           full_name: `${nombre} ${apellido}`.trim(),
           nombre: nombre,
-          apellido: apellido
+          apellido: apellido,
+          telefono: telefono,
+          dni: dni
         }
       }
     });
@@ -1592,12 +1655,36 @@ async function registrarEmail() {
 
     if (data && data.session) {
       clearAuthThrottle('register');
-      if (typeof showToast === 'function') showToast('Éxito', 'Registro completado. Ingresando...', 'success');
+      try {
+        await guardarPerfilSupabase(data.user, {
+          nombre,
+          apellido,
+          telefono,
+          dni,
+          ciudad: AppState.get('city') || 'lima',
+          role: 'vecino'
+        });
+      } catch(e) {
+        console.warn('Error guardando perfil post-registro:', e);
+      }
+      if (typeof showToast === 'function') showToast('Éxito', '¡Bienvenido a NOTIGAS Perú! Registro completado.', 'success');
       await procesarSesionExitosa(data.user, true);
     } else if (data && data.user) {
       clearAuthThrottle('register');
+      try {
+        await guardarPerfilSupabase(data.user, {
+          nombre,
+          apellido,
+          telefono,
+          dni,
+          ciudad: AppState.get('city') || 'lima',
+          role: 'vecino'
+        });
+      } catch(e) {}
       if (typeof showToast === 'function') showToast('Revisa tu correo', 'Te hemos enviado un enlace para confirmar tu cuenta. Confírmala y luego ingresa.', 'info', 8000);
       setAuthAction('login');
+      showAuthStep(2);
+      selectAuthMethod('email');
     }
   } catch (networkError) {
     console.warn('Fallo de red durante el registro:', networkError);
@@ -1732,7 +1819,8 @@ async function procesarSesionExitosa(user, isInteractive = false) {
       gmail,
       nombre: (existingProfile?.nombre || userNombre),
       apellido: (existingProfile?.apellido || userApellido),
-      telefono: existingProfile?.telefono || choferData?.telefono_whatsapp || '',
+      telefono: existingProfile?.telefono || choferData?.telefono_whatsapp || user.user_metadata?.telefono || '',
+      dni: existingProfile?.dni || user.user_metadata?.dni || '',
       ciudad: resolvedCity,
       user_id: user.id
     };
@@ -1841,10 +1929,14 @@ async function procesarSesionExitosa(user, isInteractive = false) {
 window.finalizeRoleSelection = async function(role) {
   const nameInput = document.getElementById('newUserName');
   const lastNameInput = document.getElementById('newUserLastName');
+  const phoneInput = document.getElementById('newUserPhone');
+  const dniInput = document.getElementById('newUserDni');
   const citySelect = document.getElementById('newUserCity');
 
   const selectedName = (nameInput ? nameInput.value : '').trim();
   const selectedLastName = (lastNameInput ? lastNameInput.value : '').trim();
+  const rawPhone = (phoneInput ? phoneInput.value : '').trim();
+  const rawDni = (dniInput ? dniInput.value : '').trim();
 
   if (!selectedName || !selectedLastName) {
     if (typeof showToast === 'function') {
@@ -1854,6 +1946,32 @@ window.finalizeRoleSelection = async function(role) {
     }
     return;
   }
+
+  // Validación de WhatsApp y DNI para clientes de Perú
+  if (role !== 'repartidor') {
+    if (!validarTelefonoPeru(rawPhone)) {
+      if (typeof showToast === 'function') {
+        showToast('⚠️ WhatsApp Requerido', 'En Perú el número móvil/WhatsApp debe tener 9 dígitos y comenzar con 9 (Ej: 987654321).', 'warning', 5000);
+      } else {
+        alert('En Perú el número de WhatsApp debe tener 9 dígitos y comenzar con 9.');
+      }
+      if (phoneInput) phoneInput.focus();
+      return;
+    }
+
+    if (!validarDniPeru(rawDni)) {
+      if (typeof showToast === 'function') {
+        showToast('⚠️ DNI Requerido', 'En Perú el DNI consta de exactamente 8 dígitos numéricos (Ej: 12345678).', 'warning', 5000);
+      } else {
+        alert('En Perú el DNI consta de exactamente 8 dígitos numéricos.');
+      }
+      if (dniInput) dniInput.focus();
+      return;
+    }
+  }
+
+  const selectedPhone = normalizarTelefonoPeru(rawPhone);
+  const selectedDni = normalizarDniPeru(rawDni);
 
   let selectedCity = null;
   if (citySelect && citySelect.value) {
@@ -1888,6 +2006,8 @@ window.finalizeRoleSelection = async function(role) {
   const u = AppState.get('userData') || {};
   u.nombre = selectedName;
   u.apellido = selectedLastName;
+  u.telefono = selectedPhone || u.telefono || '';
+  u.dni = selectedDni || u.dni || '';
   u.ciudad = selectedCity;
   AppState.set('userData', u);
 
@@ -1898,6 +2018,10 @@ window.finalizeRoleSelection = async function(role) {
     if (inputDriverNombre && !inputDriverNombre.value) {
       inputDriverNombre.value = `${selectedName} ${selectedLastName}`.trim();
     }
+    const inputDriverTel = document.getElementById('inputDriverTelRef');
+    if (inputDriverTel && selectedPhone) {
+      inputDriverTel.value = selectedPhone;
+    }
   }
 
   if (window._tempAuthUser) {
@@ -1905,6 +2029,8 @@ window.finalizeRoleSelection = async function(role) {
       await guardarPerfilSupabase(window._tempAuthUser, {
         nombre: selectedName,
         apellido: selectedLastName,
+        telefono: selectedPhone,
+        dni: selectedDni,
         ciudad: selectedCity,
         role: role === 'repartidor' ? 'repartidor' : 'vecino'
       });
@@ -1914,7 +2040,6 @@ window.finalizeRoleSelection = async function(role) {
     await procesarSesionExitosa(window._tempAuthUser, true);
   }
 };
-
 let currentAuthAction = 'login'; // 'login' or 'register'
 
 window.showAuthStep = function(step) {
@@ -1950,3 +2075,99 @@ window.procesarAccionEmail = async function() {
     await registrarEmail();
   }
 };
+
+
+/* MODAL Y GESTIÓN DE FICHA DE COMPRADOR */
+function abrirEdicionFichaComprador() {
+  const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el && typeof val !== 'undefined' && val !== null) el.value = val;
+  };
+  setVal('inputBuyerProfileNombre', u.nombre || '');
+  setVal('inputBuyerProfileApellido', u.apellido || '');
+  setVal('inputBuyerProfileTelefono', u.telefono || '');
+  setVal('inputBuyerProfileDni', u.dni || '');
+  if (u.ciudad) {
+    setVal('selectBuyerProfileCiudad', u.ciudad.toLowerCase().trim());
+  }
+
+  const modal = document.getElementById('modalBuyerProfile');
+  if (modal) modal.style.display = 'flex';
+}
+window.abrirEdicionFichaComprador = abrirEdicionFichaComprador;
+
+function closeBuyerProfileModal() {
+  const modal = document.getElementById('modalBuyerProfile');
+  if (modal) modal.style.display = 'none';
+}
+window.closeBuyerProfileModal = closeBuyerProfileModal;
+
+async function guardarFichaComprador() {
+  const nombre = document.getElementById('inputBuyerProfileNombre')?.value?.trim();
+  const apellido = document.getElementById('inputBuyerProfileApellido')?.value?.trim();
+  const rawTel = document.getElementById('inputBuyerProfileTelefono')?.value?.trim();
+  const rawDni = document.getElementById('inputBuyerProfileDni')?.value?.trim();
+  const ciudad = document.getElementById('selectBuyerProfileCiudad')?.value?.toLowerCase()?.trim() || 'lima';
+
+  if (!nombre || !apellido) {
+    showToast('⚠️ Datos Requeridos', 'Por favor ingresa tu Nombre y Apellido completos.', 'warning', 4000);
+    return;
+  }
+
+  if (!validarTelefonoPeru(rawTel)) {
+    showToast('⚠️ Teléfono Inválido', 'En Perú el número de WhatsApp debe tener 9 dígitos y comenzar con 9 (Ej: 987654321).', 'warning', 5000);
+    document.getElementById('inputBuyerProfileTelefono')?.focus();
+    return;
+  }
+
+  if (!validarDniPeru(rawDni)) {
+    showToast('⚠️ DNI Inválido', 'En Perú el DNI consta de exactamente 8 dígitos numéricos.', 'warning', 5000);
+    document.getElementById('inputBuyerProfileDni')?.focus();
+    return;
+  }
+
+  const telefono = normalizarTelefonoPeru(rawTel);
+  const dni = normalizarDniPeru(rawDni);
+
+  if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Guardando ficha de comprador...');
+  try {
+    let userId = (typeof getAuthenticatedUserId === 'function') ? await getAuthenticatedUserId() : null;
+    if (!userId && window._tempAuthUser) userId = window._tempAuthUser.id;
+
+    if (userId && window.supabaseClient) {
+      await guardarPerfilSupabase({ id: userId }, {
+        nombre,
+        apellido,
+        telefono,
+        dni,
+        ciudad,
+        role: 'vecino'
+      });
+    }
+
+    const u = AppState.get('userData') || {};
+    u.nombre = nombre;
+    u.apellido = apellido;
+    u.telefono = telefono;
+    u.dni = dni;
+    u.ciudad = ciudad;
+    AppState.set('userData', u);
+
+    // Sincronizar ciudad activa si fue cambiada en la ficha
+    if (typeof window.cambiarCiudad === 'function') {
+      await window.cambiarCiudad(ciudad);
+    } else {
+      AppState.set('city', ciudad);
+    }
+
+    closeBuyerProfileModal();
+    showToast('✅ Ficha Actualizada', `Tu ficha de comprador ha sido guardada. Ahora operas en ${ciudad.toUpperCase()}.`, 'success', 4000);
+  } catch (err) {
+    console.error('Error guardando ficha comprador:', err);
+    showToast('Error', 'No se pudo guardar la ficha: ' + (err.message || 'Intenta de nuevo'), 'error', 4000);
+  } finally {
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+  }
+}
+window.guardarFichaComprador = guardarFichaComprador;

@@ -41,6 +41,23 @@ document.addEventListener('DOMContentLoaded', () => {
       if (banner) banner.style.display = 'none';
     });
 
+    
+    const el_btnEditarFichaComprador = document.getElementById('btnEditarFichaComprador');
+    if (el_btnEditarFichaComprador) el_btnEditarFichaComprador.addEventListener('click', () => {
+      safeCall('closeUserSettingsModal');
+      safeCall('abrirEdicionFichaComprador');
+    });
+
+    const el_btnGuardarFichaComprador = document.getElementById('btnGuardarFichaComprador');
+    if (el_btnGuardarFichaComprador) el_btnGuardarFichaComprador.addEventListener('click', () => {
+      safeCall('guardarFichaComprador');
+    });
+
+    const el_btnCloseBuyerProfile = document.getElementById('btnCloseBuyerProfile');
+    if (el_btnCloseBuyerProfile) el_btnCloseBuyerProfile.addEventListener('click', () => {
+      safeCall('closeBuyerProfileModal');
+    });
+
     const el_btnOpenUserSettings = document.getElementById('btnOpenUserSettings');
     if (el_btnOpenUserSettings) el_btnOpenUserSettings.addEventListener('click', () => { safeCall('abrirConfiguracionSegunRol'); });
 
