@@ -96,7 +96,7 @@ async function runDatabaseIntegrationTests() {
     const res = await request('rpc/rpc_crear_aviso_vecinal', {
       method: 'POST',
       body: JSON.stringify({
-        p_ciudad: 'cochabamba',
+        p_ciudad: 'lima',
         p_barrio: 'Global',
         p_autor: 'Test Probe',
         p_titulo: 'Test Probe',
@@ -122,7 +122,7 @@ async function runDatabaseIntegrationTests() {
         p_descripcion: 'Probe',
         p_url: 'https://notigas.com',
         p_image_url: '',
-        p_ciudad: 'cochabamba',
+        p_ciudad: 'lima',
         p_activo: true,
         p_posicion: 'mapa',
         p_admin_email: 'admin@notigas.com'

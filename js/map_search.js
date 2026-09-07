@@ -8,7 +8,7 @@ function buscarCalle() {
   const query = (input?.value || '').trim();
   const selectedKey = selectCity?.value || 'lima';
 
-  const munList = (typeof GEO_PERU_MUNICIPIOS !== 'undefined') ? GEO_PERU_MUNICIPIOS : ((typeof GEOBOLIVIA_MUNICIPIOS !== 'undefined') ? GEOBOLIVIA_MUNICIPIOS : []);
+  const munList = (typeof GEO_PERU_MUNICIPIOS !== 'undefined') ? GEO_PERU_MUNICIPIOS : [];
   const munObj = munList.find(m => m.key === selectedKey) || munList[0] || { key: 'lima', nombre: 'Lima', lat: -12.0460, lon: -77.0306, querySuffix: 'Lima, Perú' };
 
   if (!query) {

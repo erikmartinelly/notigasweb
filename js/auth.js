@@ -362,10 +362,10 @@ async function solicitarYGuardarUbicacionHabitual(user) {
             }
         }
 
-        // Si todavía no hay coords, usar la capital actual de PERU_CITIES o BOLIVIA_CITIES
+        // Si todavía no hay coords, usar la capital actual de PERU_CITIES
         if (lat == null || lng == null) {
             const currentCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || 'lima') : 'lima';
-            const citiesObj = window.PERU_CITIES || window.BOLIVIA_CITIES || {};
+            const citiesObj = window.PERU_CITIES || {};
             const cityDef = citiesObj[currentCity] || { lat: -12.0460, lon: -77.0306 };
             lat = cityDef.lat;
             lng = cityDef.lon || cityDef.lng;
@@ -381,7 +381,7 @@ async function solicitarYGuardarUbicacionHabitual(user) {
     } catch (error) {
         console.warn('Ubicación base asignada por fallback:', error);
         const currentCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || 'lima') : 'lima';
-        const citiesObj = window.PERU_CITIES || window.BOLIVIA_CITIES || {};
+        const citiesObj = window.PERU_CITIES || {};
         const cityDef = citiesObj[currentCity] || { lat: -12.0460, lon: -77.0306 };
 
         await guardarUbicacionHabitualUsuario(user, cityDef.lat, cityDef.lon || cityDef.lng);
@@ -862,7 +862,7 @@ async function iniciarSesionRepartidor() {
   const validCities = window.PERU_CITIES
     ? Object.keys(window.PERU_CITIES)
     : ['lima', 'callao', 'arequipa', 'trujillo', 'chiclayo', 'piura', 'cusco', 'huancayo', 'iquitos', 'pucallpa', 'tacna', 'ica', 'huaraz', 'cajamarca', 'ayacucho', 'huanuco', 'puno', 'tarapoto', 'moyobamba', 'tumbes', 'moquegua', 'puertomaldonado', 'abancay', 'huancavelica', 'cerrodepasco', 'chachapoyas'];
-  if (!ciudad || (!validCities.includes(ciudad.toLowerCase()) && !['cochabamba', 'santacruz', 'lapaz'].includes(ciudad.toLowerCase()))) {
+  if (!ciudad || !validCities.includes(ciudad.toLowerCase())) {
     if (typeof showToast === 'function') showToast('Error', 'Debes seleccionar una ciudad válida', 'error', 3000);
     else if (typeof showToast === 'function') { showToast('Notificación', '❌ Error: Debes seleccionar una ciudad válida', 'info', 4000); } else { alert('❌ Error: Debes seleccionar una ciudad válida'); };
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();

@@ -47,19 +47,10 @@ const GEO_PERU_MUNICIPIOS = [
   { key: "chachapoyas", nombre: "Chachapoyas", keywords: ["chachapoyas", "amazonas"], lat: -6.2293, lon: -77.8715, querySuffix: "Chachapoyas, Amazonas, Perú" }
 ];
 
-const GEOBOLIVIA_MUNICIPIOS = GEO_PERU_MUNICIPIOS; // Retrocompatibilidad
-
 window.PERU_CITIES = {};
 GEO_PERU_MUNICIPIOS.forEach(c => {
   window.PERU_CITIES[c.key] = c;
 });
-
-// Retrocompatibilidad con tests y scripts
-window.BOLIVIA_CITIES = {
-  ...window.PERU_CITIES,
-  cochabamba: { key: 'cochabamba', nombre: 'Cochabamba', lat: -17.3895, lon: -66.1568, keywords: ['cochabamba'] },
-  santacruz:  { key: 'santacruz',  nombre: 'Santa Cruz de la Sierra', lat: -17.7833, lon: -63.1821, keywords: ['santa cruz'] }
-};
 
 // El icono oficial rojo se mantiene igual; el estado se comunica con un indicador de color.
 const garrafaSvgMarkerHtml = `
@@ -319,7 +310,7 @@ function isOrderCategoryMatchingDriver(orderCategory, driverCatInput) {
 
 window.matchCityByNameOrRegion = function(cityName, regionName) {
   const text = `${cityName || ''} ${regionName || ''}`.toLowerCase();
-  const citiesObj = window.PERU_CITIES || window.BOLIVIA_CITIES || {};
+  const citiesObj = window.PERU_CITIES || {};
   for (const key of Object.keys(citiesObj)) {
     const c = citiesObj[key];
     if (c.keywords && c.keywords.some(k => text.includes(k))) {
@@ -344,18 +335,12 @@ window.getCityMetroKeys = function(cityKey) {
   if (norm === 'tarapoto' || norm === 'moyobamba') {
     return ['tarapoto', 'moyobamba', 'san martin'];
   }
-  if (norm === 'cochabamba' || norm === 'cbba' || norm === 'cercado') {
-    return ['cochabamba', 'cbba', 'sacaba', 'quillacollo', 'tiquipaya', 'colcapirhua', 'vinto', 'sipesipe', 'cercado'];
-  }
-  if (norm === 'santacruz' || norm === 'santa cruz') {
-    return ['santacruz', 'santa cruz', 'warnes', 'cotoca', 'montero', 'la guardia', 'laguardia', 'porongo'];
-  }
   return [norm];
 };
 
 window.inferMainCityFromCoords = function(lat, lng) {
   if (lat == null || lng == null || isNaN(lat) || isNaN(lng)) return 'lima';
-  const cities = Object.values(window.PERU_CITIES || window.BOLIVIA_CITIES || {});
+  const cities = Object.values(window.PERU_CITIES || {});
   let closest = 'lima';
   let minDist = Infinity;
   for (const c of cities) {
@@ -1814,9 +1799,9 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
 }
 
 async function cambiarCiudadCapital(cityKey) {
-  const mun = GEOBOLIVIA_MUNICIPIOS.find(m => m.key === cityKey)
-    || (window.BOLIVIA_CITIES && window.BOLIVIA_CITIES[cityKey])
-    || GEOBOLIVIA_MUNICIPIOS[0];
+  const mun = GEO_PERU_MUNICIPIOS.find(m => m.key === cityKey)
+    || (window.PERU_CITIES && window.PERU_CITIES[cityKey])
+    || GEO_PERU_MUNICIPIOS[0];
 
   currentGpsLat = mun.lat;
   window.currentGpsLat = currentGpsLat;
@@ -2287,7 +2272,7 @@ function initNotigasMap() {
   let isNationalView = false;
   if (!startLat || !startLng) {
     const savedCity = (typeof AppState !== 'undefined') ? AppState.get('city') : null;
-    const citiesObj = window.PERU_CITIES || window.BOLIVIA_CITIES || {};
+    const citiesObj = window.PERU_CITIES || {};
     if (savedCity && citiesObj[savedCity]) {
       startLat = citiesObj[savedCity].lat;
       startLng = citiesObj[savedCity].lon || citiesObj[savedCity].lng;

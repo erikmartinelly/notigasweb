@@ -359,7 +359,7 @@ window.cambiarCiudad = async function(nuevaCiudad) {
         AppState.set('city', nuevaCiudad);
     }
 
-    const citiesObj = window.PERU_CITIES || window.BOLIVIA_CITIES || {};
+    const citiesObj = window.PERU_CITIES || {};
     if (typeof map !== 'undefined' && map && citiesObj[nuevaCiudad]) {
         const c = citiesObj[nuevaCiudad];
         if (map.getZoom() <= 10) {

@@ -435,8 +435,8 @@ try {
   if (radarZoom !== 14) {
     throw new Error(`DRIVER_RADAR_MAX_ZOOM esperado 14 pero obtenido: ${radarZoom}`);
   }
-  if (!context.window.BOLIVIA_CITIES || !context.window.BOLIVIA_CITIES.cochabamba) {
-    throw new Error('window.BOLIVIA_CITIES no está inicializado.');
+  if (!context.window.PERU_CITIES || !context.window.PERU_CITIES.lima) {
+    throw new Error('window.PERU_CITIES no está inicializado.');
   }
   if (!context.window.orderRadarMarkers || typeof context.window.orderRadarMarkers !== 'object') {
     throw new Error('window.orderRadarMarkers no está inicializado.');

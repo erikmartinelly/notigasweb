@@ -543,7 +543,7 @@ SET search_path = public, auth, pg_temp
 AS $$
 BEGIN
   NEW.nombre := LEFT(REGEXP_REPLACE(COALESCE(NEW.nombre, ''), '<[^>]*>', '', 'g'), 120);
-  NEW.ciudad := LEFT(LOWER(TRIM(COALESCE(NEW.ciudad, 'cochabamba'))), 80);
+  NEW.ciudad := LEFT(LOWER(TRIM(COALESCE(NEW.ciudad, 'lima'))), 80);
   NEW.direccion := LEFT(REGEXP_REPLACE(COALESCE(NEW.direccion, ''), '<[^>]*>', '', 'g'), 240);
   NEW.telefono := LEFT(REGEXP_REPLACE(COALESCE(NEW.telefono, ''), '[^0-9+ ()-]', '', 'g'), 24);
   NEW.role := COALESCE(NEW.role, 'vecino');
@@ -606,7 +606,7 @@ BEGIN
         ),
         COALESCE(
             NULLIF(LOWER(TRIM(NEW.raw_user_meta_data ->> 'ciudad')), ''),
-            'cochabamba'
+            'lima'
         ),
         'vecino'
     )
@@ -1690,7 +1690,7 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.rpc_crear_aviso_vecinal(
-  p_ciudad text DEFAULT 'cochabamba',
+  p_ciudad text DEFAULT 'lima',
   p_barrio text DEFAULT 'Global',
   p_autor text DEFAULT 'Vecino',
   p_tipo text DEFAULT 'aviso',
@@ -1720,7 +1720,7 @@ BEGIN
   END IF;
 
   v_barrio_final := COALESCE(NULLIF(TRIM(p_barrio_otb), ''), NULLIF(TRIM(p_barrio), ''), 'Global');
-  v_ciudad_final := COALESCE(NULLIF(LOWER(TRIM(p_ciudad)), ''), 'cochabamba');
+  v_ciudad_final := COALESCE(NULLIF(LOWER(TRIM(p_ciudad)), ''), 'lima');
 
   INSERT INTO public.avisos (
     user_id, ciudad, barrio_otb, autor, tipo, categoria, titulo, descripcion, mensaje, imagen_url, activo, votos, created_at

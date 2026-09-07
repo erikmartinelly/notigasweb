@@ -21,14 +21,14 @@ const mockOrdersDB = [
     categoria: 'Gas GLP',
     titulo: 'Pedido de Gas Casa #14',
     cantidad: '2',
-    direccion: 'Av. Heroínas #456',
-    telefono: '77998877',
+    direccion: 'Av. Arequipa #456',
+    telefono: '987654321',
     estado: 'pendiente',
     driver_id: null,
-    ciudad: 'cochabamba',
-    barrio_otb: 'Cala Cala',
-    latitude: -17.389543,
-    longitude: -66.156821,
+    ciudad: 'lima',
+    barrio_otb: 'Miraflores',
+    latitude: -12.0460,
+    longitude: -77.0306,
     descripcion: 'Tocar el timbre blanco',
     visto: false,
     created_at: new Date().toISOString()
@@ -39,17 +39,17 @@ const mockTrucksDB = [
   {
     id: 'truck-driver-b',
     user_id: 'user-driver-b',
-    distribuidor_nombre: 'Distribuidora San Pedro',
+    distribuidor_nombre: 'Distribuidora Lima Gas',
     categoria: 'Gas GLP',
     titulo: 'Camión #4',
-    ciudad: 'cochabamba',
-    latitude: -17.388000,
-    longitude: -66.155000,
+    ciudad: 'lima',
+    latitude: -12.0450,
+    longitude: -77.0300,
     garrafas_agotadas: false,
     last_active: new Date().toISOString(),
-    telefono: '71234567',
-    placa: '4589-ABC',
-    productos: 'Gas 10kg, Válvula Premium'
+    telefono: '912345678',
+    placa: 'ABC-123',
+    productos: 'Balón 10kg, Válvula Premium'
   }
 ];
 

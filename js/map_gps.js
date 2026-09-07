@@ -164,7 +164,7 @@ async function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
         }
     }
 
-    const cityDefs = (typeof window.PERU_CITIES !== 'undefined') ? window.PERU_CITIES : ((typeof window.BOLIVIA_CITIES !== 'undefined') ? window.BOLIVIA_CITIES : null);
+    const cityDefs = (typeof window.PERU_CITIES !== 'undefined') ? window.PERU_CITIES : null;
     const cityData = (cityDefs && cityDefs[detectedCity]) ? cityDefs[detectedCity] : { key: 'lima', nombre: 'Lima', lat: -12.0460, lon: -77.0306 };
 
     const finalLat = coords.lat;
