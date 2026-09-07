@@ -1705,6 +1705,10 @@ async function procesarSesionExitosa(user, isInteractive = false) {
       if (window._targetAuthRole === 'driver') {
         currentSelectedRole = 'driver';
       } else {
+        if (!isInteractive) {
+          console.info("Sesión incompleta en segundo plano: permitiendo navegación libre");
+          return;
+        }
         if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
         if (modalAuth) modalAuth.style.display = 'none';
 

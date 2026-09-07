@@ -177,6 +177,23 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    const el_btnCloseRoleSelection = document.getElementById('btnCloseRoleSelection');
+    if (el_btnCloseRoleSelection) {
+      el_btnCloseRoleSelection.addEventListener('click', () => {
+        const modal = document.getElementById('modalRoleSelection');
+        if (modal) modal.style.display = 'none';
+      });
+    }
+
+    const el_modalRoleSelection = document.getElementById('modalRoleSelection');
+    if (el_modalRoleSelection) {
+      el_modalRoleSelection.addEventListener('click', (e) => {
+        if (e.target === el_modalRoleSelection) {
+          el_modalRoleSelection.style.display = 'none';
+        }
+      });
+    }
+
     const el_btnMenuIngresar = document.getElementById('btnMenuIngresar');
     if (el_btnMenuIngresar) el_btnMenuIngresar.addEventListener('click', () => { safeCall('abrirLoginModal'); });
 

@@ -5,10 +5,11 @@ DirectoryIndex index.html
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
-  # Forzar HTTPS tambien cuando el alojamiento usa un proxy inverso.
+  # Redirigir siempre a https://www.notigas.com en un solo salto (evita cadenas y errores de redireccionamiento en Google Search Console)
+  RewriteCond %{HTTP_HOST} ^notigas\.com$ [NC,OR]
   RewriteCond %{HTTPS} !=on
   RewriteCond %{HTTP:X-Forwarded-Proto} !https [NC]
-  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+  RewriteRule ^(.*)$ https://www.notigas.com/$1 [R=301,L]
 
   # Nunca publicar material interno del proyecto.
   RewriteRule ^(?:\.git|\.agents|scripts|supabase)(?:/|$) - [F,L,NC]
