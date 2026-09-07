@@ -138,8 +138,8 @@ async function cargarAnunciosGuardados() {
   const mode = window.ADS_CONFIG.mode || 'local';
 
   const localPromoContent = document.getElementById('localPromoContent');
-  const activeCity = (typeof AppState !== 'undefined') ? AppState.get('city') : 'cochabamba';
-  const normCity = String(activeCity || 'cochabamba').toLowerCase().trim();
+  const activeCity = (typeof AppState !== 'undefined') ? AppState.get('city') : 'lima';
+  const normCity = String(activeCity || 'lima').toLowerCase().trim();
   if (mode === 'disabled') {
     if (localPromoContent) localPromoContent.style.display = 'none';
     window._localAds = {
@@ -392,7 +392,7 @@ async function initializeAdsModule() {
     _adsInitialized = true;
     document.dispatchEvent(
       new CustomEvent('notigas_ads_config_ready', {
-        detail: { city: typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba' }
+        detail: { city: typeof AppState !== 'undefined' ? AppState.get('city') : 'lima' }
       })
     );
     return true;

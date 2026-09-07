@@ -69,6 +69,7 @@ async function renderDriverOrdersList() {
     .from('pedidos_publicos')
     .select('id, user_id, categoria, titulo, cantidad, direccion, telefono, descripcion, barrio_otb, latitude, longitude, created_at, estado, driver_id, ciudad')
     .in('estado', ['pendiente', 'visto'])
+    .is('driver_id', null)
     .gte('created_at', activeWindow)
     .order('created_at', { ascending: false });
 
@@ -80,7 +81,7 @@ async function renderDriverOrdersList() {
   // Filtrado a nivel de base de datos para categoría
   if (normDriverCat && normDriverCat !== 'todos' && normDriverCat !== 'otros') {
     if (normDriverCat === 'gas') {
-      pubQuery = pubQuery.in('categoria', ['gas', 'Gas', 'GAS', 'Gas GLP', 'gas glp', 'garrafa', 'Garrafa', 'GLP']);
+      pubQuery = pubQuery.in('categoria', ['gas', 'Gas', 'GAS', 'Gas GLP', 'gas glp', 'garrafa', 'Garrafa', 'GLP', 'balon', 'Balon', 'balón', 'Balón', 'balon de gas', 'balón de gas']);
     } else if (normDriverCat === 'agua') {
       pubQuery = pubQuery.in('categoria', ['agua', 'Agua', 'AGUA', 'Agua Potable', 'agua potable', 'botellon', 'Botellón', 'botellón']);
     } else {
@@ -119,8 +120,11 @@ async function renderDriverOrdersList() {
   const allOrders = [...assignedOrders, ...pubOrders];
 
   // Filtrar estrictamente: un repartidor SOLO ve pedidos de su categoría en su ciudad
+  // Si un pedido ya fue tomado por otro chofer, se bloquea y desaparece de la lista
   const orders = allOrders.filter(o => {
-    if (o.estado === 'asignado' && o.driver_id === localUserId) return true;
+    if (o.estado === 'asignado') {
+      return o.driver_id && String(o.driver_id) === String(localUserId);
+    }
     return (typeof window.isOrderCategoryMatchingDriver !== 'function') ||
            window.isOrderCategoryMatchingDriver(o.categoria, driverCategoria);
   });
@@ -197,10 +201,10 @@ async function renderDriverOrdersList() {
   // Grupos de demanda disponibles
   html += '<div class="demand-section-title" style="margin-top:12px; margin-bottom:8px;"><i class="fa-solid fa-layer-group"></i> Demanda Vecinal Acumulada</div>';
   Object.values(groups).forEach(g => {
-    const list = g.items.filter(o => o.estado === 'pendiente' || o.estado === 'visto');
+    const list = g.items.filter(o => (o.estado === 'pendiente' || o.estado === 'visto') && (!o.driver_id || o.driver_id === null));
     if (list.length === 0) return;
 
-    const totalGarrafas = list.reduce((acc, cur) => acc + (parseInt(cur.cantidad, 10) || 1), 0);
+    const totalBalones = list.reduce((acc, cur) => acc + (parseInt(cur.cantidad, 10) || 1), 0);
     const newestTime = list[0].created_at;
     const antiguedad = formatearAntiguedadPedido(newestTime);
 
@@ -211,7 +215,7 @@ async function renderDriverOrdersList() {
             <div style="font-size:13px; font-weight:800; color:#F8FAFC;">${escapeHtmlStr(g.cat)} <span style="font-size:11px; color:#38BDF8; font-weight:700;">- ${escapeHtmlStr(g.zone)}</span></div>
             <div style="font-size:10px; color:#94A3B8;">${list.length} ${list.length === 1 ? 'vecino esperando' : 'vecinos esperando'}</div>
           </div>
-          <div class="demand-card-count">${totalGarrafas} <span style="font-size:10px; color:#94A3B8;">pedidos</span></div>
+          <div class="demand-card-count">${totalBalones} <span style="font-size:10px; color:#94A3B8;">pedidos</span></div>
         </div>
         <div class="demand-card-meta">
           <div>⏱️ Último pedido: ${antiguedad}</div>
@@ -355,7 +359,7 @@ window.abrirRutaGoogleMaps = function (a, b, c, d) {
     destination = `${lat},${lng}`;
   } else if (address && String(address).trim() !== '') {
     const activeCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || '') : '';
-    destination = `${String(address).trim()}, ${activeCity}, Bolivia`;
+    destination = `${String(address).trim()}, ${activeCity}, Perú`;
   } else {
     console.error('Coordenadas o dirección no válidas para Google Maps:', { orderId, lat, lng, address });
     if (typeof showToast === 'function') {
@@ -794,7 +798,7 @@ function confirmarPedido() {
     return;
   }
 
-  const currentCity = (typeof AppState !== 'undefined' && AppState.get('city')) ? AppState.get('city') : (window.selectedCity || 'cochabamba');
+  const currentCity = (typeof AppState !== 'undefined' && AppState.get('city')) ? AppState.get('city') : (window.selectedCity || 'lima');
 
   const orderData = {
     categoria,
@@ -1178,7 +1182,7 @@ async function notificarEscucheCamion() {
         tipo: 'camion_cerca',
         latitud: payload.lat,
         longitud: payload.lng,
-        departamento: (typeof AppState !== 'undefined') ? (AppState.get('city') || 'Cochabamba') : 'Cochabamba'
+        departamento: (typeof AppState !== 'undefined') ? (AppState.get('city') || 'Lima') : 'Lima'
       }]);
       saved = !error;
     }
@@ -1207,8 +1211,8 @@ async function lanzarEspecialEsperame() {
 
   const payload = {
     tipo: 'esperame',
-    titulo: '¡Vecino saliendo con garrafa!',
-    mensaje: 'Un vecino cercano está saliendo con su garrafa. Por favor espérale unos minutos.',
+    titulo: '¡Vecino saliendo con balón de gas!',
+    mensaje: 'Un vecino cercano está saliendo con su balón de gas. Por favor espérale unos minutos.',
     lat: Number(pos.lat || pos.latitude),
     lng: Number(pos.lng || pos.longitude),
     timestamp: Date.now()
@@ -1223,7 +1227,7 @@ async function lanzarEspecialEsperame() {
         tipo: 'vecino_esperando',
         latitud: payload.lat,
         longitud: payload.lng,
-        departamento: (typeof AppState !== 'undefined') ? (AppState.get('city') || 'Cochabamba') : 'Cochabamba'
+        departamento: (typeof AppState !== 'undefined') ? (AppState.get('city') || 'Lima') : 'Lima'
       }]);
       saved = !error;
     }
@@ -1276,7 +1280,7 @@ window.recibirAlertaVecinalBroadcast = function(payload) {
     }
   } else if (payload.tipo === 'esperame') {
     if (typeof mostrarPopupAlertaRepartidor === 'function') {
-      mostrarPopupAlertaRepartidor('⏳ ¡Vecino Saliendo!', payload.mensaje || 'Un vecino cercano está saliendo con su garrafa.');
+      mostrarPopupAlertaRepartidor('⏳ ¡Vecino Saliendo!', payload.mensaje || 'Un vecino cercano está saliendo con su balón de gas.');
     } else if (typeof showToast === 'function') {
       showToast('⏳ ¡Vecino Saliendo!', payload.mensaje || 'Un vecino cercano está saliendo.', 'warning', 5000);
     }

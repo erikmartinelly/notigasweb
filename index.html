@@ -8,11 +8,11 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-  <title>NOTIGAS - Pedidos en Vivo, Camión de Gas GLP y Mapa Vecinal</title>
+  <title>NOTIGAS - Balón de Gas GLP, Pedidos en Vivo y Repartidores en Perú</title>
 
-  <meta name="description" content="NOTIGAS - Plataforma en tiempo real con mapa interactivo y GPS. Encuentra camiones de gas GLP, agua purificada y servicios de entrega en tu barrio en Bolivia.">
+  <meta name="description" content="NOTIGAS - Plataforma en tiempo real con mapa interactivo y GPS. Encuentra camiones de balones de gas GLP, agua y servicios de entrega en tu barrio en Lima y ciudades de Perú.">
 
-  <meta name="keywords" content="notigas, gas bolivia, pedir gas glp, garrafa de gas, camión de gas, santa cruz, cochabamba, la paz, pedidos en vivo, mapa repartidores">
+  <meta name="keywords" content="notigas, gas peru, pedir balon de gas, balon de gas glp, camion de gas, lima, arequipa, trujillo, chiclayo, piura, cusco, pedidos en vivo, mapa repartidores">
 
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
 
@@ -36,17 +36,17 @@
 
   <meta property="og:site_name" content="NOTIGAS">
 
-  <meta property="og:title" content="NOTIGAS - Pedidos en Vivo y Camión de Gas en tu Barrio">
+  <meta property="og:title" content="NOTIGAS - Balones de Gas en Vivo y Camión de Gas en tu Barrio">
 
-  <meta property="og:description" content="Sigue en tiempo real el camión de gas GLP, agua y servicios en tu barrio con mapa interactivo.">
+  <meta property="og:description" content="Sigue en tiempo real el camión de balones de gas GLP, agua y servicios en tu barrio con mapa interactivo en Perú.">
 
   <meta property="og:image" content="https://www.notigas.com/icons/garrafa_red-512.png">
 
   <meta property="twitter:card" content="summary_large_image">
 
-  <meta property="twitter:title" content="NOTIGAS - Pedidos en Vivo y Camión de Gas">
+  <meta property="twitter:title" content="NOTIGAS - Pedidos en Vivo y Camión de Balones de Gas">
 
-  <meta property="twitter:description" content="Sigue en tiempo real el camión de gas GLP y agua en tu barrio.">
+  <meta property="twitter:description" content="Sigue en tiempo real el camión de balones de gas GLP y agua en tu barrio en Perú.">
 
   <meta property="twitter:image" content="https://www.notigas.com/icons/garrafa_red-512.png">
 
@@ -70,7 +70,7 @@
 
     "browserRequirements": "Requires JavaScript. Requires HTML5.",
 
-    "description": "Plataforma de geolocalización en tiempo real para conectar a vecinos con camiones repartidores de gas GLP, agua potable y suministros esenciales.",
+    "description": "Plataforma de geolocalización en tiempo real para conectar a vecinos con camiones repartidores de balones de gas GLP, agua potable y suministros esenciales en Perú.",
 
     "offers": {
 
@@ -78,7 +78,7 @@
 
       "price": "0",
 
-      "priceCurrency": "BOB"
+      "priceCurrency": "PEN"
 
     },
 
@@ -126,7 +126,7 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="styles/main.css?v=118">
+  <link rel="stylesheet" href="styles/main.css?v=119">
 
   <!-- SERVICIOS EXTERNOS -->
 
@@ -140,7 +140,7 @@
 
   <div class="ng-inline-1" id="gpsMandatoryBanner">
 
-    <i class="fa-solid fa-triangle-exclamation"></i> 📍 GPS Obligatorio: Activa tu ubicación para ubicar el camión garrafero y hacer pedidos a tu domicilio.
+    <i class="fa-solid fa-triangle-exclamation"></i> 📍 GPS Obligatorio: Activa tu ubicación para ubicar el camión de gas y hacer pedidos a tu domicilio.
 
     <button class="ng-inline-2" id="auto-event-1" aria-label="Activar GPS en vivo">Activar GPS</button>
 
@@ -312,35 +312,65 @@
 
         </div>
 
-        <!-- DROPDOWN DE CAPITALES Y MUNICIPIOS POR ÁREA METROPOLITANA -->
+        <!-- DROPDOWN DE CIUDADES CAPITALES DE PERÚ -->
 
         <div class="city-selector-bar">
 
           <i class="fa-solid fa-map-location-dot ng-inline-12"></i>
 
-          <select id="selectCiudadCapital" >
+          <select id="selectCiudadCapital">
 
-            <option value="" disabled selected>📍 Escoge tu ciudad</option>
+            <option value="lima" selected>📍 Lima (Capital)</option>
 
-            <option value="santacruz">📍 Santa Cruz de la Sierra</option>
+            <option value="callao">📍 Callao</option>
 
-            <option value="cochabamba">📍 Cochabamba</option>
+            <option value="arequipa">📍 Arequipa</option>
 
-            <option value="lapaz">📍 La Paz</option>
+            <option value="trujillo">📍 Trujillo (La Libertad)</option>
 
-            <option value="elalto">📍 El Alto</option>
+            <option value="chiclayo">📍 Chiclayo (Lambayeque)</option>
 
-            <option value="sucre">📍 Sucre</option>
+            <option value="piura">📍 Piura</option>
 
-            <option value="tarija">📍 Tarija</option>
+            <option value="cusco">📍 Cusco</option>
 
-            <option value="oruro">📍 Oruro</option>
+            <option value="huancayo">📍 Huancayo (Junín)</option>
 
-            <option value="potosi">📍 Potosí</option>
+            <option value="iquitos">📍 Iquitos (Loreto)</option>
 
-            <option value="trinidad">📍 Trinidad (Beni)</option>
+            <option value="pucallpa">📍 Pucallpa (Ucayali)</option>
 
-            <option value="cobija">📍 Cobija (Pando)</option>
+            <option value="tacna">📍 Tacna</option>
+
+            <option value="ica">📍 Ica</option>
+
+            <option value="huaraz">📍 Huaraz (Áncash)</option>
+
+            <option value="cajamarca">📍 Cajamarca</option>
+
+            <option value="ayacucho">📍 Ayacucho (Huamanga)</option>
+
+            <option value="huanuco">📍 Huánuco</option>
+
+            <option value="puno">📍 Puno / Juliaca</option>
+
+            <option value="tarapoto">📍 Tarapoto (San Martín)</option>
+
+            <option value="moyobamba">📍 Moyobamba (San Martín)</option>
+
+            <option value="tumbes">📍 Tumbes</option>
+
+            <option value="moquegua">📍 Moquegua / Ilo</option>
+
+            <option value="puertomaldonado">📍 Puerto Maldonado (Madre de Dios)</option>
+
+            <option value="abancay">📍 Abancay (Apurímac)</option>
+
+            <option value="huancavelica">📍 Huancavelica</option>
+
+            <option value="pasco">📍 Cerro de Pasco</option>
+
+            <option value="chachapoyas">📍 Chachapoyas (Amazonas)</option>
 
           </select>
 
@@ -798,7 +828,7 @@
 
         <label>¿Qué Vende / Oferta?:</label>
 
-        <input type="text" id="inputDriverProductos" placeholder="Ej: Garrafas GLP 10kg, reguladores, mangueras">
+        <input type="text" id="inputDriverProductos" placeholder="Ej: Balones de gas GLP 10kg, reguladores, mangueras">
 
       </div>
 
@@ -808,27 +838,57 @@
 
         <select id="inputDriverCiudad" required>
 
-          <option value="" disabled selected>Escoge tu ciudad</option>
+          <option value="lima" selected>📍 Lima (Capital)</option>
 
-          <option value="santacruz">Santa Cruz de la Sierra</option>
+          <option value="callao">📍 Callao</option>
 
-          <option value="cochabamba">Cochabamba</option>
+          <option value="arequipa">📍 Arequipa</option>
 
-          <option value="lapaz">La Paz</option>
+          <option value="trujillo">📍 Trujillo (La Libertad)</option>
 
-          <option value="elalto">El Alto</option>
+          <option value="chiclayo">📍 Chiclayo (Lambayeque)</option>
 
-          <option value="sucre">Sucre</option>
+          <option value="piura">📍 Piura</option>
 
-          <option value="tarija">Tarija</option>
+          <option value="cusco">📍 Cusco</option>
 
-          <option value="oruro">Oruro</option>
+          <option value="huancayo">📍 Huancayo (Junín)</option>
 
-          <option value="potosi">Potosí</option>
+          <option value="iquitos">📍 Iquitos (Loreto)</option>
 
-          <option value="trinidad">Trinidad (Beni)</option>
+          <option value="pucallpa">📍 Pucallpa (Ucayali)</option>
 
-          <option value="cobija">Cobija (Pando)</option>
+          <option value="tacna">📍 Tacna</option>
+
+          <option value="ica">📍 Ica</option>
+
+          <option value="huaraz">📍 Huaraz (Áncash)</option>
+
+          <option value="cajamarca">📍 Cajamarca</option>
+
+          <option value="ayacucho">📍 Ayacucho (Huamanga)</option>
+
+          <option value="huanuco">📍 Huánuco</option>
+
+          <option value="puno">📍 Puno / Juliaca</option>
+
+          <option value="tarapoto">📍 Tarapoto (San Martín)</option>
+
+          <option value="moyobamba">📍 Moyobamba (San Martín)</option>
+
+          <option value="tumbes">📍 Tumbes</option>
+
+          <option value="moquegua">📍 Moquegua / Ilo</option>
+
+          <option value="puertomaldonado">📍 Puerto Maldonado (Madre de Dios)</option>
+
+          <option value="abancay">📍 Abancay (Apurímac)</option>
+
+          <option value="huancavelica">📍 Huancavelica</option>
+
+          <option value="pasco">📍 Cerro de Pasco</option>
+
+          <option value="chachapoyas">📍 Chachapoyas (Amazonas)</option>
 
         </select>
 
@@ -1022,27 +1082,57 @@
 
         <select class="ng-inline-60" id="newUserCity" required>
 
-          <option value="" disabled selected>👉 Selecciona tu ciudad de preferencia (Obligatorio)</option>
+          <option value="lima" selected>📍 Lima (Capital)</option>
 
-          <option value="santacruz">Santa Cruz de la Sierra</option>
+          <option value="callao">📍 Callao</option>
 
-          <option value="cochabamba">Cochabamba</option>
+          <option value="arequipa">📍 Arequipa</option>
 
-          <option value="lapaz">La Paz</option>
+          <option value="trujillo">📍 Trujillo (La Libertad)</option>
 
-          <option value="elalto">El Alto</option>
+          <option value="chiclayo">📍 Chiclayo (Lambayeque)</option>
 
-          <option value="sucre">Sucre</option>
+          <option value="piura">📍 Piura</option>
 
-          <option value="tarija">Tarija</option>
+          <option value="cusco">📍 Cusco</option>
 
-          <option value="oruro">Oruro</option>
+          <option value="huancayo">📍 Huancayo (Junín)</option>
 
-          <option value="potosi">Potosí</option>
+          <option value="iquitos">📍 Iquitos (Loreto)</option>
 
-          <option value="trinidad">Trinidad (Beni)</option>
+          <option value="pucallpa">📍 Pucallpa (Ucayali)</option>
 
-          <option value="cobija">Cobija (Pando)</option>
+          <option value="tacna">📍 Tacna</option>
+
+          <option value="ica">📍 Ica</option>
+
+          <option value="huaraz">📍 Huaraz (Áncash)</option>
+
+          <option value="cajamarca">📍 Cajamarca</option>
+
+          <option value="ayacucho">📍 Ayacucho (Huamanga)</option>
+
+          <option value="huanuco">📍 Huánuco</option>
+
+          <option value="puno">📍 Puno / Juliaca</option>
+
+          <option value="tarapoto">📍 Tarapoto (San Martín)</option>
+
+          <option value="moyobamba">📍 Moyobamba (San Martín)</option>
+
+          <option value="tumbes">📍 Tumbes</option>
+
+          <option value="moquegua">📍 Moquegua / Ilo</option>
+
+          <option value="puertomaldonado">📍 Puerto Maldonado (Madre de Dios)</option>
+
+          <option value="abancay">📍 Abancay (Apurímac)</option>
+
+          <option value="huancavelica">📍 Huancavelica</option>
+
+          <option value="pasco">📍 Cerro de Pasco</option>
+
+          <option value="chachapoyas">📍 Chachapoyas (Amazonas)</option>
 
         </select>
 
@@ -1184,7 +1274,7 @@
 
           <ul class="ng-inline-73">
 
-            <li><strong>Transparencia de Tarifas:</strong> Respeta los precios oficiales regulados para la garrafa de gas GLP en Bolivia y tarifas justas en otros insumos.</li>
+            <li><strong>Transparencia de Tarifas:</strong> Respeta los precios oficiales y tarifas justas para el balón de gas GLP en Perú y en otros insumos.</li>
 
             <li><strong>Transmisión GPS Ética:</strong> Activa tu GPS en vivo únicamente cuando estés efectivamente en recorrido o prestando servicio en la zona.</li>
 
@@ -1232,15 +1322,15 @@
 
       </div>
 
-      <p class="ng-inline-81">Selecciona el producto o servicio que necesitas en tu OTB:</p>
+      <p class="ng-inline-81">Selecciona el producto o servicio que necesitas en tu barrio:</p>
 
       <div class="submenu-grid">
 
         <div class="submenu-card"  id="auto-event-39" >
 
-          <img class="ng-inline-82" src="icons/garrafa_red_clean.svg" alt="Garrafa GLP roja de NOTIGAS">
+          <img class="ng-inline-82" src="icons/garrafa_red_clean.svg" alt="Balón de gas GLP rojo de NOTIGAS">
 
-          <span class="submenu-title">🔥 Garrafa GLP</span>
+          <span class="submenu-title">🔥 Balón de Gas</span>
 
         </div>
 
@@ -1326,7 +1416,7 @@
 
         <select id="selectCategoria" >
 
-          <option value="gas">🔥 Garrafa de Gas GLP</option>
+          <option value="gas">🔥 Balón de Gas GLP</option>
 
           <option value="agua">💧 Botellón Agua Purificada 20L</option>
 
@@ -1932,25 +2022,57 @@
 
                   <option value="global">🌍 Todas las ciudades (Global)</option>
 
-                  <option value="cochabamba" selected>📍 Cochabamba</option>
+                  <option value="lima" selected>📍 Lima (Capital)</option>
 
-                  <option value="santacruz">📍 Santa Cruz de la Sierra</option>
+                  <option value="callao">📍 Callao</option>
 
-                  <option value="lapaz">📍 La Paz</option>
+                  <option value="arequipa">📍 Arequipa</option>
 
-                  <option value="elalto">📍 El Alto</option>
+                  <option value="trujillo">📍 Trujillo (La Libertad)</option>
 
-                  <option value="sucre">📍 Sucre</option>
+                  <option value="chiclayo">📍 Chiclayo (Lambayeque)</option>
 
-                  <option value="tarija">📍 Tarija</option>
+                  <option value="piura">📍 Piura</option>
 
-                  <option value="oruro">📍 Oruro</option>
+                  <option value="cusco">📍 Cusco</option>
 
-                  <option value="potosi">📍 Potosí</option>
+                  <option value="huancayo">📍 Huancayo (Junín)</option>
 
-                  <option value="trinidad">📍 Trinidad (Beni)</option>
+                  <option value="iquitos">📍 Iquitos (Loreto)</option>
 
-                  <option value="cobija">📍 Cobija (Pando)</option>
+                  <option value="pucallpa">📍 Pucallpa (Ucayali)</option>
+
+                  <option value="tacna">📍 Tacna</option>
+
+                  <option value="ica">📍 Ica</option>
+
+                  <option value="huaraz">📍 Huaraz (Áncash)</option>
+
+                  <option value="cajamarca">📍 Cajamarca</option>
+
+                  <option value="ayacucho">📍 Ayacucho (Huamanga)</option>
+
+                  <option value="huanuco">📍 Huánuco</option>
+
+                  <option value="puno">📍 Puno / Juliaca</option>
+
+                  <option value="tarapoto">📍 Tarapoto (San Martín)</option>
+
+                  <option value="moyobamba">📍 Moyobamba (San Martín)</option>
+
+                  <option value="tumbes">📍 Tumbes</option>
+
+                  <option value="moquegua">📍 Moquegua / Ilo</option>
+
+                  <option value="puertomaldonado">📍 Puerto Maldonado (Madre de Dios)</option>
+
+                  <option value="abancay">📍 Abancay (Apurímac)</option>
+
+                  <option value="huancavelica">📍 Huancavelica</option>
+
+                  <option value="pasco">📍 Cerro de Pasco</option>
+
+                  <option value="chachapoyas">📍 Chachapoyas (Amazonas)</option>
 
                 </select>
 
@@ -2318,27 +2440,27 @@
 
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3/dist/umd/supabase.min.js"></script>
 
-  <script defer src="js/state.js?v=118"></script>
+  <script defer src="js/state.js?v=119"></script>
 
-  <script defer src="js/ui.js?v=118"></script>
+  <script defer src="js/ui.js?v=119"></script>
 
-  <script defer src="js/supabase-config.js?v=118"></script>
+  <script defer src="js/supabase-config.js?v=119"></script>
 
-  <script defer src="js/auth.js?v=118"></script>
+  <script defer src="js/auth.js?v=119"></script>
 
-  <script defer src="js/vendors.js?v=118"></script>
+  <script defer src="js/vendors.js?v=119"></script>
 
-  <script defer src="js/map.js?v=118"></script>
+  <script defer src="js/map.js?v=119"></script>
 
-  <script defer src="js/map_search.js?v=118"></script>
+  <script defer src="js/map_search.js?v=119"></script>
 
-  <script defer src="js/map_gps.js?v=118"></script>
+  <script defer src="js/map_gps.js?v=119"></script>
 
-  <script defer src="js/orders.js?v=118"></script>
+  <script defer src="js/orders.js?v=119"></script>
 
-  <script defer src="js/app.js?v=118"></script>
+  <script defer src="js/app.js?v=119"></script>
 
-  <script defer src="js/events.js?v=118"></script>
+  <script defer src="js/events.js?v=119"></script>
 
 </body>
 

@@ -256,15 +256,15 @@ async function guardarPerfilSupabase(user, changes = {}) {
         );
     }
 
-    const currentCity = (changes.ciudad || AppState.get('city') || 'cochabamba').toLowerCase().trim();
+    const currentCity = (changes.ciudad || AppState.get('city') || 'lima').toLowerCase().trim();
     const payload = {
         id: user.id,
         role: changes.role || 'vecino',
-        ciudad: currentCity || 'cochabamba',
+        ciudad: currentCity || 'lima',
         ...changes,
         updated_at: new Date().toISOString()
     };
-    if (!payload.ciudad) payload.ciudad = 'cochabamba';
+    if (!payload.ciudad) payload.ciudad = 'lima';
 
     const { data, error } =
         await window.supabaseClient
@@ -295,13 +295,13 @@ async function guardarUbicacionHabitualUsuario(
     lng
 ) {
     const inferred = typeof inferMainCityFromCoords === 'function' ? inferMainCityFromCoords(lat, lng) : null;
-    const ciudad = (inferred || AppState.get('city') || 'cochabamba').toLowerCase().trim();
+    const ciudad = (inferred || AppState.get('city') || 'lima').toLowerCase().trim();
 
     await guardarPerfilSupabase(
         user,
         {
             role: 'vecino',
-            ciudad: ciudad || 'cochabamba',
+            ciudad: ciudad || 'lima',
             latitude: lat,
             longitude: lng,
             location_updated_at:
@@ -362,12 +362,11 @@ async function solicitarYGuardarUbicacionHabitual(user) {
             }
         }
 
-        // Si todavía no hay coords, usar la capital actual de BOLIVIA_CITIES
+        // Si todavía no hay coords, usar la capital actual de PERU_CITIES o BOLIVIA_CITIES
         if (lat == null || lng == null) {
-            const currentCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || 'cochabamba') : 'cochabamba';
-            const cityDef = (window.BOLIVIA_CITIES && window.BOLIVIA_CITIES[currentCity])
-                ? window.BOLIVIA_CITIES[currentCity]
-                : { lat: -17.3895, lon: -66.1568 };
+            const currentCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || 'lima') : 'lima';
+            const citiesObj = window.PERU_CITIES || window.BOLIVIA_CITIES || {};
+            const cityDef = citiesObj[currentCity] || { lat: -12.0460, lon: -77.0306 };
             lat = cityDef.lat;
             lng = cityDef.lon || cityDef.lng;
         }
@@ -381,10 +380,9 @@ async function solicitarYGuardarUbicacionHabitual(user) {
         return true;
     } catch (error) {
         console.warn('Ubicación base asignada por fallback:', error);
-        const currentCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || 'cochabamba') : 'cochabamba';
-        const cityDef = (window.BOLIVIA_CITIES && window.BOLIVIA_CITIES[currentCity])
-            ? window.BOLIVIA_CITIES[currentCity]
-            : { lat: -17.3895, lon: -66.1568 };
+        const currentCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || 'lima') : 'lima';
+        const citiesObj = window.PERU_CITIES || window.BOLIVIA_CITIES || {};
+        const cityDef = citiesObj[currentCity] || { lat: -12.0460, lon: -77.0306 };
 
         await guardarUbicacionHabitualUsuario(user, cityDef.lat, cityDef.lon || cityDef.lng);
         return true;
@@ -692,7 +690,7 @@ async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
     await guardarPerfilSupabase(authData.user, {
       role: 'repartidor',
       nombre: repartidorObj.nombre,
-      ciudad: repartidorObj.ciudad || AppState.get('city') || 'cochabamba'
+      ciudad: repartidorObj.ciudad || AppState.get('city') || 'lima'
     });
   } catch (profileError) {
     console.error('No se pudo guardar el modo repartidor en el perfil:', profileError);
@@ -735,7 +733,7 @@ async function guardarRegistroUnico() {
     const categoria = (document.getElementById('regCategoriaNegocio')?.value || 'gas').trim();
 
     let productos = 'Varios';
-    if (categoria === 'gas') productos = 'Garrafas GLP 10kg';
+    if (categoria === 'gas') productos = 'Balones de Gas GLP 10kg';
     else if (categoria === 'detergentes') productos = 'Detergentes y Productos de Limpieza';
     else if (categoria === 'chatarra') productos = 'Compra de Chatarra y Metales';
     else if (categoria === 'papel') productos = 'Papel, Cartón y Reciclaje';
@@ -743,7 +741,7 @@ async function guardarRegistroUnico() {
     else productos = 'Varios';
 
     const schedule = (document.getElementById('regSchedule')?.value || '').trim() || 'Lunes a Sábado: 07:00 a 18:00';
-    const ciudad = (document.getElementById('newUserCity')?.value || AppState.get('city') || '').trim();
+    const ciudad = (document.getElementById('newUserCity')?.value || AppState.get('city') || 'lima').trim();
 
     if (!ciudad) {
       if (typeof showToast === 'function') showToast('⚠️ Ciudad Requerida', 'Por favor selecciona la ciudad de operación para tu registro.', 'warning', 4000);
@@ -859,10 +857,12 @@ async function iniciarSesionRepartidor() {
     existingUserId = session.user.id;
   }
 
-  let ciudad = (document.getElementById('inputDriverCiudad')?.value || '').trim() || cachedUser.ciudad || 'cochabamba';
+  let ciudad = (document.getElementById('inputDriverCiudad')?.value || '').trim() || cachedUser.ciudad || 'lima';
 
-  const validCities = ['santacruz', 'cochabamba', 'lapaz', 'elalto', 'sucre', 'tarija', 'oruro', 'potosi', 'trinidad', 'cobija'];
-  if (!ciudad || !validCities.includes(ciudad.toLowerCase())) {
+  const validCities = window.PERU_CITIES
+    ? Object.keys(window.PERU_CITIES)
+    : ['lima', 'callao', 'arequipa', 'trujillo', 'chiclayo', 'piura', 'cusco', 'huancayo', 'iquitos', 'pucallpa', 'tacna', 'ica', 'huaraz', 'cajamarca', 'ayacucho', 'huanuco', 'puno', 'tarapoto', 'moyobamba', 'tumbes', 'moquegua', 'puertomaldonado', 'abancay', 'huancavelica', 'cerrodepasco', 'chachapoyas'];
+  if (!ciudad || (!validCities.includes(ciudad.toLowerCase()) && !['cochabamba', 'santacruz', 'lapaz'].includes(ciudad.toLowerCase()))) {
     if (typeof showToast === 'function') showToast('Error', 'Debes seleccionar una ciudad válida', 'error', 3000);
     else if (typeof showToast === 'function') { showToast('Notificación', '❌ Error: Debes seleccionar una ciudad válida', 'info', 4000); } else { alert('❌ Error: Debes seleccionar una ciudad válida'); };
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
@@ -1164,7 +1164,7 @@ async function cambiarRepartidorAComprador() {
 
     await guardarPerfilSupabase(authData.user, {
       role: 'vecino',
-      ciudad: AppState.get('city') || 'cochabamba'
+      ciudad: AppState.get('city') || 'lima'
     });
 
     if (typeof window.pausarRecorridoRepartidor === 'function') {
@@ -1430,7 +1430,7 @@ async function migrarDatosAntiguosARepartidor() {
             productos: driverRow.productos || '',
             zonas: driverRow.zonas || '',
             schedule: driverRow.schedule || '',
-            ciudad: driverRow.ciudad || AppState.get('city') || 'cochabamba',
+            ciudad: driverRow.ciudad || AppState.get('city') || 'lima',
             user_id: user.id,
             gmail: user.email || current.gmail || ''
           };
@@ -1462,10 +1462,10 @@ async function migrarDatosAntiguosARepartidor() {
       whatsapp: driverProfile.whatsapp || '',
       placa: driverProfile.placa || driverProfile.plate || '',
       categoria: driverProfile.categoria || driverProfile.category || 'gas',
-      productos: driverProfile.productos || driverProfile.products || 'Garrafas GLP 10kg',
-      zonas: driverProfile.zonas || driverProfile.zones || 'OTB Central y calles vecinas',
+      productos: driverProfile.productos || driverProfile.products || 'Balones de Gas GLP 10kg',
+      zonas: driverProfile.zonas || driverProfile.zones || 'Calles y zonas de cobertura vecinal',
       schedule: driverProfile.schedule || 'Lunes a Sábado: 07:00 a 18:00',
-      ciudad: driverProfile.ciudad || AppState.get('city') || '',
+      ciudad: driverProfile.ciudad || AppState.get('city') || 'lima',
       user_id: existingUserId
     };
 
@@ -1725,7 +1725,7 @@ async function procesarSesionExitosa(user, isInteractive = false) {
       }
     }
 
-    const resolvedCity = (choferData?.ciudad || existingProfile?.ciudad || AppState.get('city') || 'cochabamba').toLowerCase().trim();
+    const resolvedCity = (choferData?.ciudad || existingProfile?.ciudad || AppState.get('city') || 'lima').toLowerCase().trim();
 
     const clienteData = {
       role: currentSelectedRole === 'driver' ? 'repartidor' : 'vecino',
@@ -1791,7 +1791,7 @@ async function procesarSesionExitosa(user, isInteractive = false) {
               nombre: clienteData.nombre,
               apellido: clienteData.apellido,
               role: 'vecino',
-              ciudad: clienteData.ciudad || AppState.get('city') || 'cochabamba'
+              ciudad: clienteData.ciudad || AppState.get('city') || 'lima'
           }).catch(err => console.warn('Aviso creando perfil nuevo:', err));
         }
 

@@ -136,8 +136,8 @@ async function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
             const res = await provider();
             if (res && Number.isFinite(res.lat) && Number.isFinite(res.lng)) {
                 const country = String(res.countryCode || '').toUpperCase();
-                const inBolivia = res.lat >= -23.5 && res.lat <= -9.5 && res.lng >= -70 && res.lng <= -57;
-                if (inBolivia && (!country || country === 'BO')) {
+                const inPeru = res.lat >= -18.5 && res.lat <= -0.0 && res.lng >= -81.5 && res.lng <= -68.5;
+                if (inPeru && (!country || country === 'PE')) {
                     return res;
                 }
             }
@@ -146,26 +146,26 @@ async function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
     } catch (_) {}
 
     if (!item) {
-        // Fallback seguro a Cochabamba por defecto
-        item = { lat: -17.3895, lng: -66.1568, city: 'Cochabamba', region: 'Cochabamba' };
+        // Fallback seguro a Lima por defecto
+        item = { lat: -12.0460, lng: -77.0306, city: 'Lima', region: 'Lima' };
     }
 
     const coords = { lat: item.lat, lng: item.lng, city: item.city, region: item.region, time: Date.now(), exact: false };
 
-    let detectedCity = 'cochabamba';
+    let detectedCity = 'lima';
     if (typeof window.inferMainCityFromCoords === 'function') {
         detectedCity = window.inferMainCityFromCoords(coords.lat, coords.lng);
     }
     if (!detectedCity || detectedCity === 'fuera_de_cobertura') {
         if (typeof window.matchCityByNameOrRegion === 'function') {
-            detectedCity = window.matchCityByNameOrRegion(coords.city, coords.region) || 'cochabamba';
+            detectedCity = window.matchCityByNameOrRegion(coords.city, coords.region) || 'lima';
         } else {
-            detectedCity = 'cochabamba';
+            detectedCity = 'lima';
         }
     }
 
-    const cityDefs = (typeof window.BOLIVIA_CITIES !== 'undefined') ? window.BOLIVIA_CITIES : null;
-    const cityData = (cityDefs && cityDefs[detectedCity]) ? cityDefs[detectedCity] : { key: 'cochabamba', nombre: 'Cochabamba', lat: -17.3895, lon: -66.1568 };
+    const cityDefs = (typeof window.PERU_CITIES !== 'undefined') ? window.PERU_CITIES : ((typeof window.BOLIVIA_CITIES !== 'undefined') ? window.BOLIVIA_CITIES : null);
+    const cityData = (cityDefs && cityDefs[detectedCity]) ? cityDefs[detectedCity] : { key: 'lima', nombre: 'Lima', lat: -12.0460, lon: -77.0306 };
 
     const finalLat = coords.lat;
     const finalLng = coords.lng;

@@ -29,13 +29,13 @@ async function renderForumFeed() {
     
     // Si es comprador o repartidor registrado, mostrar estrictamente los avisos de su ciudad registrada
     // Si es administrador o visitante, usar la ciudad seleccionada en la cabecera
-    let rawCity = 'cochabamba';
+    let rawCity = 'lima';
     if (!isAdmin && userData && userData.ciudad) {
       rawCity = userData.ciudad;
     } else {
-      rawCity = ciudadSelector || (typeof AppState !== 'undefined' && AppState.get('city')) || (userData && userData.ciudad) || 'cochabamba';
+      rawCity = ciudadSelector || (typeof AppState !== 'undefined' && AppState.get('city')) || (userData && userData.ciudad) || 'lima';
     }
-    const ciudadReal = String(rawCity || 'cochabamba').toLowerCase().trim();
+    const ciudadReal = String(rawCity || 'lima').toLowerCase().trim();
 
     // Consultar avisos activos para la ciudad (insensible a mayúsculas)
     const { data: localPosts, error } = await window.supabaseClient.from('avisos')
@@ -364,11 +364,11 @@ function abrirModalNuevoPost() {
   const isAdmin = !!currentAdmin || (typeof AppState !== 'undefined' && AppState.get('isAdmin') === true);
   const ciudadSelector = document.getElementById('selectCiudadCapital')?.value;
 
-  let rawCity = 'cochabamba';
+  let rawCity = 'lima';
   if (!isAdmin && userData && userData.ciudad) {
     rawCity = userData.ciudad;
   } else {
-    rawCity = ciudadSelector || (typeof AppState !== 'undefined' && AppState.get('city')) || (userData && userData.ciudad) || 'cochabamba';
+    rawCity = ciudadSelector || (typeof AppState !== 'undefined' && AppState.get('city')) || (userData && userData.ciudad) || 'lima';
   }
 
   const cityLabel = document.getElementById('newPostCityLabel');
@@ -492,13 +492,13 @@ async function crearNuevoPost() {
 
     // Si es comprador o repartidor, restringir estrictamente a su ciudad registrada
     // Si es administrador, usar la ciudad seleccionada
-    let rawCity = 'cochabamba';
+    let rawCity = 'lima';
     if (!isAdmin && userData && userData.ciudad) {
       rawCity = userData.ciudad;
     } else {
-      rawCity = ciudadSelector || (typeof AppState !== 'undefined' && AppState.get('city')) || (userData && userData.ciudad) || 'cochabamba';
+      rawCity = ciudadSelector || (typeof AppState !== 'undefined' && AppState.get('city')) || (userData && userData.ciudad) || 'lima';
     }
-    const ciudadReal = String(rawCity || 'cochabamba').toLowerCase().trim();
+    const ciudadReal = String(rawCity || 'lima').toLowerCase().trim();
 
     // Determinar nombre del autor: Nombre y Apellido
     let authorName = 'Vecino de la OTB';

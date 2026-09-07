@@ -122,8 +122,8 @@ window.iniciarSuscripcionAvisos = function() {
 window.iniciarSuscripcionesRealtime = async function() {
     if (!window.supabaseClient) return;
 
-    const rawCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || 'cochabamba') : 'cochabamba';
-    const activeCity = String(rawCity || 'cochabamba').toLowerCase().trim();
+    const rawCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || 'lima') : 'lima';
+    const activeCity = String(rawCity || 'lima').toLowerCase().trim();
     if (!activeCity) {
         console.warn('⚠️ No hay ciudad activa definida para suscripción Realtime.');
         return;
@@ -359,8 +359,9 @@ window.cambiarCiudad = async function(nuevaCiudad) {
         AppState.set('city', nuevaCiudad);
     }
 
-    if (typeof map !== 'undefined' && map && window.BOLIVIA_CITIES && window.BOLIVIA_CITIES[nuevaCiudad]) {
-        const c = window.BOLIVIA_CITIES[nuevaCiudad];
+    const citiesObj = window.PERU_CITIES || window.BOLIVIA_CITIES || {};
+    if (typeof map !== 'undefined' && map && citiesObj[nuevaCiudad]) {
+        const c = citiesObj[nuevaCiudad];
         if (map.getZoom() <= 10) {
             map.flyTo([c.lat, c.lon || c.lng], 15, { duration: 1.2 });
         }

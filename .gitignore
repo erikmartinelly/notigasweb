@@ -48,6 +48,8 @@ build/
 scratch_test_runner.html
 temp_edge_profile/
 temp_*_profile/
+.tmp_*
+.*_profile/
 
 # Archivos del Sistema Operativo
 .DS_Store
