@@ -1,3 +1,19 @@
+
+function getCustomDriverTruckIcon(data, isZoomOut) {
+  if (isZoomOut && truckRadarBlueIcon) return truckRadarBlueIcon;
+  if (typeof window.crearMarcadorCamionRepartidorHtml === 'function') {
+    const html = window.crearMarcadorCamionRepartidorHtml(data);
+    return L.divIcon({
+      className: 'notigas-driver-marker',
+      html: html,
+      iconSize: [40, 62],
+      iconAnchor: [20, 31]
+    });
+  }
+  return truckIcon;
+}
+window.getCustomDriverTruckIcon = getCustomDriverTruckIcon;
+
 /* ==========================================================================
    NOTIGAS - MÓDULO DE MAPA EN VIVO, POSICIONAMIENTO GPS OBLIGATORIO,
    ANIMACIONES Y MAPA DE CALOR DE PEDIDOS PARA MODO REPARTIDOR
@@ -78,7 +94,7 @@ const garrafaGreenSvgMarkerHtml = `
 // Marcador único de repartidor: Camión 3D Rojo Moderno + insignia R Oficial
 const truckSvgMarkerHtml = `
   <div class="driver-map-marker" title="Repartidor Oficial NOTIGAS en Vivo">
-    <img src="icons/nissan_condor_side.svg" class="driver-3d-truck-img" alt="Camión Repartidor">
+    <img src="icons/camion_dina_rojo.svg" class="driver-3d-truck-img" alt="Camión Repartidor">
     <span class="driver-marker-badge" aria-hidden="true">R</span>
     <span class="driver-marker-online" title="GPS en Tiempo Real"></span>
   </div>
@@ -504,7 +520,13 @@ function actualizarIconoMarcadorUsuario(forcedMode) {
                    (typeof AppState !== 'undefined' && AppState.get('userData') && AppState.get('userData').role === 'repartidor');
   if (isDriver) {
     const isZoomOut = map && (map.getZoom() <= DRIVER_RADAR_MAX_ZOOM);
-    userMarker.setIcon(isZoomOut && truckRadarBlueIcon ? truckRadarBlueIcon : truckIcon);
+    const uData = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
+    const driverSelfIcon = getCustomDriverTruckIcon({
+      distribuidor_nombre: uData.nombre || 'Mi Camión',
+      user_id: uData.user_id || uData.id,
+      color_camion: uData.color_camion
+    }, isZoomOut);
+    userMarker.setIcon(driverSelfIcon);
   } else {
     userMarker.setIcon(userLocationIcon);
   }
@@ -1066,17 +1088,25 @@ function actualizarRepartidorEnMapa(data) {
   }
 
   const isZoomOut = map && (map.getZoom() <= DRIVER_RADAR_MAX_ZOOM);
-  const iconToUse = isZoomOut && truckRadarBlueIcon ? truckRadarBlueIcon : truckIcon;
+  const iconToUse = getCustomDriverTruckIcon(data, isZoomOut);
   const safeNombre = typeof escapeHtmlStr === 'function' ? escapeHtmlStr(data.distribuidor_nombre || 'Repartidor') : (data.distribuidor_nombre || 'Repartidor');
   const safeCategoria = typeof escapeHtmlStr === 'function' ? escapeHtmlStr(data.categoria || 'Servicio de Entrega') : (data.categoria || 'Servicio de Entrega');
   const safeTelefono = data.telefono ? (typeof escapeHtmlStr === 'function' ? escapeHtmlStr(data.telefono) : data.telefono) : '';
 
+  const driverInitials = (typeof window.getDriverInitials === 'function') ? window.getDriverInitials(data.distribuidor_nombre) : 'R';
+  const driverTheme = (typeof window.getDriverColorTheme === 'function') ? window.getDriverColorTheme(data.distribuidor_nombre, data.color_camion) : null;
+  const badgeBg = driverTheme ? driverTheme.badgeBg : '#E11D48';
+  const badgeBorder = driverTheme ? driverTheme.badgeBorder : '#FFFFFF';
+
   const popupHtml = `
-    <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
-      <strong style="color:#00E676; font-size:13px;">🚛 Camión en Vivo</strong><br>
-      <span style="font-size:12px; color:#FFFFFF; font-weight:800;">${safeNombre}</span><br>
-      <span style="font-size:11px; color:#64748B;">${safeCategoria}</span><br>
-      ${safeTelefono ? `<a href="tel:${safeTelefono}" style="display:inline-block; margin-top:5px; font-size:11px; color:#1E293B; background:#FFD54F; padding:4px 8px; border-radius:12px; text-decoration:none; font-weight:bold;">📞 Llama: ${safeTelefono}</a>` : ''}
+    <div style="font-family:'Roboto',sans-serif; text-align:center; padding:6px; min-width:160px;">
+      <div style="display:inline-flex; align-items:center; justify-content:center; margin-bottom:4px; gap:6px;">
+        <span style="background:${badgeBg}; color:white; border:1.5px solid ${badgeBorder}; border-radius:50%; width:22px; height:22px; font-size:10px; font-weight:900; display:inline-flex; align-items:center; justify-content:center;">${driverInitials}</span>
+        <strong style="color:#00E676; font-size:12.5px;">🚛 Camión en Vivo</strong>
+      </div><br>
+      <span style="font-size:13px; color:#FFFFFF; font-weight:800;">${safeNombre}</span><br>
+      <span style="font-size:11px; color:#94A3B8;">${safeCategoria}</span><br>
+      ${safeTelefono ? `<a href="tel:${safeTelefono}" style="display:inline-block; margin-top:6px; font-size:11px; color:#1E293B; background:#FFD54F; padding:4px 10px; border-radius:12px; text-decoration:none; font-weight:bold;">📞 Llama: ${safeTelefono}</a>` : ''}
     </div>
   `;
 
@@ -2003,7 +2033,7 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
 
       // Proyección explícita de columnas necesarias incluyendo visto y subestado
       const ORDER_COLUMNS = 'id, user_id, categoria, titulo, cantidad, direccion, telefono, estado, driver_id, ciudad, latitude, longitude, visto, subestado, created_at, updated_at';
-      const TRUCK_COLUMNS = 'id, user_id, distribuidor_nombre, categoria, titulo, ciudad, latitude, longitude, garrafas_agotadas, last_active, telefono, placa, productos';
+      const TRUCK_COLUMNS = 'id, user_id, distribuidor_nombre, categoria, titulo, ciudad, latitude, longitude, garrafas_agotadas, last_active, telefono, placa, productos, color_camion';
 
       // Obtener Bounding Box del viewport visible con margen de 25% para pre-carga suave
       let bbox = null;

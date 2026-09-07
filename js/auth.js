@@ -700,7 +700,8 @@ async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
     categoria: repartidorObj.categoria,
     productos: repartidorObj.productos,
     schedule: repartidorObj.schedule,
-    ciudad: repartidorObj.ciudad || AppState.get('city') || null
+    ciudad: repartidorObj.ciudad || AppState.get('city') || null,
+    color_camion: repartidorObj.color_camion || ''
   }], { onConflict: 'user_id' })
     .select('estado_verificacion')
     .single();
@@ -903,6 +904,7 @@ async function iniciarSesionRepartidor() {
     return;
   }
 
+  const colorCamion = (document.getElementById('inputDriverTruckColor')?.value || '').trim() || 'rojo';
   const repartidorData = {
     role: 'repartidor',
     nombre: nombreNegocio,
@@ -912,6 +914,7 @@ async function iniciarSesionRepartidor() {
     productos: productos,
     schedule: schedule,
     ciudad: ciudad,
+    color_camion: colorCamion,
     user_id: existingUserId
   };
 
@@ -2171,3 +2174,98 @@ async function guardarFichaComprador() {
   }
 }
 window.guardarFichaComprador = guardarFichaComprador;
+
+
+/* GESTIÓN VISUAL DEL COLOR PICKER DE CAMIÓN Y VISTA PREVIA */
+function inicializarColorPickerChofer() {
+  const container = document.getElementById('driverTruckColorPicker');
+  const inputColor = document.getElementById('inputDriverTruckColor');
+  const inputNombre = document.getElementById('inputDriverNombre');
+  const lblName = document.getElementById('lblDriverTruckColorName');
+  if (!container || !window.NOTIGAS_TRUCK_PALETTE) return;
+
+  const currentColor = (inputColor?.value || 'rojo').toLowerCase().trim();
+  container.innerHTML = '';
+
+  window.NOTIGAS_TRUCK_PALETTE.forEach(theme => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'color-swatch-chip' + (theme.key === currentColor ? ' active' : '');
+    chip.style.width = '24px';
+    chip.style.height = '24px';
+    chip.style.borderRadius = '50%';
+    chip.style.border = (theme.key === currentColor) ? '2.5px solid #FFFFFF' : '1.5px solid rgba(255,255,255,0.2)';
+    chip.style.background = theme.primary;
+    chip.style.cursor = 'pointer';
+    chip.style.boxShadow = (theme.key === currentColor) ? '0 0 8px ' + theme.primary : 'none';
+    chip.title = theme.name;
+
+    chip.addEventListener('click', () => {
+      seleccionarColorCamionModal(theme.key);
+    });
+    container.appendChild(chip);
+  });
+
+  actualizarVistaPreviaCamionChofer();
+
+  if (inputNombre && !inputNombre._previewBound) {
+    inputNombre._previewBound = true;
+    inputNombre.addEventListener('input', () => {
+      actualizarVistaPreviaCamionChofer();
+    });
+  }
+}
+window.inicializarColorPickerChofer = inicializarColorPickerChofer;
+
+function seleccionarColorCamionModal(colorKey) {
+  const inputColor = document.getElementById('inputDriverTruckColor');
+  const lblName = document.getElementById('lblDriverTruckColorName');
+  if (inputColor) inputColor.value = colorKey;
+
+  const theme = window.getDriverColorTheme ? window.getDriverColorTheme(null, colorKey) : null;
+  if (lblName && theme) {
+    lblName.textContent = theme.name;
+    lblName.style.color = theme.primary;
+  }
+
+  // Actualizar estilos activos de los chips
+  const chips = document.querySelectorAll('#driverTruckColorPicker .color-swatch-chip');
+  chips.forEach(c => {
+    if (c.title === theme?.name) {
+      c.style.border = '2.5px solid #FFFFFF';
+      c.style.boxShadow = '0 0 8px ' + theme.primary;
+    } else {
+      c.style.border = '1.5px solid rgba(255,255,255,0.2)';
+      c.style.boxShadow = 'none';
+    }
+  });
+
+  actualizarVistaPreviaCamionChofer();
+}
+window.seleccionarColorCamionModal = seleccionarColorCamionModal;
+
+function actualizarVistaPreviaCamionChofer() {
+  const container = document.getElementById('driverTruckPreviewContainer');
+  const nameInput = document.getElementById('inputDriverNombre');
+  const inputColor = document.getElementById('inputDriverTruckColor');
+  const previewName = document.getElementById('driverTruckPreviewName');
+  if (!container || typeof window.generarSvgCamionDina !== 'function') return;
+
+  const name = (nameInput?.value || 'Tu Camión').trim();
+  const color = (inputColor?.value || 'rojo').trim();
+  const initials = (typeof window.getDriverInitials === 'function') ? window.getDriverInitials(name) : 'R';
+
+  container.innerHTML = window.generarSvgCamionDina({
+    name: name,
+    initials: initials,
+    color: color,
+    withBg: false,
+    width: 76,
+    height: 48
+  });
+
+  if (previewName) {
+    previewName.textContent = name || 'Tu Camión Oficial';
+  }
+}
+window.actualizarVistaPreviaCamionChofer = actualizarVistaPreviaCamionChofer;

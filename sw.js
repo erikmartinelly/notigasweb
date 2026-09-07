@@ -1,28 +1,29 @@
-/* NOTIGAS SERVICE WORKER v123.0 - CACHÉ PROGRESIVO Y MODO OFFLINE */
-const CACHE_NAME = 'notigas-cache-v123';
+/* NOTIGAS SERVICE WORKER v124.0 - CACHÉ PROGRESIVO Y MODO OFFLINE */
+const CACHE_NAME = 'notigas-cache-v124';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './styles/main.css?v=122',
-  './js/state.js?v=122',
-  './js/ui.js?v=122',
-  './js/supabase-config.js?v=122',
-  './js/auth.js?v=122',
-  './js/vendors.js?v=122',
-  './js/map.js?v=122',
-  './js/map_search.js?v=122',
-  './js/map_gps.js?v=122',
-  './js/orders.js?v=122',
-  './js/forum.js?v=122',
-  './js/promo.js?v=122',
-  './js/admin_users.js?v=122',
-  './js/admin.js?v=122',
-  './js/app.js?v=122',
-  './js/events.js?v=122',
+  './styles/main.css?v=124',
+  './js/driver_icons.js?v=124',
+  './js/state.js?v=124',
+  './js/ui.js?v=124',
+  './js/supabase-config.js?v=124',
+  './js/auth.js?v=124',
+  './js/vendors.js?v=124',
+  './js/map.js?v=124',
+  './js/map_search.js?v=124',
+  './js/map_gps.js?v=124',
+  './js/orders.js?v=124',
+  './js/forum.js?v=124',
+  './js/promo.js?v=124',
+  './js/admin_users.js?v=124',
+  './js/admin.js?v=124',
+  './js/app.js?v=124',
+  './js/events.js?v=124',
+  './icons/camion_dina_rojo.svg',
   './icons/garrafa_red_clean.svg',
   './icons/garrafa_red-192.png',
   './icons/garrafa_red-512.png',
-  './icons/camion_red.svg',
   './manifest.json'
 ];
 

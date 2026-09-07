@@ -5707,25 +5707,17 @@ button:active, .tab-btn:active, .cat-chip:active {
 
   right: 0px;
 
-  width: 22px;
-
+  min-width: 22px;
   height: 22px;
-
+  padding: 0 4px;
   display: flex;
-
   align-items: center;
-
   justify-content: center;
-
   color: #FFFFFF;
-
   background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
-
   border: 2px solid #FFFFFF;
-
-  border-radius: 50%;
-
-  font-size: 11px;
+  border-radius: 11px;
+  font-size: 10px;
 
   font-weight: 900;
 
@@ -7421,3 +7413,23 @@ button:active, .tab-btn:active, .cat-chip:active {
   border-color: #DC2626;
 }
 
+
+
+/* ESTILOS PARA CAMBIO DE ROL Y PALETA DE COLORES */
+.btn-role-switch-header:hover {
+  filter: brightness(1.2);
+  transform: translateY(-1px);
+}
+.btn-role-choice {
+  transition: all 0.2s ease;
+}
+.btn-role-choice:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.15);
+}
+.color-swatch-chip {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.color-swatch-chip:hover {
+  transform: scale(1.2);
+}

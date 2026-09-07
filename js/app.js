@@ -1,4 +1,43 @@
 
+/* FUNCIÓN GLOBAL: ALTERNAR ROL DE USUARIO (COMPRADOR ⇄ REPARTIDOR) PARA ADMINISTRADOR Y PRUEBAS */
+window.cambiarModoRolUsuario = function(targetMode) {
+  const currentMode = (typeof AppState !== 'undefined' ? AppState.get('appMode') : 'buyer') || 'buyer';
+  const newMode = targetMode || (currentMode === 'driver' ? 'buyer' : 'driver');
+
+  const userData = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
+
+  if (newMode === 'driver') {
+    userData.role = 'repartidor';
+    if (!userData.nombre) userData.nombre = 'Repartidor de Pruebas';
+    if (!userData.telefono) userData.telefono = '987654321';
+    if (!userData.categoria) userData.categoria = 'Gas GLP';
+    if (!userData.placa) userData.placa = 'TEST-01';
+    if (!userData.ciudad) userData.ciudad = (AppState.get('city') || 'lima');
+    userData.hasDriverProfile = true;
+    AppState.set('userData', userData);
+
+    if (typeof setAppMode === 'function') setAppMode('driver', true);
+
+    if (typeof showToast === 'function') {
+      showToast('🚛 Modo Repartidor Activado', 'Ahora puedes ver y tomar pedidos, gestionar tu recorrido GPS y ver pedidos en tu zona.', 'success', 4000);
+    }
+  } else {
+    userData.role = 'vecino';
+    AppState.set('userData', userData);
+
+    if (typeof setAppMode === 'function') setAppMode('buyer', true);
+
+    if (typeof showToast === 'function') {
+      showToast('🛍️ Modo Comprador Activado', 'Ahora puedes pedir balones de gas, ver el mapa y los repartidores cercanos.', 'info', 4000);
+    }
+  }
+
+  // Refrescar vistas en mapa
+  if (typeof renderActiveOrdersMap === 'function') renderActiveOrdersMap();
+  if (typeof actualizarIconoMarcadorUsuario === 'function') actualizarIconoMarcadorUsuario(newMode);
+};
+
+
 /* CONTROL ESTRICTO DE OPERACIÓN POR CIUDAD REGISTRADA */
 window.verificarPermisoOperarEnCiudad = function(accionNombre) {
   const userData = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
@@ -189,6 +228,10 @@ function abrirFichaRepartidorEdicion() {
   if (titleEl) titleEl.textContent = 'Editar Mi Ficha de Repartidor';
   if (subtitleEl) subtitleEl.textContent = 'Actualiza los datos de tu negocio. Los cambios se aplican de inmediato.';
 
+  if (typeof window.inicializarColorPickerChofer === 'function') {
+    window.inicializarColorPickerChofer();
+  }
+
   const modal = document.getElementById('modalDriver');
   if (modal) modal.style.display = 'flex';
 }
@@ -217,7 +260,9 @@ function setAppMode(mode, refreshData = true) {
 
     if (badgeContainer) {
       badgeContainer.innerHTML = `
-        <span style="font-size:9.5px; background:rgba(255,109,0,0.2); color:#FF6D00; padding:3px 6px; border-radius:8px; font-weight:900; border:1px solid #FF6D00;">🚛 MODO REPARTIDOR</span>
+        <button type="button" id="btnHeaderRoleToggle" onclick="window.cambiarModoRolUsuario('buyer')" class="btn-role-switch-header" title="Modo Repartidor activo. Haz clic para cambiar a Comprador" style="background:rgba(255,109,0,0.22); color:#FF6D00; padding:4px 8px; border-radius:8px; font-weight:900; font-size:11px; border:1.5px solid #FF6D00; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 2px 6px rgba(255,109,0,0.3);">
+          <i class="fa-solid fa-truck-fast"></i> <span>REPARTIDOR</span> <i class="fa-solid fa-repeat" style="font-size:9px; opacity:0.85;"></i>
+        </button>
       `;
     }
 
@@ -234,7 +279,9 @@ function setAppMode(mode, refreshData = true) {
 
     if (badgeContainer) {
       badgeContainer.innerHTML = `
-        <span style="font-size:9.5px; background:rgba(2,136,209,0.2); color:#38BDF8; padding:3px 6px; border-radius:8px; font-weight:900; border:1px solid #0288D1;">🛍️ MODO COMPRADOR</span>
+        <button type="button" id="btnHeaderRoleToggle" onclick="window.cambiarModoRolUsuario('driver')" class="btn-role-switch-header" title="Modo Comprador activo. Haz clic para cambiar a Repartidor" style="background:rgba(2,136,209,0.22); color:#38BDF8; padding:4px 8px; border-radius:8px; font-weight:900; font-size:11px; border:1.5px solid #0288D1; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 2px 6px rgba(2,136,209,0.3);">
+          <i class="fa-solid fa-basket-shopping"></i> <span>COMPRADOR</span> <i class="fa-solid fa-repeat" style="font-size:9px; opacity:0.85;"></i>
+        </button>
       `;
     }
     if (refreshData && typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
@@ -242,6 +289,30 @@ function setAppMode(mode, refreshData = true) {
     if (typeof renderReportedTrucksBuffer === 'function') renderReportedTrucksBuffer();
     if (typeof checkActiveOrderStatus === 'function') checkActiveOrderStatus();
     if (typeof syncBuyerActiveOrderFromCloud === 'function') syncBuyerActiveOrderFromCloud();
+  }
+
+  // Sincronizar botones en modal de configuración
+  const btnB = document.getElementById('btnSwitchModeBuyer');
+  const btnD = document.getElementById('btnSwitchModeDriver');
+  const lbl = document.getElementById('lblCurrentActiveRole');
+  if (btnB && btnD) {
+    if (mode === 'driver') {
+      btnD.style.borderColor = '#FF6D00';
+      btnD.style.background = 'rgba(255,109,0,0.25)';
+      btnD.style.color = '#FF6D00';
+      btnB.style.borderColor = '#475569';
+      btnB.style.background = '#1E293B';
+      btnB.style.color = '#94A3B8';
+      if (lbl) { lbl.textContent = 'Repartidor'; lbl.style.color = '#FF6D00'; }
+    } else {
+      btnB.style.borderColor = '#0288D1';
+      btnB.style.background = 'rgba(2,136,209,0.25)';
+      btnB.style.color = '#38BDF8';
+      btnD.style.borderColor = '#475569';
+      btnD.style.background = '#1E293B';
+      btnD.style.color = '#94A3B8';
+      if (lbl) { lbl.textContent = 'Comprador'; lbl.style.color = '#38BDF8'; }
+    }
   }
 }
 window.setAppMode = setAppMode;

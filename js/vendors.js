@@ -25,7 +25,7 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
     // Consultar exclusivamente de la vista pública autorizada
     const { data, error } = await window.supabaseClient
       .from('choferes_publicos')
-      .select('id, nombre_completo, categoria, ciudad, telefono, descripcion, foto_url, estado_verificacion, created_at')
+      .select('id, nombre_completo, categoria, ciudad, telefono, descripcion, foto_url, estado_verificacion, created_at, color_camion')
       .in('ciudad', cityKeys);
 
     if (error) {
@@ -44,6 +44,7 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
             products: d.productos || 'Servicios de reparto a domicilio',
             zones: d.zonas || 'OTB local',
             schedule: d.schedule || 'Lunes a Sábado',
+            color_camion: d.color_camion || '',
             active: true // Fichas publicadas automáticamente
           });
         }
@@ -121,13 +122,15 @@ function renderVendorCards(filterCat) {
   const adInsertAfterIndex = Math.max(0, Math.ceil(filtered.length / 2) - 1);
   filtered.forEach((vendor, index) => {
     const safeVendorId = escapeHtmlStr(vendor.id || '');
-    const safeVendorIcon = escapeHtmlStr(vendor.icon || getIconForCategory(vendor.category));
+    const safeVendorIcon = (typeof window.crearAvatarCamionChoferHtml === 'function')
+      ? window.crearAvatarCamionChoferHtml(vendor.name, { category: vendor.category, color: vendor.color_camion })
+      : escapeHtmlStr(vendor.icon || getIconForCategory(vendor.category));
 
     html += `
       <div class="vendor-fb-card">
         <div class="vendor-fb-header">
           <div class="vendor-profile">
-            <div class="vendor-avatar">${safeVendorIcon}</div>
+            <div class="vendor-avatar" style="background:transparent; border:none; width:auto; height:auto; padding:0; overflow:visible;">${safeVendorIcon}</div>
             <div class="vendor-meta">
               <span class="vendor-name">${escapeHtmlStr(vendor.name)}</span>
               <span class="vendor-badge-cat"><i class="fa-solid fa-circle-check"></i> ${escapeHtmlStr(vendor.category)}</span>
