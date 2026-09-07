@@ -464,7 +464,7 @@ window.getActiveUserLocation = getActiveUserLocation;
 // 1. Registro del Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    const swVer = window.NOTIGAS?.CACHE_VERSION || '118';
+    const swVer = window.NOTIGAS?.CACHE_VERSION || '120';
     navigator.serviceWorker.register(`./sw.js?v=${swVer}`)
       .then((reg) => console.log('✅ Service Worker registrado', reg.scope))
       .catch((err) => console.error('❌ Error Service Worker:', err));
