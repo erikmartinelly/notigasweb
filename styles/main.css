@@ -7380,3 +7380,91 @@ button:active, .tab-btn:active, .cat-chip:active {
 .notigas-driver-marker {
   transition: transform 0.6s linear !important;
 }
+
+/* ==========================================================================
+   BOTONES DE ESTADO RÁPIDO PARA REPARTIDORES (EN CAMINO / EN PUERTA / LIBERAR)
+   ========================================================================== */
+.driver-quick-actions-container {
+  margin-top: 8px;
+  padding: 8px;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+}
+
+.driver-quick-actions-title {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #94A3B8;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 6px;
+}
+
+.driver-quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.btn-quick-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 7px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  transition: all 0.15s ease;
+}
+
+.btn-quick-action:active {
+  transform: scale(0.97);
+}
+
+.btn-quick-camino {
+  background: linear-gradient(135deg, #0284C7, #0369A1);
+  color: #FFFFFF;
+}
+
+.btn-quick-camino.active {
+  background: #0284C7;
+  box-shadow: 0 0 0 2px #38BDF8, 0 2px 8px rgba(2, 132, 199, 0.5);
+}
+
+.btn-quick-puerta {
+  background: linear-gradient(135deg, #D97706, #B45309);
+  color: #FFFFFF;
+}
+
+.btn-quick-puerta.active {
+  background: #D97706;
+  box-shadow: 0 0 0 2px #FBBF24, 0 2px 8px rgba(217, 119, 6, 0.5);
+}
+
+.btn-quick-whatsapp {
+  background: linear-gradient(135deg, #16A34A, #15803D);
+  color: #FFFFFF;
+}
+
+.btn-quick-cancel {
+  background: rgba(239, 68, 68, 0.12);
+  color: #FCA5A5;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.btn-quick-cancel:hover {
+  background: #DC2626;
+  color: #FFFFFF;
+  border-color: #DC2626;
+}
+

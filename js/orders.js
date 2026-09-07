@@ -67,7 +67,7 @@ async function renderDriverOrdersList() {
   // 1. Pedidos disponibles desde la vista pública (filtrado estricto por ciudad y categoría del chofer)
   let pubQuery = window.supabaseClient
     .from('pedidos_publicos')
-    .select('id, user_id, categoria, titulo, cantidad, direccion, telefono, descripcion, barrio_otb, latitude, longitude, created_at, estado, driver_id, ciudad')
+    .select('id, user_id, categoria, titulo, cantidad, direccion, telefono, descripcion, barrio_otb, latitude, longitude, created_at, estado, driver_id, ciudad, subestado')
     .in('estado', ['pendiente', 'visto'])
     .is('driver_id', null)
     .gte('created_at', activeWindow)
@@ -94,7 +94,7 @@ async function renderDriverOrdersList() {
   if (localUserId) {
     let assignedQuery = window.supabaseClient
       .from('pedidos')
-      .select('id, user_id, categoria, titulo, cantidad, direccion, telefono, descripcion, barrio_otb, latitude, longitude, created_at, estado, driver_id, ciudad')
+      .select('id, user_id, categoria, titulo, cantidad, direccion, telefono, descripcion, barrio_otb, latitude, longitude, created_at, estado, driver_id, ciudad, subestado')
       .eq('driver_id', localUserId)
       .eq('estado', 'asignado')
       .gte('created_at', activeWindow)
@@ -170,12 +170,20 @@ async function renderDriverOrdersList() {
       const lng = o.longitude || 0;
       const tel = o.telefono ? escapeHtmlStr(o.telefono) : '';
       const desc = o.descripcion ? escapeHtmlStr(o.descripcion) : '';
+      const subestadoBadge = o.subestado === 'en_puerta'
+        ? '<span style="font-size:9px; background:#D97706; color:white; padding:2px 6px; border-radius:4px; font-weight:800; margin-left:4px;">🚪 EN PUERTA</span>'
+        : (o.subestado === 'en_camino'
+            ? '<span style="font-size:9px; background:#0284C7; color:white; padding:2px 6px; border-radius:4px; font-weight:800; margin-left:4px;">🚚 EN CAMINO</span>'
+            : '');
 
       html += `
         <div class="assigned-order-card" style="margin-bottom:10px; border-left:4px solid #10B981; background:rgba(16,185,129,0.06); padding:10px; border-radius:8px; border:1px solid rgba(16,185,129,0.2);">
           <div class="demand-card-header" style="display:flex; justify-content:space-between; align-items:flex-start;">
             <div>
-              <span style="font-size:9px; background:#10B981; color:white; padding:2px 6px; border-radius:4px; font-weight:800;">EN ENTREGA</span>
+              <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
+                <span style="font-size:9px; background:#10B981; color:white; padding:2px 6px; border-radius:4px; font-weight:800;">EN ENTREGA</span>
+                ${subestadoBadge}
+              </div>
               <div style="font-size:13px; font-weight:800; color:#F8FAFC; margin-top:2px;">${escapeHtmlStr(o.categoria || 'Pedido')} (${escapeHtmlStr(o.cantidad || '1 un')})</div>
             </div>
             <div style="font-size:10px; color:#94A3B8;">${antiguedad}</div>
@@ -185,6 +193,31 @@ async function renderDriverOrdersList() {
             ${tel ? `<div style="margin-top:3px;">📞 <strong>Teléfono:</strong> <a href="tel:${tel}" style="color:#38BDF8; font-weight:700; text-decoration:underline;">${tel}</a></div>` : '<div style="color:#64748B; font-size:10px; margin-top:2px;">📞 Teléfono: No indicado</div>'}
             ${desc ? `<div style="margin-top:3px; font-size:10.5px; color:#94A3B8; font-style:italic;">📝 ${desc}</div>` : ''}
           </div>
+
+          <div class="driver-quick-actions-container" style="margin-top:8px;">
+            <div class="driver-quick-actions-title">⚡ Estado con Cliente:</div>
+            <div class="driver-quick-actions-grid">
+              <button type="button" class="btn-quick-action btn-quick-camino ${o.subestado === 'en_camino' ? 'active' : ''}" 
+                data-action="cambiarEstadoRapidoPedido" data-id="${o.id}" data-status="en_camino" title="Avisar al cliente que vas en camino">
+                <i class="fa-solid fa-truck-fast"></i> En camino
+              </button>
+              <button type="button" class="btn-quick-action btn-quick-puerta ${o.subestado === 'en_puerta' ? 'active' : ''}" 
+                data-action="cambiarEstadoRapidoPedido" data-id="${o.id}" data-status="en_puerta" title="Avisar al cliente que estás en la puerta">
+                <i class="fa-solid fa-bell"></i> En puerta
+              </button>
+              ${tel ? `
+              <button type="button" class="btn-quick-action btn-quick-whatsapp" 
+                data-action="abrirWhatsappDirecto" data-tel="${tel}" data-address="${street}" data-categoria="${escapeHtmlStr(o.categoria || 'gas')}" title="Chat directo por WhatsApp">
+                <i class="fa-brands fa-whatsapp"></i> WhatsApp
+              </button>
+              ` : ''}
+              <button type="button" class="btn-quick-action btn-quick-cancel" 
+                data-action="liberarPedidoRepartidor" data-id="${o.id}" title="Liberar pedido para que otro repartidor lo tome">
+                <i class="fa-solid fa-arrow-rotate-left"></i> No podré
+              </button>
+            </div>
+          </div>
+
           <div class="demand-card-actions" style="margin-top:8px; display:flex; gap:6px;">
             <button type="button" class="btn-action" style="background:#0284C7; color:white; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:700; border:none; cursor:pointer; flex:1; display:inline-flex; align-items:center; justify-content:center; gap:5px;" data-action="centrarPedidoEnMapa" data-lat="${lat}" data-lng="${lng}" data-order-id="${o.id}">
               <i class="fa-solid fa-map-location-dot"></i> VER EN EL MAPA
@@ -421,6 +454,124 @@ async function confirmarEntregaPedido(id) {
 }
 window.confirmarEntregaPedido = confirmarEntregaPedido;
 
+async function cambiarEstadoRapidoPedido(orderId, quickStatus) {
+  if (!window.supabaseClient || !orderId) return;
+
+  const statusLabel = quickStatus === 'en_puerta' ? 'Estoy en su puerta' : 'En camino';
+  const statusIcon = quickStatus === 'en_puerta' ? '🚪' : '🚚';
+
+  if (typeof showLoadingOverlay === 'function') {
+    showLoadingOverlay(`Notificando "${statusLabel}"...`);
+  }
+
+  try {
+    const { data, error } = await window.supabaseClient.rpc('rpc_driver_set_quick_status', {
+      p_order_id: orderId,
+      p_quick_status: quickStatus
+    });
+
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+
+    if (error) {
+      console.error('Error al actualizar estado rápido:', error);
+      if (typeof showToast === 'function') {
+        showToast('Error', error.message || 'No se pudo actualizar el estado.', 'error', 4000);
+      }
+      return;
+    }
+
+    if (typeof showToast === 'function') {
+      showToast(
+        `${statusIcon} Notificación enviada`,
+        quickStatus === 'en_puerta'
+          ? 'El cliente fue notificado que estás en su puerta.'
+          : 'El cliente fue notificado que vas en camino.',
+        'success',
+        3500
+      );
+    }
+
+    if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
+    if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
+  } catch (e) {
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+    console.error('Error inesperado en cambiarEstadoRapidoPedido:', e);
+    if (typeof showToast === 'function') {
+      showToast('Error', 'Error de conexión al actualizar estado.', 'error', 4000);
+    }
+  }
+}
+window.cambiarEstadoRapidoPedido = cambiarEstadoRapidoPedido;
+
+async function liberarPedidoRepartidor(orderId) {
+  if (!window.supabaseClient || !orderId) return;
+
+  const msg = '¿Seguro que no podrás entregar este pedido? Volverá a la lista disponible para que otro repartidor de la ciudad pueda atenderlo de inmediato.';
+  showConfirmModal('⚠️', '¿No podrás llegar?', msg, 'Sí, liberar pedido', async () => {
+    if (typeof showLoadingOverlay === 'function') {
+      showLoadingOverlay('Liberando pedido...');
+    }
+
+    try {
+      const { data, error } = await window.supabaseClient.rpc('rpc_driver_release_order', {
+        p_order_id: orderId,
+        p_motivo: 'Repartidor canceló por imprevisto'
+      });
+
+      if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+
+      if (error) {
+        console.error('Error al liberar pedido:', error);
+        if (typeof showToast === 'function') {
+          showToast('Error', error.message || 'No se pudo liberar el pedido.', 'error', 4000);
+        }
+        return;
+      }
+
+      if (typeof showToast === 'function') {
+        showToast('Pedido liberado', 'El pedido volvió a estar disponible para otros repartidores.', 'info', 4500);
+      }
+
+      if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
+      if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
+      if (typeof map !== 'undefined' && map && map.closePopup) {
+        map.closePopup();
+      }
+    } catch (e) {
+      if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+      console.error('Error inesperado en liberarPedidoRepartidor:', e);
+      if (typeof showToast === 'function') {
+        showToast('Error', 'Error inesperado al liberar el pedido.', 'error', 4000);
+      }
+    }
+  }, 'Mantener pedido');
+}
+window.liberarPedidoRepartidor = liberarPedidoRepartidor;
+
+function abrirWhatsappDirecto(rawTel, direccion, categoria) {
+  if (!rawTel) {
+    if (typeof showToast === 'function') {
+      showToast('Teléfono no disponible', 'El cliente no especificó número telefónico en este pedido.', 'warning', 3500);
+    }
+    return;
+  }
+
+  let cleanTel = String(rawTel).replace(/[^0-9]/g, '');
+  if (cleanTel.length === 9 && !cleanTel.startsWith('51')) {
+    cleanTel = '51' + cleanTel;
+  } else if (!cleanTel.startsWith('51') && cleanTel.length <= 10) {
+    cleanTel = '51' + cleanTel;
+  }
+
+  const catName = categoria || 'balón de gas';
+  const dirText = direccion ? ` para entrega en *${direccion}*` : '';
+  const msg = encodeURIComponent(`Hola! 👋 Te escribo desde NOTIGAS sobre tu pedido de *${catName}*${dirText}. Estoy coordinando tu entrega.`);
+  const waUrl = `https://wa.me/${cleanTel}?text=${msg}`;
+
+  window.open(waUrl, '_blank', 'noopener,noreferrer');
+}
+window.abrirWhatsappDirecto = abrirWhatsappDirecto;
+
 function ejecutarPurgaBaseDeDatosAuto() {
   const now = Date.now();
   const expirationMs = (window.NOTIGAS && window.NOTIGAS.ORDER_EXPIRATION_MS) ? window.NOTIGAS.ORDER_EXPIRATION_MS : 48 * 60 * 60 * 1000;
@@ -504,9 +655,39 @@ function renderActiveOrderNotice(order) {
   if (effectiveState === 'pendiente' && order.visto === true) {
     effectiveState = 'visto';
   }
-  const view = ORDER_STATUS_PRESENTATION[effectiveState] || ORDER_STATUS_PRESENTATION.pendiente;
+  let view = ORDER_STATUS_PRESENTATION[effectiveState] || ORDER_STATUS_PRESENTATION.pendiente;
+
+  // Personalización cuando el repartidor emite estado rápido
+  if (effectiveState === 'asignado' && order.subestado) {
+    if (order.subestado === 'en_puerta') {
+      view = {
+        title: '¡Repartidor en tu Puerta! 🚪',
+        label: 'EN TU PUERTA',
+        owner: 'REPARTIDOR LLEGÓ',
+        info: 'El repartidor ya está en la puerta de tu domicilio.',
+        detail: '¡Por favor acércate a la puerta para recibir tu balón!',
+        color: '#10B981',
+        shadow: 'rgba(16, 185, 129, 0.45)'
+      };
+    } else if (order.subestado === 'en_camino') {
+      view = {
+        title: '¡Repartidor en Camino! 🚚',
+        label: 'EN CAMINO',
+        owner: 'REPARTIDOR EN RUTA',
+        info: 'El repartidor tomó tu pedido y va hacia tu dirección.',
+        detail: 'Mantente atento a tu timbre o teléfono celular.',
+        color: '#0284C7',
+        shadow: 'rgba(2, 132, 199, 0.45)'
+      };
+    }
+  }
 
   tripCard.dataset.state = effectiveState;
+  if (order.subestado) {
+    tripCard.dataset.subestado = order.subestado;
+  } else {
+    delete tripCard.dataset.subestado;
+  }
   tripCard.style.display = 'block';
 
   const title = document.getElementById('notigasTripTitle');
@@ -547,7 +728,7 @@ async function syncActiveOrderStatusFromDatabase(order) {
 
   _activeOrderStatusRequest = window.supabaseClient
     .from('pedidos')
-    .select('estado, driver_id, visto, updated_at')
+    .select('estado, driver_id, visto, subestado, updated_at')
     .eq('id', order.id)
     .maybeSingle();
 
@@ -558,6 +739,7 @@ async function syncActiveOrderStatusFromDatabase(order) {
     const changed = data.estado !== order.estado ||
       data.visto !== order.visto ||
       data.driver_id !== order.driver_id ||
+      data.subestado !== order.subestado ||
       data.updated_at !== order.updated_at;
     if (!changed) return;
 

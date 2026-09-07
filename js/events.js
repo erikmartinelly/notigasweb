@@ -427,6 +427,27 @@ document.addEventListener('click', async (e) => {
       const id = btn.getAttribute('data-id');
       if (typeof window.confirmarEntregaPedido === 'function') window.confirmarEntregaPedido(id);
     }
+    else if (action === 'cambiarEstadoRapidoPedido') {
+      const id = btn.getAttribute('data-id');
+      const status = btn.getAttribute('data-status');
+      if (typeof window.cambiarEstadoRapidoPedido === 'function') {
+        window.cambiarEstadoRapidoPedido(id, status);
+      }
+    }
+    else if (action === 'liberarPedidoRepartidor') {
+      const id = btn.getAttribute('data-id');
+      if (typeof window.liberarPedidoRepartidor === 'function') {
+        window.liberarPedidoRepartidor(id);
+      }
+    }
+    else if (action === 'abrirWhatsappDirecto') {
+      const tel = btn.getAttribute('data-tel');
+      const address = btn.getAttribute('data-address') || '';
+      const categoria = btn.getAttribute('data-categoria') || '';
+      if (typeof window.abrirWhatsappDirecto === 'function') {
+        window.abrirWhatsappDirecto(tel, address, categoria);
+      }
+    }
     else if (action === 'confirmarRecepcionComprador') {
       if (typeof window.confirmarRecepcionComprador === 'function') window.confirmarRecepcionComprador();
       if (typeof window.cerrarPanoramicaPedidos === 'function') window.cerrarPanoramicaPedidos();

@@ -1253,7 +1253,33 @@ function agregarPedidoVecinoEnMapa(order) {
     orderAction = `
       <a href="${mapsNavUrl}" target="_blank" rel="noopener noreferrer" data-action="abrirRutaGoogleMaps" data-lat="${lat}" data-lng="${lng}" data-id="${escapeFn(order.id)}" data-address="${escapeFn(order.direccion || '')}" class="btn-driver-route order-popup-action">
         <i class="fa-solid fa-diamond-turn-right"></i> IR CON GOOGLE MAPS
-      </a>`;
+      </a>
+      <div class="driver-quick-actions-container" style="margin-top:8px;">
+        <div class="driver-quick-actions-title">⚡ Estado con Cliente:</div>
+        <div class="driver-quick-actions-grid">
+          <button type="button" class="btn-quick-action btn-quick-camino ${order.subestado === 'en_camino' ? 'active' : ''}" 
+            data-action="cambiarEstadoRapidoPedido" data-id="${escapeFn(order.id)}" data-status="en_camino" title="Avisar al cliente que vas en camino">
+            <i class="fa-solid fa-truck-fast"></i> En camino
+          </button>
+          <button type="button" class="btn-quick-action btn-quick-puerta ${order.subestado === 'en_puerta' ? 'active' : ''}" 
+            data-action="cambiarEstadoRapidoPedido" data-id="${escapeFn(order.id)}" data-status="en_puerta" title="Avisar al cliente que estás en la puerta">
+            <i class="fa-solid fa-bell"></i> En puerta
+          </button>
+          ${order.telefono ? `
+          <button type="button" class="btn-quick-action btn-quick-whatsapp" 
+            data-action="abrirWhatsappDirecto" data-tel="${escapeFn(order.telefono)}" data-address="${escapeFn(order.direccion || order.barrio_otb || '')}" data-categoria="${escapeFn(order.categoria || 'gas')}" title="Chat directo por WhatsApp">
+            <i class="fa-brands fa-whatsapp"></i> WhatsApp
+          </button>
+          ` : ''}
+          <button type="button" class="btn-quick-action btn-quick-cancel" 
+            data-action="liberarPedidoRepartidor" data-id="${escapeFn(order.id)}" title="Liberar pedido para que otro repartidor lo tome">
+            <i class="fa-solid fa-arrow-rotate-left"></i> No podré
+          </button>
+        </div>
+      </div>
+      <button type="button" class="btn-action" style="margin-top:8px; background:#10B981; color:white; border:none; padding:7px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; width:100%; display:inline-flex; align-items:center; justify-content:center; gap:5px;" data-action="confirmarEntregaPedido" data-id="${escapeFn(order.id)}">
+        <i class="fa-solid fa-circle-check"></i> Entregado
+      </button>`;
   } else if (userRole === 'repartidor') {
     orderAction = `
       <button type="button" data-action="aceptarPedidoRepartidor" data-lat="${lat}" data-lng="${lng}" data-id="${escapeFn(order.id)}" data-address="${escapeFn(order.direccion || '')}" class="btn-driver-accept order-popup-action">
@@ -1990,8 +2016,8 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
       const normCity = String(activeCity || '').toLowerCase().trim();
       const tenMinsAgo = new Date(Date.now() - 10 * 60000).toISOString();
 
-      // Proyección explícita de columnas necesarias incluyendo visto
-      const ORDER_COLUMNS = 'id, user_id, categoria, titulo, cantidad, direccion, telefono, estado, driver_id, ciudad, latitude, longitude, visto, created_at, updated_at';
+      // Proyección explícita de columnas necesarias incluyendo visto y subestado
+      const ORDER_COLUMNS = 'id, user_id, categoria, titulo, cantidad, direccion, telefono, estado, driver_id, ciudad, latitude, longitude, visto, subestado, created_at, updated_at';
       const TRUCK_COLUMNS = 'id, user_id, distribuidor_nombre, categoria, titulo, ciudad, latitude, longitude, garrafas_agotadas, last_active, telefono, placa, productos';
 
       // Obtener Bounding Box del viewport visible con margen de 25% para pre-carga suave
