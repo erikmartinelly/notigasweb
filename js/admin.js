@@ -152,28 +152,41 @@ function activarMapaCalorAdminLive() {
   if (typeof showToast === 'function') showToast('🔥 Monitor Admin', 'Visualizando pedidos en vivo y zonas de concentración en mapa.', 'info', 2000);
 }
 
-function switchModalTab(idx) {
-  document.querySelectorAll('.modal-tab-btn').forEach((btn, i) => btn.classList.toggle('active', i === idx));
+function switchModalTab(target) {
+  let idx = 0;
+  if (typeof target === 'string') {
+    const stringMap = {
+      'metricas': 0,
+      'repartidores': 1,
+      'compradores': 2,
+      'premium': 3,
+      'vip': 3,
+      'pedidos': 4,
+      'anuncios': 5,
+      'avisos': 6,
+      'muro': 6,
+      'moderacion': 7,
+      'exportar': 8
+    };
+    idx = stringMap[target.toLowerCase()] !== undefined ? stringMap[target.toLowerCase()] : 0;
+  } else {
+    idx = parseInt(target, 10) || 0;
+  }
 
+  document.querySelectorAll('.modal-tab-btn').forEach((btn, i) => btn.classList.toggle('active', i === idx));
   document.querySelectorAll('.modal-tab-pane').forEach((pane, i) => pane.classList.toggle('active', i === idx));
 
   if (idx === 0) renderAdminDashboardKPIs();
-
   if (idx === 1) renderAdminVendorsList();
   if (idx === 2) renderAdminVendorsList();
-
-  if (idx === 3) renderAdminOrdersList();
-
-  if (idx === 4) {
+  if (idx === 3) renderAdminPremiumSubscriptions();
+  if (idx === 4) renderAdminOrdersList();
+  if (idx === 5) {
     cargarConfiguracionPublicidadEnAdmin();
     renderAdminAdsAndPostsList();
   }
-
-  if (idx === 5) {
-    renderAdminAvisosFeedList();
-  }
-
-  if (idx === 6) renderAdminReports();
+  if (idx === 6) renderAdminAvisosFeedList();
+  if (idx === 7) renderAdminReports();
 }
 
 window.adminActivePromoTab = 'mapa';
@@ -2119,4 +2132,251 @@ async function borrarCompradorPermanente(userId, email, name) {
 
 window.banearCompradorAdmin = (typeof banearCompradorAdmin !== 'undefined') ? banearCompradorAdmin : undefined;
 window.borrarCompradorPermanente = (typeof borrarCompradorPermanente !== 'undefined') ? borrarCompradorPermanente : undefined;
+
+/* ==========================================================================
+   GESTIÓN DE REPARTIDORES PREMIUM (S/ 15 / mes) & COMPROBANTES QR
+   ========================================================================== */
+
+async function renderAdminPremiumSubscriptions() {
+  const container = document.getElementById('adminPremiumSubscriptionsContainer');
+  if (!container) return;
+
+  container.innerHTML = '<div style="color:#94A3B8; text-align:center; padding:24px;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando suscripciones premium y comprobantes...</div>';
+
+  if (!window.supabaseClient) {
+    container.innerHTML = '<div style="color:#EF4444; text-align:center; padding:20px;">Sin conexión a Supabase.</div>';
+    return;
+  }
+
+  try {
+    const { data: drivers, error } = await window.supabaseClient
+      .from('choferes_habilitados')
+      .select('id, user_id, nombre_completo, telefono_whatsapp, placa, categoria, ciudad, precio_balon_10kg, es_premium, premium_vence_at, comprobante_pago_url, comprobante_fecha, estado_pago_premium, created_at')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    const list = drivers || [];
+    let pendingCount = 0;
+    let activeCount = 0;
+
+    list.forEach(d => {
+      if (d.es_premium) activeCount++;
+      if (d.estado_pago_premium === 'pendiente' || (d.comprobante_pago_url && !d.es_premium)) pendingCount++;
+    });
+
+    const elPending = document.getElementById('adminVouchersPendingCount');
+    const elActive = document.getElementById('adminVouchersActiveCount');
+    if (elPending) elPending.textContent = pendingCount;
+    if (elActive) elActive.textContent = activeCount;
+
+    if (list.length === 0) {
+      container.innerHTML = '<div style="color:#94A3B8; text-align:center; padding:30px; font-size:13px;">No hay choferes registrados en el sistema.</div>';
+      return;
+    }
+
+    // Ordenar: primero los que tienen comprobante pendiente de revisión, luego los activos, luego el resto
+    list.sort((a, b) => {
+      const aPend = (a.estado_pago_premium === 'pendiente' || (a.comprobante_pago_url && !a.es_premium)) ? 1 : 0;
+      const bPend = (b.estado_pago_premium === 'pendiente' || (b.comprobante_pago_url && !b.es_premium)) ? 1 : 0;
+      if (bPend !== aPend) return bPend - aPend;
+      const aVip = a.es_premium ? 1 : 0;
+      const bVip = b.es_premium ? 1 : 0;
+      return bVip - aVip;
+    });
+
+    let html = `
+      <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:12px; text-align:left;">
+          <thead>
+            <tr style="background:#1E293B; color:#94A3B8; border-bottom:2px solid #334155;">
+              <th style="padding:10px 8px;">Repartidor</th>
+              <th style="padding:10px 8px;">Ciudad / Placa</th>
+              <th style="padding:10px 8px;">Balón 10 Kg</th>
+              <th style="padding:10px 8px;">Estado VIP</th>
+              <th style="padding:10px 8px;">Comprobante QR</th>
+              <th style="padding:10px 8px; text-align:center;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    list.forEach(driver => {
+      const safeId = driver.id;
+      const safeName = typeof escapeHtmlStr === 'function' ? escapeHtmlStr(driver.nombre_completo || 'Sin nombre') : (driver.nombre_completo || 'Sin nombre');
+      const safeTel = driver.telefono_whatsapp || '';
+      const safePlaca = driver.placa || '-';
+      const safeCiudad = driver.ciudad || 'lima';
+      const isVip = Boolean(driver.es_premium);
+      const estado = String(driver.estado_pago_premium || '').toLowerCase();
+      const hasVoucher = Boolean(driver.comprobante_pago_url);
+
+      const priceStr = (driver.precio_balon_10kg != null)
+        ? `<strong style="color:#22C55E; font-size:13px;">S/ ${Number(driver.precio_balon_10kg).toFixed(2)}</strong>`
+        : `<span style="color:#64748B;">No fijado</span>`;
+
+      let statusBadge = '';
+      if (isVip) {
+        let venceTxt = '';
+        if (driver.premium_vence_at) {
+          try { venceTxt = ' hasta ' + new Date(driver.premium_vence_at).toLocaleDateString(); } catch(_) {}
+        }
+        statusBadge = `<span style="background:linear-gradient(135deg, #F59E0B, #D97706); color:#FFF; font-size:10px; font-weight:800; padding:3px 8px; border-radius:10px; box-shadow:0 1px 4px rgba(245,158,11,0.4);">👑 VIP Activo${venceTxt}</span>`;
+      } else if (estado === 'pendiente' || hasVoucher) {
+        statusBadge = `<span style="background:rgba(234,179,8,0.2); color:#FDE047; border:1px solid #EAB308; font-size:10px; font-weight:800; padding:3px 8px; border-radius:10px;">⏳ Pendiente</span>`;
+      } else {
+        statusBadge = `<span style="color:#64748B; font-size:11px;">Inactivo</span>`;
+      }
+
+      let voucherCol = '';
+      if (hasVoucher) {
+        const safeUrl = driver.comprobante_pago_url;
+        voucherCol = `
+          <div style="display:flex; align-items:center; gap:6px;">
+            <img src="${safeUrl}" alt="Voucher" style="width:42px; height:42px; object-fit:cover; border-radius:6px; border:1.5px solid #F59E0B; cursor:pointer;" onclick="window.abrirLightboxVoucher('${safeUrl}')" title="Clic para ampliar">
+            <button type="button" onclick="window.abrirLightboxVoucher('${safeUrl}')" style="background:transparent; border:none; color:#38BDF8; font-size:11px; cursor:pointer; text-decoration:underline; font-weight:bold;">Ver QR</button>
+          </div>
+        `;
+      } else {
+        voucherCol = `<span style="color:#475569; font-size:11px;">Sin voucher</span>`;
+      }
+
+      const actionsCol = `
+        <div style="display:flex; gap:6px; justify-content:center;">
+          <button type="button" onclick="window.aprobarSuscripcionPremiumAdmin('${safeId}')" style="background:#16A34A; color:white; border:none; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 2px 4px rgba(22,163,74,0.3);" title="Aprobar 30 días VIP">
+            <i class="fa-solid fa-check"></i> Aprobar 30d
+          </button>
+          <button type="button" onclick="window.rechazarSuscripcionPremiumAdmin('${safeId}')" style="background:#DC2626; color:white; border:none; padding:6px 9px; border-radius:6px; font-size:11px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 2px 4px rgba(220,38,38,0.3);" title="Rechazar comprobante">
+            <i class="fa-solid fa-xmark"></i> Rechazar
+          </button>
+        </div>
+      `;
+
+      html += `
+        <tr style="border-bottom:1px solid #334155;">
+          <td style="padding:10px 8px;">
+            <strong style="color:#F8FAFC; font-size:12.5px;">${safeName}</strong><br>
+            ${safeTel ? `<span style="color:#94A3B8; font-size:11px;"><i class="fa-brands fa-whatsapp" style="color:#22C55E;"></i> ${safeTel}</span>` : ''}
+          </td>
+          <td style="padding:10px 8px; color:#CBD5E1;">
+            📍 ${safeCiudad.toUpperCase()}<br>
+            <span style="color:#64748B; font-size:11px;">🚘 ${safePlaca}</span>
+          </td>
+          <td style="padding:10px 8px;">${priceStr}</td>
+          <td style="padding:10px 8px;">${statusBadge}</td>
+          <td style="padding:10px 8px;">${voucherCol}</td>
+          <td style="padding:10px 8px; text-align:center;">${actionsCol}</td>
+        </tr>
+      `;
+    });
+
+    html += `
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    container.innerHTML = html;
+  } catch (err) {
+    console.error('Error cargando suscripciones premium en admin:', err);
+    container.innerHTML = `<div style="color:#EF4444; padding:20px; text-align:center;">Error: ${err.message}</div>`;
+  }
+}
+window.renderAdminPremiumSubscriptions = renderAdminPremiumSubscriptions;
+
+async function aprobarSuscripcionPremiumAdmin(driverId) {
+  if (!window.supabaseClient || !driverId) return;
+
+  if (!confirm('¿Confirmas que recibiste el pago de S/ 15.00 y deseas activar 30 días de suscripción VIP para este repartidor?')) {
+    return;
+  }
+
+  try {
+    const { data, error } = await window.supabaseClient.rpc('rpc_admin_verify_premium_payment', {
+      p_driver_id: driverId,
+      p_action: 'aprobar'
+    });
+
+    if (error) throw error;
+
+    if (typeof showToast === 'function') {
+      showToast('👑 VIP Activado', '¡Suscripción aprobada por 30 días con éxito!', 'success', 4000);
+    } else {
+      alert('Suscripción activada con éxito.');
+    }
+    renderAdminPremiumSubscriptions();
+  } catch (err) {
+    console.error('Error aprobando suscripción:', err);
+    alert('Error al aprobar: ' + err.message);
+  }
+}
+window.aprobarSuscripcionPremiumAdmin = aprobarSuscripcionPremiumAdmin;
+
+async function rechazarSuscripcionPremiumAdmin(driverId) {
+  if (!window.supabaseClient || !driverId) return;
+
+  if (!confirm('¿Deseas rechazar este comprobante de pago? El estado del chofer volverá a inactivo.')) {
+    return;
+  }
+
+  try {
+    const { data, error } = await window.supabaseClient.rpc('rpc_admin_verify_premium_payment', {
+      p_driver_id: driverId,
+      p_action: 'rechazar'
+    });
+
+    if (error) throw error;
+
+    if (typeof showToast === 'function') {
+      showToast('Comprobante Rechazado', 'El comprobante ha sido marcado como rechazado.', 'info', 3000);
+    }
+    renderAdminPremiumSubscriptions();
+  } catch (err) {
+    console.error('Error rechazando comprobante:', err);
+    alert('Error: ' + err.message);
+  }
+}
+window.rechazarSuscripcionPremiumAdmin = rechazarSuscripcionPremiumAdmin;
+
+async function depurarVouchersCaducadosAdmin() {
+  if (!window.supabaseClient) return;
+
+  if (!confirm('¿Deseas eliminar de la base de datos todos los comprobantes/vouchers de repartidores cuya suscripción ya haya vencido el mes pasado?')) {
+    return;
+  }
+
+  try {
+    const { data, error } = await window.supabaseClient.rpc('rpc_purge_expired_premium_vouchers');
+    if (error) throw error;
+
+    const count = data?.purged_count || 0;
+    if (typeof showToast === 'function') {
+      showToast('🗑️ Purga Completada', `Se depuraron y eliminaron ${count} comprobantes caducados.`, 'success', 4000);
+    } else {
+      alert(`Se depuraron ${count} comprobantes caducados.`);
+    }
+    renderAdminPremiumSubscriptions();
+  } catch (err) {
+    console.error('Error depurando vouchers caducados:', err);
+    alert('Error al depurar: ' + err.message);
+  }
+}
+window.depurarVouchersCaducadosAdmin = depurarVouchersCaducadosAdmin;
+
+function abrirLightboxVoucher(url) {
+  const modal = document.getElementById('modalVoucherLightbox');
+  const img = document.getElementById('voucherLightboxImg');
+  if (modal && img) {
+    img.src = url;
+    modal.style.display = 'flex';
+  }
+}
+window.abrirLightboxVoucher = abrirLightboxVoucher;
+
+function cerrarLightboxVoucher() {
+  const modal = document.getElementById('modalVoucherLightbox');
+  if (modal) modal.style.display = 'none';
+}
+window.cerrarLightboxVoucher = cerrarLightboxVoucher;
+
 

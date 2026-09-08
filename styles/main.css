@@ -7349,15 +7349,65 @@ button:active, .tab-btn:active, .cat-chip:active {
 .ng-inline-217 { width:100%; text-align:left; background: linear-gradient(135deg, #059669, #10B981); margin-bottom: 8px; }
 .ng-inline-218 { width:100%; text-align:left; background: linear-gradient(135deg, #2563EB, #1D4ED8); margin-bottom: 8px; }
 .ng-inline-219 { width:100%; background:none; border:1px solid rgba(255,255,255,0.15); color:#94A3B8; padding:8px; border-radius:8px; margin-top:14px; cursor:pointer; font-size:11px; }
-/* OVERRIDES PARA NISSAN CONDOR TOP-DOWN */
+/* OVERRIDES PARA CAMIÓN TOYOTA DINA */
 .driver-map-marker {
-  width: 40px !important;
-  height: 72px !important;
+  width: auto !important;
+  min-width: 80px !important;
+  height: auto !important;
+}
+
+.driver-marker-badge {
+  min-width: 20px !important;
+  width: auto !important;
+  padding: 0 5px !important;
+  font-size: 9px !important;
+  letter-spacing: 0.2px;
+  white-space: nowrap !important;
+}
+
+.driver-marker-crown {
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 16px;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.9));
+  z-index: 5;
+  animation: crownPulse 2.5s infinite ease-in-out;
+  pointer-events: none;
+}
+
+@keyframes crownPulse {
+  0%, 100% { transform: translateX(-50%) scale(1); }
+  50% { transform: translateX(-50%) scale(1.15) translateY(-2px); }
+}
+
+.driver-map-marker-vip .driver-marker-truck-wrap {
+  filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.75));
+}
+
+.driver-marker-vip-tag {
+  font-size: 8px;
+  font-weight: 900;
+  color: #F59E0B;
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid #F59E0B;
+  border-radius: 6px;
+  padding: 1px 4px;
+  margin-bottom: 2px;
+  letter-spacing: 0.5px;
+  display: inline-block;
+}
+
+.vendor-fb-card-vip {
+  border: 1.5px solid #F59E0B !important;
+  box-shadow: 0 4px 18px rgba(245, 158, 11, 0.18) !important;
+  background: linear-gradient(180deg, rgba(30, 27, 75, 0.35) 0%, rgba(15, 23, 42, 0.95) 100%) !important;
 }
 
 .driver-3d-truck-img {
-  width: 60px !important;
-  height: 40px !important;
+  width: 72px !important;
+  height: 46px !important;
   transform-origin: center center !important;
 }
 

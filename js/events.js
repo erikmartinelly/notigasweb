@@ -365,19 +365,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_btnTabCompradores = document.getElementById('btnTabCompradores');
     if (el_btnTabCompradores) el_btnTabCompradores.addEventListener('click', () => { safeCall('switchModalTab', 2); });
 
+    const el_btnTabPremium = document.getElementById('btnTabPremium');
+    if (el_btnTabPremium) el_btnTabPremium.addEventListener('click', () => { safeCall('switchModalTab', 3); });
+
     const el_auto_event_57 = document.getElementById('auto-event-57');
-    if (el_auto_event_57) el_auto_event_57.addEventListener('click', () => { safeCall('switchModalTab', 3); });
+    if (el_auto_event_57) el_auto_event_57.addEventListener('click', () => { safeCall('switchModalTab', 4); });
 
     const el_auto_event_58 = document.getElementById('auto-event-58');
-    if (el_auto_event_58) el_auto_event_58.addEventListener('click', () => { safeCall('switchModalTab', 4); });
-
-
+    if (el_auto_event_58) el_auto_event_58.addEventListener('click', () => { safeCall('switchModalTab', 5); });
 
     const el_auto_event_59 = document.getElementById('auto-event-59');
-    if (el_auto_event_59) el_auto_event_59.addEventListener('click', () => { safeCall('switchModalTab', 6); });
+    if (el_auto_event_59) el_auto_event_59.addEventListener('click', () => { safeCall('switchModalTab', 7); });
 
     const el_auto_event_60 = document.getElementById('auto-event-60');
-    if (el_auto_event_60) el_auto_event_60.addEventListener('click', () => { safeCall('switchModalTab', 7); });
+    if (el_auto_event_60) el_auto_event_60.addEventListener('click', () => { safeCall('switchModalTab', 8); });
 
     const el_auto_event_61 = document.getElementById('auto-event-61');
     if (el_auto_event_61) el_auto_event_61.addEventListener('click', () => { safeCall('emitirAlertaOficialAdmin'); });
@@ -415,6 +416,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const el_auto_event_71 = document.getElementById('auto-event-71');
     if (el_auto_event_71) el_auto_event_71.addEventListener('click', () => { safeCall('cerrarSesionAdminControl'); });
+
+    const el_btnCloseVoucherLightbox = document.getElementById('btnCloseVoucherLightbox');
+    if (el_btnCloseVoucherLightbox) el_btnCloseVoucherLightbox.addEventListener('click', () => { safeCall('cerrarLightboxVoucher'); });
+
+    const el_btnAdminPurgeExpiredVouchers = document.getElementById('btnAdminPurgeExpiredVouchers');
+    if (el_btnAdminPurgeExpiredVouchers) el_btnAdminPurgeExpiredVouchers.addEventListener('click', () => { safeCall('depurarVouchersCaducadosAdmin'); });
 
     const el_btnVerMiPedidoTrip = document.getElementById('btnVerMiPedidoTrip');
     if (el_btnVerMiPedidoTrip) el_btnVerMiPedidoTrip.addEventListener('click', () => { safeCall('centrarMapaEnMiPedido'); });
@@ -562,7 +569,11 @@ document.addEventListener('click', async (e) => {
     }
     else if (action === 'switchAdminTabAvisos') {
       if (typeof window.loadAdminModules === 'function') await window.loadAdminModules();
-      if (typeof window.switchModalTab === 'function') window.switchModalTab(5);
+      if (typeof window.switchModalTab === 'function') window.switchModalTab(6);
+    }
+    else if (action === 'switchAdminTabPremium') {
+      if (typeof window.loadAdminModules === 'function') await window.loadAdminModules();
+      if (typeof window.switchModalTab === 'function') window.switchModalTab(3);
     }
     else if (action === 'refrescarAvisosAdmin') {
       if (typeof window.loadAdminModules === 'function') await window.loadAdminModules();
@@ -584,7 +595,12 @@ document.addEventListener('click', async (e) => {
     }
     else if (action === 'abrirModalDriver') {
       const modal = document.getElementById('modalDriver');
-      if (modal) modal.style.display = 'flex';
+      if (modal) {
+        modal.style.display = 'flex';
+        if (typeof window.cargarPerfilChoferEnModal === 'function') {
+          window.cargarPerfilChoferEnModal();
+        }
+      }
     }
     else if (action === 'eliminarFichaAdmin') {
       const id = btn.getAttribute('data-id');

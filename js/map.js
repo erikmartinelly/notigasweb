@@ -1099,14 +1099,28 @@ function actualizarRepartidorEnMapa(data) {
   const badgeBg = driverTheme ? driverTheme.badgeBg : '#E11D48';
   const badgeBorder = driverTheme ? driverTheme.badgeBorder : '#FFFFFF';
 
+  const isDriverPremium = Boolean(data.es_premium);
+  const rawPrice10kg = data.precio_balon_10kg;
+  let priceHtml = '';
+  if (rawPrice10kg && !isNaN(Number(rawPrice10kg)) && Number(rawPrice10kg) > 0) {
+    const numPrice = Number(rawPrice10kg);
+    priceHtml = `<div style="margin:4px 0; background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.4); border-radius:8px; padding:3px 8px; display:inline-block;"><span style="color:#A7F3D0; font-size:10.5px; font-weight:700;">🔥 Balón 10 Kg:</span> <strong style="color:#22C55E; font-size:12.5px; font-weight:900;">S/ ${numPrice.toFixed(2)}</strong></div><br>`;
+  }
+
+  const premiumBannerHtml = isDriverPremium
+    ? `<div style="display:inline-block; background:linear-gradient(135deg, #F59E0B, #D97706); color:#FFFFFF; font-size:10px; font-weight:900; letter-spacing:0.5px; padding:2px 8px; border-radius:10px; margin-bottom:4px; box-shadow:0 2px 6px rgba(245,158,11,0.5);">👑 REPARTIDOR VIP PREMIUM</div><br>`
+    : '';
+
   const popupHtml = `
     <div style="font-family:'Roboto',sans-serif; text-align:center; padding:6px; min-width:160px;">
+      ${premiumBannerHtml}
       <div style="display:inline-flex; align-items:center; justify-content:center; margin-bottom:4px; gap:6px;">
         <span style="background:${badgeBg}; color:white; border:1.5px solid ${badgeBorder}; border-radius:50%; width:22px; height:22px; font-size:10px; font-weight:900; display:inline-flex; align-items:center; justify-content:center;">${driverInitials}</span>
         <strong style="color:#00E676; font-size:12.5px;">🚛 Camión en Vivo</strong>
       </div><br>
       <span style="font-size:13px; color:#FFFFFF; font-weight:800;">${safeNombre}</span><br>
       <span style="font-size:11px; color:#94A3B8;">${safeCategoria}</span><br>
+      ${priceHtml}
       ${safeTelefono ? `<a href="tel:${safeTelefono}" style="display:inline-block; margin-top:6px; font-size:11px; color:#1E293B; background:#FFD54F; padding:4px 10px; border-radius:12px; text-decoration:none; font-weight:bold;">📞 Llama: ${safeTelefono}</a>` : ''}
     </div>
   `;
@@ -1976,6 +1990,8 @@ async function transmitirUbicacionRepartidorServidorDB(lat, lng) {
               latitude: lat,
               longitude: lng,
               telefono: driver.telefono_whatsapp || '',
+              precio_balon_10kg: driver.precio_balon_10kg || null,
+              es_premium: Boolean(driver.es_premium),
               last_active: new Date().toISOString()
             },
             {
@@ -2034,7 +2050,7 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
 
       // Proyección explícita de columnas necesarias incluyendo visto y subestado
       const ORDER_COLUMNS = 'id, user_id, categoria, titulo, cantidad, direccion, telefono, estado, driver_id, ciudad, latitude, longitude, visto, subestado, created_at, updated_at';
-      const TRUCK_COLUMNS = 'id, user_id, distribuidor_nombre, categoria, titulo, ciudad, latitude, longitude, garrafas_agotadas, last_active, telefono, placa, productos, color_camion';
+      const TRUCK_COLUMNS = 'id, user_id, distribuidor_nombre, categoria, titulo, ciudad, latitude, longitude, garrafas_agotadas, last_active, telefono, placa, productos, color_camion, precio_balon_10kg, es_premium';
 
       // Obtener Bounding Box del viewport visible con margen de 25% para pre-carga suave
       let bbox = null;

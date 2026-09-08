@@ -539,6 +539,16 @@
     const initials = getDriverInitials(driverName || categoria);
     const key = data.user_id || data.id || driverName;
     const theme = getDriverColorTheme(key, data.color_camion);
+    const isPremium = Boolean(data.es_premium);
+
+    // Formatear precio de 10 Kg si está disponible
+    const rawPrice = data.precio_balon_10kg || data.precio;
+    let badgeContent = initials;
+    if (rawPrice && !isNaN(Number(rawPrice)) && Number(rawPrice) > 0) {
+      const numPrice = Number(rawPrice);
+      const priceFormatted = numPrice % 1 === 0 ? numPrice.toFixed(0) : numPrice.toFixed(1);
+      badgeContent = `${initials} • S/${priceFormatted}`;
+    }
 
     const truckSvg = generarSvgCamionDina({
       name: driverName,
@@ -566,14 +576,23 @@
       displayName = displayName.substring(0, 18) + '…';
     }
 
+    const crownHtml = isPremium
+      ? `<span class="driver-marker-crown" title="Repartidor VIP Premium">👑</span>`
+      : '';
+    const vipTagHtml = isPremium
+      ? `<span class="driver-marker-vip-tag">👑 VIP</span>`
+      : '';
+
     return `
-      <div class="driver-map-marker" data-driver-color="${theme.key}" title="${safeName} (${safeCategoria || 'Distribuidor'})">
+      <div class="driver-map-marker ${isPremium ? 'driver-map-marker-vip' : ''}" data-driver-color="${theme.key}" title="${safeName} (${safeCategoria || 'Distribuidor'})${isPremium ? ' - VIP Premium' : ''}">
         <div class="driver-marker-truck-wrap">
+          ${crownHtml}
           <div class="driver-3d-truck-img">${truckSvg}</div>
-          <span class="driver-marker-badge" style="background:${theme.badgeBg}; color:${theme.badgeText}; border-color:${theme.badgeBorder};" aria-hidden="true">${initials}</span>
+          <span class="driver-marker-badge" style="background:${theme.badgeBg}; color:${theme.badgeText}; border-color:${theme.badgeBorder};" aria-hidden="true">${badgeContent}</span>
           <span class="driver-marker-online" title="GPS en Tiempo Real"></span>
         </div>
-        <div class="driver-marker-label" style="border-color:${theme.light || theme.primary};">
+        <div class="driver-marker-label" style="border-color:${isPremium ? '#F59E0B' : (theme.light || theme.primary)};">
+          ${vipTagHtml}
           ${brandHtml}
           <span class="driver-marker-label-name">${displayName}</span>
         </div>
@@ -584,14 +603,31 @@
 
   /**
    * Genera el HTML de avatar para las tarjetas de negocio en la Lista de Repartidores.
+   * En vez de sólo las iniciales, muestra el precio del balón de 10 Kg si está disponible.
    */
   function crearAvatarCamionChoferHtml(driverName, options = {}) {
     const name = driverName || 'Repartidor';
     const initials = getDriverInitials(name);
     const theme = getDriverColorTheme(name, options.color);
+    const isPremium = Boolean(options.es_premium);
+
+    const rawPrice = options.price || options.precio_balon_10kg;
+    let badgeText = initials;
+    let badgeCustomStyle = 'border-radius:50%; width:18px; height:18px; font-size:9.5px;';
+    if (rawPrice && !isNaN(Number(rawPrice)) && Number(rawPrice) > 0) {
+      const numPrice = Number(rawPrice);
+      const priceFormatted = numPrice % 1 === 0 ? numPrice.toFixed(0) : numPrice.toFixed(1);
+      badgeText = `S/${priceFormatted}`;
+      badgeCustomStyle = 'border-radius:8px; min-width:28px; width:auto; padding:0 3px; height:17px; font-size:8.5px; font-weight:900;';
+    }
+
+    const crownAvatarHtml = isPremium
+      ? `<span style="position:absolute; top:-10px; left:2px; font-size:13px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.8)); z-index:3;">👑</span>`
+      : '';
 
     return `
-      <div class="driver-truck-avatar-wrap" style="position:relative; width:54px; height:42px; display:inline-flex; align-items:center; justify-content:center;">
+      <div class="driver-truck-avatar-wrap ${isPremium ? 'avatar-vip' : ''}" style="position:relative; width:54px; height:42px; display:inline-flex; align-items:center; justify-content:center;">
+        ${crownAvatarHtml}
         ${generarSvgCamionDina({
           name: name,
           initials: initials,
@@ -600,7 +636,7 @@
           width: 54,
           height: 38
         })}
-        <span style="position:absolute; top:-3px; right:-2px; background:${theme.badgeBg}; color:${theme.badgeText}; border:1.5px solid ${theme.badgeBorder}; border-radius:50%; width:18px; height:18px; font-size:9.5px; font-weight:900; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 4px rgba(0,0,0,0.5);">${initials}</span>
+        <span style="position:absolute; top:-3px; right:-4px; background:${theme.badgeBg}; color:${theme.badgeText}; border:1.5px solid ${theme.badgeBorder}; ${badgeCustomStyle} display:flex; align-items:center; justify-content:center; box-shadow:0 2px 4px rgba(0,0,0,0.5); z-index:2;">${badgeText}</span>
       </div>
     `;
   }

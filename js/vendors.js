@@ -25,7 +25,7 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
     // Consultar exclusivamente de la vista pública autorizada
     const { data, error } = await window.supabaseClient
       .from('choferes_publicos')
-      .select('id, nombre_completo, categoria, ciudad, telefono, descripcion, foto_url, estado_verificacion, created_at, color_camion')
+      .select('id, nombre_completo, categoria, ciudad, telefono, descripcion, foto_url, estado_verificacion, created_at, color_camion, precio_balon_10kg, es_premium')
       .in('ciudad', cityKeys);
 
     if (error) {
@@ -45,6 +45,8 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
             zones: d.zonas || 'OTB local',
             schedule: d.schedule || 'Lunes a Sábado',
             color_camion: d.color_camion || '',
+            precio_balon_10kg: d.precio_balon_10kg || null,
+            es_premium: Boolean(d.es_premium),
             active: true // Fichas publicadas automáticamente
           });
         }
@@ -122,12 +124,32 @@ function renderVendorCards(filterCat) {
   const adInsertAfterIndex = Math.max(0, Math.ceil(filtered.length / 2) - 1);
   filtered.forEach((vendor, index) => {
     const safeVendorId = escapeHtmlStr(vendor.id || '');
+    const isVip = Boolean(vendor.es_premium);
     const safeVendorIcon = (typeof window.crearAvatarCamionChoferHtml === 'function')
-      ? window.crearAvatarCamionChoferHtml(vendor.name, { category: vendor.category, color: vendor.color_camion })
+      ? window.crearAvatarCamionChoferHtml(vendor.name, {
+          category: vendor.category,
+          color: vendor.color_camion,
+          price: vendor.precio_balon_10kg,
+          es_premium: isVip
+        })
       : escapeHtmlStr(vendor.icon || getIconForCategory(vendor.category));
 
+    let price10kgHtml = '';
+    if (vendor.precio_balon_10kg && !isNaN(Number(vendor.precio_balon_10kg)) && Number(vendor.precio_balon_10kg) > 0) {
+      price10kgHtml = `
+        <div class="vendor-field vendor-field-price" style="background:rgba(34,197,94,0.12); border:1px solid rgba(34,197,94,0.35); padding:6px 10px; border-radius:8px; margin:2px 0;">
+          <strong style="color:#A7F3D0; font-size:12px;">🔥 Balón 10 Kg:</strong>
+          <span class="vendor-price-highlight" style="color:#22C55E; font-size:14.5px; font-weight:900; margin-left:auto;">S/ ${Number(vendor.precio_balon_10kg).toFixed(2)}</span>
+        </div>
+      `;
+    }
+
+    const vipHeaderBadge = isVip
+      ? `<span class="vip-premium-badge" style="background:linear-gradient(135deg, #F59E0B, #D97706); color:#FFFFFF; border:1px solid #FDE68A; border-radius:12px; font-size:10px; font-weight:900; padding:3px 8px; letter-spacing:0.5px; box-shadow:0 2px 6px rgba(245,158,11,0.4);"><i class="fa-solid fa-crown"></i> VIP PREMIUM</span>`
+      : '';
+
     html += `
-      <div class="vendor-fb-card">
+      <div class="vendor-fb-card ${isVip ? 'vendor-fb-card-vip' : ''}">
         <div class="vendor-fb-header">
           <div class="vendor-profile">
             <div class="vendor-avatar" style="background:transparent; border:none; width:auto; height:auto; padding:0; overflow:visible;">${safeVendorIcon}</div>
@@ -136,17 +158,20 @@ function renderVendorCards(filterCat) {
               <span class="vendor-badge-cat"><i class="fa-solid fa-circle-check"></i> ${escapeHtmlStr(vendor.category)}</span>
             </div>
           </div>
-          ${isAdmin ? `<button data-action="eliminarFichaAdmin" data-id="${safeVendorId}" style="background:#D32F2F; color:white; border:none; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;" title="Borrar como Admin"><i class="fa-solid fa-trash"></i> Borrar (Admin)</button>` : `<span class="promo-badge" style="background: rgba(0,230,118,0.15); color: #00E676; border-color: rgba(0,230,118,0.4);">REPARTIDOR ACTIVO</span>`}
+          <div style="display:flex; align-items:center; gap:6px;">
+            ${vipHeaderBadge}
+            ${isAdmin ? `<button data-action="eliminarFichaAdmin" data-id="${safeVendorId}" style="background:#D32F2F; color:white; border:none; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;" title="Borrar como Admin"><i class="fa-solid fa-trash"></i> Borrar (Admin)</button>` : `<span class="promo-badge" style="background: rgba(0,230,118,0.15); color: #00E676; border-color: rgba(0,230,118,0.4);">REPARTIDOR ACTIVO</span>`}
+          </div>
         </div>
 
         <div class="vendor-fb-body">
+          ${price10kgHtml}
           <div class="vendor-field"><strong>🚘 Vehículo/Placa:</strong> ${escapeHtmlStr(vendor.plate)}</div>
           <div class="vendor-field"><strong>📦 ¿Qué Vende/Oferta?:</strong> ${escapeHtmlStr(vendor.products)}</div>
           <div class="vendor-field"><strong>🗺️ Zonas de Recorrido:</strong> ${escapeHtmlStr(vendor.zones)}</div>
         </div>
 
         <div class="vendor-fb-footer">
-
           <button class="btn-vendor-order" data-action="seleccionarYPedirDirecto" data-cat="${encodeURIComponent(vendor.category)}"><i class="fa-solid fa-cart-plus"></i> Pedir Producto</button>
         </div>
       </div>

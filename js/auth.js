@@ -692,7 +692,7 @@ async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
   // de ficha creaba una fila nueva (duplicado) porque nunca se comprobaba si
   // el chofer ya existía. ci_carnet ya no se usa como llave de unicidad
   // porque el formulario nunca pide ese dato real.
-  const { data, error } = await window.supabaseClient.from('choferes_habilitados').upsert([{
+  const payload = {
     user_id: repartidorObj.user_id,
     nombre_completo: repartidorObj.nombre,
     telefono_whatsapp: repartidorObj.whatsapp,
@@ -702,7 +702,13 @@ async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
     schedule: repartidorObj.schedule,
     ciudad: repartidorObj.ciudad || AppState.get('city') || null,
     color_camion: repartidorObj.color_camion || ''
-  }], { onConflict: 'user_id' })
+  };
+  if (repartidorObj.precio_balon_10kg !== undefined && repartidorObj.precio_balon_10kg !== null && repartidorObj.precio_balon_10kg !== '') {
+    const pNum = parseFloat(repartidorObj.precio_balon_10kg);
+    if (!isNaN(pNum)) payload.precio_balon_10kg = pNum;
+  }
+
+  const { data, error } = await window.supabaseClient.from('choferes_habilitados').upsert([payload], { onConflict: 'user_id' })
     .select('estado_verificacion')
     .single();
 
@@ -905,6 +911,7 @@ async function iniciarSesionRepartidor() {
   }
 
   const colorCamion = (document.getElementById('inputDriverTruckColor')?.value || '').trim() || 'rojo';
+  const precio10kgRaw = (document.getElementById('inputDriverPrecioBalon10kg')?.value || '').trim();
   const repartidorData = {
     role: 'repartidor',
     nombre: nombreNegocio,
@@ -915,6 +922,7 @@ async function iniciarSesionRepartidor() {
     schedule: schedule,
     ciudad: ciudad,
     color_camion: colorCamion,
+    precio_balon_10kg: precio10kgRaw !== '' ? parseFloat(precio10kgRaw) : null,
     user_id: existingUserId
   };
 
@@ -2269,3 +2277,200 @@ function actualizarVistaPreviaCamionChofer() {
   }
 }
 window.actualizarVistaPreviaCamionChofer = actualizarVistaPreviaCamionChofer;
+
+/**
+ * Carga los datos del chofer (incluyendo precio del balón de 10 Kg y suscripción Premium)
+ * en los campos del modal de chofer (#modalDriver).
+ */
+async function cargarPerfilChoferEnModal() {
+  if (!window.supabaseClient) return;
+
+  try {
+    const { data: authData } = await window.supabaseClient.auth.getUser();
+    const userId = authData?.user?.id;
+    if (!userId) return;
+
+    const { data: driverRow, error } = await window.supabaseClient
+      .from('choferes_habilitados')
+      .select('id, user_id, nombre_completo, telefono_whatsapp, placa, categoria, productos, schedule, ciudad, color_camion, precio_balon_10kg, es_premium, premium_vence_at, estado_pago_premium, comprobante_pago_url')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error || !driverRow) return;
+
+    const inputNombre = document.getElementById('inputDriverNombre');
+    const inputTel = document.getElementById('inputDriverTelRef');
+    const inputPlaca = document.getElementById('inputDriverPlate');
+    const inputCat = document.getElementById('inputDriverCat');
+    const inputProd = document.getElementById('inputDriverProductos');
+    const inputCiudad = document.getElementById('inputDriverCiudad');
+    const inputPrecio10kg = document.getElementById('inputDriverPrecioBalon10kg');
+
+    if (inputNombre && driverRow.nombre_completo) inputNombre.value = driverRow.nombre_completo;
+    if (inputTel && driverRow.telefono_whatsapp) inputTel.value = driverRow.telefono_whatsapp;
+    if (inputPlaca && driverRow.placa) inputPlaca.value = driverRow.placa;
+    if (inputCat && driverRow.categoria) inputCat.value = driverRow.categoria;
+    if (inputProd && driverRow.productos) inputProd.value = driverRow.productos;
+    if (inputCiudad && driverRow.ciudad) inputCiudad.value = driverRow.ciudad;
+    if (inputPrecio10kg && driverRow.precio_balon_10kg != null) {
+      inputPrecio10kg.value = driverRow.precio_balon_10kg;
+    }
+
+    if (driverRow.color_camion && typeof seleccionarColorCamionModal === 'function') {
+      seleccionarColorCamionModal(driverRow.color_camion);
+    }
+
+    // Actualizar estado de membresía Premium VIP
+    actualizarEstadoUIPerfilPremium(driverRow);
+  } catch (err) {
+    console.warn('Error al cargar perfil de chofer en modal:', err);
+  }
+}
+window.cargarPerfilChoferEnModal = cargarPerfilChoferEnModal;
+
+/**
+ * Actualiza los avisos e insignias visuales de la suscripción VIP en el modal de chofer.
+ */
+function actualizarEstadoUIPerfilPremium(driverRow = {}) {
+  const badge = document.getElementById('driverPremiumStatusBadge');
+  const alertActive = document.getElementById('driverPremiumActiveAlert');
+  const textActive = document.getElementById('driverPremiumActiveText');
+  const alertPending = document.getElementById('driverPremiumPendingAlert');
+
+  if (!badge) return;
+
+  const isVip = Boolean(driverRow.es_premium);
+  const estado = String(driverRow.estado_pago_premium || '').toLowerCase();
+
+  if (isVip) {
+    badge.textContent = '👑 VIP Activo';
+    badge.style.background = 'linear-gradient(135deg, #F59E0B, #D97706)';
+    badge.style.color = '#FFFFFF';
+    if (alertActive) {
+      alertActive.style.display = 'block';
+      let venceStr = '';
+      if (driverRow.premium_vence_at) {
+        try {
+          const d = new Date(driverRow.premium_vence_at);
+          venceStr = ` (Vence el: ${d.toLocaleDateString()})`;
+        } catch (_) {}
+      }
+      if (textActive) textActive.textContent = `¡Suscripción VIP Activa! Tienes 3 minutos de ventaja en pedidos.${venceStr}`;
+    }
+    if (alertPending) alertPending.style.display = 'none';
+  } else if (estado === 'pendiente' || driverRow.comprobante_pago_url) {
+    badge.textContent = '⏳ En Revisión';
+    badge.style.background = 'rgba(234, 179, 8, 0.25)';
+    badge.style.color = '#FDE047';
+    if (alertActive) alertActive.style.display = 'none';
+    if (alertPending) alertPending.style.display = 'block';
+  } else {
+    badge.textContent = 'Inactivo';
+    badge.style.background = 'rgba(148,163,184,0.2)';
+    badge.style.color = '#94A3B8';
+    if (alertActive) alertActive.style.display = 'none';
+    if (alertPending) alertPending.style.display = 'none';
+  }
+}
+window.actualizarEstadoUIPerfilPremium = actualizarEstadoUIPerfilPremium;
+
+/**
+ * Sube el comprobante de pago QR a Supabase Storage (bucket 'vouchers-premium')
+ * y llama al RPC 'rpc_driver_submit_premium_payment'.
+ */
+async function enviarComprobantePagoPremium() {
+  if (!window.supabaseClient) {
+    if (typeof showToast === 'function') showToast('Error', 'Sin conexión con el servidor Supabase', 'error');
+    return;
+  }
+
+  const fileInput = document.getElementById('inputDriverVoucherFile');
+  const file = fileInput?.files?.[0];
+
+  if (!file) {
+    if (typeof showToast === 'function') {
+      showToast('⚠️ Falta comprobante', 'Selecciona una imagen con tu comprobante o captura de pago QR.', 'warning', 3500);
+    } else {
+      alert('Por favor selecciona una captura de tu pago QR.');
+    }
+    return;
+  }
+
+  if (!file.type.startsWith('image/')) {
+    if (typeof showToast === 'function') showToast('⚠️ Formato Inválido', 'El archivo debe ser una imagen (JPG, PNG, WEBP).', 'warning', 3500);
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    if (typeof showToast === 'function') showToast('⚠️ Archivo muy grande', 'La imagen no debe superar los 5 MB.', 'warning', 3500);
+    return;
+  }
+
+  if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Subiendo comprobante de pago QR...');
+
+  try {
+    const { data: authData, error: authErr } = await window.supabaseClient.auth.getUser();
+    const user = authData?.user;
+    if (authErr || !user?.id) {
+      throw new Error('Debes iniciar sesión para enviar un comprobante.');
+    }
+
+    const ext = file.name.split('.').pop() || 'png';
+    const filePath = `${user.id}/${Date.now()}_voucher.${ext}`;
+
+    const { error: uploadError } = await window.supabaseClient.storage
+      .from('vouchers-premium')
+      .upload(filePath, file, { upsert: true, contentType: file.type });
+
+    if (uploadError) {
+      throw new Error('Error al subir la imagen al almacenamiento: ' + uploadError.message);
+    }
+
+    const { data: pubData } = window.supabaseClient.storage
+      .from('vouchers-premium')
+      .getPublicUrl(filePath);
+
+    const publicUrl = pubData?.publicUrl || '';
+    if (!publicUrl) {
+      throw new Error('No se pudo generar la URL del comprobante.');
+    }
+
+    // Registrar en BD invocando la función RPC autorizada
+    const { data: rpcRes, error: rpcErr } = await window.supabaseClient
+      .rpc('rpc_driver_submit_premium_payment', { p_comprobante_url: publicUrl });
+
+    if (rpcErr) {
+      throw new Error('Error al registrar comprobante: ' + rpcErr.message);
+    }
+
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+
+    if (typeof showToast === 'function') {
+      showToast('✅ Comprobante Enviado', '¡Comprobante recibido! El administrador lo verificará y activará tus 30 días VIP.', 'success', 5000);
+    }
+
+    // Limpiar input y recargar estado en modal
+    if (fileInput) fileInput.value = '';
+    await cargarPerfilChoferEnModal();
+  } catch (err) {
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+    console.error('Error enviando comprobante:', err);
+    if (typeof showToast === 'function') {
+      showToast('❌ Error al enviar', err.message || 'No se pudo enviar el comprobante.', 'error', 4500);
+    } else {
+      alert('Error: ' + err.message);
+    }
+  }
+}
+window.enviarComprobantePagoPremium = enviarComprobantePagoPremium;
+
+// Hook para el botón de subida de voucher en modalDriver
+document.addEventListener('DOMContentLoaded', () => {
+  const btnSubmitVoucher = document.getElementById('btnDriverSubmitVoucher');
+  if (btnSubmitVoucher) {
+    btnSubmitVoucher.addEventListener('click', (e) => {
+      e.preventDefault();
+      enviarComprobantePagoPremium();
+    });
+  }
+});
