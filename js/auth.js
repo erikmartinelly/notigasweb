@@ -911,23 +911,6 @@ async function iniciarSesionRepartidor() {
     return;
   }
 
-  const planTipo = (document.getElementById('inputDriverPlanTipo')?.value || 'gratuito').toLowerCase();
-  const fileVoucher = document.getElementById('inputDriverVoucherFile')?.files?.[0];
-  const yaEsVip = Boolean(cachedUser.es_premium);
-
-  // Si eligió PRO pero aún no es VIP y no ha seleccionado comprobante, advertir amablemente
-  if (planTipo === 'pro' && !yaEsVip && !fileVoucher) {
-    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-    if (typeof showToast === 'function') {
-      showToast('📸 Falta Comprobante QR', 'Para activar el Plan PRO (S/ 15/mes) debes adjuntar tu captura de pago QR (Yape, Plin o Takenos). Si prefieres empezar gratis, selecciona el Plan Gratuito.', 'warning', 6500);
-    } else {
-      alert('Para el Plan PRO, por favor sube tu captura de pago QR (Yape, Plin o Takenos). O selecciona el Plan Gratuito.');
-    }
-    const sec = document.getElementById('driverPremiumPaymentSection');
-    if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    return;
-  }
-
   const repartidorData = {
     role: 'repartidor',
     nombre: nombreNegocio,
@@ -940,8 +923,8 @@ async function iniciarSesionRepartidor() {
     color_camion: colorCamion,
     precio_balon_10kg: precio10kgRaw !== '' ? parseFloat(precio10kgRaw) : null,
     user_id: existingUserId,
-    tipo_plan: planTipo,
-    es_premium: yaEsVip
+    tipo_plan: 'gratuito',
+    es_premium: false
   };
 
   if (existingGmail) repartidorData.gmail = existingGmail;
@@ -955,15 +938,6 @@ async function iniciarSesionRepartidor() {
   }
 
   AppState.set('userData', repartidorData);
-
-  // Si eligió PRO y adjuntó comprobante, procesarlo de inmediato para activación instantánea
-  if (planTipo === 'pro' && fileVoucher) {
-    try {
-      await enviarComprobantePagoPremium();
-    } catch (vErr) {
-      console.warn("Aviso al procesar comprobante durante registro:", vErr);
-    }
-  }
 
   if (typeof window.cambiarCiudad === 'function') {
     try {
@@ -984,14 +958,8 @@ async function iniciarSesionRepartidor() {
     setAppMode('driver');
   }
 
-  if (planTipo === 'pro') {
-    if (typeof showToast === 'function') {
-      showToast('👑 ¡Repartidor PRO Activado!', `¡Bienvenido ${nombreNegocio}! Cuentas con 3 minutos de ventaja en pedidos y 1 minuto ante compradores.`, 'success', 6500);
-    }
-  } else {
-    if (typeof showToast === 'function') {
-      showToast('🟢 Registro Gratuito Activado', `Ficha de ${nombreNegocio} registrada. Puedes pasar a PRO por S/ 15/mes para obtener 3 minutos de ventaja.`, 'success', 6000);
-    }
+  if (typeof showToast === 'function') {
+    showToast('🚚 Repartidor Activo', `¡Bienvenido ${nombreNegocio}! Tu ficha está publicada de forma 100% gratuita y en tiempo real.`, 'success', 5000);
   }
 
   if (typeof renderVendorCards === 'function') {
@@ -2413,13 +2381,9 @@ async function cargarPerfilChoferEnModal() {
       seleccionarColorCamionModal(driverRow.color_camion);
     }
 
-    // Seleccionar plan activo (PRO o Gratuito)
-    const isVipOrPro = Boolean(driverRow.es_premium || driverRow.tipo_plan === 'pro');
-    seleccionarPlanRegistroChofer(isVipOrPro ? 'pro' : 'gratuito');
-
     const btnText = document.getElementById('btnDriverSubmitText');
-    if (btnText && driverRow.id) {
-      btnText.textContent = isVipOrPro ? 'Guardar Cambios de Ficha PRO' : 'Guardar Ficha Gratuita';
+    if (btnText) {
+      btnText.textContent = driverRow.id ? 'Guardar Cambios de Mi Ficha' : 'Activar y Publicar Mi Ficha de Repartidor (Gratis)';
     }
 
     // Actualizar estado de membresía Premium VIP

@@ -20,7 +20,11 @@ function normalizeStoredAdPlacement(value) {
 }
 
 window.ADS_CONFIG = {
-  mode: 'local',
+  mode: 'adsense',
+  publisher_id: 'ca-pub-2502415561017945',
+  slot_feed_repartidores: null,
+  slot_feed_muro: null,
+  slot_banner_inferior: null,
   adSenseLoaded: false
 };
 
@@ -299,11 +303,35 @@ window.abrirContactoPublicidad = function() {
 };
 
 /**
- * Generador de tarjeta independiente para los feeds (Repartidores y Muro de Comentarios)
+ * Generador de tarjeta publicitaria para los feeds (Repartidores y Muro de Comentarios)
  */
 window.getAdSenseFeedMarkup = function(placement) {
-  const mode = window.ADS_CONFIG.mode || 'local';
+  const mode = window.ADS_CONFIG.mode || 'adsense';
   if (mode === 'disabled') return '';
+
+  const pubId = window.ADS_CONFIG.publisher_id || 'ca-pub-2502415561017945';
+  let slotId = '';
+  if (placement === 'vendors') {
+    slotId = window.ADS_CONFIG.slot_feed_repartidores || '';
+  } else if (placement === 'forum') {
+    slotId = window.ADS_CONFIG.slot_feed_muro || '';
+  }
+
+  // Si el modo es Google AdSense (o híbrido sin anuncio local preferente)
+  if (mode === 'adsense' || mode === 'hybrid') {
+    return `
+      <div class="adsense-feed-unit-card" data-ad-placement="${placement}" style="margin: 12px 0; padding: 12px; background: rgba(15,23,42,0.85); border: 1px solid #334155; border-radius: 12px; text-align: center; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+        <div style="font-size: 10px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 4px; font-weight: 700;">
+          <i class="fa-solid fa-rectangle-ad"></i> Publicidad Patrocinada • Google AdSense
+        </div>
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="${pubId}"
+             ${slotId ? `data-ad-slot="${slotId}"` : ''}
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+      </div>`;
+  }
 
   let ad = null;
   let placementTitle = 'PROPAGANDA LOCAL';
@@ -351,7 +379,19 @@ window.getAdSenseFeedMarkup = function(placement) {
 };
 
 window.activateAdSenseIn = function(container) {
-  // No-op para compatibilidad de interfaces
+  if (!container) return;
+  try {
+    const uninitialized = container.querySelectorAll('ins.adsbygoogle:not([data-adsbygoogle-status])');
+    uninitialized.forEach(ins => {
+      try {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      } catch (err) {
+        console.warn('Aviso activando unidad Google AdSense:', err);
+      }
+    });
+  } catch (err) {
+    console.warn('Error en activateAdSenseIn:', err);
+  }
 };
 
 let _adsInitializationPromise = null;
@@ -362,13 +402,16 @@ async function cargarConfiguracionPublicidadGlobal() {
   try {
     const { data, error } = await window.supabaseClient
       .from('configuracion_publicidad')
-      .select('modo')
+      .select('modo, publisher_id, slot_repartidores, slot_avisos')
       .eq('id', 1)
       .maybeSingle();
       
     if (error) throw error;
-    if (data?.modo) {
-      window.ADS_CONFIG.mode = data.modo;
+    if (data) {
+      if (data.modo) window.ADS_CONFIG.mode = data.modo;
+      if (data.publisher_id) window.ADS_CONFIG.publisher_id = data.publisher_id;
+      if (data.slot_repartidores) window.ADS_CONFIG.slot_feed_repartidores = data.slot_repartidores;
+      if (data.slot_avisos) window.ADS_CONFIG.slot_feed_muro = data.slot_avisos;
     }
   } catch (error) {
     console.warn('No se pudo cargar configuracion_publicidad:', error);

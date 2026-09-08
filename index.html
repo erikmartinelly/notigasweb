@@ -20,6 +20,9 @@
 
   <meta name="google-site-verification" content="JeMlpAfVVAMa3rJI7ElMJUsIlgLS4QxoJkS7S2TtjL8">
 
+  <!-- GOOGLE ADSENSE INTEGRATION (MONETIZACIÓN OFICIAL) -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2502415561017945" crossorigin="anonymous"></script>
+
   <link rel="canonical" href="https://www.notigas.com/">
 
   <meta name="theme-color" content="#FF6D00">
@@ -809,6 +812,12 @@
 
           </button>
 
+          <button class="ng-inline-40" id="btnOpenPrivacyPolicy" type="button" data-action="abrirModalPoliticaPrivacidad">
+
+            <i class="fa-solid fa-user-shield"></i> 🔒 Política de Privacidad y Cookies
+
+          </button>
+
           <button class="ng-inline-41" type="button" id="btnDeleteMyAccount">
 
             <i class="fa-solid fa-trash-can"></i> Eliminar Mi Cuenta y Todos Mis Datos
@@ -839,71 +848,16 @@
 
       <p class="ng-inline-42" id="driverModalSubtitle">Completa tu ficha de negocio. Aparecerá en la lista de repartidores de la OTB.</p>
 
-      <!-- SELECTOR DE PLAN DE REGISTRO: PRO VS GRATUITO -->
-      <div id="driverPlanSelectorContainer" style="margin-top:12px; margin-bottom:16px; background:#0B1329; border:1px solid #1E293B; border-radius:12px; padding:12px;">
-        <label style="display:block; color:#F8FAFC; font-weight:800; font-size:13px; margin-bottom:10px; text-align:center;">
-          🎯 Elige tu Modalidad de Registro:
-        </label>
-        
-        <input type="hidden" id="inputDriverPlanTipo" value="pro">
-
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;" id="driverPlanCardsGrid">
-          
-          <!-- TARJETA PLAN PRO (DESTACADO / RECOMENDADO) -->
-          <div id="cardPlanDriverPro" class="driver-plan-card active" style="border:2px solid #F59E0B; background:linear-gradient(145deg, #1E1B4B 0%, #171E38 100%); border-radius:10px; padding:12px 10px; cursor:pointer; position:relative; box-shadow:0 0 16px rgba(245,158,11,0.25); transition:all 0.2s ease;">
-            <div style="position:absolute; top:-10px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg, #F59E0B, #D97706); color:#0F172A; font-weight:900; font-size:9.5px; padding:2px 8px; border-radius:10px; text-transform:uppercase; letter-spacing:0.5px; white-space:nowrap; box-shadow:0 2px 6px rgba(0,0,0,0.3);">
-              👑 RECOMENDADO
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px; margin-bottom:8px;">
-              <strong style="color:#FDE68A; font-size:13px;">Repartidor PRO</strong>
-              <span style="color:#22C55E; font-weight:900; font-size:13px;">S/ 15 <small style="font-size:9.5px; color:#94A3B8;">/mes</small></span>
-            </div>
-            <div style="font-size:10.5px; color:#CBD5E1; line-height:1.45;">
-              <div style="margin-bottom:5px; color:#86EFAC;">
-                ⚡ <strong>3 min de ventaja</strong> en pedidos nuevos.
-              </div>
-              <div style="margin-bottom:5px; color:#38BDF8;">
-                ⭐ <strong>1 min de ventaja</strong> ante compradores.
-              </div>
-              <div style="margin-bottom:5px; color:#FDE68A;">
-                👑 Corona VIP y precio destacado.
-              </div>
-              <div style="color:#CBD5E1;">
-                💳 Pago QR (Yape/Plin/Takenos) con OCR.
-              </div>
-            </div>
-            <div id="badgeSelectedPlanPro" style="margin-top:10px; text-align:center; background:#F59E0B; color:#0F172A; font-weight:800; font-size:10.5px; padding:4px; border-radius:6px;">
-              <i class="fa-solid fa-circle-check"></i> Plan Elegido
-            </div>
-          </div>
-
-          <!-- TARJETA PLAN GRATUITO (BÁSICO) -->
-          <div id="cardPlanDriverGratuito" class="driver-plan-card" style="border:1.5px solid #334155; background:#0F172A; border-radius:10px; padding:12px 10px; cursor:pointer; position:relative; opacity:0.85; transition:all 0.2s ease;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px; margin-bottom:8px;">
-              <strong style="color:#94A3B8; font-size:13px;">Plan Gratuito</strong>
-              <span style="color:#94A3B8; font-weight:800; font-size:13px;">S/ 0 <small style="font-size:9.5px; color:#64748B;">Gratis</small></span>
-            </div>
-            <div style="font-size:10.5px; color:#94A3B8; line-height:1.45;">
-              <div style="margin-bottom:5px;">
-                ⏱️ Pedidos con <strong>3 min de espera</strong>.
-              </div>
-              <div style="margin-bottom:5px;">
-                ⏱️ En mapa clientes con <strong>1 min de espera</strong>.
-              </div>
-              <div style="margin-bottom:5px;">
-                ⚪ Ficha básica sin corona VIP.
-              </div>
-              <div>
-                🆓 Empieza gratis sin costo inicial.
-              </div>
-            </div>
-            <div id="badgeSelectedPlanGratuito" style="display:none; margin-top:10px; text-align:center; background:#334155; color:#F8FAFC; font-weight:800; font-size:10.5px; padding:4px; border-radius:6px;">
-              <i class="fa-solid fa-circle-check"></i> Plan Elegido
-            </div>
-          </div>
-
+      <!-- REGISTRO 100% GRATUITO Y LIBRE PARA REPARTIDORES -->
+      <div id="driverFreeNoticeBanner" style="margin-top:12px; margin-bottom:14px; background:linear-gradient(135deg, rgba(34,197,94,0.12) 0%, rgba(15,23,42,0.9) 100%); border:1.5px solid #22C55E; border-radius:12px; padding:12px 14px; text-align:center;">
+        <div style="font-size:13px; font-weight:900; color:#86EFAC; margin-bottom:4px; display:flex; align-items:center; justify-content:center; gap:6px;">
+          <i class="fa-solid fa-circle-check"></i> <span>Registro 100% Gratuito y Libre</span>
         </div>
+        <p style="font-size:11px; color:#CBD5E1; margin:0; line-height:1.4;">
+          Publica tu camión sin costo alguno. Tendrás acceso inmediato y en tiempo real a todos los pedidos vecinales y visibilidad directa en el mapa.
+        </p>
       </div>
+      <input type="hidden" id="inputDriverPlanTipo" value="gratuito">
 
       <div class="form-group">
 
@@ -996,75 +950,22 @@
         <small style="color:#94A3B8; font-size:11px; display:block; margin-top:5px;">Este precio se mostrará junto con las iniciales de tu camión en el mapa y en tu ficha de negocio.</small>
       </div>
 
-      <!-- SECCIÓN MEMBRESÍA VIP PREMIUM -->
-      <div class="driver-premium-subscription-box" style="background:linear-gradient(145deg, #1E1B4B 0%, #0F172A 100%); border:1.5px solid #F59E0B; border-radius:12px; padding:14px; margin-top:14px; margin-bottom:14px; box-shadow:0 4px 14px rgba(245,158,11,0.2);">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <h4 style="margin:0; color:#FDE68A; font-size:13.5px; font-weight:900; display:flex; align-items:center; gap:6px;">
-            <span>👑 Repartidor VIP Premium</span>
-            <span style="background:#F59E0B; color:#0F172A; font-size:10px; font-weight:900; padding:2px 6px; border-radius:6px;">S/ 15 / mes</span>
-          </h4>
-          <span id="driverPremiumStatusBadge" style="font-size:11px; font-weight:bold; padding:3px 8px; border-radius:8px; background:rgba(148,163,184,0.2); color:#94A3B8;">Inactivo</span>
-        </div>
-
-        <div id="driverPremiumProContent">
-          <div style="background:rgba(245,158,11,0.08); border-left:3px solid #F59E0B; padding:8px 10px; border-radius:0 6px 6px 0; margin-bottom:10px; font-size:11px; color:#E2E8F0; line-height:1.4;">
-            <div style="margin-bottom:4px;">⚡ <strong>Ventaja de 3 Minutos en Pedidos:</strong> Verás los pedidos en el mapa 3 minutos antes que tu competencia.</div>
-            <div style="margin-bottom:4px;">👑 <strong>Prioridad ante Compradores:</strong> Te mostramos 1 minuto antes en el mapa de clientes y con prioridad superior.</div>
-            <div>🚛 <strong>Insignia VIP Dorada:</strong> Corona de oro y precio destacado en tu camión en vivo.</div>
-          </div>
-
-          <div id="driverPremiumActiveAlert" style="display:none; background:rgba(34,197,94,0.15); border:1px solid #22C55E; border-radius:8px; padding:8px 10px; margin-bottom:10px; font-size:12px; color:#A7F3D0;">
-            <i class="fa-solid fa-circle-check"></i> <strong id="driverPremiumActiveText">¡Suscripción VIP Activa!</strong>
-          </div>
-
-          <div id="driverPremiumPendingAlert" style="display:none; background:rgba(234,179,8,0.15); border:1px solid #EAB308; border-radius:8px; padding:8px 10px; margin-bottom:10px; font-size:12px; color:#FEF08A;">
-            <i class="fa-solid fa-clock"></i> <strong>Comprobante en revisión.</strong> Tu cuenta VIP está activa de inmediato mientras el Administrador valida la acreditación.
-          </div>
-
-          <!-- INSTRUCCIONES DE PAGO Y SUBIDA DE COMPROBANTE -->
-          <div id="driverPremiumPaymentSection" style="background:#0F172A; border:1px solid #334155; border-radius:10px; padding:10px; margin-top:8px;">
-            <p style="margin:0 0 6px 0; font-size:11.5px; color:#CBD5E1; font-weight:700;">
-              💳 Paga S/ 15.00 con QR vía <strong>Yape, Plin o Takenos</strong>:
-            </p>
-            <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px; background:#1E293B; padding:8px; border-radius:8px;">
-              <div style="width:54px; height:54px; background:#FFFFFF; border-radius:6px; display:flex; align-items:center; justify-content:center; color:#0F172A;">
-                <i class="fa-solid fa-qrcode" style="font-size:36px; color:#0F172A;"></i>
-              </div>
-              <div style="font-size:11px; color:#94A3B8; line-height:1.4;">
-                <div>Yape / Plin: <strong style="color:#FDE68A;">987-654-321</strong></div>
-                <div>Takenos QR: <strong style="color:#38BDF8;">Transfiere a @notigas</strong></div>
-                <div>Monto mensual: <strong style="color:#22C55E;">S/ 15.00 PEN</strong></div>
-              </div>
-            </div>
-
-            <label style="display:block; font-size:11px; color:#CBD5E1; font-weight:700; margin-bottom:4px;">
-              📸 Sube tu Captura / Voucher de Pago:
-            </label>
-            <input type="file" id="inputDriverVoucherFile" accept="image/*" style="font-size:11px; color:#94A3B8; width:100%; margin-bottom:8px;">
-
-            <!-- CAJA DE ESTADO Y RESULTADO DE LECTURA OCR -->
-            <div id="driverOcrStatusBox" style="display:none; margin-bottom:10px; padding:8px 10px; border-radius:8px; font-size:11.5px; border:1px solid #334155; background:#1E293B;">
-              <div id="driverOcrStatusText" style="color:#CBD5E1; display:flex; align-items:center; gap:8px;"></div>
-            </div>
-
-            <button type="button" id="btnDriverSubmitVoucher" style="width:100%; background:linear-gradient(135deg, #F59E0B, #D97706); color:#FFFFFF; border:none; padding:10px 12px; border-radius:8px; font-size:12px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 3px 8px rgba(245,158,11,0.4);">
-              <i class="fa-solid fa-bolt"></i> Enviar Comprobante y Activar VIP al Instante
-            </button>
-          </div>
-        </div>
-
-        <!-- CONTENIDO SI EL CHOFER ELIGE PLAN GRATUITO -->
-        <div id="driverPremiumGratuitoContent" style="display:none; padding:12px; background:#0F172A; border-radius:10px; border:1px dashed #475569; text-align:center;">
-          <div style="font-size:12.5px; color:#F8FAFC; margin-bottom:6px;">
-            <i class="fa-solid fa-circle-check" style="color:#38BDF8;"></i> <strong>Has seleccionado el Plan Gratuito (S/ 0)</strong>
-          </div>
-          <p style="font-size:11px; color:#94A3B8; margin:0 0 10px 0; line-height:1.45;">
-            No requieres realizar ningún pago. Tu ficha quedará activa al guardar. Podrás pasarte al Plan PRO cuando quieras para desbloquear 3 minutos de ventaja en pedidos y 1 minuto ante clientes.
-          </p>
-          <button type="button" id="btnCambiarAProDesdeGratuito" style="background:linear-gradient(135deg, rgba(245,158,11,0.2) 0%, rgba(217,119,6,0.15) 100%); border:1.5px solid #F59E0B; color:#FDE68A; padding:7px 14px; border-radius:8px; font-size:11.5px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
-            👑 Cambiar a Plan PRO para ganar ventaja
-          </button>
-        </div>
+      <!-- COMPATIBILIDAD OCULTA (Sin cobro a repartidores) -->
+      <div style="display:none;" aria-hidden="true">
+        <input type="file" id="inputDriverVoucherFile">
+        <div id="driverOcrStatusBox"><div id="driverOcrStatusText"></div></div>
+        <button type="button" id="btnDriverSubmitVoucher"></button>
+        <span id="driverPremiumStatusBadge"></span>
+        <div id="driverPremiumActiveAlert"><span id="driverPremiumActiveText"></span></div>
+        <div id="driverPremiumPendingAlert"></div>
+        <div id="driverPremiumPaymentSection"></div>
+        <div id="driverPremiumProContent"></div>
+        <div id="driverPremiumGratuitoContent"></div>
+        <button type="button" id="btnCambiarAProDesdeGratuito"></button>
+        <div id="cardPlanDriverPro"></div>
+        <div id="cardPlanDriverGratuito"></div>
+        <div id="badgeSelectedPlanPro"></div>
+        <div id="badgeSelectedPlanGratuito"></div>
       </div>
 
       <div class="form-group">
@@ -1129,8 +1030,8 @@
 
       </div>
 
-      <button class="btn-submit-google" id="auto-event-30" style="background:linear-gradient(135deg, #F59E0B, #D97706); color:#FFFFFF; font-weight:800; display:flex; align-items:center; justify-content:center; gap:8px;">
-        <i class="fa-solid fa-bolt"></i> <span id="btnDriverSubmitText">Registrar y Activar Repartidor PRO (S/ 15/mes)</span>
+      <button class="btn-submit-google" id="auto-event-30" style="background:linear-gradient(135deg, #10B981, #059669); color:#FFFFFF; font-weight:800; display:flex; align-items:center; justify-content:center; gap:8px;">
+        <i class="fa-solid fa-truck-fast"></i> <span id="btnDriverSubmitText">Activar y Publicar Mi Ficha de Repartidor (Gratis)</span>
       </button>
 
       <!-- DENUNCIAR PEDIDO FALSO (HABILITADO EN LA CUENTA DEL REPARTIDOR) -->
@@ -1564,6 +1465,55 @@
 
     </div>
 
+  </div>
+
+  <!-- MODAL DE POLÍTICA DE PRIVACIDAD Y COOKIES (GOOGLE ADSENSE COMPLIANCE) -->
+  <div class="modal" id="modalPrivacyPolicy" style="display: none;">
+    <div class="modal-content ng-inline-66" style="max-width: 580px; max-height: 85vh; overflow-y: auto;">
+      <div class="modal-title">
+        <span>🔒 Política de Privacidad y Cookies</span>
+        <button class="btn-close" id="btnClosePrivacyPolicy" type="button">✖</button>
+      </div>
+      <div class="ng-inline-67" style="font-size: 12.5px; color: #CBD5E1; line-height: 1.6;">
+        <div class="ng-inline-68" style="margin-bottom: 12px;">
+          <strong class="ng-inline-69" style="color: #38BDF8; display: block; margin-bottom: 4px;">1. Plataforma Comunitaria 100% Gratuita</strong>
+          <p class="ng-inline-70" style="margin: 0;">
+            NOTIGAS es una plataforma colaborativa comunitaria libre y gratuita para vecinos y repartidores locales de balones de gas GLP, agua y servicios en Perú. No cobramos comisiones ni tarifas de suscripción a los repartidores ni a los compradores.
+          </p>
+        </div>
+
+        <div class="ng-inline-71" style="margin-bottom: 12px;">
+          <strong class="ng-inline-72" style="color: #F59E0B; display: block; margin-bottom: 4px;">2. Publicidad y Cookies de Terceros (Google AdSense)</strong>
+          <p class="ng-inline-73" style="margin: 0 0 6px 0;">
+            Para mantener el servicio completamente gratuito y solventar los costos de infraestructura tecnológica en la nube, NOTIGAS utiliza <strong>Google AdSense</strong> como proveedor publicitario.
+          </p>
+          <ul style="margin: 4px 0 0 16px; padding: 0;">
+            <li>Proveedores externos, incluido <strong>Google</strong>, utilizan cookies para publicar anuncios basados en visitas anteriores de los usuarios a este sitio web o a otros sitios de Internet.</li>
+            <li>El uso de cookies de publicidad por parte de Google le permite a este y a sus socios publicar anuncios a los usuarios según sus visitas a este sitio web y a otros sitios de Internet.</li>
+            <li>Los usuarios pueden inhabilitar la publicidad personalizada consultando la <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer" style="color: #38BDF8; font-weight: bold; text-decoration: underline;">Configuración de Anuncios de Google</a>.</li>
+            <li>Alternativamente, los usuarios pueden inhabilitar el uso de cookies para publicidad personalizada de proveedores externos visitando el portal <a href="https://www.aboutads.info/choices/" target="_blank" rel="noopener noreferrer" style="color: #38BDF8; font-weight: bold; text-decoration: underline;">aboutads.info</a>.</li>
+          </ul>
+        </div>
+
+        <div class="ng-inline-74" style="margin-bottom: 12px;">
+          <strong class="ng-inline-75" style="color: #10B981; display: block; margin-bottom: 4px;">3. Datos Personales y Geolocalización</strong>
+          <p style="margin: 0;">
+            Los datos solicitados al registrarse (nombre, teléfono de WhatsApp, DNI, placa vehicular y ubicación GPS) son utilizados exclusivamente para la coordinación del despacho de balones de gas o productos solicitados por los vecinos, y para moderación comunitaria contra fraudes. NOTIGAS no comercializa ni cede bases de datos personales a terceros.
+          </p>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <strong style="color: #A78BFA; display: block; margin-bottom: 4px;">4. Archivo Oficial de Autorización Publicitaria (ads.txt)</strong>
+          <p style="margin: 0;">
+            El dominio cuenta con un archivo oficial <code>ads.txt</code> verificado con el Publisher ID oficial de Google AdSense: <code>google.com, pub-2502415561017945, DIRECT, f08c47fec0942fa0</code>.
+          </p>
+        </div>
+
+        <button class="ng-inline-79" type="button" id="btnEntendidoPrivacyPolicy" style="width: 100%; background: linear-gradient(135deg, #0284C7, #0369A1); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 800; cursor: pointer;">
+          ✅ He leído y acepto la Política de Privacidad y Cookies
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- MODAL SUBMENÚ PEDIDOS MEJORADO -->

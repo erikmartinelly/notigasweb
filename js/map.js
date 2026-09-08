@@ -1069,19 +1069,7 @@ function actualizarRepartidorEnMapa(data) {
 
   const isDriverPremium = Boolean(data.es_premium || data.tipo_plan === 'pro');
 
-  // 1 Minuto de Ventaja para Repartidores PRO ante Compradores:
-  // Si el observador es un comprador y el camión es gratuito (no PRO),
-  // se retiene la visualización en el mapa durante los primeros 60 segundos desde que inició la ruta.
-  if (userRole !== 'repartidor' && !isDriverPremium) {
-    const routeStartTime = data.route_created_at ? new Date(data.route_created_at).getTime() : 0;
-    if (routeStartTime > 0) {
-      const routeAgeMs = Date.now() - routeStartTime;
-      const PRO_BUYER_ADVANTAGE_MS = 60 * 1000; // 1 minuto de ventaja
-      if (routeAgeMs < PRO_BUYER_ADVANTAGE_MS) {
-        return; // Retener visualización ante compradores durante el primer minuto
-      }
-    }
-  }
+  // Plataforma 100% Gratuita: Todos los camiones son visibles de inmediato para todos los compradores.
 
   // 3. Buscar si ya existe un marcador para este camión por routeId, userId o nombre
   const routeId = data.id ? String(data.id) : null;
@@ -2189,22 +2177,11 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
       if (isDriverUser) {
         clearNeighborOrderMarkers();
         let availableOrders = [];
-        const isCurrentDriverVip = Boolean(u.es_premium || u.tipo_plan === 'pro');
-        const PRO_ORDER_ADVANTAGE_MS = 3 * 60 * 1000;
-        const fetchNow = Date.now();
-
         if (Array.isArray(pubRes.data)) {
           availableOrders = pubRes.data.filter(order => {
             const matchesCat = (typeof window.isOrderCategoryMatchingDriver !== 'function') ||
               window.isOrderCategoryMatchingDriver(order.categoria, driverCategoria);
-            if (!matchesCat) return false;
-
-            // Ventaja de 3 minutos para repartidores PRO:
-            if (!isCurrentDriverVip) {
-              const orderAge = fetchNow - new Date(order.created_at).getTime();
-              if (orderAge < PRO_ORDER_ADVANTAGE_MS) return false;
-            }
-            return true;
+            return matchesCat;
           });
         }
         const assignedOrders = assignedRes.data || [];

@@ -11,6 +11,16 @@ window.closeRulesModal = function() {
   if (modal) modal.style.display = 'none';
 };
 
+window.abrirModalPoliticaPrivacidad = function() {
+  const modal = document.getElementById('modalPrivacyPolicy');
+  if (modal) modal.style.display = 'flex';
+};
+
+window.cerrarModalPoliticaPrivacidad = function() {
+  const modal = document.getElementById('modalPrivacyPolicy');
+  if (modal) modal.style.display = 'none';
+};
+
 document.addEventListener('DOMContentLoaded', () => {
   try {
     const safeCall = async (fnName, ...args) => {
@@ -301,6 +311,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isFake && inputName) setTimeout(() => inputName.focus(), 100);
       });
     }
+
+    const btnOpenPrivacy = document.getElementById('btnOpenPrivacyPolicy');
+    if (btnOpenPrivacy) btnOpenPrivacy.addEventListener('click', () => { safeCall('abrirModalPoliticaPrivacidad'); });
+
+    const btnClosePrivacy = document.getElementById('btnClosePrivacyPolicy');
+    if (btnClosePrivacy) btnClosePrivacy.addEventListener('click', () => { safeCall('cerrarModalPoliticaPrivacidad'); });
+
+    const btnEntendidoPrivacy = document.getElementById('btnEntendidoPrivacyPolicy');
+    if (btnEntendidoPrivacy) btnEntendidoPrivacy.addEventListener('click', () => { safeCall('cerrarModalPoliticaPrivacidad'); });
 
     const el_auto_event_38 = document.getElementById('auto-event-38');
     if (el_auto_event_38) el_auto_event_38.addEventListener('click', () => { safeCall('closeSubmenuModal'); });
@@ -737,6 +756,12 @@ document.addEventListener('click', async (e) => {
     }
     else if (action === 'abrirModalReglasApp') {
       if (typeof window.abrirModalReglasApp === 'function') window.abrirModalReglasApp();
+    }
+    else if (action === 'abrirModalPoliticaPrivacidad') {
+      if (typeof window.abrirModalPoliticaPrivacidad === 'function') window.abrirModalPoliticaPrivacidad();
+    }
+    else if (action === 'cerrarModalPoliticaPrivacidad') {
+      if (typeof window.cerrarModalPoliticaPrivacidad === 'function') window.cerrarModalPoliticaPrivacidad();
     }
   } catch (err) {
     console.error('Error ejecutando acción de evento:', action, err);
