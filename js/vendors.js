@@ -101,6 +101,9 @@ function renderVendorCards(filterCat) {
     ? allVendors
     : allVendors.filter(v => v.category.toLowerCase().includes(filterCat.toLowerCase()) || filterCat.toLowerCase().includes(v.category.toLowerCase()));
 
+  // Prioridad para repartidores PRO: aparecen siempre en los primeros lugares
+  filtered.sort((a, b) => (b.es_premium ? 1 : 0) - (a.es_premium ? 1 : 0));
+
   let html = '';
 
   // (El pedido destacado vecinal ya se maneja en Tab 1 con datos en tiempo real de Supabase)

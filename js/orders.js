@@ -144,17 +144,76 @@ async function renderDriverOrdersList() {
 
   const pubOrders = pubRes.data || [];
   const assignedOrders = assignedRes.data || [];
-  const allOrders = [...assignedOrders, ...pubOrders];
 
-  // Filtrar estrictamente: un repartidor SOLO ve pedidos de su categoría en su ciudad
-  // Si un pedido ya fue tomado por otro chofer, se bloquea y desaparece de la lista
+  // 3 Minutos de Ventaja para Repartidores PRO:
+  const isDriverVip = Boolean(userData?.es_premium || userData?.tipo_plan === 'pro');
+  const PRO_ORDER_ADVANTAGE_MS = 3 * 60 * 1000; // 3 minutos
+  const now = Date.now();
+
+  let ordersInVipWindow = 0;
+
+  // Filtrar pedidos públicos: si es chofer gratuito, los pedidos nuevos (< 3 min) se reservan para los PRO
+  const visiblePubOrders = pubOrders.filter(o => {
+    const matchesCat = (typeof window.isOrderCategoryMatchingDriver !== 'function') ||
+                       window.isOrderCategoryMatchingDriver(o.categoria, driverCategoria);
+    if (!matchesCat) return false;
+
+    const orderAge = now - new Date(o.created_at).getTime();
+    if (!isDriverVip && orderAge < PRO_ORDER_ADVANTAGE_MS) {
+      ordersInVipWindow++;
+      return false; // Reservado exclusivamente para choferes PRO durante los primeros 3 minutos
+    }
+    return true;
+  });
+
+  const allOrders = [...assignedOrders, ...visiblePubOrders];
+
+  // Filtrar asignados a este chofer o públicos válidos
   const orders = allOrders.filter(o => {
     if (o.estado === 'asignado') {
       return o.driver_id && String(o.driver_id) === String(localUserId);
     }
-    return (typeof window.isOrderCategoryMatchingDriver !== 'function') ||
-           window.isOrderCategoryMatchingDriver(o.categoria, driverCategoria);
+    return true;
   });
+
+  // Banner informativo superior de Plan PRO vs Gratuito
+  let planBannerHtml = '';
+  if (isDriverVip) {
+    planBannerHtml = `
+      <div class="driver-plan-banner" style="background:linear-gradient(135deg, rgba(245,158,11,0.2) 0%, rgba(217,119,6,0.12) 100%); border:1.5px solid #F59E0B; border-radius:10px; padding:10px 12px; margin-bottom:12px; display:flex; align-items:center; gap:10px; box-shadow:0 3px 10px rgba(245,158,11,0.15);">
+        <div style="font-size:24px;">👑</div>
+        <div style="font-size:11.5px; color:#FDE68A; line-height:1.4; flex:1;">
+          <strong style="color:#FFFFFF; font-size:12.5px; display:block;">¡Modo Repartidor PRO Activo!</strong>
+          Disfrutas de <strong>3 minutos de ventaja exclusiva</strong> para ver y tomar pedidos antes que los repartidores gratuitos.
+        </div>
+        <span style="font-size:10px; background:#F59E0B; color:#0F172A; font-weight:900; padding:2px 7px; border-radius:6px;">VIP PRO</span>
+      </div>
+    `;
+  } else {
+    planBannerHtml = `
+      <div class="driver-plan-banner" style="background:linear-gradient(135deg, #1E293B 0%, #0F172A 100%); border:1.5px solid #38BDF8; border-radius:10px; padding:10px 12px; margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+          <div style="font-size:11.5px; color:#CBD5E1; line-height:1.45; flex:1;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <strong style="color:#38BDF8; font-size:12px;">📦 Modo Repartidor Gratuito</strong>
+              <span style="font-size:9.5px; background:#334155; color:#94A3B8; font-weight:800; padding:1px 6px; border-radius:4px;">BÁSICO</span>
+            </div>
+            <div style="color:#94A3B8; margin-top:2px;">
+              Los pedidos nuevos se te muestran con <strong>3 minutos de demora</strong> frente a los choferes PRO.
+            </div>
+            ${ordersInVipWindow > 0 ? `
+              <div style="margin-top:6px; background:rgba(245,158,11,0.15); border-left:3px solid #F59E0B; padding:5px 8px; border-radius:0 6px 6px 0; color:#FEF08A; font-weight:700;">
+                🔥 ¡Hay ${ordersInVipWindow} pedido(s) nuevo(s) en tu zona que los choferes PRO están atendiendo ahora mismo!
+              </div>
+            ` : ''}
+          </div>
+          <button type="button" class="btn-driver" style="margin:0; padding:7px 11px; font-size:11px; font-weight:900; background:linear-gradient(135deg, #F59E0B, #D97706); border:none; white-space:nowrap; border-radius:8px; color:#0F172A; cursor:pointer; box-shadow:0 3px 8px rgba(245,158,11,0.3);" data-action="abrirModalDriver">
+            👑 Pasar a PRO
+          </button>
+        </div>
+      </div>
+    `;
+  }
 
   if (!orders || orders.length === 0) {
     if (pubRes.error || assignedRes.error) {
@@ -168,7 +227,22 @@ async function renderDriverOrdersList() {
         </div>`;
       return;
     }
-    container.innerHTML = '<div style="padding:25px; text-align:center; color:#94A3B8; font-size:12px;"><i class="fa-solid fa-clipboard-check" style="font-size:24px; margin-bottom:8px; display:block;"></i>No hay pedidos pendientes para tu categoría en esta ciudad.</div>';
+    const vipLockedNotice = (ordersInVipWindow > 0)
+      ? `<div style="margin-top:10px; padding:12px; background:rgba(245,158,11,0.12); border:1.5px solid #F59E0B; border-radius:10px; color:#FDE68A; font-size:12px; line-height:1.45;">
+          🔒 <strong>¡Hay ${ordersInVipWindow} pedido(s) nuevo(s) en tu zona!</strong><br>
+          <span style="font-size:11px; color:#CBD5E1;">Están en la ventana exclusiva de 3 minutos para choferes PRO. Pásate a PRO por S/ 15/mes para verlos al instante y no perder clientes.</span><br>
+          <button type="button" class="btn-driver" style="margin-top:8px; padding:7px 12px; font-size:11px; font-weight:800; background:linear-gradient(135deg, #F59E0B, #D97706); border:none; border-radius:8px; color:#0F172A; cursor:pointer;" data-action="abrirModalDriver">
+            👑 Activar Plan PRO (S/ 15/mes)
+          </button>
+        </div>`
+      : '';
+
+    container.innerHTML = planBannerHtml + `
+      <div style="padding:25px; text-align:center; color:#94A3B8; font-size:12px;">
+        <i class="fa-solid fa-clipboard-check" style="font-size:24px; margin-bottom:8px; display:block;"></i>
+        No hay pedidos pendientes disponibles en este momento para tu categoría en esta ciudad.
+        ${vipLockedNotice}
+      </div>`;
     return;
   }
 
@@ -184,7 +258,7 @@ async function renderDriverOrdersList() {
     groups[groupKey].items.push(o);
   });
 
-  let html = '';
+  let html = planBannerHtml;
 
   // Pedidos asignados a este chofer
   const myAssigned = orders.filter(o => o.estado === 'asignado' && o.driver_id === localUserId);

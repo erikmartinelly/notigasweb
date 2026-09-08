@@ -2196,7 +2196,7 @@ async function renderAdminPremiumSubscriptions() {
   try {
     const { data: drivers, error } = await window.supabaseClient
       .from('choferes_habilitados')
-      .select('id, user_id, nombre_completo, telefono_whatsapp, placa, categoria, ciudad, precio_balon_10kg, es_premium, premium_vence_at, comprobante_pago_url, comprobante_fecha, estado_pago_premium, ocr_monto, ocr_app, ocr_operacion, ocr_valido, ocr_raw_text, created_at')
+      .select('id, user_id, nombre_completo, telefono_whatsapp, placa, categoria, ciudad, precio_balon_10kg, es_premium, premium_vence_at, comprobante_pago_url, comprobante_fecha, estado_pago_premium, ocr_monto, ocr_app, ocr_operacion, ocr_valido, ocr_raw_text, tipo_plan, created_at')
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -2270,13 +2270,13 @@ async function renderAdminPremiumSubscriptions() {
         if (driver.premium_vence_at) {
           try { venceTxt = ' hasta ' + new Date(driver.premium_vence_at).toLocaleDateString(); } catch(_) {}
         }
-        statusBadge = `<span style="background:linear-gradient(135deg, #F59E0B, #D97706); color:#FFF; font-size:10px; font-weight:800; padding:3px 8px; border-radius:10px; box-shadow:0 1px 4px rgba(245,158,11,0.4);">👑 VIP Activo${venceTxt}</span>`;
+        statusBadge = `<span style="background:linear-gradient(135deg, #F59E0B, #D97706); color:#FFF; font-size:10px; font-weight:800; padding:3px 8px; border-radius:10px; box-shadow:0 1px 4px rgba(245,158,11,0.4);">👑 PRO Activo${venceTxt}</span>`;
       } else if (estado === 'pendiente' || hasVoucher) {
-        statusBadge = `<span style="background:rgba(234,179,8,0.2); color:#FDE047; border:1px solid #EAB308; font-size:10px; font-weight:800; padding:3px 8px; border-radius:10px;">⏳ Pendiente</span>`;
+        statusBadge = `<span style="background:rgba(234,179,8,0.2); color:#FDE047; border:1px solid #EAB308; font-size:10px; font-weight:800; padding:3px 8px; border-radius:10px;">⏳ PRO Pendiente</span>`;
       } else if (estado === 'baneado_voucher_invalido') {
         statusBadge = `<span style="background:rgba(239,68,68,0.2); color:#FCA5A5; border:1px solid #EF4444; font-size:10px; font-weight:800; padding:3px 8px; border-radius:10px;">⛔ Baneado</span>`;
       } else {
-        statusBadge = `<span style="color:#64748B; font-size:11px;">Inactivo</span>`;
+        statusBadge = `<span style="background:rgba(148,163,184,0.15); color:#94A3B8; border:1px solid #475569; font-size:10px; font-weight:800; padding:2px 7px; border-radius:8px;">⚪ Gratuito</span>`;
       }
 
       let voucherCol = '';

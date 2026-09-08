@@ -1067,6 +1067,22 @@ function actualizarRepartidorEnMapa(data) {
      return;
   }
 
+  const isDriverPremium = Boolean(data.es_premium || data.tipo_plan === 'pro');
+
+  // 1 Minuto de Ventaja para Repartidores PRO ante Compradores:
+  // Si el observador es un comprador y el camión es gratuito (no PRO),
+  // se retiene la visualización en el mapa durante los primeros 60 segundos desde que inició la ruta.
+  if (userRole !== 'repartidor' && !isDriverPremium) {
+    const routeStartTime = data.route_created_at ? new Date(data.route_created_at).getTime() : 0;
+    if (routeStartTime > 0) {
+      const routeAgeMs = Date.now() - routeStartTime;
+      const PRO_BUYER_ADVANTAGE_MS = 60 * 1000; // 1 minuto de ventaja
+      if (routeAgeMs < PRO_BUYER_ADVANTAGE_MS) {
+        return; // Retener visualización ante compradores durante el primer minuto
+      }
+    }
+  }
+
   // 3. Buscar si ya existe un marcador para este camión por routeId, userId o nombre
   const routeId = data.id ? String(data.id) : null;
   const userId = data.user_id ? String(data.user_id) : null;
@@ -1099,7 +1115,6 @@ function actualizarRepartidorEnMapa(data) {
   const badgeBg = driverTheme ? driverTheme.badgeBg : '#E11D48';
   const badgeBorder = driverTheme ? driverTheme.badgeBorder : '#FFFFFF';
 
-  const isDriverPremium = Boolean(data.es_premium);
   const rawPrice10kg = data.precio_balon_10kg;
   let priceHtml = '';
   if (rawPrice10kg && !isNaN(Number(rawPrice10kg)) && Number(rawPrice10kg) > 0) {
@@ -1129,6 +1144,8 @@ function actualizarRepartidorEnMapa(data) {
   const canonicalKey = routeId || userId || driverName;
   if (!canonicalKey) return;
 
+  const truckZIndex = isDriverPremium ? 9500 : 9000;
+
   if (existingMarker) {
     let newAngle = existingMarker._notigasHeading || 0;
     const oldLatLng = existingMarker.getLatLng();
@@ -1146,6 +1163,7 @@ function actualizarRepartidorEnMapa(data) {
     existingMarker._notigasUserId = userId || existingMarker._notigasUserId;
     existingMarker._notigasDriverName = driverName || existingMarker._notigasDriverName;
     if (existingMarker.setIcon) existingMarker.setIcon(iconToUse);
+    if (existingMarker.setZIndexOffset) existingMarker.setZIndexOffset(truckZIndex);
     if (existingMarker.getPopup()) {
       existingMarker.setPopupContent(popupHtml);
     }
@@ -1164,7 +1182,7 @@ function actualizarRepartidorEnMapa(data) {
       }
     });
 
-    const marker = L.marker([lat, lng], { icon: iconToUse, zIndexOffset: 9000 }).addTo(map);
+    const marker = L.marker([lat, lng], { icon: iconToUse, zIndexOffset: truckZIndex }).addTo(map);
     marker._notigasRouteId = routeId;
     marker._notigasUserId = userId;
     marker._notigasDriverName = driverName;
@@ -2050,7 +2068,7 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
 
       // Proyección explícita de columnas necesarias incluyendo visto y subestado
       const ORDER_COLUMNS = 'id, user_id, categoria, titulo, cantidad, direccion, telefono, estado, driver_id, ciudad, latitude, longitude, visto, subestado, created_at, updated_at';
-      const TRUCK_COLUMNS = 'id, user_id, distribuidor_nombre, categoria, titulo, ciudad, latitude, longitude, garrafas_agotadas, last_active, telefono, placa, productos, color_camion, precio_balon_10kg, es_premium';
+      const TRUCK_COLUMNS = 'id, user_id, distribuidor_nombre, categoria, titulo, ciudad, latitude, longitude, garrafas_agotadas, last_active, telefono, placa, productos, color_camion, precio_balon_10kg, es_premium, route_created_at, tipo_plan';
 
       // Obtener Bounding Box del viewport visible con margen de 25% para pre-carga suave
       let bbox = null;
@@ -2171,10 +2189,22 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
       if (isDriverUser) {
         clearNeighborOrderMarkers();
         let availableOrders = [];
+        const isCurrentDriverVip = Boolean(u.es_premium || u.tipo_plan === 'pro');
+        const PRO_ORDER_ADVANTAGE_MS = 3 * 60 * 1000;
+        const fetchNow = Date.now();
+
         if (Array.isArray(pubRes.data)) {
           availableOrders = pubRes.data.filter(order => {
-            return typeof window.isOrderCategoryMatchingDriver !== 'function' ||
+            const matchesCat = (typeof window.isOrderCategoryMatchingDriver !== 'function') ||
               window.isOrderCategoryMatchingDriver(order.categoria, driverCategoria);
+            if (!matchesCat) return false;
+
+            // Ventaja de 3 minutos para repartidores PRO:
+            if (!isCurrentDriverVip) {
+              const orderAge = fetchNow - new Date(order.created_at).getTime();
+              if (orderAge < PRO_ORDER_ADVANTAGE_MS) return false;
+            }
+            return true;
           });
         }
         const assignedOrders = assignedRes.data || [];

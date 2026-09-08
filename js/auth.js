@@ -701,7 +701,8 @@ async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
     productos: repartidorObj.productos,
     schedule: repartidorObj.schedule,
     ciudad: repartidorObj.ciudad || AppState.get('city') || null,
-    color_camion: repartidorObj.color_camion || ''
+    color_camion: repartidorObj.color_camion || '',
+    tipo_plan: repartidorObj.tipo_plan || 'gratuito'
   };
   if (repartidorObj.precio_balon_10kg !== undefined && repartidorObj.precio_balon_10kg !== null && repartidorObj.precio_balon_10kg !== '') {
     const pNum = parseFloat(repartidorObj.precio_balon_10kg);
@@ -910,8 +911,23 @@ async function iniciarSesionRepartidor() {
     return;
   }
 
-  const colorCamion = (document.getElementById('inputDriverTruckColor')?.value || '').trim() || 'rojo';
-  const precio10kgRaw = (document.getElementById('inputDriverPrecioBalon10kg')?.value || '').trim();
+  const planTipo = (document.getElementById('inputDriverPlanTipo')?.value || 'gratuito').toLowerCase();
+  const fileVoucher = document.getElementById('inputDriverVoucherFile')?.files?.[0];
+  const yaEsVip = Boolean(cachedUser.es_premium);
+
+  // Si eligió PRO pero aún no es VIP y no ha seleccionado comprobante, advertir amablemente
+  if (planTipo === 'pro' && !yaEsVip && !fileVoucher) {
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+    if (typeof showToast === 'function') {
+      showToast('📸 Falta Comprobante QR', 'Para activar el Plan PRO (S/ 15/mes) debes adjuntar tu captura de pago QR (Yape, Plin o Takenos). Si prefieres empezar gratis, selecciona el Plan Gratuito.', 'warning', 6500);
+    } else {
+      alert('Para el Plan PRO, por favor sube tu captura de pago QR (Yape, Plin o Takenos). O selecciona el Plan Gratuito.');
+    }
+    const sec = document.getElementById('driverPremiumPaymentSection');
+    if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
   const repartidorData = {
     role: 'repartidor',
     nombre: nombreNegocio,
@@ -923,7 +939,9 @@ async function iniciarSesionRepartidor() {
     ciudad: ciudad,
     color_camion: colorCamion,
     precio_balon_10kg: precio10kgRaw !== '' ? parseFloat(precio10kgRaw) : null,
-    user_id: existingUserId
+    user_id: existingUserId,
+    tipo_plan: planTipo,
+    es_premium: yaEsVip
   };
 
   if (existingGmail) repartidorData.gmail = existingGmail;
@@ -931,11 +949,21 @@ async function iniciarSesionRepartidor() {
   const exito = await guardarRepartidorEnBaseDeDatos(repartidorData);
 
   if (!exito?.ok) {
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
     if (typeof showToast === 'function') showToast('❌ Error', 'No se pudo guardar la configuración. Reintenta.', 'error', 3000);
     return;
   }
 
   AppState.set('userData', repartidorData);
+
+  // Si eligió PRO y adjuntó comprobante, procesarlo de inmediato para activación instantánea
+  if (planTipo === 'pro' && fileVoucher) {
+    try {
+      await enviarComprobantePagoPremium();
+    } catch (vErr) {
+      console.warn("Aviso al procesar comprobante durante registro:", vErr);
+    }
+  }
 
   if (typeof window.cambiarCiudad === 'function') {
     try {
@@ -956,7 +984,15 @@ async function iniciarSesionRepartidor() {
     setAppMode('driver');
   }
 
-  if (typeof showToast === 'function') showToast('🟢 Negocio Activado', `Ficha de ${nombreNegocio} registrada.`, 'success', 2000);
+  if (planTipo === 'pro') {
+    if (typeof showToast === 'function') {
+      showToast('👑 ¡Repartidor PRO Activado!', `¡Bienvenido ${nombreNegocio}! Cuentas con 3 minutos de ventaja en pedidos y 1 minuto ante compradores.`, 'success', 6500);
+    }
+  } else {
+    if (typeof showToast === 'function') {
+      showToast('🟢 Registro Gratuito Activado', `Ficha de ${nombreNegocio} registrada. Puedes pasar a PRO por S/ 15/mes para obtener 3 minutos de ventaja.`, 'success', 6000);
+    }
+  }
 
   if (typeof renderVendorCards === 'function') {
     renderVendorCards('TODOS');
@@ -2279,7 +2315,64 @@ function actualizarVistaPreviaCamionChofer() {
 window.actualizarVistaPreviaCamionChofer = actualizarVistaPreviaCamionChofer;
 
 /**
- * Carga los datos del chofer (incluyendo precio del balón de 10 Kg y suscripción Premium)
+ * Alterna dinámicamente entre el Plan PRO (S/ 15/mes) y el Plan Gratuito (S/ 0)
+ * en el modal de registro/edición de chofer.
+ */
+function seleccionarPlanRegistroChofer(tipoPlan) {
+  const plan = (tipoPlan === 'gratuito') ? 'gratuito' : 'pro';
+  const inputTipo = document.getElementById('inputDriverPlanTipo');
+  if (inputTipo) inputTipo.value = plan;
+
+  const cardPro = document.getElementById('cardPlanDriverPro');
+  const cardGratuito = document.getElementById('cardPlanDriverGratuito');
+  const badgePro = document.getElementById('badgeSelectedPlanPro');
+  const badgeGratuito = document.getElementById('badgeSelectedPlanGratuito');
+  const proContent = document.getElementById('driverPremiumProContent');
+  const gratuitoContent = document.getElementById('driverPremiumGratuitoContent');
+  const btnText = document.getElementById('btnDriverSubmitText');
+
+  if (plan === 'pro') {
+    if (cardPro) {
+      cardPro.classList.add('active');
+      cardPro.style.border = '2px solid #F59E0B';
+      cardPro.style.boxShadow = '0 0 16px rgba(245,158,11,0.25)';
+      cardPro.style.opacity = '1';
+    }
+    if (cardGratuito) {
+      cardGratuito.classList.remove('active');
+      cardGratuito.style.border = '1.5px solid #334155';
+      cardGratuito.style.boxShadow = 'none';
+      cardGratuito.style.opacity = '0.7';
+    }
+    if (badgePro) badgePro.style.display = 'block';
+    if (badgeGratuito) badgeGratuito.style.display = 'none';
+    if (proContent) proContent.style.display = 'block';
+    if (gratuitoContent) gratuitoContent.style.display = 'none';
+    if (btnText) btnText.textContent = 'Registrar y Activar Repartidor PRO (S/ 15/mes)';
+  } else {
+    if (cardPro) {
+      cardPro.classList.remove('active');
+      cardPro.style.border = '1.5px solid #334155';
+      cardPro.style.boxShadow = 'none';
+      cardPro.style.opacity = '0.7';
+    }
+    if (cardGratuito) {
+      cardGratuito.classList.add('active');
+      cardGratuito.style.border = '2px solid #38BDF8';
+      cardGratuito.style.boxShadow = '0 0 14px rgba(56,189,248,0.2)';
+      cardGratuito.style.opacity = '1';
+    }
+    if (badgePro) badgePro.style.display = 'none';
+    if (badgeGratuito) badgeGratuito.style.display = 'block';
+    if (proContent) proContent.style.display = 'none';
+    if (gratuitoContent) gratuitoContent.style.display = 'block';
+    if (btnText) btnText.textContent = 'Activar Registro Gratuito (S/ 0)';
+  }
+}
+window.seleccionarPlanRegistroChofer = seleccionarPlanRegistroChofer;
+
+/**
+ * Carga los datos del chofer (incluyendo precio del balón de 10 Kg, tipo de plan y suscripción Premium)
  * en los campos del modal de chofer (#modalDriver).
  */
 async function cargarPerfilChoferEnModal() {
@@ -2292,7 +2385,7 @@ async function cargarPerfilChoferEnModal() {
 
     const { data: driverRow, error } = await window.supabaseClient
       .from('choferes_habilitados')
-      .select('id, user_id, nombre_completo, telefono_whatsapp, placa, categoria, productos, schedule, ciudad, color_camion, precio_balon_10kg, es_premium, premium_vence_at, estado_pago_premium, comprobante_pago_url')
+      .select('id, user_id, nombre_completo, telefono_whatsapp, placa, categoria, productos, schedule, ciudad, color_camion, precio_balon_10kg, es_premium, premium_vence_at, estado_pago_premium, comprobante_pago_url, tipo_plan')
       .eq('user_id', userId)
       .maybeSingle();
 
@@ -2318,6 +2411,15 @@ async function cargarPerfilChoferEnModal() {
 
     if (driverRow.color_camion && typeof seleccionarColorCamionModal === 'function') {
       seleccionarColorCamionModal(driverRow.color_camion);
+    }
+
+    // Seleccionar plan activo (PRO o Gratuito)
+    const isVipOrPro = Boolean(driverRow.es_premium || driverRow.tipo_plan === 'pro');
+    seleccionarPlanRegistroChofer(isVipOrPro ? 'pro' : 'gratuito');
+
+    const btnText = document.getElementById('btnDriverSubmitText');
+    if (btnText && driverRow.id) {
+      btnText.textContent = isVipOrPro ? 'Guardar Cambios de Ficha PRO' : 'Guardar Ficha Gratuita';
     }
 
     // Actualizar estado de membresía Premium VIP

@@ -235,6 +235,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_auto_event_29 = document.getElementById('auto-event-29');
     if (el_auto_event_29) el_auto_event_29.addEventListener('click', () => { safeCall('closeDriverModal'); });
 
+    const el_cardPlanDriverPro = document.getElementById('cardPlanDriverPro');
+    if (el_cardPlanDriverPro) el_cardPlanDriverPro.addEventListener('click', () => {
+      safeCall('seleccionarPlanRegistroChofer', 'pro');
+    });
+
+    const el_cardPlanDriverGratuito = document.getElementById('cardPlanDriverGratuito');
+    if (el_cardPlanDriverGratuito) el_cardPlanDriverGratuito.addEventListener('click', () => {
+      safeCall('seleccionarPlanRegistroChofer', 'gratuito');
+    });
+
+    const el_btnCambiarAProDesdeGratuito = document.getElementById('btnCambiarAProDesdeGratuito');
+    if (el_btnCambiarAProDesdeGratuito) el_btnCambiarAProDesdeGratuito.addEventListener('click', () => {
+      safeCall('seleccionarPlanRegistroChofer', 'pro');
+    });
+
     const el_auto_event_30 = document.getElementById('auto-event-30');
     if (el_auto_event_30) el_auto_event_30.addEventListener('click', () => { safeCall('iniciarSesionRepartidor'); });
 
