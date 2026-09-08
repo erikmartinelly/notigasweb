@@ -100,11 +100,11 @@
     <line x1="265" y1="248" x2="350" y2="248" stroke="#7F1D1D" stroke-width="2"/>
     <rect x="312" y="252" width="22" height="6" rx="2" fill="#F8FAFC" stroke="#0F172A" stroke-width="1"/>
 
-    <!-- INSIGNIA ORO CON LA GRAN "R" DE REPARTIDOR EN LA PUERTA -->
+    <!-- INSIGNIA ORO CON LA LETRA INICIAL "D" DE DISTRIBUIDOR EN LA PUERTA -->
     <circle cx="340" cy="286" r="30" fill="url(#goldBadge)" stroke="#FFFFFF" stroke-width="3.5" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.4))"/>
     <circle cx="340" cy="286" r="25" fill="none" stroke="#78350F" stroke-width="1.5" opacity="0.6"/>
     <!-- LA "R" MODERNA Y PODEROSA -->
-    <text x="340" y="299" font-family="'Impact', 'Arial Black', sans-serif" font-weight="900" font-size="36" fill="#0F172A" text-anchor="middle">R</text>
+    <text x="340" y="299" font-family="'Impact', 'Arial Black', sans-serif" font-weight="900" font-size="34" fill="#0F172A" text-anchor="middle">D</text>
 
     <!-- PARRILLA FRONTAL TOYOTA DINA -->
     <path d="M 426 270 L 444 270 L 444 316 L 426 316 Z" fill="#0F172A"/>
@@ -140,7 +140,7 @@
 
   <!-- TEXTO INFERIOR ELEGANTE: REPARTIDOR -->
   <g filter="drop-shadow(0 4px 10px rgba(0,0,0,0.8))">
-    <rect x="80" y="422" width="352" height="48" rx="24" fill="rgba(225, 29, 72, 0.95)" stroke="#FDA4AF" stroke-width="2"/>
-    <text x="256" y="454" font-family="'Segoe UI', Roboto, Montserrat, sans-serif" font-weight="900" font-size="22" fill="#FFFFFF" text-anchor="middle" letter-spacing="4">REPARTIDOR</text>
+    <rect x="60" y="420" width="392" height="52" rx="26" fill="rgba(225, 29, 72, 0.95)" stroke="#FDA4AF" stroke-width="2.5">
+    <text x="256" y="455" font-family="'Segoe UI', Roboto, Montserrat, sans-serif" font-weight="900" font-size="22" fill="#FFFFFF" text-anchor="middle" letter-spacing="3">DISTRIBUIDOR</text>
   </g>
 </svg>

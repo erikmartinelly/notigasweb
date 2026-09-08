@@ -379,22 +379,22 @@
    * Ej: "Juan Pérez" -> "JP", "Carlos Mendoza Quispe" -> "CM", "Alberto" -> "AL"
    */
   function getDriverInitials(name) {
-    if (!name || typeof name !== 'string') return 'R';
+    if (!name || typeof name !== 'string') return 'D';
     let clean = name
       .replace(/\b(repartidor|chofer|distribuidora|gas|otb|don|sr|sra|empresa|comercial)\b/gi, '')
       .replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')
       .trim();
 
-    if (!clean) clean = name.replace(/[^a-zA-Z]/g, '').trim() || 'R';
+    if (!clean) clean = name.replace(/[^a-zA-Z]/g, '').trim() || 'D';
 
     const words = clean.split(/\s+/).filter(Boolean);
     if (words.length >= 2) {
       return (words[0][0] + words[1][0]).toUpperCase();
     }
-    if (words.length === 1 && words[0].length >= 2) {
-      return words[0].slice(0, 2).toUpperCase();
+    if (words.length === 1 && words[0].length >= 1) {
+      return words[0][0].toUpperCase();
     }
-    return (clean[0] || 'R').toUpperCase();
+    return (clean[0] || 'D').toUpperCase();
   }
   window.getDriverInitials = getDriverInitials;
 
@@ -534,8 +534,9 @@
    * Genera el HTML completo para el marcador de Leaflet de un chofer en vivo.
    */
   function crearMarcadorCamionRepartidorHtml(data = {}) {
-    const driverName = data.distribuidor_nombre || data.nombre_completo || data.nombre || 'Repartidor';
-    const initials = getDriverInitials(driverName);
+    const driverName = data.distribuidor_nombre || data.nombre_completo || data.nombre || 'Distribuidor';
+    const categoria = data.categoria || data.empresa || '';
+    const initials = getDriverInitials(driverName || categoria);
     const key = data.user_id || data.id || driverName;
     const theme = getDriverColorTheme(key, data.color_camion);
 
@@ -549,12 +550,33 @@
     });
 
     const safeName = (typeof escapeHtmlStr === 'function') ? escapeHtmlStr(driverName) : driverName;
+    const safeCategoria = (typeof escapeHtmlStr === 'function') ? escapeHtmlStr(categoria) : categoria;
+
+    // Detectar si categoria es una empresa específica (Solgas, Llamagas, Zeta Gas, Primax, etc.)
+    const esEmpresaConocida = safeCategoria && !/^(gas|glp|gas glp|servicio|entrega|reparto|oficial)$/i.test(safeCategoria.trim());
+    const nombreYaContieneEmpresa = safeCategoria && safeName.toLowerCase().includes(safeCategoria.toLowerCase());
+
+    let brandHtml = '';
+    if (esEmpresaConocida && !nombreYaContieneEmpresa) {
+      brandHtml = `<span class="driver-marker-label-brand" style="color:${theme.badgeBorder || '#FCD34D'};">${safeCategoria}</span>`;
+    }
+
+    let displayName = safeName;
+    if (displayName.length > 20) {
+      displayName = displayName.substring(0, 18) + '…';
+    }
 
     return `
-      <div class="driver-map-marker" data-driver-color="${theme.key}" title="${safeName} (Repartidor Oficial)">
-        <div class="driver-3d-truck-img">${truckSvg}</div>
-        <span class="driver-marker-badge" style="background:${theme.badgeBg}; color:${theme.badgeText}; border-color:${theme.badgeBorder};" aria-hidden="true">${initials}</span>
-        <span class="driver-marker-online" title="GPS en Tiempo Real"></span>
+      <div class="driver-map-marker" data-driver-color="${theme.key}" title="${safeName} (${safeCategoria || 'Distribuidor'})">
+        <div class="driver-marker-truck-wrap">
+          <div class="driver-3d-truck-img">${truckSvg}</div>
+          <span class="driver-marker-badge" style="background:${theme.badgeBg}; color:${theme.badgeText}; border-color:${theme.badgeBorder};" aria-hidden="true">${initials}</span>
+          <span class="driver-marker-online" title="GPS en Tiempo Real"></span>
+        </div>
+        <div class="driver-marker-label" style="border-color:${theme.light || theme.primary};">
+          ${brandHtml}
+          <span class="driver-marker-label-name">${displayName}</span>
+        </div>
       </div>
     `;
   }
@@ -583,5 +605,157 @@
     `;
   }
   window.crearAvatarCamionChoferHtml = crearAvatarCamionChoferHtml;
+
+  /**
+   * Actualiza dinámicamente el favicon del navegador con el camión Toyota Dina personalizado
+   * con la letra inicial y nombre de la empresa del distribuidor.
+   */
+  function actualizarFaviconCamion(driverOpts = {}) {
+    try {
+      const name = driverOpts.nombre || driverOpts.name || driverOpts.distribuidor_nombre || 'Distribuidor';
+      const company = driverOpts.empresa || driverOpts.categoria || 'NOTIGAS';
+      const initials = driverOpts.initials || getDriverInitials(name || company);
+      const colorKey = driverOpts.color || driverOpts.color_camion;
+      const theme = (colorKey && PALETTE_MAP[colorKey]) ? PALETTE_MAP[colorKey] : getDriverColorTheme(name, colorKey);
+
+      let bottomLabel = company.toUpperCase();
+      if (bottomLabel === 'GAS GLP' || bottomLabel === 'SERVICIO DE ENTREGA' || !bottomLabel) {
+        bottomLabel = name.toUpperCase();
+      }
+      if (bottomLabel.length > 14) {
+        bottomLabel = bottomLabel.substring(0, 13) + '…';
+      }
+
+      const uid = 'fav_' + Math.random().toString(36).substr(2, 5);
+      const p = theme.primary;
+      const d = theme.dark;
+      const l = theme.light;
+      const bgP = theme.badgeBg;
+      const bgT = theme.badgeText;
+      const bgB = theme.badgeBorder;
+      const initChar = (initials || 'D').slice(0, 2).toUpperCase();
+      const fontSize = initChar.length > 1 ? 26 : 34;
+
+      const svgFavicon = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="bg_${uid}" cx="50%" cy="35%" r="75%">
+      <stop offset="0%" stop-color="#1E293B"/>
+      <stop offset="60%" stop-color="#0F172A"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </radialGradient>
+    <linearGradient id="cab_${uid}" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="${l}"/>
+      <stop offset="35%" stop-color="${p}"/>
+      <stop offset="75%" stop-color="${d}"/>
+      <stop offset="100%" stop-color="${d}"/>
+    </linearGradient>
+    <linearGradient id="cargo_${uid}" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F8FAFC"/>
+      <stop offset="40%" stop-color="#E2E8F0"/>
+      <stop offset="100%" stop-color="#CBD5E1"/>
+    </linearGradient>
+    <linearGradient id="badge_${uid}" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="${bgB}"/>
+      <stop offset="50%" stop-color="${bgP}"/>
+      <stop offset="100%" stop-color="${d}"/>
+    </linearGradient>
+    <linearGradient id="win_${uid}" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.9"/>
+      <stop offset="50%" stop-color="#0284C7" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#0369A1"/>
+    </linearGradient>
+    <filter id="sh_${uid}" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#bg_${uid})"/>
+  <rect width="504" height="504" x="4" y="4" rx="108" fill="none" stroke="${theme.primary}" stroke-width="6" opacity="0.85"/>
+  <ellipse cx="256" cy="385" rx="195" ry="22" fill="rgba(0,0,0,0.5)"/>
+
+  <g filter="url(#sh_${uid})">
+    <rect x="70" y="145" width="205" height="185" rx="14" fill="url(#cargo_${uid})" stroke="#94A3B8" stroke-width="3"/>
+    <line x1="138" y1="148" x2="138" y2="328" stroke="#CBD5E1" stroke-width="2.5"/>
+    <line x1="206" y1="148" x2="206" y2="328" stroke="#CBD5E1" stroke-width="2.5"/>
+    <rect x="86" y="195" width="125" height="34" rx="6" fill="#0F172A" opacity="0.88"/>
+    <text x="148" y="218" font-family="'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="16" fill="#FFD200" text-anchor="middle" letter-spacing="2">NOTIGAS</text>
+
+    <path d="M 260 140 L 370 140 Q 405 142 418 175 L 442 245 Q 446 258 446 275 L 446 332 Q 446 338 440 338 L 260 338 Z" fill="url(#cab_${uid})" stroke="${d}" stroke-width="3"/>
+
+    <path d="M 285 152 L 366 152 Q 390 154 398 176 L 418 226 Q 420 232 414 232 L 285 232 Z" fill="url(#win_${uid})" stroke="#0284C7" stroke-width="2.5"/>
+    <path d="M 305 156 L 332 156 L 305 224 L 290 224 Z" fill="rgba(255,255,255,0.45)"/>
+    <path d="M 285 152 L 285 232 L 270 232 L 270 152 Z" fill="#0369A1" opacity="0.95"/>
+    <path d="M 255 138 L 385 138 Q 400 138 406 146 L 255 146 Z" fill="#1E293B"/>
+
+    <rect x="424" y="172" width="16" height="38" rx="4" fill="#0F172A" stroke="#475569" stroke-width="1.5"/>
+    <line x1="416" y1="184" x2="424" y2="184" stroke="#0F172A" stroke-width="3"/>
+    <line x1="265" y1="248" x2="350" y2="248" stroke="${d}" stroke-width="2"/>
+    <rect x="312" y="252" width="22" height="6" rx="2" fill="#F8FAFC" stroke="#0F172A" stroke-width="1"/>
+
+    <circle cx="340" cy="286" r="30" fill="url(#badge_${uid})" stroke="#FFFFFF" stroke-width="3.5"/>
+    <circle cx="340" cy="286" r="25" fill="none" stroke="${bgB}" stroke-width="1.5" opacity="0.7"/>
+    <text x="340" y="${initChar.length > 1 ? 297 : 299}" font-family="'Impact', 'Arial Black', sans-serif" font-weight="900" font-size="${fontSize}" fill="${bgT}" text-anchor="middle" letter-spacing="1">${initChar}</text>
+
+    <path d="M 426 270 L 444 270 L 444 316 L 426 316 Z" fill="#0F172A"/>
+    <line x1="428" y1="280" x2="442" y2="280" stroke="#64748B" stroke-width="2"/>
+    <line x1="428" y1="290" x2="442" y2="290" stroke="#64748B" stroke-width="2"/>
+    <line x1="428" y1="300" x2="442" y2="300" stroke="#64748B" stroke-width="2"/>
+    <rect x="432" y="248" width="12" height="18" rx="3" fill="#FEF08A" stroke="#EAB308" stroke-width="1.5"/>
+    <rect x="436" y="252" width="6" height="10" rx="1" fill="#FFFFFF"/>
+    <path d="M 260 328 L 452 328 Q 456 328 456 336 L 454 348 Q 452 352 444 352 L 260 352 Z" fill="#334155" stroke="#1E293B" stroke-width="2"/>
+
+    <g>
+      <circle cx="140" cy="352" r="38" fill="#0F172A" stroke="#020617" stroke-width="3"/>
+      <circle cx="140" cy="352" r="24" fill="#64748B" stroke="#CBD5E1" stroke-width="3"/>
+      <circle cx="140" cy="352" r="10" fill="#0F172A"/>
+      <circle cx="140" cy="352" r="4" fill="#F8FAFC"/>
+    </g>
+    <g>
+      <circle cx="378" cy="352" r="38" fill="#0F172A" stroke="#020617" stroke-width="3"/>
+      <circle cx="378" cy="352" r="24" fill="#64748B" stroke="#CBD5E1" stroke-width="3"/>
+      <circle cx="378" cy="352" r="10" fill="#0F172A"/>
+      <circle cx="378" cy="352" r="4" fill="#F8FAFC"/>
+    </g>
+  </g>
+
+  <g filter="drop-shadow(0 4px 10px rgba(0,0,0,0.8))">
+    <rect x="60" y="420" width="392" height="52" rx="26" fill="${theme.badgeBg || p}" stroke="${theme.badgeBorder || '#FFFFFF'}" stroke-width="2.5"/>
+    <text x="256" y="455" font-family="'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="22" fill="#FFFFFF" text-anchor="middle" letter-spacing="2">${bottomLabel}</text>
+  </g>
+</svg>
+      `.trim();
+
+      const dataUri = "data:image/svg+xml;utf8," + encodeURIComponent(svgFavicon);
+      const favEl = document.getElementById('dynamicFavicon') || document.querySelector("link[rel*='icon']");
+      if (favEl) {
+        favEl.type = "image/svg+xml";
+        favEl.href = dataUri;
+      }
+      document.querySelectorAll("link[rel='shortcut icon'], link[rel='icon']").forEach(link => {
+        link.type = "image/svg+xml";
+        link.href = dataUri;
+      });
+      return dataUri;
+    } catch (err) {
+      console.warn('Error al actualizar favicon dinamico:', err);
+    }
+  }
+  window.actualizarFaviconCamion = actualizarFaviconCamion;
+
+  function restaurarFaviconDefault() {
+    const defaultHref = "favicon.svg?v=125";
+    const favEl = document.getElementById('dynamicFavicon') || document.querySelector("link[rel*='icon']");
+    if (favEl) {
+      favEl.type = "image/svg+xml";
+      favEl.href = defaultHref;
+    }
+    document.querySelectorAll("link[rel='shortcut icon'], link[rel='icon']").forEach(link => {
+      link.type = "image/svg+xml";
+      link.href = defaultHref;
+    });
+  }
+  window.restaurarFaviconDefault = restaurarFaviconDefault;
+
 
 })();

@@ -6,8 +6,8 @@ function getCustomDriverTruckIcon(data, isZoomOut) {
     return L.divIcon({
       className: 'notigas-driver-marker',
       html: html,
-      iconSize: [40, 62],
-      iconAnchor: [20, 31]
+      iconSize: [96, 74],
+      iconAnchor: [48, 23]
     });
   }
   return truckIcon;
@@ -523,6 +523,7 @@ function actualizarIconoMarcadorUsuario(forcedMode) {
     const uData = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
     const driverSelfIcon = getCustomDriverTruckIcon({
       distribuidor_nombre: uData.nombre || 'Mi Camión',
+      categoria: uData.categoria || 'Distribuidor',
       user_id: uData.user_id || uData.id,
       color_camion: uData.color_camion
     }, isZoomOut);

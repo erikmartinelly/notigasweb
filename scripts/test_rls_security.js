@@ -27,8 +27,8 @@ const mockOrdersDB = [
     driver_id: null,
     ciudad: 'lima',
     barrio_otb: 'Miraflores',
-    latitude: -12.0460,
-    longitude: -77.0306,
+    latitude: -12.046374,
+    longitude: -77.030685,
     descripcion: 'Tocar el timbre blanco',
     visto: false,
     created_at: new Date().toISOString()

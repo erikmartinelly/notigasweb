@@ -5658,45 +5658,84 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 .driver-map-marker {
   position: relative;
-  width: 40px;
-  height: 72px;
-
-  height: 62px;
-
+  width: 96px;
   display: flex;
-
+  flex-direction: column;
   align-items: center;
-
-  justify-content: center;
-
+  justify-content: flex-start;
   overflow: visible !important;
-
   transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-
   cursor: pointer;
-
   z-index: 10000;
-
+  pointer-events: auto;
 }
 
 .driver-map-marker:hover {
+  transform: scale(1.12) translateY(-2px);
+  z-index: 10002;
+}
 
-  transform: scale(1.18) translateY(-3px);
-
+.driver-marker-truck-wrap {
+  position: relative;
+  width: 72px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .driver-3d-truck-img {
-
-  width: 70px;
-
-  height: 45px;
-
-  object-fit: contain;
-
+  width: 72px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   user-select: none;
-
   pointer-events: none;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
+}
 
+.driver-marker-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.94);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1.5px solid #38BDF8;
+  border-radius: 10px;
+  padding: 2px 6px;
+  margin-top: 1px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.7);
+  max-width: 100px;
+  text-align: center;
+  pointer-events: none;
+  user-select: none;
+}
+
+.driver-marker-label-brand {
+  font-size: 8px;
+  font-weight: 900;
+  color: #FCD34D;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1.1;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.driver-marker-label-name {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #FFFFFF;
+  line-height: 1.15;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .driver-marker-badge {

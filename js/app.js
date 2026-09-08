@@ -446,10 +446,23 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
 
   if (!categoria && !estado) {
     if (isDriverMode) {
-      favEl.href = "icons/camion_3d_rojo.svg?v=86";
-      document.title = "🚛 MODO REPARTIDOR - NOTIGAS en Vivo";
+      if (typeof window.actualizarFaviconCamion === 'function') {
+        const uData = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
+        window.actualizarFaviconCamion({
+          nombre: uData.nombre || 'Distribuidor',
+          empresa: uData.categoria || 'NOTIGAS',
+          color: uData.color_camion
+        });
+      } else {
+        favEl.href = "favicon.svg?v=125";
+      }
+      document.title = "🚛 DISTRIBUIDOR OFICIAL - NOTIGAS en Vivo";
     } else {
-      favEl.href = "icons/garrafa_red-192.png?v=85";
+      if (typeof window.restaurarFaviconDefault === 'function') {
+        window.restaurarFaviconDefault();
+      } else {
+        favEl.href = "favicon.svg?v=125";
+      }
       document.title = "NOTIGAS - Plataforma Vecinal en Vivo";
     }
     return;
