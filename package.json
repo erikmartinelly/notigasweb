@@ -18,7 +18,7 @@
   "author": "NOTIGAS",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.19.2"
+    "express": "^4.21.2"
   },
   "engines": {
     "node": ">=18.0.0"
