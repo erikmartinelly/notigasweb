@@ -124,5 +124,20 @@ console.log('   ✅ Botones de Política de Privacidad y Aviso Legal en menús c
 console.log('   ✅ Selector de planes PRO vs Gratuito y caja de pago verificados.');
 console.log('   ✅ Script de Google AdSense en <head> verificado.\n');
 
+// 6. Verificación de Método de Pago: Remesa por Yape
+console.log('6️⃣ Verificando método de pago Remesa por Yape en UI y OCR...');
+assert.ok(indexContent.includes('Remesa por Yape'), 'index.html debe declarar el método de pago Remesa por Yape');
+
+const ocrPath = path.join(__dirname, '..', 'js', 'voucher_ocr.js');
+const ocrContent = fs.readFileSync(ocrPath, 'utf8');
+assert.ok(ocrContent.includes('Remesa por Yape'), 'js/voucher_ocr.js debe identificar Remesa por Yape');
+assert.ok(ocrContent.includes('remesa'), 'js/voucher_ocr.js debe contener remesa en palabras clave');
+
+const authPath = path.join(__dirname, '..', 'js', 'auth.js');
+const authContent = fs.readFileSync(authPath, 'utf8');
+assert.ok(authContent.includes('Remesa por Yape'), 'js/auth.js debe instruir sobre Remesa por Yape');
+
+console.log('   ✅ Remesa por Yape configurado correctamente en formulario, OCR y autenticación.\n');
+
 console.log('--------------------------------------------------');
-console.log('✨ ÉXITO: 100% de pruebas de ventajas PRO, 3 min pedidos, 1 min clientes, Aviso Legal y AdSense superadas.');
+console.log('✨ ÉXITO: 100% de pruebas de ventajas PRO, Remesa por Yape, Aviso Legal y AdSense superadas.');

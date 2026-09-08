@@ -105,10 +105,14 @@
     const clean = rawText.replace(/\r/g, ' ').replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
     const lower = clean.toLowerCase();
 
-    // 1. Detectar Billetera / Aplicación
-    let app = 'Comprobante QR';
-    if (lower.includes('yape')) {
-      app = 'Yape';
+    // 1. Detectar Billetera / Remesa
+    let app = 'Remesa por Yape';
+    if (lower.includes('remesa') && lower.includes('yape')) {
+      app = 'Remesa por Yape';
+    } else if (lower.includes('remesa')) {
+      app = 'Remesa por Yape';
+    } else if (lower.includes('yape')) {
+      app = 'Remesa por Yape';
     } else if (lower.includes('plin')) {
       app = 'Plin';
     } else if (lower.includes('takenos')) {
@@ -185,7 +189,7 @@
     // 5. Criterio de Validación Automática:
     // Es válido si detectó monto de S/ 15 (o aprox) Y tiene palabras de pago o billetera
     const tieneMonto15 = (monto !== null && Math.abs(monto - 15) <= 1.0);
-    const tienePalabrasPago = /yape|plin|takenos|bcp|bbva|interbank|scotiabank|transferencia|pago|enviaste|constancia|exitoso|operaci[oó]n|comprobante|recibo|soles/i.test(clean);
+    const tienePalabrasPago = /remesa|giro|yape|plin|takenos|bcp|bbva|interbank|scotiabank|transferencia|pago|enviaste|constancia|exitoso|operaci[oó]n|comprobante|recibo|soles/i.test(clean);
 
     const esValido = tieneMonto15 && tienePalabrasPago;
 

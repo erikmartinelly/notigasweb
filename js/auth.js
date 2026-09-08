@@ -919,9 +919,9 @@ async function iniciarSesionRepartidor() {
   if (planTipo === 'pro' && !yaEsVip && !fileVoucher) {
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
     if (typeof showToast === 'function') {
-      showToast('📸 Falta Comprobante QR', 'Para activar el Plan PRO (S/ 15/mes) debes adjuntar tu captura de pago QR (Yape, Plin o Takenos). Si prefieres empezar gratis, selecciona el Plan Gratuito.', 'warning', 6500);
+      showToast('📸 Falta Comprobante de Remesa', 'Para activar el Plan PRO (S/ 15/mes) debes adjuntar tu captura de Remesa por Yape al 987-654-321. Si prefieres empezar gratis, selecciona el Plan Gratuito.', 'warning', 6500);
     } else {
-      alert('Para el Plan PRO, por favor sube tu captura de pago QR (Yape, Plin o Takenos). O selecciona el Plan Gratuito.');
+      alert('Para el Plan PRO, por favor sube tu captura de comprobante de Remesa por Yape al 987-654-321. O selecciona el Plan Gratuito.');
     }
     const sec = document.getElementById('driverPremiumPaymentSection');
     if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -2593,9 +2593,9 @@ async function enviarComprobantePagoPremium() {
 
   if (!file) {
     if (typeof showToast === 'function') {
-      showToast('⚠️ Falta comprobante', 'Selecciona una imagen con tu comprobante o captura de pago QR.', 'warning', 3500);
+      showToast('⚠️ Falta comprobante', 'Selecciona una imagen con tu comprobante o captura de tu Remesa por Yape.', 'warning', 3500);
     } else {
-      alert('Por favor selecciona una captura de tu pago QR.');
+      alert('Por favor selecciona una captura de tu comprobante de Remesa por Yape.');
     }
     return;
   }
