@@ -2151,7 +2151,7 @@ async function renderAdminPremiumSubscriptions() {
   try {
     const { data: drivers, error } = await window.supabaseClient
       .from('choferes_habilitados')
-      .select('id, user_id, nombre_completo, telefono_whatsapp, placa, categoria, ciudad, precio_balon_10kg, es_premium, premium_vence_at, comprobante_pago_url, comprobante_fecha, estado_pago_premium, created_at')
+      .select('id, user_id, nombre_completo, telefono_whatsapp, placa, categoria, ciudad, precio_balon_10kg, es_premium, premium_vence_at, comprobante_pago_url, comprobante_fecha, estado_pago_premium, ocr_monto, ocr_app, ocr_operacion, ocr_valido, ocr_raw_text, created_at')
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -2175,7 +2175,7 @@ async function renderAdminPremiumSubscriptions() {
       return;
     }
 
-    // Ordenar: primero los que tienen comprobante pendiente de revisión, luego los activos, luego el resto
+    // Ordenar: primero los que tienen comprobante pendiente de confirmación, luego los activos, luego el resto
     list.sort((a, b) => {
       const aPend = (a.estado_pago_premium === 'pendiente' || (a.comprobante_pago_url && !a.es_premium)) ? 1 : 0;
       const bPend = (b.estado_pago_premium === 'pendiente' || (b.comprobante_pago_url && !b.es_premium)) ? 1 : 0;
@@ -2184,6 +2184,8 @@ async function renderAdminPremiumSubscriptions() {
       const bVip = b.es_premium ? 1 : 0;
       return bVip - aVip;
     });
+
+    const escapeFn = typeof window.escapeHtmlStr === 'function' ? window.escapeHtmlStr : (s => String(s || '').replace(/</g, '&lt;'));
 
     let html = `
       <div style="overflow-x:auto;">
@@ -2195,6 +2197,7 @@ async function renderAdminPremiumSubscriptions() {
               <th style="padding:10px 8px;">Balón 10 Kg</th>
               <th style="padding:10px 8px;">Estado VIP</th>
               <th style="padding:10px 8px;">Comprobante QR</th>
+              <th style="padding:10px 8px;">Validación OCR</th>
               <th style="padding:10px 8px; text-align:center;">Acciones</th>
             </tr>
           </thead>
@@ -2203,7 +2206,8 @@ async function renderAdminPremiumSubscriptions() {
 
     list.forEach(driver => {
       const safeId = driver.id;
-      const safeName = typeof escapeHtmlStr === 'function' ? escapeHtmlStr(driver.nombre_completo || 'Sin nombre') : (driver.nombre_completo || 'Sin nombre');
+      const safeName = escapeFn(driver.nombre_completo || 'Sin nombre');
+      const safeNameJs = (driver.nombre_completo || 'Sin nombre').replace(/'/g, "\\'");
       const safeTel = driver.telefono_whatsapp || '';
       const safePlaca = driver.placa || '-';
       const safeCiudad = driver.ciudad || 'lima';
@@ -2224,6 +2228,8 @@ async function renderAdminPremiumSubscriptions() {
         statusBadge = `<span style="background:linear-gradient(135deg, #F59E0B, #D97706); color:#FFF; font-size:10px; font-weight:800; padding:3px 8px; border-radius:10px; box-shadow:0 1px 4px rgba(245,158,11,0.4);">👑 VIP Activo${venceTxt}</span>`;
       } else if (estado === 'pendiente' || hasVoucher) {
         statusBadge = `<span style="background:rgba(234,179,8,0.2); color:#FDE047; border:1px solid #EAB308; font-size:10px; font-weight:800; padding:3px 8px; border-radius:10px;">⏳ Pendiente</span>`;
+      } else if (estado === 'baneado_voucher_invalido') {
+        statusBadge = `<span style="background:rgba(239,68,68,0.2); color:#FCA5A5; border:1px solid #EF4444; font-size:10px; font-weight:800; padding:3px 8px; border-radius:10px;">⛔ Baneado</span>`;
       } else {
         statusBadge = `<span style="color:#64748B; font-size:11px;">Inactivo</span>`;
       }
@@ -2233,7 +2239,7 @@ async function renderAdminPremiumSubscriptions() {
         const safeUrl = driver.comprobante_pago_url;
         voucherCol = `
           <div style="display:flex; align-items:center; gap:6px;">
-            <img src="${safeUrl}" alt="Voucher" style="width:42px; height:42px; object-fit:cover; border-radius:6px; border:1.5px solid #F59E0B; cursor:pointer;" onclick="window.abrirLightboxVoucher('${safeUrl}')" title="Clic para ampliar">
+            <img src="${safeUrl}" alt="Voucher" style="width:42px; height:42px; object-fit:cover; border-radius:6px; border:1.5px solid #F59E0B; cursor:pointer;" onclick="window.abrirLightboxVoucher('${safeUrl}')" title="Clic para ampliar comprobante">
             <button type="button" onclick="window.abrirLightboxVoucher('${safeUrl}')" style="background:transparent; border:none; color:#38BDF8; font-size:11px; cursor:pointer; text-decoration:underline; font-weight:bold;">Ver QR</button>
           </div>
         `;
@@ -2241,13 +2247,47 @@ async function renderAdminPremiumSubscriptions() {
         voucherCol = `<span style="color:#475569; font-size:11px;">Sin voucher</span>`;
       }
 
+      let ocrCol = '';
+      if (hasVoucher) {
+        const ocrValido = Boolean(driver.ocr_valido);
+        const ocrMonto = driver.ocr_monto != null ? `S/ ${Number(driver.ocr_monto).toFixed(2)}` : 'S/ --';
+        const ocrApp = driver.ocr_app ? escapeFn(driver.ocr_app) : 'App QR';
+        const ocrOp = driver.ocr_operacion ? `Op: ${escapeFn(driver.ocr_operacion)}` : '';
+        const rawSnippet = driver.ocr_raw_text ? escapeFn(driver.ocr_raw_text.substring(0, 140)) : '';
+
+        if (ocrValido) {
+          ocrCol = `
+            <div style="background:rgba(34,197,94,0.12); border:1px solid #22C55E; border-radius:6px; padding:5px 8px; font-size:11px; line-height:1.35;" title="${rawSnippet}">
+              <div style="color:#86EFAC; font-weight:800; display:flex; align-items:center; gap:4px;"><i class="fa-solid fa-circle-check"></i> ${ocrApp}</div>
+              <div style="color:#F8FAFC; font-weight:bold; font-size:11.5px;">${ocrMonto}</div>
+              ${ocrOp ? `<div style="color:#CBD5E1; font-size:10px;">${ocrOp}</div>` : ''}
+              <div style="color:#22C55E; font-size:9.5px; font-weight:700;">Validado Automático</div>
+            </div>
+          `;
+        } else {
+          ocrCol = `
+            <div style="background:rgba(234,179,8,0.12); border:1px solid #EAB308; border-radius:6px; padding:5px 8px; font-size:11px; line-height:1.35;" title="${rawSnippet}">
+              <div style="color:#FDE047; font-weight:800; display:flex; align-items:center; gap:4px;"><i class="fa-solid fa-triangle-exclamation"></i> ${ocrApp}</div>
+              <div style="color:#E2E8F0; font-weight:bold;">${ocrMonto}</div>
+              ${ocrOp ? `<div style="color:#CBD5E1; font-size:10px;">${ocrOp}</div>` : ''}
+              <div style="color:#FCD34D; font-size:9.5px;">Verificar depósito</div>
+            </div>
+          `;
+        }
+      } else {
+        ocrCol = `<span style="color:#475569; font-size:11px;">-</span>`;
+      }
+
       const actionsCol = `
-        <div style="display:flex; gap:6px; justify-content:center;">
-          <button type="button" onclick="window.aprobarSuscripcionPremiumAdmin('${safeId}')" style="background:#16A34A; color:white; border:none; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 2px 4px rgba(22,163,74,0.3);" title="Aprobar 30 días VIP">
-            <i class="fa-solid fa-check"></i> Aprobar 30d
+        <div style="display:flex; flex-direction:column; gap:4px; min-width:115px;">
+          <button type="button" onclick="window.aprobarSuscripcionPremiumAdmin('${safeId}')" style="background:#16A34A; color:white; border:none; padding:5px 8px; border-radius:6px; font-size:10.5px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; box-shadow:0 2px 4px rgba(22,163,74,0.3);" title="Confirmar que el depósito bancario se efectivizó">
+            <i class="fa-solid fa-check"></i> Confirmar Depósito
           </button>
-          <button type="button" onclick="window.rechazarSuscripcionPremiumAdmin('${safeId}')" style="background:#DC2626; color:white; border:none; padding:6px 9px; border-radius:6px; font-size:11px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 2px 4px rgba(220,38,38,0.3);" title="Rechazar comprobante">
-            <i class="fa-solid fa-xmark"></i> Rechazar
+          <button type="button" onclick="window.rechazarSuscripcionPremiumAdmin('${safeId}')" style="background:#475569; color:white; border:none; padding:5px 8px; border-radius:6px; font-size:10.5px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;" title="Revocar estado VIP sin banear">
+            <i class="fa-solid fa-xmark"></i> Revocar VIP
+          </button>
+          <button type="button" onclick="window.banearRepartidorPorVoucherInvalidoAdmin('${safeId}', '${safeNameJs}')" style="background:#DC2626; color:white; border:none; padding:5px 8px; border-radius:6px; font-size:10.5px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; box-shadow:0 2px 4px rgba(220,38,38,0.4);" title="Banear y bloquear por voucher falso o pago no efectivizado">
+            <i class="fa-solid fa-ban"></i> ⛔ Banear Chofer
           </button>
         </div>
       `;
@@ -2265,6 +2305,7 @@ async function renderAdminPremiumSubscriptions() {
           <td style="padding:10px 8px;">${priceStr}</td>
           <td style="padding:10px 8px;">${statusBadge}</td>
           <td style="padding:10px 8px;">${voucherCol}</td>
+          <td style="padding:10px 8px;">${ocrCol}</td>
           <td style="padding:10px 8px; text-align:center;">${actionsCol}</td>
         </tr>
       `;
@@ -2287,27 +2328,27 @@ window.renderAdminPremiumSubscriptions = renderAdminPremiumSubscriptions;
 async function aprobarSuscripcionPremiumAdmin(driverId) {
   if (!window.supabaseClient || !driverId) return;
 
-  if (!confirm('¿Confirmas que recibiste el pago de S/ 15.00 y deseas activar 30 días de suscripción VIP para este repartidor?')) {
+  if (!confirm('¿Confirmas que el depósito de S/ 15.00 se efectivizó en tu cuenta bancaria para mantener verificada la suscripción VIP de este repartidor?')) {
     return;
   }
 
   try {
     const { data, error } = await window.supabaseClient.rpc('rpc_admin_verify_premium_payment', {
       p_driver_id: driverId,
-      p_action: 'aprobar'
+      p_action: 'confirmar'
     });
 
     if (error) throw error;
 
     if (typeof showToast === 'function') {
-      showToast('👑 VIP Activado', '¡Suscripción aprobada por 30 días con éxito!', 'success', 4000);
+      showToast('👑 VIP Confirmado', '¡Depósito confirmado y suscripción VIP verificada!', 'success', 4000);
     } else {
-      alert('Suscripción activada con éxito.');
+      alert('Pago verificado y suscripción confirmada.');
     }
     renderAdminPremiumSubscriptions();
   } catch (err) {
-    console.error('Error aprobando suscripción:', err);
-    alert('Error al aprobar: ' + err.message);
+    console.error('Error confirmando suscripción:', err);
+    alert('Error al confirmar: ' + err.message);
   }
 }
 window.aprobarSuscripcionPremiumAdmin = aprobarSuscripcionPremiumAdmin;
@@ -2315,7 +2356,7 @@ window.aprobarSuscripcionPremiumAdmin = aprobarSuscripcionPremiumAdmin;
 async function rechazarSuscripcionPremiumAdmin(driverId) {
   if (!window.supabaseClient || !driverId) return;
 
-  if (!confirm('¿Deseas rechazar este comprobante de pago? El estado del chofer volverá a inactivo.')) {
+  if (!confirm('¿Deseas revocar la suscripción VIP de este chofer? Su estado volverá a inactivo sin banearlo.')) {
     return;
   }
 
@@ -2328,15 +2369,57 @@ async function rechazarSuscripcionPremiumAdmin(driverId) {
     if (error) throw error;
 
     if (typeof showToast === 'function') {
-      showToast('Comprobante Rechazado', 'El comprobante ha sido marcado como rechazado.', 'info', 3000);
+      showToast('VIP Revocado', 'La suscripción VIP ha sido revocada.', 'info', 3000);
     }
     renderAdminPremiumSubscriptions();
   } catch (err) {
-    console.error('Error rechazando comprobante:', err);
+    console.error('Error revocando suscripción:', err);
     alert('Error: ' + err.message);
   }
 }
 window.rechazarSuscripcionPremiumAdmin = rechazarSuscripcionPremiumAdmin;
+
+async function banearRepartidorPorVoucherInvalidoAdmin(driverId, driverName = '') {
+  if (!window.supabaseClient || !driverId) return;
+
+  const motivoConfirm = confirm(
+    `🚨 ATENCIÓN: ¿Deseas BANEAR al repartidor "${driverName}" del sistema?\n\n` +
+    `• Se le revocará inmediatamente la suscripción VIP.\n` +
+    `• Se eliminará su camión y ruta activa del mapa.\n` +
+    `• Se registrará en la lista negra de usuarios baneados por voucher falso o depósito no efectivizado.\n\n` +
+    `¿Deseas confirmar el baneo definitivo?`
+  );
+
+  if (!motivoConfirm) return;
+
+  try {
+    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Baneando repartidor y revocando acceso...');
+
+    const { data, error } = await window.supabaseClient.rpc('rpc_admin_verify_premium_payment', {
+      p_driver_id: driverId,
+      p_action: 'banear'
+    });
+
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+
+    if (error) throw error;
+
+    if (typeof showToast === 'function') {
+      showToast('⛔ Repartidor Baneado', `El chofer "${driverName}" ha sido expulsado del sistema por voucher inválido.`, 'error', 5000);
+    } else {
+      alert(`El chofer "${driverName}" ha sido baneado.`);
+    }
+
+    renderAdminPremiumSubscriptions();
+    if (typeof renderAdminDrivers === 'function') renderAdminDrivers();
+    if (typeof renderAdminBannedUsers === 'function') renderAdminBannedUsers();
+  } catch (err) {
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+    console.error('Error baneando chofer:', err);
+    alert('Error al banear: ' + err.message);
+  }
+}
+window.banearRepartidorPorVoucherInvalidoAdmin = banearRepartidorPorVoucherInvalidoAdmin;
 
 async function depurarVouchersCaducadosAdmin() {
   if (!window.supabaseClient) return;

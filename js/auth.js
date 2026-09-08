@@ -2374,9 +2374,111 @@ function actualizarEstadoUIPerfilPremium(driverRow = {}) {
 }
 window.actualizarEstadoUIPerfilPremium = actualizarEstadoUIPerfilPremium;
 
+let ultimoResultadoVoucherOcr = null;
+
+/**
+ * Maneja el evento change al seleccionar un comprobante en el modal de chofer.
+ * Ejecuta OCR automático en el cliente y muestra los resultados detectados.
+ */
+async function manejarSeleccionVoucherDriver(event) {
+  const file = event?.target?.files?.[0];
+  const box = document.getElementById('driverOcrStatusBox');
+  const textEl = document.getElementById('driverOcrStatusText');
+  ultimoResultadoVoucherOcr = null;
+
+  if (!file) {
+    if (box) box.style.display = 'none';
+    return;
+  }
+
+  if (!file.type.startsWith('image/')) {
+    if (box) {
+      box.style.display = 'block';
+      box.style.background = 'rgba(239,68,68,0.15)';
+      box.style.border = '1px solid #EF4444';
+      if (textEl) textEl.innerHTML = '<span style="color:#FCA5A5;">⚠️ El archivo seleccionado no es una imagen válida.</span>';
+    }
+    return;
+  }
+
+  if (box) {
+    box.style.display = 'block';
+    box.style.background = 'rgba(15,23,42,0.9)';
+    box.style.border = '1px solid #38BDF8';
+    if (textEl) {
+      textEl.innerHTML = `
+        <i class="fa-solid fa-spinner fa-spin" style="color:#38BDF8; font-size:16px;"></i>
+        <div style="font-size:11px; color:#E2E8F0; line-height:1.4;">
+          <strong>Validando comprobante con Inteligencia Artificial (OCR)...</strong>
+          <div id="driverOcrProgressBar" style="color:#94A3B8; font-size:10px;">Iniciando motor de lectura...</div>
+        </div>
+      `;
+    }
+  }
+
+  try {
+    const onProgress = (prog) => {
+      const pBar = document.getElementById('driverOcrProgressBar');
+      if (pBar && prog && prog.message) {
+        pBar.textContent = prog.message;
+      }
+    };
+
+    const res = (typeof window.leerYValidarVoucherOCR === 'function')
+      ? await window.leerYValidarVoucherOCR(file, onProgress)
+      : { esValido: false, monto: 15.0, app: 'Comprobante QR', operacion: null, rawText: '', resumen: 'OCR listo' };
+
+    ultimoResultadoVoucherOcr = res;
+
+    if (box && textEl) {
+      box.style.display = 'block';
+      if (res.esValido) {
+        box.style.background = 'rgba(34,197,94,0.15)';
+        box.style.border = '1px solid #22C55E';
+        textEl.innerHTML = `
+          <div style="display:flex; align-items:flex-start; gap:8px;">
+            <i class="fa-solid fa-circle-check" style="color:#22C55E; font-size:16px; margin-top:2px;"></i>
+            <div style="font-size:11px; color:#E2E8F0; line-height:1.4;">
+              <strong style="color:#86EFAC;">¡Voucher ${res.app} validado con éxito!</strong><br>
+              <span>Monto detectado: <strong style="color:#22C55E; font-size:12px;">S/ ${(res.monto || 15).toFixed(2)}</strong></span>
+              ${res.operacion ? ` &bull; <span>Op: <strong style="color:#CBD5E1;">${res.operacion}</strong></span>` : ''}<br>
+              <span style="color:#A7F3D0; font-size:10.5px;">⚡ Al presionar el botón abajo, tu Suscripción VIP se activará al instante por 30 días.</span>
+            </div>
+          </div>
+        `;
+      } else {
+        box.style.background = 'rgba(234,179,8,0.15)';
+        box.style.border = '1px solid #EAB308';
+        textEl.innerHTML = `
+          <div style="display:flex; align-items:flex-start; gap:8px;">
+            <i class="fa-solid fa-circle-info" style="color:#FBBF24; font-size:16px; margin-top:2px;"></i>
+            <div style="font-size:11px; color:#E2E8F0; line-height:1.4;">
+              <strong style="color:#FDE047;">Comprobante ${res.app || 'detectado'}:</strong><br>
+              <span>${res.resumen || 'Comprobante listo para enviar.'}</span><br>
+              <span style="color:#FEF08A; font-size:10.5px;">⚡ Tu membresía VIP se activará de inmediato al enviarlo; el Administrador confirmará el depósito.</span>
+            </div>
+          </div>
+        `;
+      }
+    }
+  } catch (err) {
+    console.warn('Error en proceso OCR del voucher:', err);
+    if (box && textEl) {
+      box.style.background = 'rgba(51,65,85,0.4)';
+      box.style.border = '1px solid #64748B';
+      textEl.innerHTML = `
+        <div style="font-size:11px; color:#CBD5E1;">
+          📷 Comprobante seleccionado listo para enviar y activar VIP.
+        </div>
+      `;
+    }
+  }
+}
+window.manejarSeleccionVoucherDriver = manejarSeleccionVoucherDriver;
+
 /**
  * Sube el comprobante de pago QR a Supabase Storage (bucket 'vouchers-premium')
- * y llama al RPC 'rpc_driver_submit_premium_payment'.
+ * y llama al RPC 'rpc_driver_submit_premium_payment' para activación VIP inmediata.
  */
 async function enviarComprobantePagoPremium() {
   if (!window.supabaseClient) {
@@ -2406,7 +2508,7 @@ async function enviarComprobantePagoPremium() {
     return;
   }
 
-  if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Subiendo comprobante de pago QR...');
+  if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Validando y activando Suscripción VIP...');
 
   try {
     const { data: authData, error: authErr } = await window.supabaseClient.auth.getUser();
@@ -2414,6 +2516,15 @@ async function enviarComprobantePagoPremium() {
     if (authErr || !user?.id) {
       throw new Error('Debes iniciar sesión para enviar un comprobante.');
     }
+
+    // Si aún no se completó el OCR, ejecutarlo rápidamente antes de enviar
+    if (!ultimoResultadoVoucherOcr && typeof window.leerYValidarVoucherOCR === 'function') {
+      try {
+        ultimoResultadoVoucherOcr = await window.leerYValidarVoucherOCR(file);
+      } catch (_) {}
+    }
+
+    const ocr = ultimoResultadoVoucherOcr || {};
 
     const ext = file.name.split('.').pop() || 'png';
     const filePath = `${user.id}/${Date.now()}_voucher.${ext}`;
@@ -2435,9 +2546,18 @@ async function enviarComprobantePagoPremium() {
       throw new Error('No se pudo generar la URL del comprobante.');
     }
 
-    // Registrar en BD invocando la función RPC autorizada
+    // Registrar en BD invocando la función RPC autorizada con activación instantánea
+    const rpcPayload = {
+      p_comprobante_url: publicUrl,
+      p_ocr_monto: (typeof ocr.monto === 'number' && !isNaN(ocr.monto)) ? ocr.monto : null,
+      p_ocr_app: ocr.app || null,
+      p_ocr_operacion: ocr.operacion || null,
+      p_ocr_valido: Boolean(ocr.esValido),
+      p_ocr_raw_text: ocr.rawText ? String(ocr.rawText).substring(0, 1000) : null
+    };
+
     const { data: rpcRes, error: rpcErr } = await window.supabaseClient
-      .rpc('rpc_driver_submit_premium_payment', { p_comprobante_url: publicUrl });
+      .rpc('rpc_driver_submit_premium_payment', rpcPayload);
 
     if (rpcErr) {
       throw new Error('Error al registrar comprobante: ' + rpcErr.message);
@@ -2446,11 +2566,28 @@ async function enviarComprobantePagoPremium() {
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
 
     if (typeof showToast === 'function') {
-      showToast('✅ Comprobante Enviado', '¡Comprobante recibido! El administrador lo verificará y activará tus 30 días VIP.', 'success', 5000);
+      showToast('👑 ¡Suscripción VIP Activada!', '¡Felicidades! Tu cuenta VIP ha sido activada de inmediato por 30 días. Cuentas con 3 minutos de ventaja en pedidos y mapa.', 'success', 7000);
+    } else {
+      alert('¡Suscripción VIP activada inmediatamente por 30 días!');
     }
 
-    // Limpiar input y recargar estado en modal
+    // Limpiar input y caja OCR
     if (fileInput) fileInput.value = '';
+    const box = document.getElementById('driverOcrStatusBox');
+    if (box) box.style.display = 'none';
+    ultimoResultadoVoucherOcr = null;
+
+    // Actualizar UI de chofer
+    actualizarEstadoUIPerfilPremium({
+      es_premium: true,
+      estado_pago_premium: 'activo',
+      premium_vence_at: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString()
+    });
+
+    if (window.currentDriverRoute) {
+      window.currentDriverRoute.es_premium = true;
+    }
+
     await cargarPerfilChoferEnModal();
   } catch (err) {
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
@@ -2464,8 +2601,13 @@ async function enviarComprobantePagoPremium() {
 }
 window.enviarComprobantePagoPremium = enviarComprobantePagoPremium;
 
-// Hook para el botón de subida de voucher en modalDriver
+// Hook para los controles de voucher en modalDriver
 document.addEventListener('DOMContentLoaded', () => {
+  const inputVoucher = document.getElementById('inputDriverVoucherFile');
+  if (inputVoucher) {
+    inputVoucher.addEventListener('change', manejarSeleccionVoucherDriver);
+  }
+
   const btnSubmitVoucher = document.getElementById('btnDriverSubmitVoucher');
   if (btnSubmitVoucher) {
     btnSubmitVoucher.addEventListener('click', (e) => {

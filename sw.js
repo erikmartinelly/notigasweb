@@ -8,6 +8,7 @@ const ASSETS_TO_CACHE = [
   './js/state.js?v=126',
   './js/ui.js?v=126',
   './js/supabase-config.js?v=126',
+  './js/voucher_ocr.js?v=126',
   './js/auth.js?v=126',
   './js/vendors.js?v=126',
   './js/map.js?v=126',
