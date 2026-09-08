@@ -12,6 +12,8 @@ window.closeRulesModal = function() {
 };
 
 window.abrirModalPoliticaPrivacidad = function() {
+  const modalSettings = document.getElementById('modalUserSettings');
+  if (modalSettings) modalSettings.style.display = 'none';
   const modal = document.getElementById('modalPrivacyPolicy');
   if (modal) modal.style.display = 'flex';
 };
@@ -314,6 +316,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const btnOpenPrivacy = document.getElementById('btnOpenPrivacyPolicy');
     if (btnOpenPrivacy) btnOpenPrivacy.addEventListener('click', () => { safeCall('abrirModalPoliticaPrivacidad'); });
+
+    const btnPrivacyBuyer = document.getElementById('btnPrivacyPolicyBuyer');
+    if (btnPrivacyBuyer) btnPrivacyBuyer.addEventListener('click', () => { safeCall('abrirModalPoliticaPrivacidad'); });
+
+    const btnPrivacyDriver = document.getElementById('btnPrivacyPolicyDriver');
+    if (btnPrivacyDriver) btnPrivacyDriver.addEventListener('click', () => { safeCall('abrirModalPoliticaPrivacidad'); });
 
     const btnClosePrivacy = document.getElementById('btnClosePrivacyPolicy');
     if (btnClosePrivacy) btnClosePrivacy.addEventListener('click', () => { safeCall('cerrarModalPoliticaPrivacidad'); });

@@ -693,6 +693,11 @@
           </button>
         </div>
 
+        <!-- POLÍTICA DE PRIVACIDAD Y AVISO LEGAL (MENÚ COMPRADOR) -->
+        <button type="button" class="btn-menu-legal" id="btnPrivacyPolicyBuyer" data-action="abrirModalPoliticaPrivacidad" style="width:100%; background:rgba(30,41,59,0.8); border:1.5px solid #475569; color:#CBD5E1; padding:11px 14px; border-radius:10px; font-weight:700; font-size:12.5px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 6px rgba(0,0,0,0.2); margin-top:10px;">
+          <i class="fa-solid fa-scale-balanced" style="color:#38BDF8;"></i> ⚖️ Política de Privacidad y Aviso Legal
+        </button>
+
         <hr class="ng-inline-24">
 
       </div>
@@ -734,6 +739,11 @@
 
           <i class="fa-solid fa-id-card"></i> Ver / Editar Mi Ficha de Repartidor
 
+        </button>
+
+        <!-- POLÍTICA DE PRIVACIDAD Y AVISO LEGAL (MENÚ REPARTIDOR) -->
+        <button type="button" class="btn-menu-legal" id="btnPrivacyPolicyDriver" data-action="abrirModalPoliticaPrivacidad" style="width:100%; background:rgba(30,41,59,0.8); border:1.5px solid #475569; color:#CBD5E1; padding:11px 14px; border-radius:10px; font-weight:700; font-size:12.5px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 6px rgba(0,0,0,0.2); margin-top:10px;">
+          <i class="fa-solid fa-scale-balanced" style="color:#38BDF8;"></i> ⚖️ Política de Privacidad y Aviso Legal
         </button>
 
       </div>
@@ -814,7 +824,7 @@
 
           <button class="ng-inline-40" id="btnOpenPrivacyPolicy" type="button" data-action="abrirModalPoliticaPrivacidad">
 
-            <i class="fa-solid fa-user-shield"></i> 🔒 Política de Privacidad y Cookies
+            <i class="fa-solid fa-scale-balanced"></i> ⚖️ Política de Privacidad y Aviso Legal
 
           </button>
 
@@ -1467,50 +1477,114 @@
 
   </div>
 
-  <!-- MODAL DE POLÍTICA DE PRIVACIDAD Y COOKIES (GOOGLE ADSENSE COMPLIANCE) -->
+  <!-- MODAL DE POLÍTICA DE PRIVACIDAD Y AVISO LEGAL (GOOGLE ADSENSE & INTERMEDIACIÓN) -->
   <div class="modal" id="modalPrivacyPolicy" style="display: none;">
-    <div class="modal-content ng-inline-66" style="max-width: 580px; max-height: 85vh; overflow-y: auto;">
+    <div class="modal-content ng-inline-66" style="max-width: 620px; max-height: 85vh; overflow-y: auto;">
       <div class="modal-title">
-        <span>🔒 Política de Privacidad y Cookies</span>
+        <span>⚖️ Política de Privacidad y Aviso Legal</span>
         <button class="btn-close" id="btnClosePrivacyPolicy" type="button">✖</button>
       </div>
       <div class="ng-inline-67" style="font-size: 12.5px; color: #CBD5E1; line-height: 1.6;">
-        <div class="ng-inline-68" style="margin-bottom: 12px;">
-          <strong class="ng-inline-69" style="color: #38BDF8; display: block; margin-bottom: 4px;">1. Plataforma Comunitaria 100% Gratuita</strong>
+
+        <div style="background: rgba(56, 189, 248, 0.08); border-left: 3px solid #38BDF8; padding: 10px 12px; border-radius: 0 8px 8px 0; margin-bottom: 14px;">
+          <div style="font-size: 11.5px; color: #E2E8F0;">
+            NOTIGAS es una plataforma tecnológica comunitaria de enlace en tiempo real en Perú. El uso de esta plataforma por parte de compradores (vecinos) y repartidores independientes implica la aceptación total de este Aviso Legal, Términos de Intermediación y Política de Privacidad.
+          </div>
+        </div>
+
+        <!-- 1. SERVICIO 100% GRATUITO -->
+        <div class="ng-inline-68" style="margin-bottom: 14px;">
+          <strong class="ng-inline-69" style="color: #38BDF8; display: block; margin-bottom: 4px; font-size: 13px;">
+            1. Plataforma 100% Gratuita para Compradores y Repartidores
+          </strong>
           <p class="ng-inline-70" style="margin: 0;">
-            NOTIGAS es una plataforma colaborativa comunitaria libre y gratuita para vecinos y repartidores locales de balones de gas GLP, agua y servicios en Perú. No cobramos comisiones ni tarifas de suscripción a los repartidores ni a los compradores.
+            NOTIGAS es una plataforma colaborativa y comunitaria completamente <strong>libre y gratuita</strong>. No cobramos comisiones por pedido, tarifas por venta ni suscripciones periódicas a compradores ni a repartidores. Todos los usuarios registrados acceden en tiempo real en igualdad de condiciones sin costos ocultos.
           </p>
         </div>
 
-        <div class="ng-inline-71" style="margin-bottom: 12px;">
-          <strong class="ng-inline-72" style="color: #F59E0B; display: block; margin-bottom: 4px;">2. Publicidad y Cookies de Terceros (Google AdSense)</strong>
-          <p class="ng-inline-73" style="margin: 0 0 6px 0;">
-            Para mantener el servicio completamente gratuito y solventar los costos de infraestructura tecnológica en la nube, NOTIGAS utiliza <strong>Google AdSense</strong> como proveedor publicitario.
+        <!-- 2. ROL EXCLUSIVO DE INTERMEDIARIO TECNOLÓGICO -->
+        <div class="ng-inline-71" style="margin-bottom: 14px;">
+          <strong class="ng-inline-72" style="color: #F59E0B; display: block; margin-bottom: 4px; font-size: 13px;">
+            2. Rol Exclusivo de Intermediación Tecnológica Neutral
+          </strong>
+          <p style="margin: 0 0 6px 0;">
+            NOTIGAS opera exclusivamente como un <strong>directorio digital, mapa interactivo con GPS en vivo y tablón comunitario</strong> que facilita el contacto voluntario y directo entre vecinos que necesitan balones de gas GLP, agua de mesa u otros servicios, y repartidores o distribuidoras independientes.
           </p>
-          <ul style="margin: 4px 0 0 16px; padding: 0;">
-            <li>Proveedores externos, incluido <strong>Google</strong>, utilizan cookies para publicar anuncios basados en visitas anteriores de los usuarios a este sitio web o a otros sitios de Internet.</li>
-            <li>El uso de cookies de publicidad por parte de Google le permite a este y a sus socios publicar anuncios a los usuarios según sus visitas a este sitio web y a otros sitios de Internet.</li>
-            <li>Los usuarios pueden inhabilitar la publicidad personalizada consultando la <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer" style="color: #38BDF8; font-weight: bold; text-decoration: underline;">Configuración de Anuncios de Google</a>.</li>
-            <li>Alternativamente, los usuarios pueden inhabilitar el uso de cookies para publicidad personalizada de proveedores externos visitando el portal <a href="https://www.aboutads.info/choices/" target="_blank" rel="noopener noreferrer" style="color: #38BDF8; font-weight: bold; text-decoration: underline;">aboutads.info</a>.</li>
+          <p style="margin: 0; color: #94A3B8; font-size: 12px;">
+            NOTIGAS <strong>NO es comercializadora de gas, NO es planta envasadora, NO posee vehículos de transporte ni mantiene relación laboral, de subordinación o de agencia</strong> con los repartidores. Los choferes y distribuidores prestan sus servicios de manera autónoma e independiente bajo su propia responsabilidad.
+          </p>
+        </div>
+
+        <!-- 3. EXENCIÓN TOTAL DE RESPONSABILIDAD EN ACUERDOS FINALES -->
+        <div style="margin-bottom: 14px; background: rgba(239, 68, 68, 0.08); border: 1.5px solid rgba(239, 68, 68, 0.35); border-radius: 10px; padding: 12px;">
+          <strong style="color: #FCA5A5; display: block; margin-bottom: 6px; font-size: 13px;">
+            ⚠️ 3. Exención Total de Responsabilidad sobre Acuerdos y Transacciones Finales
+          </strong>
+          <p style="margin: 0 0 8px 0; font-size: 12px; color: #FEE2E2; line-height: 1.55;">
+            NOTIGAS es únicamente un intermediario tecnológico y <strong>NO SE HACE RESPONSABLE DE LOS ACUERDOS FINALES, CONTRATOS, TRATOS VERBALES O TRANSACCIONES COMERCIALES QUE SE CELEBREN ENTRE SUS USUARIOS</strong>.
+          </p>
+          <ul style="margin: 0 0 0 16px; padding: 0; font-size: 11.5px; color: #FECACA; line-height: 1.5;">
+            <li><strong>Precios y Pagos:</strong> El precio final pactado, el método de pago (efectivo, Yape, Plin, transferencia o tarjeta) y la entrega de comprobantes de pago (boleta o factura de SUNAT) son acordados de forma directa y exclusiva entre el comprador y el repartidor. NOTIGAS no interviene, procesa, recauda ni custodia fondos.</li>
+            <li><strong>Calidad, Contenido y Peso de Productos:</strong> NOTIGAS no inspecciona físicamente los cilindros de gas GLP, bidones de agua u otros artículos, ni garantiza su contenido neto o estado. La responsabilidad civil, comercial y técnica corresponde exclusivamente al distribuidor o repartidor.</li>
+            <li><strong>Despacho y Tiempos de Entrega:</strong> Los tiempos de llegada, demoras en ruta o cancelaciones son gestionados directamente entre las partes.</li>
+            <li><strong>Discrepancias y Reclamaciones:</strong> Cualquier diferencia o reclamo derivado del servicio o producto debe ser canalizado directamente entre el comprador y el repartidor o distribuidor correspondiente.</li>
           </ul>
         </div>
 
-        <div class="ng-inline-74" style="margin-bottom: 12px;">
-          <strong class="ng-inline-75" style="color: #10B981; display: block; margin-bottom: 4px;">3. Datos Personales y Geolocalización</strong>
-          <p style="margin: 0;">
-            Los datos solicitados al registrarse (nombre, teléfono de WhatsApp, DNI, placa vehicular y ubicación GPS) son utilizados exclusivamente para la coordinación del despacho de balones de gas o productos solicitados por los vecinos, y para moderación comunitaria contra fraudes. NOTIGAS no comercializa ni cede bases de datos personales a terceros.
+        <!-- 4. SEGURIDAD Y NORMATIVA DE HIDROCARBUROS (OSINERGMIN) -->
+        <div style="margin-bottom: 14px;">
+          <strong style="color: #10B981; display: block; margin-bottom: 4px; font-size: 13px;">
+            4. Seguridad, Normativa Técnica de GLP (OSINERGMIN) y Tránsito
+          </strong>
+          <p style="margin: 0 0 6px 0;">
+            Los repartidores y distribuidores registrados son los únicos responsables de cumplir con las normativas legales y de seguridad vigentes en el Perú, incluyendo las disposiciones de <strong>OSINERGMIN</strong> respecto a cilindros certificados, válvulas reglamentarias, pesaje exacto, condiciones mecánicas del vehículo y póliza SOAT vigente.
+          </p>
+          <p style="margin: 0; color: #94A3B8; font-size: 12px;">
+            Se exhorta a los compradores a verificar el precinto de seguridad del balón de gas y exigir el respectivo comprobante de pago emitido por el distribuidor autorizado.
           </p>
         </div>
 
+        <!-- 5. TOLERANCIA CERO A FRAUDES Y NORMAS COMUNITARIAS -->
+        <div style="margin-bottom: 14px;">
+          <strong style="color: #EAB308; display: block; margin-bottom: 4px; font-size: 13px;">
+            5. Normas Comunitarias, Denuncias y Moderación Antifraude
+          </strong>
+          <p style="margin: 0;">
+            NOTIGAS aplica tolerancia cero ante pedidos falsos, suplantación de identidad, acoso a repartidores o vecinos y conductas fraudulentas. La plataforma dispone de mecanismos de denuncia comunitaria y se reserva el derecho de <strong>bloquear o expulsar de forma definitiva</strong> a cualquier número telefónico, usuario o placa vehicular infractora sin previo aviso ni compensación.
+          </p>
+        </div>
+
+        <!-- 6. POLÍTICA DE PRIVACIDAD Y PROTECCIÓN DE DATOS PERSONALES -->
+        <div style="margin-bottom: 14px;">
+          <strong style="color: #A78BFA; display: block; margin-bottom: 4px; font-size: 13px;">
+            6. Política de Privacidad y Protección de Datos Personales (Ley N° 29733)
+          </strong>
+          <p style="margin: 0 0 6px 0;">
+            En conformidad con la Ley de Protección de Datos Personales del Perú (Ley N° 29733), los datos facilitados por los usuarios (nombre, teléfono/WhatsApp, DNI, ciudad, placa vehicular y geolocalización GPS voluntaria) se recopilan exclusivamente con el fin de coordinar las entregas y garantizar la seguridad del servicio.
+          </p>
+          <p style="margin: 0; color: #94A3B8; font-size: 12px;">
+            NOTIGAS <strong>no comercializa ni cede bases de datos personales a terceros</strong>. Cualquier usuario puede solicitar la edición o eliminación definitiva de su cuenta y datos personales mediante la opción correspondiente en el menú.
+          </p>
+        </div>
+
+        <!-- 7. MONETIZACIÓN CON GOOGLE ADSENSE Y COOKIES DE TERCEROS -->
         <div style="margin-bottom: 16px;">
-          <strong style="color: #A78BFA; display: block; margin-bottom: 4px;">4. Archivo Oficial de Autorización Publicitaria (ads.txt)</strong>
-          <p style="margin: 0;">
-            El dominio cuenta con un archivo oficial <code>ads.txt</code> verificado con el Publisher ID oficial de Google AdSense: <code>google.com, pub-2502415561017945, DIRECT, f08c47fec0942fa0</code>.
+          <strong style="color: #38BDF8; display: block; margin-bottom: 4px; font-size: 13px;">
+            7. Publicidad y Cookies de Terceros (Google AdSense)
+          </strong>
+          <p style="margin: 0 0 6px 0;">
+            Para mantener el servicio 100% gratuito y cubrir los costos de infraestructura tecnológica, NOTIGAS incorpora publicidad gestionada por <strong>Google AdSense</strong>:
           </p>
+          <ul style="margin: 4px 0 0 16px; padding: 0; font-size: 12px;">
+            <li>Proveedores externos, incluido Google, utilizan cookies para publicar anuncios basados en visitas anteriores de los usuarios a este sitio web o a otros sitios de Internet.</li>
+            <li>El uso de cookies de publicidad permite a Google y a sus socios publicar anuncios a los usuarios según sus visitas a este y otros sitios en la red.</li>
+            <li>Los usuarios pueden inhabilitar la publicidad personalizada en cualquier momento consultando la <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer" style="color: #38BDF8; font-weight: bold; text-decoration: underline;">Configuración de Anuncios de Google</a> o visitando el portal <a href="https://www.aboutads.info/choices/" target="_blank" rel="noopener noreferrer" style="color: #38BDF8; font-weight: bold; text-decoration: underline;">aboutads.info</a>.</li>
+            <li>El dominio cuenta con declaración oficial y autorizada en el archivo <code>ads.txt</code> (Publisher ID: <code>google.com, pub-2502415561017945, DIRECT, f08c47fec0942fa0</code>).</li>
+          </ul>
         </div>
 
-        <button class="ng-inline-79" type="button" id="btnEntendidoPrivacyPolicy" style="width: 100%; background: linear-gradient(135deg, #0284C7, #0369A1); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 800; cursor: pointer;">
-          ✅ He leído y acepto la Política de Privacidad y Cookies
+        <button class="ng-inline-79" type="button" id="btnEntendidoPrivacyPolicy" style="width: 100%; background: linear-gradient(135deg, #0284C7, #0369A1); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 13px;">
+          ✅ He leído y acepto la Política de Privacidad y Aviso Legal
         </button>
       </div>
     </div>
