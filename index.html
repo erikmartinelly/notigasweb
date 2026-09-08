@@ -692,12 +692,6 @@
 
         <hr class="ng-inline-24">
 
-        <button class="ng-inline-26" type="button" id="btnContratarPublicidad">
-
-          <i class="fa-brands fa-telegram ng-inline-27"></i> CONTRATAR PUBLICIDAD
-
-        </button>
-
       </div>
 
       <!-- SECCIÓN REPARTIDOR -->
@@ -710,19 +704,8 @@
 
         </div>
 
-        <div class="form-group">
-
-          <label>Visibilidad de Mi Ubicación:</label>
-
-          <select id="driverGpsLive">
-
-            <option value="on">Avisar mi ubicación a los clientes</option>
-
-            <option value="off">Pausar mi ubicación</option>
-
-          </select>
-
-        </div>
+        <!-- Visibilidad y pausar GPS se controla directamente desde la 1ª Pestaña (Mapa en Vivo) -->
+        <input type="hidden" id="driverGpsLive" value="off">
 
         <div class="form-group">
 
@@ -752,9 +735,15 @@
 
       </div>
 
-      <!-- ACCIONES COMUNES -->
+      <!-- ACCIONES COMUNES (DISPONIBLE PARA COMPRADORES Y REPARTIDORES) -->
 
       <hr class="ng-inline-24">
+
+      <button class="ng-inline-26" type="button" id="btnContratarPublicidad">
+
+        <i class="fa-brands fa-telegram ng-inline-27"></i> CONTRATAR PUBLICIDAD
+
+      </button>
 
       <button class="ng-inline-33" id="btnAdminAccessQuick">
 
@@ -1061,6 +1050,11 @@
 
       <button class="btn-submit-google"  id="auto-event-30" ><i class="fa-solid fa-store"></i> Activar y Publicar Mini Página de Negocio</button>
 
+      <!-- DENUNCIAR PEDIDO FALSO (HABILITADO EN LA CUENTA DEL REPARTIDOR) -->
+      <button type="button" class="btn-driver-report-fake" id="btnDriverReportFakeOrderModal" style="width:100%; margin-top:12px; background:rgba(239,68,68,0.12); color:#FCA5A5; border:1.5px solid #EF4444; padding:11px 14px; border-radius:10px; font-weight:800; font-size:12.5px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 3px 10px rgba(239,68,68,0.2);">
+        <i class="fa-solid fa-triangle-exclamation"></i> 🚨 Denunciar Pedido Falso
+      </button>
+
     </div>
 
   </div>
@@ -1354,7 +1348,20 @@
 
         </label>
 
-        <input class="ng-inline-64" type="text" id="inputReportPersonName" placeholder="Escribe el nombre o contacto de la persona...">
+        <input class="ng-inline-64" type="text" id="inputReportPersonName" placeholder="Escribe el nombre de la persona...">
+
+      </div>
+
+      <!-- CAMPO OBLIGATORIO: TELÉFONO DE LA PERSONA DEL PEDIDO FALSO -->
+      <div class="form-group ng-inline-62" id="groupReportPersonPhone" style="display:none; margin-top:8px;">
+
+        <label class="ng-inline-63" id="lblReportPersonPhone">
+
+          📞 Teléfono / WhatsApp de quien realizó el pedido falso (*Obligatorio):
+
+        </label>
+
+        <input class="ng-inline-64" type="tel" id="inputReportPersonPhone" placeholder="Ej: 987654321..." style="width:100%; padding:9px 12px; background:#1E293B; border:1.5px solid #475569; border-radius:8px; color:#F8FAFC; font-size:13px; box-sizing:border-box;">
 
       </div>
 
@@ -1722,6 +1729,12 @@
 
         <!-- Renderizado dinámico de pedidos disponibles y asignados -->
 
+      </div>
+
+      <div style="margin-top: 14px; text-align: center; border-top: 1px solid #334155; padding-top: 10px;">
+        <button type="button" style="background:rgba(239,68,68,0.12); color:#FCA5A5; border:1px solid #EF4444; padding:8px 14px; border-radius:8px; font-size:11.5px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:6px;" data-action="abrirModalDenunciaPedidoFalsoMenu">
+          <i class="fa-solid fa-triangle-exclamation"></i> 🚨 ¿Detectaste un pedido falso? Denúncialo aquí
+        </button>
       </div>
 
     </div>

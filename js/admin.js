@@ -1651,7 +1651,7 @@ async function renderAdminReports() {
   // 1. Fetch Denuncias
   const { data: reports, error: reportsError } = await window.supabaseClient
     .from('denuncias')
-    .select('id, denunciado_id, motivo, detalles, created_at')
+    .select('id, denunciado_id, motivo, detalles, telefono_denunciado, created_at')
     .order('created_at', { ascending: false })
     .limit(100);
   if (reportsError) { console.error('Error cargando denuncias:', reportsError); return; }
@@ -1663,15 +1663,19 @@ async function renderAdminReports() {
     let html = '';
 
     reports.forEach((rep) => {
+      const telSnippet = rep.telefono_denunciado
+        ? `<div style="font-size:10.5px; color:#22C55E; margin-top:2px; font-weight:700;"><i class="fa-brands fa-whatsapp"></i> Tel: <a href="https://wa.me/51${String(rep.telefono_denunciado).replace(/\\D/g,'')}" target="_blank" style="color:#86EFAC; text-decoration:underline;">${escapeHtmlStr(rep.telefono_denunciado)}</a></div>`
+        : '';
+
       html += `
 
-        <div style="background:#1E293B; padding:6px 8px; border-radius:6px; border-left:3px solid #EF4444; display:flex; justify-content:space-between; align-items:center;">
+        <div style="background:#1E293B; padding:7px 10px; border-radius:6px; border-left:3px solid #EF4444; display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
 
           <div>
 
-            <strong>${escapeHtmlStr(rep.denunciado_id || 'Publicación')}</strong>: ${escapeHtmlStr(rep.motivo)}
-
-            <div style="font-size:9px; color:#94A3B8;">${escapeHtmlStr(rep.detalles || 'Sin detalle')}</div>
+            <strong style="color:#F8FAFC;">${escapeHtmlStr(rep.denunciado_id || 'Publicación')}</strong>: <span style="color:#FDE047;">${escapeHtmlStr(rep.motivo)}</span>
+            ${telSnippet}
+            <div style="font-size:10px; color:#94A3B8; margin-top:2px;">${escapeHtmlStr(rep.detalles || 'Sin detalle')}</div>
 
           </div>
 
@@ -1791,21 +1795,27 @@ async function borrarDenunciaAdmin(indexId) {
 
 /* FUNCIONALIDAD DEL MODAL DE DENUNCIAS (REPORTAR CONTENIDO / USUARIO) */
 
-function abrirModalDenuncia(contextTitle, targetInfo, isFakeOrder = false) {
+function abrirModalDenuncia(contextTitle, targetInfo, isFakeOrder = false, prefill = {}) {
   const modal = document.getElementById('modalReport');
   const label = document.getElementById('reportTargetLabel');
   const titleText = document.getElementById('reportModalTitleText');
   const inputContext = document.getElementById('reportContext');
   const groupName = document.getElementById('groupReportPersonName');
   const inputName = document.getElementById('inputReportPersonName');
+  const groupPhone = document.getElementById('groupReportPersonPhone');
+  const inputPhone = document.getElementById('inputReportPersonPhone');
   const selectMotivo = document.getElementById('selectReportMotivo');
   const inputDetalle = document.getElementById('inputReportDetalle');
 
   if (inputName) {
-    inputName.value = '';
+    inputName.value = prefill.name || '';
     inputName.style.border = '1.5px solid #EF4444';
   }
-  if (inputDetalle) inputDetalle.value = '';
+  if (inputPhone) {
+    inputPhone.value = prefill.phone || '';
+    inputPhone.style.border = '1.5px solid #EF4444';
+  }
+  if (inputDetalle) inputDetalle.value = prefill.detail || '';
 
   if (isFakeOrder) {
     if (titleText) titleText.textContent = '🚨 Denunciar Pedido Falso';
@@ -1813,23 +1823,31 @@ function abrirModalDenuncia(contextTitle, targetInfo, isFakeOrder = false) {
     if (inputContext) inputContext.value = 'Pedido Falso';
     if (selectMotivo) selectMotivo.value = 'Pedido falso / posible fraude';
     if (groupName) groupName.style.display = 'block';
-    if (inputName) {
+    if (groupPhone) groupPhone.style.display = 'block';
+    if (inputName && !prefill.name) {
       setTimeout(() => inputName.focus(), 150);
+    } else if (inputPhone && !prefill.phone) {
+      setTimeout(() => inputPhone.focus(), 150);
     }
   } else {
     if (titleText) titleText.textContent = '🚨 Denunciar Publicación o Acoso';
     if (label) label.innerText = `Reportar ${contextTitle}: "${targetInfo}"`;
     if (inputContext) inputContext.value = `${contextTitle} - ${targetInfo}`;
-    if (groupName) groupName.style.display = (selectMotivo && selectMotivo.value === 'Pedido falso / posible fraude') ? 'block' : 'none';
+    const isFake = Boolean(selectMotivo && selectMotivo.value === 'Pedido falso / posible fraude');
+    if (groupName) groupName.style.display = isFake ? 'block' : 'none';
+    if (groupPhone) groupPhone.style.display = isFake ? 'block' : 'none';
   }
 
   if (modal) modal.style.display = 'flex';
 }
+window.abrirModalDenuncia = abrirModalDenuncia;
 
-window.abrirModalDenunciaPedidoFalso = function() {
+window.abrirModalDenunciaPedidoFalso = function(prefillData = {}) {
+  const modalDriver = document.getElementById('modalDriver');
+  if (modalDriver) modalDriver.style.display = 'none';
   const modalSettings = document.getElementById('modalUserSettings');
   if (modalSettings) modalSettings.style.display = 'none';
-  abrirModalDenuncia('Pedido Falso', 'Reporte desde Menú Repartidor', true);
+  abrirModalDenuncia('Pedido Falso', 'Reporte desde Cuenta de Repartidor', true, prefillData);
 };
 
 function closeReportModal() {
@@ -1839,7 +1857,12 @@ function closeReportModal() {
   if (groupName) groupName.style.display = 'none';
   const inputName = document.getElementById('inputReportPersonName');
   if (inputName) inputName.value = '';
+  const groupPhone = document.getElementById('groupReportPersonPhone');
+  if (groupPhone) groupPhone.style.display = 'none';
+  const inputPhone = document.getElementById('inputReportPersonPhone');
+  if (inputPhone) inputPhone.value = '';
 }
+window.closeReportModal = closeReportModal;
 
 async function enviarDenuncia() {
   const context = document.getElementById('reportContext')?.value || 'General';
@@ -1847,8 +1870,10 @@ async function enviarDenuncia() {
   const detalle = document.getElementById('inputReportDetalle')?.value.trim() || '';
   const personNameInput = document.getElementById('inputReportPersonName');
   const personName = personNameInput ? personNameInput.value.trim() : '';
+  const personPhoneInput = document.getElementById('inputReportPersonPhone');
+  const personPhone = personPhoneInput ? personPhoneInput.value.trim() : '';
 
-  // VALIDACIÓN ESTRICTA: Para denunciar un pedido falso DEBE nombrarse a la persona
+  // VALIDACIÓN ESTRICTA: Para denunciar un pedido falso DEBE anotarse el nombre y teléfono
   if (motivo === 'Pedido falso / posible fraude' || context.toLowerCase().includes('pedido falso')) {
     if (!personName) {
       if (typeof showToast === 'function') {
@@ -1862,6 +1887,18 @@ async function enviarDenuncia() {
       }
       return;
     }
+    if (!personPhone) {
+      if (typeof showToast === 'function') {
+        showToast('⚠️ Teléfono Obligatorio', 'Debes anotar el número de teléfono o WhatsApp de la persona del pedido falso.', 'warning', 5000);
+      } else {
+        alert('Debes anotar el número de teléfono de la persona que realizó el pedido falso.');
+      }
+      if (personPhoneInput) {
+        personPhoneInput.focus();
+        personPhoneInput.style.border = '2px solid #EF4444';
+      }
+      return;
+    }
   }
 
   if (!window.supabaseClient) {
@@ -1869,16 +1906,23 @@ async function enviarDenuncia() {
     return;
   }
 
-  const denunciadoIdFinal = personName ? `Persona: ${personName}` : context;
-  const detalleFinal = personName ? `${detalle ? detalle + ' | ' : ''}Persona denunciada: ${personName}` : detalle;
+  const denunciadoIdFinal = personName ? `Persona: ${personName}${personPhone ? ' (' + personPhone + ')' : ''}` : context;
+  let detalleFinal = detalle;
+  if (personName || personPhone) {
+    const contactInfo = `Persona denunciada: ${personName || 'No precisado'} | Tel: ${personPhone || 'No precisado'}`;
+    detalleFinal = detalle ? `${detalle} | ${contactInfo}` : contactInfo;
+  }
 
   if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Enviando denuncia...');
 
-  const { error } = await window.supabaseClient.from('denuncias').insert([{
+  const payload = {
     denunciado_id: denunciadoIdFinal,
     motivo: motivo,
-    detalles: detalleFinal
-  }]);
+    detalles: detalleFinal,
+    telefono_denunciado: personPhone || null
+  };
+
+  const { error } = await window.supabaseClient.from('denuncias').insert([payload]);
 
   if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
 
@@ -1891,11 +1935,12 @@ async function enviarDenuncia() {
   closeReportModal();
 
   if (personNameInput) personNameInput.value = '';
+  if (personPhoneInput) personPhoneInput.value = '';
   const inputDetalle = document.getElementById('inputReportDetalle');
   if (inputDetalle) inputDetalle.value = '';
 
   if (typeof showToast === 'function') {
-    showToast('🚨 Denuncia Registrada', 'Denuncia registrada de forma segura. El equipo de administración revisará al usuario y tomará las sanciones correspondientes.', 'success', 5000);
+    showToast('🚨 Denuncia Registrada', 'Denuncia registrada de forma segura con el teléfono del infractor. El equipo de administración revisará y procederá al bloqueo.', 'success', 5500);
   } else {
     alert('⚠️ Denuncia registrada de forma segura. El equipo de administración revisará al usuario.');
   }

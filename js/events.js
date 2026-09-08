@@ -170,6 +170,13 @@ document.addEventListener('DOMContentLoaded', () => {
       safeCall('abrirFichaRepartidorEdicion');
     });
 
+    const el_btnDriverReportFakeOrderModal = document.getElementById('btnDriverReportFakeOrderModal');
+    if (el_btnDriverReportFakeOrderModal) {
+      el_btnDriverReportFakeOrderModal.addEventListener('click', () => {
+        safeCall('abrirModalDenunciaPedidoFalso');
+      });
+    }
+
     const el_btnAdminAccessQuick = document.getElementById('btnAdminAccessQuick');
     if (el_btnAdminAccessQuick) el_btnAdminAccessQuick.addEventListener('click', () => { safeCall('abrirModalAdminDashboard'); });
 
@@ -271,12 +278,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (selReportMotivo) {
       selReportMotivo.addEventListener('change', (e) => {
         const groupName = document.getElementById('groupReportPersonName');
+        const groupPhone = document.getElementById('groupReportPersonPhone');
         const inputName = document.getElementById('inputReportPersonName');
-        if (groupName) {
-          const isFake = e.target.value === 'Pedido falso / posible fraude';
-          groupName.style.display = isFake ? 'block' : 'none';
-          if (isFake && inputName) setTimeout(() => inputName.focus(), 100);
-        }
+        const isFake = e.target.value === 'Pedido falso / posible fraude';
+        if (groupName) groupName.style.display = isFake ? 'block' : 'none';
+        if (groupPhone) groupPhone.style.display = isFake ? 'block' : 'none';
+        if (isFake && inputName) setTimeout(() => inputName.focus(), 100);
       });
     }
 
@@ -532,10 +539,15 @@ document.addEventListener('click', async (e) => {
     else if (action === 'denunciarPedidoFalso') {
       const id = btn.getAttribute('data-id') || '';
       const buyer = decodeURIComponent(btn.getAttribute('data-buyer') || 'Vecino');
-      const email = decodeURIComponent(btn.getAttribute('data-email') || 'Correo no disponible');
+      const email = decodeURIComponent(btn.getAttribute('data-email') || '');
+      const phone = decodeURIComponent(btn.getAttribute('data-tel') || btn.getAttribute('data-phone') || '');
       if (typeof window.loadAdminModules === 'function') await window.loadAdminModules();
       if (typeof window.abrirModalDenuncia === 'function') {
-        window.abrirModalDenuncia('Pedido Falso', `Pedido ${id} | Comprador: ${buyer} | Correo: ${email}`, true);
+        window.abrirModalDenuncia('Pedido Falso', `Pedido #${id}`, true, {
+          name: buyer,
+          phone: phone,
+          detail: `Pedido #${id} | Comprador: ${buyer}${email ? ' | Correo: ' + email : ''}`
+        });
       }
     }
     else if (action === 'borrarPostForumAdmin' || action === 'borrarPostPropio') {

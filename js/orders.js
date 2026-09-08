@@ -252,6 +252,9 @@ async function renderDriverOrdersList() {
             <button type="button" class="btn-action" style="background:#10B981; color:white; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:700; border:none; cursor:pointer; flex:1; display:inline-flex; align-items:center; justify-content:center; gap:5px;" data-action="confirmarEntregaPedido" data-id="${o.id}">
               <i class="fa-solid fa-circle-check"></i> Entregado
             </button>
+            <button type="button" class="btn-action" style="background:rgba(239,68,68,0.2); color:#FCA5A5; border:1px solid #EF4444; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:4px;" data-action="denunciarPedidoFalso" data-id="${o.id}" data-buyer="${encodeURIComponent(o.cliente_nombre || o.nombre || 'Comprador')}" data-tel="${encodeURIComponent(tel || '')}" title="Denunciar que este pedido es falso o fraude">
+              <i class="fa-solid fa-triangle-exclamation"></i> Falso
+            </button>
           </div>
         </div>
       `;
