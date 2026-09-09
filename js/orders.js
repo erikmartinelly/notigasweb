@@ -133,13 +133,87 @@ async function renderDriverOrdersList() {
     assignedPromise = assignedQuery;
   }
 
-  const [pubRes, assignedRes] = await Promise.all([pubQuery, assignedPromise]);
+  // 3. Estado financiero del chofer (Comisión fija S/ 1 por balón, Tope S/ 50.00)
+  let driverFinancePromise = Promise.resolve({ data: null, error: null });
+  if (localUserId) {
+    driverFinancePromise = window.supabaseClient
+      .from('choferes_habilitados')
+      .select('comisiones_pendientes, limite_credito, estado_servicio, bloqueado, motivo_bloqueo')
+      .eq('user_id', localUserId)
+      .maybeSingle();
+  }
+
+  const [pubRes, assignedRes, finRes] = await Promise.all([pubQuery, assignedPromise, driverFinancePromise]);
 
   if (pubRes.error) {
     console.error("Error cargando lista de pedidos repartidor (públicos):", pubRes.error);
   }
   if (assignedRes.error) {
     console.error("Error cargando pedidos asignados repartidor:", assignedRes.error);
+  }
+
+  // Sincronizar y evaluar estado financiero
+  const driverFinances = {
+    comisiones: Number(finRes?.data?.comisiones_pendientes || userData?.comisiones_pendientes || 0),
+    limite: Number(finRes?.data?.limite_credito || userData?.limite_credito || 50.00),
+    estado_servicio: finRes?.data?.estado_servicio || userData?.estado_servicio || 'activo',
+    bloqueado: Boolean(finRes?.data?.bloqueado || userData?.bloqueado)
+  };
+  driverFinances.isSuspended = Boolean(
+    driverFinances.bloqueado || 
+    driverFinances.estado_servicio === 'suspendido_tope' || 
+    driverFinances.estado_servicio === 'baneado' || 
+    driverFinances.comisiones >= driverFinances.limite
+  );
+
+  if (typeof AppState !== 'undefined') {
+    const curU = AppState.get('userData') || {};
+    AppState.set('userData', {
+      ...curU,
+      comisiones_pendientes: driverFinances.comisiones,
+      limite_credito: driverFinances.limite,
+      estado_servicio: driverFinances.estado_servicio,
+      bloqueado: driverFinances.bloqueado
+    });
+  }
+
+  const pctComisiones = Math.min(100, Math.round((driverFinances.comisiones / driverFinances.limite) * 100));
+  const barColor = driverFinances.isSuspended || pctComisiones >= 100 ? '#EF4444' : (pctComisiones >= 60 ? '#F59E0B' : '#10B981');
+  
+  let financialWidgetHtml = `
+    <div class="driver-financial-card" style="background:linear-gradient(135deg, #1E293B 0%, #0F172A 100%); border:1.5px solid ${driverFinances.isSuspended ? '#EF4444' : '#334155'}; border-radius:10px; padding:10px 12px; margin-bottom:12px; box-shadow:0 2px 8px rgba(0,0,0,0.25);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <span style="font-size:11px; font-weight:800; color:#E2E8F0; display:flex; align-items:center; gap:5px;">
+          <span>💰</span> Saldo de Comisiones:
+        </span>
+        <span style="font-size:12px; font-weight:900; color:${barColor};">
+          S/ ${driverFinances.comisiones.toFixed(2)} <span style="font-size:10px; color:#94A3B8; font-weight:600;">/ S/ ${driverFinances.limite.toFixed(2)} (Tope)</span>
+        </span>
+      </div>
+      <div style="background:#0F172A; border-radius:6px; height:8px; width:100%; overflow:hidden; border:1px solid #334155; position:relative;">
+        <div style="background:${barColor}; height:100%; width:${pctComisiones}%; transition:width 0.4s ease;"></div>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px; font-size:9.5px; color:#94A3B8;">
+        <span>Comisión fija: S/ 1.00 por balón entregado</span>
+        <span>Corte: Domingos 11:59 PM</span>
+      </div>
+    </div>
+  `;
+
+  if (driverFinances.isSuspended) {
+    financialWidgetHtml += `
+      <div class="driver-lockout-banner" style="background:rgba(239,68,68,0.15); border:2px solid #EF4444; border-radius:10px; padding:12px; margin-bottom:12px; color:#FECACA;">
+        <div style="display:flex; align-items:center; gap:8px; font-weight:900; color:#EF4444; font-size:12.5px;">
+          <span style="font-size:18px;">⛔</span> CUENTA SUSPENDIDA - LÍMITE DE CRÉDITO ALCANZADO
+        </div>
+        <p style="font-size:11.5px; margin:6px 0 0 0; line-height:1.45; color:#F8FAFC;">
+          Has alcanzado el tope máximo de <strong>S/ 50.00</strong> en comisiones pendientes (S/ 1.00 por balón entregado). Se ha <strong>bloqueado la toma de pedidos</strong>.
+        </p>
+        <div style="margin-top:8px; font-size:11px; background:rgba(0,0,0,0.4); padding:8px 10px; border-radius:6px; border-left:3px solid #EF4444; color:#FEE2E2;">
+          📲 <strong>Para reactivar tu cuenta:</strong> Realiza tu remesa por <strong>Yape / Plin</strong> al número oficial de administración y regulariza tu saldo para desbloquear tus pedidos al instante.
+        </div>
+      </div>
+    `;
   }
 
   const pubOrders = pubRes.data || [];
@@ -219,7 +293,7 @@ async function renderDriverOrdersList() {
     if (pubRes.error || assignedRes.error) {
       const errDetail = pubRes.error?.message || assignedRes.error?.message || 'Error de conexión o permisos';
       const safeErr = typeof escapeHtmlStr === 'function' ? escapeHtmlStr(errDetail) : errDetail;
-      container.innerHTML = `
+      container.innerHTML = financialWidgetHtml + `
         <div style="padding:22px; text-align:center; color:#F87171; font-size:12px; background:rgba(239, 68, 68, 0.08); border-radius:8px; border:1px solid rgba(239, 68, 68, 0.25);">
           <i class="fa-solid fa-triangle-exclamation" style="font-size:24px; margin-bottom:8px; display:block; color:#EF4444;"></i>
           <strong style="display:block; margin-bottom:4px; font-size:13px;">Error cargando pedidos</strong>
@@ -238,7 +312,7 @@ async function renderDriverOrdersList() {
         </div>`
       : '';
 
-    container.innerHTML = planBannerHtml + `
+    container.innerHTML = financialWidgetHtml + planBannerHtml + `
       <div style="padding:25px; text-align:center; color:#94A3B8; font-size:12px;">
         <i class="fa-solid fa-clipboard-check" style="font-size:24px; margin-bottom:8px; display:block;"></i>
         No hay pedidos pendientes disponibles en este momento para tu categoría en esta ciudad.
@@ -259,7 +333,7 @@ async function renderDriverOrdersList() {
     groups[groupKey].items.push(o);
   });
 
-  let html = planBannerHtml;
+  let html = financialWidgetHtml + planBannerHtml;
 
   // Pedidos asignados a este chofer
   const myAssigned = orders.filter(o => o.estado === 'asignado' && o.driver_id === localUserId);
@@ -392,9 +466,15 @@ async function renderDriverOrdersList() {
                   <button type="button" style="background:#0284C7; color:#F8FAFC; border:none; padding:5px 9px; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;" data-action="centrarPedidoEnMapa" data-lat="${lat}" data-lng="${lng}" data-order-id="${o.id}" title="Ver en el mapa">
                     <i class="fa-solid fa-map-location-dot"></i> VER EN EL MAPA
                   </button>
-                  <button type="button" style="background:#FF6D00; color:white; border:none; padding:5px 12px; border-radius:6px; font-size:10px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;" data-action="aceptarPedidoRepartidor" data-id="${o.id}" data-lat="${lat}" data-lng="${lng}" data-address="${escapeHtmlStr(o.direccion || '')}">
-                    <i class="fa-solid fa-truck"></i> Tomar
-                  </button>
+                  ${driverFinances.isSuspended ? `
+                    <button type="button" style="background:#475569; color:#94A3B8; border:none; padding:5px 12px; border-radius:6px; font-size:10px; font-weight:800; cursor:not-allowed; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;" onclick="alert('⛔ Cuenta Suspendida: Has alcanzado el tope de S/ 50.00 en comisiones. Paga vía Yape a la administración para volver a tomar pedidos.');" title="Cuenta suspendida por tope de comisiones">
+                      <i class="fa-solid fa-ban"></i> Bloqueado
+                    </button>
+                  ` : `
+                    <button type="button" style="background:#FF6D00; color:white; border:none; padding:5px 12px; border-radius:6px; font-size:10px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;" data-action="aceptarPedidoRepartidor" data-id="${o.id}" data-lat="${lat}" data-lng="${lng}" data-address="${escapeHtmlStr(o.direccion || '')}">
+                      <i class="fa-solid fa-truck"></i> Tomar
+                    </button>
+                  `}
                 </div>
               </div>
             `;
@@ -439,6 +519,18 @@ window.aceptarPedidoRepartidor = function(orderId, lat, lng, address) {
     else alert('❌ Error: Sin conexión a la base de datos.');
     return;
   }
+
+  // Comprobar suspensión de comisiones o límite de crédito
+  const curUser = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
+  if (curUser && (curUser.comisiones_pendientes >= (curUser.limite_credito || 50) || curUser.estado_servicio === 'suspendido_tope' || curUser.bloqueado)) {
+    if (typeof showToast === 'function') {
+      showToast('⛔ Límite de Crédito Alcanzado', 'Has acumulado S/ 50.00 en comisiones pendientes. Regulariza tu saldo por Yape a la administración para volver a recibir pedidos.', 'error', 7000);
+    } else {
+      alert('⛔ Cuenta Suspendida: Límite de crédito de S/ 50.00 alcanzado. Paga tus comisiones por Yape para continuar.');
+    }
+    return;
+  }
+
   showConfirmModal('🚚', 'Elegir Pedido', 'El pedido se te asignará y se abrirá la navegación externa.', 'Elegir y navegar', async () => {
     if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Asignando pedido...');
 
@@ -450,8 +542,12 @@ window.aceptarPedidoRepartidor = function(orderId, lat, lng, address) {
 
     if (error) {
       console.error('Error asignando pedido:', error);
-      if (typeof showToast === 'function') showToast('Pedido no disponible', error.message || 'Otro repartidor pudo tomarlo antes.', 'error');
-      else alert('❌ No se pudo asignar el pedido.');
+      const isFinLimit = error.message && (error.message.includes('Límite de crédito') || error.message.includes('Regulariza tus comisiones'));
+      if (typeof showToast === 'function') {
+        showToast(isFinLimit ? '⛔ Límite de Crédito' : 'Pedido no disponible', error.message || 'Otro repartidor pudo tomarlo antes.', 'error', isFinLimit ? 7000 : 4000);
+      } else {
+        alert('❌ ' + (error.message || 'No se pudo asignar el pedido.'));
+      }
       return;
     }
 
@@ -546,7 +642,18 @@ async function confirmarEntregaPedido(id) {
         showToast('Error', error.message || 'No se pudo confirmar la entrega.', 'error', 4000);
       } else {
         closeDriverOrdersModal();
-        showToast('¡Buen trabajo!', 'Pedido entregado. El pedido fue archivado en tus estadísticas.', 'success', 5000);
+        const res = data || {};
+        const newSaldo = res.comisiones_pendientes != null ? Number(res.comisiones_pendientes) : null;
+        const isSuspended = Boolean(res.suspendido || (newSaldo != null && newSaldo >= 50));
+
+        if (isSuspended) {
+          showToast('⚠️ Límite de Crédito Alcanzado (S/ 50.00)', `Pedido entregado (+S/ 1.00 de comisión). Saldo: S/ ${newSaldo ? newSaldo.toFixed(2) : '50.00'}. Tu cuenta ha sido suspendida para tomar nuevos pedidos hasta regularizar vía Yape.`, 'warning', 8000);
+        } else if (newSaldo != null) {
+          showToast('¡Entrega Confirmada! 🎉', `Comisión fija de S/ 1.00 registrada. Saldo acumulado: S/ ${newSaldo.toFixed(2)} / S/ 50.00 (Tope).`, 'success', 5000);
+        } else {
+          showToast('¡Buen trabajo!', 'Pedido entregado. El pedido fue archivado en tus estadísticas.', 'success', 5000);
+        }
+
         if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
         if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
       }

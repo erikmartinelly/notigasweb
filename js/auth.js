@@ -1182,7 +1182,7 @@ window.abrirRegistroRepartidores = async function() {
       try {
         const { data: driverRow } = await window.supabaseClient
           .from('choferes_habilitados')
-          .select('id, nombre_completo, placa, dni, bloqueado, motivo_bloqueo, categoria, telefono_whatsapp, ciudad, schedule, productos')
+          .select('id, nombre_completo, placa, dni, bloqueado, motivo_bloqueo, categoria, telefono_whatsapp, ciudad, schedule, productos, comisiones_pendientes, limite_credito, estado_servicio')
           .eq('user_id', userId)
           .maybeSingle();
 
@@ -1206,7 +1206,10 @@ window.abrirRegistroRepartidores = async function() {
             categoria: driverRow.categoria,
             productos: driverRow.productos,
             schedule: driverRow.schedule,
-            ciudad: driverRow.ciudad
+            ciudad: driverRow.ciudad,
+            comisiones_pendientes: Number(driverRow.comisiones_pendientes || 0),
+            limite_credito: Number(driverRow.limite_credito || 50),
+            estado_servicio: driverRow.estado_servicio || 'activo'
           });
         }
       } catch (e) {
@@ -1887,7 +1890,7 @@ async function procesarSesionExitosa(user, isInteractive = false) {
           const [driverRes, profileRes] = await Promise.all([
             window.supabaseClient
               .from('choferes_habilitados')
-              .select('ciudad, categoria, productos, schedule, estado_verificacion, bloqueado, motivo_bloqueo, dni, placa')
+              .select('ciudad, categoria, productos, schedule, estado_verificacion, bloqueado, motivo_bloqueo, dni, placa, comisiones_pendientes, limite_credito, estado_servicio')
               .eq('user_id', user.id)
               .maybeSingle(),
             window.supabaseClient
@@ -2504,7 +2507,7 @@ async function cargarPerfilChoferEnModal() {
 
     const { data: driverRow, error } = await window.supabaseClient
       .from('choferes_habilitados')
-      .select('id, user_id, nombre_completo, telefono_whatsapp, placa, dni, categoria, productos, schedule, ciudad, color_camion, precio_balon_10kg, es_premium, premium_vence_at, estado_pago_premium, comprobante_pago_url, tipo_plan')
+      .select('id, user_id, nombre_completo, telefono_whatsapp, placa, dni, categoria, productos, schedule, ciudad, color_camion, precio_balon_10kg, es_premium, premium_vence_at, estado_pago_premium, comprobante_pago_url, tipo_plan, comisiones_pendientes, limite_credito, estado_servicio')
       .eq('user_id', userId)
       .maybeSingle();
 

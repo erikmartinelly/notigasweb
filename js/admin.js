@@ -582,7 +582,9 @@ async function renderAdminVendorsList() {
   }
 
   const [driversResult, usersResult] = await Promise.all([
-    window.supabaseClient.from('choferes_habilitados').select('id, user_id, nombre_completo, categoria, placa, telefono_whatsapp, created_at').order('created_at', { ascending: false }).limit(100),
+    window.supabaseClient.from('choferes_habilitados')
+      .select('id, user_id, nombre_completo, categoria, placa, telefono_whatsapp, dni, comisiones_pendientes, limite_credito, estado_servicio, bloqueado, motivo_bloqueo, created_at')
+      .order('created_at', { ascending: false }).limit(100),
     window.supabaseClient.rpc('rpc_admin_list_users')
   ]);
 
@@ -600,7 +602,12 @@ async function renderAdminVendorsList() {
       category: driver.categoria || 'Gas GLP',
       plate: driver.placa || 'Placa registrada',
       whatsapp: driver.telefono_whatsapp || '',
-      is_banned: !!(linkedUser && linkedUser.is_banned)
+      dni: driver.dni || '',
+      comisiones: Number(driver.comisiones_pendientes || 0),
+      limite: Number(driver.limite_credito || 50),
+      estado_servicio: driver.estado_servicio || 'activo',
+      bloqueado: !!driver.bloqueado,
+      is_banned: !!(linkedUser && linkedUser.is_banned) || !!driver.bloqueado
     };
   });
   const buyersList = users
@@ -629,16 +636,32 @@ function renderFinalVendors(defaultVendors, deletedIds, buyersList = [], usersLo
     }
     finalVendors.forEach((v) => {
       const isBanned = v.is_banned || (typeof esRepartidorBaneado === 'function' ? esRepartidorBaneado(v.name, v.plate, v.whatsapp, v.user_id) : false);
+      const isCreditLocked = !isBanned && (v.estado_servicio === 'suspendido_tope' || v.comisiones >= v.limite);
       const safeName = encodeURIComponent(v.name || '').replace(/'/g, "%27");
       const safePlate = encodeURIComponent(v.plate || '').replace(/'/g, "%27");
+      
+      let badgeEstado = '<span style="color:#00B0FF; font-weight:700;">ACTIVO</span>';
+      if (isBanned) {
+        badgeEstado = '<span style="color:#EF4444; font-weight:700;">BANEADO (DNI + HARDWARE)</span>';
+      } else if (isCreditLocked) {
+        badgeEstado = '<span style="color:#F59E0B; font-weight:800; background:rgba(245,158,11,0.2); padding:1px 6px; border-radius:4px;">SUSPENDIDO (TOPE S/ 50)</span>';
+      }
+
+      const commissionBadge = v.comisiones > 0 
+        ? `<span style="color:${v.comisiones >= v.limite ? '#EF4444' : '#FDE68A'}; font-weight:800;">S/ ${v.comisiones.toFixed(2)}</span> / S/ ${v.limite.toFixed(2)}`
+        : `<span style="color:#10B981; font-weight:700;">S/ 0.00 (Al día)</span>`;
+
       html += `
-        <div style="background:#1E293B; padding:10px 12px; border-radius:10px; border:1px solid ${isBanned ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.08)'}; display:flex; justify-content:space-between; align-items:center; opacity: ${isBanned ? '0.7' : '1'}; margin-bottom:6px;">
+        <div style="background:#1E293B; padding:10px 12px; border-radius:10px; border:1px solid ${isBanned ? 'rgba(239,68,68,0.4)' : (isCreditLocked ? 'rgba(245,158,11,0.5)' : 'rgba(255,255,255,0.08)')}; display:flex; justify-content:space-between; align-items:center; opacity: ${isBanned ? '0.75' : '1'}; margin-bottom:6px;">
           <div>
-            <strong style="color:${isBanned ? '#EF4444' : '#FF6D00'}; font-size:12px;">${isBanned ? '⛔ [BLOQUEADO/BANEADO] ' : '🏍️ '}${escapeHtmlStr(v.name)}</strong>
+            <strong style="color:${isBanned ? '#EF4444' : (isCreditLocked ? '#F59E0B' : '#FF6D00')}; font-size:12px;">${isBanned ? '⛔ [BANEADO] ' : (isCreditLocked ? '⚠️ [SUSPENDIDO] ' : '🏍️ ')}${escapeHtmlStr(v.name)}</strong>
             <span style="font-size:10.5px; color:#CBD5E1;"> (${escapeHtmlStr(v.category)})</span>
-            <div style="font-size:10px; color:#94A3B8; margin-top:2px;">Placa: ${escapeHtmlStr(v.plate)} • Estado: ${isBanned ? '<span style="color:#EF4444; font-weight:700;">ACCESO BLOQUEADO</span>' : '<span style="color:#00B0FF; font-weight:700;">ACTIVO (REGISTRO AUTOMÁTICO)</span>'}</div>
+            <div style="font-size:10px; color:#94A3B8; margin-top:2px;">
+              DNI: ${escapeHtmlStr(v.dni || 'No reg.')} • Placa: ${escapeHtmlStr(v.plate)} • Deuda: ${commissionBadge} • Estado: ${badgeEstado}
+            </div>
           </div>
-          <div style="display:flex; gap:4px;">
+          <div style="display:flex; gap:4px; align-items:center; flex-wrap:wrap;">
+            <button data-action="liquidarComisionesAdmin" data-user-id="${encodeURIComponent(v.user_id || '')}" data-name="${safeName}" data-saldo="${v.comisiones}" style="background:#10B981; color:#0F172A; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;" title="Registrar abono de comisiones por Yape"><i class="fa-solid fa-money-bill-wave"></i> Liquidar</button>
             ${isBanned ? `
               <button data-action="desbanearRepartidorAdmin" data-id="${v.id}" data-user-id="${encodeURIComponent(v.user_id || '')}" data-name="${safeName}" style="background:#0288D1; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-lock-open"></i> Desbanear</button>
             ` : `

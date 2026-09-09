@@ -342,3 +342,103 @@ function verificarBloqueoAppUsuario() {
     }
   } catch(e){}
 }
+
+// ==========================================
+// CONTROL FINANCIERO Y COMISIONES NOTIGAS
+// ==========================================
+
+window.liquidarComisionesAdmin = async function(userId, name, currentSaldo) {
+  if (!userId) {
+    if (typeof showToast === 'function') showToast('Error', 'Falta el identificador del chofer.', 'error');
+    return;
+  }
+  const defaultMonto = currentSaldo > 0 ? currentSaldo : '';
+  const inputPrompt = prompt(`💰 Registrar Liquidación de Comisiones\nRepartidor: ${name}\nSaldo adeudado actual: S/ ${Number(currentSaldo || 0).toFixed(2)}\n\nIngresa el monto recibido vía Yape / Plin (deja en blanco para liquidar el saldo total):`, defaultMonto);
+  
+  if (inputPrompt === null) return;
+  
+  const monto = inputPrompt.trim() === '' ? null : parseFloat(inputPrompt);
+  if (inputPrompt.trim() !== '' && (isNaN(monto) || monto <= 0)) {
+    alert('Por favor ingresa un monto numérico válido.');
+    return;
+  }
+
+  const ref = prompt('Referencia o Código de Operación Yape/Plin (opcional):', 'Pago Yape') || 'Pago Yape';
+
+  if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Procesando liquidación de comisiones...');
+
+  try {
+    const { data, error } = await window.supabaseClient.rpc('rpc_liquidar_comisiones_chofer', {
+      p_driver_id: userId,
+      p_monto: monto,
+      p_referencia: ref
+    });
+
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+
+    if (error) {
+      console.error('Error liquidando comisiones:', error);
+      if (typeof showToast === 'function') showToast('Error', error.message || 'No se pudo registrar el pago.', 'error');
+      else alert('Error: ' + error.message);
+      return;
+    }
+
+    if (typeof showToast === 'function') {
+      showToast('✅ Pago Liquidado', `Se registró el abono de S/ ${data.abono} para ${name}. Nuevo saldo deudor: S/ ${data.saldo_nuevo}.`, 'success', 5000);
+    }
+
+    await descargarBaneadosDeSupabase();
+    if (typeof renderAdminVendorsList === 'function') renderAdminVendorsList();
+    if (typeof renderAdminDashboardKPIs === 'function') renderAdminDashboardKPIs();
+  } catch(e) {
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+    console.error('Error inesperado al liquidar comisiones:', e);
+  }
+};
+
+window.ejecutarCorteSemanalManualAdmin = async function() {
+  if (!confirm('¿Ejecutar el Corte Semanal Dominical (11:59 PM) ahora mismo? Esto generará el balance y registrará el corte de los choferes con deuda.')) return;
+  
+  if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Ejecutando corte dominical...');
+  try {
+    const { data, error } = await window.supabaseClient.rpc('rpc_ejecutar_corte_semanal_comisiones');
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+    if (error) {
+      if (typeof showToast === 'function') showToast('Error', error.message, 'error');
+      else alert('Error: ' + error.message);
+      return;
+    }
+    if (typeof showToast === 'function') {
+      showToast('📅 Corte Dominical Ejecutado', `Choferes con deuda: ${data.choferes_con_deuda}. Deuda total: S/ ${data.deuda_total_acumulada}. Plazo límite vence Lunes 1:00 PM.`, 'success', 7000);
+    }
+    if (typeof renderAdminVendorsList === 'function') renderAdminVendorsList();
+  } catch(e) {
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+    console.error('Error ejecutando corte semanal:', e);
+  }
+};
+
+window.ejecutarBaneoSemanalManualAdmin = async function() {
+  if (!confirm('🚨 ATENCIÓN: ¿Ejecutar el Baneo Semanal de Morosos (Lunes 1:00 PM)?\n\nTodos los choferes con saldo deudor > S/ 0.00 serán BLOQUEADOS (DNI, Placa y Hardware de su celular inhabilitados).')) return;
+
+  if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Ejecutando baneo semanal de morosos...');
+  try {
+    const { data, error } = await window.supabaseClient.rpc('rpc_ejecutar_baneo_semanal_morosos');
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+    if (error) {
+      if (typeof showToast === 'function') showToast('Error', error.message, 'error');
+      else alert('Error: ' + error.message);
+      return;
+    }
+    if (typeof showToast === 'function') {
+      showToast('🚫 Baneo Semanal Aplicado', `Se suspendió a ${data.choferes_baneados} chofer(es) moroso(s) y se bloquearon sus dispositivos móviles y DNI.`, 'warning', 7000);
+    }
+    await descargarBaneadosDeSupabase();
+    if (typeof renderAdminVendorsList === 'function') renderAdminVendorsList();
+    if (typeof renderAdminDashboardKPIs === 'function') renderAdminDashboardKPIs();
+  } catch(e) {
+    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+    console.error('Error ejecutando baneo semanal:', e);
+  }
+};
+

@@ -758,6 +758,12 @@ document.addEventListener('click', async (e) => {
       if (typeof window.loadAdminModules === 'function') await window.loadAdminModules();
       if (typeof window.borrarAnuncioLocalAdmin === 'function') await window.borrarAnuncioLocalAdmin(id);
     }
+    else if (action === 'liquidarComisionesAdmin') {
+      const userId = decodeURIComponent(btn.getAttribute('data-user-id') || '');
+      const name = decodeURIComponent(btn.getAttribute('data-name') || '');
+      const saldo = parseFloat(btn.getAttribute('data-saldo') || '0');
+      if (typeof window.liquidarComisionesAdmin === 'function') window.liquidarComisionesAdmin(userId, name, saldo);
+    }
     else if (action === 'desbanearRepartidorAdmin') {
       const userId = decodeURIComponent(btn.getAttribute('data-user-id') || '');
       const id = btn.getAttribute('data-id');
