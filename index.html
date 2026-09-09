@@ -746,6 +746,11 @@
           <i class="fa-solid fa-scale-balanced" style="color:#38BDF8;"></i> ⚖️ Política de Privacidad y Aviso Legal
         </button>
 
+        <!-- TÉRMINOS Y CONDICIONES PARA REPARTIDORES (COMISIONES Y ANTIFRAUDE) -->
+        <button type="button" class="btn-menu-legal" id="btnDriverTermsMenu" data-action="abrirModalTerminosRepartidores" style="width:100%; background:rgba(245,158,11,0.12); border:1.5px solid #F59E0B; color:#FDE68A; padding:11px 14px; border-radius:10px; font-weight:800; font-size:12.5px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 6px rgba(0,0,0,0.2); margin-top:10px;">
+          <i class="fa-solid fa-file-contract" style="color:#F59E0B;"></i> 📜 Términos y Condiciones para Repartidores
+        </button>
+
       </div>
 
       <!-- ACCIONES COMUNES (DISPONIBLE PARA COMPRADORES Y REPARTIDORES) -->
@@ -1156,6 +1161,16 @@
 
         </select>
 
+      </div>
+
+      <!-- ACEPTACIÓN DE TÉRMINOS Y CONDICIONES PARA REPARTIDORES -->
+      <div style="background:rgba(15,23,42,0.85); border:1.5px solid #F59E0B; border-radius:10px; padding:12px; margin-top:10px; margin-bottom:14px; font-size:11.5px; color:#CBD5E1; line-height:1.5;">
+        <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+          <input type="checkbox" id="checkAceptoTerminosChofer" checked required style="margin-top:3px; accent-color:#F59E0B; width:17px; height:17px; cursor:pointer;">
+          <span>
+            Acepto los <a href="javascript:void(0)" onclick="window.abrirModalTerminosRepartidores()" style="color:#FDE68A; font-weight:800; text-decoration:underline;">Términos y Condiciones para Repartidores</a> de Notigas.com (Comisión fija de S/ 1.00 por balón entregado, límite de crédito de S/ 50.00, corte semanal los domingos 11:59 PM y baneo definitivo por hardware en caso de incumplimiento).
+          </span>
+        </label>
       </div>
 
       <button class="btn-submit-google" id="auto-event-30" style="background:linear-gradient(135deg, #F59E0B, #D97706); color:#FFFFFF; font-weight:800; display:flex; align-items:center; justify-content:center; gap:8px;">
@@ -1595,14 +1610,117 @@
 
   </div>
 
-  <!-- MODAL DE POLÍTICA DE PRIVACIDAD Y AVISO LEGAL (GOOGLE ADSENSE & INTERMEDIACIÓN) -->
-  <div class="modal" id="modalPrivacyPolicy" style="display: none;">
-    <div class="modal-content ng-inline-66" style="max-width: 620px; max-height: 85vh; overflow-y: auto;">
-      <div class="modal-title">
-        <span>⚖️ Política de Privacidad y Aviso Legal</span>
+  <!-- MODAL DE POLÍTICA DE PRIVACIDAD, AVISO LEGAL Y TÉRMINOS PARA REPARTIDORES -->
+  <div class="modal" id="modalPrivacyPolicy" style="display: none; z-index: 99999;">
+    <div class="modal-content ng-inline-66" style="max-width: 650px; max-height: 85vh; overflow-y: auto;">
+      <div class="modal-title" style="display:flex; justify-content:space-between; align-items:center;">
+        <span id="privacyPolicyModalHeaderTitle">📜 Términos y Condiciones – NOTIGAS.COM</span>
         <button class="btn-close" id="btnClosePrivacyPolicy" type="button">✖</button>
       </div>
-      <div class="ng-inline-67" style="font-size: 12.5px; color: #CBD5E1; line-height: 1.6;">
+
+      <!-- SELECTOR DE PESTAÑAS LEGALES -->
+      <div style="display:flex; gap:8px; margin:10px 0 14px 0; border-bottom:1px solid #334155; padding-bottom:8px;">
+        <button type="button" id="tabBtnDriverTerms" onclick="window.switchLegalTab('driver')" style="flex:1; padding:9px 12px; border-radius:8px; border:1.5px solid #F59E0B; background:rgba(245,158,11,0.2); color:#FDE68A; font-weight:800; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s;">
+          <i class="fa-solid fa-motorcycle" style="color:#F59E0B;"></i> <span>Términos de Repartidores</span>
+        </button>
+        <button type="button" id="tabBtnGeneralTerms" onclick="window.switchLegalTab('general')" style="flex:1; padding:9px 12px; border-radius:8px; border:1px solid #334155; background:#1E293B; color:#94A3B8; font-weight:700; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s;">
+          <i class="fa-solid fa-scale-balanced" style="color:#38BDF8;"></i> <span>Aviso Legal y Compradores</span>
+        </button>
+      </div>
+
+      <!-- PESTAÑA 1: TÉRMINOS Y CONDICIONES PARA REPARTIDORES – NOTIGAS.COM -->
+      <div id="termsDriverContent" style="display:block; font-size: 12.5px; color: #CBD5E1; line-height: 1.6;">
+        <div style="background: rgba(245, 158, 11, 0.1); border-left: 3.5px solid #F59E0B; padding: 10px 12px; border-radius: 0 8px 8px 0; margin-bottom: 14px;">
+          <h3 style="color: #FDE68A; margin: 0 0 4px 0; font-size: 13.5px; font-weight: 900;">
+            TÉRMINOS Y CONDICIONES PARA REPARTIDORES – NOTIGAS.COM
+          </h3>
+          <div style="font-size: 11.5px; color: #E2E8F0; line-height: 1.45;">
+            Bienvenido a Notigas.com. Al registrarte y utilizar nuestra plataforma móvil como repartidor independiente, aceptas cumplir y quedar sujeto a los siguientes términos y condiciones de uso:
+          </div>
+        </div>
+
+        <!-- 1. Naturaleza del Servicio -->
+        <div style="margin-bottom: 12px; background: #1E293B; border-radius: 8px; padding: 12px; border: 1px solid #334155;">
+          <strong style="color: #38BDF8; display: block; margin-bottom: 4px; font-size: 13px;">
+            1. Naturaleza del Servicio
+          </strong>
+          <p style="margin: 0; color: #CBD5E1; font-size: 12px; line-height: 1.5;">
+            Notigas.com es una plataforma tecnológica que conecta a repartidores independientes con clientes que requieren el servicio de entrega de balones de gas. El repartidor actúa de forma autónoma, utilizando sus propios medios de transporte, herramientas y equipos celulares.
+          </p>
+        </div>
+
+        <!-- 2. Recopilación de Datos y Seguridad (Protección de Datos Personales) -->
+        <div style="margin-bottom: 12px; background: #1E293B; border-radius: 8px; padding: 12px; border: 1px solid #334155;">
+          <strong style="color: #10B981; display: block; margin-bottom: 4px; font-size: 13px;">
+            2. Recopilación de Datos y Seguridad (Protección de Datos Personales)
+          </strong>
+          <p style="margin: 0 0 6px 0; color: #CBD5E1; font-size: 12px; line-height: 1.5;">
+            Para garantizar la seguridad de los clientes, la plataforma y los propios repartidores, Notigas.com recopila y almacena obligatoriamente los siguientes datos al momento del registro:
+          </p>
+          <ul style="margin: 0 0 8px 18px; padding: 0; font-size: 11.5px; color: #94A3B8; line-height: 1.55;">
+            <li>Nombres, Apellidos y número de DNI / CE.</li>
+            <li>Fotografía del documento de identidad y fotografía del rostro del usuario (Selfie de validación).</li>
+            <li>Número de Placa de Rodaje del vehículo utilizado para el reparto.</li>
+            <li>Identificador único del dispositivo móvil (Device ID / Android ID) desde el cual se ejecuta la aplicación.</li>
+          </ul>
+          <p style="margin: 0; color: #A7F3D0; font-size: 11.5px; line-height: 1.45; background: rgba(16,185,129,0.1); padding: 6px 8px; border-radius: 6px;">
+            El usuario otorga su consentimiento expreso para el tratamiento de estos datos con fines de validación de identidad y prevención del fraude.
+          </p>
+        </div>
+
+        <!-- 3. Modelo de Comisiones y Crédito -->
+        <div style="margin-bottom: 12px; background: rgba(245, 158, 11, 0.08); border-radius: 8px; padding: 12px; border: 1.5px solid rgba(245, 158, 11, 0.4);">
+          <strong style="color: #FDE68A; display: block; margin-bottom: 6px; font-size: 13px;">
+            3. Modelo de Comisiones y Crédito
+          </strong>
+          <ul style="margin: 0 0 0 18px; padding: 0; font-size: 12px; color: #E2E8F0; line-height: 1.55;">
+            <li style="margin-bottom: 6px;">
+              <strong>Comisión por pedido:</strong> Notigas.com cobrará una tarifa fija promocional de <strong>S/ 1.00 (Un Sol y 00/100)</strong> por cada balón de gas efectivamente entregado a través de la aplicación.
+            </li>
+            <li>
+              <strong>Límite de Crédito:</strong> Todo repartidor cuenta con un límite de crédito máximo de <strong>S/ 50.00</strong>. Si las comisiones acumuladas alcanzan este monto en cualquier momento de la semana, la aplicación suspenderá la asignación de pedidos de forma automática hasta que se realice el pago correspondiente.
+            </li>
+          </ul>
+        </div>
+
+        <!-- 4. Ciclo de Pago y Baneo Automático por Incumplimiento -->
+        <div style="margin-bottom: 12px; background: rgba(239, 68, 68, 0.08); border-radius: 8px; padding: 12px; border: 1.5px solid rgba(239, 68, 68, 0.45);">
+          <strong style="color: #FCA5A5; display: block; margin-bottom: 6px; font-size: 13px;">
+            🚨 4. Ciclo de Pago y Baneo Automático por Incumplimiento
+          </strong>
+          <ul style="margin: 0 0 0 18px; padding: 0; font-size: 12px; color: #FEE2E2; line-height: 1.55;">
+            <li style="margin-bottom: 6px;">
+              <strong>Corte Semanal:</strong> El sistema calcula el saldo total de comisiones pendientes <strong>todos los domingos a las 11:59 PM</strong>.
+            </li>
+            <li style="margin-bottom: 6px;">
+              <strong>Plazo de Pago:</strong> El repartidor se compromete a liquidar el saldo total de su cuenta mediante los canales oficiales (Yape/Plin indicados en la app) <strong>a más tardar los lunes a la 1:00 PM</strong>.
+            </li>
+            <li style="margin-bottom: 6px;">
+              <strong>Baneo Definitivo de Dispositivo e Identidad:</strong> Si el pago no es reportado en el plazo establecido, el sistema procederá al bloqueo y baneo automático inmediato de la cuenta.
+            </li>
+            <li>
+              <strong>Política Antifraude:</strong> Debido a que el baneo se vincula directamente al DNI, la Placa del Vehículo y el Device ID del teléfono, el usuario bloqueado <strong>no podrá volver a registrarse ni utilizar el mismo equipo celular con otra identidad</strong>. Notigas.com se reserva el derecho de mantener estas restricciones de hardware y datos de forma permanente en su lista negra por motivos de seguridad financiera.
+            </li>
+          </ul>
+        </div>
+
+        <!-- 5. Modificaciones -->
+        <div style="margin-bottom: 16px; background: #1E293B; border-radius: 8px; padding: 12px; border: 1px solid #334155;">
+          <strong style="color: #94A3B8; display: block; margin-bottom: 4px; font-size: 13px;">
+            5. Modificaciones
+          </strong>
+          <p style="margin: 0; color: #CBD5E1; font-size: 12px; line-height: 1.5;">
+            Notigas.com se reserva el derecho de modificar las tarifas de comisión o las reglas operativas, notificando a los usuarios a través de la aplicación con anticipación.
+          </p>
+        </div>
+
+        <button class="ng-inline-79" type="button" id="btnEntendidoDriverTerms" onclick="window.cerrarModalPoliticaPrivacidad()" style="width: 100%; background: linear-gradient(135deg, #F59E0B, #D97706); color: #0F172A; border: none; padding: 12px; border-radius: 8px; font-weight: 900; cursor: pointer; font-size: 13px; box-shadow: 0 2px 8px rgba(245,158,11,0.35);">
+          ✅ He leído y acepto los Términos y Condiciones de Repartidor
+        </button>
+      </div>
+
+      <!-- PESTAÑA 2: AVISO LEGAL Y POLÍTICA GENERAL PARA COMPRADORES / ADSENSE -->
+      <div id="termsGeneralContent" style="display:none; font-size: 12.5px; color: #CBD5E1; line-height: 1.6;">
 
         <div style="background: rgba(56, 189, 248, 0.08); border-left: 3px solid #38BDF8; padding: 10px 12px; border-radius: 0 8px 8px 0; margin-bottom: 14px;">
           <div style="font-size: 11.5px; color: #E2E8F0;">
@@ -1701,7 +1819,7 @@
           </ul>
         </div>
 
-        <button class="ng-inline-79" type="button" id="btnEntendidoPrivacyPolicy" style="width: 100%; background: linear-gradient(135deg, #0284C7, #0369A1); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 13px;">
+        <button class="ng-inline-79" type="button" id="btnEntendidoPrivacyPolicy" onclick="window.cerrarModalPoliticaPrivacidad()" style="width: 100%; background: linear-gradient(135deg, #0284C7, #0369A1); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 13px;">
           ✅ He leído y acepto la Política de Privacidad y Aviso Legal
         </button>
       </div>

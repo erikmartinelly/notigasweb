@@ -904,6 +904,18 @@ async function iniciarSesionRepartidor() {
     return;
   }
 
+  // VALIDACIÓN DE ACEPTACIÓN DE TÉRMINOS Y CONDICIONES PARA REPARTIDORES
+  const checkTerminos = document.getElementById('checkAceptoTerminosChofer');
+  if (checkTerminos && !checkTerminos.checked) {
+    if (typeof showToast === 'function') {
+      showToast('⚠️ Términos Requeridos', 'Debes aceptar los Términos y Condiciones para Repartidores de Notigas.com para continuar.', 'warning', 4000);
+    } else {
+      alert('Debes aceptar los Términos y Condiciones para Repartidores de Notigas.com para continuar.');
+    }
+    checkTerminos.focus();
+    return;
+  }
+
   const tempGmail = sessionStorage.getItem('notigas_temp_gmail') || '';
   const cachedUser = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
   let existingGmail = cachedUser.gmail || tempGmail;

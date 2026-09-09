@@ -11,11 +11,67 @@ window.closeRulesModal = function() {
   if (modal) modal.style.display = 'none';
 };
 
+window.switchLegalTab = function(tab) {
+  const driverTab = document.getElementById('termsDriverContent');
+  const generalTab = document.getElementById('termsGeneralContent');
+  const btnDriver = document.getElementById('tabBtnDriverTerms');
+  const btnGeneral = document.getElementById('tabBtnGeneralTerms');
+  const headerTitle = document.getElementById('privacyPolicyModalHeaderTitle');
+
+  if (tab === 'driver') {
+    if (driverTab) driverTab.style.display = 'block';
+    if (generalTab) generalTab.style.display = 'none';
+    if (headerTitle) headerTitle.textContent = '📜 Términos y Condiciones para Repartidores';
+    if (btnDriver) {
+      btnDriver.style.border = '1.5px solid #F59E0B';
+      btnDriver.style.background = 'rgba(245,158,11,0.2)';
+      btnDriver.style.color = '#FDE68A';
+    }
+    if (btnGeneral) {
+      btnGeneral.style.border = '1px solid #334155';
+      btnGeneral.style.background = '#1E293B';
+      btnGeneral.style.color = '#94A3B8';
+    }
+  } else {
+    if (driverTab) driverTab.style.display = 'none';
+    if (generalTab) generalTab.style.display = 'block';
+    if (headerTitle) headerTitle.textContent = '⚖️ Política de Privacidad y Aviso Legal';
+    if (btnGeneral) {
+      btnGeneral.style.border = '1.5px solid #38BDF8';
+      btnGeneral.style.background = 'rgba(56,189,248,0.2)';
+      btnGeneral.style.color = '#38BDF8';
+    }
+    if (btnDriver) {
+      btnDriver.style.border = '1px solid #334155';
+      btnDriver.style.background = '#1E293B';
+      btnDriver.style.color = '#94A3B8';
+    }
+  }
+};
+
+window.abrirModalTerminosRepartidores = function() {
+  const modalSettings = document.getElementById('modalUserSettings');
+  if (modalSettings) modalSettings.style.display = 'none';
+  const modal = document.getElementById('modalPrivacyPolicy');
+  if (modal) {
+    modal.style.display = 'flex';
+    window.switchLegalTab('driver');
+    const content = modal.querySelector('.modal-content');
+    if (content) content.scrollTop = 0;
+  }
+};
+
 window.abrirModalPoliticaPrivacidad = function() {
   const modalSettings = document.getElementById('modalUserSettings');
   if (modalSettings) modalSettings.style.display = 'none';
   const modal = document.getElementById('modalPrivacyPolicy');
-  if (modal) modal.style.display = 'flex';
+  if (modal) {
+    modal.style.display = 'flex';
+    const isDriver = (typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver');
+    window.switchLegalTab(isDriver ? 'driver' : 'general');
+    const content = modal.querySelector('.modal-content');
+    if (content) content.scrollTop = 0;
+  }
 };
 
 window.cerrarModalPoliticaPrivacidad = function() {
@@ -323,11 +379,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnPrivacyDriver = document.getElementById('btnPrivacyPolicyDriver');
     if (btnPrivacyDriver) btnPrivacyDriver.addEventListener('click', () => { safeCall('abrirModalPoliticaPrivacidad'); });
 
+    const btnDriverTerms = document.getElementById('btnDriverTermsMenu');
+    if (btnDriverTerms) btnDriverTerms.addEventListener('click', () => { safeCall('abrirModalTerminosRepartidores'); });
+
     const btnClosePrivacy = document.getElementById('btnClosePrivacyPolicy');
     if (btnClosePrivacy) btnClosePrivacy.addEventListener('click', () => { safeCall('cerrarModalPoliticaPrivacidad'); });
 
     const btnEntendidoPrivacy = document.getElementById('btnEntendidoPrivacyPolicy');
     if (btnEntendidoPrivacy) btnEntendidoPrivacy.addEventListener('click', () => { safeCall('cerrarModalPoliticaPrivacidad'); });
+
+    const btnEntendidoDriver = document.getElementById('btnEntendidoDriverTerms');
+    if (btnEntendidoDriver) btnEntendidoDriver.addEventListener('click', () => { safeCall('cerrarModalPoliticaPrivacidad'); });
 
     const el_auto_event_38 = document.getElementById('auto-event-38');
     if (el_auto_event_38) el_auto_event_38.addEventListener('click', () => { safeCall('closeSubmenuModal'); });
@@ -767,6 +829,9 @@ document.addEventListener('click', async (e) => {
     }
     else if (action === 'abrirModalPoliticaPrivacidad') {
       if (typeof window.abrirModalPoliticaPrivacidad === 'function') window.abrirModalPoliticaPrivacidad();
+    }
+    else if (action === 'abrirModalTerminosRepartidores') {
+      if (typeof window.abrirModalTerminosRepartidores === 'function') window.abrirModalTerminosRepartidores();
     }
     else if (action === 'cerrarModalPoliticaPrivacidad') {
       if (typeof window.cerrarModalPoliticaPrivacidad === 'function') window.cerrarModalPoliticaPrivacidad();
