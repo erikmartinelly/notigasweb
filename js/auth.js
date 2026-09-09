@@ -697,6 +697,9 @@ async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
     nombre_completo: repartidorObj.nombre,
     telefono_whatsapp: repartidorObj.whatsapp,
     placa: repartidorObj.placa,
+    dni: repartidorObj.dni || null,
+    device_id: repartidorObj.device_id || null,
+    device_fingerprint: repartidorObj.device_fingerprint || null,
     categoria: repartidorObj.categoria,
     productos: repartidorObj.productos,
     schedule: repartidorObj.schedule,
@@ -719,6 +722,12 @@ async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
 
   if (error) {
     console.error("Error registrando chofer en Supabase:", error);
+    if (String(error.message || '').includes('DISPOSITIVO_BLOQUEADO')) {
+      if (window.DeviceSecurity && typeof window.DeviceSecurity.triggerLockout === 'function') {
+        window.DeviceSecurity.triggerLockout(error.message.replace('DISPOSITIVO_BLOQUEADO:', '').trim());
+      }
+      return { ok: false, status: 'blocked' };
+    }
     alert('Error al guardar la ficha: ' + error.message);
     if (typeof showToast === 'function') showToast('Error', 'No se pudo guardar en la nube. ' + error.message, 'error');
     return { ok: false, status: 'error' };
@@ -732,7 +741,8 @@ async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
     await guardarPerfilSupabase(authData.user, {
       role: 'repartidor',
       nombre: repartidorObj.nombre,
-      ciudad: repartidorObj.ciudad || AppState.get('city') || 'lima'
+      ciudad: repartidorObj.ciudad || AppState.get('city') || 'lima',
+      dni: repartidorObj.dni || null
     });
   } catch (profileError) {
     console.error('No se pudo guardar el modo repartidor en el perfil:', profileError);
@@ -857,13 +867,40 @@ function closeDriverModal() {
 async function iniciarSesionRepartidor() {
   const nombreNegocio = (document.getElementById('inputDriverNombre')?.value || '').trim();
   const whatsapp = (document.getElementById('inputDriverTelRef')?.value || '').trim();
-  const plate = (document.getElementById('inputDriverPlate')?.value || '').trim();
+  const plate = (document.getElementById('inputDriverPlate')?.value || '').trim().toUpperCase();
+  const dni = (document.getElementById('inputDriverDni')?.value || '').trim().replace(/[^0-9]/g, '');
   const categoria = (document.getElementById('inputDriverCat')?.value || 'gas').trim();
   const productos = (document.getElementById('inputDriverProductos')?.value || '').trim();
   const schedule = (document.getElementById('inputDriverSchedule')?.value || '').trim();
+  const colorCamion = (document.getElementById('inputDriverTruckColor')?.value || '').trim();
+  const precio10kgRaw = (document.getElementById('inputDriverPrecioBalon10kg')?.value || '').trim();
 
   if (!nombreNegocio || !whatsapp || !plate || !productos) {
     if (typeof showToast === 'function') showToast('⚠️ Campos Requeridos', 'Por favor completa todos los campos requeridos.', 'warning', 2000);
+    return;
+  }
+
+  // VALIDACIÓN ESTRICTA DE DNI (8 DÍGITOS PERUANOS)
+  if (!dni || dni.length !== 8) {
+    if (typeof showToast === 'function') {
+      showToast('🪪 DNI Obligatorio', 'Debes ingresar un número de DNI válido de 8 dígitos para registrarte como repartidor.', 'warning', 4000);
+    } else {
+      alert('Debes ingresar un número de DNI válido de 8 dígitos para registrarte como repartidor.');
+    }
+    const inputDniEl = document.getElementById('inputDriverDni');
+    if (inputDniEl) inputDniEl.focus();
+    return;
+  }
+
+  // VALIDACIÓN ESTRICTA DE PLACA (MÍNIMO 4 CARACTERES)
+  if (!plate || plate.length < 4) {
+    if (typeof showToast === 'function') {
+      showToast('⚠️ Placa Requerida', 'Por favor ingresa la placa de tu vehículo o medio de transporte.', 'warning', 3000);
+    } else {
+      alert('Por favor ingresa la placa de tu vehículo o medio de transporte.');
+    }
+    const inputPlateEl = document.getElementById('inputDriverPlate');
+    if (inputPlateEl) inputPlateEl.focus();
     return;
   }
 
@@ -872,12 +909,31 @@ async function iniciarSesionRepartidor() {
   let existingGmail = cachedUser.gmail || tempGmail;
   let existingUserId = cachedUser.user_id || null;
 
-  // COMPROBACIÓN ESTRICTA DE BANEO POR LA ADMINISTRACIÓN
+  // COMPROBACIÓN ESTRICTA DE BANEO POR LA ADMINISTRACIÓN (EN MEMORIA / LISTA NEGRA)
   if (typeof esRepartidorBaneado === 'function' && esRepartidorBaneado(nombreNegocio, plate, whatsapp, existingGmail)) {
     if (typeof showToast === 'function') {
       showToast('⛔ Acceso Suspendido', 'Tu cuenta de repartidor ha sido suspendida/baneada por la administración de NOTIGAS.', 'error', 2000);
     }
     return;
+  }
+
+  // COMPROBACIÓN DE HARDWARE / DEVICE ID / DNI / PLACA EN SUPABASE
+  if (window.DeviceSecurity && typeof window.DeviceSecurity.checkBlockedStatus === 'function') {
+    const lockCheck = await window.DeviceSecurity.checkBlockedStatus(dni, plate);
+    if (lockCheck && lockCheck.bloqueado) {
+      window.DeviceSecurity.triggerLockout(lockCheck.motivo);
+      return;
+    }
+  }
+
+  // OBTENCIÓN DEL PAYLOAD DE SEGURIDAD (DEVICE ID MULTI-CAPA + HUELLA DE HARDWARE)
+  let secPayload = { device_id: null, device_fingerprint: null };
+  if (window.DeviceSecurity && typeof window.DeviceSecurity.getSecurityPayload === 'function') {
+    try {
+      secPayload = await window.DeviceSecurity.getSecurityPayload();
+    } catch (secErr) {
+      console.warn("Aviso al obtener DeviceSecurity payload:", secErr);
+    }
   }
 
   if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Autenticando...');
@@ -933,6 +989,9 @@ async function iniciarSesionRepartidor() {
     nombre: nombreNegocio,
     whatsapp: whatsapp,
     placa: plate,
+    dni: dni,
+    device_id: secPayload.device_id,
+    device_fingerprint: secPayload.device_fingerprint,
     categoria: categoria,
     productos: productos,
     schedule: schedule,
@@ -1091,6 +1150,15 @@ window.abrirModalRegistroPedido = function() {
 window.abrirRegistroRepartidores = async function() {
   if (typeof closeUserSettingsModal === 'function') closeUserSettingsModal();
 
+  // Comprobar bloqueo previo de hardware o dispositivo
+  if (window.DeviceSecurity && typeof window.DeviceSecurity.checkBlockedStatus === 'function') {
+    const lockCheck = await window.DeviceSecurity.checkBlockedStatus();
+    if (lockCheck && lockCheck.bloqueado) {
+      window.DeviceSecurity.triggerLockout(lockCheck.motivo);
+      return;
+    }
+  }
+
   const userId = (typeof getAuthenticatedUserId === 'function') ? await getAuthenticatedUserId() : null;
   const userData = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
   const isLoggedIn = Boolean(userId || userData?.user_id || userData?.gmail);
@@ -1102,11 +1170,17 @@ window.abrirRegistroRepartidores = async function() {
       try {
         const { data: driverRow } = await window.supabaseClient
           .from('choferes_habilitados')
-          .select('id, nombre_completo, placa, categoria, telefono_whatsapp, ciudad, schedule, productos')
+          .select('id, nombre_completo, placa, dni, bloqueado, motivo_bloqueo, categoria, telefono_whatsapp, ciudad, schedule, productos')
           .eq('user_id', userId)
           .maybeSingle();
 
         if (driverRow) {
+          if (driverRow.bloqueado) {
+            if (window.DeviceSecurity) {
+              window.DeviceSecurity.triggerLockout(driverRow.motivo_bloqueo || 'Dispositivo suspendido por comisiones pendientes.');
+            }
+            return;
+          }
           hasDriverProfile = true;
           const u = AppState.get('userData') || {};
           AppState.set('userData', {
@@ -1116,6 +1190,7 @@ window.abrirRegistroRepartidores = async function() {
             nombre: driverRow.nombre_completo || u.nombre,
             whatsapp: driverRow.telefono_whatsapp || u.whatsapp,
             placa: driverRow.placa,
+            dni: driverRow.dni || u.dni,
             categoria: driverRow.categoria,
             productos: driverRow.productos,
             schedule: driverRow.schedule,
@@ -1142,6 +1217,10 @@ window.abrirRegistroRepartidores = async function() {
         const inputDriverCiudad = document.getElementById('inputDriverCiudad');
         if (inputDriverCiudad && userData?.ciudad) {
           inputDriverCiudad.value = userData.ciudad;
+        }
+        const inputDriverDni = document.getElementById('inputDriverDni');
+        if (inputDriverDni && userData?.dni) {
+          inputDriverDni.value = userData.dni;
         }
         const titleEl = document.getElementById('driverModalTitleText');
         const subtitleEl = document.getElementById('driverModalSubtitle');
@@ -1796,7 +1875,7 @@ async function procesarSesionExitosa(user, isInteractive = false) {
           const [driverRes, profileRes] = await Promise.all([
             window.supabaseClient
               .from('choferes_habilitados')
-              .select('ciudad, categoria, productos, schedule, estado_verificacion')
+              .select('ciudad, categoria, productos, schedule, estado_verificacion, bloqueado, motivo_bloqueo, dni, placa')
               .eq('user_id', user.id)
               .maybeSingle(),
             window.supabaseClient
@@ -1809,6 +1888,12 @@ async function procesarSesionExitosa(user, isInteractive = false) {
           if (driverRes?.data) {
             esRepartidorDB = true;
             choferData = driverRes.data;
+            if (choferData.bloqueado || choferData.estado_verificacion === 'bloqueado') {
+              if (window.DeviceSecurity) {
+                window.DeviceSecurity.triggerLockout(choferData.motivo_bloqueo || 'Dispositivo suspendido por falta de pago de comisiones.');
+              }
+              return;
+            }
           }
           if (profileRes?.data) {
             existingProfile = profileRes.data;
@@ -1818,6 +1903,13 @@ async function procesarSesionExitosa(user, isInteractive = false) {
           if (window.checkAndApplyAdminStatus) {
             window.checkAndApplyAdminStatus(user).catch(() => {});
           }
+        }
+
+        if (choferData && (choferData.bloqueado || choferData.estado_verificacion === 'bloqueado')) {
+          if (window.DeviceSecurity) {
+            window.DeviceSecurity.triggerLockout(choferData.motivo_bloqueo || 'Dispositivo suspendido por falta de pago de comisiones.');
+          }
+          return;
         }
 
         if (!window._roleSelectedNow) {
@@ -1867,7 +1959,7 @@ async function procesarSesionExitosa(user, isInteractive = false) {
       nombre: (existingProfile?.nombre || userNombre),
       apellido: (existingProfile?.apellido || userApellido),
       telefono: existingProfile?.telefono || choferData?.telefono_whatsapp || user.user_metadata?.telefono || '',
-      dni: existingProfile?.dni || user.user_metadata?.dni || '',
+      dni: existingProfile?.dni || user.user_metadata?.dni || choferData?.dni || '',
       ciudad: resolvedCity,
       user_id: user.id
     };
@@ -1880,15 +1972,30 @@ async function procesarSesionExitosa(user, isInteractive = false) {
         if (choferData.categoria) clienteData.categoria = choferData.categoria;
         if (choferData.productos) clienteData.productos = choferData.productos;
         if (choferData.schedule) clienteData.schedule = choferData.schedule;
+        if (choferData.dni) clienteData.dni = choferData.dni;
+        if (choferData.placa) clienteData.placa = choferData.placa;
 
         AppState.set('city', clienteData.ciudad);
       } else {
-        // Driver NO EXISTE en la DB. Mostrar formulario de registro de negocio
+        // Driver NO EXISTE en la DB. Comprobar bloqueo previo del dispositivo
+        if (window.DeviceSecurity && typeof window.DeviceSecurity.checkBlockedStatus === 'function') {
+          const lockCheck = await window.DeviceSecurity.checkBlockedStatus(clienteData.dni);
+          if (lockCheck && lockCheck.bloqueado) {
+            if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+            window.DeviceSecurity.triggerLockout(lockCheck.motivo);
+            return;
+          }
+        }
+
+        // Mostrar formulario de registro de negocio
         if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
         if (modalAuth) modalAuth.style.display = 'none';
 
         const inputDriverNombre = document.getElementById('inputDriverNombre');
         if (inputDriverNombre) inputDriverNombre.value = clienteData.nombre;
+
+        const inputDriverDni = document.getElementById('inputDriverDni');
+        if (inputDriverDni && clienteData.dni) inputDriverDni.value = clienteData.dni;
 
         const modalDriver = document.getElementById('modalDriver');
         if (modalDriver) modalDriver.style.display = 'flex';
@@ -2385,7 +2492,7 @@ async function cargarPerfilChoferEnModal() {
 
     const { data: driverRow, error } = await window.supabaseClient
       .from('choferes_habilitados')
-      .select('id, user_id, nombre_completo, telefono_whatsapp, placa, categoria, productos, schedule, ciudad, color_camion, precio_balon_10kg, es_premium, premium_vence_at, estado_pago_premium, comprobante_pago_url, tipo_plan')
+      .select('id, user_id, nombre_completo, telefono_whatsapp, placa, dni, categoria, productos, schedule, ciudad, color_camion, precio_balon_10kg, es_premium, premium_vence_at, estado_pago_premium, comprobante_pago_url, tipo_plan')
       .eq('user_id', userId)
       .maybeSingle();
 
@@ -2394,6 +2501,7 @@ async function cargarPerfilChoferEnModal() {
     const inputNombre = document.getElementById('inputDriverNombre');
     const inputTel = document.getElementById('inputDriverTelRef');
     const inputPlaca = document.getElementById('inputDriverPlate');
+    const inputDni = document.getElementById('inputDriverDni');
     const inputCat = document.getElementById('inputDriverCat');
     const inputProd = document.getElementById('inputDriverProductos');
     const inputCiudad = document.getElementById('inputDriverCiudad');
@@ -2402,6 +2510,7 @@ async function cargarPerfilChoferEnModal() {
     if (inputNombre && driverRow.nombre_completo) inputNombre.value = driverRow.nombre_completo;
     if (inputTel && driverRow.telefono_whatsapp) inputTel.value = driverRow.telefono_whatsapp;
     if (inputPlaca && driverRow.placa) inputPlaca.value = driverRow.placa;
+    if (inputDni && driverRow.dni) inputDni.value = driverRow.dni;
     if (inputCat && driverRow.categoria) inputCat.value = driverRow.categoria;
     if (inputProd && driverRow.productos) inputProd.value = driverRow.productos;
     if (inputCiudad && driverRow.ciudad) inputCiudad.value = driverRow.ciudad;

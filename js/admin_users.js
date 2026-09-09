@@ -60,9 +60,7 @@ function esRepartidorBaneado(nombre, placa, whatsapp, gmail) {
 async function banearRepartidorAdmin(vendorUserId, vendorName, plate = '', whatsapp = '') {
   // IMPORTANTE: vendorUserId debe ser el auth.uid() real del chofer (viene de
   // choferes_habilitados.user_id vía data-user-id), NO el id de la fila
-  // choferes_habilitados.id. Antes se guardaba "driver_<id-de-fila>" en
-  // usuarios_baneados.user_id, que nunca coincidía con auth.uid(), así que
-  // is_banned() jamás detectaba el baneo a nivel de base de datos.
+  // choferes_habilitados.id.
   if (!vendorUserId) {
     console.error('banearRepartidorAdmin: falta vendorUserId (auth.uid real del chofer)');
     if (typeof showToast === 'function') {
@@ -72,20 +70,29 @@ async function banearRepartidorAdmin(vendorUserId, vendorName, plate = '', whats
   }
 
   if (window.supabaseClient) {
-    const { error } = await window.supabaseClient.from('usuarios_baneados').insert([{
-      user_id: vendorUserId,
-      nombre: vendorName,
-      placa: plate,
-      telefono: whatsapp,
-      motivo: 'Baneado por Administrador'
-    }]);
+    // 1. Invocar RPC atómica que bloquea al chofer, su DNI, Placa y su Device ID / Hardware Fingerprint
+    const { data: rpcRes, error: rpcError } = await window.supabaseClient.rpc('rpc_banear_repartidor_completo', {
+      p_user_id: vendorUserId,
+      p_motivo: 'Falta de pago de comisión (S/ 1 por balón)'
+    });
 
-    if (error) {
-      console.error('Error al banear repartidor:', error);
-      if (typeof showToast === 'function') {
-        showToast('❌ Error al Banear', error.message || 'No se pudo registrar el baneo en la base de datos.', 'error', 5000);
+    if (rpcError) {
+      console.warn('Aviso en rpc_banear_repartidor_completo, ejecutando fallback directo:', rpcError);
+      const { error } = await window.supabaseClient.from('usuarios_baneados').insert([{
+        user_id: vendorUserId,
+        nombre: vendorName,
+        placa: plate,
+        telefono: whatsapp,
+        motivo: 'Falta de pago de comisión (S/ 1 por balón)'
+      }]);
+
+      if (error) {
+        console.error('Error al banear repartidor:', error);
+        if (typeof showToast === 'function') {
+          showToast('❌ Error al Banear', error.message || 'No se pudo registrar el baneo en la base de datos.', 'error', 5000);
+        }
+        return; // No refrescar como si hubiera funcionado
       }
-      return; // No refrescar como si hubiera funcionado
     }
 
     await descargarBaneadosDeSupabase();
@@ -96,7 +103,7 @@ async function banearRepartidorAdmin(vendorUserId, vendorName, plate = '', whats
   if (typeof renderVendorCards === 'function') renderVendorCards('TODOS');
 
   if (typeof showToast === 'function') {
-    showToast('🚫 Repartidor Baneado', `Se suspendió el acceso e ingreso de "${vendorName}".`, 'error', 5000);
+    showToast('🚫 Repartidor y Celular Bloqueados', `Se suspendió a "${vendorName}" y se bloqueó el hardware de su dispositivo por comisiones pendientes.`, 'error', 6000);
   }
 }
 async function limpiarTodosLosBaneosAdmin() {
@@ -118,6 +125,12 @@ async function ejecutarLimpiezaBaneos() {
   if (window.supabaseClient) {
     const { error } = await window.supabaseClient.from('usuarios_baneados').delete().not('id', 'is', null);
     if (error) console.error("Error limpiando baneos en Supabase:", error);
+
+    // Desbloquear también en choferes_habilitados
+    await window.supabaseClient.from('choferes_habilitados')
+      .update({ bloqueado: false, motivo_bloqueo: null, estado_verificacion: 'aprobado' })
+      .not('id', 'is', null);
+
     await descargarBaneadosDeSupabase();
   }
 
@@ -143,6 +156,12 @@ async function desbanearRepartidorAdmin(vendorUserId, vendorName) {
       }
       return;
     }
+
+    // Desbloquear también en choferes_habilitados
+    await window.supabaseClient.from('choferes_habilitados')
+      .update({ bloqueado: false, motivo_bloqueo: null, estado_verificacion: 'aprobado' })
+      .eq('user_id', vendorUserId);
+
     await descargarBaneadosDeSupabase();
   }
 

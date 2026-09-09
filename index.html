@@ -944,8 +944,18 @@
 
         <label>Número de Placa del Vehículo / Medio de Transporte:</label>
 
-        <input type="text" id="inputDriverPlate" placeholder="Ej: 3842-XYZ">
+        <input type="text" id="inputDriverPlate" placeholder="Ej: 3842-XYZ" required>
 
+      </div>
+
+      <!-- DNI DEL REPARTIDOR (OBLIGATORIO - VINCULADO AL DISPOSITIVO) -->
+      <div class="form-group" style="background:#0F172A; border:1.5px solid #38BDF8; border-radius:10px; padding:12px; margin-top:8px; margin-bottom:12px;">
+        <label style="color:#FEF08A; font-weight:800; display:flex; justify-content:space-between; align-items:center;">
+          <span>🪪 Número de DNI del Repartidor (Titular):</span>
+          <span style="color:#38BDF8; font-size:11px; font-weight:800;">8 Dígitos Numéricos</span>
+        </label>
+        <input type="tel" id="inputDriverDni" maxlength="8" pattern="[0-9]{8}" placeholder="Ej: 71234567" required style="font-size:15px; font-weight:bold; letter-spacing:1.5px; color:#FFFFFF; background:#1E293B; border:1px solid #475569; border-radius:8px; width:100%; box-sizing:border-box; padding:10px 12px; margin-top:6px;">
+        <small style="color:#94A3B8; font-size:11px; display:block; margin-top:5px;">El DNI es verificado y vinculado al hardware de este dispositivo para control de comisiones y seguridad antifraude.</small>
       </div>
 
       <div class="form-group">
@@ -2904,6 +2914,36 @@
     </div>
   </div>
 
+  <!-- MODAL DE BLOQUEO DE DISPOSITIVO (LE CIERRA LA PUERTA EN LA CARA) -->
+  <div class="modal" id="modalDeviceLockout" style="display:none; z-index:999999; background:rgba(15, 23, 42, 0.96); backdrop-filter:blur(10px); align-items:center; justify-content:center; position:fixed; inset:0;">
+    <div class="modal-content" style="max-width:480px; width:90%; background:#0F172A; border:2px solid #EF4444; border-radius:16px; padding:24px; text-align:center; box-shadow:0 0 35px rgba(239, 68, 68, 0.4); animation:none;">
+      <div style="width:68px; height:68px; border-radius:50%; background:rgba(239, 68, 68, 0.15); border:2px solid #EF4444; display:flex; align-items:center; justify-content:center; margin:0 auto 16px auto;">
+        <i class="fa-solid fa-ban" style="font-size:36px; color:#EF4444;"></i>
+      </div>
+      <h3 style="color:#EF4444; margin:0 0 8px 0; font-size:18px; font-weight:900; letter-spacing:0.5px;">
+        🚪 ACCESO DENEGADO
+      </h3>
+      <h4 style="color:#FCA5A5; margin:0 0 14px 0; font-size:13.5px; font-weight:800;">
+        DISPOSITIVO SUSPENDIDO POR EL SISTEMA
+      </h4>
+      <div style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:10px; padding:12px; margin-bottom:14px; text-align:left; font-size:11.5px; color:#CBD5E1; line-height:1.5;">
+        <div style="margin-bottom:6px;">
+          <strong style="color:#FCA5A5;">Motivo de Bloqueo:</strong>
+          <span id="deviceLockoutReasonText" style="color:#FFFFFF; display:block; margin-top:2px;">Falta de pago de comisión (S/ 1 por balón) o sanción administrativa.</span>
+        </div>
+        <div style="margin-top:8px; padding-top:8px; border-top:1px dashed #334155; font-size:10.5px; color:#94A3B8;">
+          <strong>ID de Dispositivo Móvil:</strong> <code id="deviceLockoutIdText" style="color:#38BDF8;">DEV-LOCKED</code>
+        </div>
+      </div>
+      <div style="background:#1E293B; border-radius:8px; padding:10px; margin-bottom:18px; font-size:11px; color:#94A3B8; line-height:1.45; text-align:left;">
+        ⚠️ <strong>Aviso de Seguridad Antifraude:</strong> Este teléfono celular ha sido vinculado permanentemente a través de su identificador de hardware. Intentar abrir una nueva cuenta con otro DNI, nombre o chip telefónico en este mismo equipo mantendrá el acceso denegado.
+      </div>
+      <a href="https://wa.me/51987654321?text=Hola%20Administración%20NOTIGAS,%20mi%20dispositivo%20ha%20sido%20bloqueado%20por%20comisiones%20pendientes.%20Deseo%20regularizar%20mi%20pago." target="_blank" rel="noopener noreferrer" style="display:inline-flex; align-items:center; justify-content:center; gap:8px; width:100%; background:linear-gradient(135deg, #22C55E, #16A34A); color:white; font-weight:800; font-size:13px; text-decoration:none; padding:12px; border-radius:10px; box-shadow:0 3px 12px rgba(34,197,94,0.35);">
+        <i class="fa-brands fa-whatsapp" style="font-size:18px;"></i> Contactar Administración por WhatsApp
+      </a>
+    </div>
+  </div>
+
   <!-- SCRIPTS AL FINAL DEL BODY CON CARGA ASÍNCRONA/DEFER Y CODE-SPLITTING POR MÓDULOS -->
 
   <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
@@ -2917,6 +2957,7 @@
 
   <script defer src="js/supabase-config.js?v=126"></script>
 
+  <script src="js/device_security.js?v=126"></script>
   <script defer src="js/voucher_ocr.js?v=126"></script>
 
   <script defer src="js/auth.js?v=126"></script>

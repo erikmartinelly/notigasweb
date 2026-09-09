@@ -216,6 +216,7 @@ function abrirFichaRepartidorEdicion() {
     setVal('inputDriverNombre', u.nombre);
     setVal('inputDriverTelRef', u.whatsapp);
     setVal('inputDriverPlate', u.placa);
+    setVal('inputDriverDni', u.dni);
     setVal('inputDriverCat', u.categoria);
     setVal('inputDriverProductos', u.productos);
     setVal('inputDriverZonas', u.zonas);
