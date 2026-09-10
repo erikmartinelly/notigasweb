@@ -140,12 +140,11 @@
     }
   }
 
-  async function banearPorFraudePagoAdmin(pagoId, driverName) {
+  async function banearPorFraudePagoAdmin(pagoId) {
     const ejecutar = async () => {
       try {
         if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Aplicando baneo por fraude...');
-        const motivo = `Comprobante de remesa falsificado o manipulado${driverName ? ` - ${driverName}` : ''}`;
-        const data = await llamarRevision(pagoId, 'fraude', motivo);
+        const data = await llamarRevision(pagoId, 'fraude', 'Comprobante de remesa falsificado o manipulado');
         if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
         if (typeof showToast === 'function') showToast('Repartidor baneado', data?.mensaje || 'Baneo permanente aplicado por fraude.', 'error', 5500);
         await renderAdminPaymentsReview();
@@ -156,7 +155,7 @@
       }
     };
 
-    const texto = `Esta acción marcará el pago como fraude y bloqueará la cuenta, DNI y dispositivos asociados${driverName ? ` de ${driverName}` : ''}. Un pago posterior no levantará este baneo.`;
+    const texto = 'Esta acción marcará el pago como fraude y bloqueará la cuenta, DNI y dispositivos asociados. Un pago posterior no levantará este baneo.';
     if (typeof showConfirmModal === 'function') {
       showConfirmModal('⛔', 'Banear por comprobante falsificado', texto, 'Banear por fraude', ejecutar);
     } else if (confirm(texto)) {
@@ -166,21 +165,19 @@
 
   function accionesPago(row) {
     const estado = String(row.estado || '').toLowerCase();
+    const id = esc(row.pago_id);
+
     if (estado === 'pendiente_verificacion_recepcion') {
-      const id = esc(row.pago_id);
-      const name = String(row.driver_nombre || 'Repartidor').replace(/'/g, '&#39;');
       return `
         <div style="display:grid;gap:6px;min-width:190px;">
           <button type="button" onclick="window.confirmarRecepcionPagoAdmin('${id}')" style="background:#16A34A;color:white;border:0;padding:8px 10px;border-radius:8px;font-weight:800;cursor:pointer;">✓ Confirmar recepción</button>
           <button type="button" onclick="window.marcarPagoNoRecibidoAdmin('${id}')" style="background:#475569;color:white;border:0;padding:8px 10px;border-radius:8px;font-weight:700;cursor:pointer;">No recibido</button>
-          <button type="button" onclick="window.banearPorFraudePagoAdmin('${id}','${name}')" style="background:#DC2626;color:white;border:0;padding:8px 10px;border-radius:8px;font-weight:800;cursor:pointer;">⛔ Banear por fraude</button>
+          <button type="button" onclick="window.banearPorFraudePagoAdmin('${id}')" style="background:#DC2626;color:white;border:0;padding:8px 10px;border-radius:8px;font-weight:800;cursor:pointer;">⛔ Banear por fraude</button>
         </div>`;
     }
 
     if (estado === 'ocr_no_valido' || estado === 'no_recibido') {
-      const id = esc(row.pago_id);
-      const name = String(row.driver_nombre || 'Repartidor').replace(/'/g, '&#39;');
-      return `<button type="button" onclick="window.banearPorFraudePagoAdmin('${id}','${name}')" style="background:#DC2626;color:white;border:0;padding:8px 10px;border-radius:8px;font-weight:800;cursor:pointer;">⛔ Banear por fraude</button>`;
+      return `<button type="button" onclick="window.banearPorFraudePagoAdmin('${id}')" style="background:#DC2626;color:white;border:0;padding:8px 10px;border-radius:8px;font-weight:800;cursor:pointer;">⛔ Banear por fraude</button>`;
     }
 
     return '<span style="color:#94A3B8;font-size:12px;">Sin acciones pendientes</span>';
@@ -270,6 +267,22 @@
   window.confirmarRecepcionPagoAdmin = confirmarRecepcionPagoAdmin;
   window.marcarPagoNoRecibidoAdmin = marcarPagoNoRecibidoAdmin;
   window.banearPorFraudePagoAdmin = banearPorFraudePagoAdmin;
+
+  // Compatibilidad con el panel heredado: acepta "pagos" como nombre de pestaña y
+  // fuerza el render nuevo después de que admin.js cambie de tab.
+  const legacySwitchModalTab = window.switchModalTab;
+  if (typeof legacySwitchModalTab === 'function' && !window._notigasPaymentsSwitchWrapped) {
+    window._notigasPaymentsSwitchWrapped = true;
+    window.switchModalTab = function(target) {
+      const normalized = (typeof target === 'string' && target.toLowerCase() === 'pagos') ? 3 : target;
+      const result = legacySwitchModalTab(normalized);
+      const idx = (typeof normalized === 'number') ? normalized : parseInt(normalized, 10);
+      if (idx === 3) {
+        Promise.resolve().then(() => renderAdminPaymentsReview());
+      }
+      return result;
+    };
+  }
 
   normalizarEtiquetasPanelPagos();
 })();
