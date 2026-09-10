@@ -29,3 +29,9 @@ jobs:
 
       - name: Verify Audit Hardening Invariants
         run: node scripts/check_audit_hardening.js
+
+      - name: Verify Driver Promotion and Credit Tiers
+        run: node scripts/test_driver_plans.js
+
+      - name: Verify Financial Contract
+        run: python3 test_financial_parameters.py
