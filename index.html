@@ -1171,7 +1171,7 @@
         <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
           <input type="checkbox" id="checkAceptoTerminosChofer" checked required style="margin-top:3px; accent-color:#F59E0B; width:17px; height:17px; cursor:pointer;">
           <span>
-            Acepto los <a href="javascript:void(0)" onclick="window.abrirModalTerminosRepartidores()" style="color:#FDE68A; font-weight:800; text-decoration:underline;">Términos y Condiciones para Repartidores</a> de Notigas.com (Comisión fija de S/ 1.00 por balón entregado, límite de crédito de S/ 50.00, corte semanal los domingos 11:59 PM y baneo definitivo por hardware en caso de incumplimiento).
+            Acepto los <a href="javascript:void(0)" onclick="window.abrirModalTerminosRepartidores()" style="color:#FDE68A; font-weight:800; text-decoration:underline;">Términos y Condiciones para Repartidores</a> de Notigas.com (Comisión de S/ 0.20 por pedido entregado, ciclo de crédito de 100 pedidos (S/ 20) y suspensión hasta regularizar el pago pendiente).
           </span>
         </label>
       </div>
@@ -2517,16 +2517,10 @@
                       <i class="fa-solid fa-coins"></i> Control Financiero y Comisiones Notigas
                     </strong>
                     <div style="font-size:10.5px; color:#94A3B8; margin-top:3px; line-height:1.4;">
-                      Comisión fija: <strong>S/ 1.00</strong>/balón • Límite de crédito: <strong>S/ 50.00</strong> (Suspensión) • Corte: <strong>Dom 11:59 PM</strong> • Baneo: <strong>Lun 1:00 PM</strong>
+                      Comisión: <strong>S/ 0.20</strong>/pedido • Ciclo: <strong>100 pedidos = S/ 20</strong> • Suspensión hasta regularizar el pago
                     </div>
                   </div>
                   <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                    <button type="button" onclick="ejecutarCorteSemanalManualAdmin()" style="background:#0284C7; color:white; border:none; padding:7px 11px; border-radius:6px; font-size:10.5px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:5px;" title="Generar corte semanal de saldos">
-                      <i class="fa-solid fa-calendar-check"></i> Corte Dom (11:59 PM)
-                    </button>
-                    <button type="button" onclick="ejecutarBaneoSemanalManualAdmin()" style="background:#DC2626; color:white; border:none; padding:7px 11px; border-radius:6px; font-size:10.5px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:5px;" title="Bloquear choferes con deuda > S/ 0 (DNI + Placa + Hardware)">
-                      <i class="fa-solid fa-ban"></i> Baneo Lun (1:00 PM)
-                    </button>
                   </div>
                 </div>
               </div>

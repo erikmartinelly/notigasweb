@@ -134,12 +134,12 @@ async function renderDriverOrdersList() {
   }
 
   // 3. Estado operativo y de crédito del repartidor. La suspensión depende del
-  // ciclo de 100 unidades entregadas; el saldo es informativo y se liquida por remesa.
+  // ciclo de 100 pedidos entregados; el saldo es informativo y se liquida por Yape.
   let driverFinancePromise = Promise.resolve({ data: null, error: null });
   if (localUserId) {
     driverFinancePromise = window.supabaseClient
       .from('choferes_habilitados')
-      .select('comisiones_pendientes, estado_servicio, bloqueado, motivo_bloqueo, promo_pedidos_gratis_total, promo_pedidos_gratis_usados, botellones_credito_ciclo, limite_botellones_credito, comision_por_pedido')
+      .select('comisiones_pendientes, estado_servicio, bloqueado, motivo_bloqueo, pedidos_credito_ciclo, limite_pedidos_credito, comision_por_pedido')
       .eq('user_id', localUserId)
       .maybeSingle();
   }
@@ -154,10 +154,8 @@ async function renderDriverOrdersList() {
     estado_servicio: financeRow.estado_servicio || userData?.estado_servicio || 'activo',
     bloqueado: Boolean(financeRow.bloqueado || userData?.bloqueado),
     motivo_bloqueo: financeRow.motivo_bloqueo || userData?.motivo_bloqueo || '',
-    gratisTotal: Number(financeRow.promo_pedidos_gratis_total ?? userData?.promo_pedidos_gratis_total ?? 20),
-    gratisUsados: Number(financeRow.promo_pedidos_gratis_usados ?? userData?.promo_pedidos_gratis_usados ?? 0),
-    unidadesCiclo: Number(financeRow.botellones_credito_ciclo ?? userData?.botellones_credito_ciclo ?? 0),
-    unidadesLimite: Number(financeRow.limite_botellones_credito ?? userData?.limite_botellones_credito ?? 100),
+    pedidosCiclo: Number(financeRow.pedidos_credito_ciclo ?? userData?.pedidos_credito_ciclo ?? 0),
+    pedidosLimite: Number(financeRow.limite_pedidos_credito ?? userData?.limite_pedidos_credito ?? 100),
     comisionPedido: Number(financeRow.comision_por_pedido ?? userData?.comision_por_pedido ?? 0.20)
   };
   driverFinances.isSuspended = Boolean(
@@ -172,21 +170,20 @@ async function renderDriverOrdersList() {
     AppState.set('userData', { ...curU, ...financeRow });
   }
 
-  const pctCredito = driverFinances.unidadesLimite > 0
-    ? Math.min(100, Math.round((driverFinances.unidadesCiclo / driverFinances.unidadesLimite) * 100))
+  const pctCredito = driverFinances.pedidosLimite > 0
+    ? Math.min(100, Math.round((driverFinances.pedidosCiclo / driverFinances.pedidosLimite) * 100))
     : 0;
   const barColor = driverFinances.isSuspended || pctCredito >= 100 ? '#EF4444' : (pctCredito >= 70 ? '#F59E0B' : '#10B981');
-  const gratisRestantes = Math.max(0, driverFinances.gratisTotal - driverFinances.gratisUsados);
 
   let financialWidgetHtml = `
     <div class="driver-financial-card" style="background:linear-gradient(135deg,#1E293B 0%,#0F172A 100%);border:1.5px solid ${driverFinances.isSuspended ? '#EF4444' : '#334155'};border-radius:10px;padding:10px 12px;margin-bottom:12px;">
       <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:6px;">
         <span style="font-size:11px;font-weight:800;color:#E2E8F0;">💳 Crédito por uso</span>
-        <span style="font-size:11px;font-weight:900;color:${barColor};">${driverFinances.unidadesCiclo}/${driverFinances.unidadesLimite} unidades</span>
+        <span style="font-size:11px;font-weight:900;color:${barColor};">${driverFinances.pedidosCiclo}/${driverFinances.pedidosLimite} pedidos</span>
       </div>
       <div style="background:#0F172A;border-radius:6px;height:8px;width:100%;overflow:hidden;border:1px solid #334155;"><div style="background:${barColor};height:100%;width:${pctCredito}%;"></div></div>
       <div style="display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:9.5px;color:#94A3B8;">
-        <span>${gratisRestantes > 0 ? `${gratisRestantes} pedido(s) gratis restantes` : `Comisión: S/ ${driverFinances.comisionPedido.toFixed(2)} por pedido confirmado`}</span>
+        <span>Comisión: S/ ${driverFinances.comisionPedido.toFixed(2)} por pedido confirmado</span>
         <span>Saldo: S/ ${driverFinances.comisiones.toFixed(2)}</span>
       </div>
     </div>`;
@@ -216,7 +213,7 @@ async function renderDriverOrdersList() {
 
   const planBannerHtml = `
     <div class="driver-plan-banner" style="background:linear-gradient(135deg,rgba(16,185,129,.14),#0F172A);border:1.5px solid #10B981;border-radius:10px;padding:10px 12px;margin-bottom:12px;color:#D1FAE5;font-size:11.5px;line-height:1.45;">
-      <strong style="color:#FFFFFF;">Pedidos en tiempo real</strong> · Los primeros 20 pedidos confirmados no generan comisión. Después: S/ 0,20 por pedido, con crédito hasta 100 unidades entregadas.
+      <strong style="color:#FFFFFF;">Pedidos en tiempo real</strong> · Comisión S/ 0,20 por pedido confirmado. Ciclo de crédito: 100 pedidos = S/ 20.
     </div>`;
 
   if (!orders || orders.length === 0) {
@@ -389,7 +386,7 @@ async function renderDriverOrdersList() {
                     <i class="fa-solid fa-map-location-dot"></i> VER EN EL MAPA
                   </button>
                   ${driverFinances.isSuspended ? `
-                    <button type="button" style="background:#475569; color:#94A3B8; border:none; padding:5px 12px; border-radius:6px; font-size:10px; font-weight:800; cursor:not-allowed; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;" onclick="alert('⛔ Cuenta Suspendida: Has alcanzado el tope de S/ 50.00 en comisiones. Paga vía Yape a la administración para volver a tomar pedidos.');" title="Cuenta suspendida por tope de comisiones">
+                    <button type="button" style="background:#475569; color:#94A3B8; border:none; padding:5px 12px; border-radius:6px; font-size:10px; font-weight:800; cursor:not-allowed; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;" onclick="alert('⛔ Cuenta suspendida: Alcanzaste el ciclo de 100 pedidos (S/ 20). Regulariza tu pago por Yape para volver a tomar pedidos.');" title="Cuenta suspendida por tope de comisiones">
                       <i class="fa-solid fa-ban"></i> Bloqueado
                     </button>
                   ` : `
@@ -442,13 +439,18 @@ window.aceptarPedidoRepartidor = function(orderId, lat, lng, address) {
     return;
   }
 
-  // Comprobar suspensión de comisiones o límite de crédito
+  // Comprobar suspensión o límite del ciclo de crédito vigente.
   const curUser = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
-  if (curUser && (curUser.comisiones_pendientes >= (curUser.limite_credito || 50) || curUser.estado_servicio === 'suspendido_tope' || curUser.bloqueado)) {
+  const pedidosCiclo = Number(curUser?.pedidos_credito_ciclo || 0);
+  const pedidosLimite = Number(curUser?.limite_pedidos_credito || 100);
+  const saldoPendiente = Number(curUser?.comisiones_pendientes || 0);
+  const limiteCredito = Number(curUser?.limite_credito || 20);
+  if (curUser && (pedidosCiclo >= pedidosLimite || saldoPendiente >= limiteCredito || curUser.estado_servicio === 'suspendido_tope' || curUser.bloqueado)) {
+    const mensaje = 'Alcanzaste el ciclo de 100 pedidos (S/ 20). Regulariza tu pago por Yape para volver a recibir pedidos.';
     if (typeof showToast === 'function') {
-      showToast('⛔ Límite de Crédito Alcanzado', 'Has acumulado S/ 50.00 en comisiones pendientes. Regulariza tu saldo por Yape a la administración para volver a recibir pedidos.', 'error', 7000);
+      showToast('⛔ Límite de crédito alcanzado', mensaje, 'error', 7000);
     } else {
-      alert('⛔ Cuenta Suspendida: Límite de crédito de S/ 50.00 alcanzado. Paga tus comisiones por Yape para continuar.');
+      alert('⛔ Cuenta suspendida: ' + mensaje);
     }
     return;
   }
@@ -565,15 +567,19 @@ async function confirmarEntregaPedido(id) {
       } else {
         closeDriverOrdersModal();
         const res = data || {};
-        const newSaldo = res.comisiones_pendientes != null ? Number(res.comisiones_pendientes) : null;
-        const isSuspended = Boolean(res.suspendido || (newSaldo != null && newSaldo >= 50));
+        const accounting = res.accounting || res;
+        const newSaldo = accounting.comisiones_pendientes != null ? Number(accounting.comisiones_pendientes) : null;
+        const commissionCharged = Number(accounting.comision_cargada ?? res.comision_cargada ?? 0.20);
+        const ordersCycle = Number(accounting.pedidos_credito_ciclo ?? res.pedidos_credito_ciclo ?? 0);
+        const ordersLimit = Number(accounting.limite_pedidos_credito ?? res.limite_pedidos_credito ?? 100);
+        const isSuspended = Boolean(accounting.suspendido ?? res.suspendido ?? false);
 
         if (isSuspended) {
-          showToast('⚠️ Límite de Crédito Alcanzado (S/ 50.00)', `Pedido entregado (+S/ 1.00 de comisión). Saldo: S/ ${newSaldo ? newSaldo.toFixed(2) : '50.00'}. Tu cuenta ha sido suspendida para tomar nuevos pedidos hasta regularizar vía Yape.`, 'warning', 8000);
+          showToast('⚠️ Límite de crédito alcanzado', `Pedido entregado (+S/ ${commissionCharged.toFixed(2)} de comisión). Ciclo: ${ordersCycle || ordersLimit}/${ordersLimit} pedidos (S/ 20). Regulariza tu pago para continuar.`, 'warning', 8000);
         } else if (newSaldo != null) {
-          showToast('¡Entrega Confirmada! 🎉', `Comisión fija de S/ 1.00 registrada. Saldo acumulado: S/ ${newSaldo.toFixed(2)} / S/ 50.00 (Tope).`, 'success', 5000);
+          showToast('¡Entrega Confirmada! 🎉', `Comisión S/ ${commissionCharged.toFixed(2)} registrada. Saldo acumulado: S/ ${newSaldo.toFixed(2)} · Ciclo: ${ordersCycle}/${ordersLimit} pedidos.`, 'success', 5000);
         } else {
-          showToast('¡Buen trabajo!', 'Pedido entregado. El pedido fue archivado en tus estadísticas.', 'success', 5000);
+          showToast('¡Buen trabajo!', 'Pedido entregado y contabilizado.', 'success', 5000);
         }
 
         if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
