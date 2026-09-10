@@ -1,0 +1,2 @@
+-- Historial remoto aplicado directamente en Supabase.
+-- Corrige Perú/PEN, S/0.20 por pedido, 100 pedidos = S/20 y privacidad. Estado final reproducible en git_reconcile_*.

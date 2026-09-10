@@ -3,7 +3,7 @@
    - OCR gratuito con Tesseract.js en el navegador.
    - La imagen NO se sube ni se persiste: solo se envian datos estructurados.
    - La validacion definitiva (fecha, monto, transaccion unica e identidad)
-     ocurre en PostgreSQL mediante rpc_registrar_ocr_pago.
+     ocurre en PostgreSQL mediante el flujo vigente de pagos del repartidor.
    ========================================================================== */
 (function () {
   'use strict';
@@ -280,59 +280,9 @@
     }
   }
 
-  async function generarCobroComisiones() {
-    if (!window.supabaseClient) throw new Error('Sin conexión con Supabase');
-    const { data, error } = await window.supabaseClient.rpc('rpc_generar_cobro_comisiones');
-    if (error) throw error;
-    return data;
-  }
-
-  async function registrarPagoDesdeOCR(pagoId, parsed) {
-    if (!window.supabaseClient) throw new Error('Sin conexión con Supabase');
-    if (!pagoId) throw new Error('Falta el identificador del cobro');
-    if (!parsed?.operacion) throw new Error('No se detectó número de transacción');
-    if (!parsed?.fechaISO) throw new Error('No se detectó fecha y hora completas del pago');
-    if (parsed?.monto === null || parsed?.monto === undefined) throw new Error('No se detectó el monto');
-
-    let deviceId = null;
-    try {
-      deviceId = localStorage.getItem('notigas_device_id') || null;
-    } catch (_) {}
-
-    const { data, error } = await window.supabaseClient.rpc('rpc_registrar_ocr_pago', {
-      p_pago_id: pagoId,
-      p_monto: Number(parsed.monto),
-      p_fecha_pago: parsed.fechaISO,
-      p_numero_transaccion: String(parsed.operacion),
-      p_remitente_nombre: parsed.remitenteNombre || null,
-      p_remitente_dni: normalizarNumero(parsed.remitenteDni),
-      p_remitente_yape: normalizarNumero(parsed.remitenteYape),
-      p_device_id: deviceId,
-      p_ocr_confianza: parsed.confianza === null || parsed.confianza === undefined ? null : Number(parsed.confianza)
-    });
-
-    if (error) throw error;
-    return data;
-  }
-
-  async function procesarYRegistrarPagoOCR(imageFile, pagoId, onProgress = null) {
-    const parsed = await leerYValidarVoucherOCR(imageFile, onProgress);
-    if (!parsed.esValido) return { ok: false, parsed, server: null };
-    const server = await registrarPagoDesdeOCR(pagoId, parsed);
-    return { ok: true, parsed, server };
-  }
-
-  async function obtenerInstruccionesPago() {
-    if (!window.supabaseClient) throw new Error('Sin conexión con Supabase');
-    const { data, error } = await window.supabaseClient.rpc('rpc_get_payment_instructions');
-    if (error) throw error;
-    return data;
-  }
+  // Este módulo solo interpreta la imagen localmente. driver_payments.js es el único
+  // responsable de enviar datos estructurados al RPC vigente de pagos.
 
   window.leerYValidarVoucherOCR = leerYValidarVoucherOCR;
   window.parsearTextoVoucher = parsearTextoVoucher;
-  window.generarCobroComisiones = generarCobroComisiones;
-  window.registrarPagoDesdeOCR = registrarPagoDesdeOCR;
-  window.procesarYRegistrarPagoOCR = procesarYRegistrarPagoOCR;
-  window.obtenerInstruccionesPago = obtenerInstruccionesPago;
 })();

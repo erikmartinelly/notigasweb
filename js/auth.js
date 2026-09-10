@@ -979,15 +979,15 @@ async function iniciarSesionRepartidor() {
     return;
   }
 
-  const planTipo = (document.getElementById('inputDriverPlanTipo')?.value || 'gratuito').toLowerCase();
+  const planTipo = 'credito';
   const fileVoucher = document.getElementById('inputDriverVoucherFile')?.files?.[0];
-  const yaEsVip = Boolean(cachedUser.es_premium);
+  const yaEsVip = false;
 
   // Si eligió PRO pero aún no es VIP y no ha seleccionado comprobante, advertir amablemente
-  if (planTipo === 'pro' && !yaEsVip && !fileVoucher) {
+  if (false) {
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
     if (typeof showToast === 'function') {
-      showToast('📸 Falta Comprobante de Remesa', 'Para activar el Plan PRO (S/ 15/mes) debes adjuntar tu captura de Remesa por Yape al 987-654-321. Si prefieres empezar gratis, selecciona el Plan Gratuito.', 'warning', 6500);
+      showToast('📸 Falta Comprobante de Remesa', 'El registro de repartidor no requiere suscripción ni pago inicial.', 'warning', 6500);
     } else {
       alert('Para el Plan PRO, por favor sube tu captura de comprobante de Remesa por Yape al 987-654-321. O selecciona el Plan Gratuito.');
     }
@@ -1011,8 +1011,8 @@ async function iniciarSesionRepartidor() {
     color_camion: colorCamion,
     precio_balon_10kg: precio10kgRaw !== '' ? parseFloat(precio10kgRaw) : null,
     user_id: existingUserId,
-    tipo_plan: planTipo,
-    es_premium: yaEsVip
+    tipo_plan: 'credito',
+    es_premium: false
   };
 
   if (existingGmail) repartidorData.gmail = existingGmail;
@@ -1240,7 +1240,7 @@ window.abrirRegistroRepartidores = async function() {
         const titleEl = document.getElementById('driverModalTitleText');
         const subtitleEl = document.getElementById('driverModalSubtitle');
         if (titleEl) titleEl.textContent = 'Registro de Repartidor';
-        if (subtitleEl) subtitleEl.textContent = 'Completa tu ficha de negocio. Aparecerá en la lista de repartidores de la OTB.';
+        if (subtitleEl) subtitleEl.textContent = 'Completa tu ficha de negocio. Aparecerá en la lista de repartidores de la zona.';
         modalDriver.style.display = 'flex';
       }
     }
@@ -2018,7 +2018,7 @@ async function procesarSesionExitosa(user, isInteractive = false) {
         const titleEl = document.getElementById('driverModalTitleText');
         const subtitleEl = document.getElementById('driverModalSubtitle');
         if (titleEl) titleEl.textContent = 'Registro de Repartidor';
-        if (subtitleEl) subtitleEl.textContent = 'Completa tu ficha de negocio. Aparecerá en la lista de repartidores de la OTB.';
+        if (subtitleEl) subtitleEl.textContent = 'Completa tu ficha de negocio. Aparecerá en la lista de repartidores de la zona.';
 
         sessionStorage.setItem('notigas_temp_gmail', gmail);
         return;
@@ -2440,58 +2440,26 @@ window.actualizarVistaPreviaCamionChofer = actualizarVistaPreviaCamionChofer;
  * Alterna dinámicamente entre el Plan PRO (S/ 15/mes) y el Plan Gratuito (S/ 0)
  * en el modal de registro/edición de chofer.
  */
-function seleccionarPlanRegistroChofer(tipoPlan) {
-  const plan = (tipoPlan === 'gratuito') ? 'gratuito' : 'pro';
+function seleccionarPlanRegistroChofer() {
   const inputTipo = document.getElementById('inputDriverPlanTipo');
-  if (inputTipo) inputTipo.value = plan;
-
+  if (inputTipo) inputTipo.value = 'credito';
   const cardPro = document.getElementById('cardPlanDriverPro');
-  const cardGratuito = document.getElementById('cardPlanDriverGratuito');
-  const badgePro = document.getElementById('badgeSelectedPlanPro');
-  const badgeGratuito = document.getElementById('badgeSelectedPlanGratuito');
   const proContent = document.getElementById('driverPremiumProContent');
-  const gratuitoContent = document.getElementById('driverPremiumGratuitoContent');
+  const paymentSection = document.getElementById('driverPremiumPaymentSection');
+  const statusBadge = document.getElementById('driverPremiumStatusBadge');
+  if (cardPro) cardPro.style.display = 'none';
+  if (proContent) proContent.style.display = 'none';
+  if (paymentSection) paymentSection.style.display = 'none';
+  if (statusBadge) statusBadge.style.display = 'none';
+  const cardBase = document.getElementById('cardPlanDriverGratuito');
+  if (cardBase) { cardBase.style.display = 'block'; cardBase.style.opacity = '1'; cardBase.style.border = '2px solid #10B981'; }
+  const content = document.getElementById('driverPremiumGratuitoContent');
+  if (content) { content.style.display = 'block'; content.innerHTML = '<p style="margin:0;font-size:11px;color:#CBD5E1;line-height:1.5;">Registro sin suscripción mensual. Primeros 20 pedidos confirmados sin comisión; luego S/ 0,20 por pedido con crédito hasta 100 unidades.</p>'; }
   const btnText = document.getElementById('btnDriverSubmitText');
-
-  if (plan === 'pro') {
-    if (cardPro) {
-      cardPro.classList.add('active');
-      cardPro.style.border = '2px solid #F59E0B';
-      cardPro.style.boxShadow = '0 0 16px rgba(245,158,11,0.25)';
-      cardPro.style.opacity = '1';
-    }
-    if (cardGratuito) {
-      cardGratuito.classList.remove('active');
-      cardGratuito.style.border = '1.5px solid #334155';
-      cardGratuito.style.boxShadow = 'none';
-      cardGratuito.style.opacity = '0.7';
-    }
-    if (badgePro) badgePro.style.display = 'block';
-    if (badgeGratuito) badgeGratuito.style.display = 'none';
-    if (proContent) proContent.style.display = 'block';
-    if (gratuitoContent) gratuitoContent.style.display = 'none';
-    if (btnText) btnText.textContent = 'Registrar y Activar Repartidor PRO (S/ 15/mes)';
-  } else {
-    if (cardPro) {
-      cardPro.classList.remove('active');
-      cardPro.style.border = '1.5px solid #334155';
-      cardPro.style.boxShadow = 'none';
-      cardPro.style.opacity = '0.7';
-    }
-    if (cardGratuito) {
-      cardGratuito.classList.add('active');
-      cardGratuito.style.border = '2px solid #38BDF8';
-      cardGratuito.style.boxShadow = '0 0 14px rgba(56,189,248,0.2)';
-      cardGratuito.style.opacity = '1';
-    }
-    if (badgePro) badgePro.style.display = 'none';
-    if (badgeGratuito) badgeGratuito.style.display = 'block';
-    if (proContent) proContent.style.display = 'none';
-    if (gratuitoContent) gratuitoContent.style.display = 'block';
-    if (btnText) btnText.textContent = 'Activar Registro Gratuito (S/ 0)';
-  }
+  if (btnText) btnText.textContent = 'Guardar ficha de repartidor';
 }
 window.seleccionarPlanRegistroChofer = seleccionarPlanRegistroChofer;
+
 
 /**
  * Carga los datos del chofer (incluyendo precio del balón de 10 Kg, tipo de plan y suscripción Premium)
@@ -2536,17 +2504,7 @@ async function cargarPerfilChoferEnModal() {
     if (driverRow.color_camion && typeof seleccionarColorCamionModal === 'function') {
       seleccionarColorCamionModal(driverRow.color_camion);
     }
-
-    // Seleccionar plan activo (PRO o Gratuito)
-    const isVipOrPro = Boolean(driverRow.es_premium || driverRow.tipo_plan === 'pro');
-    seleccionarPlanRegistroChofer(isVipOrPro ? 'pro' : 'gratuito');
-
-    const btnText = document.getElementById('btnDriverSubmitText');
-    if (btnText && driverRow.id) {
-      btnText.textContent = isVipOrPro ? 'Guardar Cambios de Ficha PRO' : 'Guardar Ficha Gratuita';
-    }
-
-    // Actualizar estado de membresía Premium VIP
+    seleccionarPlanRegistroChofer('credito');
     actualizarEstadoUIPerfilPremium(driverRow);
   } catch (err) {
     console.warn('Error al cargar perfil de chofer en modal:', err);
@@ -2557,48 +2515,14 @@ window.cargarPerfilChoferEnModal = cargarPerfilChoferEnModal;
 /**
  * Actualiza los avisos e insignias visuales de la suscripción VIP en el modal de chofer.
  */
-function actualizarEstadoUIPerfilPremium(driverRow = {}) {
-  const badge = document.getElementById('driverPremiumStatusBadge');
-  const alertActive = document.getElementById('driverPremiumActiveAlert');
-  const textActive = document.getElementById('driverPremiumActiveText');
-  const alertPending = document.getElementById('driverPremiumPendingAlert');
-
-  if (!badge) return;
-
-  const isVip = Boolean(driverRow.es_premium);
-  const estado = String(driverRow.estado_pago_premium || '').toLowerCase();
-
-  if (isVip) {
-    badge.textContent = '👑 VIP Activo';
-    badge.style.background = 'linear-gradient(135deg, #F59E0B, #D97706)';
-    badge.style.color = '#FFFFFF';
-    if (alertActive) {
-      alertActive.style.display = 'block';
-      let venceStr = '';
-      if (driverRow.premium_vence_at) {
-        try {
-          const d = new Date(driverRow.premium_vence_at);
-          venceStr = ` (Vence el: ${d.toLocaleDateString()})`;
-        } catch (_) {}
-      }
-      if (textActive) textActive.textContent = `¡Suscripción VIP Activa! Tienes 3 minutos de ventaja en pedidos.${venceStr}`;
-    }
-    if (alertPending) alertPending.style.display = 'none';
-  } else if (estado === 'pendiente' || driverRow.comprobante_pago_url) {
-    badge.textContent = '⏳ En Revisión';
-    badge.style.background = 'rgba(234, 179, 8, 0.25)';
-    badge.style.color = '#FDE047';
-    if (alertActive) alertActive.style.display = 'none';
-    if (alertPending) alertPending.style.display = 'block';
-  } else {
-    badge.textContent = 'Inactivo';
-    badge.style.background = 'rgba(148,163,184,0.2)';
-    badge.style.color = '#94A3B8';
-    if (alertActive) alertActive.style.display = 'none';
-    if (alertPending) alertPending.style.display = 'none';
-  }
+function actualizarEstadoUIPerfilPremium() {
+  ['driverPremiumStatusBadge','driverPremiumActiveAlert','driverPremiumPendingAlert','driverPremiumProContent','driverPremiumPaymentSection'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
 }
 window.actualizarEstadoUIPerfilPremium = actualizarEstadoUIPerfilPremium;
+
 
 let ultimoResultadoVoucherOcr = null;
 
@@ -2606,226 +2530,21 @@ let ultimoResultadoVoucherOcr = null;
  * Maneja el evento change al seleccionar un comprobante en el modal de chofer.
  * Ejecuta OCR automático en el cliente y muestra los resultados detectados.
  */
-async function manejarSeleccionVoucherDriver(event) {
-  const file = event?.target?.files?.[0];
-  const box = document.getElementById('driverOcrStatusBox');
-  const textEl = document.getElementById('driverOcrStatusText');
-  ultimoResultadoVoucherOcr = null;
-
-  if (!file) {
-    if (box) box.style.display = 'none';
-    return;
-  }
-
-  if (!file.type.startsWith('image/')) {
-    if (box) {
-      box.style.display = 'block';
-      box.style.background = 'rgba(239,68,68,0.15)';
-      box.style.border = '1px solid #EF4444';
-      if (textEl) textEl.innerHTML = '<span style="color:#FCA5A5;">⚠️ El archivo seleccionado no es una imagen válida.</span>';
-    }
-    return;
-  }
-
-  if (box) {
-    box.style.display = 'block';
-    box.style.background = 'rgba(15,23,42,0.9)';
-    box.style.border = '1px solid #38BDF8';
-    if (textEl) {
-      textEl.innerHTML = `
-        <i class="fa-solid fa-spinner fa-spin" style="color:#38BDF8; font-size:16px;"></i>
-        <div style="font-size:11px; color:#E2E8F0; line-height:1.4;">
-          <strong>Validando comprobante con Inteligencia Artificial (OCR)...</strong>
-          <div id="driverOcrProgressBar" style="color:#94A3B8; font-size:10px;">Iniciando motor de lectura...</div>
-        </div>
-      `;
-    }
-  }
-
-  try {
-    const onProgress = (prog) => {
-      const pBar = document.getElementById('driverOcrProgressBar');
-      if (pBar && prog && prog.message) {
-        pBar.textContent = prog.message;
-      }
-    };
-
-    const res = (typeof window.leerYValidarVoucherOCR === 'function')
-      ? await window.leerYValidarVoucherOCR(file, onProgress)
-      : { esValido: false, monto: 15.0, app: 'Comprobante QR', operacion: null, rawText: '', resumen: 'OCR listo' };
-
-    ultimoResultadoVoucherOcr = res;
-
-    if (box && textEl) {
-      box.style.display = 'block';
-      if (res.esValido) {
-        box.style.background = 'rgba(34,197,94,0.15)';
-        box.style.border = '1px solid #22C55E';
-        textEl.innerHTML = `
-          <div style="display:flex; align-items:flex-start; gap:8px;">
-            <i class="fa-solid fa-circle-check" style="color:#22C55E; font-size:16px; margin-top:2px;"></i>
-            <div style="font-size:11px; color:#E2E8F0; line-height:1.4;">
-              <strong style="color:#86EFAC;">¡Voucher ${res.app} validado con éxito!</strong><br>
-              <span>Monto detectado: <strong style="color:#22C55E; font-size:12px;">S/ ${(res.monto || 15).toFixed(2)}</strong></span>
-              ${res.operacion ? ` &bull; <span>Op: <strong style="color:#CBD5E1;">${res.operacion}</strong></span>` : ''}<br>
-              <span style="color:#A7F3D0; font-size:10.5px;">⚡ Al presionar el botón abajo, tu Suscripción VIP se activará al instante por 30 días.</span>
-            </div>
-          </div>
-        `;
-      } else {
-        box.style.background = 'rgba(234,179,8,0.15)';
-        box.style.border = '1px solid #EAB308';
-        textEl.innerHTML = `
-          <div style="display:flex; align-items:flex-start; gap:8px;">
-            <i class="fa-solid fa-circle-info" style="color:#FBBF24; font-size:16px; margin-top:2px;"></i>
-            <div style="font-size:11px; color:#E2E8F0; line-height:1.4;">
-              <strong style="color:#FDE047;">Comprobante ${res.app || 'detectado'}:</strong><br>
-              <span>${res.resumen || 'Comprobante listo para enviar.'}</span><br>
-              <span style="color:#FEF08A; font-size:10.5px;">⚡ Tu membresía VIP se activará de inmediato al enviarlo; el Administrador confirmará el depósito.</span>
-            </div>
-          </div>
-        `;
-      }
-    }
-  } catch (err) {
-    console.warn('Error en proceso OCR del voucher:', err);
-    if (box && textEl) {
-      box.style.background = 'rgba(51,65,85,0.4)';
-      box.style.border = '1px solid #64748B';
-      textEl.innerHTML = `
-        <div style="font-size:11px; color:#CBD5E1;">
-          📷 Comprobante seleccionado listo para enviar y activar VIP.
-        </div>
-      `;
-    }
-  }
+async function manejarSeleccionVoucherDriver() {
+  if (typeof showToast === 'function') showToast('Pagos', 'Los pagos de comisiones se gestionan desde la sección Pagos del repartidor.', 'info', 3500);
 }
 window.manejarSeleccionVoucherDriver = manejarSeleccionVoucherDriver;
+
 
 /**
  * Sube el comprobante de pago QR a Supabase Storage (bucket 'vouchers-premium')
  * y llama al RPC 'rpc_driver_submit_premium_payment' para activación VIP inmediata.
  */
 async function enviarComprobantePagoPremium() {
-  if (!window.supabaseClient) {
-    if (typeof showToast === 'function') showToast('Error', 'Sin conexión con el servidor Supabase', 'error');
-    return;
-  }
-
-  const fileInput = document.getElementById('inputDriverVoucherFile');
-  const file = fileInput?.files?.[0];
-
-  if (!file) {
-    if (typeof showToast === 'function') {
-      showToast('⚠️ Falta comprobante', 'Selecciona una imagen con tu comprobante o captura de tu Remesa por Yape.', 'warning', 3500);
-    } else {
-      alert('Por favor selecciona una captura de tu comprobante de Remesa por Yape.');
-    }
-    return;
-  }
-
-  if (!file.type.startsWith('image/')) {
-    if (typeof showToast === 'function') showToast('⚠️ Formato Inválido', 'El archivo debe ser una imagen (JPG, PNG, WEBP).', 'warning', 3500);
-    return;
-  }
-
-  if (file.size > 5 * 1024 * 1024) {
-    if (typeof showToast === 'function') showToast('⚠️ Archivo muy grande', 'La imagen no debe superar los 5 MB.', 'warning', 3500);
-    return;
-  }
-
-  if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Validando y activando Suscripción VIP...');
-
-  try {
-    const { data: authData, error: authErr } = await window.supabaseClient.auth.getUser();
-    const user = authData?.user;
-    if (authErr || !user?.id) {
-      throw new Error('Debes iniciar sesión para enviar un comprobante.');
-    }
-
-    // Si aún no se completó el OCR, ejecutarlo rápidamente antes de enviar
-    if (!ultimoResultadoVoucherOcr && typeof window.leerYValidarVoucherOCR === 'function') {
-      try {
-        ultimoResultadoVoucherOcr = await window.leerYValidarVoucherOCR(file);
-      } catch (_) {}
-    }
-
-    const ocr = ultimoResultadoVoucherOcr || {};
-
-    const ext = file.name.split('.').pop() || 'png';
-    const filePath = `${user.id}/${Date.now()}_voucher.${ext}`;
-
-    const { error: uploadError } = await window.supabaseClient.storage
-      .from('vouchers-premium')
-      .upload(filePath, file, { upsert: true, contentType: file.type });
-
-    if (uploadError) {
-      throw new Error('Error al subir la imagen al almacenamiento: ' + uploadError.message);
-    }
-
-    const { data: pubData } = window.supabaseClient.storage
-      .from('vouchers-premium')
-      .getPublicUrl(filePath);
-
-    const publicUrl = pubData?.publicUrl || '';
-    if (!publicUrl) {
-      throw new Error('No se pudo generar la URL del comprobante.');
-    }
-
-    // Registrar en BD invocando la función RPC autorizada con activación instantánea
-    const rpcPayload = {
-      p_comprobante_url: publicUrl,
-      p_ocr_monto: (typeof ocr.monto === 'number' && !isNaN(ocr.monto)) ? ocr.monto : null,
-      p_ocr_app: ocr.app || null,
-      p_ocr_operacion: ocr.operacion || null,
-      p_ocr_valido: Boolean(ocr.esValido),
-      p_ocr_raw_text: ocr.rawText ? String(ocr.rawText).substring(0, 1000) : null
-    };
-
-    const { data: rpcRes, error: rpcErr } = await window.supabaseClient
-      .rpc('rpc_driver_submit_premium_payment', rpcPayload);
-
-    if (rpcErr) {
-      throw new Error('Error al registrar comprobante: ' + rpcErr.message);
-    }
-
-    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-
-    if (typeof showToast === 'function') {
-      showToast('👑 ¡Suscripción VIP Activada!', '¡Felicidades! Tu cuenta VIP ha sido activada de inmediato por 30 días. Cuentas con 3 minutos de ventaja en pedidos y mapa.', 'success', 7000);
-    } else {
-      alert('¡Suscripción VIP activada inmediatamente por 30 días!');
-    }
-
-    // Limpiar input y caja OCR
-    if (fileInput) fileInput.value = '';
-    const box = document.getElementById('driverOcrStatusBox');
-    if (box) box.style.display = 'none';
-    ultimoResultadoVoucherOcr = null;
-
-    // Actualizar UI de chofer
-    actualizarEstadoUIPerfilPremium({
-      es_premium: true,
-      estado_pago_premium: 'activo',
-      premium_vence_at: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString()
-    });
-
-    if (window.currentDriverRoute) {
-      window.currentDriverRoute.es_premium = true;
-    }
-
-    await cargarPerfilChoferEnModal();
-  } catch (err) {
-    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-    console.error('Error enviando comprobante:', err);
-    if (typeof showToast === 'function') {
-      showToast('❌ Error al enviar', err.message || 'No se pudo enviar el comprobante.', 'error', 4500);
-    } else {
-      alert('Error: ' + err.message);
-    }
-  }
+  if (typeof showToast === 'function') showToast('Función retirada', 'No existen suscripciones PRO/VIP. Usa la sección Pagos únicamente cuando alcances el límite de crédito.', 'info', 4500);
 }
 window.enviarComprobantePagoPremium = enviarComprobantePagoPremium;
+
 
 // Hook para los controles de voucher en modalDriver
 document.addEventListener('DOMContentLoaded', () => {

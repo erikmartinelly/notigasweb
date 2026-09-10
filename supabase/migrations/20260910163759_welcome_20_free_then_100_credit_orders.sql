@@ -1,0 +1,3 @@
+-- Historial remoto supersedido.
+-- La promoción inicial de 20 pedidos gratis fue retirada: el modelo vigente cobra S/0.20 desde cada pedido y liquida a 100 pedidos = S/20.
+-- Estado final consolidado en las migraciones git_reconcile_*.

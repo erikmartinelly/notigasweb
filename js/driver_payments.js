@@ -1,8 +1,9 @@
 /* ==========================================================================
-   NOTIGAS - PAGOS DEL REPARTIDOR
-   - Menú principal Pagos: Ver mis pagos / Realizar un nuevo pago.
-   - Configuración del repartidor con Legal y privacidad / Mi cuenta.
-   - OCR local; la imagen no se persiste ni se sube a Supabase.
+   NOTIGAS - PAGOS DEL REPARTIDOR (PERU)
+   - Comisión: S/ 0.20 por pedido entregado.
+   - Liquidación: 100 pedidos = S/ 20.
+   - Pago por Yape en Perú.
+   - OCR local: la imagen no se persiste; solo se envían datos extraídos.
    ========================================================================== */
 (function () {
   'use strict';
@@ -17,17 +18,17 @@
       .replace(/'/g, '&#39;');
   };
 
-  function numero(value) {
-    const digits = String(value || '').replace(/[^0-9]/g, '');
-    return digits || null;
-  }
+  const digits = (value) => {
+    const out = String(value || '').replace(/[^0-9]/g, '');
+    return out || null;
+  };
 
-  function money(value, prefix) {
+  const money = (value) => {
     const n = Number(value);
-    return Number.isFinite(n) ? `${prefix} ${n.toFixed(2)}` : '—';
-  }
+    return Number.isFinite(n) ? `S/ ${n.toFixed(2)}` : '—';
+  };
 
-  function fecha(value) {
+  const fecha = (value) => {
     if (!value) return '—';
     try {
       return new Date(value).toLocaleString('es-PE', {
@@ -37,9 +38,9 @@
     } catch (_) {
       return String(value);
     }
-  }
+  };
 
-  function getDriverRole() {
+  function isDriver() {
     const role = typeof AppState !== 'undefined' ? AppState.get('userRole') : null;
     const mode = typeof AppState !== 'undefined' ? AppState.get('appMode') : null;
     const user = typeof AppState !== 'undefined' ? AppState.get('userData') : null;
@@ -49,7 +50,6 @@
   function ensurePaymentsModal() {
     let modal = document.getElementById('modalDriverPayments');
     if (modal) return modal;
-
     modal = document.createElement('div');
     modal.id = 'modalDriverPayments';
     modal.className = 'modal';
@@ -63,13 +63,8 @@
         <div id="driverPaymentsModalBody"></div>
       </div>`;
     document.body.appendChild(modal);
-
-    modal.querySelector('#btnCloseDriverPayments')?.addEventListener('click', () => {
-      modal.style.display = 'none';
-    });
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) modal.style.display = 'none';
-    });
+    modal.querySelector('#btnCloseDriverPayments')?.addEventListener('click', () => { modal.style.display = 'none'; });
+    modal.addEventListener('click', (event) => { if (event.target === modal) modal.style.display = 'none'; });
     return modal;
   }
 
@@ -83,9 +78,27 @@
     return { modal, body };
   }
 
+  function syncDriverMenuVisibility() {
+    const visible = isDriver();
+    const paymentMenu = document.getElementById('driverPaymentsMenu');
+    const driverConfig = document.getElementById('driverConfigMenu');
+    if (paymentMenu) paymentMenu.style.display = visible ? 'block' : 'none';
+    if (driverConfig) driverConfig.style.display = visible ? 'block' : 'none';
+
+    const commonConfigButton = document.getElementById('btnCambiarCiudadPref');
+    const commonConfig = typeof commonConfigButton?.closest === 'function'
+      ? commonConfigButton.closest('details')
+      : null;
+    const commonDelete = document.getElementById('btnDeleteMyAccount');
+    const driverPrivacy = document.getElementById('btnPrivacyPolicyDriver');
+    if (commonConfig) commonConfig.style.display = visible ? 'none' : '';
+    if (commonDelete && visible) commonDelete.style.display = 'none';
+    if (driverPrivacy) driverPrivacy.style.display = visible ? 'none' : '';
+  }
+
   function ensureDriverMenu() {
-    const driverSection = document.getElementById('settingsDriverSection');
-    if (!driverSection) return;
+    const section = document.getElementById('settingsDriverSection');
+    if (!section) return;
 
     if (!document.getElementById('driverPaymentsMenu')) {
       const payments = document.createElement('details');
@@ -97,6 +110,9 @@
           <span style="font-size:10px;color:#94A3B8;">(Desplegar)</span>
         </summary>
         <div style="display:grid;gap:9px;margin-top:10px;">
+          <div style="font-size:11px;color:#CBD5E1;line-height:1.45;padding:8px;border-radius:8px;background:#0F172A;">
+            Comisión: <strong>S/ 0.20 por pedido entregado</strong>. Al llegar a <strong>100 pedidos (S/ 20)</strong>, debes liquidar por Yape para iniciar un nuevo ciclo.
+          </div>
           <button type="button" id="btnDriverPaymentsHistory" style="width:100%;background:#1E293B;color:#E2E8F0;border:1px solid #475569;padding:10px;border-radius:10px;font-weight:800;cursor:pointer;">
             <i class="fa-solid fa-clock-rotate-left"></i> Ver mis pagos
           </button>
@@ -104,11 +120,7 @@
             <i class="fa-solid fa-paper-plane"></i> Realizar un nuevo pago
           </button>
         </div>`;
-
-      const firstCard = driverSection.firstElementChild;
-      if (firstCard?.nextSibling) driverSection.insertBefore(payments, firstCard.nextSibling);
-      else driverSection.appendChild(payments);
-
+      section.appendChild(payments);
       payments.querySelector('#btnDriverPaymentsHistory')?.addEventListener('click', verMisPagos);
       payments.querySelector('#btnDriverNewPayment')?.addEventListener('click', nuevoPago);
     }
@@ -123,27 +135,12 @@
           <span style="font-size:10px;color:#94A3B8;">(Desplegar)</span>
         </summary>
         <div style="display:grid;gap:9px;margin-top:10px;">
-          <button type="button" id="btnDriverProxyCity" style="width:100%;background:#0369A1;color:white;border:0;padding:9px;border-radius:9px;font-weight:800;cursor:pointer;">
-            <i class="fa-solid fa-map-location-dot"></i> Cambiar mi ciudad
-          </button>
-          <button type="button" id="btnDriverProxyRules" style="width:100%;background:#EA580C;color:white;border:0;padding:9px;border-radius:9px;font-weight:800;cursor:pointer;">
-            <i class="fa-solid fa-scroll"></i> Reglas y normas de uso
-          </button>
-          <details id="driverLegalPrivacySubmenu" style="background:#1E293B;border:1px solid #475569;border-radius:9px;padding:8px 10px;">
-            <summary style="font-weight:800;color:#CBD5E1;cursor:pointer;"><i class="fa-solid fa-shield-halved"></i> Legal y privacidad</summary>
-            <button type="button" id="btnDriverPrivacyPolicy" style="width:100%;margin-top:8px;background:#334155;color:white;border:0;padding:9px;border-radius:8px;font-weight:700;cursor:pointer;">
-              Política de Privacidad y Aviso Legal
-            </button>
-          </details>
-          <details id="driverAccountSubmenu" style="background:#1E293B;border:1px solid #7F1D1D;border-radius:9px;padding:8px 10px;">
-            <summary style="font-weight:800;color:#FCA5A5;cursor:pointer;"><i class="fa-solid fa-user-gear"></i> Mi cuenta</summary>
-            <button type="button" id="btnDriverDeleteAccount" style="width:100%;margin-top:8px;background:#991B1B;color:white;border:0;padding:9px;border-radius:8px;font-weight:800;cursor:pointer;">
-              <i class="fa-solid fa-trash-can"></i> Eliminar totalmente mi cuenta y mis datos
-            </button>
-          </details>
+          <button type="button" id="btnDriverProxyCity" style="width:100%;background:#0369A1;color:white;border:0;padding:9px;border-radius:9px;font-weight:800;cursor:pointer;"><i class="fa-solid fa-map-location-dot"></i> Cambiar mi ciudad</button>
+          <button type="button" id="btnDriverProxyRules" style="width:100%;background:#EA580C;color:white;border:0;padding:9px;border-radius:9px;font-weight:800;cursor:pointer;"><i class="fa-solid fa-scroll"></i> Reglas y normas de uso</button>
+          <button type="button" id="btnDriverPrivacyPolicy" style="width:100%;background:#334155;color:white;border:0;padding:9px;border-radius:8px;font-weight:700;cursor:pointer;"><i class="fa-solid fa-shield-halved"></i> Legal y privacidad</button>
+          <button type="button" id="btnDriverDeleteAccount" style="width:100%;background:#991B1B;color:white;border:0;padding:9px;border-radius:8px;font-weight:800;cursor:pointer;"><i class="fa-solid fa-trash-can"></i> Eliminar totalmente mi cuenta</button>
         </div>`;
-      driverSection.appendChild(config);
-
+      section.appendChild(config);
       config.querySelector('#btnDriverProxyCity')?.addEventListener('click', () => document.getElementById('btnCambiarCiudadPref')?.click());
       config.querySelector('#btnDriverProxyRules')?.addEventListener('click', () => {
         if (typeof window.abrirModalReglasApp === 'function') window.abrirModalReglasApp();
@@ -159,26 +156,9 @@
     syncDriverMenuVisibility();
   }
 
-  function syncDriverMenuVisibility() {
-    const isDriver = getDriverRole();
-    const commonConfig = document.getElementById('btnCambiarCiudadPref')?.closest('details');
-    const commonDelete = document.getElementById('btnDeleteMyAccount');
-    const driverPrivacy = document.getElementById('btnPrivacyPolicyDriver');
-
-    if (commonConfig) commonConfig.style.display = isDriver ? 'none' : '';
-    if (commonDelete && isDriver) commonDelete.style.display = 'none';
-    if (driverPrivacy) driverPrivacy.style.display = isDriver ? 'none' : '';
-
-    const paymentMenu = document.getElementById('driverPaymentsMenu');
-    const driverConfig = document.getElementById('driverConfigMenu');
-    if (paymentMenu) paymentMenu.style.display = isDriver ? 'block' : 'none';
-    if (driverConfig) driverConfig.style.display = isDriver ? 'block' : 'none';
-  }
-
   async function verMisPagos() {
     if (!window.supabaseClient) return;
     const { body } = openPaymentsModal('<i class="fa-solid fa-clock-rotate-left"></i> Mis pagos', '<div style="padding:20px;text-align:center;color:#94A3B8;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando...</div>');
-
     try {
       const { data: authData } = await window.supabaseClient.auth.getUser();
       const uid = authData?.user?.id;
@@ -186,7 +166,7 @@
 
       const { data, error } = await window.supabaseClient
         .from('pagos_comisiones')
-        .select('id,monto,estado,cobro_generado_at,pago_fecha,numero_transaccion,monto_enviado_pen,monto_recibido_bob,created_at,reviewed_at,admin_observacion')
+        .select('id,monto,estado,cobro_generado_at,pago_fecha,numero_transaccion,monto_enviado_pen,created_at,reviewed_at,admin_observacion')
         .eq('user_id', uid)
         .order('created_at', { ascending: false })
         .limit(50);
@@ -197,46 +177,42 @@
         return;
       }
 
-      body.innerHTML = data.map(p => {
-        const labels = {
-          generado: 'Cobro generado',
-          pendiente_verificacion_recepcion: 'Validado automáticamente · verificando recepción',
-          confirmado: 'Pago confirmado',
-          no_recibido: 'No recibido',
-          ocr_no_valido: 'Comprobante no válido',
-          fraude_confirmado: 'Fraude confirmado'
-        };
-        return `
-          <div style="border:1px solid #334155;border-radius:10px;padding:12px;margin-bottom:10px;background:#0F172A;color:#E2E8F0;">
-            <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
-              <strong>${esc(labels[p.estado] || p.estado || 'Pendiente')}</strong>
-              <strong>${money(p.monto_enviado_pen ?? p.monto,'S/')}</strong>
-            </div>
-            <div style="margin-top:6px;font-size:12px;color:#94A3B8;line-height:1.5;">
-              Operación: ${esc(p.numero_transaccion || '—')}<br>
-              Fecha del pago: ${fecha(p.pago_fecha)}<br>
-              Recibido en Bolivia: ${money(p.monto_recibido_bob,'Bs')}<br>
-              ${p.admin_observacion ? `Verificación: ${esc(p.admin_observacion)}` : ''}
-            </div>
-          </div>`;
-      }).join('');
+      const labels = {
+        generado: 'Cobro generado',
+        pendiente_verificacion_recepcion: 'Validado automáticamente · verificando recepción',
+        confirmado: 'Pago confirmado',
+        no_recibido: 'No recibido',
+        ocr_no_valido: 'Comprobante no válido',
+        fraude_confirmado: 'Fraude confirmado'
+      };
+
+      body.innerHTML = data.map((p) => `
+        <div style="border:1px solid #334155;border-radius:10px;padding:12px;margin-bottom:10px;background:#0F172A;color:#E2E8F0;">
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
+            <strong>${esc(labels[p.estado] || p.estado || 'Pendiente')}</strong>
+            <strong>${money(p.monto_enviado_pen ?? p.monto)}</strong>
+          </div>
+          <div style="margin-top:6px;font-size:12px;color:#94A3B8;line-height:1.5;">
+            Operación: ${esc(p.numero_transaccion || '—')}<br>
+            Fecha del pago: ${fecha(p.pago_fecha)}<br>
+            ${p.admin_observacion ? `Verificación: ${esc(p.admin_observacion)}` : ''}
+          </div>
+        </div>`).join('');
     } catch (err) {
       body.innerHTML = `<div style="padding:20px;color:#EF4444;">${esc(err.message || err)}</div>`;
     }
   }
 
-  function extractAmount(text, currency) {
+  function extractPenAmount(text) {
     const raw = String(text || '');
-    const patterns = currency === 'PEN'
-      ? [/(?:S\/?\.?|PEN|soles?)\s*[:=]?\s*([0-9]{1,6}(?:[.,][0-9]{1,2})?)/ig,
-         /([0-9]{1,6}(?:[.,][0-9]{1,2})?)\s*(?:PEN|soles?)\b/ig]
-      : [/(?:Bs\.?|BOB|bolivianos?)\s*[:=]?\s*([0-9]{1,6}(?:[.,][0-9]{1,2})?)/ig,
-         /([0-9]{1,6}(?:[.,][0-9]{1,2})?)\s*(?:Bs\.?|BOB|bolivianos?)\b/ig];
-
+    const patterns = [
+      /(?:S\/?\.?|PEN|soles?)\s*[:=]?\s*([0-9]{1,6}(?:[.,][0-9]{1,2})?)/ig,
+      /([0-9]{1,6}(?:[.,][0-9]{1,2})?)\s*(?:PEN|soles?)\b/ig
+    ];
     for (const re of patterns) {
-      const m = re.exec(raw);
-      if (m?.[1]) {
-        const n = Number(String(m[1]).replace(',', '.'));
+      const match = re.exec(raw);
+      if (match?.[1]) {
+        const n = Number(String(match[1]).replace(',', '.'));
         if (Number.isFinite(n)) return n;
       }
     }
@@ -244,13 +220,13 @@
   }
 
   function extractRecipientName(text) {
-    const lines = String(text || '').split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+    const lines = String(text || '').split(/\r?\n/).map((x) => x.trim()).filter(Boolean);
     const re = /^(?:destinatario|beneficiario|recibe|para)\s*[:\-]\s*(.+)$/i;
     for (const line of lines) {
-      const m = line.match(re);
-      if (!m?.[1]) continue;
-      const name = m[1].replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ' .-]/g,'').replace(/\s+/g,' ').trim();
-      if (name.length >= 5 && name.length <= 90) return name;
+      const match = line.match(re);
+      if (!match?.[1]) continue;
+      const name = match[1].replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ' .-]/g, '').replace(/\s+/g, ' ').trim();
+      if (name.length >= 3 && name.length <= 90) return name;
     }
     return null;
   }
@@ -258,12 +234,12 @@
   function extractRecipientYape(text) {
     const raw = String(text || '');
     const patterns = [
-      /(?:yape\s*bolivia|celular\s*(?:destino|destinatario)|n[uú]mero\s*(?:destino|destinatario)|cuenta\s*(?:destino|destinatario))[^0-9]{0,25}([0-9]{8})\b/i,
-      /(?:destinatario|beneficiario)[\s\S]{0,80}?\b([0-9]{8})\b/i
+      /(?:yape|celular|n[uú]mero|destinatario|beneficiario)[^0-9]{0,30}(9[0-9]{8})\b/i,
+      /\b(9[0-9]{8})\b/
     ];
     for (const re of patterns) {
-      const m = raw.match(re);
-      if (m?.[1]) return m[1];
+      const match = raw.match(re);
+      if (match?.[1]) return match[1];
     }
     return null;
   }
@@ -284,7 +260,6 @@
   async function nuevoPago() {
     if (!window.supabaseClient) return;
     const { body } = openPaymentsModal('<i class="fa-solid fa-paper-plane"></i> Realizar un nuevo pago', '<div style="padding:20px;text-align:center;color:#94A3B8;"><i class="fa-solid fa-spinner fa-spin"></i> Preparando cobro...</div>');
-
     try {
       const cobroRes = typeof window.generarCobroComisiones === 'function'
         ? await window.generarCobroComisiones()
@@ -298,31 +273,32 @@
 
       const profile = await getDriverProfile();
       const pagoId = cobroRes.pago_id;
+      const yapeDestino = digits(instructionsRes.numero_cuenta);
+      if (!yapeDestino || yapeDestino.length !== 9 || !yapeDestino.startsWith('9')) {
+        throw new Error('El número Yape de recepción no está configurado correctamente');
+      }
 
       body.innerHTML = `
         <div style="background:#0F172A;border:1px solid #334155;border-radius:12px;padding:14px;color:#E2E8F0;">
-          <div style="font-size:12px;color:#94A3B8;">Monto a remitir desde Perú</div>
-          <div style="font-size:28px;font-weight:900;color:#10B981;">${money(cobroRes.monto,'S/')}</div>
+          <div style="font-size:12px;color:#94A3B8;">Monto a pagar por Yape</div>
+          <div style="font-size:28px;font-weight:900;color:#10B981;">${money(cobroRes.monto)}</div>
           <div style="font-size:11px;color:#94A3B8;margin-top:4px;">Cobro generado: ${fecha(cobroRes.cobro_generado_at)}</div>
         </div>
         <div style="margin-top:12px;background:#1E293B;border:1px solid #475569;border-radius:12px;padding:14px;color:#E2E8F0;line-height:1.6;">
-          <strong>Remesa a ${esc(instructionsRes.pais_destino || 'Bolivia')}</strong><br>
-          Beneficiario: <strong>${esc(instructionsRes.beneficiario_nombre || '—')}</strong><br>
-          Documento: <strong>${esc(instructionsRes.beneficiario_documento || '—')}</strong><br>
-          Método de entrega: <strong>${esc(instructionsRes.metodo_entrega || '—')}</strong><br>
-          Cuenta / Yape Bolivia: <strong>${esc(instructionsRes.numero_cuenta || '—')}</strong>
+          <strong>Pago en Perú</strong><br>
+          Método: <strong>${esc(instructionsRes.metodo_entrega || 'Yape')}</strong><br>
+          Número Yape: <strong>${esc(yapeDestino)}</strong>
         </div>
         <div style="margin-top:12px;">
-          <label style="display:block;font-size:12px;font-weight:800;color:#CBD5E1;margin-bottom:5px;">Mi número Yape en Perú</label>
+          <label style="display:block;font-size:12px;font-weight:800;color:#CBD5E1;margin-bottom:5px;">Mi número Yape</label>
           <input id="inputDriverYapePayment" inputmode="numeric" maxlength="9" value="${esc(profile.yape_numero || '')}" placeholder="9XXXXXXXX" style="width:100%;box-sizing:border-box;padding:10px;border-radius:9px;border:1px solid #475569;background:#0F172A;color:white;">
-          <div style="font-size:10.5px;color:#94A3B8;margin-top:4px;">Se usa para contrastar el remitente con tu ficha cuando el voucher lo muestra.</div>
         </div>
         <div style="margin-top:12px;">
-          <label style="display:block;font-size:12px;font-weight:800;color:#CBD5E1;margin-bottom:5px;">Comprobante de remesa</label>
+          <label style="display:block;font-size:12px;font-weight:800;color:#CBD5E1;margin-bottom:5px;">Comprobante Yape</label>
           <input id="inputDriverPaymentVoucher" type="file" accept="image/*" style="width:100%;color:#CBD5E1;">
-          <div style="font-size:10.5px;color:#94A3B8;margin-top:5px;">La imagen se procesa localmente con OCR y no se guarda. Solo se conservan los datos extraídos.</div>
+          <div style="font-size:10.5px;color:#94A3B8;margin-top:5px;">El comprobante se procesa localmente. NOTIGAS no guarda la imagen; solo registra los datos necesarios para validar el pago.</div>
         </div>
-        <div id="driverPaymentOcrStatus" style="margin-top:12px;padding:10px;border-radius:9px;background:#0F172A;color:#94A3B8;font-size:12px;">Selecciona el comprobante para validar automáticamente.</div>`;
+        <div id="driverPaymentOcrStatus" style="margin-top:12px;padding:10px;border-radius:9px;background:#0F172A;color:#94A3B8;font-size:12px;">Selecciona el comprobante para validarlo.</div>`;
 
       const yapeInput = body.querySelector('#inputDriverYapePayment');
       const fileInput = body.querySelector('#inputDriverPaymentVoucher');
@@ -332,37 +308,32 @@
         const file = fileInput.files?.[0];
         if (!file) return;
         try {
-          const yape = numero(yapeInput?.value);
-          if (!yape || yape.length !== 9 || !yape.startsWith('9')) {
-            throw new Error('Registra primero un número Yape Perú válido de 9 dígitos');
+          const ownYape = digits(yapeInput?.value);
+          if (!ownYape || ownYape.length !== 9 || !ownYape.startsWith('9')) {
+            throw new Error('Registra primero un número Yape válido de 9 dígitos');
           }
 
-          const { error: yapeErr } = await window.supabaseClient.rpc('rpc_actualizar_yape_chofer', { p_yape: yape });
+          const { error: yapeErr } = await window.supabaseClient.rpc('rpc_actualizar_yape_chofer', { p_yape: ownYape });
           if (yapeErr) throw yapeErr;
-
           if (typeof window.leerYValidarVoucherOCR !== 'function') throw new Error('OCR no disponible');
-          const parsed = await window.leerYValidarVoucherOCR(file, (p) => {
-            if (status) status.textContent = p?.message || 'Procesando OCR...';
+
+          const parsed = await window.leerYValidarVoucherOCR(file, (progress) => {
+            if (status) status.textContent = progress?.message || 'Procesando OCR...';
           });
 
           const raw = parsed?.rawText || '';
-          const pen = extractAmount(raw, 'PEN') ?? parsed?.monto ?? null;
-          const bob = extractAmount(raw, 'BOB');
-          const recipientName = extractRecipientName(raw);
-          const recipientYape = extractRecipientYape(raw);
+          const amount = extractPenAmount(raw) ?? parsed?.monto ?? null;
           const operation = parsed?.operacion || null;
           const dateIso = parsed?.fechaISO || null;
+          const recipientName = extractRecipientName(raw);
+          const recipientYape = extractRecipientYape(raw);
 
           const missing = [];
-          if (pen == null) missing.push('monto enviado en soles');
-          if (bob == null) missing.push('monto recibido en bolivianos');
+          if (amount == null) missing.push('monto en soles');
           if (!operation) missing.push('número de operación');
           if (!dateIso) missing.push('fecha y hora');
-          if (!recipientName) missing.push('nombre del destinatario');
-          if (!recipientYape) missing.push('Yape Bolivia del destinatario');
-
           if (missing.length) {
-            status.innerHTML = `<strong style="color:#DC2626;">OCR incompleto.</strong><br>Falta: ${esc(missing.join(', '))}.<br><span style="color:#94A3B8;">Usa una captura completa y legible del voucher.</span>`;
+            status.innerHTML = `<strong style="color:#DC2626;">OCR incompleto.</strong><br>Falta: ${esc(missing.join(', '))}.<br><span style="color:#94A3B8;">Usa una captura completa y legible del comprobante.</span>`;
             fileInput.value = '';
             return;
           }
@@ -372,22 +343,21 @@
 
           const { data: server, error: rpcError } = await window.supabaseClient.rpc('rpc_registrar_ocr_pago', {
             p_pago_id: pagoId,
-            p_monto_enviado_pen: Number(pen),
-            p_monto_recibido_bob: Number(bob),
+            p_monto_enviado_pen: Number(amount),
             p_fecha_pago: dateIso,
             p_numero_transaccion: String(operation),
             p_destinatario_nombre: recipientName,
             p_destinatario_yape: recipientYape,
             p_remitente_nombre: parsed?.remitenteNombre || null,
-            p_remitente_dni: numero(parsed?.remitenteDni),
-            p_remitente_yape: numero(parsed?.remitenteYape),
+            p_remitente_dni: digits(parsed?.remitenteDni),
+            p_remitente_yape: digits(parsed?.remitenteYape),
             p_device_id: deviceId,
             p_ocr_confianza: parsed?.confianza == null ? null : Number(parsed.confianza)
           });
           if (rpcError) throw rpcError;
 
           if (server?.estado === 'pendiente_verificacion_recepcion') {
-            status.innerHTML = `<strong style="color:#16A34A;">✓ Validación automática superada.</strong><br>Operación ${esc(operation)} · ${money(pen,'S/')} → ${money(bob,'Bs')}<br><span style="color:#CBD5E1;">El pago ya pasó al panel del administrador para comprobar únicamente la llegada efectiva del dinero.</span>`;
+            status.innerHTML = `<strong style="color:#16A34A;">✓ Validación automática superada.</strong><br>Operación ${esc(operation)} · ${money(amount)}<br><span style="color:#CBD5E1;">El pago pasó al panel del administrador para confirmar la recepción efectiva en Yape.</span>`;
           } else {
             const checks = [
               server?.monto_valido === false ? 'monto' : null,
@@ -403,7 +373,6 @@
             status.innerHTML = `<strong style="color:#DC2626;">✕ El comprobante no superó la validación automática.</strong><br>${checks.length ? `Revisar: ${esc(checks.join(', '))}.` : 'Los datos no coinciden con el cobro generado.'}`;
           }
 
-          // La imagen nunca se persiste; se libera la referencia del input tras procesarla.
           fileInput.value = '';
         } catch (err) {
           if (status) status.innerHTML = `<strong style="color:#DC2626;">Error:</strong> ${esc(err.message || err)}`;
@@ -419,14 +388,9 @@
   window.nuevoPago = nuevoPago;
   window.ensureDriverPaymentsMenu = ensureDriverMenu;
 
-  const run = () => {
-    ensureDriverMenu();
-    syncDriverMenuVisibility();
-  };
-
+  const run = () => { ensureDriverMenu(); syncDriverMenuVisibility(); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run, { once: true });
   else run();
-
   document.getElementById('btnOpenUserSettings')?.addEventListener('click', () => setTimeout(run, 0));
   if (typeof AppState !== 'undefined' && typeof AppState.on === 'function') {
     AppState.on('userRole', run);

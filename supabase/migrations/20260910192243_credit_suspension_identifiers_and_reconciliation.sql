@@ -1,0 +1,2 @@
+-- Historial remoto aplicado directamente en Supabase.
+-- Suspensión por teléfono/placa/DNI/device y expulsión de ruta activa quedan consolidadas en 20260910193151_git_reconcile_order_security_peru.sql.

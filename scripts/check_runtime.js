@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * NOTIGAS - Complete Runtime & Initialization Integrity Checker
- * Simulates the full browser environment to evaluate and run all 15 application modules,
+ * Simulates the full browser environment to evaluate and run all application modules,
  * verifying that no Temporal Dead Zone (TDZ), ReferenceError, or TypeError occurs
  * across map, orders, auth, forum, admin, and state management.
  */
@@ -12,7 +12,7 @@ const vm = require('vm');
 
 const ROOT_DIR = path.resolve(__dirname, '..');
 
-console.log('🧪 Iniciando prueba de runtime integral para NOTIGAS (15 módulos frontend)...\n');
+console.log('🧪 Iniciando prueba de runtime integral para NOTIGAS (módulos frontend)...\n');
 
 // 1. Entorno de Simulación de Navegador Completo
 const windowListeners = {};
@@ -60,7 +60,7 @@ class MockMap {
   constructor(id, opts = {}) {
     this.id = id;
     this.opts = opts;
-    this.center = opts.center || [-17.3895, -66.1568];
+    this.center = opts.center || [-12.0464, -77.0428];
     this.zoom = opts.zoom || 16;
     this.layers = new Set();
   }
@@ -85,17 +85,17 @@ class MockMap {
   getBounds() {
     return {
       pad: () => ({
-        getSouth: () => -17.5,
-        getNorth: () => -17.2,
-        getWest: () => -66.3,
-        getEast: () => -66.0,
+        getSouth: () => -12.2,
+        getNorth: () => -11.9,
+        getWest: () => -77.2,
+        getEast: () => -76.8,
         contains: () => true
       }),
       contains: () => true,
-      getSouth: () => -17.5,
-      getNorth: () => -17.2,
-      getWest: () => -66.3,
-      getEast: () => -66.0
+      getSouth: () => -12.2,
+      getNorth: () => -11.9,
+      getWest: () => -77.2,
+      getEast: () => -76.8
     };
   }
   on(event, fn) {
@@ -357,6 +357,9 @@ const allModules = [
   'js/forum.js',
   'js/promo.js',
   'js/admin.js',
+  'js/admin_payments.js',
+  'js/driver_payments.js',
+  'js/driver_order_rules.js',
   'js/admin_users.js'
 ];
 

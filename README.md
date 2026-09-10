@@ -33,16 +33,12 @@ Engineered with **Vanilla JavaScript**, **Supabase PostgreSQL with PostGIS**, an
 
 ## 🌍 Social Impact, Market Evolution & Purpose (The "Why")
 
-### The Origin: Bolivia and the Challenge of State Monopoly
-NOTIGAS was initially conceived with a deep social mission to serve vulnerable households in **Bolivia**, where thousands of families rely on liquefied petroleum gas (LPG) cylinders for daily cooking and essential heating. However, retail gas distribution in Bolivia is governed under a centralized state monopoly (controlled by YPFB). Under this monopolistic framework, strict government quotas, fixed distribution channels, and administrative bottlenecks hindered open market modernization, preventing direct peer-to-peer driver competition, innovation, and technological transparency.
+### Current Operating Model: Peru
+NOTIGAS operates in **Peru** as a neighborhood logistics platform for LPG cylinders and other essential deliveries. Buyers publish geolocated requests and independent delivery partners compete on availability, price, coverage, and service.
 
-### The Strategic Pivot: Expansion to Peru (Open, Competitive Free Market)
-Recognizing that open technology thrives best in an open economy, NOTIGAS evolved and transitioned its operational footprint to **Peru**—a dynamic, free-market economy with private retail energy distribution and independent delivery entrepreneurs (*baloneros*):
-* **Free Market Logistics:** Peru operates without state retail monopolies in LPG distribution. Private companies, independent distributors, and local delivery trucks compete transparently based on speed, customer satisfaction, and coverage across 26 department capitals (with Lima as the primary hub).
-* **Peer-to-Peer (1-to-1) Driver Competition:** In Peru, NOTIGAS connects buyers directly with independent drivers. While a demand beacon is available, drivers inspect buyer contact information; once a driver accepts, atomic locking assigns the order exclusively, fostering healthy competition.
-* **Instant Direct Coordination:** Drivers utilize 1-touch status updates (*"En camino"*, *"Estoy en su puerta"*, 1-click WhatsApp direct coordination, and atomic release) alongside external Google Maps turn-by-turn routing, cutting intermediary costs and delivering immediate social value.
+The current business model has **no PRO/VIP monthly subscription and no artificial visibility delay**. Driver onboarding is free. The first 20 confirmed orders are commission-free; afterward the platform records a S/ 0.20 commission per confirmed order and allows a credit cycle of up to 100 delivered units before requiring the configured remittance workflow.
 
-By shifting from a state-monopolized market to Peru's competitive free market, NOTIGAS transformed everyday technology into a truly democratic catalyst for social equity, accessibility, and lower living costs.
+The production architecture uses server-authoritative PostgreSQL RPCs and RLS for assignment, delivery confirmation, accounting, payments, suspensions, and administrative actions.
 
 ---
 

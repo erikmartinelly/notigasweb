@@ -1,0 +1,2 @@
+-- Historial remoto aplicado directamente en Supabase.
+-- Flujo final de validación automática, revisión humana y baneo por fraude consolidado en 20260910193029.

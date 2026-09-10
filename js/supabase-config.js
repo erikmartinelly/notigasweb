@@ -250,10 +250,10 @@ window.iniciarSuscripcionesRealtime = async function() {
             if (aviso && aviso.activo && (aviso.tipo === 'oficial' || aviso.tipo === 'alerta_oficial')) {
                 const mensaje = aviso.mensaje || aviso.descripcion || aviso.titulo || 'Comunicado oficial';
                 if (typeof mostrarPopupAlertaRepartidor === 'function') {
-                    mostrarPopupAlertaRepartidor('COMUNICADO OFICIAL ADMINISTRACIÓN OTB', mensaje);
+                    mostrarPopupAlertaRepartidor('COMUNICADO OFICIAL DE ADMINISTRACIÓN', mensaje);
                 }
                 if (typeof showToast === 'function') {
-                    showToast('📢 Comunicado Oficial OTB', mensaje, 'info', 6000);
+                    showToast('📢 Comunicado Oficial', mensaje, 'info', 6000);
                 }
             }
             debouncedRefreshForum();
@@ -284,6 +284,18 @@ window.iniciarSuscripcionesRealtime = async function() {
                 _clearRealtimeRetryTimer();
                 _realtimeRetryCount = 0;
                 if (window.AppState) window.AppState.set('realtimeConnected', true);
+                // Reconciliar snapshot autoritativo: los eventos ocurridos durante una
+                // desconexión no deben depender de que Realtime los reenvíe.
+                Promise.resolve().then(async () => {
+                    try {
+                        if (typeof cargarPedidosVecinalesEnVivo === 'function') await cargarPedidosVecinalesEnVivo();
+                        if (typeof checkActiveOrderStatus === 'function') await checkActiveOrderStatus();
+                        if (typeof cargarRepartidoresEnMapa === 'function') await cargarRepartidoresEnMapa();
+                        if (typeof renderActiveOrdersMap === 'function') renderActiveOrdersMap();
+                    } catch (snapshotError) {
+                        console.warn('Realtime reconectado; la reconciliación de snapshot falló:', snapshotError);
+                    }
+                });
             } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
                 console.warn(`⚠️ Realtime desconectado (${status}). Intentando reconectar...`);
                 window.notigasGlobalChannel = null;

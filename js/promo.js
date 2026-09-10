@@ -35,18 +35,18 @@ window._localAds = {
   muro_avisos: null
 };
 window._currentLocalAdData = null; // Retrocompatibilidad
-let currentAdUrl = 'https://wa.me/59170000000?text=Hola';
+let currentAdUrl = '';
 
 function formatExternalUrl(value) {
   if (!value || typeof value !== 'string') return '';
   let str = value.trim();
   if (!str) return '';
 
-  // Si es un número telefónico (e.g. 70000000 o 59170000000)
+  // Número móvil peruano: 9 dígitos, opcionalmente precedido por +51/51.
   const digitsOnly = str.replace(/[^0-9]/g, '');
-  if (/^(\+?591)?[67][0-9]{7}$/.test(str) || (/^[0-9]{8,12}$/.test(digitsOnly) && !str.includes('.') && !str.includes('/'))) {
-    const cleanNum = digitsOnly.startsWith('591') ? digitsOnly : ('591' + digitsOnly);
-    return `https://wa.me/${cleanNum}`;
+  if (/^(?:\+?51)?9[0-9]{8}$/.test(str) || (/^(?:51)?9[0-9]{8}$/.test(digitsOnly) && !str.includes('.') && !str.includes('/'))) {
+    const localNumber = digitsOnly.startsWith('51') ? digitsOnly.slice(2) : digitsOnly;
+    return `https://wa.me/51${localNumber}`;
   }
 
   // Si ya tiene protocolo http/https
@@ -356,7 +356,7 @@ window.getAdSenseFeedMarkup = function(placement) {
   const safeCity = (typeof window.escapeHtmlStr === 'function')
     ? window.escapeHtmlStr(String(ad.ciudad || (typeof AppState !== 'undefined' ? AppState.get('city') : 'Local') || 'Local').toUpperCase())
     : String(ad.ciudad || 'Local').toUpperCase();
-  const safeUrl = getSafeExternalUrl(ad.url) || 'https://wa.me/59170000000?text=Hola';
+  const safeUrl = getSafeExternalUrl(ad.url) || 'https://wa.me/51900000000?text=Hola';
   const safeImg = getSafeAdImageUrl(ad.image_url);
 
   const bgStyle = safeImg

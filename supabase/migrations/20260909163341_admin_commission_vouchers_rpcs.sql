@@ -1,0 +1,2 @@
+-- Historial remoto aplicado en Supabase el 2026-09-09.
+-- Estado final consolidado por 20260910192931, 20260910193029 y 20260910193151.

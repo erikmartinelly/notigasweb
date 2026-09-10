@@ -1,0 +1,2 @@
+-- Historial remoto aplicado directamente en Supabase.
+-- Confirmación comprador/repartidor y contabilidad final consolidadas en 20260910193151_git_reconcile_order_security_peru.sql.
