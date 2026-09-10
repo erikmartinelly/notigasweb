@@ -33,7 +33,7 @@ window.NOTIGAS.GPS_TIMEOUT_MS        = 12000;                  // 12 segundos (t
 window.NOTIGAS.MIN_MOVEMENT_METERS   = 15;                     // 15 metros (movimiento mínimo GPS)
 window.NOTIGAS.IDLE_THRESHOLD_MS     = 3 * 60 * 1000;         // 3 minutos (repartidor inactivo)
 window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño máximo imagen)
-window.NOTIGAS.CACHE_VERSION = '122';
+window.NOTIGAS.CACHE_VERSION = '127';
 
 // Contrato de datos: la publicidad y los avisos comunitarios son módulos distintos.
 window.NOTIGAS.AD_TABLE = 'anuncios_globales';
@@ -83,11 +83,18 @@ window.loadScriptAsync = function(src) {
 };
 
 window.loadAdminModules = async function() {
-  if (typeof window.renderAdminReports === 'function') return;
-  await Promise.all([
-    window.loadScriptAsync('js/admin_users.js'),
-    window.loadScriptAsync('js/admin.js')
-  ]);
+  if (typeof window.renderAdminReports !== 'function') {
+    await Promise.all([
+      window.loadScriptAsync('js/admin_users.js'),
+      window.loadScriptAsync('js/admin.js')
+    ]);
+  }
+
+  // Debe cargarse DESPUÉS de admin.js porque reemplaza el panel heredado PRO/VIP
+  // por la cola de pagos validada automáticamente y revisión humana de recepción.
+  if (typeof window.renderAdminPaymentsReview !== 'function') {
+    await window.loadScriptAsync('js/admin_payments.js');
+  }
 };
 
 window.loadForumModule = async function() {
