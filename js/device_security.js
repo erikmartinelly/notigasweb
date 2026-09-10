@@ -1,11 +1,10 @@
 /**
- * NOTIGAS - Módulo de Seguridad y Huella de Hardware Móvil (Device Security)
- * Garantiza persistencia multi-capa del Device ID y genera una huella de hardware
- * (Canvas 2D + WebGL + Screen + Concurrency) para impedir la evasión de sanciones
- * por falta de pago de comisiones o intento de registro con DNI ajeno.
+ * NOTIGAS - Device security signal module.
+ *
+ * Browser identifiers are secondary anti-abuse signals, not immutable hardware IDs.
+ * The backend remains the authority for suspensions and reactivation.
  */
-
-(function(window) {
+(function (window) {
   'use strict';
 
   const STORAGE_KEY_DEV = 'notigas_device_id';
@@ -13,45 +12,69 @@
   const COOKIE_NAME = 'notigas_did';
   const IDB_NAME = 'notigas_sec_db';
   const IDB_STORE = 'sec_store';
+  const COOKIE_MAX_AGE = 10 * 365 * 24 * 60 * 60;
 
   let cachedDeviceId = null;
   let cachedFingerprint = null;
   let isLockoutActive = false;
 
-  // 1. Funciones auxiliares de cookies con expiración a 10 años
   function setLongLivedCookie(name, value) {
     try {
-      const maxAge = 10 * 365 * 24 * 60 * 60; // 10 años
-      document.cookie = ${name}=; Max-Age=; path=/; SameSite=Lax;
+      document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(value)}; Max-Age=${COOKIE_MAX_AGE}; Path=/; SameSite=Lax; Secure`;
     } catch (_) {}
   }
 
   function getCookie(name) {
     try {
-      const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-      return match ? decodeURIComponent(match[2]) : null;
+      const encodedName = encodeURIComponent(name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${encodedName}=([^;]+)`));
+      return match ? decodeURIComponent(match[1]) : null;
     } catch (_) {
       return null;
     }
   }
 
-  // 2. Persistencia en IndexedDB (Resiste borrado simple de localStorage en muchos navegadores)
+  function readLocalLock() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY_LOCK);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return parsed && parsed.bloqueado === true ? parsed : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function writeLocalLock(motivo) {
+    try {
+      localStorage.setItem(STORAGE_KEY_LOCK, JSON.stringify({
+        bloqueado: true,
+        motivo: String(motivo || 'Cuenta de repartidor suspendida.'),
+        checked_at: new Date().toISOString()
+      }));
+    } catch (_) {}
+  }
+
+  function clearLocalLock() {
+    try { localStorage.removeItem(STORAGE_KEY_LOCK); } catch (_) {}
+    isLockoutActive = false;
+    const modal = document.getElementById('modalDeviceLockout');
+    if (modal) modal.style.display = 'none';
+  }
+
   function getFromIndexedDB() {
     return new Promise((resolve) => {
       try {
         if (!window.indexedDB) return resolve(null);
         const req = window.indexedDB.open(IDB_NAME, 1);
-        req.onupgradeneeded = (e) => {
-          const db = e.target.result;
-          if (!db.objectStoreNames.contains(IDB_STORE)) {
-            db.createObjectStore(IDB_STORE);
-          }
+        req.onupgradeneeded = (event) => {
+          const db = event.target.result;
+          if (!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
         };
-        req.onsuccess = (e) => {
-          const db = e.target.result;
+        req.onsuccess = (event) => {
+          const db = event.target.result;
           const tx = db.transaction(IDB_STORE, 'readonly');
-          const store = tx.objectStore(IDB_STORE);
-          const getReq = store.get('device_id');
+          const getReq = tx.objectStore(IDB_STORE).get('device_id');
           getReq.onsuccess = () => resolve(getReq.result || null);
           getReq.onerror = () => resolve(null);
         };
@@ -66,26 +89,23 @@
     try {
       if (!window.indexedDB || !id) return;
       const req = window.indexedDB.open(IDB_NAME, 1);
-      req.onupgradeneeded = (e) => {
-        const db = e.target.result;
-        if (!db.objectStoreNames.contains(IDB_STORE)) {
-          db.createObjectStore(IDB_STORE);
-        }
+      req.onupgradeneeded = (event) => {
+        const db = event.target.result;
+        if (!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
       };
-      req.onsuccess = (e) => {
-        const db = e.target.result;
+      req.onsuccess = (event) => {
+        const db = event.target.result;
         const tx = db.transaction(IDB_STORE, 'readwrite');
-        const store = tx.objectStore(IDB_STORE);
-        store.put(id, 'device_id');
+        tx.objectStore(IDB_STORE).put(id, 'device_id');
       };
     } catch (_) {}
   }
 
-  // 3. Generación de Hash determinístico FNV-1a (32/64 bit string)
-  function fnv1aHash(str) {
-    let h1 = 0xdeadbeef ^ 0;
-    let h2 = 0x41c6ce57 ^ 0;
-    for (let i = 0; i < str.length; i++) {
+  function fnv1aHash(value) {
+    const str = String(value || '');
+    let h1 = 0xdeadbeef;
+    let h2 = 0x41c6ce57;
+    for (let i = 0; i < str.length; i += 1) {
       const ch = str.charCodeAt(i);
       h1 = Math.imul(h1 ^ ch, 2654435761);
       h2 = Math.imul(h2 ^ ch, 1597334677);
@@ -95,24 +115,20 @@
     return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16);
   }
 
-  // 4. Huella de Hardware Digital (Canvas 2D + GPU WebGL + Pantalla + Hardware)
-  function generateHardwareFingerprint() {
+  function generateBrowserFingerprint() {
     if (cachedFingerprint) return cachedFingerprint;
-
     const components = [];
 
-    // Componente Pantalla y Dispositivo
     try {
-      components.push(scr:xx);
-      components.push(dpr:);
-      components.push(cpu:);
-      components.push(mem:);
-      components.push(plat:);
-      components.push(	ouch:);
-      components.push(	z:);
+      components.push(`scr:${screen.width}x${screen.height}`);
+      components.push(`dpr:${window.devicePixelRatio || 1}`);
+      components.push(`cpu:${navigator.hardwareConcurrency || 0}`);
+      components.push(`mem:${navigator.deviceMemory || 0}`);
+      components.push(`plat:${navigator.platform || ''}`);
+      components.push(`touch:${navigator.maxTouchPoints || 0}`);
+      components.push(`tz:${Intl.DateTimeFormat().resolvedOptions().timeZone || ''}`);
     } catch (_) {}
 
-    // Componente Canvas 2D
     try {
       const canvas = document.createElement('canvas');
       canvas.width = 200;
@@ -125,219 +141,161 @@
         ctx.fillRect(10, 5, 80, 25);
         ctx.fillStyle = '#0F172A';
         ctx.fillText('NOTIGAS_SEC_PERU_GLP', 12, 10);
-        ctx.strokeStyle = '#10B981';
-        ctx.strokeRect(5, 2, 180, 32);
-        components.push(cvs:);
+        components.push(`cvs:${canvas.toDataURL().slice(-96)}`);
       }
     } catch (_) {}
 
-    // Componente GPU WebGL
     try {
       const glCanvas = document.createElement('canvas');
       const gl = glCanvas.getContext('webgl') || glCanvas.getContext('experimental-webgl');
       if (gl) {
-        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-        if (debugInfo) {
-          const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
-          const vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
-          components.push(gpu:~);
+        const info = gl.getExtension('WEBGL_debug_renderer_info');
+        if (info) {
+          components.push(`gpu:${gl.getParameter(info.UNMASKED_VENDOR_WEBGL)}~${gl.getParameter(info.UNMASKED_RENDERER_WEBGL)}`);
         }
       }
     } catch (_) {}
 
-    const rawSignature = components.join('||');
-    const hash = 'FP-' + fnv1aHash(rawSignature).toUpperCase();
-    cachedFingerprint = hash;
-    return hash;
+    cachedFingerprint = `FP-${fnv1aHash(components.join('||')).toUpperCase()}`;
+    return cachedFingerprint;
   }
 
-  // 5. Obtención y Sincronización del Device ID multi-capa
+  function newDeviceId() {
+    try {
+      if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+        return `DEV-${window.crypto.randomUUID().toUpperCase()}`;
+      }
+    } catch (_) {}
+    const randomPart = Math.random().toString(36).slice(2, 12).toUpperCase();
+    return `DEV-${Date.now().toString(36).toUpperCase()}-${randomPart}`;
+  }
+
   async function resolveDeviceId() {
     if (cachedDeviceId) return cachedDeviceId;
 
-    // Capa A: LocalStorage
-    let devId = null;
-    try {
-      devId = localStorage.getItem(STORAGE_KEY_DEV);
-    } catch (_) {}
+    let deviceId = null;
+    try { deviceId = localStorage.getItem(STORAGE_KEY_DEV); } catch (_) {}
+    if (!deviceId) deviceId = getCookie(COOKIE_NAME);
+    if (!deviceId) deviceId = await getFromIndexedDB();
+    if (!deviceId) deviceId = newDeviceId();
 
-    // Capa B: Cookie
-    if (!devId) {
-      devId = getCookie(COOKIE_NAME);
-    }
-
-    // Capa C: IndexedDB
-    if (!devId) {
-      devId = await getFromIndexedDB();
-    }
-
-    // Si aún no existe, generar nuevo Device ID acoplado
-    if (!devId) {
-      const randHex = Math.random().toString(36).substring(2, 10).toUpperCase();
-      const timeHex = Date.now().toString(36).toUpperCase();
-      devId = DEV--;
-    }
-
-    cachedDeviceId = devId;
-
-    // Sincronizar en todas las capas para máxima persistencia
-    try { localStorage.setItem(STORAGE_KEY_DEV, devId); } catch (_) {}
-    setLongLivedCookie(COOKIE_NAME, devId);
-    saveToIndexedDB(devId);
-
-    return devId;
+    cachedDeviceId = deviceId;
+    try { localStorage.setItem(STORAGE_KEY_DEV, deviceId); } catch (_) {}
+    setLongLivedCookie(COOKIE_NAME, deviceId);
+    saveToIndexedDB(deviceId);
+    return deviceId;
   }
 
   function getDeviceIdSync() {
     if (cachedDeviceId) return cachedDeviceId;
-    let devId = null;
-    try { devId = localStorage.getItem(STORAGE_KEY_DEV); } catch (_) {}
-    if (!devId) devId = getCookie(COOKIE_NAME);
-    if (!devId) {
-      const randHex = Math.random().toString(36).substring(2, 10).toUpperCase();
-      devId = DEV--;
-    }
-    cachedDeviceId = devId;
-    try { localStorage.setItem(STORAGE_KEY_DEV, devId); } catch (_) {}
-    setLongLivedCookie(COOKIE_NAME, devId);
-    return devId;
+    let deviceId = null;
+    try { deviceId = localStorage.getItem(STORAGE_KEY_DEV); } catch (_) {}
+    if (!deviceId) deviceId = getCookie(COOKIE_NAME);
+    if (!deviceId) deviceId = newDeviceId();
+    cachedDeviceId = deviceId;
+    try { localStorage.setItem(STORAGE_KEY_DEV, deviceId); } catch (_) {}
+    setLongLivedCookie(COOKIE_NAME, deviceId);
+    saveToIndexedDB(deviceId);
+    return deviceId;
   }
 
-  // 6. Consultar al backend de Supabase si este equipo, DNI o placa está bloqueado
-  async function checkBlockedStatus(dni = '', placa = '') {
-    const devId = await resolveDeviceId();
-    const fp = generateHardwareFingerprint();
-
-    // Comprobación local previa de bandera de bloqueo persistente
-    try {
-      const localLock = localStorage.getItem(STORAGE_KEY_LOCK);
-      if (localLock) {
-        const parsed = JSON.parse(localLock);
-        if (parsed && parsed.bloqueado) {
-          triggerLockout(parsed.motivo || 'Dispositivo suspendido por comisiones pendientes.');
-          return { bloqueado: true, motivo: parsed.motivo };
-        }
-      }
-    } catch (_) {}
-
-    if (!window.supabaseClient) {
-      return { bloqueado: false };
-    }
-
-    try {
-      const { data, error } = await window.supabaseClient.rpc('rpc_verificar_bloqueo_dispositivo', {
-        p_device_id: devId,
-        p_device_fingerprint: fp,
-        p_dni: dni ? String(dni).trim() : null,
-        p_placa: placa ? String(placa).trim() : null
-      });
-
-      if (error) {
-        console.warn('Aviso comprobando bloqueo de dispositivo:', error.message);
-        return { bloqueado: false };
-      }
-
-      if (data && data.bloqueado === true) {
-        const motivo = data.motivo || 'Dispositivo suspendido por falta de pago de comisiones (S/ 1 por balón).';
-        try {
-          localStorage.setItem(STORAGE_KEY_LOCK, JSON.stringify({ bloqueado: true, motivo, timestamp: Date.now() }));
-        } catch (_) {}
-        triggerLockout(motivo);
-        return { bloqueado: true, motivo };
-      }
-
-      return { bloqueado: false };
-    } catch (err) {
-      console.warn('Error en checkBlockedStatus:', err);
-      return { bloqueado: false };
-    }
-  }
-
-  // 7. Pantalla Ineludible de Bloqueo: Le Cierra la Puerta en la Cara
-  function triggerLockout(motivo = 'Dispositivo suspendido por falta de pago de comisión de S/ 1 por balón de gas el fin de semana.') {
+  function triggerLockout(motivo) {
+    const reason = String(motivo || 'Cuenta de repartidor suspendida hasta regularizar su situación.');
     isLockoutActive = true;
 
-    // Desactivar inmediatamente modo repartidor y limpiar credenciales activas
     if (typeof window.setAppMode === 'function') {
       try { window.setAppMode('buyer'); } catch (_) {}
     }
 
-    // Ocultar modal de registro de chofer si estuviera abierto
-    const modalDriver = document.getElementById('modalDriver');
-    if (modalDriver) modalDriver.style.display = 'none';
+    const driverModal = document.getElementById('modalDriver');
+    if (driverModal) driverModal.style.display = 'none';
 
-    // Desplegar modal de bloqueo permanente
     const lockoutModal = document.getElementById('modalDeviceLockout');
-    const lockoutReasonEl = document.getElementById('deviceLockoutReasonText');
-    const lockoutDeviceIdEl = document.getElementById('deviceLockoutIdText');
-
-    if (lockoutReasonEl) lockoutReasonEl.textContent = motivo;
-    if (lockoutDeviceIdEl) lockoutDeviceIdEl.textContent = cachedDeviceId || getDeviceIdSync();
+    const reasonEl = document.getElementById('deviceLockoutReasonText');
+    const idEl = document.getElementById('deviceLockoutIdText');
+    if (reasonEl) reasonEl.textContent = reason;
+    if (idEl) idEl.textContent = cachedDeviceId || getDeviceIdSync();
 
     if (lockoutModal) {
       lockoutModal.style.display = 'flex';
-    } else {
-      alert(🚪 ACCESO DENEGADO - DISPOSITIVO BLOQUEADO
-
-
-
-No se permite registrar ni utilizar cuentas de repartidor en este teléfono celular.);
+    } else if (typeof window.alert === 'function') {
+      window.alert(`ACCESO SUSPENDIDO\n\n${reason}`);
     }
-
-    // Bloquear intentos de abrir el modal de chofer en el futuro
-    window.abrirModalDriver = function() {
-      triggerLockout(motivo);
-    };
   }
 
-  // 8. Inicialización automática al cargar el DOM
-  async function init() {
-    resolveDeviceId();
-    generateHardwareFingerprint();
+  async function checkBlockedStatus(dni = '', placa = '', telefono = '') {
+    const deviceId = await resolveDeviceId();
+    const fingerprint = generateBrowserFingerprint();
+    const cachedLock = readLocalLock();
 
-    // Si ya existe bandera local de bloqueo, disparar pantalla de inmediato
+    if (!window.supabaseClient) {
+      if (cachedLock) triggerLockout(cachedLock.motivo);
+      return cachedLock || { bloqueado: false, verificacion_pendiente: true };
+    }
+
     try {
-      const localLock = localStorage.getItem(STORAGE_KEY_LOCK);
-      if (localLock) {
-        const parsed = JSON.parse(localLock);
-        if (parsed && parsed.bloqueado) {
-          triggerLockout(parsed.motivo);
-          return;
-        }
-      }
-    } catch (_) {}
+      const { data, error } = await window.supabaseClient.rpc('rpc_verificar_bloqueo_dispositivo', {
+        p_device_id: deviceId,
+        p_device_fingerprint: fingerprint,
+        p_dni: dni ? String(dni).trim() : null,
+        p_placa: placa ? String(placa).trim() : null,
+        p_telefono: telefono ? String(telefono).trim() : null
+      });
 
-    // Verificación rápida en segundo plano
-    setTimeout(async () => {
+      if (error) {
+        console.warn('No se pudo verificar el bloqueo de dispositivo:', error.message);
+        if (cachedLock) triggerLockout(cachedLock.motivo);
+        return cachedLock || { bloqueado: false, verificacion_pendiente: true };
+      }
+
+      if (data && data.bloqueado === true) {
+        const motivo = data.motivo || 'Cuenta de repartidor suspendida. Regulariza la remesa pendiente para continuar.';
+        writeLocalLock(motivo);
+        triggerLockout(motivo);
+        return data;
+      }
+
+      clearLocalLock();
+      return data || { bloqueado: false };
+    } catch (err) {
+      console.warn('Error verificando bloqueo de dispositivo:', err);
+      if (cachedLock) triggerLockout(cachedLock.motivo);
+      return cachedLock || { bloqueado: false, verificacion_pendiente: true };
+    }
+  }
+
+  async function init() {
+    await resolveDeviceId();
+    generateBrowserFingerprint();
+
+    window.setTimeout(async () => {
       try {
-        const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
-        const dni = u.dni || '';
-        const placa = u.placa || '';
-        await checkBlockedStatus(dni, placa);
+        const user = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
+        await checkBlockedStatus(user.dni || '', user.placa || '', user.telefono_whatsapp || user.telefono || '');
       } catch (_) {}
-    }, 1200);
+    }, 800);
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', init, { once: true });
   } else {
     init();
   }
 
-  // Exportar API global
   window.DeviceSecurity = {
     getDeviceId: resolveDeviceId,
-    getDeviceIdSync: getDeviceIdSync,
-    getHardwareFingerprint: generateHardwareFingerprint,
-    getSecurityPayload: async function() {
+    getDeviceIdSync,
+    getHardwareFingerprint: generateBrowserFingerprint,
+    getBrowserFingerprint: generateBrowserFingerprint,
+    getSecurityPayload: async function () {
       return {
         device_id: await resolveDeviceId(),
-        device_fingerprint: generateHardwareFingerprint()
+        device_fingerprint: generateBrowserFingerprint()
       };
     },
-    checkBlockedStatus: checkBlockedStatus,
-    triggerLockout: triggerLockout,
-    isLockoutActive: function() { return isLockoutActive; }
+    checkBlockedStatus,
+    triggerLockout,
+    clearLocalLockout: clearLocalLock,
+    isLockoutActive: function () { return isLockoutActive; }
   };
-
 })(window);
