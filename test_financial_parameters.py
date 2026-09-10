@@ -1,9 +1,12 @@
 """NOTIGAS - verificación portable del contrato financiero vigente (Perú).
 
 Contrato esperado:
-- S/ 0.20 por pedido entregado y contabilizado una sola vez.
-- 100 pedidos = S/ 20 de crédito.
-- Suspensión al alcanzar el límite hasta regularizar el pago.
+- Primeros 50 pedidos confirmados sin comisión.
+- Desde el pedido 51: S/ 0.20 por pedido entregado y contabilizado una sola vez.
+- Primer ciclo cobrable: 100 pedidos = S/ 20.
+- 1.ª remesa confirmada -> crédito S/ 50 (250 pedidos).
+- 2.ª remesa -> mantiene S/ 50.
+- 3.ª remesa -> crédito máximo S/ 100 (500 pedidos).
 - Sin cortes/baneos semanales automáticos.
 """
 from pathlib import Path
@@ -49,14 +52,17 @@ def run_tests() -> None:
     print("✅ [3/5] Backend elimina RPC semanales y protege el baneo administrativo.")
 
     rules = read("js/driver_order_rules.js")
+    assert "50 pedidos" in rules
     assert "S/ 0.20 por pedido" in rules
-    assert "100 pedidos = S/ 20" in rules
+    assert "S/ 20" in rules
+    assert "S/ 50" in rules
+    assert "S/ 100" in rules
     assert "confirmarEntregaPedidoActual" in rules
     assert "pedidos_credito_ciclo" in rules
     assert "limite_pedidos_credito" in rules
     assert "normalizeLegacyFinancialCopy" in rules
     assert "No se aplicó comisión" in rules
-    print("✅ [4/5] Frontend fuerza el contrato actual y neutraliza copias heredadas.")
+    print("✅ [4/5] Frontend fuerza 50 gratis y crédito progresivo S/20 -> S/50 -> S/100.")
 
     hardening = read("scripts/check_audit_hardening.js")
     assert "check_audit_hardening" not in hardening or "Audit hardening" in hardening

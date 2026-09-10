@@ -1,7 +1,7 @@
 /* ==========================================================================
    NOTIGAS - PAGOS DEL REPARTIDOR (PERU)
-   - Comisión: S/ 0.20 por pedido entregado.
-   - Liquidación: 100 pedidos = S/ 20.
+   - Promoción: primeros 50 pedidos confirmados sin comisión.
+   - Después: S/ 0.20 por pedido. Crédito S/ 20 -> S/ 50 -> S/ 100.
    - Pago por Yape en Perú.
    - OCR local: la imagen no se persiste; solo se envían datos extraídos.
    ========================================================================== */
@@ -111,7 +111,7 @@
         </summary>
         <div style="display:grid;gap:9px;margin-top:10px;">
           <div style="font-size:11px;color:#CBD5E1;line-height:1.45;padding:8px;border-radius:8px;background:#0F172A;">
-            Comisión: <strong>S/ 0.20 por pedido entregado</strong>. Al llegar a <strong>100 pedidos (S/ 20)</strong>, debes liquidar por Yape para iniciar un nuevo ciclo.
+            <strong>Primeros 50 pedidos confirmados: GRATIS.</strong> Después: S/ 0.20 por pedido. Primer ciclo: 100 pedidos cobrables = S/ 20; tras la 1.ª remesa el crédito sube a S/ 50 y tras la 3.ª al tope de S/ 100.
           </div>
           <button type="button" id="btnDriverPaymentsHistory" style="width:100%;background:#1E293B;color:#E2E8F0;border:1px solid #475569;padding:10px;border-radius:10px;font-weight:800;cursor:pointer;">
             <i class="fa-solid fa-clock-rotate-left"></i> Ver mis pagos

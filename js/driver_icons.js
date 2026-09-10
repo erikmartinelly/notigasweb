@@ -539,7 +539,7 @@
     const initials = getDriverInitials(driverName || categoria);
     const key = data.user_id || data.id || driverName;
     const theme = getDriverColorTheme(key, data.color_camion);
-    const isPremium = Boolean(data.es_premium);
+    const isPremium = false; // campo legado ignorado: no existe prioridad Premium
 
     // Formatear precio de 10 Kg si está disponible
     const rawPrice = data.precio_balon_10kg || data.precio;

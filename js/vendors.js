@@ -46,7 +46,7 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
             schedule: d.schedule || 'Lunes a Sábado',
             color_camion: d.color_camion || '',
             precio_balon_10kg: d.precio_balon_10kg || null,
-            es_premium: Boolean(d.es_premium),
+            es_premium: false, // campo legado: no produce prioridad ni distintivos
             active: true // Fichas publicadas automáticamente
           });
         }
@@ -101,8 +101,6 @@ function renderVendorCards(filterCat) {
     ? allVendors
     : allVendors.filter(v => v.category.toLowerCase().includes(filterCat.toLowerCase()) || filterCat.toLowerCase().includes(v.category.toLowerCase()));
 
-  // Prioridad para repartidores PRO: aparecen siempre en los primeros lugares
-  filtered.sort((a, b) => (b.es_premium ? 1 : 0) - (a.es_premium ? 1 : 0));
 
   let html = '';
 
@@ -127,7 +125,7 @@ function renderVendorCards(filterCat) {
   const adInsertAfterIndex = Math.max(0, Math.ceil(filtered.length / 2) - 1);
   filtered.forEach((vendor, index) => {
     const safeVendorId = escapeHtmlStr(vendor.id || '');
-    const isVip = Boolean(vendor.es_premium);
+    const isVip = false; // no existe categoría VIP/PRO
     const safeVendorIcon = (typeof window.crearAvatarCamionChoferHtml === 'function')
       ? window.crearAvatarCamionChoferHtml(vendor.name, {
           category: vendor.category,

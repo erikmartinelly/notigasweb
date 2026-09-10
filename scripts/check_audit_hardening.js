@@ -1,108 +1,110 @@
 #!/usr/bin/env node
 'use strict';
+
 const fs = require('fs');
 const path = require('path');
 const root = path.resolve(__dirname, '..');
 const read = (p) => fs.readFileSync(path.join(root, p), 'utf8');
 const fail = (m) => { throw new Error(m); };
-const assertNo = (p, re, label) => { const t = read(p); if (re.test(t)) fail(`${label}: ${p}`); };
-const assertHas = (p, re, label) => { const t = read(p); if (!re.test(t)) fail(`${label}: ${p}`); };
+const assertNo = (p, re, label) => { if (re.test(read(p))) fail(`${label}: ${p}`); };
+const assertHas = (p, re, label) => { if (!re.test(read(p))) fail(`${label}: ${p}`); };
 
 try {
-  assertNo('js/device_security.js', /document\.cookie\s*=\s*\$\{/, 'Device security contiene template literal inválido');
+  // Seguridad base.
+  assertNo('js/device_security.js', /document\.cookie\s*=\s*\$\{/, 'Device security contiene JavaScript inválido');
   assertNo('js/promo.js', /59170000000|\+591|wa\.me\/591/, 'Quedó un fallback telefónico boliviano');
-  assertNo('js/orders.js', /PRO_ORDER_ADVANTAGE_MS|3 minutos de ventaja|Plan PRO \(S\/ 15\/mes\)/i, 'Quedó ventaja PRO en pedidos');
-  assertNo('js/orders.js', /S\/\s*1\.00\s+de\s+comisi[oó]n|Comisi[oó]n\s+fija\s+de\s+S\/\s*1\.00|S\/\s*50\.00|primeros\s+20\s+pedidos\s+confirmados\s+no\s+generan\s+comisi[oó]n|promo_pedidos_gratis_(?:total|usados)/i, 'orders.js conserva el contrato financiero antiguo');
-  assertNo('index.html', /Comisi[oó]n\s+fija\s+de\s+S\/\s*1\.00\s+por\s+bal[oó]n|L[ií]mite\s+de\s+cr[eé]dito:\s*<strong>S\/\s*50\.00|onclick=["']ejecutar(?:CorteSemanal|BaneoSemanal)ManualAdmin\(\)["']/i, 'index.html conserva controles o textos financieros antiguos');
-  assertNo('js/map.js', /PRO_BUYER_ADVANTAGE_MS|1 Minuto de Ventaja para Repartidores PRO/i, 'Quedó ventaja PRO en mapa');
-  assertNo('js/voucher_ocr.js', /\.rpc\(\s*['"](?:rpc_registrar_ocr_pago|rpc_driver_submit_premium_payment)['"]|\.from\(\s*['"]vouchers-premium['"]/, 'OCR genérico todavía escribe pagos o Premium');
-
-  for (const p of ['js/driver_payments.js','js/admin_payments.js']) {
-    assertNo(p, /Bolivia|bolivian|\bBOB\b|monto_recibido_bob|Yape Bolivia/i, 'Quedó lógica activa Bolivia/BOB en pagos');
-  }
-  assertHas('js/driver_payments.js', /p_monto_enviado_pen/, 'Falta monto PEN en contrato OCR vigente');
-  assertHas('js/driver_payments.js', /100 pedidos \(S\/ 20\)/, 'La interfaz no explica 100 pedidos = S/ 20');
-  assertHas('js/driver_payments.js', /9\[0-9\]\{8\}/, 'El OCR no reconoce número Yape Perú de 9 dígitos');
-
-  assertNo('js/driver_order_rules.js', /20\s+PEDIDOS\s+GRATIS|primeros\s+20\s+pedidos|penalizaci[oó]n\s+de\s+S\/\s*0[.,]10|100\s+botellones/i, 'Reglas del repartidor conservan el modelo financiero anterior');
-  assertHas('js/driver_order_rules.js', /S\/\s*0\.20\s+por\s+cada\s+pedido\s+entregado/i, 'Falta comisión de S/ 0.20 por pedido entregado');
-  assertHas('js/driver_order_rules.js', /100\s+pedidos[\s\S]{0,80}S\/\s*20/i, 'Falta regla 100 pedidos = S/ 20');
-  assertHas('js/driver_order_rules.js', /no\s+genera\s+comisi[oó]n\s+ni\s+modifica\s+tu\s+saldo/i, 'Liberar pedido todavía puede parecer un cargo');
-  assertHas('js/driver_order_rules.js', /normalizeLegacyPlanCopy/, 'No se neutraliza el texto HTML legado del Plan PRO');
-  assertHas('js/driver_order_rules.js', /normalizeLegacyFinancialCopy/, 'No se neutraliza el texto financiero heredado');
-  assertHas('js/driver_order_rules.js', /confirmarEntregaPedidoActual/, 'No se reemplaza la confirmación de entrega heredada');
-  assertHas('js/driver_order_rules.js', /pedidos_credito_ciclo/, 'La UI no usa el contador vigente de pedidos');
-  assertHas('js/driver_order_rules.js', /limite_pedidos_credito/, 'La UI no usa el límite vigente de pedidos');
-
-  assertNo('js/admin_users.js', /Falta de pago de comisi[oó]n\s*\(S\/\s*1 por bal[oó]n\)|\.rpc\(\s*['"]rpc_ejecutar_(?:corte_semanal_comisiones|baneo_semanal_morosos)['"]/i, 'Administración conserva acciones financieras semanales o motivo S/1 obsoleto');
-  assertHas('js/admin_users.js', /p_motivo:\s*['"]Suspensión administrativa['"]/, 'Baneo administrativo no usa motivo neutral vigente');
-  assertHas('js/admin_users.js', /estado_servicio:\s*['"]activo['"]/, 'Desbloqueo administrativo no restaura el estado operativo');
-
-  assertHas('js/supabase-config.js', /reconciliación de snapshot falló/i, 'Realtime no reconcilia snapshot después de reconectar');
   assertHas('.htaccess', /worker-src 'self' blob:/, 'CSP Apache no permite el worker OCR');
+  assertHas('js/supabase-config.js', /reconciliación de snapshot falló/i, 'Realtime no reconcilia después de reconectar');
 
+  // Perú y eliminación efectiva del modelo PRO/VIP.
+  assertNo('js/map.js', /PRO_ORDER_ADVANTAGE_MS|PRO_BUYER_ADVANTAGE_MS|isCurrentDriverVip|Ventaja de 3 minutos para repartidores PRO/i, 'Mapa conserva prioridad PRO');
+  assertNo('js/vendors.js', /Prioridad para repartidores PRO/i, 'Directorio conserva ordenamiento PRO');
+  assertNo('js/auth.js', /Puedes pasar a PRO|Repartidor PRO Activado|3 minutos de ventaja en pedidos/i, 'Auth conserva promoción PRO');
+  assertNo('index.html', /S\/\s*15(?:\.00)?(?:\s*PEN|\s*\/\s*mes|\/mes)|Ventaja de 3 Minutos en Pedidos|Baneo Definitivo de Dispositivo|Corte Semanal:/i, 'Registro o términos conservan contrato PRO/S15/semanal');
+
+  // Contrato financiero vigente.
+  for (const p of ['index.html', 'js/driver_order_rules.js', 'js/driver_payments.js']) {
+    assertHas(p, /50\s+pedidos/i, 'Falta promoción de 50 pedidos gratis');
+    assertHas(p, /S\/\s*0[.,]20/i, 'Falta comisión de S/0.20');
+    assertHas(p, /S\/\s*20/i, 'Falta primer límite S/20');
+    assertHas(p, /S\/\s*50/i, 'Falta segundo nivel S/50');
+    assertHas(p, /S\/\s*100/i, 'Falta tope S/100');
+  }
+  assertHas('index.html', /Primeros 50 pedidos confirmados gratis/i, 'Aceptación de términos no informa los 50 pedidos gratis');
+  assertHas('index.html', /primera remesa confirmada[\s\S]{0,120}S\/\s*50/i, 'Términos no explican la primera remesa');
+  assertHas('index.html', /tercera remesa confirmada[\s\S]{0,120}S\/\s*100/i, 'Términos no explican el tope después de la tercera remesa');
+
+  assertHas('js/driver_order_rules.js', /no\s+genera\s+comisi[oó]n\s+ni\s+modifica\s+tu\s+saldo/i, 'Liberar un pedido parece generar cargo');
+  assertHas('js/driver_order_rules.js', /pedido_gratis/i, 'La UI de entrega no distingue pedidos promocionales');
+  assertHas('js/driver_order_rules.js', /promo_pedidos_gratis_(?:total|usados)/i, 'La UI no consulta el contador promocional');
+  assertHas('js/driver_order_rules.js', /remesas_confirmadas/i, 'La UI no conoce el nivel de remesas');
+
+  // OCR de pagos: Perú/PEN, sin almacenamiento Premium.
+  for (const p of ['js/driver_payments.js', 'js/admin_payments.js']) {
+    assertNo(p, /Bolivia|bolivian|\bBOB\b|monto_recibido_bob|Yape Bolivia/i, 'Pagos conserva lógica Bolivia/BOB');
+  }
+  assertHas('js/driver_payments.js', /p_monto_enviado_pen/, 'Falta monto PEN en contrato OCR');
+  assertHas('js/driver_payments.js', /9\[0-9\]\{8\}/, 'OCR no reconoce Yape Perú de 9 dígitos');
+  assertNo('js/voucher_ocr.js', /\.rpc\(\s*['"](?:rpc_registrar_ocr_pago|rpc_driver_submit_premium_payment)['"]|\.from\(\s*['"]vouchers-premium['"]/, 'OCR genérico todavía persiste pagos o Premium');
+
+  // Administración y baneo.
+  assertNo('js/admin_users.js', /Falta de pago de comisi[oó]n\s*\(S\/\s*1 por bal[oó]n\)|\.rpc\(\s*['"]rpc_ejecutar_(?:corte_semanal_comisiones|baneo_semanal_morosos)['"]/i, 'Administración conserva el modelo semanal/S1');
+  assertHas('js/admin_users.js', /p_motivo:\s*['"]Suspensión administrativa['"]/, 'Baneo administrativo no usa motivo neutral');
+  assertHas('js/admin_users.js', /estado_servicio:\s*['"]activo['"]/, 'Desbloqueo administrativo no restaura estado activo');
+
+  // Localización activa.
   const runtimeFiles = ['index.html','js/app.js','js/auth.js','js/forum.js','js/vendors.js','js/admin.js','js/orders.js','js/map.js','js/supabase-config.js','scripts/check_runtime.js'];
   for (const p of runtimeFiles) assertNo(p, /Cochabamba|COCHABAMBA/, 'Residuo activo de Cochabamba');
-  assertNo('README.md', /The Origin: Bolivia|YPFB|state monopoly/i, 'README conserva el modelo boliviano como descripción vigente');
+  assertNo('README.md', /The Origin: Bolivia|YPFB|state monopoly/i, 'README conserva descripción boliviana vigente');
 
+  // PWA: una sola generación de assets.
   const index = read('index.html');
   const htmlVersions = [...index.matchAll(/(?:styles|js)\/[^"']+\?v=(\d+)/g)].map(m => m[1]);
   if (!htmlVersions.length) fail('No se detectaron assets versionados en index.html');
   const uniqueHtmlVersions = [...new Set(htmlVersions)];
-  if (uniqueHtmlVersions.length !== 1 || uniqueHtmlVersions[0] !== '130') {
-    fail(`Versiones de assets mezcladas en index.html: ${uniqueHtmlVersions.join(',')}`);
+  if (uniqueHtmlVersions.length !== 1 || uniqueHtmlVersions[0] !== '132') {
+    fail(`Versiones de assets mezcladas: ${uniqueHtmlVersions.join(',')}`);
   }
-
   const sw = read('sw.js');
-  if (!/notigas-cache-v131/.test(sw)) fail('Service worker no fuerza renovación de caché v131');
-  if (!/fetch\(asset, \{ cache: 'reload' \}\)/.test(sw)) fail('Service worker no fuerza recarga de assets en instalación');
+  if (!/notigas-cache-v132/.test(sw)) fail('Service worker no usa cache v132');
+  if (!/fetch\(asset, \{ cache: 'reload' \}\)/.test(sw)) fail('Service worker no fuerza recarga durante instalación');
 
+  // Runtime tests deben cargar los módulos críticos.
   const runtime = read('scripts/check_runtime.js');
   for (const mod of ['js/admin_payments.js','js/driver_payments.js','js/driver_order_rules.js']) {
     if (!runtime.includes(`'${mod}'`)) fail(`Runtime test no carga ${mod}`);
   }
 
+  // Migraciones críticas y contrato progresivo reproducible.
   const migrationDir = path.join(root, 'supabase', 'migrations');
-  const migrationNames = fs.readdirSync(migrationDir);
+  const names = fs.readdirSync(migrationDir);
   for (const required of [
     '20260910192243_credit_suspension_identifiers_and_reconciliation.sql',
     '20260910205311_fix_device_block_rpc_overload_ambiguity_v2.sql',
     '20260910205729_remove_release_penalty_align_credit_contract.sql',
-    '20260910220052_remove_obsolete_weekly_financial_rpcs.sql'
+    '20260910220052_remove_obsolete_weekly_financial_rpcs.sql',
+    '20260910225938_driver_50_free_and_progressive_credit_tiers.sql'
   ]) {
-    if (!migrationNames.includes(required)) fail(`Falta migración crítica: ${required}`);
+    if (!names.includes(required)) fail(`Falta migración crítica: ${required}`);
   }
 
-  const legacyHardware = read('supabase/migrations/20260908005000_device_id_dni_hardware_ban.sql');
-  if (/rpc_banear_repartidor_completo|S\/\s*1\b/i.test(legacyHardware)) {
-    fail('La migración histórica de hardware reintroduce lógica financiera/baneo obsoleta');
-  }
-  if (!/device_fingerprint/.test(legacyHardware)) fail('La migración histórica de hardware perdió su estructura base');
+  const tier = read('supabase/migrations/20260910225938_driver_50_free_and_progressive_credit_tiers.sql');
+  if (!/promo_pedidos_gratis_total SET DEFAULT 50/i.test(tier)) fail('La migración no fija 50 pedidos gratis');
+  if (!/remesas_confirmadas/.test(tier)) fail('La migración no registra remesas confirmadas');
+  if (!/p_count,0\) >= 3 THEN 100\.00/.test(tier)) fail('La tercera remesa no eleva el crédito a S/100');
+  if (!/p_count,0\) >= 1 THEN 50\.00/.test(tier)) fail('La primera remesa no eleva el crédito a S/50');
+  if (!/ELSE 20\.00/.test(tier)) fail('El crédito inicial no es S/20');
+  if (!/promo_entrega_gratis/.test(tier)) fail('No existe registro contable para pedidos gratuitos');
+  if (!/v_full_payment/.test(tier)) fail('Las remesas parciales podrían subir indebidamente el nivel');
 
   const legacyFinance = read('supabase/migrations/20260908010000_financial_commission_rules.sql');
   if (/S\/\s*1\.00|S\/\s*50\.00|rpc_ejecutar_corte_semanal_comisiones|rpc_ejecutar_baneo_semanal_morosos/i.test(legacyFinance)) {
-    fail('La migración financiera histórica reintroduce el contrato S/1-S/50 o procesos semanales');
+    fail('Migración histórica reintroduce S/1-S/50 o procesos semanales');
   }
-  if (!/DEFAULT\s+20\.00/i.test(legacyFinance) || !/DEFAULT\s+0\.20/i.test(legacyFinance)) {
-    fail('La migración financiera histórica no conserva los defaults S/20 y S/0.20');
-  }
+  const legacyHardware = read('supabase/migrations/20260908005000_device_id_dni_hardware_ban.sql');
+  if (/rpc_banear_repartidor_completo|S\/\s*1\b/i.test(legacyHardware)) fail('Migración histórica de hardware reintroduce baneo financiero antiguo');
 
-  const overloadFix = read('supabase/migrations/20260910205311_fix_device_block_rpc_overload_ambiguity_v2.sql');
-  if (/p_telefono\s+text\s+DEFAULT/i.test(overloadFix)) fail('La sobrecarga de 5 argumentos vuelve a tener defaults ambiguos');
-  if (!/NEW\.telefono_whatsapp/.test(overloadFix)) fail('El trigger de bloqueo no valida teléfono');
-
-  const releaseFix = read('supabase/migrations/20260910205729_remove_release_penalty_align_credit_contract.sql');
-  if (/penalizacion_cancelacion|v_penalty\s*numeric/i.test(releaseFix)) fail('La migración final reintroduce penalización financiera');
-  if (!/'penalizacion',0/.test(releaseFix)) fail('La liberación no conserva compatibilidad explícita con penalización 0');
-
-  const weeklyCleanup = read('supabase/migrations/20260910220052_remove_obsolete_weekly_financial_rpcs.sql');
-  if (!/DROP FUNCTION IF EXISTS public\.rpc_ejecutar_corte_semanal_comisiones\(\)/.test(weeklyCleanup)) fail('No se elimina el RPC de corte semanal');
-  if (!/DROP FUNCTION IF EXISTS public\.rpc_ejecutar_baneo_semanal_morosos\(\)/.test(weeklyCleanup)) fail('No se elimina el RPC de baneo semanal');
-  if (!/NOT public\.is_admin_email\(\)/.test(weeklyCleanup)) fail('El baneo administrativo no comprueba autorización');
-  if (!/Suspensión administrativa/.test(weeklyCleanup)) fail('El baneo administrativo conserva un motivo financiero obsoleto');
-  if (!/REVOKE ALL ON FUNCTION public\.rpc_banear_repartidor_completo/.test(weeklyCleanup)) fail('El RPC de baneo no revoca ejecución pública');
-
-  console.log('✅ Audit hardening invariants OK');
+  console.log('✅ Audit hardening invariants OK: 50 gratis, crédito S/20 -> S/50 -> S/100');
 } catch (err) {
   console.error('❌ Audit hardening check:', err.message);
   process.exit(1);

@@ -139,7 +139,7 @@ async function renderDriverOrdersList() {
   if (localUserId) {
     driverFinancePromise = window.supabaseClient
       .from('choferes_habilitados')
-      .select('comisiones_pendientes, estado_servicio, bloqueado, motivo_bloqueo, pedidos_credito_ciclo, limite_pedidos_credito, comision_por_pedido')
+      .select('comisiones_pendientes, estado_servicio, bloqueado, motivo_bloqueo, pedidos_credito_ciclo, limite_pedidos_credito, limite_credito, comision_por_pedido, promo_pedidos_gratis_total, promo_pedidos_gratis_usados, remesas_confirmadas')
       .eq('user_id', localUserId)
       .maybeSingle();
   }
@@ -156,7 +156,11 @@ async function renderDriverOrdersList() {
     motivo_bloqueo: financeRow.motivo_bloqueo || userData?.motivo_bloqueo || '',
     pedidosCiclo: Number(financeRow.pedidos_credito_ciclo ?? userData?.pedidos_credito_ciclo ?? 0),
     pedidosLimite: Number(financeRow.limite_pedidos_credito ?? userData?.limite_pedidos_credito ?? 100),
-    comisionPedido: Number(financeRow.comision_por_pedido ?? userData?.comision_por_pedido ?? 0.20)
+    comisionPedido: Number(financeRow.comision_por_pedido ?? userData?.comision_por_pedido ?? 0.20),
+    limiteCredito: Number(financeRow.limite_credito ?? userData?.limite_credito ?? 20),
+    promoTotal: Number(financeRow.promo_pedidos_gratis_total ?? userData?.promo_pedidos_gratis_total ?? 50),
+    promoUsados: Number(financeRow.promo_pedidos_gratis_usados ?? userData?.promo_pedidos_gratis_usados ?? 0),
+    remesasConfirmadas: Number(financeRow.remesas_confirmadas ?? userData?.remesas_confirmadas ?? 0)
   };
   driverFinances.isSuspended = Boolean(
     driverFinances.bloqueado ||
@@ -170,21 +174,23 @@ async function renderDriverOrdersList() {
     AppState.set('userData', { ...curU, ...financeRow });
   }
 
-  const pctCredito = driverFinances.pedidosLimite > 0
-    ? Math.min(100, Math.round((driverFinances.pedidosCiclo / driverFinances.pedidosLimite) * 100))
-    : 0;
+  const promoRestantes = Math.max(0, driverFinances.promoTotal - driverFinances.promoUsados);
+  const enPromo = promoRestantes > 0;
+  const pctCredito = enPromo
+    ? (driverFinances.promoTotal > 0 ? Math.min(100, Math.round((driverFinances.promoUsados / driverFinances.promoTotal) * 100)) : 0)
+    : (driverFinances.pedidosLimite > 0 ? Math.min(100, Math.round((driverFinances.pedidosCiclo / driverFinances.pedidosLimite) * 100)) : 0);
   const barColor = driverFinances.isSuspended || pctCredito >= 100 ? '#EF4444' : (pctCredito >= 70 ? '#F59E0B' : '#10B981');
 
   let financialWidgetHtml = `
     <div class="driver-financial-card" style="background:linear-gradient(135deg,#1E293B 0%,#0F172A 100%);border:1.5px solid ${driverFinances.isSuspended ? '#EF4444' : '#334155'};border-radius:10px;padding:10px 12px;margin-bottom:12px;">
       <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:6px;">
-        <span style="font-size:11px;font-weight:800;color:#E2E8F0;">💳 Crédito por uso</span>
-        <span style="font-size:11px;font-weight:900;color:${barColor};">${driverFinances.pedidosCiclo}/${driverFinances.pedidosLimite} pedidos</span>
+        <span style="font-size:11px;font-weight:800;color:#E2E8F0;">${enPromo ? '🎁 Prueba gratis' : '💳 Crédito por uso'}</span>
+        <span style="font-size:11px;font-weight:900;color:${barColor};">${enPromo ? `${driverFinances.promoUsados}/${driverFinances.promoTotal} gratis` : `${driverFinances.pedidosCiclo}/${driverFinances.pedidosLimite} pedidos`}</span>
       </div>
       <div style="background:#0F172A;border-radius:6px;height:8px;width:100%;overflow:hidden;border:1px solid #334155;"><div style="background:${barColor};height:100%;width:${pctCredito}%;"></div></div>
       <div style="display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:9.5px;color:#94A3B8;">
-        <span>Comisión: S/ ${driverFinances.comisionPedido.toFixed(2)} por pedido confirmado</span>
-        <span>Saldo: S/ ${driverFinances.comisiones.toFixed(2)}</span>
+        <span>${enPromo ? `${promoRestantes} pedido(s) gratis restantes` : `Comisión: S/ ${driverFinances.comisionPedido.toFixed(2)} por pedido confirmado`}</span>
+        <span>${enPromo ? 'Saldo: S/ 0.00' : `Saldo: S/ ${driverFinances.comisiones.toFixed(2)} / S/ ${driverFinances.limiteCredito.toFixed(2)}`}</span>
       </div>
     </div>`;
 
@@ -213,7 +219,7 @@ async function renderDriverOrdersList() {
 
   const planBannerHtml = `
     <div class="driver-plan-banner" style="background:linear-gradient(135deg,rgba(16,185,129,.14),#0F172A);border:1.5px solid #10B981;border-radius:10px;padding:10px 12px;margin-bottom:12px;color:#D1FAE5;font-size:11.5px;line-height:1.45;">
-      <strong style="color:#FFFFFF;">Pedidos en tiempo real</strong> · Comisión S/ 0,20 por pedido confirmado. Ciclo de crédito: 100 pedidos = S/ 20.
+      <strong style="color:#FFFFFF;">🎁 50 pedidos gratis para probar NOTIGAS</strong> · Después: S/ 0,20 por pedido. Primer ciclo: 100 pedidos cobrables = S/ 20; luego el crédito progresa a S/ 50 y, tras la 3.ª remesa, a S/ 100.
     </div>`;
 
   if (!orders || orders.length === 0) {

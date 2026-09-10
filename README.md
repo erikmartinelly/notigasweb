@@ -36,7 +36,7 @@ Engineered with **Vanilla JavaScript**, **Supabase PostgreSQL with PostGIS**, an
 ### Current Operating Model: Peru
 NOTIGAS operates in **Peru** as a neighborhood logistics platform for LPG cylinders and other essential deliveries. Buyers publish geolocated requests and independent delivery partners compete on availability, price, coverage, and service.
 
-The current business model has **no PRO/VIP monthly subscription and no artificial visibility delay**. Driver onboarding is free. The first 20 confirmed orders are commission-free; afterward the platform records a S/ 0.20 commission per confirmed order and allows a credit cycle of up to 100 delivered units before requiring the configured remittance workflow.
+The current business model has **no PRO/VIP monthly subscription and no artificial visibility delay**. Driver onboarding includes the first **50 confirmed orders commission-free**. After that, the platform records **S/ 0.20 per confirmed order**. The first paid credit cycle is **100 orders = S/ 20**; after the first confirmed remittance the credit limit increases to **S/ 50**, remains S/ 50 through the second remittance, and after the third confirmed remittance increases to the maximum **S/ 100**.
 
 The production architecture uses server-authoritative PostgreSQL RPCs and RLS for assignment, delivery confirmation, accounting, payments, suspensions, and administrative actions.
 

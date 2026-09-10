@@ -2142,9 +2142,7 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
       if (isDriverUser) {
         clearNeighborOrderMarkers();
         let availableOrders = [];
-        const isCurrentDriverVip = Boolean(u.es_premium || u.tipo_plan === 'pro');
-        const PRO_ORDER_ADVANTAGE_MS = 3 * 60 * 1000;
-        const fetchNow = Date.now();
+
 
         if (Array.isArray(pubRes.data)) {
           availableOrders = pubRes.data.filter(order => {
@@ -2152,11 +2150,6 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
               window.isOrderCategoryMatchingDriver(order.categoria, driverCategoria);
             if (!matchesCat) return false;
 
-            // Ventaja de 3 minutos para repartidores PRO:
-            if (!isCurrentDriverVip) {
-              const orderAge = fetchNow - new Date(order.created_at).getTime();
-              if (orderAge < PRO_ORDER_ADVANTAGE_MS) return false;
-            }
             return true;
           });
         }
