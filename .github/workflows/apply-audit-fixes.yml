@@ -5,6 +5,7 @@ on:
     branches: [ fix/audit-hardening-20260910 ]
     paths:
       - 'scripts/apply_audit_fixes.py'
+      - 'scripts/apply_audit_followup.py'
       - 'scripts/check_audit_hardening.js'
       - '.github/workflows/apply-audit-fixes.yml'
 
@@ -24,7 +25,9 @@ jobs:
         with:
           node-version: '22'
       - name: Apply deterministic remediation
-        run: python3 scripts/apply_audit_fixes.py
+        run: |
+          python3 scripts/apply_audit_fixes.py
+          python3 scripts/apply_audit_followup.py
       - name: Verify syntax and hardening invariants
         run: |
           node scripts/check_syntax.js
