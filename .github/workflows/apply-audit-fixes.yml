@@ -1,0 +1,42 @@
+name: Apply audited remediation
+
+on:
+  push:
+    branches: [ fix/audit-hardening-20260910 ]
+    paths:
+      - 'scripts/apply_audit_fixes.py'
+      - 'scripts/check_audit_hardening.js'
+      - '.github/workflows/apply-audit-fixes.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  remediate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/audit-hardening-20260910
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply deterministic remediation
+        run: python3 scripts/apply_audit_fixes.py
+      - name: Verify syntax and hardening invariants
+        run: |
+          node scripts/check_syntax.js
+          node scripts/check_audit_hardening.js
+      - name: Commit remediated application
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'No changes to commit.'
+          else
+            git commit -m 'fix: apply audited frontend hardening'
+            git push origin HEAD:fix/audit-hardening-20260910
+          fi
