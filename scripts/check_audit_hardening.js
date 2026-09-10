@@ -32,6 +32,10 @@ try {
   assertHas('js/driver_order_rules.js', /pedidos_credito_ciclo/, 'La UI no usa el contador vigente de pedidos');
   assertHas('js/driver_order_rules.js', /limite_pedidos_credito/, 'La UI no usa el límite vigente de pedidos');
 
+  assertNo('js/admin_users.js', /Falta de pago de comisi[oó]n\s*\(S\/\s*1 por bal[oó]n\)|\.rpc\(\s*['"]rpc_ejecutar_(?:corte_semanal_comisiones|baneo_semanal_morosos)['"]/i, 'Administración conserva acciones financieras semanales o motivo S/1 obsoleto');
+  assertHas('js/admin_users.js', /p_motivo:\s*['"]Suspensión administrativa['"]/, 'Baneo administrativo no usa motivo neutral vigente');
+  assertHas('js/admin_users.js', /estado_servicio:\s*['"]activo['"]/, 'Desbloqueo administrativo no restaura el estado operativo');
+
   assertHas('js/supabase-config.js', /reconciliación de snapshot falló/i, 'Realtime no reconcilia snapshot después de reconectar');
   assertHas('.htaccess', /worker-src 'self' blob:/, 'CSP Apache no permite el worker OCR');
 
