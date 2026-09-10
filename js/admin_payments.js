@@ -45,7 +45,7 @@
       pendiente_verificacion_recepcion: ['#F59E0B', 'Validado automáticamente · verificar recepción'],
       confirmado: ['#16A34A', 'Pago recibido · confirmado'],
       no_recibido: ['#64748B', 'Dinero no recibido'],
-      fraude_confirmado: ['#DC2626', 'Fraude confirmado · baneado'],
+      fraude_confirmado: ['#DC2626', 'Comprobante observado · cuenta suspendida'],
       ocr_no_valido: ['#DC2626', 'OCR no válido'],
       generado: ['#2563EB', 'Cobro generado'],
       pendiente: ['#F59E0B', 'Pendiente']
@@ -123,18 +123,18 @@
   async function banearPorFraudePagoAdmin(pagoId) {
     const ejecutar = async () => {
       try {
-        if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Aplicando baneo por fraude...');
+        if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Suspendiendo cuenta por comprobante observado...');
         const data = await llamarRevision(pagoId, 'fraude', 'Comprobante Yape falsificado o manipulado');
         if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-        if (typeof showToast === 'function') showToast('Repartidor baneado', data?.mensaje || 'Baneo permanente aplicado por fraude.', 'error', 5500);
+        if (typeof showToast === 'function') showToast('Cuenta suspendida', data?.mensaje || 'La cuenta quedó suspendida hasta que se verifique el pago total.', 'warning', 5500);
         await renderAdminPaymentsReview();
       } catch (err) {
         if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-        if (typeof showToast === 'function') showToast('Error', err.message || 'No se pudo aplicar el baneo.', 'error', 4500);
+        if (typeof showToast === 'function') showToast('Error', err.message || 'No se pudo suspender la cuenta.', 'error', 4500);
       }
     };
-    const text = 'Esta acción marcará el pago como fraude y bloqueará la cuenta y los identificadores asociados. Un pago posterior no levantará este baneo.';
-    if (typeof showConfirmModal === 'function') showConfirmModal('⛔', 'Banear por comprobante falsificado', text, 'Banear por fraude', ejecutar);
+    const text = 'Esta acción marca el comprobante como observado y suspende temporalmente la cuenta. Si posteriormente se verifica el pago total adeudado, el repartidor se reactiva.';
+    if (typeof showConfirmModal === 'function') showConfirmModal('⚠️', 'Suspender por comprobante observado', text, 'Suspender temporalmente', ejecutar);
     else if (confirm(text)) ejecutar();
   }
 
@@ -145,11 +145,11 @@
       return `<div style="display:grid;gap:6px;min-width:190px;">
         <button type="button" onclick="window.confirmarRecepcionPagoAdmin('${id}')" style="background:#16A34A;color:white;border:0;padding:8px 10px;border-radius:8px;font-weight:800;cursor:pointer;">✓ Confirmar recepción</button>
         <button type="button" onclick="window.marcarPagoNoRecibidoAdmin('${id}')" style="background:#475569;color:white;border:0;padding:8px 10px;border-radius:8px;font-weight:700;cursor:pointer;">No recibido</button>
-        <button type="button" onclick="window.banearPorFraudePagoAdmin('${id}')" style="background:#DC2626;color:white;border:0;padding:8px 10px;border-radius:8px;font-weight:800;cursor:pointer;">⛔ Banear por fraude</button>
+        <button type="button" onclick="window.banearPorFraudePagoAdmin('${id}')" style="background:#DC2626;color:white;border:0;padding:8px 10px;border-radius:8px;font-weight:800;cursor:pointer;">⚠️ Suspender por comprobante observado</button>
       </div>`;
     }
     if (estado === 'ocr_no_valido' || estado === 'no_recibido') {
-      return `<button type="button" onclick="window.banearPorFraudePagoAdmin('${id}')" style="background:#DC2626;color:white;border:0;padding:8px 10px;border-radius:8px;font-weight:800;cursor:pointer;">⛔ Banear por fraude</button>`;
+      return `<button type="button" onclick="window.banearPorFraudePagoAdmin('${id}')" style="background:#DC2626;color:white;border:0;padding:8px 10px;border-radius:8px;font-weight:800;cursor:pointer;">⚠️ Suspender por comprobante observado</button>`;
     }
     return '<span style="color:#94A3B8;font-size:12px;">Sin acciones pendientes</span>';
   }
@@ -171,7 +171,7 @@
       let html = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px;">
         <div style="background:#1E293B;border:1px solid #F59E0B;border-radius:10px;padding:12px;"><div style="font-size:11px;color:#CBD5E1;">Por verificar recepción</div><div style="font-size:24px;font-weight:900;color:#F59E0B;">${pending}</div></div>
         <div style="background:#1E293B;border:1px solid #16A34A;border-radius:10px;padding:12px;"><div style="font-size:11px;color:#CBD5E1;">Confirmados</div><div style="font-size:24px;font-weight:900;color:#16A34A;">${confirmed}</div></div>
-        <div style="background:#1E293B;border:1px solid #DC2626;border-radius:10px;padding:12px;"><div style="font-size:11px;color:#CBD5E1;">Fraudes baneados</div><div style="font-size:24px;font-weight:900;color:#DC2626;">${fraud}</div></div>
+        <div style="background:#1E293B;border:1px solid #DC2626;border-radius:10px;padding:12px;"><div style="font-size:11px;color:#CBD5E1;">Comprobantes observados</div><div style="font-size:24px;font-weight:900;color:#DC2626;">${fraud}</div></div>
       </div>`;
 
       if (!rows.length) {

@@ -51,6 +51,14 @@ def run_tests() -> None:
     assert "REVOKE ALL ON FUNCTION public.rpc_banear_repartidor_completo" in cleanup
     print("✅ [3/5] Backend elimina RPC semanales y protege el baneo administrativo.")
 
+    reversible = read("supabase/migrations/20260910234110_make_payment_suspensions_reversible_on_full_payment.sql")
+    assert "estado_servicio = 'suspendido_mora'" in reversible
+    assert "WHEN v_full_payment THEN 'activo'" in reversible
+    assert "'reactivado', (v_full_payment AND NOT v_admin_ban)" in reversible
+    assert "'auto_aprobado', false" in reversible
+    assert "'fraude_comprobante', false" in reversible
+    print("✅ Suspensiones financieras reversibles: pago total verificado reactiva la cuenta.")
+
     rules = read("js/driver_order_rules.js")
     assert "50 pedidos" in rules
     assert "S/ 0.20 por pedido" in rules

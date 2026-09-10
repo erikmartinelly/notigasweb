@@ -62,11 +62,11 @@ try {
   const htmlVersions = [...index.matchAll(/(?:styles|js)\/[^"']+\?v=(\d+)/g)].map(m => m[1]);
   if (!htmlVersions.length) fail('No se detectaron assets versionados en index.html');
   const uniqueHtmlVersions = [...new Set(htmlVersions)];
-  if (uniqueHtmlVersions.length !== 1 || uniqueHtmlVersions[0] !== '132') {
+  if (uniqueHtmlVersions.length !== 1 || uniqueHtmlVersions[0] !== '133') {
     fail(`Versiones de assets mezcladas: ${uniqueHtmlVersions.join(',')}`);
   }
   const sw = read('sw.js');
-  if (!/notigas-cache-v132/.test(sw)) fail('Service worker no usa cache v132');
+  if (!/notigas-cache-v133/.test(sw)) fail('Service worker no usa cache v132');
   if (!/fetch\(asset, \{ cache: 'reload' \}\)/.test(sw)) fail('Service worker no fuerza recarga durante instalación');
 
   // Runtime tests deben cargar los módulos críticos.
@@ -83,10 +83,21 @@ try {
     '20260910205311_fix_device_block_rpc_overload_ambiguity_v2.sql',
     '20260910205729_remove_release_penalty_align_credit_contract.sql',
     '20260910220052_remove_obsolete_weekly_financial_rpcs.sql',
-    '20260910225938_driver_50_free_and_progressive_credit_tiers.sql'
+    '20260910225938_driver_50_free_and_progressive_credit_tiers.sql',
+    '20260910234110_make_payment_suspensions_reversible_on_full_payment.sql'
   ]) {
     if (!names.includes(required)) fail(`Falta migración crítica: ${required}`);
   }
+
+  assertNo('js/admin_payments.js', /baneo permanente|Un pago posterior no levantará este baneo|Fraudes baneados/i, 'Panel de pagos conserva baneo financiero definitivo');
+  assertHas('js/admin_payments.js', /se verifica el pago total adeudado[\s\S]{0,80}se reactiva/i, 'Panel no explica reactivación tras pago total');
+  assertHas('index.html', /No existen baneos financieros definitivos/i, 'Términos no declaran la reversibilidad financiera');
+
+  const reversible = read('supabase/migrations/20260910234110_make_payment_suspensions_reversible_on_full_payment.sql');
+  if (!/estado_servicio = 'suspendido_mora'/.test(reversible)) fail('La mora no usa suspensión reversible');
+  if (!/WHEN v_full_payment THEN 'activo'/.test(reversible)) fail('El pago total no reactiva al repartidor');
+  if (!/permanente, false/.test(reversible)) fail('Comprobante observado aún podría generar baneo permanente');
+  if (!/'auto_aprobado', false/.test(reversible)) fail('El OCR legado aún podría aprobar pagos sin revisión administrativa');
 
   const tier = read('supabase/migrations/20260910225938_driver_50_free_and_progressive_credit_tiers.sql');
   if (!/promo_pedidos_gratis_total SET DEFAULT 50/i.test(tier)) fail('La migración no fija 50 pedidos gratis');
