@@ -22,6 +22,12 @@ try {
   assertHas('js/driver_payments.js', /100 pedidos \(S\/ 20\)/, 'La interfaz no explica 100 pedidos = S/ 20');
   assertHas('js/driver_payments.js', /9\[0-9\]\{8\}/, 'El OCR no reconoce número Yape Perú de 9 dígitos');
 
+  assertNo('js/driver_order_rules.js', /20\s+PEDIDOS\s+GRATIS|primeros\s+20\s+pedidos|penalizaci[oó]n\s+de\s+S\/\s*0[.,]10|100\s+botellones/i, 'Reglas del repartidor conservan el modelo financiero anterior');
+  assertHas('js/driver_order_rules.js', /S\/\s*0\.20\s+por\s+cada\s+pedido\s+entregado/i, 'Falta comisión de S/ 0.20 por pedido entregado');
+  assertHas('js/driver_order_rules.js', /100\s+pedidos[\s\S]{0,80}S\/\s*20/i, 'Falta regla 100 pedidos = S/ 20');
+  assertHas('js/driver_order_rules.js', /no\s+genera\s+comisi[oó]n\s+ni\s+modifica\s+tu\s+saldo/i, 'Liberar pedido todavía puede parecer un cargo');
+  assertHas('js/driver_order_rules.js', /normalizeLegacyPlanCopy/, 'No se neutraliza el texto HTML legado del Plan PRO');
+
   assertHas('js/supabase-config.js', /reconciliación de snapshot falló/i, 'Realtime no reconcilia snapshot después de reconectar');
   assertHas('.htaccess', /worker-src 'self' blob:/, 'CSP Apache no permite el worker OCR');
 
@@ -48,9 +54,21 @@ try {
 
   const migrationDir = path.join(root, 'supabase', 'migrations');
   const migrationNames = fs.readdirSync(migrationDir);
-  if (!migrationNames.some(n => n.includes('credit_suspension_identifiers_and_reconciliation'))) {
-    fail('Falta migración final de reconciliación Git/Supabase');
+  for (const required of [
+    '20260910192243_credit_suspension_identifiers_and_reconciliation.sql',
+    '20260910205311_fix_device_block_rpc_overload_ambiguity_v2.sql',
+    '20260910205729_remove_release_penalty_align_credit_contract.sql'
+  ]) {
+    if (!migrationNames.includes(required)) fail(`Falta migración crítica: ${required}`);
   }
+
+  const overloadFix = read('supabase/migrations/20260910205311_fix_device_block_rpc_overload_ambiguity_v2.sql');
+  if (/p_telefono\s+text\s+DEFAULT/i.test(overloadFix)) fail('La sobrecarga de 5 argumentos vuelve a tener defaults ambiguos');
+  if (!/NEW\.telefono_whatsapp/.test(overloadFix)) fail('El trigger de bloqueo no valida teléfono');
+
+  const releaseFix = read('supabase/migrations/20260910205729_remove_release_penalty_align_credit_contract.sql');
+  if (/penalizacion_cancelacion|v_penalty\s*numeric/i.test(releaseFix)) fail('La migración final reintroduce penalización financiera');
+  if (!/'penalizacion',0/.test(releaseFix)) fail('La liberación no conserva compatibilidad explícita con penalización 0');
 
   console.log('✅ Audit hardening invariants OK');
 } catch (err) {
