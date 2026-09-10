@@ -1,5 +1,7 @@
 /* ==========================================================================
    NOTIGAS - REGLAS OPERATIVAS DEL REPARTIDOR
+   - Primeros 20 pedidos confirmados: sin comisión.
+   - Después: S/ 0.20 por pedido confirmado, a crédito hasta 100 botellones.
    - Cancelar/liberar un pedido ya tomado aplica penalización de S/ 0.10.
    - "No entregué" registra la declaración sin cerrar la posibilidad de que el
      comprador confirme recepción; la confirmación del comprador prevalece.
@@ -218,11 +220,76 @@
     });
   }
 
+  function normalizeDriverRegistrationOffer() {
+    const inputTipo = document.getElementById('inputDriverPlanTipo');
+    if (inputTipo) inputTipo.value = 'gratuito';
+
+    const originalSelector = window._notigasOriginalSeleccionarPlanRegistroChofer || window.seleccionarPlanRegistroChofer;
+    if (!window._notigasOriginalSeleccionarPlanRegistroChofer && typeof originalSelector === 'function') {
+      window._notigasOriginalSeleccionarPlanRegistroChofer = originalSelector;
+      window.seleccionarPlanRegistroChofer = function () {
+        return window._notigasOriginalSeleccionarPlanRegistroChofer('gratuito');
+      };
+    }
+
+    try {
+      if (typeof window._notigasOriginalSeleccionarPlanRegistroChofer === 'function') {
+        window._notigasOriginalSeleccionarPlanRegistroChofer('gratuito');
+      }
+    } catch (_) {}
+
+    const grid = document.getElementById('driverPlanCardsGrid');
+    if (grid) {
+      grid.style.gridTemplateColumns = '1fr';
+      grid.innerHTML = `
+        <div style="border:1.5px solid #10B981;background:linear-gradient(135deg,rgba(16,185,129,.14),rgba(15,23,42,.95));border-radius:12px;padding:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;">
+            <strong style="color:#FFFFFF;font-size:14px;">🎁 Promoción de bienvenida NOTIGAS</strong>
+            <span style="background:#10B981;color:#052E16;border-radius:999px;padding:4px 9px;font-size:10px;font-weight:900;white-space:nowrap;">20 PEDIDOS GRATIS</span>
+          </div>
+          <div style="font-size:11.5px;color:#D1FAE5;line-height:1.55;">
+            Tus <strong>primeros 20 pedidos confirmados</strong> no generan comisión. Desde el pedido 21 se aplica una comisión de <strong>S/ 0,20 por pedido confirmado</strong>, a crédito hasta acumular <strong>100 botellones entregados</strong>.
+          </div>
+          <div style="margin-top:9px;background:rgba(15,23,42,.72);border-left:3px solid #F59E0B;padding:8px 10px;border-radius:0 8px 8px 0;font-size:11px;color:#FDE68A;line-height:1.5;">
+            Al llegar al límite, puedes decidir si deseas continuar usando NOTIGAS. Si continúas, regulariza el saldo mediante la remesa indicada en <strong>Pagos</strong>. Si no realizas la remesa, tu cuenta queda suspendida y dejas de ver nuevos pedidos en el mapa hasta regularizarla.
+          </div>
+          <div style="margin-top:8px;font-size:10.5px;color:#CBD5E1;line-height:1.45;">
+            ⚠️ Cancelar un pedido que ya tomaste tiene una penalización de <strong>S/ 0,10</strong>.
+          </div>
+        </div>`;
+    }
+
+    const proContent = document.getElementById('driverPremiumProContent');
+    if (proContent) proContent.style.display = 'none';
+
+    const paymentSection = document.getElementById('driverPremiumPaymentSection');
+    if (paymentSection) paymentSection.style.display = 'none';
+
+    const gratuitoContent = document.getElementById('driverPremiumGratuitoContent');
+    if (gratuitoContent) {
+      gratuitoContent.style.display = 'block';
+      gratuitoContent.innerHTML = '<p style="margin:0;font-size:11px;color:#CBD5E1;line-height:1.5;">Tu registro no requiere pago inicial. La promoción y el crédito comienzan cuando tus entregas son confirmadas.</p>';
+    }
+
+    const btnText = document.getElementById('btnDriverSubmitText');
+    if (btnText) btnText.textContent = 'Registrar y activar mi cuenta de repartidor';
+
+    const planContainer = document.getElementById('driverPlanSelectorContainer');
+    if (planContainer) {
+      planContainer.querySelectorAll('h3,h4,p').forEach((el) => {
+        if (/plan\s+pro|premium|suscripci[oó]n/i.test(el.textContent || '')) {
+          el.style.display = 'none';
+        }
+      });
+    }
+  }
+
   function install() {
     // orders.js ya fue ejecutado antes de DOMContentLoaded; sustituimos únicamente
     // la acción de liberar para mostrar el costo antes de confirmar.
     window.liberarPedidoRepartidor = liberarPedidoConPenalizacion;
     window.reportarNoEntregadoPedido = reportarNoEntregadoPedido;
+    normalizeDriverRegistrationOffer();
     observeOrderButtons();
     startNotifications();
   }
