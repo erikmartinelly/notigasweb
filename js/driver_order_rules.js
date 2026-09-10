@@ -137,8 +137,162 @@
     });
   }
 
+  function normalizeLegacyFinancialCopy(root = document) {
+    const scope = root && root.nodeType ? root : document;
+    const weeklyButtonRx = /Corte\s+Dom|Corte\s+Semanal|Baneo\s+Lun|Baneo\s+Semanal/i;
+
+    const buttons = scope.querySelectorAll?.('button') || [];
+    buttons.forEach((button) => {
+      if (weeklyButtonRx.test(String(button.textContent || ''))) {
+        button.style.display = 'none';
+        button.disabled = true;
+        button.setAttribute('aria-hidden', 'true');
+      }
+    });
+
+    const doc = scope.ownerDocument || document;
+    const startNode = scope === document ? document.body : scope;
+    if (startNode && typeof doc.createTreeWalker === 'function' && typeof NodeFilter !== 'undefined') {
+      const walker = doc.createTreeWalker(startNode, NodeFilter.SHOW_TEXT);
+      const textNodes = [];
+      while (walker.nextNode()) textNodes.push(walker.currentNode);
+
+      textNodes.forEach((node) => {
+        let text = node.nodeValue || '';
+        if (!text) return;
+        const original = text;
+        text = text
+          .replace(/Comisi[oó]n\s+fija\s+de\s+S\/\s*1\.00\s+por\s+bal[oó]n\s+entregado/gi, 'Comisión de S/ 0.20 por pedido entregado')
+          .replace(/l[ií]mite\s+de\s+cr[eé]dito\s+de\s+S\/\s*50\.00/gi, 'ciclo de crédito de 100 pedidos (S/ 20)')
+          .replace(/corte\s+semanal\s+los\s+domingos\s+11:59\s*PM\s+y\s+baneo\s+definitivo\s+por\s+hardware\s+en\s+caso\s+de\s+incumplimiento/gi, 'suspensión al completar el ciclo hasta regularizar el pago')
+          .replace(/Los\s+primeros\s+20\s+pedidos\s+confirmados\s+no\s+generan\s+comisi[oó]n\.\s*Despu[eé]s:\s*/gi, '')
+          .replace(/cr[eé]dito\s+hasta\s+100\s+unidades\s+entregadas/gi, 'ciclo de crédito de 100 pedidos');
+        if (text !== original) node.nodeValue = text;
+      });
+    }
+
+    const deepestSummary = Array.from(scope.querySelectorAll?.('div') || []).filter((el) => {
+      const text = String(el.textContent || '').replace(/\s+/g, ' ').trim();
+      if (!/Comisi[oó]n fija:.*S\/\s*1\.00.*S\/\s*50\.00.*Corte:.*Baneo:/i.test(text)) return false;
+      return !Array.from(el.children || []).some((child) => /Comisi[oó]n fija:.*S\/\s*1\.00.*S\/\s*50\.00.*Corte:.*Baneo:/i.test(String(child.textContent || '')));
+    });
+    deepestSummary.forEach((el) => {
+      el.textContent = 'Comisión: S/ 0.20 por pedido confirmado • Ciclo: 100 pedidos = S/ 20 • Suspensión hasta regularizar el pago';
+    });
+  }
+
+  function normalizeLegacyOrderBanners(root = document) {
+    const banners = root.querySelectorAll?.('.driver-plan-banner') || [];
+    banners.forEach((banner) => {
+      banner.innerHTML = '<strong style="color:#FFFFFF;">Pedidos en tiempo real</strong> · Comisión: S/ 0.20 por pedido confirmado. Ciclo de crédito: 100 pedidos = S/ 20.';
+    });
+  }
+
+  async function syncDriverCreditCard() {
+    if (!window.supabaseClient) return;
+    const card = document.querySelector('.driver-financial-card');
+    if (!card) return;
+
+    try {
+      const { data: authData } = await window.supabaseClient.auth.getUser();
+      const uid = authData?.user?.id;
+      if (!uid) return;
+
+      const { data: driver, error } = await window.supabaseClient
+        .from('choferes_habilitados')
+        .select('comisiones_pendientes,pedidos_credito_ciclo,limite_pedidos_credito,comision_por_pedido,estado_servicio,bloqueado')
+        .eq('user_id', uid)
+        .maybeSingle();
+      if (error || !driver) return;
+
+      const used = Number(driver.pedidos_credito_ciclo || 0);
+      const limit = Number(driver.limite_pedidos_credito || 100);
+      const saldo = Number(driver.comisiones_pendientes || 0);
+      const fee = Number(driver.comision_por_pedido || 0.20);
+      const pct = limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0;
+      const suspended = Boolean(driver.bloqueado || driver.estado_servicio === 'suspendido_tope' || driver.estado_servicio === 'baneado');
+      const barColor = suspended || pct >= 100 ? '#EF4444' : (pct >= 70 ? '#F59E0B' : '#10B981');
+
+      card.innerHTML = `
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:6px;">
+          <span style="font-size:11px;font-weight:800;color:#E2E8F0;">💳 Crédito por uso</span>
+          <span style="font-size:11px;font-weight:900;color:${barColor};">${used}/${limit} pedidos</span>
+        </div>
+        <div style="background:#0F172A;border-radius:6px;height:8px;width:100%;overflow:hidden;border:1px solid #334155;"><div style="background:${barColor};height:100%;width:${pct}%;"></div></div>
+        <div style="display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:9.5px;color:#94A3B8;">
+          <span>Comisión: S/ ${fee.toFixed(2)} por pedido confirmado</span>
+          <span>Saldo: S/ ${saldo.toFixed(2)}</span>
+        </div>`;
+    } catch (err) {
+      console.warn('No se pudo sincronizar el crédito del repartidor:', err);
+    }
+  }
+
+  async function confirmarEntregaPedidoActual(orderId) {
+    if (!window.supabaseClient || !orderId) return;
+
+    const execute = async () => {
+      if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Confirmando entrega...');
+      try {
+        const { data, error } = await window.supabaseClient.rpc('rpc_driver_confirm_delivery', { p_order_id: orderId });
+        if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
+        if (error) {
+          toast('Error', error.message || 'No se pudo confirmar la entrega.', 'error', 5000);
+          return;
+        }
+
+        const accounting = data?.accounting || data || {};
+        const fee = Number(accounting.comision_cargada ?? data?.comision_cargada ?? 0.20);
+        const saldo = Number(accounting.comisiones_pendientes ?? data?.comisiones_pendientes ?? 0);
+        const used = Number(accounting.pedidos_credito_ciclo ?? data?.pedidos_credito_ciclo ?? 0);
+        const limit = Number(accounting.limite_pedidos_credito ?? data?.limite_pedidos_credito ?? 100);
+        const suspended = Boolean(accounting.suspendido ?? data?.suspendido ?? false);
+
+        if (suspended) {
+          toast('⚠️ Límite de crédito alcanzado', `Entrega confirmada. Comisión S/ ${fee.toFixed(2)}. Alcanzaste ${used || limit}/${limit} pedidos del ciclo (S/ 20). Regulariza el pago para continuar.`, 'warning', 8000);
+        } else {
+          toast('¡Entrega confirmada! 🎉', `Comisión S/ ${fee.toFixed(2)} registrada. Saldo: S/ ${saldo.toFixed(2)} · Ciclo: ${used}/${limit} pedidos.`, 'success', 5000);
+        }
+
+        if (typeof window.renderDriverOrdersList === 'function') await window.renderDriverOrdersList();
+        if (typeof window.cargarPedidosVecinalesEnVivo === 'function') window.cargarPedidosVecinalesEnVivo();
+        await syncDriverCreditCard();
+      } catch (err) {
+        if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
+        toast('Error', err.message || 'No se pudo confirmar la entrega.', 'error', 5000);
+      }
+    };
+
+    const message = '¿El comprador ya recibió su pedido? La entrega confirmada genera una comisión de S/ 0.20 y suma 1 pedido al ciclo de 100.';
+    if (typeof window.showConfirmModal === 'function') {
+      window.showConfirmModal('🏁', 'Confirmar entrega', message, 'Sí, ya entregué el pedido', execute, 'Volver');
+    } else if (window.confirm(message)) {
+      execute();
+    }
+  }
+
+  function installOrderRuntimePatch() {
+    window.confirmarEntregaPedido = confirmarEntregaPedidoActual;
+
+    const original = window.renderDriverOrdersList;
+    if (typeof original === 'function' && !original.__notigasCreditContractPatched) {
+      const wrapped = async function (...args) {
+        const result = await original.apply(this, args);
+        normalizeLegacyFinancialCopy(document);
+        normalizeLegacyOrderBanners(document);
+        await syncDriverCreditCard();
+        return result;
+      };
+      wrapped.__notigasCreditContractPatched = true;
+      wrapped.__notigasOriginal = original;
+      window.renderDriverOrdersList = wrapped;
+    }
+  }
+
   function observeOrderButtons() {
     ensureNotDeliveredButtons(document);
+    normalizeLegacyFinancialCopy(document);
+    normalizeLegacyOrderBanners(document);
     if (observerInstalled || !document.body || typeof MutationObserver !== 'function') return;
     observerInstalled = true;
 
@@ -146,6 +300,8 @@
       for (const mutation of mutations) {
         mutation.addedNodes.forEach((node) => {
           if (typeof Element !== 'undefined' && !(node instanceof Element)) return;
+          normalizeLegacyFinancialCopy(node);
+          normalizeLegacyOrderBanners(node);
           if (node.matches?.('button[data-action="confirmarEntregaPedido"]')) {
             ensureNotDeliveredButtons(node.parentElement || document);
           } else if (node.querySelector?.('button[data-action="confirmarEntregaPedido"]')) {
@@ -249,6 +405,7 @@
         el.textContent = 'NOTIGAS es de libre acceso para compradores. Los repartidores no pagan suscripción: se aplica S/ 0.20 por cada pedido entregado y el saldo se liquida al completar 100 pedidos (S/ 20).';
       }
     });
+    normalizeLegacyFinancialCopy(document);
   }
 
   function normalizeDriverRegistrationOffer() {
@@ -307,9 +464,16 @@
   function install() {
     window.liberarPedidoRepartidor = liberarPedidoRepartidor;
     window.reportarNoEntregadoPedido = reportarNoEntregadoPedido;
+    installOrderRuntimePatch();
     normalizeDriverRegistrationOffer();
     observeOrderButtons();
     startNotifications();
+    window.setTimeout(() => {
+      installOrderRuntimePatch();
+      normalizeLegacyFinancialCopy(document);
+      normalizeLegacyOrderBanners(document);
+      syncDriverCreditCard();
+    }, 0);
   }
 
   if (document.readyState === 'loading') {
