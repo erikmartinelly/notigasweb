@@ -35,4 +35,4 @@ jobs:
             exit 0
           fi
           git commit -m "feat: 50 pedidos gratis y crédito progresivo para repartidores"
-          git push --force-with-lease origin HEAD:fix/driver-50free-progressive-credit
+          git push --force origin HEAD:fix/driver-50free-progressive-credit
