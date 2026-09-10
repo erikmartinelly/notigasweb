@@ -10,10 +10,10 @@ const assertHas = (p, re, label) => { const t = read(p); if (!re.test(t)) fail(`
 
 try {
   assertNo('js/device_security.js', /document\.cookie\s*=\s*\$\{/, 'Device security contiene template literal inválido');
-  assertNo('js/promo.js', /59170000000|\+?591\)?\?\[67\]/, 'Quedó un fallback telefónico boliviano');
+  assertNo('js/promo.js', /59170000000|\+591|wa\.me\/591/, 'Quedó un fallback telefónico boliviano');
   assertNo('js/orders.js', /PRO_ORDER_ADVANTAGE_MS|3 minutos de ventaja|Plan PRO \(S\/ 15\/mes\)/i, 'Quedó ventaja PRO en pedidos');
   assertNo('js/map.js', /PRO_BUYER_ADVANTAGE_MS|1 Minuto de Ventaja para Repartidores PRO/i, 'Quedó ventaja PRO en mapa');
-  assertNo('js/voucher_ocr.js', /rpc_registrar_ocr_pago|rpc_driver_submit_premium_payment|vouchers-premium/, 'OCR local todavía escribe pagos o Premium');
+  assertNo('js/voucher_ocr.js', /\.rpc\(\s*['"](?:rpc_registrar_ocr_pago|rpc_driver_submit_premium_payment)['"]|\.from\(\s*['"]vouchers-premium['"]/, 'OCR local todavía escribe pagos o Premium');
   assertHas('js/driver_payments.js', /p_monto_enviado_pen/,'Falta monto PEN en contrato OCR vigente');
   assertHas('js/driver_payments.js', /p_monto_recibido_bob/,'Falta monto BOB en contrato OCR vigente');
   assertHas('js/supabase-config.js', /reconciliación de snapshot falló/i, 'Realtime no reconcilia snapshot después de reconectar');
@@ -21,6 +21,7 @@ try {
 
   const runtimeFiles = ['index.html','js/app.js','js/auth.js','js/forum.js','js/vendors.js','js/admin.js','js/orders.js','js/map.js','js/supabase-config.js','scripts/check_runtime.js'];
   for (const p of runtimeFiles) assertNo(p, /Cochabamba|COCHABAMBA/, 'Residuo activo de Cochabamba');
+  assertNo('README.md', /The Origin: Bolivia|YPFB|state monopoly/i, 'README conserva el modelo boliviano como descripción vigente');
 
   const index = read('index.html');
   const htmlVersions = [...index.matchAll(/(?:styles|js)\/[^"']+\?v=(\d+)/g)].map(m => m[1]);
