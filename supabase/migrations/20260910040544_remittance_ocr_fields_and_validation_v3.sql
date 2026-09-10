@@ -1,0 +1,2 @@
+-- Historial remoto aplicado directamente en Supabase.
+-- Campos y RPC finales de remesa quedan definidos idempotentemente en 20260910192931 y 20260910193029.

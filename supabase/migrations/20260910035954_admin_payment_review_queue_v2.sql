@@ -1,0 +1,2 @@
+-- Historial remoto aplicado directamente en Supabase.
+-- Cola administrativa final consolidada en 20260910193029_git_reconcile_payments_peru.sql.

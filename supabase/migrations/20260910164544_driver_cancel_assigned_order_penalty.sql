@@ -1,0 +1,2 @@
+-- Historial remoto aplicado directamente en Supabase.
+-- Penalización final de liberación de pedido consolidada en 20260910193151_git_reconcile_order_security_peru.sql.

@@ -1,0 +1,2 @@
+-- Historial remoto aplicado directamente en Supabase.
+-- Estado final de integridad de pedidos y contabilidad consolidado en 20260910193151.

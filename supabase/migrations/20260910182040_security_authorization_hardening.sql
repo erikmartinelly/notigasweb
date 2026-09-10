@@ -1,0 +1,2 @@
+-- Historial remoto aplicado directamente en Supabase.
+-- Estado final de autorización/RLS consolidado por 20260910192931 y 20260910193151.

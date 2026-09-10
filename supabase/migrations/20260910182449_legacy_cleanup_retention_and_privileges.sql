@@ -1,0 +1,2 @@
+-- Historial remoto aplicado directamente en Supabase.
+-- Limpieza y privilegios vigentes quedan reforzados por las migraciones git_reconcile_* posteriores.

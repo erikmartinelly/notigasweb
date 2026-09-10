@@ -1,0 +1,2 @@
+-- Historial remoto aplicado en Supabase el 2026-09-09.
+-- Sus efectos finales quedan consolidados idempotentemente por las migraciones git_reconcile_* del 2026-09-10.

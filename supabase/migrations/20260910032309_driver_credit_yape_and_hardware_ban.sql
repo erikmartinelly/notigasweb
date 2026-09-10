@@ -1,0 +1,2 @@
+-- Historial remoto aplicado directamente en Supabase.
+-- La implementación vigente de crédito/Yape/bloqueo está consolidada en las migraciones git_reconcile_* posteriores.

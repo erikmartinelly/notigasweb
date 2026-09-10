@@ -1,0 +1,2 @@
+-- Historial remoto aplicado directamente en Supabase.
+-- rpc_actualizar_yape_chofer final se consolida en 20260910193029_git_reconcile_payments_peru.sql.

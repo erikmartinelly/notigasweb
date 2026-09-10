@@ -1,0 +1,2 @@
+-- Historial remoto aplicado directamente en Supabase.
+-- OCR vigente: solo texto/datos; la imagen no se persiste. Estado final en 20260910193029_git_reconcile_payments_peru.sql.
