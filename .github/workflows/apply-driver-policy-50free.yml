@@ -17,19 +17,23 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Apply driver policy source migration
-        run: python3 scripts/apply_driver_policy_50free.py || true
+        run: python3 scripts/apply_driver_policy_50free_v2.py
 
       - name: Validate syntax before publishing branch
         run: |
           git diff --check
           node scripts/check_syntax.js
+          node scripts/check_runtime.js
+          node scripts/check_audit_hardening.js
+          node scripts/test_driver_plans.js
+          python3 test_financial_parameters.py
 
       - name: Publish transformed source to validation branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -B fix/driver-50free-progressive-credit
-          git add index.html README.md js/auth.js js/map.js js/vendors.js js/driver_icons.js js/orders.js js/driver_order_rules.js js/driver_payments.js js/state.js sw.js scripts/test_driver_plans.js scripts/check_audit_hardening.js
+          git add index.html README.md js/auth.js js/map.js js/vendors.js js/driver_icons.js js/orders.js js/driver_order_rules.js js/driver_payments.js js/state.js sw.js scripts/test_driver_plans.js scripts/check_audit_hardening.js test_financial_parameters.py
           if git diff --cached --quiet; then
             echo "No source changes required"
             exit 0
