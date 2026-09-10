@@ -1,27 +1,28 @@
-/* NOTIGAS SERVICE WORKER v127.0 - CACHÉ PROGRESIVO Y MODO OFFLINE */
-const CACHE_NAME = 'notigas-cache-v127';
+/* NOTIGAS SERVICE WORKER v128.0 - CACHÉ PROGRESIVO Y MODO OFFLINE */
+const CACHE_NAME = 'notigas-cache-v128';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './styles/main.css?v=127',
-  './js/driver_icons.js?v=127',
-  './js/state.js?v=127',
-  './js/ui.js?v=127',
-  './js/supabase-config.js?v=127',
-  './js/voucher_ocr.js?v=127',
-  './js/auth.js?v=127',
-  './js/vendors.js?v=127',
-  './js/map.js?v=127',
-  './js/map_search.js?v=127',
-  './js/map_gps.js?v=127',
-  './js/orders.js?v=127',
-  './js/forum.js?v=127',
-  './js/promo.js?v=127',
-  './js/admin_users.js?v=127',
-  './js/admin.js?v=127',
-  './js/admin_payments.js?v=127',
-  './js/app.js?v=127',
-  './js/events.js?v=127',
+  './styles/main.css?v=128',
+  './js/driver_icons.js?v=128',
+  './js/state.js?v=128',
+  './js/ui.js?v=128',
+  './js/supabase-config.js?v=128',
+  './js/voucher_ocr.js?v=128',
+  './js/auth.js?v=128',
+  './js/vendors.js?v=128',
+  './js/map.js?v=128',
+  './js/map_search.js?v=128',
+  './js/map_gps.js?v=128',
+  './js/orders.js?v=128',
+  './js/forum.js?v=128',
+  './js/promo.js?v=128',
+  './js/admin_users.js?v=128',
+  './js/admin.js?v=128',
+  './js/admin_payments.js?v=128',
+  './js/driver_payments.js?v=128',
+  './js/app.js?v=128',
+  './js/events.js?v=128',
   './icons/camion_dina_rojo.svg',
   './icons/garrafa_red_clean.svg',
   './icons/garrafa_red-192.png',
@@ -32,7 +33,6 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      // Usar Promise.allSettled para que un solo archivo no rompa todo el Service Worker
       return Promise.allSettled(ASSETS_TO_CACHE.map(asset => {
          return fetch(asset).then(response => {
             if (response.ok) return cache.put(asset, response);
@@ -59,18 +59,14 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
-  if (!event.request.url.startsWith('http')) return; // Prevenir errores con extensiones de Chrome (chrome-extension://)
+  if (!event.request.url.startsWith('http')) return;
 
-  // Solo cachear archivos propios. Auth, Supabase, mapas, CDNs y AdSense deben
-  // comunicarse directamente con sus servidores y nunca pasar por la caché PWA.
   const requestUrl = new URL(event.request.url);
   if (requestUrl.origin !== self.location.origin) return;
 
   const acceptsHtml = event.request.headers.get('accept')?.includes('text/html');
   const isNavigation = event.request.mode === 'navigate' || acceptsHtml;
 
-  // La página principal debe ser network-first para no mantener una versión
-  // antigua después de un despliegue. La caché solo actúa como respaldo offline.
   if (isNavigation) {
     event.respondWith(
       fetch(event.request, { cache: 'no-store' })
@@ -89,7 +85,6 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
-        // Stale-While-Revalidate: servir caché y actualizar en segundo plano
         fetch(event.request).then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
             const responseClone = networkResponse.clone();
@@ -98,7 +93,6 @@ self.addEventListener('fetch', (event) => {
         }).catch(() => {});
         return cachedResponse;
       }
-      // Network-first para recursos no cacheados
       return fetch(event.request).then((networkResponse) => {
         if (networkResponse && networkResponse.status === 200) {
           const responseClone = networkResponse.clone();
