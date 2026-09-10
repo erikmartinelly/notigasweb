@@ -12,6 +12,8 @@ try {
   assertNo('js/device_security.js', /document\.cookie\s*=\s*\$\{/, 'Device security contiene template literal inválido');
   assertNo('js/promo.js', /59170000000|\+591|wa\.me\/591/, 'Quedó un fallback telefónico boliviano');
   assertNo('js/orders.js', /PRO_ORDER_ADVANTAGE_MS|3 minutos de ventaja|Plan PRO \(S\/ 15\/mes\)/i, 'Quedó ventaja PRO en pedidos');
+  assertNo('js/orders.js', /S\/\s*1\.00\s+de\s+comisi[oó]n|Comisi[oó]n\s+fija\s+de\s+S\/\s*1\.00|S\/\s*50\.00|primeros\s+20\s+pedidos\s+confirmados\s+no\s+generan\s+comisi[oó]n|promo_pedidos_gratis_(?:total|usados)/i, 'orders.js conserva el contrato financiero antiguo');
+  assertNo('index.html', /Comisi[oó]n\s+fija\s+de\s+S\/\s*1\.00\s+por\s+bal[oó]n|L[ií]mite\s+de\s+cr[eé]dito:\s*<strong>S\/\s*50\.00|onclick=["']ejecutar(?:CorteSemanal|BaneoSemanal)ManualAdmin\(\)["']/i, 'index.html conserva controles o textos financieros antiguos');
   assertNo('js/map.js', /PRO_BUYER_ADVANTAGE_MS|1 Minuto de Ventaja para Repartidores PRO/i, 'Quedó ventaja PRO en mapa');
   assertNo('js/voucher_ocr.js', /\.rpc\(\s*['"](?:rpc_registrar_ocr_pago|rpc_driver_submit_premium_payment)['"]|\.from\(\s*['"]vouchers-premium['"]/, 'OCR genérico todavía escribe pagos o Premium');
 
