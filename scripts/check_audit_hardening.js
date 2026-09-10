@@ -27,6 +27,10 @@ try {
   assertHas('js/driver_order_rules.js', /100\s+pedidos[\s\S]{0,80}S\/\s*20/i, 'Falta regla 100 pedidos = S/ 20');
   assertHas('js/driver_order_rules.js', /no\s+genera\s+comisi[oó]n\s+ni\s+modifica\s+tu\s+saldo/i, 'Liberar pedido todavía puede parecer un cargo');
   assertHas('js/driver_order_rules.js', /normalizeLegacyPlanCopy/, 'No se neutraliza el texto HTML legado del Plan PRO');
+  assertHas('js/driver_order_rules.js', /normalizeLegacyFinancialCopy/, 'No se neutraliza el texto financiero heredado');
+  assertHas('js/driver_order_rules.js', /confirmarEntregaPedidoActual/, 'No se reemplaza la confirmación de entrega heredada');
+  assertHas('js/driver_order_rules.js', /pedidos_credito_ciclo/, 'La UI no usa el contador vigente de pedidos');
+  assertHas('js/driver_order_rules.js', /limite_pedidos_credito/, 'La UI no usa el límite vigente de pedidos');
 
   assertHas('js/supabase-config.js', /reconciliación de snapshot falló/i, 'Realtime no reconcilia snapshot después de reconectar');
   assertHas('.htaccess', /worker-src 'self' blob:/, 'CSP Apache no permite el worker OCR');
@@ -57,9 +61,24 @@ try {
   for (const required of [
     '20260910192243_credit_suspension_identifiers_and_reconciliation.sql',
     '20260910205311_fix_device_block_rpc_overload_ambiguity_v2.sql',
-    '20260910205729_remove_release_penalty_align_credit_contract.sql'
+    '20260910205729_remove_release_penalty_align_credit_contract.sql',
+    '20260910220052_remove_obsolete_weekly_financial_rpcs.sql'
   ]) {
     if (!migrationNames.includes(required)) fail(`Falta migración crítica: ${required}`);
+  }
+
+  const legacyHardware = read('supabase/migrations/20260908005000_device_id_dni_hardware_ban.sql');
+  if (/rpc_banear_repartidor_completo|S\/\s*1\b/i.test(legacyHardware)) {
+    fail('La migración histórica de hardware reintroduce lógica financiera/baneo obsoleta');
+  }
+  if (!/device_fingerprint/.test(legacyHardware)) fail('La migración histórica de hardware perdió su estructura base');
+
+  const legacyFinance = read('supabase/migrations/20260908010000_financial_commission_rules.sql');
+  if (/S\/\s*1\.00|S\/\s*50\.00|rpc_ejecutar_corte_semanal_comisiones|rpc_ejecutar_baneo_semanal_morosos/i.test(legacyFinance)) {
+    fail('La migración financiera histórica reintroduce el contrato S/1-S/50 o procesos semanales');
+  }
+  if (!/DEFAULT\s+20\.00/i.test(legacyFinance) || !/DEFAULT\s+0\.20/i.test(legacyFinance)) {
+    fail('La migración financiera histórica no conserva los defaults S/20 y S/0.20');
   }
 
   const overloadFix = read('supabase/migrations/20260910205311_fix_device_block_rpc_overload_ambiguity_v2.sql');
@@ -69,6 +88,13 @@ try {
   const releaseFix = read('supabase/migrations/20260910205729_remove_release_penalty_align_credit_contract.sql');
   if (/penalizacion_cancelacion|v_penalty\s*numeric/i.test(releaseFix)) fail('La migración final reintroduce penalización financiera');
   if (!/'penalizacion',0/.test(releaseFix)) fail('La liberación no conserva compatibilidad explícita con penalización 0');
+
+  const weeklyCleanup = read('supabase/migrations/20260910220052_remove_obsolete_weekly_financial_rpcs.sql');
+  if (!/DROP FUNCTION IF EXISTS public\.rpc_ejecutar_corte_semanal_comisiones\(\)/.test(weeklyCleanup)) fail('No se elimina el RPC de corte semanal');
+  if (!/DROP FUNCTION IF EXISTS public\.rpc_ejecutar_baneo_semanal_morosos\(\)/.test(weeklyCleanup)) fail('No se elimina el RPC de baneo semanal');
+  if (!/NOT public\.is_admin_email\(\)/.test(weeklyCleanup)) fail('El baneo administrativo no comprueba autorización');
+  if (!/Suspensión administrativa/.test(weeklyCleanup)) fail('El baneo administrativo conserva un motivo financiero obsoleto');
+  if (!/REVOKE ALL ON FUNCTION public\.rpc_banear_repartidor_completo/.test(weeklyCleanup)) fail('El RPC de baneo no revoca ejecución pública');
 
   console.log('✅ Audit hardening invariants OK');
 } catch (err) {
