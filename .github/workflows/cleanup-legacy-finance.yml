@@ -1,0 +1,146 @@
+name: One-time cleanup legacy finance residues
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/cleanup-legacy-finance.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Remove obsolete financial UI and admin code
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          def update(path, transform):
+              p = Path(path)
+              old = p.read_text(encoding='utf-8')
+              new = transform(old)
+              if new == old:
+                  raise SystemExit(f'No se modificó {path}; patrón esperado no encontrado')
+              p.write_text(new, encoding='utf-8')
+
+          def index_transform(t):
+              old_contract = ('Comisión fija de S/ 1.00 por balón entregado, límite de crédito de S/ 50.00, '
+                              'corte semanal los domingos 11:59 PM y baneo definitivo por hardware en caso de incumplimiento')
+              new_contract = ('Comisión de S/ 0.20 por pedido entregado, ciclo de crédito de 100 pedidos (S/ 20) '
+                              'y suspensión hasta regularizar el pago pendiente')
+              if old_contract not in t:
+                  raise SystemExit('No se encontró el contrato antiguo en index.html')
+              t = t.replace(old_contract, new_contract)
+
+              summary_rx = re.compile(
+                  r'Comisión fija:\s*<strong>S/ 1\.00</strong>/balón\s*•\s*'
+                  r'Límite de crédito:\s*<strong>S/ 50\.00</strong>\s*\(Suspensión\)\s*•\s*'
+                  r'Corte:\s*<strong>Dom 11:59 PM</strong>\s*•\s*Baneo:\s*<strong>Lun 1:00 PM</strong>',
+                  re.I)
+              t, n = summary_rx.subn('Comisión: <strong>S/ 0.20</strong>/pedido • Ciclo: <strong>100 pedidos = S/ 20</strong> • Suspensión hasta regularizar el pago', t)
+              if n < 1:
+                  raise SystemExit('No se encontró el resumen financiero antiguo en index.html')
+
+              for fn in ('ejecutarCorteSemanalManualAdmin', 'ejecutarBaneoSemanalManualAdmin'):
+                  rx = re.compile(r'\s*<button\b[^>]*onclick="' + fn + r'\(\)"[^>]*>[\s\S]*?</button>', re.I)
+                  t, n = rx.subn('', t, count=1)
+                  if n != 1:
+                      raise SystemExit(f'No se encontró el botón legado {fn} en index.html')
+              return t
+
+          def orders_transform(t):
+              replacements = {
+                  ".select('comisiones_pendientes, estado_servicio, bloqueado, motivo_bloqueo, promo_pedidos_gratis_total, promo_pedidos_gratis_usados, botellones_credito_ciclo, limite_botellones_credito, comision_por_pedido')":
+                  ".select('comisiones_pendientes, estado_servicio, bloqueado, motivo_bloqueo, pedidos_credito_ciclo, limite_pedidos_credito, comision_por_pedido')",
+                  "// ciclo de 100 unidades entregadas; el saldo es informativo y se liquida por remesa.":
+                  "// ciclo de 100 pedidos entregados; el saldo es informativo y se liquida por Yape.",
+                  "    gratisTotal: Number(financeRow.promo_pedidos_gratis_total ?? userData?.promo_pedidos_gratis_total ?? 20),\n": "",
+                  "    gratisUsados: Number(financeRow.promo_pedidos_gratis_usados ?? userData?.promo_pedidos_gratis_usados ?? 0),\n": "",
+                  "    unidadesCiclo: Number(financeRow.botellones_credito_ciclo ?? userData?.botellones_credito_ciclo ?? 0),":
+                  "    pedidosCiclo: Number(financeRow.pedidos_credito_ciclo ?? userData?.pedidos_credito_ciclo ?? 0),",
+                  "    unidadesLimite: Number(financeRow.limite_botellones_credito ?? userData?.limite_botellones_credito ?? 100),":
+                  "    pedidosLimite: Number(financeRow.limite_pedidos_credito ?? userData?.limite_pedidos_credito ?? 100),",
+                  "driverFinances.unidadesLimite": "driverFinances.pedidosLimite",
+                  "driverFinances.unidadesCiclo": "driverFinances.pedidosCiclo",
+                  "  const gratisRestantes = Math.max(0, driverFinances.gratisTotal - driverFinances.gratisUsados);\n": "",
+                  "${driverFinances.pedidosCiclo}/${driverFinances.pedidosLimite} unidades": "${driverFinances.pedidosCiclo}/${driverFinances.pedidosLimite} pedidos",
+                  "${gratisRestantes > 0 ? `${gratisRestantes} pedido(s) gratis restantes` : `Comisión: S/ ${driverFinances.comisionPedido.toFixed(2)} por pedido confirmado`}":
+                  "Comisión: S/ ${driverFinances.comisionPedido.toFixed(2)} por pedido confirmado",
+                  "Los primeros 20 pedidos confirmados no generan comisión. Después: S/ 0,20 por pedido, con crédito hasta 100 unidades entregadas.":
+                  "Comisión: S/ 0,20 por pedido confirmado, con ciclo de crédito de 100 pedidos = S/ 20."
+              }
+              for old, new in replacements.items():
+                  if old in t:
+                      t = t.replace(old, new)
+
+              block = re.compile(
+                  r"\s*const isSuspended = Boolean\(res\.suspendido \|\| \(newSaldo != null && newSaldo >= 50\)\);\s*"
+                  r"if \(isSuspended\) \{\s*"
+                  r"showToast\('⚠️ Límite de Crédito Alcanzado \(S/ 50\.00\)',[\s\S]*?"
+                  r"\} else \{\s*showToast\('¡Buen trabajo!', 'Pedido entregado\. El pedido fue archivado en tus estadísticas\.', 'success', 5000\);\s*\}",
+                  re.M)
+              replacement = """
+        const accounting = res?.accounting || res || {};
+        const commissionCharged = Number(accounting.comision_cargada ?? res?.comision_cargada ?? 0.20);
+        const ordersCycle = Number(accounting.pedidos_credito_ciclo ?? res?.pedidos_credito_ciclo ?? 0);
+        const ordersLimit = Number(accounting.limite_pedidos_credito ?? res?.limite_pedidos_credito ?? 100);
+        const isSuspended = Boolean(accounting.suspendido ?? res?.suspendido ?? false);
+
+        if (isSuspended) {
+          showToast('⚠️ Límite de crédito alcanzado', `Pedido entregado (+S/ ${commissionCharged.toFixed(2)} de comisión). Ciclo: ${ordersCycle || ordersLimit}/${ordersLimit} pedidos (S/ 20). Regulariza tu pago para continuar.`, 'warning', 8000);
+        } else if (newSaldo != null) {
+          showToast('¡Entrega Confirmada! 🎉', `Comisión S/ ${commissionCharged.toFixed(2)} registrada. Saldo acumulado: S/ ${newSaldo.toFixed(2)} · Ciclo: ${ordersCycle}/${ordersLimit} pedidos.`, 'success', 5000);
+        } else {
+          showToast('¡Buen trabajo!', 'Pedido entregado y contabilizado.', 'success', 5000);
+        }"""
+              t, n = block.subn(replacement, t, count=1)
+              if n != 1:
+                  raise SystemExit('No se encontró el bloque de confirmación S/1-S/50 en js/orders.js')
+
+              forbidden = [r'S/ 1\.00', r'S/ 50\.00', r'primeros 20 pedidos', r'100 unidades entregadas']
+              for pattern in forbidden:
+                  if re.search(pattern, t, re.I):
+                      raise SystemExit(f'Residuo financiero en js/orders.js: {pattern}')
+              return t
+
+          def admin_users_transform(t):
+              t = t.replace("'Falta de pago de comisión (S/ 1 por balón)'", "'Suspensión administrativa'")
+              for fn in ('ejecutarCorteSemanalManualAdmin', 'ejecutarBaneoSemanalManualAdmin'):
+                  rx = re.compile(r'^window\.' + fn + r'\s*=\s*async function\(\)\s*\{[\s\S]*?^\};\s*$', re.M)
+                  t, n = rx.subn('', t, count=1)
+                  if n != 1:
+                      raise SystemExit(f'No se pudo retirar la función legado {fn} de js/admin_users.js')
+              if 'S/ 1 por balón' in t or 'rpc_ejecutar_corte_semanal_comisiones' in t or 'rpc_ejecutar_baneo_semanal_morosos' in t:
+                  raise SystemExit('Quedó lógica semanal/S1 en js/admin_users.js')
+              return t
+
+          update('index.html', index_transform)
+          update('js/orders.js', orders_transform)
+          update('js/admin_users.js', admin_users_transform)
+          PY
+
+          git diff --check
+          node scripts/check_syntax.js
+          node scripts/check_runtime.js
+          node scripts/check_audit_hardening.js
+          python3 test_financial_parameters.py
+
+      - name: Commit cleaned sources
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html js/orders.js js/admin_users.js
+          git diff --cached --quiet && exit 0
+          git commit -m "fix: remove legacy S/1 S/50 and weekly finance UI"
+          git push origin HEAD:main
