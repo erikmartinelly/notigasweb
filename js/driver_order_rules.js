@@ -139,13 +139,13 @@
 
   function observeOrderButtons() {
     ensureNotDeliveredButtons(document);
-    if (observerInstalled || !document.body) return;
+    if (observerInstalled || !document.body || typeof MutationObserver !== 'function') return;
     observerInstalled = true;
 
     const observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
         mutation.addedNodes.forEach((node) => {
-          if (!(node instanceof Element)) return;
+          if (typeof Element !== 'undefined' && !(node instanceof Element)) return;
           if (node.matches?.('button[data-action="confirmarEntregaPedido"]')) {
             ensureNotDeliveredButtons(node.parentElement || document);
           } else if (node.querySelector?.('button[data-action="confirmarEntregaPedido"]')) {
