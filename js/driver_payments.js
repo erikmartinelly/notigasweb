@@ -85,7 +85,10 @@
     if (paymentMenu) paymentMenu.style.display = visible ? 'block' : 'none';
     if (driverConfig) driverConfig.style.display = visible ? 'block' : 'none';
 
-    const commonConfig = document.getElementById('btnCambiarCiudadPref')?.closest('details');
+    const commonConfigButton = document.getElementById('btnCambiarCiudadPref');
+    const commonConfig = typeof commonConfigButton?.closest === 'function'
+      ? commonConfigButton.closest('details')
+      : null;
     const commonDelete = document.getElementById('btnDeleteMyAccount');
     const driverPrivacy = document.getElementById('btnPrivacyPolicyDriver');
     if (commonConfig) commonConfig.style.display = visible ? 'none' : '';
@@ -257,7 +260,6 @@
   async function nuevoPago() {
     if (!window.supabaseClient) return;
     const { body } = openPaymentsModal('<i class="fa-solid fa-paper-plane"></i> Realizar un nuevo pago', '<div style="padding:20px;text-align:center;color:#94A3B8;"><i class="fa-solid fa-spinner fa-spin"></i> Preparando cobro...</div>');
-
     try {
       const cobroRes = typeof window.generarCobroComisiones === 'function'
         ? await window.generarCobroComisiones()
