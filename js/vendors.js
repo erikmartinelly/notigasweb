@@ -42,7 +42,7 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
             icon: typeof getIconForCategory === 'function' ? getIconForCategory(d.categoria) : '🚛',
             plate: d.placa || 'Placa registrada',
             products: d.productos || 'Servicios de reparto a domicilio',
-            zones: d.zonas || 'OTB local',
+            zones: d.zonas || 'zona local',
             schedule: d.schedule || 'Lunes a Sábado',
             color_camion: d.color_camion || '',
             precio_balon_10kg: d.precio_balon_10kg || null,
@@ -113,7 +113,7 @@ function renderVendorCards(filterCat) {
       <div style="text-align:center; color:#94A3B8; padding:40px 14px; font-size:13px; background: #1E293B; border-radius: 14px; border: 1px dashed rgba(255,255,255,0.15); margin-top: 14px;">
         <i class="fa-solid fa-store-slash" style="font-size:32px; color:#FF6D00; margin-bottom:10px;"></i><br>
         <strong>Aún no hay Fichas de Repartidores registradas en esta categoría.</strong><br>
-        <span style="font-size: 11px; color: #64748B;">¿Eres repartidor? Registra tu ficha de negocio gratis y conéctate con los vecinos de tu OTB.</span><br><br>
+        <span style="font-size: 11px; color: #64748B;">¿Eres repartidor? Registra tu ficha de negocio gratis y conéctate con los vecinos de tu zona.</span><br><br>
         <button class="btn-driver" style="margin: 0 auto; padding: 10px 16px; font-size: 12px;" data-action="abrirModalDriver">🚚 Publicar Mi Mini Página de Negocio</button>
       </div>
     `;

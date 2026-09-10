@@ -133,113 +133,77 @@ async function renderDriverOrdersList() {
     assignedPromise = assignedQuery;
   }
 
-  // 3. Estado financiero del chofer (Comisión fija S/ 1 por balón, Tope S/ 50.00)
+  // 3. Estado operativo y de crédito del repartidor. La suspensión depende del
+  // ciclo de 100 unidades entregadas; el saldo es informativo y se liquida por remesa.
   let driverFinancePromise = Promise.resolve({ data: null, error: null });
   if (localUserId) {
     driverFinancePromise = window.supabaseClient
       .from('choferes_habilitados')
-      .select('comisiones_pendientes, limite_credito, estado_servicio, bloqueado, motivo_bloqueo')
+      .select('comisiones_pendientes, estado_servicio, bloqueado, motivo_bloqueo, promo_pedidos_gratis_total, promo_pedidos_gratis_usados, botellones_credito_ciclo, limite_botellones_credito, comision_por_pedido')
       .eq('user_id', localUserId)
       .maybeSingle();
   }
 
   const [pubRes, assignedRes, finRes] = await Promise.all([pubQuery, assignedPromise, driverFinancePromise]);
+  if (pubRes.error) console.error('Error cargando lista de pedidos repartidor (públicos):', pubRes.error);
+  if (assignedRes.error) console.error('Error cargando pedidos asignados repartidor:', assignedRes.error);
 
-  if (pubRes.error) {
-    console.error("Error cargando lista de pedidos repartidor (públicos):", pubRes.error);
-  }
-  if (assignedRes.error) {
-    console.error("Error cargando pedidos asignados repartidor:", assignedRes.error);
-  }
-
-  // Sincronizar y evaluar estado financiero
+  const financeRow = finRes?.data || {};
   const driverFinances = {
-    comisiones: Number(finRes?.data?.comisiones_pendientes || userData?.comisiones_pendientes || 0),
-    limite: Number(finRes?.data?.limite_credito || userData?.limite_credito || 50.00),
-    estado_servicio: finRes?.data?.estado_servicio || userData?.estado_servicio || 'activo',
-    bloqueado: Boolean(finRes?.data?.bloqueado || userData?.bloqueado)
+    comisiones: Number(financeRow.comisiones_pendientes ?? userData?.comisiones_pendientes ?? 0),
+    estado_servicio: financeRow.estado_servicio || userData?.estado_servicio || 'activo',
+    bloqueado: Boolean(financeRow.bloqueado || userData?.bloqueado),
+    motivo_bloqueo: financeRow.motivo_bloqueo || userData?.motivo_bloqueo || '',
+    gratisTotal: Number(financeRow.promo_pedidos_gratis_total ?? userData?.promo_pedidos_gratis_total ?? 20),
+    gratisUsados: Number(financeRow.promo_pedidos_gratis_usados ?? userData?.promo_pedidos_gratis_usados ?? 0),
+    unidadesCiclo: Number(financeRow.botellones_credito_ciclo ?? userData?.botellones_credito_ciclo ?? 0),
+    unidadesLimite: Number(financeRow.limite_botellones_credito ?? userData?.limite_botellones_credito ?? 100),
+    comisionPedido: Number(financeRow.comision_por_pedido ?? userData?.comision_por_pedido ?? 0.20)
   };
   driverFinances.isSuspended = Boolean(
-    driverFinances.bloqueado || 
-    driverFinances.estado_servicio === 'suspendido_tope' || 
-    driverFinances.estado_servicio === 'baneado' || 
-    driverFinances.comisiones >= driverFinances.limite
+    driverFinances.bloqueado ||
+    driverFinances.estado_servicio === 'suspendido_tope' ||
+    driverFinances.estado_servicio === 'suspendido' ||
+    driverFinances.estado_servicio === 'baneado'
   );
 
   if (typeof AppState !== 'undefined') {
     const curU = AppState.get('userData') || {};
-    AppState.set('userData', {
-      ...curU,
-      comisiones_pendientes: driverFinances.comisiones,
-      limite_credito: driverFinances.limite,
-      estado_servicio: driverFinances.estado_servicio,
-      bloqueado: driverFinances.bloqueado
-    });
+    AppState.set('userData', { ...curU, ...financeRow });
   }
 
-  const pctComisiones = Math.min(100, Math.round((driverFinances.comisiones / driverFinances.limite) * 100));
-  const barColor = driverFinances.isSuspended || pctComisiones >= 100 ? '#EF4444' : (pctComisiones >= 60 ? '#F59E0B' : '#10B981');
-  
+  const pctCredito = driverFinances.unidadesLimite > 0
+    ? Math.min(100, Math.round((driverFinances.unidadesCiclo / driverFinances.unidadesLimite) * 100))
+    : 0;
+  const barColor = driverFinances.isSuspended || pctCredito >= 100 ? '#EF4444' : (pctCredito >= 70 ? '#F59E0B' : '#10B981');
+  const gratisRestantes = Math.max(0, driverFinances.gratisTotal - driverFinances.gratisUsados);
+
   let financialWidgetHtml = `
-    <div class="driver-financial-card" style="background:linear-gradient(135deg, #1E293B 0%, #0F172A 100%); border:1.5px solid ${driverFinances.isSuspended ? '#EF4444' : '#334155'}; border-radius:10px; padding:10px 12px; margin-bottom:12px; box-shadow:0 2px 8px rgba(0,0,0,0.25);">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-        <span style="font-size:11px; font-weight:800; color:#E2E8F0; display:flex; align-items:center; gap:5px;">
-          <span>💰</span> Saldo de Comisiones:
-        </span>
-        <span style="font-size:12px; font-weight:900; color:${barColor};">
-          S/ ${driverFinances.comisiones.toFixed(2)} <span style="font-size:10px; color:#94A3B8; font-weight:600;">/ S/ ${driverFinances.limite.toFixed(2)} (Tope)</span>
-        </span>
+    <div class="driver-financial-card" style="background:linear-gradient(135deg,#1E293B 0%,#0F172A 100%);border:1.5px solid ${driverFinances.isSuspended ? '#EF4444' : '#334155'};border-radius:10px;padding:10px 12px;margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:6px;">
+        <span style="font-size:11px;font-weight:800;color:#E2E8F0;">💳 Crédito por uso</span>
+        <span style="font-size:11px;font-weight:900;color:${barColor};">${driverFinances.unidadesCiclo}/${driverFinances.unidadesLimite} unidades</span>
       </div>
-      <div style="background:#0F172A; border-radius:6px; height:8px; width:100%; overflow:hidden; border:1px solid #334155; position:relative;">
-        <div style="background:${barColor}; height:100%; width:${pctComisiones}%; transition:width 0.4s ease;"></div>
+      <div style="background:#0F172A;border-radius:6px;height:8px;width:100%;overflow:hidden;border:1px solid #334155;"><div style="background:${barColor};height:100%;width:${pctCredito}%;"></div></div>
+      <div style="display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:9.5px;color:#94A3B8;">
+        <span>${gratisRestantes > 0 ? `${gratisRestantes} pedido(s) gratis restantes` : `Comisión: S/ ${driverFinances.comisionPedido.toFixed(2)} por pedido confirmado`}</span>
+        <span>Saldo: S/ ${driverFinances.comisiones.toFixed(2)}</span>
       </div>
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px; font-size:9.5px; color:#94A3B8;">
-        <span>Comisión fija: S/ 1.00 por balón entregado</span>
-        <span>Corte: Domingos 11:59 PM</span>
-      </div>
-    </div>
-  `;
+    </div>`;
 
   if (driverFinances.isSuspended) {
-    financialWidgetHtml += `
-      <div class="driver-lockout-banner" style="background:rgba(239,68,68,0.15); border:2px solid #EF4444; border-radius:10px; padding:12px; margin-bottom:12px; color:#FECACA;">
-        <div style="display:flex; align-items:center; gap:8px; font-weight:900; color:#EF4444; font-size:12.5px;">
-          <span style="font-size:18px;">⛔</span> CUENTA SUSPENDIDA - LÍMITE DE CRÉDITO ALCANZADO
-        </div>
-        <p style="font-size:11.5px; margin:6px 0 0 0; line-height:1.45; color:#F8FAFC;">
-          Has alcanzado el tope máximo de <strong>S/ 50.00</strong> en comisiones pendientes (S/ 1.00 por balón entregado). Se ha <strong>bloqueado la toma de pedidos</strong>.
-        </p>
-        <div style="margin-top:8px; font-size:11px; background:rgba(0,0,0,0.4); padding:8px 10px; border-radius:6px; border-left:3px solid #EF4444; color:#FEE2E2;">
-          📲 <strong>Para reactivar tu cuenta:</strong> Realiza tu remesa por <strong>Yape / Plin</strong> al número oficial de administración y regulariza tu saldo para desbloquear tus pedidos al instante.
-        </div>
-      </div>
-    `;
+    const motivo = driverFinances.motivo_bloqueo || 'Alcanzaste el límite del ciclo de crédito. Regulariza la remesa pendiente para continuar.';
+    financialWidgetHtml += `<div class="driver-lockout-banner" style="background:rgba(239,68,68,.15);border:2px solid #EF4444;border-radius:10px;padding:12px;margin-bottom:12px;color:#FECACA;"><strong>⛔ CUENTA SUSPENDIDA</strong><div style="margin-top:5px;font-size:11px;line-height:1.45;">${typeof escapeHtmlStr === 'function' ? escapeHtmlStr(motivo) : motivo}</div></div>`;
   }
 
   const pubOrders = pubRes.data || [];
   const assignedOrders = assignedRes.data || [];
 
-  // 3 Minutos de Ventaja para Repartidores PRO:
-  const isDriverVip = Boolean(userData?.es_premium || userData?.tipo_plan === 'pro');
-  const PRO_ORDER_ADVANTAGE_MS = 3 * 60 * 1000; // 3 minutos
-  const now = Date.now();
-
-  let ordersInVipWindow = 0;
-
-  // Filtrar pedidos públicos: si es chofer gratuito, los pedidos nuevos (< 3 min) se reservan para los PRO
-  const visiblePubOrders = pubOrders.filter(o => {
-    const matchesCat = (typeof window.isOrderCategoryMatchingDriver !== 'function') ||
-                       window.isOrderCategoryMatchingDriver(o.categoria, driverCategoria);
-    if (!matchesCat) return false;
-
-    const orderAge = now - new Date(o.created_at).getTime();
-    if (!isDriverVip && orderAge < PRO_ORDER_ADVANTAGE_MS) {
-      ordersInVipWindow++;
-      return false; // Reservado exclusivamente para choferes PRO durante los primeros 3 minutos
-    }
-    return true;
-  });
-
+  // Todos los repartidores habilitados reciben los pedidos en tiempo real, sin ventajas artificiales.
+  const visiblePubOrders = pubOrders.filter(o =>
+    (typeof window.isOrderCategoryMatchingDriver !== 'function') ||
+    window.isOrderCategoryMatchingDriver(o.categoria, driverCategoria)
+  );
   const allOrders = [...assignedOrders, ...visiblePubOrders];
 
   // Filtrar asignados a este chofer o públicos válidos
@@ -250,44 +214,10 @@ async function renderDriverOrdersList() {
     return true;
   });
 
-  // Banner informativo superior de Plan PRO vs Gratuito
-  let planBannerHtml = '';
-  if (isDriverVip) {
-    planBannerHtml = `
-      <div class="driver-plan-banner" style="background:linear-gradient(135deg, rgba(245,158,11,0.2) 0%, rgba(217,119,6,0.12) 100%); border:1.5px solid #F59E0B; border-radius:10px; padding:10px 12px; margin-bottom:12px; display:flex; align-items:center; gap:10px; box-shadow:0 3px 10px rgba(245,158,11,0.15);">
-        <div style="font-size:24px;">👑</div>
-        <div style="font-size:11.5px; color:#FDE68A; line-height:1.4; flex:1;">
-          <strong style="color:#FFFFFF; font-size:12.5px; display:block;">¡Modo Repartidor PRO Activo!</strong>
-          Disfrutas de <strong>3 minutos de ventaja exclusiva</strong> para ver y tomar pedidos antes que los repartidores gratuitos.
-        </div>
-        <span style="font-size:10px; background:#F59E0B; color:#0F172A; font-weight:900; padding:2px 7px; border-radius:6px;">VIP PRO</span>
-      </div>
-    `;
-  } else {
-    planBannerHtml = `
-      <div class="driver-plan-banner" style="background:linear-gradient(135deg, #1E293B 0%, #0F172A 100%); border:1.5px solid #38BDF8; border-radius:10px; padding:10px 12px; margin-bottom:12px;">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
-          <div style="font-size:11.5px; color:#CBD5E1; line-height:1.45; flex:1;">
-            <div style="display:flex; align-items:center; gap:6px;">
-              <strong style="color:#38BDF8; font-size:12px;">📦 Modo Repartidor Gratuito</strong>
-              <span style="font-size:9.5px; background:#334155; color:#94A3B8; font-weight:800; padding:1px 6px; border-radius:4px;">BÁSICO</span>
-            </div>
-            <div style="color:#94A3B8; margin-top:2px;">
-              Los pedidos nuevos se te muestran con <strong>3 minutos de demora</strong> frente a los choferes PRO.
-            </div>
-            ${ordersInVipWindow > 0 ? `
-              <div style="margin-top:6px; background:rgba(245,158,11,0.15); border-left:3px solid #F59E0B; padding:5px 8px; border-radius:0 6px 6px 0; color:#FEF08A; font-weight:700;">
-                🔥 ¡Hay ${ordersInVipWindow} pedido(s) nuevo(s) en tu zona que los choferes PRO están atendiendo ahora mismo!
-              </div>
-            ` : ''}
-          </div>
-          <button type="button" class="btn-driver" style="margin:0; padding:7px 11px; font-size:11px; font-weight:900; background:linear-gradient(135deg, #F59E0B, #D97706); border:none; white-space:nowrap; border-radius:8px; color:#0F172A; cursor:pointer; box-shadow:0 3px 8px rgba(245,158,11,0.3);" data-action="abrirModalDriver">
-            👑 Pasar a PRO
-          </button>
-        </div>
-      </div>
-    `;
-  }
+  const planBannerHtml = `
+    <div class="driver-plan-banner" style="background:linear-gradient(135deg,rgba(16,185,129,.14),#0F172A);border:1.5px solid #10B981;border-radius:10px;padding:10px 12px;margin-bottom:12px;color:#D1FAE5;font-size:11.5px;line-height:1.45;">
+      <strong style="color:#FFFFFF;">Pedidos en tiempo real</strong> · Los primeros 20 pedidos confirmados no generan comisión. Después: S/ 0,20 por pedido, con crédito hasta 100 unidades entregadas.
+    </div>`;
 
   if (!orders || orders.length === 0) {
     if (pubRes.error || assignedRes.error) {
@@ -302,15 +232,7 @@ async function renderDriverOrdersList() {
       return;
     }
 
-    const vipLockedNotice = (ordersInVipWindow > 0)
-      ? `<div style="margin-top:10px; padding:12px; background:rgba(245,158,11,0.12); border:1.5px solid #F59E0B; border-radius:10px; color:#FDE68A; font-size:12px; line-height:1.45;">
-          🔒 <strong>¡Hay ${ordersInVipWindow} pedido(s) nuevo(s) en tu zona!</strong><br>
-          <span style="font-size:11px; color:#CBD5E1;">Están en la ventana exclusiva de 3 minutos para choferes PRO. Pásate a PRO por S/ 15/mes para verlos al instante y no perder clientes.</span><br>
-          <button type="button" class="btn-driver" style="margin-top:8px; padding:7px 12px; font-size:11px; font-weight:800; background:linear-gradient(135deg, #F59E0B, #D97706); border:none; border-radius:8px; color:#0F172A; cursor:pointer;" data-action="abrirModalDriver">
-            👑 Activar Plan PRO (S/ 15/mes)
-          </button>
-        </div>`
-      : '';
+    const vipLockedNotice = '';
 
     container.innerHTML = financialWidgetHtml + planBannerHtml + `
       <div style="padding:25px; text-align:center; color:#94A3B8; font-size:12px;">

@@ -62,7 +62,7 @@ async function renderForumFeed() {
         <div style="text-align:center; color:#94A3B8; padding:40px 14px; font-size:13px; background: #1E293B; border-radius: 14px; border: 1px dashed rgba(255,255,255,0.15);">
           <i class="fa-solid fa-comments" style="font-size:32px; color:#FF6D00; margin-bottom:10px;"></i><br>
           <strong>El Muro de Muro de Comentarios está limpio en ${escapeHtmlStr(ciudadReal)}.</strong><br>
-          <span style="font-size: 11px; color: #64748B;">Sé el primero en publicar un aviso, alerta u oferta para los vecinos de tu OTB.</span><br><br>
+          <span style="font-size: 11px; color: #64748B;">Sé el primero en publicar un aviso, alerta u oferta para los vecinos de tu zona.</span><br><br>
           <button class="btn-new-post" style="margin: 0 auto; padding: 10px 16px; font-size: 12px;" data-action="abrirModalNuevoPost">📝 Publicar Nuevo Aviso (24 Horas)</button>
         </div>
       `;
@@ -98,7 +98,7 @@ async function renderForumFeed() {
       const safeTitle = encodeURIComponent(post.titulo || '').replace(/'/g, "%27");
       const safeDesc = encodeURIComponent(post.descripcion || '').replace(/'/g, "%27");
       const safeCat = encodeURIComponent(post.categoria || '').replace(/'/g, "%27");
-      const authorName = post.autor || 'Vecino de la OTB';
+      const authorName = post.autor || 'Vecino de la zona';
       const isAuthor = Boolean(
         currentUserId && post.user_id &&
         String(post.user_id).trim().toLowerCase() === String(currentUserId).trim().toLowerCase()
@@ -505,13 +505,13 @@ async function crearNuevoPost() {
     const ciudadReal = String(rawCity || 'lima').toLowerCase().trim();
 
     // Determinar nombre del autor: Nombre y Apellido
-    let authorName = 'Vecino de la OTB';
+    let authorName = 'Vecino de la zona';
     if (isAdmin) {
       authorName = 'Administración NOTIGAS';
     } else {
       const nom = formNombre || userData?.nombre || '';
       const ape = formApellido || userData?.apellido || '';
-      authorName = [nom, ape].filter(Boolean).join(' ') || nom || 'Vecino de la OTB';
+      authorName = [nom, ape].filter(Boolean).join(' ') || nom || 'Vecino de la zona';
 
       // Persistir si el usuario los completó en el modal
       if (userData && (formNombre || formApellido)) {
@@ -671,7 +671,7 @@ function renderCommentsListUI(comments) {
         // FIX W-01: Los comentarios de la nueva tabla tienen campo 'id' de BD (bigint), siempre único.
         const cId = c.id;
         const v = typeof c.votos === 'number' ? c.votos : (c.votos ?? 1);
-        const autor = c.autor || c.author || 'Vecino de la OTB';
+        const autor = c.autor || c.author || 'Vecino de la zona';
         const texto = c.texto || c.text || '';
         const tiempo = c.created_at ? new Date(c.created_at).toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' }) : 'Ahora mismo';
         html += `
@@ -793,7 +793,7 @@ async function agregarComentarioPost() {
 
   const postId = activePostCommentsRef.id;
 
-  let authorName = 'Vecino de la OTB';
+  let authorName = 'Vecino de la zona';
   let userId = null;
   try {
     const currentAdmin = (typeof getVerifiedAdminEmail === 'function') ? getVerifiedAdminEmail() : null;
@@ -804,11 +804,11 @@ async function agregarComentarioPost() {
       const u = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
       if (u) {
         if (u.role === 'repartidor') {
-          authorName = u.nombre || 'Repartidor de la OTB';
+          authorName = u.nombre || 'Repartidor de la zona';
         } else {
           const nom = (u.nombre || '').trim();
           const ape = (u.apellido || '').trim();
-          authorName = [nom, ape].filter(Boolean).join(' ') || nom || 'Vecino de la OTB';
+          authorName = [nom, ape].filter(Boolean).join(' ') || nom || 'Vecino de la zona';
         }
       }
     }

@@ -1067,55 +1067,8 @@ function actualizarRepartidorEnMapa(data) {
      return;
   }
 
-  const isDriverPremium = Boolean(data.es_premium || data.tipo_plan === 'pro');
+  // Sin ventaja de visibilidad por plan: todos los camiones activos se muestran inmediatamente.
 
-  // 1 Minuto de Ventaja para Repartidores PRO ante Compradores:
-  // Si el observador es un comprador y el camión es gratuito (no PRO),
-  // se retiene la visualización en el mapa durante los primeros 60 segundos desde que inició la ruta.
-  if (userRole !== 'repartidor' && !isDriverPremium) {
-    const routeStartTime = data.route_created_at ? new Date(data.route_created_at).getTime() : 0;
-    if (routeStartTime > 0) {
-      const routeAgeMs = Date.now() - routeStartTime;
-      const PRO_BUYER_ADVANTAGE_MS = 60 * 1000; // 1 minuto de ventaja
-      if (routeAgeMs < PRO_BUYER_ADVANTAGE_MS) {
-        return; // Retener visualización ante compradores durante el primer minuto
-      }
-    }
-  }
-
-  // 3. Buscar si ya existe un marcador para este camión por routeId, userId o nombre
-  const routeId = data.id ? String(data.id) : null;
-  const userId = data.user_id ? String(data.user_id) : null;
-  const driverName = data.distribuidor_nombre ? String(data.distribuidor_nombre).trim() : null;
-
-  let existingKey = null;
-  let existingMarker = null;
-
-  // Búsqueda exhaustiva para reutilizar el mismo marcador y evitar duplicados
-  for (const key of Object.keys(activeTruckMarkers)) {
-    const m = activeTruckMarkers[key];
-    if (!m) continue;
-    if ((routeId && (key === routeId || m._notigasRouteId === routeId)) ||
-        (userId && (key === userId || m._notigasUserId === userId)) ||
-        (driverName && m._notigasDriverName === driverName)) {
-      existingKey = key;
-      existingMarker = m;
-      break;
-    }
-  }
-
-  const isZoomOut = map && (map.getZoom() <= DRIVER_RADAR_MAX_ZOOM);
-  const iconToUse = getCustomDriverTruckIcon(data, isZoomOut);
-  const safeNombre = typeof escapeHtmlStr === 'function' ? escapeHtmlStr(data.distribuidor_nombre || 'Repartidor') : (data.distribuidor_nombre || 'Repartidor');
-  const safeCategoria = typeof escapeHtmlStr === 'function' ? escapeHtmlStr(data.categoria || 'Servicio de Entrega') : (data.categoria || 'Servicio de Entrega');
-  const safeTelefono = data.telefono ? (typeof escapeHtmlStr === 'function' ? escapeHtmlStr(data.telefono) : data.telefono) : '';
-
-  const driverInitials = (typeof window.getDriverInitials === 'function') ? window.getDriverInitials(data.distribuidor_nombre) : 'R';
-  const driverTheme = (typeof window.getDriverColorTheme === 'function') ? window.getDriverColorTheme(data.distribuidor_nombre, data.color_camion) : null;
-  const badgeBg = driverTheme ? driverTheme.badgeBg : '#E11D48';
-  const badgeBorder = driverTheme ? driverTheme.badgeBorder : '#FFFFFF';
-
-  const rawPrice10kg = data.precio_balon_10kg;
   let priceHtml = '';
   if (rawPrice10kg && !isNaN(Number(rawPrice10kg)) && Number(rawPrice10kg) > 0) {
     const numPrice = Number(rawPrice10kg);

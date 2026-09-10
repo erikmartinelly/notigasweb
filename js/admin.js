@@ -472,7 +472,7 @@ async function emitirAlertaOficialAdmin(mensaje) {
   const ciudad = (typeof AppState !== 'undefined') ? AppState.get('city') : null;
 
   if (!texto) {
-    if (typeof showToast === 'function') showToast('⚠️ Texto Requerido', 'Ingresa el texto de la Alerta Oficial OTB.', 'warning', 2000);
+    if (typeof showToast === 'function') showToast('⚠️ Texto Requerido', 'Ingresa el texto de la Alerta Oficial de Zona.', 'warning', 2000);
     return;
   }
 
@@ -1155,7 +1155,7 @@ async function guardarPropagandaTab(tabName, silent = false) {
       // 1. Guardar a través de RPC atómico con p_admin_email y p_posicion
       try {
         const { data: rpcRes, error: rpcErr } = await window.supabaseClient.rpc('rpc_save_local_ad', {
-          p_titulo: inputAd || (pos === 'mapa' ? 'Promociona tu negocio o servicio profesional directamente en tu OTB' : (pos === 'repartidores' ? 'Distribución mayorista, repuestos y accesorios autorizados' : 'Promociona tu negocio o servicio en tu barrio')),
+          p_titulo: inputAd || (pos === 'mapa' ? 'Promociona tu negocio o servicio profesional directamente en tu zona' : (pos === 'repartidores' ? 'Distribución mayorista, repuestos y accesorios autorizados' : 'Promociona tu negocio o servicio en tu barrio')),
           p_descripcion: `Propaganda Local - ${pos.toUpperCase()}`,
           p_url: safeUrl || rawUrl || '',
           p_image_url: imgUrl || '',
