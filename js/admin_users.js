@@ -57,55 +57,48 @@ function esRepartidorBaneado(nombre, placa, whatsapp, gmail) {
   }
   return false;
 }
+
 async function banearRepartidorAdmin(vendorUserId, vendorName, plate = '', whatsapp = '') {
-  // IMPORTANTE: vendorUserId debe ser el auth.uid() real del chofer (viene de
-  // choferes_habilitados.user_id vía data-user-id), NO el id de la fila
-  // choferes_habilitados.id.
+  // vendorUserId debe ser el auth.uid() real del chofer.
   if (!vendorUserId) {
     console.error('banearRepartidorAdmin: falta vendorUserId (auth.uid real del chofer)');
     if (typeof showToast === 'function') {
-      showToast('❌ Error', 'No se pudo banear: falta el identificador real del usuario.', 'error', 5000);
+      showToast('❌ Error', 'No se pudo suspender: falta el identificador real del usuario.', 'error', 5000);
     }
     return;
   }
 
-  if (window.supabaseClient) {
-    // 1. Invocar RPC atómica que bloquea al chofer, su DNI, Placa y su Device ID / Hardware Fingerprint
-    const { data: rpcRes, error: rpcError } = await window.supabaseClient.rpc('rpc_banear_repartidor_completo', {
-      p_user_id: vendorUserId,
-      p_motivo: 'Falta de pago de comisión (S/ 1 por balón)'
-    });
-
-    if (rpcError) {
-      console.warn('Aviso en rpc_banear_repartidor_completo, ejecutando fallback directo:', rpcError);
-      const { error } = await window.supabaseClient.from('usuarios_baneados').insert([{
-        user_id: vendorUserId,
-        nombre: vendorName,
-        placa: plate,
-        telefono: whatsapp,
-        motivo: 'Falta de pago de comisión (S/ 1 por balón)'
-      }]);
-
-      if (error) {
-        console.error('Error al banear repartidor:', error);
-        if (typeof showToast === 'function') {
-          showToast('❌ Error al Banear', error.message || 'No se pudo registrar el baneo en la base de datos.', 'error', 5000);
-        }
-        return; // No refrescar como si hubiera funcionado
-      }
-    }
-
-    await descargarBaneadosDeSupabase();
+  if (!window.supabaseClient) {
+    if (typeof showToast === 'function') showToast('❌ Error', 'No hay conexión con Supabase.', 'error', 4500);
+    return;
   }
 
-  renderAdminVendorsList();
-  renderAdminDashboardKPIs();
+  // Única vía autorizada: RPC atómica y protegida en backend. No hacer fallback
+  // directo a usuarios_baneados porque omitiría la sincronización de estado,
+  // identificadores y reglas de autorización.
+  const { error: rpcError } = await window.supabaseClient.rpc('rpc_banear_repartidor_completo', {
+    p_user_id: vendorUserId,
+    p_motivo: 'Suspensión administrativa'
+  });
+
+  if (rpcError) {
+    console.error('Error en rpc_banear_repartidor_completo:', rpcError);
+    if (typeof showToast === 'function') {
+      showToast('❌ Error al suspender', rpcError.message || 'No se pudo registrar la suspensión en la base de datos.', 'error', 5000);
+    }
+    return;
+  }
+
+  await descargarBaneadosDeSupabase();
+  if (typeof renderAdminVendorsList === 'function') renderAdminVendorsList();
+  if (typeof renderAdminDashboardKPIs === 'function') renderAdminDashboardKPIs();
   if (typeof renderVendorCards === 'function') renderVendorCards('TODOS');
 
   if (typeof showToast === 'function') {
-    showToast('🚫 Repartidor y Celular Bloqueados', `Se suspendió a "${vendorName}" y se bloqueó el hardware de su dispositivo por comisiones pendientes.`, 'error', 6000);
+    showToast('🚫 Repartidor suspendido', `Se suspendió a "${vendorName}" y se bloquearon los identificadores asociados.`, 'error', 6000);
   }
 }
+
 async function limpiarTodosLosBaneosAdmin() {
   if (typeof showConfirmModal === 'function') {
     showConfirmModal('⚠️', '¿Eliminar todos los bloqueos?', 'Se borrarán de forma permanente todos los registros de baneos de la base de datos.', 'Sí, borrar todo', ejecutarLimpiezaBaneos);
@@ -126,9 +119,9 @@ async function ejecutarLimpiezaBaneos() {
     const { error } = await window.supabaseClient.from('usuarios_baneados').delete().not('id', 'is', null);
     if (error) console.error("Error limpiando baneos en Supabase:", error);
 
-    // Desbloquear también en choferes_habilitados
+    // Desbloquear también en choferes_habilitados y restaurar el servicio.
     await window.supabaseClient.from('choferes_habilitados')
-      .update({ bloqueado: false, motivo_bloqueo: null, estado_verificacion: 'aprobado' })
+      .update({ bloqueado: false, motivo_bloqueo: null, estado_verificacion: 'aprobado', estado_servicio: 'activo' })
       .not('id', 'is', null);
 
     await descargarBaneadosDeSupabase();
@@ -145,8 +138,9 @@ async function ejecutarLimpiezaBaneos() {
     showToast('🔓 Todos los Bloqueos Eliminados', 'Se eliminaron todos los baneos y bloqueos de la base de datos.', 'info', 4500);
   }
 }
+
 async function desbanearRepartidorAdmin(vendorUserId, vendorName) {
-  // IMPORTANTE: vendorUserId debe ser el auth.uid() real (ver nota en banearRepartidorAdmin).
+  // vendorUserId debe ser el auth.uid() real.
   if (window.supabaseClient) {
     const { error } = await window.supabaseClient.from('usuarios_baneados').delete().eq('user_id', vendorUserId);
     if (error) {
@@ -157,16 +151,21 @@ async function desbanearRepartidorAdmin(vendorUserId, vendorName) {
       return;
     }
 
-    // Desbloquear también en choferes_habilitados
-    await window.supabaseClient.from('choferes_habilitados')
-      .update({ bloqueado: false, motivo_bloqueo: null, estado_verificacion: 'aprobado' })
+    // Desbloquear y restaurar el estado operativo.
+    const { error: driverError } = await window.supabaseClient.from('choferes_habilitados')
+      .update({ bloqueado: false, motivo_bloqueo: null, estado_verificacion: 'aprobado', estado_servicio: 'activo' })
       .eq('user_id', vendorUserId);
+    if (driverError) {
+      console.error('Error restaurando estado del repartidor:', driverError);
+      if (typeof showToast === 'function') showToast('❌ Error', 'Se retiró el baneo, pero no se pudo restaurar el estado operativo.', 'error', 5000);
+      return;
+    }
 
     await descargarBaneadosDeSupabase();
   }
 
-  renderAdminVendorsList();
-  renderAdminDashboardKPIs();
+  if (typeof renderAdminVendorsList === 'function') renderAdminVendorsList();
+  if (typeof renderAdminDashboardKPIs === 'function') renderAdminDashboardKPIs();
   if (typeof renderVendorCards === 'function') renderVendorCards('TODOS');
 
   if (typeof showToast === 'function') {
@@ -191,7 +190,7 @@ window.borrarRepartidorPermanente = function(vendorId, vendorUserId, vendorName,
 
     // 1. Intentar borrar con rpc_admin_delete_user usando ID o email
     if (vendorUserId || vendorEmail) {
-      const { error } = await window.supabaseClient.rpc('rpc_admin_delete_user', { 
+      const { error } = await window.supabaseClient.rpc('rpc_admin_delete_user', {
         p_user_id: vendorUserId || '',
         p_email: vendorEmail || null
       });
@@ -295,7 +294,7 @@ async function ejecutarBorradoUsuarioCompleto(userId, nombre, tipo, vendorId = '
 
   if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Eliminando usuario...');
 
-  const { error } = await window.supabaseClient.rpc('rpc_admin_delete_user', { 
+  const { error } = await window.supabaseClient.rpc('rpc_admin_delete_user', {
     p_user_id: userId || '',
     p_email: email || null
   });
@@ -327,7 +326,6 @@ async function ejecutarBorradoUsuarioCompleto(userId, nombre, tipo, vendorId = '
   }
 }
 
-
 function verificarBloqueoAppUsuario() {
   try {
     const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
@@ -354,9 +352,9 @@ window.liquidarComisionesAdmin = async function(userId, name, currentSaldo) {
   }
   const defaultMonto = currentSaldo > 0 ? currentSaldo : '';
   const inputPrompt = prompt(`💰 Registrar Liquidación de Comisiones\nRepartidor: ${name}\nSaldo adeudado actual: S/ ${Number(currentSaldo || 0).toFixed(2)}\n\nIngresa el monto recibido vía Yape / Plin (deja en blanco para liquidar el saldo total):`, defaultMonto);
-  
+
   if (inputPrompt === null) return;
-  
+
   const monto = inputPrompt.trim() === '' ? null : parseFloat(inputPrompt);
   if (inputPrompt.trim() !== '' && (isNaN(monto) || monto <= 0)) {
     alert('Por favor ingresa un monto numérico válido.');
@@ -396,49 +394,16 @@ window.liquidarComisionesAdmin = async function(userId, name, currentSaldo) {
   }
 };
 
-window.ejecutarCorteSemanalManualAdmin = async function() {
-  if (!confirm('¿Ejecutar el Corte Semanal Dominical (11:59 PM) ahora mismo? Esto generará el balance y registrará el corte de los choferes con deuda.')) return;
-  
-  if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Ejecutando corte dominical...');
-  try {
-    const { data, error } = await window.supabaseClient.rpc('rpc_ejecutar_corte_semanal_comisiones');
-    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-    if (error) {
-      if (typeof showToast === 'function') showToast('Error', error.message, 'error');
-      else alert('Error: ' + error.message);
-      return;
-    }
-    if (typeof showToast === 'function') {
-      showToast('📅 Corte Dominical Ejecutado', `Choferes con deuda: ${data.choferes_con_deuda}. Deuda total: S/ ${data.deuda_total_acumulada}. Plazo límite vence Lunes 1:00 PM.`, 'success', 7000);
-    }
-    if (typeof renderAdminVendorsList === 'function') renderAdminVendorsList();
-  } catch(e) {
-    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-    console.error('Error ejecutando corte semanal:', e);
+// Compatibilidad temporal con botones heredados del HTML: las tareas semanales
+// fueron retiradas del backend y estas acciones ya no ejecutan cambios.
+window.ejecutarCorteSemanalManualAdmin = function() {
+  if (typeof showToast === 'function') {
+    showToast('Proceso retirado', 'El corte semanal ya no forma parte del modelo de comisiones. Se usa el ciclo de 100 pedidos = S/ 20.', 'info', 5500);
   }
 };
 
-window.ejecutarBaneoSemanalManualAdmin = async function() {
-  if (!confirm('🚨 ATENCIÓN: ¿Ejecutar el Baneo Semanal de Morosos (Lunes 1:00 PM)?\n\nTodos los choferes con saldo deudor > S/ 0.00 serán BLOQUEADOS (DNI, Placa y Hardware de su celular inhabilitados).')) return;
-
-  if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Ejecutando baneo semanal de morosos...');
-  try {
-    const { data, error } = await window.supabaseClient.rpc('rpc_ejecutar_baneo_semanal_morosos');
-    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-    if (error) {
-      if (typeof showToast === 'function') showToast('Error', error.message, 'error');
-      else alert('Error: ' + error.message);
-      return;
-    }
-    if (typeof showToast === 'function') {
-      showToast('🚫 Baneo Semanal Aplicado', `Se suspendió a ${data.choferes_baneados} chofer(es) moroso(s) y se bloquearon sus dispositivos móviles y DNI.`, 'warning', 7000);
-    }
-    await descargarBaneadosDeSupabase();
-    if (typeof renderAdminVendorsList === 'function') renderAdminVendorsList();
-    if (typeof renderAdminDashboardKPIs === 'function') renderAdminDashboardKPIs();
-  } catch(e) {
-    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-    console.error('Error ejecutando baneo semanal:', e);
+window.ejecutarBaneoSemanalManualAdmin = function() {
+  if (typeof showToast === 'function') {
+    showToast('Proceso retirado', 'El baneo semanal por mora fue eliminado. La suspensión se gestiona al alcanzar el límite del ciclo y se reactiva al validar el pago.', 'info', 6000);
   }
 };
-
