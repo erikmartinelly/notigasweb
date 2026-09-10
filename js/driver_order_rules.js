@@ -1,8 +1,8 @@
 /* ==========================================================================
    NOTIGAS - REGLAS OPERATIVAS DEL REPARTIDOR (PERÚ)
    - Sin suscripción, VIP ni ventajas temporales.
-   - Comisión fija: S/ 0.20 por pedido entregado y contabilizado una sola vez.
-   - Ciclo de crédito: 100 pedidos = S/ 20; al llegar al tope se suspende hasta pagar.
+   - Promoción: primeros 50 pedidos confirmados sin comisión.
+   - Después: S/ 0.20 por pedido. Crédito progresivo S/ 20 -> S/ 50 -> S/ 100.
    - Liberar un pedido no entregado no genera comisión ni modifica el saldo.
    - "No entregué" registra la declaración; si el comprador confirma recepción,
      la confirmación del comprador prevalece y la entrega se contabiliza.
@@ -184,7 +184,7 @@
   function normalizeLegacyOrderBanners(root = document) {
     const banners = root.querySelectorAll?.('.driver-plan-banner') || [];
     banners.forEach((banner) => {
-      banner.innerHTML = '<strong style="color:#FFFFFF;">Pedidos en tiempo real</strong> · Comisión: S/ 0.20 por pedido confirmado. Ciclo de crédito: 100 pedidos = S/ 20.';
+      banner.innerHTML = '<strong style="color:#FFFFFF;">🎁 50 pedidos gratis para probar NOTIGAS</strong> · Después: S/ 0.20 por pedido. Crédito progresivo hasta S/ 100.';
     });
   }
 
@@ -200,7 +200,7 @@
 
       const { data: driver, error } = await window.supabaseClient
         .from('choferes_habilitados')
-        .select('comisiones_pendientes,pedidos_credito_ciclo,limite_pedidos_credito,comision_por_pedido,estado_servicio,bloqueado')
+        .select('comisiones_pendientes,pedidos_credito_ciclo,limite_pedidos_credito,limite_credito,comision_por_pedido,promo_pedidos_gratis_total,promo_pedidos_gratis_usados,remesas_confirmadas,estado_servicio,bloqueado')
         .eq('user_id', uid)
         .maybeSingle();
       if (error || !driver) return;
@@ -209,19 +209,24 @@
       const limit = Number(driver.limite_pedidos_credito || 100);
       const saldo = Number(driver.comisiones_pendientes || 0);
       const fee = Number(driver.comision_por_pedido || 0.20);
-      const pct = limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0;
+      const creditLimit = Number(driver.limite_credito || 20);
+      const freeTotal = Number(driver.promo_pedidos_gratis_total || 50);
+      const freeUsed = Number(driver.promo_pedidos_gratis_usados || 0);
+      const freeRemaining = Math.max(0, freeTotal - freeUsed);
+      const inPromo = freeRemaining > 0;
+      const pct = inPromo ? Math.min(100, Math.round((freeUsed / Math.max(freeTotal,1)) * 100)) : (limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0);
       const suspended = Boolean(driver.bloqueado || driver.estado_servicio === 'suspendido_tope' || driver.estado_servicio === 'baneado');
       const barColor = suspended || pct >= 100 ? '#EF4444' : (pct >= 70 ? '#F59E0B' : '#10B981');
 
       card.innerHTML = `
         <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:6px;">
-          <span style="font-size:11px;font-weight:800;color:#E2E8F0;">💳 Crédito por uso</span>
-          <span style="font-size:11px;font-weight:900;color:${barColor};">${used}/${limit} pedidos</span>
+          <span style="font-size:11px;font-weight:800;color:#E2E8F0;">${inPromo ? '🎁 Prueba gratis' : '💳 Crédito por uso'}</span>
+          <span style="font-size:11px;font-weight:900;color:${barColor};">${inPromo ? `${freeUsed}/${freeTotal} gratis` : `${used}/${limit} pedidos`}</span>
         </div>
         <div style="background:#0F172A;border-radius:6px;height:8px;width:100%;overflow:hidden;border:1px solid #334155;"><div style="background:${barColor};height:100%;width:${pct}%;"></div></div>
         <div style="display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:9.5px;color:#94A3B8;">
-          <span>Comisión: S/ ${fee.toFixed(2)} por pedido confirmado</span>
-          <span>Saldo: S/ ${saldo.toFixed(2)}</span>
+          <span>${inPromo ? `${freeRemaining} pedido(s) gratis restantes` : `Comisión: S/ ${fee.toFixed(2)} por pedido confirmado`}</span>
+          <span>${inPromo ? 'Saldo: S/ 0.00' : `Saldo: S/ ${saldo.toFixed(2)} / S/ ${creditLimit.toFixed(2)}`}</span>
         </div>`;
     } catch (err) {
       console.warn('No se pudo sincronizar el crédito del repartidor:', err);
@@ -247,11 +252,16 @@
         const used = Number(accounting.pedidos_credito_ciclo ?? data?.pedidos_credito_ciclo ?? 0);
         const limit = Number(accounting.limite_pedidos_credito ?? data?.limite_pedidos_credito ?? 100);
         const suspended = Boolean(accounting.suspendido ?? data?.suspendido ?? false);
+        const freeOrder = Boolean(accounting.pedido_gratis ?? data?.pedido_gratis ?? false);
+        const promoRemaining = Number(accounting.promo_restantes ?? data?.promo_restantes ?? 0);
+        const creditLimit = Number(accounting.limite_credito ?? data?.limite_credito ?? 20);
 
-        if (suspended) {
-          toast('⚠️ Límite de crédito alcanzado', `Entrega confirmada. Comisión S/ ${fee.toFixed(2)}. Alcanzaste ${used || limit}/${limit} pedidos del ciclo (S/ 20). Regulariza el pago para continuar.`, 'warning', 8000);
+        if (freeOrder) {
+          toast('🎁 Pedido gratuito confirmado', `No se generó comisión. Te quedan ${promoRemaining} pedido(s) gratis de la promoción inicial.`, 'success', 5000);
+        } else if (suspended) {
+          toast('⚠️ Límite de crédito alcanzado', `Entrega confirmada. Comisión S/ ${fee.toFixed(2)}. Alcanzaste ${used || limit}/${limit} pedidos del ciclo y S/ ${creditLimit.toFixed(2)} de crédito. Regulariza la remesa para continuar.`, 'warning', 8000);
         } else {
-          toast('¡Entrega confirmada! 🎉', `Comisión S/ ${fee.toFixed(2)} registrada. Saldo: S/ ${saldo.toFixed(2)} · Ciclo: ${used}/${limit} pedidos.`, 'success', 5000);
+          toast('¡Entrega confirmada! 🎉', `Comisión S/ ${fee.toFixed(2)} registrada. Saldo: S/ ${saldo.toFixed(2)} / S/ ${creditLimit.toFixed(2)} · Ciclo: ${used}/${limit} pedidos.`, 'success', 5000);
         }
 
         if (typeof window.renderDriverOrdersList === 'function') await window.renderDriverOrdersList();
@@ -263,7 +273,7 @@
       }
     };
 
-    const message = '¿El comprador ya recibió su pedido? La entrega confirmada genera una comisión de S/ 0.20 y suma 1 pedido al ciclo de 100.';
+    const message = '¿El comprador ya recibió su pedido? Si aún estás dentro de los primeros 50 pedidos promocionales, esta entrega es gratuita. Después se aplica S/ 0.20 por pedido confirmado.';
     if (typeof window.showConfirmModal === 'function') {
       window.showConfirmModal('🏁', 'Confirmar entrega', message, 'Sí, ya entregué el pedido', execute, 'Volver');
     } else if (window.confirm(message)) {
@@ -402,7 +412,7 @@
       }
 
       if (/suscribirse.*Plan PRO|3 minutos.*pedidos|1 minuto.*clientes/i.test(text)) {
-        el.textContent = 'NOTIGAS es de libre acceso para compradores. Los repartidores no pagan suscripción: se aplica S/ 0.20 por cada pedido entregado y el saldo se liquida al completar 100 pedidos (S/ 20).';
+        el.textContent = 'NOTIGAS no cobra suscripción. Los primeros 50 pedidos confirmados son gratis; después se aplica S/ 0.20 por pedido. El crédito comienza en S/ 20, sube a S/ 50 tras la primera remesa y a S/ 100 tras la tercera.';
       }
     });
     normalizeLegacyFinancialCopy(document);
@@ -436,10 +446,10 @@
             <span style="background:#10B981;color:#052E16;border-radius:999px;padding:4px 9px;font-size:10px;font-weight:900;white-space:nowrap;">SIN SUSCRIPCIÓN</span>
           </div>
           <div style="font-size:11.5px;color:#D1FAE5;line-height:1.55;">
-            Se registra una comisión de <strong>S/ 0.20 por cada pedido entregado</strong>. El ciclo permite <strong>100 pedidos</strong>, equivalentes a <strong>S/ 20</strong> de comisión acumulada.
+            Tus primeros <strong>50 pedidos confirmados son totalmente gratuitos</strong>. Desde el pedido 51 se registra una comisión de <strong>S/ 0.20 por cada pedido entregado</strong>.
           </div>
           <div style="margin-top:9px;background:rgba(15,23,42,.72);border-left:3px solid #F59E0B;padding:8px 10px;border-radius:0 8px 8px 0;font-size:11px;color:#FDE68A;line-height:1.5;">
-            Al confirmar el pedido 100, la cuenta queda suspendida para nuevos pedidos hasta que el pago Yape sea validado. Al aprobarse el pago, el ciclo vuelve a 0 automáticamente.
+            El primer ciclo cobrable permite <strong>100 pedidos = S/ 20</strong>. Tras la primera remesa confirmada tu crédito sube a <strong>S/ 50</strong>; la segunda mantiene S/ 50 y, tras la tercera remesa confirmada, sube al tope de <strong>S/ 100</strong>.
           </div>
         </div>`;
     }
@@ -452,7 +462,7 @@
     const creditContent = document.getElementById('driverPremiumGratuitoContent');
     if (creditContent) {
       creditContent.style.display = 'block';
-      creditContent.innerHTML = '<p style="margin:0;font-size:11px;color:#CBD5E1;line-height:1.5;">El registro no requiere pago inicial ni suscripción. La comisión se genera únicamente cuando una entrega queda confirmada.</p>';
+      creditContent.innerHTML = '<p style="margin:0;font-size:11px;color:#CBD5E1;line-height:1.5;"><strong>Prueba gratis:</strong> tus primeros 50 pedidos confirmados no generan comisión. Después: S/ 0.20 por pedido, con crédito progresivo S/ 20 → S/ 50 → S/ 100.</p>';
     }
 
     const btnText = document.getElementById('btnDriverSubmitText');

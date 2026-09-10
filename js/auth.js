@@ -1057,11 +1057,11 @@ async function iniciarSesionRepartidor() {
 
   if (planTipo === 'pro') {
     if (typeof showToast === 'function') {
-      showToast('👑 ¡Repartidor PRO Activado!', `¡Bienvenido ${nombreNegocio}! Cuentas con 3 minutos de ventaja en pedidos y 1 minuto ante compradores.`, 'success', 6500);
+      showToast('🎁 Cuenta de repartidor activada', `¡Bienvenido ${nombreNegocio}! Tus primeros 50 pedidos confirmados son gratuitos.`, 'success', 6500);
     }
   } else {
     if (typeof showToast === 'function') {
-      showToast('🟢 Registro Gratuito Activado', `Ficha de ${nombreNegocio} registrada. Puedes pasar a PRO por S/ 15/mes para obtener 3 minutos de ventaja.`, 'success', 6000);
+      showToast('🎁 Cuenta de repartidor activada', `Ficha de ${nombreNegocio} registrada. Tus primeros 50 pedidos confirmados son gratuitos.`, 'success', 6000);
     }
   }
 
@@ -2437,7 +2437,7 @@ function actualizarVistaPreviaCamionChofer() {
 window.actualizarVistaPreviaCamionChofer = actualizarVistaPreviaCamionChofer;
 
 /**
- * Alterna dinámicamente entre el Plan PRO (S/ 15/mes) y el Plan Gratuito (S/ 0)
+ * Configura la modalidad única de crédito operativo del repartidor
  * en el modal de registro/edición de chofer.
  */
 function seleccionarPlanRegistroChofer() {
@@ -2454,7 +2454,7 @@ function seleccionarPlanRegistroChofer() {
   const cardBase = document.getElementById('cardPlanDriverGratuito');
   if (cardBase) { cardBase.style.display = 'block'; cardBase.style.opacity = '1'; cardBase.style.border = '2px solid #10B981'; }
   const content = document.getElementById('driverPremiumGratuitoContent');
-  if (content) { content.style.display = 'block'; content.innerHTML = '<p style="margin:0;font-size:11px;color:#CBD5E1;line-height:1.5;">Registro sin suscripción mensual. Primeros 20 pedidos confirmados sin comisión; luego S/ 0,20 por pedido con crédito hasta 100 unidades.</p>'; }
+  if (content) { content.style.display = 'block'; content.innerHTML = '<p style="margin:0;font-size:11px;color:#CBD5E1;line-height:1.5;">Registro sin suscripción mensual. Tus primeros 50 pedidos confirmados son gratuitos. Después se aplica S/ 0,20 por pedido: primer ciclo S/ 20, luego crédito S/ 50 tras la primera remesa y S/ 100 tras la tercera.</p>'; }
   const btnText = document.getElementById('btnDriverSubmitText');
   if (btnText) btnText.textContent = 'Guardar ficha de repartidor';
 }
@@ -2513,7 +2513,7 @@ async function cargarPerfilChoferEnModal() {
 window.cargarPerfilChoferEnModal = cargarPerfilChoferEnModal;
 
 /**
- * Actualiza los avisos e insignias visuales de la suscripción VIP en el modal de chofer.
+ * Oculta controles heredados de suscripción que ya no forman parte del modelo vigente.
  */
 function actualizarEstadoUIPerfilPremium() {
   ['driverPremiumStatusBadge','driverPremiumActiveAlert','driverPremiumPendingAlert','driverPremiumProContent','driverPremiumPaymentSection'].forEach(id => {
