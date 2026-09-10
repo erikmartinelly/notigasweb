@@ -33,7 +33,7 @@ window.NOTIGAS.GPS_TIMEOUT_MS        = 12000;                  // 12 segundos (t
 window.NOTIGAS.MIN_MOVEMENT_METERS   = 15;                     // 15 metros (movimiento mínimo GPS)
 window.NOTIGAS.IDLE_THRESHOLD_MS     = 3 * 60 * 1000;         // 3 minutos (repartidor inactivo)
 window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño máximo imagen)
-window.NOTIGAS.CACHE_VERSION = '128';
+window.NOTIGAS.CACHE_VERSION = '129';
 
 // Contrato de datos: la publicidad y los avisos comunitarios son módulos distintos.
 window.NOTIGAS.AD_TABLE = 'anuncios_globales';
@@ -98,8 +98,14 @@ window.loadAdminModules = async function() {
 };
 
 window.loadDriverPaymentsModule = async function() {
-  if (typeof window.ensureDriverPaymentsMenu === 'function') return;
-  await window.loadScriptAsync('js/driver_payments.js');
+  if (typeof window.ensureDriverPaymentsMenu !== 'function') {
+    await window.loadScriptAsync('js/driver_payments.js');
+  }
+  // Reglas posteriores a orders.js: penalización por cancelar, "No entregué"
+  // y notificaciones cuando el comprador confirma recepción.
+  if (typeof window.reportarNoEntregadoPedido !== 'function') {
+    await window.loadScriptAsync('js/driver_order_rules.js');
+  }
 };
 
 window.loadForumModule = async function() {
@@ -113,7 +119,7 @@ window.loadAdsModule = async function () {
     if (!window._adsModuleLoadPromise) { 
       window._adsModuleLoadPromise = window.loadScriptAsync(`js/promo.js`).catch((error) => { 
         window._adsModuleLoadPromise = null; 
-        throw error; 
+        throw error;
       }); 
     } 
     await window._adsModuleLoadPromise; 
@@ -341,7 +347,7 @@ window.loadAdsModule = async function () {
 
   const loadDriverPayments = () => {
     window.loadDriverPaymentsModule?.().catch((err) => {
-      console.warn('No se pudo cargar el módulo de pagos del repartidor:', err);
+      console.warn('No se pudo cargar el módulo de pagos/reglas del repartidor:', err);
     });
   };
   if (document.readyState === 'loading') {
