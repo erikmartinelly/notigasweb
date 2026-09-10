@@ -19,14 +19,23 @@ jobs:
       - name: Apply driver policy source migration
         run: python3 scripts/apply_driver_policy_50free_v2.py
 
-      - name: Validate syntax before publishing branch
-        run: |
-          git diff --check
-          node scripts/check_syntax.js
-          node scripts/check_runtime.js
-          node scripts/check_audit_hardening.js
-          node scripts/test_driver_plans.js
-          python3 test_financial_parameters.py
+      - name: Validate diff
+        run: git diff --check
+
+      - name: Validate JavaScript syntax
+        run: node scripts/check_syntax.js
+
+      - name: Validate runtime
+        run: node scripts/check_runtime.js
+
+      - name: Validate audit hardening
+        run: node scripts/check_audit_hardening.js
+
+      - name: Validate driver policy
+        run: node scripts/test_driver_plans.js
+
+      - name: Validate financial contract
+        run: python3 test_financial_parameters.py
 
       - name: Publish transformed source to validation branch
         run: |
