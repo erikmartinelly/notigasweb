@@ -33,7 +33,7 @@ window.NOTIGAS.GPS_TIMEOUT_MS        = 12000;                  // 12 segundos (t
 window.NOTIGAS.MIN_MOVEMENT_METERS   = 15;                     // 15 metros (movimiento mínimo GPS)
 window.NOTIGAS.IDLE_THRESHOLD_MS     = 3 * 60 * 1000;         // 3 minutos (repartidor inactivo)
 window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño máximo imagen)
-window.NOTIGAS.CACHE_VERSION = '127';
+window.NOTIGAS.CACHE_VERSION = '128';
 
 // Contrato de datos: la publicidad y los avisos comunitarios son módulos distintos.
 window.NOTIGAS.AD_TABLE = 'anuncios_globales';
@@ -95,6 +95,11 @@ window.loadAdminModules = async function() {
   if (typeof window.renderAdminPaymentsReview !== 'function') {
     await window.loadScriptAsync('js/admin_payments.js');
   }
+};
+
+window.loadDriverPaymentsModule = async function() {
+  if (typeof window.ensureDriverPaymentsMenu === 'function') return;
+  await window.loadScriptAsync('js/driver_payments.js');
 };
 
 window.loadForumModule = async function() {
@@ -333,4 +338,15 @@ window.loadAdsModule = async function () {
 
   window.AppState = AppState;
   console.log('✅ AppState inicializado.');
+
+  const loadDriverPayments = () => {
+    window.loadDriverPaymentsModule?.().catch((err) => {
+      console.warn('No se pudo cargar el módulo de pagos del repartidor:', err);
+    });
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadDriverPayments, { once: true });
+  } else {
+    loadDriverPayments();
+  }
 })();
