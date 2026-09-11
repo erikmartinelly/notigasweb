@@ -7,7 +7,7 @@
   "display": "standalone",
   "background_color": "#0F172A",
   "theme_color": "#FF6D00",
-  "description": "Plataforma vecinal en vivo con mapa GPS, mini páginas de negocio para repartidores y noticias de la OTB.",
+  "description": "Plataforma vecinal en vivo con mapa GPS, mini páginas de negocio para repartidores y avisos de la zona.",
   "orientation": "portrait-primary",
   "prefer_related_applications": false,
   "icons": [

@@ -93,8 +93,21 @@
     window.renderAdminPaymentsReview = wrapped;
   }
 
+  function disableLegacyPremiumAdmin() {
+    if (typeof window.renderAdminPaymentsReview === 'function') window.renderAdminPremiumSubscriptions = window.renderAdminPaymentsReview;
+    const retired = function () {
+      if (typeof showToast === 'function') showToast('Función retirada', 'Las suscripciones PRO/VIP ya no existen. Usa el módulo Pagos.', 'info', 3000);
+      if (typeof window.renderAdminPaymentsReview === 'function') return window.renderAdminPaymentsReview();
+      return null;
+    };
+    window.aprobarSuscripcionPremiumAdmin = retired;
+    window.revocarSuscripcionPremiumAdmin = retired;
+    window.banearRepartidorDesdePremium = retired;
+  }
+
   window.ensureAdminPaymentConfigPanel = ensurePanel;
   window.loadAdminPaymentConfig = loadConfig;
   window.wrapAdminPaymentsWithConfig = wrapPaymentsRender;
   wrapPaymentsRender();
+  disableLegacyPremiumAdmin();
 })();

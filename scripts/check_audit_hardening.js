@@ -44,6 +44,9 @@ try {
     assertNo(p, /Bolivia|bolivian|\bBOB\b|monto_recibido_bob|Yape Bolivia/i, 'Pagos conserva lógica Bolivia/BOB');
   }
   assertHas('js/driver_payments.js', /p_monto_enviado_pen/, 'Falta monto PEN en contrato OCR');
+  assertHas('js/driver_payments.js', /missing\.push\('nombre del destinatario'\)/, 'OCR cliente no exige nombre del destinatario');
+  assertHas('js/driver_payments.js', /missing\.push\('Yape del destinatario'\)/, 'OCR cliente no exige Yape del destinatario');
+  assertHas('js/admin_payment_config.js', /disableLegacyPremiumAdmin/, 'No se neutraliza el admin Premium heredado');
   assertHas('js/driver_payments.js', /9\[0-9\]\{8\}/, 'OCR no reconoce Yape Perú de 9 dígitos');
   assertNo('js/voucher_ocr.js', /\.rpc\(\s*['"](?:rpc_registrar_ocr_pago|rpc_driver_submit_premium_payment)['"]|\.from\(\s*['"]vouchers-premium['"]/, 'OCR genérico todavía persiste pagos o Premium');
 
@@ -62,16 +65,16 @@ try {
   const htmlVersions = [...index.matchAll(/(?:styles|js)\/[^"']+\?v=(\d+)/g)].map(m => m[1]);
   if (!htmlVersions.length) fail('No se detectaron assets versionados en index.html');
   const uniqueHtmlVersions = [...new Set(htmlVersions)];
-  if (uniqueHtmlVersions.length !== 1 || uniqueHtmlVersions[0] !== '133') {
+  if (uniqueHtmlVersions.length !== 1 || uniqueHtmlVersions[0] !== '134') {
     fail(`Versiones de assets mezcladas: ${uniqueHtmlVersions.join(',')}`);
   }
   const sw = read('sw.js');
-  if (!/notigas-cache-v133/.test(sw)) fail('Service worker no usa cache v132');
+  if (!/notigas-cache-v134/.test(sw)) fail('Service worker no usa cache v134');
   if (!/fetch\(asset, \{ cache: 'reload' \}\)/.test(sw)) fail('Service worker no fuerza recarga durante instalación');
 
   // Runtime tests deben cargar los módulos críticos.
   const runtime = read('scripts/check_runtime.js');
-  for (const mod of ['js/admin_payments.js','js/driver_payments.js','js/driver_order_rules.js']) {
+  for (const mod of ['js/admin_payments.js','js/admin_payment_config.js','js/driver_payments.js','js/driver_order_rules.js']) {
     if (!runtime.includes(`'${mod}'`)) fail(`Runtime test no carga ${mod}`);
   }
 
@@ -84,7 +87,8 @@ try {
     '20260910205729_remove_release_penalty_align_credit_contract.sql',
     '20260910220052_remove_obsolete_weekly_financial_rpcs.sql',
     '20260910225938_driver_50_free_and_progressive_credit_tiers.sql',
-    '20260910234110_make_payment_suspensions_reversible_on_full_payment.sql'
+    '20260910234110_make_payment_suspensions_reversible_on_full_payment.sql',
+    '20260911011500_preprod_security_payment_hardening.sql'
   ]) {
     if (!names.includes(required)) fail(`Falta migración crítica: ${required}`);
   }
@@ -114,6 +118,13 @@ try {
   }
   const legacyHardware = read('supabase/migrations/20260908005000_device_id_dni_hardware_ban.sql');
   if (/rpc_banear_repartidor_completo|S\/\s*1\b/i.test(legacyHardware)) fail('Migración histórica de hardware reintroduce baneo financiero antiguo');
+
+  const preprod = read('supabase/migrations/20260911011500_preprod_security_payment_hardening.sql');
+  if (!/suspendido_mora/.test(preprod) || !/suspendido_pago/.test(preprod)) fail('Migración final no permite estados reversibles');
+  if (!/rutas_select_own_or_admin/.test(preprod)) fail('Tabla base de rutas no está restringida');
+  if (!/No se detectó el nombre del destinatario/.test(preprod) || !/No se detectó un Yape destinatario válido/.test(preprod)) fail('OCR servidor no falla cerrado');
+  if (!/numero_cuenta = NULL/.test(preprod)) fail('Placeholder de pago no se invalida');
+  assertHas('js/admin_payment_config.js', /rpc_admin_set_payment_config/, 'Falta configuración segura del receptor');
 
   console.log('✅ Audit hardening invariants OK: 50 gratis, crédito S/20 -> S/50 -> S/100');
 } catch (err) {
