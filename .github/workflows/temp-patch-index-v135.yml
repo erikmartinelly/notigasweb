@@ -1,0 +1,40 @@
+name: TEMP - Patch index assets to v135
+
+on:
+  push:
+    branches: [ fix/order-privacy-50m ]
+
+permissions:
+  contents: write
+
+jobs:
+  patch-index:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/order-privacy-50m
+          fetch-depth: 0
+      - name: Update asset query versions
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          s2 = s.replace('?v=134', '?v=135')
+          if s2 == s:
+              print('No v134 asset references found')
+          else:
+              p.write_text(s2, encoding='utf-8')
+          PY
+      - name: Commit patch when needed
+        run: |
+          if git diff --quiet -- index.html; then
+            exit 0
+          fi
+          git config user.name 'notigas-ci'
+          git config user.email 'notigas-ci@users.noreply.github.com'
+          git add index.html
+          git commit -m 'chore: alinear index con PWA v135'
+          git push origin HEAD:fix/order-privacy-50m
