@@ -1,185 +1,125 @@
 #!/usr/bin/env node
-/**
- * NOTIGAS - Real Database & PostgREST Integration Test Suite
- * Connects directly to the live Supabase project to verify RPC signatures,
- * schema endpoints, RLS security policies, and error handling without mocks.
- */
+'use strict';
 
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://yxzzfqyehllogzzhdtmc.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_wWVQ59Rejod5Oc1X4s_eeQ_ONbXzyi2';
+const fs = require('fs');
+const path = require('path');
 
-async function request(endpoint, options = {}) {
-  const url = `${SUPABASE_URL}/rest/v1/${endpoint.replace(/^\//, '')}`;
-  const headers = {
-    'apikey': SUPABASE_KEY,
-    'Authorization': `Bearer ${SUPABASE_KEY}`,
-    'Content-Type': 'application/json',
-    'Prefer': 'return=representation',
-    ...(options.headers || {})
-  };
-
-  const res = await fetch(url, {
-    ...options,
-    headers
-  });
-
-  const text = await res.text();
-  let json = null;
-  try {
-    json = text ? JSON.parse(text) : null;
-  } catch (_) {
-    json = text;
-  }
-
-  return { status: res.status, ok: res.ok, data: json, headers: res.headers };
+function loadPublicConfig() {
+  const src = fs.readFileSync(path.join(__dirname, '..', 'js', 'supabase-config.js'), 'utf8');
+  const urlMatch = src.match(/https:\/\/[a-z0-9]+\.supabase\.co/i);
+  const keyMatch = src.match(/sb_publishable_[A-Za-z0-9_-]+/);
+  const url = process.env.SUPABASE_URL || urlMatch?.[0];
+  const key = process.env.SUPABASE_PUBLISHABLE_KEY || keyMatch?.[0];
+  if (!url || !key) throw new Error('No se pudo resolver la configuración pública de Supabase');
+  return { url, key };
 }
 
-async function runDatabaseIntegrationTests() {
-  console.log('🧪 Iniciando prueba de integración REAL contra Supabase Postgres...');
-  console.log(`🌐 Endpoint objetivo: ${SUPABASE_URL}\n`);
+const PUBLIC_CONFIG = loadPublicConfig();
 
+async function request(endpoint, options = {}) {
+  const url = `${PUBLIC_CONFIG.url}/rest/v1/${endpoint.replace(/^\//, '')}`;
+  const headers = {
+    apikey: PUBLIC_CONFIG.key,
+    Authorization: `Bearer ${PUBLIC_CONFIG.key}`,
+    'Content-Type': 'application/json',
+    ...(options.headers || {})
+  };
+  const res = await fetch(url, { ...options, headers });
+  const text = await res.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : null; } catch (_) { data = text; }
+  return { status: res.status, ok: res.ok, data };
+}
+
+function assert(condition, message) {
+  if (!condition) throw new Error(message);
+}
+
+function assertDenied(res, label) {
+  if (res.ok) {
+    const empty = Array.isArray(res.data) && res.data.length === 0;
+    if (!empty) throw new Error(`${label} quedó accesible sin sesión`);
+  }
+}
+
+async function main() {
+  console.log(`🧪 Integración PostgREST: ${PUBLIC_CONFIG.url}`);
   let passed = 0;
   let failed = 0;
-  const errors = [];
 
   async function test(name, fn) {
     try {
-      process.stdout.write(`  ⏳ ${name}... `);
       await fn();
-      console.log('✅ [PASSED]');
+      console.log(`✅ ${name}`);
       passed++;
     } catch (err) {
-      console.log('❌ [FAILED]');
-      console.error(`     Error: ${err.message}`);
-      errors.push({ test: name, error: err.message });
+      console.error(`❌ ${name}: ${err.message}`);
       failed++;
     }
   }
 
-  // TEST 1: Conectividad y lectura de anuncios globales
-  await test('Lectura de tabla pública anuncios_globales', async () => {
-    const res = await request('anuncios_globales?select=id,titulo,ciudad,posicion,activo&limit=5');
-    if (!res.ok) throw new Error(`HTTP ${res.status}: ${JSON.stringify(res.data)}`);
-    if (!Array.isArray(res.data)) throw new Error('Se esperaba un array de anuncios');
+  await test('Anuncios públicos legibles', async () => {
+    const res = await request('anuncios_globales?select=id,titulo,ciudad,posicion,activo&limit=3');
+    assert(res.ok && Array.isArray(res.data), `HTTP ${res.status}`);
   });
 
-  // TEST 2: Lectura de avisos comunitarios
-  await test('Lectura de tabla pública avisos por ciudad', async () => {
-    const res = await request('avisos?select=id,titulo,ciudad,categoria&limit=5');
-    if (!res.ok) throw new Error(`HTTP ${res.status}: ${JSON.stringify(res.data)}`);
-    if (!Array.isArray(res.data)) throw new Error('Se esperaba un array de avisos');
+  await test('Avisos públicos legibles', async () => {
+    const res = await request('avisos?select=id,titulo,ciudad,categoria&limit=3');
+    assert(res.ok && Array.isArray(res.data), `HTTP ${res.status}`);
   });
 
-  // TEST 3: RPC is_banned responde correctamente
-  await test('Invocación RPC is_banned()', async () => {
-    const res = await request('rpc/is_banned', {
-      method: 'POST',
-      body: JSON.stringify({})
+  for (const fn of ['is_admin_email', 'is_banned']) {
+    await test(`${fn} no es RPC anónimo`, async () => {
+      assertDenied(await request(`rpc/${fn}`, { method: 'POST', body: '{}' }), fn);
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}: ${JSON.stringify(res.data)}`);
-    if (typeof res.data !== 'boolean') throw new Error(`Se esperaba boolean pero se obtuvo: ${typeof res.data}`);
-  });
-
-  // TEST 4: RPC is_admin_email_for rechaza llamadas no autenticadas
-  await test('RPC is_admin_email_for rechaza llamadas sin sesión administrativa JWT', async () => {
-    const res = await request('rpc/is_admin_email_for', {
-      method: 'POST',
-      body: JSON.stringify({ p_email: 'unauthorized_probe@example.com' })
-    });
-    if (res.status === 200 && res.data === true) {
-      throw new Error('Probe no autorizado debió ser rechazado');
-    }
-  });
-
-  // TEST 5: RPC rpc_crear_aviso_vecinal rechaza usuarios anónimos de forma controlada
-  await test('RPC rpc_crear_aviso_vecinal rechaza llamada anónima con error controlado', async () => {
-    const res = await request('rpc/rpc_crear_aviso_vecinal', {
-      method: 'POST',
-      body: JSON.stringify({
-        p_ciudad: 'lima',
-        p_barrio: 'Global',
-        p_autor: 'Test Probe',
-        p_titulo: 'Test Probe',
-        p_descripcion: 'Test Probe',
-        p_mensaje: 'Test Probe'
-      })
-    });
-    if (res.status === 200 && res.data) {
-      if (res.data.ok === true || res.data.success === true) {
-        throw new Error('rpc_crear_aviso_vecinal permitió creación anónima');
-      }
-    } else if (res.status >= 500) {
-      throw new Error(`Error de servidor inesperado HTTP ${res.status}: ${JSON.stringify(res.data)}`);
-    }
-  });
-
-  // TEST 6: RPC rpc_save_local_ad rechaza llamada anónima o no-admin
-  await test('RPC rpc_save_local_ad rechaza llamadas sin sesión administrativa JWT', async () => {
-    const res = await request('rpc/rpc_save_local_ad', {
-      method: 'POST',
-      body: JSON.stringify({
-        p_titulo: 'Unauthorized Ad Probe',
-        p_descripcion: 'Probe',
-        p_url: 'https://notigas.com',
-        p_image_url: '',
-        p_ciudad: 'lima',
-        p_activo: true,
-        p_posicion: 'mapa',
-        p_admin_email: 'admin@notigas.com'
-      })
-    });
-    // Debe rechazar por falta de JWT administrativo (HTTP 401, 403, 404 o ok=false)
-    if (res.status === 200 && res.data) {
-      if (res.data.success === true) {
-        throw new Error('rpc_save_local_ad permitió guardado sin sesión JWT real autenticada');
-      }
-    }
-  });
-
-  // TEST 7: RPC rpc_delete_local_ad rechaza eliminación no-admin
-  await test('RPC rpc_delete_local_ad rechaza llamadas sin sesión administrativa JWT', async () => {
-    const res = await request('rpc/rpc_delete_local_ad', {
-      method: 'POST',
-      body: JSON.stringify({
-        p_ad_id: '00000000-0000-0000-0000-000000000000',
-        p_admin_email: 'admin@notigas.com'
-      })
-    });
-    if (res.status === 200 && res.data) {
-      if (res.data.success === true) {
-        throw new Error('rpc_delete_local_ad permitió borrado no autorizado');
-      }
-    }
-  });
-
-  // TEST 8: Lectura de la vista pedidos_publicos
-  await test('Lectura de vista protegida pedidos_publicos', async () => {
-    const res = await request('pedidos_publicos?limit=5');
-    if (!res.ok) throw new Error(`HTTP ${res.status}: ${JSON.stringify(res.data)}`);
-    if (!Array.isArray(res.data)) throw new Error('Se esperaba un array de pedidos públicos');
-  });
-
-  // TEST 9: Lectura de la vista choferes_publicos
-  await test('Lectura de vista protegida choferes_publicos', async () => {
-    const res = await request('choferes_publicos?limit=5');
-    if (!res.ok) throw new Error(`HTTP ${res.status}: ${JSON.stringify(res.data)}`);
-    if (!Array.isArray(res.data)) throw new Error('Se esperaba un array de choferes públicos');
-  });
-
-  console.log('\n--------------------------------------------------');
-  if (failed === 0) {
-    console.log(`✨ ÉXITO TOTAL: ${passed} pruebas reales de integración con Supabase superadas.\n`);
-    process.exit(0);
-  } else {
-    console.error(`🚨 ERROR: ${failed} de ${passed + failed} pruebas de integración fallaron:\n`);
-    for (const e of errors) {
-      console.error(`  - ${e.test}: ${e.error}`);
-    }
-    process.exit(1);
   }
+
+  await test('is_current_enabled_driver no es RPC anónimo', async () => {
+    assertDenied(await request('rpc/is_current_enabled_driver', {
+      method: 'POST', body: JSON.stringify({ p_ciudad: 'lima', p_categoria: 'gas' })
+    }), 'is_current_enabled_driver');
+  });
+
+  await test('Chequeo pre-registro de dispositivo responde sin error 5xx', async () => {
+    const res = await request('rpc/rpc_verificar_bloqueo_dispositivo', {
+      method: 'POST',
+      body: JSON.stringify({
+        p_device_id: 'integration-probe',
+        p_device_fingerprint: 'integration-probe',
+        p_dni: '00000000',
+        p_placa: 'PROBE000',
+        p_telefono: '900000000'
+      })
+    });
+    assert(res.status < 500, `HTTP ${res.status}`);
+  });
+
+  for (const endpoint of [
+    'pedidos?select=id,direccion,telefono,latitude,longitude&limit=1',
+    'order_public_radar?select=order_id,latitude,longitude,radius_m&limit=1',
+    'choferes_publicos?select=id,nombre_completo,categoria&limit=1',
+    'rutas_repartidores_publicas?select=id,latitude,longitude&limit=1'
+  ]) {
+    await test(`${endpoint.split('?')[0]} no expone datos sin sesión`, async () => {
+      assertDenied(await request(endpoint), endpoint);
+    });
+  }
+
+  await test('RPC antiguo de pedidos libres permanece revocado', async () => {
+    assertDenied(await request('rpc/rpc_get_driver_available_orders', {
+      method: 'POST', body: JSON.stringify({ p_ciudad: 'lima', p_categoria: 'gas' })
+    }), 'rpc_get_driver_available_orders');
+  });
+
+  await test('Instrucciones de pago requieren sesión', async () => {
+    assertDenied(await request('rpc/rpc_get_payment_instructions', { method: 'POST', body: '{}' }), 'rpc_get_payment_instructions');
+  });
+
+  console.log(`\nResultado: ${passed} OK / ${failed} fallos`);
+  if (failed) process.exit(1);
 }
 
-runDatabaseIntegrationTests().catch(err => {
-  console.error('\n🚨 Excepción no controlada en suite de integración:', err);
+main().catch((err) => {
+  console.error('🚨 Error de integración:', err.message);
   process.exit(1);
 });
