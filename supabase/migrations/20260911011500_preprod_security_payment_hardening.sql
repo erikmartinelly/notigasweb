@@ -319,7 +319,8 @@ GRANT EXECUTE ON FUNCTION public.rpc_admin_set_payment_config(text,text,text) TO
 GRANT EXECUTE ON FUNCTION public.rpc_get_payment_instructions() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.rpc_registrar_ocr_pago(uuid,numeric,timestamptz,text,text,text,text,text,text,text,numeric) TO authenticated;
 
--- 9) Los vouchers ya no se almacenan: retirar buckets vacíos heredados.
-DELETE FROM storage.buckets WHERE id IN ('vouchers-premium','vouchers-comisiones');
+-- 9) Los buckets de vouchers heredados se mantienen privados y vacíos.
+-- Supabase Storage prohíbe borrarlos directamente por SQL; retirarlos, si se desea,
+-- debe hacerse mediante la Storage API para preservar la integridad del catálogo.
 
 COMMIT;
