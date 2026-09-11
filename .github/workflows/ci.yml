@@ -58,3 +58,6 @@ jobs:
 
       - name: Verify Financial Contract
         run: python3 test_financial_parameters.py
+
+      - name: Verify Live Supabase Public Boundary
+        run: node scripts/test_db_integration.js
