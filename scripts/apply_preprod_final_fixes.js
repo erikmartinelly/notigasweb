@@ -13,7 +13,6 @@ function replaceOnce(text, from, to, label) {
   return text.replace(from, to);
 }
 
-// state.js: una sola versión y carga del configurador seguro de pagos.
 {
   const p = 'js/state.js';
   let s = read(p);
@@ -24,7 +23,6 @@ function replaceOnce(text, from, to, label) {
   write(p, s);
 }
 
-// Service worker: v134 real en nombre y URLs internas.
 {
   const p = 'sw.js';
   let s = read(p).replace(/v133/g, 'v134').replace(/\?v=132/g, '?v=134').replace(/\?v=133/g, '?v=134');
@@ -34,7 +32,6 @@ function replaceOnce(text, from, to, label) {
   write(p, s);
 }
 
-// HTML: assets v134 y textos visibles sin OTB/Premium heredado.
 {
   const p = 'index.html';
   let s = read(p).replace(/\?v=133/g, '?v=134');
@@ -43,7 +40,6 @@ function replaceOnce(text, from, to, label) {
   write(p, s);
 }
 
-// Manifest: terminología peruana neutral.
 {
   const p = 'manifest.json';
   const obj = JSON.parse(read(p));
@@ -51,7 +47,6 @@ function replaceOnce(text, from, to, label) {
   write(p, JSON.stringify(obj, null, 2) + '\n');
 }
 
-// Driver payments: destinatario obligatorio en cliente antes de llegar al RPC fail-closed.
 {
   const p = 'js/driver_payments.js';
   let s = read(p);
@@ -70,22 +65,19 @@ function replaceOnce(text, from, to, label) {
   write(p, s);
 }
 
-// admin.js: retirar físicamente el módulo Premium/S15 y dejar shim hacia Pagos.
 {
   const p = 'js/admin.js';
   let s = read(p);
   const start = s.indexOf('async function renderAdminPremiumSubscriptions()');
-  const marker = '/* INSPECCIÓN Y ELIMINACIÓN DE PEDIDOS FANTASMA PARA EL ADMINISTRADOR */';
-  const end = s.indexOf(marker, start);
-  must(start >= 0 && end > start, 'No se pudo localizar el bloque Premium de admin.js');
-  const shim = `async function renderAdminPremiumSubscriptions() {\n  if (typeof window.renderAdminPaymentsReview === 'function') {\n    return window.renderAdminPaymentsReview();\n  }\n  const container = document.getElementById('adminPremiumSubscriptionsContainer');\n  if (container) container.innerHTML = '<div style="color:#94A3B8;text-align:center;padding:20px;">Cargando pagos...</div>';\n}\nwindow.renderAdminPremiumSubscriptions = renderAdminPremiumSubscriptions;\n\n`;
-  s = s.slice(0, start) + shim + s.slice(end);
+  const ordersStart = s.indexOf('async function renderAdminOrdersList()', start);
+  must(start >= 0 && ordersStart > start, 'No se pudo localizar el bloque Premium de admin.js');
+  const shim = `async function renderAdminPremiumSubscriptions() {\n  if (typeof window.renderAdminPaymentsReview === 'function') {\n    return window.renderAdminPaymentsReview();\n  }\n  const container = document.getElementById('adminPremiumSubscriptionsContainer');\n  if (container) container.innerHTML = '<div style="color:#94A3B8;text-align:center;padding:20px;">Cargando pagos...</div>';\n}\nwindow.renderAdminPremiumSubscriptions = renderAdminPremiumSubscriptions;\n\n/* INSPECCIÓN Y ELIMINACIÓN DE PEDIDOS PARA EL ADMINISTRADOR */\n\n`;
+  s = s.slice(0, start) + shim + s.slice(ordersStart);
   s = s.replace("      'premium': 3,\n      'vip': 3,", "      'pagos': 3,");
   s = s.replace(/\bOTB\b/g, 'zona');
   write(p, s);
 }
 
-// auth.js: dejar de pedir columnas Premium obsoletas.
 {
   const p = 'js/auth.js';
   let s = read(p);
@@ -94,7 +86,6 @@ function replaceOnce(text, from, to, label) {
   write(p, s);
 }
 
-// Runtime: incluir el nuevo módulo administrativo.
 {
   const p = 'scripts/check_runtime.js';
   let s = read(p);
@@ -104,7 +95,6 @@ function replaceOnce(text, from, to, label) {
   write(p, s);
 }
 
-// package/lock sincronizados.
 {
   const p = 'package.json';
   const obj = JSON.parse(read(p));
@@ -123,7 +113,6 @@ function replaceOnce(text, from, to, label) {
   write(lock, l);
 }
 
-// CI: instalar exactamente el lockfile y arrancar el servidor antes de tests.
 {
   const p = '.github/workflows/ci.yml';
   let s = read(p);
@@ -135,7 +124,6 @@ function replaceOnce(text, from, to, label) {
   write(p, s);
 }
 
-// Guardrail: versión, OCR estricto, eliminación Premium y migración final.
 {
   const p = 'scripts/check_audit_hardening.js';
   let s = read(p).replace(/!== '133'/g, "!== '134'").replace(/notigas-cache-v133/g, 'notigas-cache-v134').replace(/cache v132/g, 'cache v134');
@@ -150,15 +138,14 @@ function replaceOnce(text, from, to, label) {
   if (!s.includes('20260911011500_preprod_security_payment_hardening.sql')) {
     s = replaceOnce(s, migrationAnchor, `${migrationAnchor},\n    '20260911011500_preprod_security_payment_hardening.sql'`, 'hardening migration list');
   }
-  if (!s.includes('suspendido_mora') || !s.includes('rutas_select_own_or_admin')) {
-    const beforeLog = "  console.log('✅ Audit hardening invariants OK: 50 gratis, crédito S/20 -> S/50 -> S/100');";
+  const beforeLog = "  console.log('✅ Audit hardening invariants OK: 50 gratis, crédito S/20 -> S/50 -> S/100');";
+  if (!s.includes("const preprod = read('supabase/migrations/20260911011500_preprod_security_payment_hardening.sql')")) {
     const checks = `  const preprod = read('supabase/migrations/20260911011500_preprod_security_payment_hardening.sql');\n  if (!/suspendido_mora/.test(preprod) || !/suspendido_pago/.test(preprod)) fail('Migración final no permite estados reversibles de suspensión');\n  if (!/rutas_select_own_or_admin/.test(preprod)) fail('Migración final no restringe tabla base de rutas');\n  if (!/No se detectó el nombre del destinatario/.test(preprod) || !/No se detectó un Yape destinatario válido/.test(preprod)) fail('RPC OCR no falla cerrado ante destinatario incompleto');\n  if (!/987654321/.test(preprod) || !/numero_cuenta = NULL/.test(preprod)) fail('Placeholder Yape no se invalida');\n  assertHas('js/admin_payment_config.js', /rpc_admin_set_payment_config/, 'No existe configuración administrativa segura del receptor Yape');\n\n${beforeLog}`;
     s = replaceOnce(s, beforeLog, checks, 'hardening preprod migration checks');
   }
   write(p, s);
 }
 
-// Verificaciones de transformación antes de dejar que CI tome el relevo.
 const admin = read('js/admin.js');
 must(!/rpc_admin_verify_premium_payment|S\/\s*15\.00|aprobarSuscripcionPremiumAdmin|revocarSuscripcionPremiumAdmin/i.test(admin), 'Quedó flujo Premium en admin.js');
 must(/CACHE_VERSION = '134'/.test(read('js/state.js')), 'state.js no quedó en v134');
