@@ -16,47 +16,31 @@ jobs:
         with:
           ref: fix/preprod-final-audit-20260911
           fetch-depth: 0
-      - name: Patch legacy runtime and deployment docs
+      - name: Patch secure driver-order delegation
         run: |
           python3 - <<'PY'
           from pathlib import Path
-
-          # 1) Todos los estados financieros reversibles deben verse como suspendidos.
           p = Path('js/orders.js')
           s = p.read_text(encoding='utf-8')
-          old = """    driverFinances.estado_servicio === 'suspendido_tope' ||\n    driverFinances.estado_servicio === 'suspendido' ||\n    driverFinances.estado_servicio === 'baneado'"""
-          new = """    driverFinances.estado_servicio === 'suspendido_tope' ||\n    driverFinances.estado_servicio === 'suspendido' ||\n    driverFinances.estado_servicio === 'suspendido_mora' ||\n    driverFinances.estado_servicio === 'suspendido_pago' ||\n    driverFinances.estado_servicio === 'baneado'"""
-          if old not in s:
-              raise SystemExit('No se encontró el bloque isSuspended esperado en js/orders.js')
-          p.write_text(s.replace(old, new, 1), encoding='utf-8')
-
-          # 2) README: migraciones son la única fuente canónica; snapshot obsoleto.
-          p = Path('README.md')
-          s = p.read_text(encoding='utf-8')
-          s = s.replace(
-            '│   ├── full_production_schema.sql # CONSOLIDATED PRODUCTION SCHEMA (1-Click Database Deployment - v094)\n│   └── migrations/         # Historical incremental migrations (001 through 094)',
-            '│   ├── full_production_schema.sql # DEPRECATED: falla intencionalmente; no usar\n│   └── migrations/         # Fuente canónica del esquema y seguridad de producción'
-          )
-          s = s.replace(
-            '* **Option A (Recommended - 1-Click Deployment):** Execute [`supabase/full_production_schema.sql`](supabase/full_production_schema.sql) in the Supabase SQL Editor. This single script provisions all tables, PostGIS extensions, public views, spatial clustering, automated triggers, strict category/city isolation, atomic RPC functions, and Row Level Security (RLS) policies through version `094`.\n* **Option B (Incremental Migrations):** Run the migration files inside `supabase/migrations/` in sequential order through `094`.',
-            '* **Canonical deployment:** apply every file in `supabase/migrations/` in ascending order using the project migration workflow. The remote migration history must match Git.\n* `supabase/full_production_schema.sql` is intentionally deprecated and aborts if executed; it must never be used for production, staging, recovery, or a fresh install.\n* Configure the real Yape beneficiary and recipient number from the protected Admin payment settings; payment data must not be committed to Git.'
-          )
-          s = s.replace('drivers can inspect individual orders with precise pins', 'registered users see free orders only as 50 m uncertainty areas; exact coordinates are revealed only to the assigned driver')
-          s = s.replace('verified drivers only access active demand points within their category and city', 'registered drivers access only sanitized free-order radar areas for their category/city; exact order data is available only after atomic assignment')
+          marker = 'async function renderDriverOrdersList() {\n'
+          guard = """async function renderDriverOrdersList() {\n  // La lista legacy nunca debe consultar pedidos libres completos. Primero carga\n  // y delega a la capa de privacidad, que consume order_public_radar.\n  if (typeof window.secureRenderDriverOrdersList === 'function') {\n    return window.secureRenderDriverOrdersList();\n  }\n  if (typeof window.loadDriverPaymentsModule === 'function') {\n    try {\n      await window.loadDriverPaymentsModule();\n      if (typeof window.secureRenderDriverOrdersList === 'function') {\n        return window.secureRenderDriverOrdersList();\n      }\n    } catch (err) {\n      console.warn('[Orders] No se pudo cargar la capa segura de pedidos:', err);\n    }\n  }\n"""
+          if '[Orders] No se pudo cargar la capa segura de pedidos:' not in s:
+              if marker not in s:
+                  raise SystemExit('No se encontró renderDriverOrdersList')
+              s = s.replace(marker, guard, 1)
           p.write_text(s, encoding='utf-8')
           PY
-      - name: Validate patched files
+      - name: Validate secure delegation
         run: |
           node --check js/orders.js
+          grep -q "secureRenderDriverOrdersList" js/orders.js
           grep -q "suspendido_mora" js/orders.js
           grep -q "suspendido_pago" js/orders.js
-          grep -q "Canonical deployment" README.md
-          grep -q "intentionally deprecated" README.md
       - name: Commit patch
         run: |
           if git diff --quiet; then exit 0; fi
           git config user.name 'notigas-ci'
           git config user.email 'notigas-ci@users.noreply.github.com'
-          git add js/orders.js README.md
-          git commit -m 'fix: alinear estados suspendidos y despliegue canónico'
+          git add js/orders.js
+          git commit -m 'fix: delegar pedidos libres al radar seguro'
           git push origin HEAD:fix/preprod-final-audit-20260911
