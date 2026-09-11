@@ -13,7 +13,9 @@ function assert(condition, message) {
 }
 
 const migrationPath = 'supabase/migrations/20260911022526_secure_order_radar_and_registered_driver_visibility.sql';
+const grantPath = 'supabase/migrations/20260911023909_allow_radar_policy_helper_for_authenticated.sql';
 const migration = read(migrationPath);
+const grantMigration = read(grantPath);
 const privacy = read('js/order_privacy_layer.js');
 const state = read('js/state.js');
 const sw = read('sw.js');
@@ -27,6 +29,8 @@ assert(/create policy pedidos_select_strict[\s\S]*user_id=.*auth\.uid[\s\S]*driv
 assert(/security_invoker=true/i.test(migration), 'Las vistas públicas usan SECURITY INVOKER');
 assert(/revoke all on public\.rutas_repartidores_publicas from public, anon/i.test(migration), 'Usuarios no registrados no leen repartidores');
 assert(/revoke all on public\.choferes_publicos from public, anon/i.test(migration), 'Usuarios no registrados no leen fichas de repartidor');
+assert(/grant usage on schema private to authenticated/i.test(grantMigration), 'La policy puede resolver el helper del schema privado');
+assert(/grant execute on function private\.can_view_order_radar\(uuid\) to authenticated/i.test(grantMigration), 'Authenticated puede evaluar el helper privado desde RLS');
 
 assert(/from\('order_public_radar'\)/.test(privacy), 'Frontend consume exclusivamente el radar sanitizado para pedidos libres');
 assert(/L\.circle\(\[lat, lng\]/.test(privacy), 'Pedidos libres se dibujan como área, no como pin exacto');
