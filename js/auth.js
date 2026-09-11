@@ -2475,7 +2475,7 @@ async function cargarPerfilChoferEnModal() {
 
     const { data: driverRow, error } = await window.supabaseClient
       .from('choferes_habilitados')
-      .select('id, user_id, nombre_completo, telefono_whatsapp, placa, dni, categoria, productos, schedule, ciudad, color_camion, precio_balon_10kg, es_premium, premium_vence_at, estado_pago_premium, comprobante_pago_url, tipo_plan, comisiones_pendientes, limite_credito, estado_servicio')
+      .select('id, user_id, nombre_completo, telefono_whatsapp, placa, dni, categoria, productos, schedule, ciudad, color_camion, precio_balon_10kg, comisiones_pendientes, limite_credito, estado_servicio')
       .eq('user_id', userId)
       .maybeSingle();
 

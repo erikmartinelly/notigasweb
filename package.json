@@ -5,9 +5,9 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node scripts/check_syntax.js && node scripts/check_runtime.js && node scripts/test_rls_security.js && node scripts/check_audit_hardening.js",
+    "test": "node scripts/check_syntax.js && node scripts/check_runtime.js && node scripts/test_rls_security.js && node scripts/check_audit_hardening.js && node scripts/test_driver_plans.js && python3 test_financial_parameters.py",
     "test:integration": "node scripts/test_db_integration.js",
-    "build": "node scripts/check_syntax.js && node scripts/check_runtime.js && node scripts/test_rls_security.js && node scripts/check_audit_hardening.js"
+    "build": "node scripts/check_syntax.js && node scripts/check_runtime.js && node scripts/test_rls_security.js && node scripts/check_audit_hardening.js && node scripts/test_driver_plans.js && python3 test_financial_parameters.py"
   },
   "keywords": [
     "notigas",
@@ -18,9 +18,10 @@
   "author": "NOTIGAS",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.21.2"
+    "express": "^4.22.2"
   },
   "engines": {
     "node": ">=18.0.0"
-  }
+  },
+  "packageManager": "pnpm@10.15.0"
 }

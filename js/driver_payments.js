@@ -287,6 +287,7 @@
         <div style="margin-top:12px;background:#1E293B;border:1px solid #475569;border-radius:12px;padding:14px;color:#E2E8F0;line-height:1.6;">
           <strong>Pago en Perú</strong><br>
           Método: <strong>${esc(instructionsRes.metodo_entrega || 'Yape')}</strong><br>
+          Beneficiario: <strong>${esc(instructionsRes.beneficiario_nombre || '—')}</strong><br>
           Número Yape: <strong>${esc(yapeDestino)}</strong>
         </div>
         <div style="margin-top:12px;">
@@ -332,6 +333,8 @@
           if (amount == null) missing.push('monto en soles');
           if (!operation) missing.push('número de operación');
           if (!dateIso) missing.push('fecha y hora');
+          if (!recipientName) missing.push('nombre del destinatario');
+          if (!recipientYape) missing.push('Yape del destinatario');
           if (missing.length) {
             status.innerHTML = `<strong style="color:#DC2626;">OCR incompleto.</strong><br>Falta: ${esc(missing.join(', '))}.<br><span style="color:#94A3B8;">Usa una captura completa y legible del comprobante.</span>`;
             fileInput.value = '';

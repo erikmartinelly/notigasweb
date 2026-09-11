@@ -358,6 +358,7 @@ const allModules = [
   'js/promo.js',
   'js/admin.js',
   'js/admin_payments.js',
+  'js/admin_payment_config.js',
   'js/driver_payments.js',
   'js/driver_order_rules.js',
   'js/admin_users.js'
