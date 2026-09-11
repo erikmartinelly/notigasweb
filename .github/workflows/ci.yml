@@ -53,8 +53,14 @@ jobs:
       - name: Verify Order Privacy Contract
         run: node scripts/check_order_privacy.js
 
+      - name: Verify Final Preproduction Guardrails
+        run: node scripts/check_preprod_final.js
+
       - name: Verify Driver Promotion and Credit Tiers
         run: node scripts/test_driver_plans.js
 
       - name: Verify Financial Contract
         run: python3 test_financial_parameters.py
+
+      - name: Verify Live Supabase Public Boundary
+        run: node scripts/test_db_integration.js

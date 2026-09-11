@@ -1,0 +1,1 @@
+-- Historial remoto supersedido por migraciones posteriores de reconciliación.
