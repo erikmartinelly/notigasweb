@@ -166,6 +166,8 @@ async function renderDriverOrdersList() {
     driverFinances.bloqueado ||
     driverFinances.estado_servicio === 'suspendido_tope' ||
     driverFinances.estado_servicio === 'suspendido' ||
+    driverFinances.estado_servicio === 'suspendido_mora' ||
+    driverFinances.estado_servicio === 'suspendido_pago' ||
     driverFinances.estado_servicio === 'baneado'
   );
 

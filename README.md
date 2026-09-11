@@ -19,7 +19,7 @@ Engineered with **Vanilla JavaScript**, **Supabase PostgreSQL with PostGIS**, an
 ## 🚀 Key Features
 
 * **Real-Time Interactive Map:** Live synchronized visualization for buyers and drivers. Buyers publish supply requests that generate geolocated map markers, while delivery trucks transmit live GPS telemetry as they navigate neighborhood streets.
-* **Spatial Demand Radar:** When zoomed out on the map (`zoom <= 14`), orders and density clusters emit radiating sonar radar waves. When zoomed in, drivers can inspect individual orders with precise pins.
+* **Spatial Demand Radar:** When zoomed out on the map (`zoom <= 14`), orders and density clusters emit radiating sonar radar waves. When zoomed in, registered users see free orders only as 50 m uncertainty areas; exact coordinates are revealed only to the assigned driver.
 * **Instant WebSocket Sync (Supabase Realtime):** Sub-second updates for order statuses, markers, and active delivery trucks without requiring page refreshes.
 * **Dual User Roles:**
   * **Neighbor (Buyer):** Request essential supplies (LPG gas cylinders, bottled water, groceries) and track approaching delivery trucks in real time.
@@ -83,8 +83,8 @@ The production architecture uses server-authoritative PostgreSQL RPCs and RLS fo
 ├── styles/
 │   └── main.css            # Application design tokens, responsive layouts, and Google Maps-inspired UI
 ├── supabase/
-│   ├── full_production_schema.sql # CONSOLIDATED PRODUCTION SCHEMA (1-Click Database Deployment - v094)
-│   └── migrations/         # Historical incremental migrations (001 through 094)
+│   ├── full_production_schema.sql # DEPRECATED: falla intencionalmente; no usar
+│   └── migrations/         # Fuente canónica del esquema y seguridad de producción
 └── .github/
     └── workflows/ci.yml    # CI automated syntax & integrity verification
 ```
@@ -101,8 +101,9 @@ cd notigasweb
 
 ### 2. Configure Database & Backend (Supabase)
 * Create a new project at [Supabase](https://supabase.com/).
-* **Option A (Recommended - 1-Click Deployment):** Execute [`supabase/full_production_schema.sql`](supabase/full_production_schema.sql) in the Supabase SQL Editor. This single script provisions all tables, PostGIS extensions, public views, spatial clustering, automated triggers, strict category/city isolation, atomic RPC functions, and Row Level Security (RLS) policies through version `094`.
-* **Option B (Incremental Migrations):** Run the migration files inside `supabase/migrations/` in sequential order through `094`.
+* **Canonical deployment:** apply every file in `supabase/migrations/` in ascending order using the project migration workflow. The remote migration history must match Git.
+* `supabase/full_production_schema.sql` is intentionally deprecated and aborts if executed; it must never be used for production, staging, recovery, or a fresh install.
+* Configure the real Yape beneficiary and recipient number from the protected Admin payment settings; payment data must not be committed to Git.
 * Open `js/supabase-config.js` and input your `supabaseUrl` and `supabaseAnonKey`.
 
 ### 3. Configure Google Identity Services & Auth
@@ -137,7 +138,7 @@ node server.js
 
 ### Database & Row Level Security (RLS)
 * **Publicidad separada de Muro de Comentarios:** `public.anuncios_globales` contiene anuncios publicitarios persistentes administrados; `public.avisos` contiene publicaciones comunitarias con ciclo de vida de 48 horas. El espacio publicitario del tercer feed usa `posicion = 'muro_avisos'`, nunca una fila de `avisos`.
-* **Strict Row Level Security:** RLS is enforced across all tables in the `public` schema. Buyers can only modify their own orders, and verified drivers only access active demand points within their category and city.
+* **Strict Row Level Security:** RLS is enforced across all tables in the `public` schema. Buyers can only modify their own orders, and registered drivers access only sanitized free-order radar areas for their category/city; exact order data is available only after atomic assignment.
 * **6-State Finite State Machine:** Enforces canonical order lifecycle transitions (`pendiente` → `visto` → `asignado` → `entregado` / `recibido` / `cancelado`) strictly validated by database triggers (`trg_check_pedido_transition` & `guard_pedido_mutation`).
 * **Automated Terminal Record Purge:** Cancelled and delivered orders are automatically swept by `rpc_purge_old_records()`, keeping PostgreSQL clean, optimized, and free of obsolete clutter.
 * **Live GPS Telemetry (`rutas_repartidores`):** Atomic upserts per driver (`user_id`, `last_active`) with automated pruning of inactive telemetry.
