@@ -58,7 +58,7 @@ try {
   const htmlVersions = [...index.matchAll(/(?:styles|js)\/[^"']+\?v=(\d+)/g)].map(m => m[1]);
   if (!htmlVersions.length) fail('No se detectaron assets versionados en index.html');
   const uniqueHtmlVersions = [...new Set(htmlVersions)];
-  if (uniqueHtmlVersions.length !== 1 || !['134','135'].includes(uniqueHtmlVersions[0])) {
+  if (uniqueHtmlVersions.length !== 1 || uniqueHtmlVersions[0] !== '135') {
     fail(`Versiones de assets mezcladas: ${uniqueHtmlVersions.join(',')}`);
   }
   const sw = read('sw.js');
@@ -82,7 +82,7 @@ try {
     '20260910225938_driver_50_free_and_progressive_credit_tiers.sql',
     '20260910234110_make_payment_suspensions_reversible_on_full_payment.sql',
     '20260911011500_preprod_security_payment_hardening.sql',
-    '20260911022500_secure_order_radar_and_registered_driver_visibility.sql'
+    '20260911022526_secure_order_radar_and_registered_driver_visibility.sql'
   ]) {
     if (!names.includes(required)) fail(`Falta migración crítica: ${required}`);
   }

@@ -12,7 +12,7 @@ function assert(condition, message) {
   console.log(`✅ ${message}`);
 }
 
-const migrationPath = 'supabase/migrations/20260911022500_secure_order_radar_and_registered_driver_visibility.sql';
+const migrationPath = 'supabase/migrations/20260911022526_secure_order_radar_and_registered_driver_visibility.sql';
 const migration = read(migrationPath);
 const privacy = read('js/order_privacy_layer.js');
 const state = read('js/state.js');
