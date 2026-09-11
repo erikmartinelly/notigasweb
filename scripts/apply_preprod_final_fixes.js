@@ -68,9 +68,11 @@ function replaceOnce(text, from, to, label) {
 {
   const p = 'js/admin.js';
   let s = read(p);
-  const start = s.indexOf('async function renderAdminPremiumSubscriptions()');
-  const ordersStart = s.indexOf('async function renderAdminOrdersList()', start);
-  must(start >= 0 && ordersStart > start, 'No se pudo localizar el bloque Premium de admin.js');
+  const startMatch = /async\s+function\s+renderAdminPremiumSubscriptions\s*\(\s*\)\s*\{/.exec(s);
+  const endMatch = /async\s+function\s+renderAdminOrdersList\s*\(\s*\)\s*\{/.exec(s);
+  must(startMatch && endMatch && endMatch.index > startMatch.index, 'No se pudo localizar el bloque Premium de admin.js');
+  const start = startMatch.index;
+  const ordersStart = endMatch.index;
   const shim = `async function renderAdminPremiumSubscriptions() {\n  if (typeof window.renderAdminPaymentsReview === 'function') {\n    return window.renderAdminPaymentsReview();\n  }\n  const container = document.getElementById('adminPremiumSubscriptionsContainer');\n  if (container) container.innerHTML = '<div style="color:#94A3B8;text-align:center;padding:20px;">Cargando pagos...</div>';\n}\nwindow.renderAdminPremiumSubscriptions = renderAdminPremiumSubscriptions;\n\n/* INSPECCIÓN Y ELIMINACIÓN DE PEDIDOS PARA EL ADMINISTRADOR */\n\n`;
   s = s.slice(0, start) + shim + s.slice(ordersStart);
   s = s.replace("      'premium': 3,\n      'vip': 3,", "      'pagos': 3,");
