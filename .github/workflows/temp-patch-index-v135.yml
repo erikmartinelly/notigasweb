@@ -1,4 +1,4 @@
-name: TEMP - Patch index assets to v135
+name: TEMP - Align privacy migration history
 
 on:
   push:
@@ -8,7 +8,7 @@ permissions:
   contents: write
 
 jobs:
-  patch-index:
+  align:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
@@ -16,25 +16,24 @@ jobs:
         with:
           ref: fix/order-privacy-50m
           fetch-depth: 0
-      - name: Update asset query versions
+      - name: Align exact Supabase migration timestamp
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('index.html')
-          s = p.read_text(encoding='utf-8')
-          s2 = s.replace('?v=134', '?v=135')
-          if s2 == s:
-              print('No v134 asset references found')
-          else:
-              p.write_text(s2, encoding='utf-8')
-          PY
-      - name: Commit patch when needed
+          set -euo pipefail
+          OLD='supabase/migrations/20260911022500_secure_order_radar_and_registered_driver_visibility.sql'
+          NEW='supabase/migrations/20260911022526_secure_order_radar_and_registered_driver_visibility.sql'
+          if [ -f "$OLD" ]; then git mv "$OLD" "$NEW"; fi
+          sed -i 's/20260911022500_secure_order_radar_and_registered_driver_visibility/20260911022526_secure_order_radar_and_registered_driver_visibility/g' scripts/check_order_privacy.js scripts/check_audit_hardening.js
+          sed -i "s/!\['134','135'\]\.includes(uniqueHtmlVersions\[0\])/uniqueHtmlVersions[0] !== '135'/" scripts/check_audit_hardening.js || true
+      - name: Validate privacy contract
         run: |
-          if git diff --quiet -- index.html; then
-            exit 0
-          fi
+          node scripts/check_syntax.js
+          node scripts/check_order_privacy.js
+          node scripts/check_audit_hardening.js
+      - name: Commit alignment when needed
+        run: |
+          if git diff --quiet; then exit 0; fi
           git config user.name 'notigas-ci'
           git config user.email 'notigas-ci@users.noreply.github.com'
-          git add index.html
-          git commit -m 'chore: alinear index con PWA v135'
+          git add supabase/migrations scripts/check_order_privacy.js scripts/check_audit_hardening.js
+          git commit -m 'chore: alinear migración de privacidad con Supabase'
           git push origin HEAD:fix/order-privacy-50m
