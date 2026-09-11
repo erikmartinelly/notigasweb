@@ -98,7 +98,8 @@ async function main() {
     'pedidos?select=id,direccion,telefono,latitude,longitude&limit=1',
     'order_public_radar?select=order_id,latitude,longitude,radius_m&limit=1',
     'choferes_publicos?select=id,nombre_completo,categoria&limit=1',
-    'rutas_repartidores_publicas?select=id,latitude,longitude&limit=1'
+    'rutas_repartidores_publicas?select=id,latitude,longitude&limit=1',
+    'repartidores?select=id,nombre,telefono,placa&limit=1'
   ]) {
     await test(`${endpoint.split('?')[0]} no expone datos sin sesión`, async () => {
       assertDenied(await request(endpoint), endpoint);
