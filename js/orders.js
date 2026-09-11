@@ -60,6 +60,21 @@ function closeDriverOrdersModal() {
 window.closeDriverOrdersModal = closeDriverOrdersModal;
 
 async function renderDriverOrdersList() {
+  // La lista legacy nunca debe consultar pedidos libres completos. Primero carga
+  // y delega a la capa de privacidad, que consume order_public_radar.
+  if (typeof window.secureRenderDriverOrdersList === 'function') {
+    return window.secureRenderDriverOrdersList();
+  }
+  if (typeof window.loadDriverPaymentsModule === 'function') {
+    try {
+      await window.loadDriverPaymentsModule();
+      if (typeof window.secureRenderDriverOrdersList === 'function') {
+        return window.secureRenderDriverOrdersList();
+      }
+    } catch (err) {
+      console.warn('[Orders] No se pudo cargar la capa segura de pedidos:', err);
+    }
+  }
   const container = document.getElementById('driverOrdersContainer') || document.getElementById('driverOrdersList');
   if (!container) return;
 
