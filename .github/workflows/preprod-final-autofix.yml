@@ -34,11 +34,13 @@ jobs:
           node scripts/test_driver_plans.js
           python3 test_financial_parameters.py
 
-      - name: Commit transformed files
+      - name: Commit transformed application files
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
+          git restore --staged .github/workflows/ci.yml || true
+          git restore .github/workflows/ci.yml || true
           if git diff --cached --quiet; then
             echo "No changes to commit"
             exit 0
