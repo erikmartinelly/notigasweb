@@ -43,6 +43,11 @@ must(/DROP POLICY IF EXISTS "Lectura publica repartidores"/i.test(legacyDrivers)
 must(/REVOKE ALL ON public\.repartidores FROM PUBLIC, anon, authenticated/i.test(legacyDrivers), 'teléfono/placa legacy quedan cerrados');
 
 for (const required of [
+  '20260911020205_preprod_states_routes_privacy.sql',
+  '20260911020222_preprod_public_views_privacy.sql',
+  '20260911020236_preprod_payment_configuration.sql',
+  '20260911020258_preprod_ocr_fail_closed.sql',
+  '20260911020308_preprod_remove_legacy_premium_rpcs.sql',
   '20260911211132_preprod_financial_rls_reconcile.sql',
   '20260911211150_preprod_roles_insert_rls_reconcile.sql',
   '20260911211159_preprod_roles_update_rls_reconcile.sql',
