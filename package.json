@@ -5,9 +5,9 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node scripts/check_syntax.js && node scripts/check_runtime.js && node scripts/test_rls_security.js && node scripts/check_audit_hardening.js && node scripts/check_order_privacy.js && node scripts/test_driver_plans.js && python3 test_financial_parameters.py && node scripts/test_db_integration.js",
+    "test": "node scripts/check_syntax.js && node scripts/check_runtime.js && node scripts/test_rls_security.js && node scripts/check_audit_hardening.js && node scripts/check_order_privacy.js && node scripts/check_preprod_final.js && node scripts/test_driver_plans.js && python3 test_financial_parameters.py && node scripts/test_db_integration.js",
     "test:integration": "node scripts/test_db_integration.js",
-    "build": "node scripts/check_syntax.js && node scripts/check_runtime.js && node scripts/test_rls_security.js && node scripts/check_audit_hardening.js && node scripts/check_order_privacy.js && node scripts/test_driver_plans.js && python3 test_financial_parameters.py"
+    "build": "node scripts/check_syntax.js && node scripts/check_runtime.js && node scripts/test_rls_security.js && node scripts/check_audit_hardening.js && node scripts/check_order_privacy.js && node scripts/check_preprod_final.js && node scripts/test_driver_plans.js && python3 test_financial_parameters.py"
   },
   "keywords": [
     "notigas",
