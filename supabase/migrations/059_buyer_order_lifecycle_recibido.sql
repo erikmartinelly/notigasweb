@@ -151,7 +151,7 @@ BEGIN
     RETURN jsonb_build_object(
         'ok', true,
         'pedidos_purgados', v_pedidos_borrados,
-        'rutas_borradas', v_rutas_borradas,
+        'rutas_purgadas', v_rutas_borradas,
         'avisos_purgados', v_avisos_borrados,
         'duracion_retencion_horas', 48,
         'ejecutado_el', now()
