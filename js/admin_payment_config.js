@@ -8,6 +8,28 @@
   };
   const digits = (v) => String(v || '').replace(/[^0-9]/g, '');
 
+  // admin.js carga bajo demanda y define getVerifiedAdminEmail como función async.
+  // Otros módulos históricos la consumen de forma síncrona; un Promise sería truthy
+  // incluso para un usuario sin privilegios. Conservamos el verificador fresco bajo
+  // un nombre explícito y restauramos un getter síncrono que solo devuelve una
+  // identidad previamente validada por Supabase.
+  const freshAdminVerifier = (typeof window.getVerifiedAdminEmail === 'function')
+    ? window.getVerifiedAdminEmail
+    : null;
+  if (freshAdminVerifier && freshAdminVerifier.constructor?.name === 'AsyncFunction') {
+    window.verifyAdminSessionEmail = freshAdminVerifier;
+  }
+  window.getVerifiedAdminEmail = function () {
+    try {
+      const isAdmin = typeof AppState !== 'undefined' && AppState.get('isAdmin') === true;
+      if (!isAdmin) return null;
+      const verified = window._verifiedAdminEmail || window._cachedAdminEmail || '';
+      return verified ? String(verified).toLowerCase().trim() : null;
+    } catch (_) {
+      return null;
+    }
+  };
+
   function ensurePanel() {
     const list = document.getElementById('adminPremiumSubscriptionsContainer');
     if (!list || document.getElementById('adminPaymentConfigPanel')) return;
