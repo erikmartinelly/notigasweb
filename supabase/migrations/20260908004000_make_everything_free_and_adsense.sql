@@ -21,8 +21,3 @@ SET
 -- 3. Unificar rutas activas en modelo libre
 UPDATE public.rutas_repartidores
 SET es_premium = false;
-
--- 4. Registrar migración en schema_migrations
-INSERT INTO supabase_migrations.schema_migrations (version, statements, name)
-VALUES ('20260908004000', ARRAY['UPDATE public.configuracion_publicidad SET modo = ''adsense'';'], 'make_everything_free_and_adsense')
-ON CONFLICT (version) DO NOTHING;
