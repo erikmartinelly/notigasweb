@@ -36,7 +36,6 @@ BEGIN
         RAISE EXCEPTION 'Usuario no autenticado';
     END IF;
 
-    -- Validar que el usuario sea un chofer habilitado no baneado
     IF NOT EXISTS (
         SELECT 1
         FROM public.choferes_habilitados ch
@@ -82,9 +81,5 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.rpc_get_driver_available_orders(text, text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.rpc_get_driver_available_orders(text, text) TO anon;
-
-INSERT INTO supabase_migrations.schema_migrations (version, name)
-VALUES ('053', 'driver_available_orders_with_email')
-ON CONFLICT (version) DO NOTHING;
 
 COMMIT;
