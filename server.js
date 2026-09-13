@@ -1,11 +1,16 @@
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || process.env.SERVER_PORT || 3000;
 const RATE_LIMIT_WINDOW_MS = 60 * 1000;
 const RATE_LIMIT_MAX_REQUESTS = 200;
 const requestCounters = new Map();
+const INDEX_PATH = path.join(__dirname, 'index.html');
+// El HTML histórico conserva un carácter mojibake en el filtro "Todos".
+// Se sanea al servir la página sin reescribir el monolito completo a ciegas.
+const INDEX_HTML = fs.readFileSync(INDEX_PATH, 'utf8').replace('🌍 Todos', '🌍 Todos');
 
 app.disable('x-powered-by');
 // Hostinger termina HTTPS delante de la aplicación. Con un salto de proxy,
@@ -136,14 +141,19 @@ app.use((req, res, next) => {
   next();
 });
 
+function sendIndex(req, res) {
+  res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+  res.type('html').send(INDEX_HTML);
+}
+
+// Interceptar explícitamente el documento principal antes de express.static.
+app.get(['/', '/index.html'], sendIndex);
+
 // Servir archivos estáticos del proyecto
-app.use(express.static(__dirname));
+app.use(express.static(__dirname, { index: false }));
 
 // Fallback SPA para PWA
-app.get('*', (req, res) => {
-  res.setHeader('Cache-Control', 'no-cache, must-revalidate');
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
+app.get('*', sendIndex);
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ NOTIGAS iniciado exitosamente en puerto ${PORT}`);
