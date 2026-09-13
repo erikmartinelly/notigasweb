@@ -18,6 +18,7 @@ const readme = read('README.md');
 const snapshot = read('supabase/full_production_schema.sql');
 const migration = read('supabase/migrations/20260911205957_preprod_final_security_and_credit_messages.sql');
 const legacyDrivers = read('supabase/migrations/20260911210832_close_legacy_repartidores_public_read.sql');
+const hardening = read('supabase/migrations/20260913003000_security_surface_hardening.sql');
 const integration = read('scripts/test_db_integration.js');
 const ci = read('.github/workflows/ci.yml');
 
@@ -42,6 +43,16 @@ must(/Alcanzaste tu límite de crédito: % pedidos cobrables \/ S\/ %/i.test(mig
 must(/DROP POLICY IF EXISTS "Lectura publica repartidores"/i.test(legacyDrivers), 'tabla repartidores legacy ya no es pública');
 must(/REVOKE ALL ON public\.repartidores FROM PUBLIC, anon, authenticated/i.test(legacyDrivers), 'teléfono/placa legacy quedan cerrados');
 
+must(/private\.is_admin_email_internal/i.test(hardening), 'autorización admin privilegiada vive fuera del API público');
+must(/public\.is_admin_email\(\)[\s\S]*SECURITY INVOKER/i.test(hardening), 'wrapper admin público usa privilegios del invocador');
+must(/internal_pre_auth\.check_device_block/i.test(hardening), 'chequeo de dispositivo privilegiado vive en esquema no expuesto');
+must(/rpc_verificar_bloqueo_dispositivo[\s\S]*SECURITY INVOKER/i.test(hardening), 'RPC pre-registro público deja de ser SECURITY DEFINER');
+must(/DROP FUNCTION IF EXISTS public\.rpc_verificar_bloqueo_dispositivo\(text, text, text, text\)/i.test(hardening), 'sobrecarga legacy de bloqueo queda eliminada');
+must(/REVOKE ALL ON TABLE public\.mensajes_foro FROM anon, authenticated/i.test(hardening), 'tabla legacy mensajes_foro queda cerrada');
+must(/REVOKE ALL ON TABLE public\.publicaciones FROM anon, authenticated/i.test(hardening), 'tabla legacy publicaciones queda cerrada');
+must(/ALTER DEFAULT PRIVILEGES[\s\S]*REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC/i.test(hardening), 'funciones futuras no nacen como RPC públicos');
+must(/config_pagos_service_access/i.test(hardening), 'config_pagos documenta acceso RPC-only');
+
 for (const required of [
   '20260911020205_preprod_states_routes_privacy.sql',
   '20260911020222_preprod_public_views_privacy.sql',
@@ -56,13 +67,17 @@ for (const required of [
   '20260911211410_require_real_auth_for_spam_reports.sql',
   '20260911211419_require_real_auth_for_rate_limits.sql',
   '20260911211430_require_real_auth_for_banned_admin.sql',
-  '20260911211439_require_real_auth_for_vote_records.sql'
+  '20260911211439_require_real_auth_for_vote_records.sql',
+  '20260913003000_security_surface_hardening.sql'
 ]) {
   must(exists(`supabase/migrations/${required}`), `Git contiene migración remota ${required}`);
 }
 
 must(integration.includes('order_public_radar'), 'integración verifica radar');
 must(integration.includes('rpc_get_driver_available_orders'), 'integración verifica RPC legacy revocado');
+must(integration.includes('mensajes_foro'), 'integración verifica cierre de mensajes_foro');
+must(integration.includes('publicaciones'), 'integración verifica cierre de publicaciones');
+must(integration.includes('telefono_bloqueado'), 'integración verifica que RPC pre-registro no filtre coincidencias');
 must(ci.includes('Verify Live Supabase Public Boundary'), 'CI ejecuta integración real');
 must(ci.includes('Verify Final Preproduction Guardrails'), 'CI ejecuta guardrail final');
 
