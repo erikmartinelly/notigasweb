@@ -123,6 +123,7 @@
       return null;
     };
     window.aprobarSuscripcionPremiumAdmin = retired;
+    window.rechazarSuscripcionPremiumAdmin = retired;
     window.revocarSuscripcionPremiumAdmin = retired;
     window.banearRepartidorDesdePremium = retired;
   }

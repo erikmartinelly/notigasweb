@@ -22,9 +22,17 @@ const legacyCleanup = read('supabase/migrations/20260910182449_legacy_cleanup_re
 const hardening = read('supabase/migrations/20260913003000_security_surface_hardening.sql');
 const adminWrites = read('supabase/migrations/20260913004500_require_real_auth_for_administration_writes.sql');
 const recheck = read('supabase/migrations/20260913085148_recheck_retention_and_internal_rpc.sql');
+const forumIntegrity = read('supabase/migrations/20260913190218_fix_forum_vote_integrity.sql');
+const contentGuard = read('supabase/migrations/20260913190239_fix_content_guard_and_report_identity.sql');
+const guardReconcile = read('supabase/migrations/20260913190352_reconcile_content_guard_definition.sql');
+const noticeRpc = read('supabase/migrations/20260913190817_fix_notice_rpc_current_schema.sql');
+const deleteAccount = read('supabase/migrations/20260913191235_fix_delete_account_current_schema.sql');
+const splitGuards = read('supabase/migrations/20260913191441_split_content_guards_by_table.sql');
 const adsSeparation = read('supabase/migrations/20260824043251_separate_ads_from_notices.sql');
 const integration = read('scripts/test_db_integration.js');
 const ci = read('.github/workflows/ci.yml');
+const server = read('server.js');
+const adminPaymentConfig = read('js/admin_payment_config.js');
 
 must(orders.includes("estado_servicio === 'suspendido_mora'"), 'UI legacy reconoce suspendido_mora');
 must(orders.includes("estado_servicio === 'suspendido_pago'"), 'UI legacy reconoce suspendido_pago');
@@ -75,6 +83,50 @@ must(/'entregado','cancelado','recibido'/i.test(recheck), 'purga final contempla
 must(/trg_estado_pago_ocr_automatico\(\).*FROM PUBLIC, anon, authenticated/is.test(recheck), 'trigger OCR interno no queda expuesto como RPC');
 must(/rpc_purge_old_records\(\).*FROM PUBLIC, anon, authenticated/is.test(recheck), 'purga administrativa no queda expuesta al cliente');
 
+must(/ADD COLUMN IF NOT EXISTS valor smallint/i.test(forumIntegrity), 'ledger de votos guarda el sentido del voto');
+must(/CHECK \(valor IN \(-1, 1\)\)/i.test(forumIntegrity), 'valor de voto solo admite -1 o +1');
+must(/sync_forum_vote_ledger_internal/i.test(forumIntegrity), 'altas y borrados del muro sincronizan el ledger');
+must((forumIntegrity.match(/is_anonymous/g) || []).length >= 2, 'RPCs de voto rechazan sesiones anónimas');
+must(/IF v_old = v_new THEN RETURN;/i.test(forumIntegrity), 'repetir el mismo voto es idempotente');
+must(/SUM\(valor\)/i.test(forumIntegrity), 'contador se recalcula desde el ledger y no deriva por decrementos repetidos');
+
+must(/TG_TABLE_NAME = 'denuncias'[\s\S]*NEW\.motivo[\s\S]*NEW\.detalles/i.test(contentGuard), 'migración intermedia corrigió columnas de denuncias');
+must(/TG_TABLE_NAME = 'reportes_spam'[\s\S]*NEW\.motivo[\s\S]*NEW\.texto/i.test(contentGuard), 'migración intermedia corrigió columnas anti-spam');
+must(/user_id = auth\.uid\(\)::text[\s\S]*denunciante_id = auth\.uid\(\)::text/i.test(contentGuard), 'denuncias fijan identidad real del reportante');
+must(/reportes_spam_insert[\s\S]*user_id = auth\.uid\(\)::text/i.test(contentGuard), 'spam fija identidad real del reportante');
+must(/normalize_delivery_category\(text\).*FROM PUBLIC, anon, authenticated/is.test(contentGuard), 'normalizador interno deja de ser RPC público');
+must(/trg_estado_pago_ocr_automatico\(\).*FROM PUBLIC, anon, authenticated/is.test(contentGuard), 'trigger OCR conserva cierre explícito');
+must(/NEW\.direccion := LEFT\(REGEXP_REPLACE\(COALESCE\(NEW\.direccion, ''\), '<\[\^>\]\*>', '', 'g'\)/i.test(guardReconcile), 'reconciliación sanea HTML de dirección');
+
+must(/CREATE OR REPLACE FUNCTION public\.rpc_crear_aviso_vecinal/i.test(noticeRpc), 'RPC de publicación vecinal queda versionado');
+must(/INSERT INTO public\.avisos\([\s\S]*mensaje, activo, votos, created_at/i.test(noticeRpc), 'RPC de aviso usa las columnas actuales');
+must(!/imagen_url/i.test(noticeRpc), 'RPC de aviso no referencia columna eliminada imagen_url');
+must(/is_anonymous/i.test(noticeRpc), 'RPC de aviso exige sesión real');
+
+must(/CREATE OR REPLACE FUNCTION public\.delete_user_account/i.test(deleteAccount), 'borrado total de cuenta queda reconciliado');
+must(!/anuncios_globales\s+WHERE\s+user_id/i.test(deleteAccount), 'borrado de cuenta no referencia user_id inexistente en anuncios');
+must(/is_anonymous/i.test(deleteAccount), 'borrado de cuenta exige sesión real');
+must(/DELETE FROM public\.usuarios_baneados[\s\S]*permanente,false\)=false/i.test(deleteAccount), 'borrado conserva bloqueos permanentes antifraude');
+
+for (const fn of [
+  'guard_avisos_insert_internal',
+  'guard_comentarios_insert_internal',
+  'guard_votos_insert_internal',
+  'guard_denuncias_insert_internal',
+  'guard_reportes_spam_insert_internal',
+  'guard_driver_registration_insert_internal',
+  'guard_driver_route_insert_internal'
+]) {
+  must(splitGuards.includes(`private.${fn}`), `guard privado ${fn} queda definido`);
+  must(new RegExp(`REVOKE ALL ON FUNCTION private\\.${fn}\\(\\) FROM PUBLIC, anon, authenticated, service_role`, 'i').test(splitGuards), `${fn} no es RPC de cliente`);
+}
+must(/DROP FUNCTION IF EXISTS public\.guard_limited_content_insert\(\)/i.test(splitGuards), 'guard heterogéneo defectuoso queda eliminado');
+must((splitGuards.match(/EXECUTE FUNCTION private\.guard_/g) || []).length === 7, 'los siete triggers usan guards tipados privados');
+
+must(server.includes(".replace('🌍 Todos', '🌍 Todos')"), 'servidor corrige mojibake visible del filtro Todos');
+must(/express\.static\(__dirname, \{ index: false \}\)/.test(server), 'index se sirve por la ruta saneada');
+must(adminPaymentConfig.includes('window.rechazarSuscripcionPremiumAdmin = retired'), 'rechazo Premium legacy ya no llama RPC eliminado');
+
 for (const required of [
   '20260910182449_legacy_cleanup_retention_and_privileges.sql',
   '20260911020205_preprod_states_routes_privacy.sql',
@@ -95,7 +147,13 @@ for (const required of [
   '20260913004500_require_real_auth_for_administration_writes.sql',
   '20260913043142_optimize_security_rls_initplans.sql',
   '20260913044520_revoke_anon_internal_table_reads.sql',
-  '20260913085148_recheck_retention_and_internal_rpc.sql'
+  '20260913085148_recheck_retention_and_internal_rpc.sql',
+  '20260913190218_fix_forum_vote_integrity.sql',
+  '20260913190239_fix_content_guard_and_report_identity.sql',
+  '20260913190352_reconcile_content_guard_definition.sql',
+  '20260913190817_fix_notice_rpc_current_schema.sql',
+  '20260913191235_fix_delete_account_current_schema.sql',
+  '20260913191441_split_content_guards_by_table.sql'
 ]) must(exists(`supabase/migrations/${required}`), `Git contiene migración remota ${required}`);
 
 must(integration.includes('order_public_radar'), 'integración verifica radar');
@@ -103,7 +161,12 @@ must(integration.includes('rpc_get_driver_available_orders'), 'integración veri
 must(integration.includes('mensajes_foro'), 'integración verifica cierre de mensajes_foro');
 must(integration.includes('publicaciones'), 'integración verifica cierre de publicaciones');
 must(integration.includes('telefono_bloqueado'), 'integración verifica que RPC pre-registro no filtre coincidencias');
+must(integration.includes('normalize_delivery_category'), 'integración verifica cierre del normalizador interno');
 must(ci.includes('Verify Live Supabase Public Boundary'), 'CI ejecuta integración real');
 must(ci.includes('Verify Final Preproduction Guardrails'), 'CI ejecuta guardrail final');
+must(ci.includes('actions/checkout@v7'), 'CI usa checkout con runtime actual');
+must(ci.includes('actions/setup-node@v7'), 'CI usa setup-node con runtime actual');
+must(ci.includes('pnpm/action-setup@v6'), 'CI usa pnpm action actual');
+must(ci.includes("grep -q '🌍 Todos'"), 'CI verifica el HTML realmente servido');
 
 console.log('Preproducción: guardrail final OK');
