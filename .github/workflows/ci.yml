@@ -32,7 +32,15 @@ jobs:
           PID=$!
           trap 'kill $PID || true' EXIT
           for i in {1..20}; do
-            if curl -fsS http://127.0.0.1:3000/health | grep -q '^OK$'; then exit 0; fi
+            if curl -fsS http://127.0.0.1:3000/health | grep -q '^OK$'; then
+              curl -fsS http://127.0.0.1:3000/ > /tmp/notigas-index.html
+              grep -q '🌍 Todos' /tmp/notigas-index.html
+              if grep -q '🌍 Todos' /tmp/notigas-index.html; then
+                echo 'HTML servido conserva mojibake en filtro Todos'
+                exit 1
+              fi
+              exit 0
+            fi
             sleep 0.5
           done
           cat /tmp/notigas-server.log
