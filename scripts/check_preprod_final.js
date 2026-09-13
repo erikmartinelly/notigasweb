@@ -19,6 +19,8 @@ const snapshot = read('supabase/full_production_schema.sql');
 const migration = read('supabase/migrations/20260911205957_preprod_final_security_and_credit_messages.sql');
 const legacyDrivers = read('supabase/migrations/20260911210832_close_legacy_repartidores_public_read.sql');
 const hardening = read('supabase/migrations/20260913003000_security_surface_hardening.sql');
+const adminWrites = read('supabase/migrations/20260913004500_require_real_auth_for_administration_writes.sql');
+const adsSeparation = read('supabase/migrations/20260824043251_separate_ads_from_notices.sql');
 const integration = read('scripts/test_db_integration.js');
 const ci = read('.github/workflows/ci.yml');
 
@@ -53,6 +55,17 @@ must(/REVOKE ALL ON TABLE public\.publicaciones FROM anon, authenticated/i.test(
 must(/ALTER DEFAULT PRIVILEGES[\s\S]*REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC/i.test(hardening), 'funciones futuras no nacen como RPC públicos');
 must(/config_pagos_service_access/i.test(hardening), 'config_pagos documenta acceso RPC-only');
 
+for (const policy of [
+  'anuncios_admin_insert', 'anuncios_admin_update', 'anuncios_admin_delete',
+  'anuncios_nativos_insert', 'anuncios_nativos_update', 'anuncios_nativos_delete',
+  'config_publicidad_insert', 'config_publicidad_update', 'config_publicidad_delete',
+  'storage_anuncios_admin_insert', 'storage_anuncios_admin_update', 'storage_anuncios_admin_delete'
+]) {
+  must(adminWrites.includes(policy), `escritura administrativa ${policy} queda redefinida`);
+}
+must((adminWrites.match(/is_anonymous/g) || []).length >= 12, 'todas las escrituras administrativas exigen sesión no anónima');
+must(/CREATE POLICY "storage_anuncios_read"[\s\S]*FOR SELECT TO public/i.test(adsSeparation), 'lectura pública de media publicitaria se conserva');
+
 for (const required of [
   '20260911020205_preprod_states_routes_privacy.sql',
   '20260911020222_preprod_public_views_privacy.sql',
@@ -68,7 +81,8 @@ for (const required of [
   '20260911211419_require_real_auth_for_rate_limits.sql',
   '20260911211430_require_real_auth_for_banned_admin.sql',
   '20260911211439_require_real_auth_for_vote_records.sql',
-  '20260913003000_security_surface_hardening.sql'
+  '20260913003000_security_surface_hardening.sql',
+  '20260913004500_require_real_auth_for_administration_writes.sql'
 ]) {
   must(exists(`supabase/migrations/${required}`), `Git contiene migración remota ${required}`);
 }
