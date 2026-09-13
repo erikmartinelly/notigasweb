@@ -27,9 +27,4 @@ CREATE TRIGGER trg_sanitize_avisos
 BEFORE INSERT OR UPDATE ON public.avisos
 FOR EACH ROW EXECUTE FUNCTION public.sanitize_html();
 
--- 3. Registrar migración
-INSERT INTO supabase_migrations.schema_migrations (version, name)
-VALUES ('052', 'fix_avisos_trigger_autor_column')
-ON CONFLICT (version) DO NOTHING;
-
 COMMIT;

@@ -15,9 +15,7 @@ ADD COLUMN IF NOT EXISTS telefono text;
 CREATE INDEX IF NOT EXISTS idx_usuarios_baneados_email ON public.usuarios_baneados(email);
 CREATE INDEX IF NOT EXISTS idx_usuarios_baneados_user_id ON public.usuarios_baneados(user_id);
 
--- 2. Actualizar función is_banned() con búsqueda robusta por user_id y email
-DROP FUNCTION IF EXISTS public.is_banned();
-
+-- 2. Actualizar función is_banned() sin eliminarla: varias policies previas ya dependen de ella.
 CREATE OR REPLACE FUNCTION public.is_banned()
 RETURNS boolean
 LANGUAGE plpgsql

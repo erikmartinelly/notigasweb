@@ -127,8 +127,4 @@ REVOKE ALL ON FUNCTION public.rpc_get_driver_available_orders(text, text) FROM P
 GRANT EXECUTE ON FUNCTION public.rpc_get_driver_available_orders(text, text) TO authenticated;
 REVOKE ALL ON FUNCTION public.guard_optional_order_insert() FROM PUBLIC, anon, authenticated;
 
-INSERT INTO supabase_migrations.schema_migrations (version, name)
-VALUES ('054', 'driver_order_review_and_optional_contact')
-ON CONFLICT (version) DO NOTHING;
-
 COMMIT;

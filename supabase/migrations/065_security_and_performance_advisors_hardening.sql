@@ -113,7 +113,6 @@ GRANT SELECT ON public.pedidos_publicos TO anon, authenticated;
 -- 2. OPTIMIZACIÓN DE PLANES RLS (auth_rls_initplan) Y CONSOLIDACIÓN
 -- =====================================================================
 
--- Admin Credentials
 DROP POLICY IF EXISTS "admin_credentials_select_own" ON public.admin_credentials;
 DROP POLICY IF EXISTS "Admin Credentials SELECT" ON public.admin_credentials;
 CREATE POLICY "admin_credentials_select_own" ON public.admin_credentials
@@ -122,7 +121,6 @@ USING (
     LOWER(TRIM(email)) = LOWER(TRIM(COALESCE(((SELECT auth.jwt()) ->> 'email'), '')))
 );
 
--- Usuarios Roles (Consolidar en 1 política por acción)
 DROP POLICY IF EXISTS "usuarios_roles_admin_all" ON public.usuarios_roles;
 DROP POLICY IF EXISTS "usuarios_roles_admin_mod" ON public.usuarios_roles;
 DROP POLICY IF EXISTS "usuarios_roles_select_public" ON public.usuarios_roles;
@@ -148,7 +146,6 @@ CREATE POLICY "usuarios_roles_delete" ON public.usuarios_roles
 FOR DELETE TO authenticated
 USING (public.is_admin_email());
 
--- Denuncias (Consolidar políticas permisivas redundantes)
 DROP POLICY IF EXISTS "denuncias_admin_all" ON public.denuncias;
 DROP POLICY IF EXISTS "denuncias_admin_mod" ON public.denuncias;
 DROP POLICY IF EXISTS "denuncias_insert_auth" ON public.denuncias;
@@ -174,7 +171,6 @@ CREATE POLICY "denuncias_delete" ON public.denuncias
 FOR DELETE TO authenticated
 USING (public.is_admin_email());
 
--- Reportes Spam (Consolidar políticas permisivas redundantes)
 DROP POLICY IF EXISTS "reportes_spam_admin_all" ON public.reportes_spam;
 DROP POLICY IF EXISTS "reportes_spam_admin_mod" ON public.reportes_spam;
 DROP POLICY IF EXISTS "reportes_spam_insert_auth" ON public.reportes_spam;
@@ -200,7 +196,6 @@ CREATE POLICY "reportes_spam_delete" ON public.reportes_spam
 FOR DELETE TO authenticated
 USING (public.is_admin_email());
 
--- Anuncios Nativos Sistema
 DROP POLICY IF EXISTS "anuncios_nativos_admin_mod" ON public.anuncios_nativos_sistema;
 DROP POLICY IF EXISTS "anuncios_nativos_select_public" ON public.anuncios_nativos_sistema;
 DROP POLICY IF EXISTS "anuncios_nativos_select" ON public.anuncios_nativos_sistema;
@@ -225,7 +220,6 @@ CREATE POLICY "anuncios_nativos_delete" ON public.anuncios_nativos_sistema
 FOR DELETE TO authenticated
 USING (public.is_admin_email());
 
--- Configuración Publicidad
 DROP POLICY IF EXISTS "config_publicidad_admin_mod" ON public.configuracion_publicidad;
 DROP POLICY IF EXISTS "config_publicidad_select_public" ON public.configuracion_publicidad;
 DROP POLICY IF EXISTS "config_publicidad_select" ON public.configuracion_publicidad;
@@ -266,9 +260,5 @@ BEGIN
         ALTER FUNCTION public.delete_user_account() SET search_path = public, pg_temp;
     END IF;
 END $$;
-
-INSERT INTO supabase_migrations.schema_migrations (version, name)
-VALUES ('065', 'security_and_performance_advisors_hardening')
-ON CONFLICT (version) DO NOTHING;
 
 COMMIT;

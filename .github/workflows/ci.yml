@@ -64,3 +64,26 @@ jobs:
 
       - name: Verify Live Supabase Public Boundary
         run: node scripts/test_db_integration.js
+
+  migration-replay:
+    name: Rebuild Supabase From Migrations
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: 2.117.0
+
+      - name: Start local Supabase and replay migrations
+        run: supabase start
+
+      - name: Reset database and replay migrations again
+        run: supabase db reset
+
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop --no-backup

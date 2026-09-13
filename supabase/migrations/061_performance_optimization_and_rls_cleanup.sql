@@ -136,6 +136,24 @@ CREATE POLICY "votos_delete" ON public.votos_registro
   USING ((SELECT auth.uid())::text = user_id);
 
 -- 6. ANUNCIOS & PUBLICIDAD ADMIN
+-- Esta tabla existía en producción por una creación manual previa, pero faltaba en
+-- la cadena canónica. Reconstruirla aquí antes de que 061/064/065 gestionen RLS.
+CREATE TABLE IF NOT EXISTS public.anuncios_nativos_sistema (
+  id integer PRIMARY KEY DEFAULT 1,
+  texto_anuncio text NOT NULL DEFAULT '🚚 Servicios técnicos & Comercio local verificado en la OTB',
+  url_anuncio text DEFAULT '',
+  actualizado_por text NOT NULL DEFAULT 'erikmartinelly@gmail.com',
+  actualizado_en timestamptz NOT NULL DEFAULT now()
+);
+
+INSERT INTO public.anuncios_nativos_sistema (id)
+VALUES (1)
+ON CONFLICT (id) DO NOTHING;
+
+ALTER TABLE public.anuncios_nativos_sistema ENABLE ROW LEVEL SECURITY;
+GRANT SELECT ON public.anuncios_nativos_sistema TO anon, authenticated;
+GRANT INSERT, UPDATE, DELETE ON public.anuncios_nativos_sistema TO authenticated;
+
 DROP POLICY IF EXISTS "Admin Control Total Anuncios" ON public.anuncios_nativos_sistema;
 DROP POLICY IF EXISTS "anuncios_nativos_admin" ON public.anuncios_nativos_sistema;
 

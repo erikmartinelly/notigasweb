@@ -52,15 +52,12 @@ BEGIN
 
     v_is_admin := public.is_admin_email();
 
-    -- Si no es admin, la ciudad se restringe a la registrada en su perfil o ficha de repartidor
     IF NOT v_is_admin THEN
-        -- 1. Intentar obtener ciudad y nombre desde perfiles (compradores / vecinos)
         SELECT p.ciudad, NULLIF(TRIM(CONCAT_WS(' ', p.nombre, p.apellido)), '')
         INTO v_profile_city, v_profile_name
         FROM public.profiles p
         WHERE p.id = v_user_uuid;
 
-        -- 2. Si no tiene perfil o no tiene ciudad, buscar en choferes_habilitados (repartidores)
         IF v_profile_city IS NULL OR v_profile_city = '' THEN
             SELECT c.ciudad, c.nombre_completo
             INTO v_profile_city, v_profile_name
@@ -68,11 +65,9 @@ BEGIN
             WHERE c.user_id = v_user_id;
         END IF;
 
-        -- Forzar ciudad de registro si existe, o usar p_ciudad sanitizada como respaldo
         v_clean_city := LOWER(TRIM(COALESCE(v_profile_city, p_ciudad, 'cochabamba')));
         v_author_name := COALESCE(NULLIF(TRIM(p_autor), ''), NULLIF(TRIM(v_profile_name), ''), 'Vecino de la OTB');
     ELSE
-        -- Administrador todopoderoso: puede publicar en cualquier ciudad elegida
         v_clean_city := LOWER(TRIM(COALESCE(p_ciudad, 'cochabamba')));
         v_author_name := COALESCE(NULLIF(TRIM(p_autor), ''), 'Administración NOTIGAS');
     END IF;
@@ -145,10 +140,5 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
--- 6. Registrar en schema_migrations
-INSERT INTO supabase_migrations.schema_migrations (version, name)
-VALUES ('058', 'fix_avisos_autor_column_and_rpc')
-ON CONFLICT (version) DO NOTHING;
 
 COMMIT;
