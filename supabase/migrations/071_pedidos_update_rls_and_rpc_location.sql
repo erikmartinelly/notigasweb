@@ -84,8 +84,3 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.rpc_update_order_location(UUID, DOUBLE PRECISION, DOUBLE PRECISION) TO authenticated;
-
--- Registrar migración en historial
-INSERT INTO supabase_migrations.schema_migrations(version, name) 
-VALUES ('071', 'pedidos_update_rls_and_rpc_location') 
-ON CONFLICT (version) DO NOTHING;
