@@ -97,6 +97,12 @@ async function main() {
     }
   });
 
+  for (const fn of ['trg_estado_pago_ocr_automatico', 'rpc_purge_old_records']) {
+    await test(`${fn} no es RPC anónimo`, async () => {
+      assertDenied(await request(`rpc/${fn}`, { method: 'POST', body: '{}' }), fn);
+    });
+  }
+
   for (const endpoint of [
     'pedidos?select=id,direccion,telefono,latitude,longitude&limit=1',
     'order_public_radar?select=order_id,latitude,longitude,radius_m&limit=1',
