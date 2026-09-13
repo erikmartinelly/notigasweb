@@ -81,8 +81,4 @@ WHERE p.estado IN ('pendiente', 'visto');
 GRANT SELECT ON public.rutas_repartidores_publicas TO anon, authenticated;
 GRANT SELECT ON public.pedidos_publicos TO anon, authenticated;
 
-INSERT INTO supabase_migrations.schema_migrations (version, name)
-VALUES ('055', 'map_views_and_driver_contact_sync')
-ON CONFLICT (version) DO NOTHING;
-
 COMMIT;
