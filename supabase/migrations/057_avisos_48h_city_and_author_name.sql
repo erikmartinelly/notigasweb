@@ -19,7 +19,6 @@ BEGIN
     DELETE FROM public.rutas_repartidores
     WHERE last_active < now() - interval '12 hours';
 
-    -- Avisos gratis duran 48 horas
     DELETE FROM public.avisos
     WHERE created_at < now() - interval '48 hours';
 END;
@@ -50,7 +49,6 @@ BEGIN
     WHERE last_active < now() - interval '12 hours';
     GET DIAGNOSTICS v_rutas_borradas = ROW_COUNT;
 
-    -- Avisos gratis duran 48 horas
     DELETE FROM public.avisos
     WHERE created_at < now() - interval '48 hours';
     GET DIAGNOSTICS v_avisos_borrados = ROW_COUNT;
@@ -132,15 +130,12 @@ BEGIN
 
     v_is_admin := public.is_admin_email();
 
-    -- Si no es admin, la ciudad se restringe a la registrada en su perfil o ficha de repartidor
     IF NOT v_is_admin THEN
-        -- 1. Intentar obtener ciudad y nombre desde perfiles (compradores / vecinos)
         SELECT p.ciudad, NULLIF(TRIM(CONCAT_WS(' ', p.nombre, p.apellido)), '')
         INTO v_profile_city, v_profile_name
         FROM public.profiles p
         WHERE p.id = v_user_uuid;
 
-        -- 2. Si no tiene perfil o no tiene ciudad, buscar en choferes_habilitados (repartidores)
         IF v_profile_city IS NULL OR v_profile_city = '' THEN
             SELECT c.ciudad, c.nombre_completo
             INTO v_profile_city, v_profile_name
@@ -148,11 +143,9 @@ BEGIN
             WHERE c.user_id = v_user_id;
         END IF;
 
-        -- Forzar ciudad de registro si existe, o usar p_ciudad sanitizada como respaldo
         v_clean_city := LOWER(TRIM(COALESCE(v_profile_city, p_ciudad, 'cochabamba')));
         v_author_name := COALESCE(NULLIF(TRIM(p_autor), ''), NULLIF(TRIM(v_profile_name), ''), 'Vecino de la OTB');
     ELSE
-        -- Administrador todopoderoso: puede publicar en cualquier ciudad elegida
         v_clean_city := LOWER(TRIM(COALESCE(p_ciudad, 'cochabamba')));
         v_author_name := COALESCE(NULLIF(TRIM(p_autor), ''), 'Administración NOTIGAS');
     END IF;
@@ -201,13 +194,7 @@ BEGIN
 END;
 $$;
 
--- 6. Permisos de ejecución
 REVOKE ALL ON FUNCTION public.rpc_crear_aviso_vecinal(text, text, text, text, text, text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.rpc_crear_aviso_vecinal(text, text, text, text, text, text) TO authenticated;
-
--- 7. Registrar migración
-INSERT INTO supabase_migrations.schema_migrations (version, name)
-VALUES ('057', 'avisos_48h_city_and_author_name')
-ON CONFLICT (version) DO NOTHING;
 
 COMMIT;
