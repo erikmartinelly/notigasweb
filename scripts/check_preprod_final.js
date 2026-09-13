@@ -20,9 +20,12 @@ const migration = read('supabase/migrations/20260911205957_preprod_final_securit
 const legacyDrivers = read('supabase/migrations/20260911210832_close_legacy_repartidores_public_read.sql');
 const hardening = read('supabase/migrations/20260913003000_security_surface_hardening.sql');
 const adminWrites = read('supabase/migrations/20260913004500_require_real_auth_for_administration_writes.sql');
+const rlsInitplans = read('supabase/migrations/20260913043142_optimize_security_rls_initplans.sql');
 const adsSeparation = read('supabase/migrations/20260824043251_separate_ads_from_notices.sql');
 const integration = read('scripts/test_db_integration.js');
 const ci = read('.github/workflows/ci.yml');
+const supabaseConfig = read('supabase/config.toml');
+const migration031 = read('supabase/migrations/031_fix_order_assignment_and_rls.sql');
 
 must(orders.includes("estado_servicio === 'suspendido_mora'"), 'UI legacy reconoce suspendido_mora');
 must(orders.includes("estado_servicio === 'suspendido_pago'"), 'UI legacy reconoce suspendido_pago');
@@ -66,6 +69,10 @@ for (const policy of [
 must((adminWrites.match(/is_anonymous/g) || []).length >= 12, 'todas las escrituras administrativas exigen sesión no anónima');
 must(/CREATE POLICY "storage_anuncios_read"[\s\S]*FOR SELECT TO public/i.test(adsSeparation), 'lectura pública de media publicitaria se conserva');
 
+must(/SELECT auth\.jwt\(\)/i.test(rlsInitplans), 'RLS cachea JWT por statement');
+must(/SELECT auth\.uid\(\)/i.test(rlsInitplans), 'RLS cachea UID por statement');
+must(/SELECT public\.is_admin_email\(\)/i.test(rlsInitplans), 'RLS cachea comprobación admin por statement');
+
 for (const required of [
   '20260911020205_preprod_states_routes_privacy.sql',
   '20260911020222_preprod_public_views_privacy.sql',
@@ -82,11 +89,24 @@ for (const required of [
   '20260911211430_require_real_auth_for_banned_admin.sql',
   '20260911211439_require_real_auth_for_vote_records.sql',
   '20260913003000_security_surface_hardening.sql',
-  '20260913004500_require_real_auth_for_administration_writes.sql'
+  '20260913004500_require_real_auth_for_administration_writes.sql',
+  '20260913043142_optimize_security_rls_initplans.sql'
 ]) {
   must(exists(`supabase/migrations/${required}`), `Git contiene migración remota ${required}`);
 }
 
+must(!/DROP FUNCTION IF EXISTS public\.is_banned\(\)/i.test(migration031), 'migración 031 preserva dependencias de is_banned');
+
+const migrationFiles = fs.readdirSync('supabase/migrations').filter((name) => name.endsWith('.sql'));
+for (const file of migrationFiles) {
+  const source = read(`supabase/migrations/${file}`);
+  must(!/INSERT\s+INTO\s+supabase_migrations\.schema_migrations/i.test(source), `${file} deja el registro de versión al Supabase CLI`);
+}
+
+must(/major_version\s*=\s*17/.test(supabaseConfig), 'config local usa PostgreSQL 17');
+must(/migration-replay:/i.test(ci), 'CI contiene job de replay de migraciones');
+must(/supabase start/i.test(ci), 'CI reconstruye Supabase local desde cero');
+must(/supabase db reset/i.test(ci), 'CI repite todas las migraciones con db reset');
 must(integration.includes('order_public_radar'), 'integración verifica radar');
 must(integration.includes('rpc_get_driver_available_orders'), 'integración verifica RPC legacy revocado');
 must(integration.includes('mensajes_foro'), 'integración verifica cierre de mensajes_foro');
