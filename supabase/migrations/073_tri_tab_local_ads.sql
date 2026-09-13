@@ -116,7 +116,6 @@ BEGIN
         RETURNING id INTO v_ad_id;
     END IF;
 
-    -- Fijar configuración a modo local
     UPDATE public.configuracion_publicidad
     SET modo = 'local',
         updated_at = now()
@@ -134,10 +133,5 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.rpc_save_local_ad(TEXT, TEXT, TEXT, TEXT, TEXT, BOOLEAN, TEXT) TO authenticated;
-
--- Registrar migración
-INSERT INTO supabase_migrations.schema_migrations(version, name) 
-VALUES ('073', 'tri_tab_local_ads') 
-ON CONFLICT (version) DO NOTHING;
 
 COMMIT;
