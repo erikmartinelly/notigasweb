@@ -151,7 +151,7 @@ BEGIN
     RETURN jsonb_build_object(
         'ok', true,
         'pedidos_purgados', v_pedidos_borrados,
-        'rutas_purgadas', v_rutas_borradas,
+        'rutas_borradas', v_rutas_borradas,
         'avisos_purgados', v_avisos_borrados,
         'duracion_retencion_horas', 48,
         'ejecutado_el', now()
@@ -159,16 +159,10 @@ BEGIN
 END;
 $$;
 
--- 5. Permisos
 REVOKE ALL ON FUNCTION public.rpc_confirm_order_received(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.rpc_confirm_order_received(uuid) TO authenticated;
 
 REVOKE ALL ON FUNCTION public.rpc_cancel_own_order(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.rpc_cancel_own_order(uuid) TO authenticated;
-
--- 6. Registrar migración
-INSERT INTO supabase_migrations.schema_migrations (version, name)
-VALUES ('059', 'buyer_order_lifecycle_recibido')
-ON CONFLICT (version) DO NOTHING;
 
 COMMIT;
