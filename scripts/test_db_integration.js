@@ -80,7 +80,7 @@ async function main() {
     }), 'is_current_enabled_driver');
   });
 
-  await test('Chequeo pre-registro de dispositivo responde sin error 5xx', async () => {
+  await test('Chequeo pre-registro responde y no filtra qué identificador coincidió', async () => {
     const res = await request('rpc/rpc_verificar_bloqueo_dispositivo', {
       method: 'POST',
       body: JSON.stringify({
@@ -91,7 +91,10 @@ async function main() {
         p_telefono: '900000000'
       })
     });
-    assert(res.status < 500, `HTTP ${res.status}`);
+    assert(res.ok && res.data && typeof res.data === 'object', `HTTP ${res.status}`);
+    for (const leakedKey of ['telefono_bloqueado', 'placa_bloqueada', 'device_bloqueado']) {
+      assert(!(leakedKey in res.data), `RPC pre-registro expone ${leakedKey}`);
+    }
   });
 
   for (const endpoint of [
@@ -99,7 +102,9 @@ async function main() {
     'order_public_radar?select=order_id,latitude,longitude,radius_m&limit=1',
     'choferes_publicos?select=id,nombre_completo,categoria&limit=1',
     'rutas_repartidores_publicas?select=id,latitude,longitude&limit=1',
-    'repartidores?select=id,nombre,telefono,placa&limit=1'
+    'repartidores?select=id,nombre,telefono,placa&limit=1',
+    'mensajes_foro?select=*&limit=1',
+    'publicaciones?select=id,user_id&limit=1'
   ]) {
     await test(`${endpoint.split('?')[0]} no expone datos sin sesión`, async () => {
       assertDenied(await request(endpoint), endpoint);
