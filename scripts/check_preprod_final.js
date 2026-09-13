@@ -20,6 +20,7 @@ const migration = read('supabase/migrations/20260911205957_preprod_final_securit
 const legacyDrivers = read('supabase/migrations/20260911210832_close_legacy_repartidores_public_read.sql');
 const hardening = read('supabase/migrations/20260913003000_security_surface_hardening.sql');
 const adminWrites = read('supabase/migrations/20260913004500_require_real_auth_for_administration_writes.sql');
+const adsSeparation = read('supabase/migrations/20260824043251_separate_ads_from_notices.sql');
 const integration = read('scripts/test_db_integration.js');
 const ci = read('.github/workflows/ci.yml');
 
@@ -63,7 +64,7 @@ for (const policy of [
   must(adminWrites.includes(policy), `escritura administrativa ${policy} queda redefinida`);
 }
 must((adminWrites.match(/is_anonymous/g) || []).length >= 12, 'todas las escrituras administrativas exigen sesión no anónima');
-must(/storage_anuncios_read/.test(read('supabase/migrations/089_harden_db_cron_archive_and_security.sql')) || /storage_anuncios_read/.test(hardening) || true, 'lectura pública de media no se elimina por el hardening de escritura');
+must(/CREATE POLICY "storage_anuncios_read"[\s\S]*FOR SELECT TO public/i.test(adsSeparation), 'lectura pública de media publicitaria se conserva');
 
 for (const required of [
   '20260911020205_preprod_states_routes_privacy.sql',
