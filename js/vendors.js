@@ -79,11 +79,9 @@ function getStoredVendors() {
   let list = AppState.get('notigas_vendors_directory') || [];
   let deletedIds = AppState.get('notigas_deleted_vendor_ids') || [];
 
-  // FIX: Ya no inyectamos al usuario actual automáticamente con "active: true".
-  // Su estado real vendrá de la tabla choferes_habilitados de Supabase.
-
-  const currentAdmin = typeof getVerifiedAdminEmail === 'function' ? getVerifiedAdminEmail() : null;
-  const isAdmin = !!currentAdmin;
+  // El estado de administrador proviene exclusivamente de la verificación de sesión
+  // que actualiza AppState; no se infiere a partir de la presencia de un email.
+  const isAdmin = typeof AppState !== 'undefined' && AppState.get('isAdmin') === true;
 
   return list.filter(v => !deletedIds.includes(v.id) && (v.active || isAdmin));
 }
@@ -92,8 +90,7 @@ function renderVendorCards(filterCat) {
   const container = document.getElementById('vendorGridContainer');
   if (!container) return;
 
-  const currentAdmin = typeof getVerifiedAdminEmail === 'function' ? getVerifiedAdminEmail() : null;
-  const isAdmin = !!currentAdmin;
+  const isAdmin = typeof AppState !== 'undefined' && AppState.get('isAdmin') === true;
 
   const allVendors = getStoredVendors();
 
