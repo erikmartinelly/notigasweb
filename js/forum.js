@@ -19,8 +19,7 @@ async function renderForumFeed() {
     const feed = document.getElementById('forumFeed');
     if (!feed || !window.supabaseClient) return;
 
-    const currentAdmin = (typeof getVerifiedAdminEmail === 'function') ? getVerifiedAdminEmail() : null;
-    const isAdmin = !!currentAdmin || (typeof AppState !== 'undefined' && AppState.get('isAdmin') === true);
+    const isAdmin = typeof AppState !== 'undefined' && AppState.get('isAdmin') === true;
 
     const dosDiasAtras = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
 
@@ -61,7 +60,7 @@ async function renderForumFeed() {
       feed.innerHTML = `
         <div style="text-align:center; color:#94A3B8; padding:40px 14px; font-size:13px; background: #1E293B; border-radius: 14px; border: 1px dashed rgba(255,255,255,0.15);">
           <i class="fa-solid fa-comments" style="font-size:32px; color:#FF6D00; margin-bottom:10px;"></i><br>
-          <strong>El Muro de Muro de Comentarios está limpio en ${escapeHtmlStr(ciudadReal)}.</strong><br>
+          <strong>El Muro de Comentarios está limpio en ${escapeHtmlStr(ciudadReal)}.</strong><br>
           <span style="font-size: 11px; color: #64748B;">Sé el primero en publicar un aviso, alerta u oferta para los vecinos de tu zona.</span><br><br>
           <button class="btn-new-post" style="margin: 0 auto; padding: 10px 16px; font-size: 12px;" data-action="abrirModalNuevoPost">📝 Publicar Nuevo Aviso (24 Horas)</button>
         </div>
@@ -120,15 +119,15 @@ async function renderForumFeed() {
             <div class="forum-title">${escapeHtmlStr(post.titulo)}</div>
             <div class="forum-desc">${escapeHtmlStr(post.descripcion)}</div>
             <div class="forum-footer" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-              <button data-action="abrirComentariosPost" data-id="${post.id}" data-title="${safeTitle}" data-desc="${safeDesc}" data-cat="${safeCat}" style="background: rgba(255,109,0,0.15); color: #FF6D00; border: 1px solid rgba(255,109,0,0.3); border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;">
+              <button data-action="abrirComentariosPost" data-id="${post.id}" data-title="${safeTitle}" data-desc="${safeDesc}" data-cat="${safeCat}" style="background: rgba(255,109,0,0.15); color: #FF6D00; border: 1px solid rgba(255,109,0,0.3); border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 800; cursor: pointer; display: flex; align-items:center; gap: 6px; transition: all 0.2s;">
                 <i class="fa-regular fa-comment"></i> <span class="comment-count-num">${commentCount}</span> Comentar
               </button>
               <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
                 ${canManage ? `
-                  <button data-action="abrirModalEditarPost" data-id="${post.id}" data-title="${safeTitle}" data-desc="${safeDesc}" data-cat="${safeCat}" style="background: rgba(14,165,233,0.2); color: #38BDF8; border: 1.5px solid #0284C7; border-radius: 6px; padding: 5px 12px; font-size: 11.5px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; box-shadow:0 2px 6px rgba(2,132,199,0.2);" title="Editar tu aviso">
+                  <button data-action="abrirModalEditarPost" data-id="${post.id}" data-title="${safeTitle}" data-desc="${safeDesc}" data-cat="${safeCat}" style="background: rgba(14,165,233,0.2); color: #38BDF8; border: 1.5px solid #0284C7; border-radius: 6px; padding: 5px 12px; font-size: 11.5px; font-weight: 800; cursor: pointer; display: inline-flex; align-items:center; gap: 5px; box-shadow:0 2px 6px rgba(2,132,199,0.2);" title="Editar tu aviso">
                     <i class="fa-solid fa-pen-to-square"></i> EDITAR
                   </button>
-                  <button data-action="borrarPostPropio" data-id="${post.id}" style="background: rgba(239,68,68,0.15); color: #EF4444; border: 1px solid rgba(239,68,68,0.3); border-radius: 6px; padding: 5px 8px; font-size: 11.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" title="Eliminar este aviso">
+                  <button data-action="borrarPostPropio" data-id="${post.id}" style="background: rgba(239,68,68,0.15); color: #EF4444; border: 1px solid rgba(239,68,68,0.3); border-radius: 6px; padding: 5px 8px; font-size: 11.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items:center; gap: 4px;" title="Eliminar este aviso">
                     <i class="fa-solid fa-trash"></i>
                   </button>
                 ` : `
@@ -196,7 +195,6 @@ async function guardarEdicionPost() {
   try {
     if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Guardando cambios...');
 
-    // 1. Intentar RPC atómico
     const { data: rpcData, error: rpcError } = await window.supabaseClient.rpc('rpc_actualizar_aviso_propio', {
       p_aviso_id: postId,
       p_titulo: newTitle,
@@ -205,14 +203,9 @@ async function guardarEdicionPost() {
     });
 
     if (rpcError) {
-      // 2. Fallback a UPDATE directo
       const { error: directErr } = await window.supabaseClient
         .from('avisos')
-        .update({
-          titulo: newTitle,
-          descripcion: newDesc,
-          categoria: newCat
-        })
+        .update({ titulo: newTitle, descripcion: newDesc, categoria: newCat })
         .eq('id', postId);
 
       if (directErr) {
@@ -261,7 +254,6 @@ async function borrarPostForumAdmin(postId) {
 async function votarPost(el, delta, postId) {
   if (!window.supabaseClient || !postId) return;
 
-  // 1. Validar que el usuario tenga sesión activa en Supabase
   let user = null;
   try {
     const sessionData = await window.supabaseClient.auth.getSession();
@@ -282,21 +274,15 @@ async function votarPost(el, delta, postId) {
   const voteKey = `notigas_voted_p_${postId}`;
   const previousVote = sessionStorage.getItem(voteKey);
 
-  // Evitar votar dos veces consecutivas la misma opción
   if (delta > 0 && previousVote === 'up') {
-    if (typeof showToast === 'function') {
-      showToast('ℹ️ Voto ya registrado', 'Ya diste "Me Gusta" a esta publicación.', 'info', 2500);
-    }
+    if (typeof showToast === 'function') showToast('ℹ️ Voto ya registrado', 'Ya diste "Me Gusta" a esta publicación.', 'info', 2500);
     return;
   }
   if (delta < 0 && previousVote === 'down') {
-    if (typeof showToast === 'function') {
-      showToast('ℹ️ Voto ya registrado', 'Ya diste "Me Disgusta" a esta publicación.', 'info', 2500);
-    }
+    if (typeof showToast === 'function') showToast('ℹ️ Voto ya registrado', 'Ya diste "Me Disgusta" a esta publicación.', 'info', 2500);
     return;
   }
 
-  // Buscar todos los spans de contador asociados a este postId (tarjeta en el feed y cabecera del modal si está abierto)
   const matchingSpans = [];
   const feedCards = document.querySelectorAll('.forum-card');
   feedCards.forEach(card => {
@@ -314,9 +300,7 @@ async function votarPost(el, delta, postId) {
   }
 
   const relativeSpan = el?.parentElement?.querySelector('.v-count');
-  if (relativeSpan && !matchingSpans.includes(relativeSpan)) {
-    matchingSpans.push(relativeSpan);
-  }
+  if (relativeSpan && !matchingSpans.includes(relativeSpan)) matchingSpans.push(relativeSpan);
 
   const oldVals = matchingSpans.map(s => parseInt(s.innerText) || 0);
   matchingSpans.forEach(s => {
@@ -338,16 +322,12 @@ async function votarPost(el, delta, postId) {
       const msg = error.message && error.message.includes('Ya has votado')
         ? 'Ya has votado esta publicación.'
         : (error.message || 'No se pudo registrar tu voto.');
-      if (typeof showToast === 'function') {
-        showToast('⚠️ Votación', msg, 'warning', 3500);
-      }
+      if (typeof showToast === 'function') showToast('⚠️ Votación', msg, 'warning', 3500);
       return;
     }
 
     sessionStorage.setItem(voteKey, delta > 0 ? 'up' : 'down');
-    if (typeof showToast === 'function') {
-      showToast('✅ Voto registrado', delta > 0 ? '¡Te gusta este aviso!' : 'Voto registrado.', 'success', 2000);
-    }
+    if (typeof showToast === 'function') showToast('✅ Voto registrado', delta > 0 ? '¡Te gusta este aviso!' : 'Voto registrado.', 'success', 2000);
   } catch (err) {
     console.error('Error al votar publicación:', err);
     matchingSpans.forEach((s, idx) => {
@@ -361,8 +341,7 @@ function abrirModalNuevoPost() {
   if (!modal) return;
 
   const userData = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
-  const currentAdmin = (typeof getVerifiedAdminEmail === 'function') ? getVerifiedAdminEmail() : null;
-  const isAdmin = !!currentAdmin || (typeof AppState !== 'undefined' && AppState.get('isAdmin') === true);
+  const isAdmin = typeof AppState !== 'undefined' && AppState.get('isAdmin') === true;
   const ciudadSelector = document.getElementById('selectCiudadCapital')?.value;
 
   let rawCity = 'lima';
@@ -373,9 +352,7 @@ function abrirModalNuevoPost() {
   }
 
   const cityLabel = document.getElementById('newPostCityLabel');
-  if (cityLabel) {
-    cityLabel.innerText = String(rawCity).charAt(0).toUpperCase() + String(rawCity).slice(1);
-  }
+  if (cityLabel) cityLabel.innerText = String(rawCity).charAt(0).toUpperCase() + String(rawCity).slice(1);
 
   const inputNom = document.getElementById('inputPostNombre');
   const inputApe = document.getElementById('inputPostApellido');
@@ -395,9 +372,7 @@ function closeNuevoPostModal() {
 }
 
 async function crearNuevoPost() {
-  if (typeof window.verificarPermisoOperarEnCiudad === 'function' && !window.verificarPermisoOperarEnCiudad('publicar avisos')) {
-    return;
-  }
+  if (typeof window.verificarPermisoOperarEnCiudad === 'function' && !window.verificarPermisoOperarEnCiudad('publicar avisos')) return;
   try {
     const titleEl = document.getElementById('inputPostTitulo') || document.getElementById('inputPostTitle');
     const descEl = document.getElementById('inputPostDesc');
@@ -412,11 +387,8 @@ async function crearNuevoPost() {
     const formApellido = (inputApe ? inputApe.value : '').trim();
 
     if (!title || !desc) {
-      if (typeof showToast === 'function') {
-        showToast('Campos requeridos', 'Por favor ingresa un título y una descripción para tu aviso.', 'warning', 4000);
-      } else {
-        alert('Por favor ingresa un título y una descripción para tu aviso.');
-      }
+      if (typeof showToast === 'function') showToast('Campos requeridos', 'Por favor ingresa un título y una descripción para tu aviso.', 'warning', 4000);
+      else alert('Por favor ingresa un título y una descripción para tu aviso.');
       return;
     }
 
@@ -426,12 +398,8 @@ async function crearNuevoPost() {
     const hasSpanishChars = /[à-ÿñÑ¡¿]/i.test(textoCompleto);
 
     if (spamMatches && spamMatches.length >= 1 && !hasSpanishChars) {
-      if (typeof showToast === 'function') {
-        showToast('Seguridad', '⛔ Tu publicación contiene términos no permitidos.', 'warning', 4000);
-      }
-      if (window.supabaseClient) {
-        window.supabaseClient.from('reportes_spam').insert([{ texto: textoCompleto, motivo: 'Filtro Anti-Spam' }]);
-      }
+      if (typeof showToast === 'function') showToast('Seguridad', '⛔ Tu publicación contiene términos no permitidos.', 'warning', 4000);
+      if (window.supabaseClient) window.supabaseClient.from('reportes_spam').insert([{ texto: textoCompleto, motivo: 'Filtro Anti-Spam' }]);
       closeNewPostModal();
       return;
     }
@@ -441,7 +409,6 @@ async function crearNuevoPost() {
       return;
     }
 
-    // 1. Obtener la sesión activa de Supabase
     let userId = null;
     try {
       const { data: sessionData } = await window.supabaseClient.auth.getSession();
@@ -453,9 +420,7 @@ async function crearNuevoPost() {
       console.warn("Error leyendo sesión:", e);
     }
 
-    if (!userId && window._tempAuthUser?.id) {
-      userId = window._tempAuthUser.id;
-    }
+    if (!userId && window._tempAuthUser?.id) userId = window._tempAuthUser.id;
 
     if (!userId) {
       try {
@@ -468,11 +433,8 @@ async function crearNuevoPost() {
     }
 
     if (!userId) {
-      if (typeof showToast === 'function') {
-        showToast('🔒 Inicia Sesión', 'Debes iniciar sesión con Google o Correo para publicar un aviso gratis.', 'warning', 4000);
-      } else {
-        alert('Debes iniciar sesión con Google o Correo para poder publicar un aviso vecinal.');
-      }
+      if (typeof showToast === 'function') showToast('🔒 Inicia Sesión', 'Debes iniciar sesión con Google o Correo para publicar un aviso gratis.', 'warning', 4000);
+      else alert('Debes iniciar sesión con Google o Correo para poder publicar un aviso vecinal.');
       closeNewPostModal();
       const modalAuth = document.getElementById('modalWelcomeAuth');
       if (modalAuth) modalAuth.style.display = 'flex';
@@ -480,31 +442,20 @@ async function crearNuevoPost() {
     }
 
     const userData = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
-    const currentAdmin = (typeof getVerifiedAdminEmail === 'function') ? getVerifiedAdminEmail() : null;
-    const isAdmin = !!currentAdmin || (typeof AppState !== 'undefined' && AppState.get('isAdmin') === true);
+    const isAdmin = typeof AppState !== 'undefined' && AppState.get('isAdmin') === true;
     const ciudadSelector = document.getElementById('selectCiudadCapital')?.value;
 
-    // Si no es admin, validar que ingrese su nombre y apellido
     if (!isAdmin && (!formNombre || !formApellido) && (!userData?.nombre || !userData?.apellido)) {
-      if (typeof showToast === 'function') {
-        showToast('Datos requeridos', 'Por favor ingresa tu Nombre y Apellido para publicar el aviso.', 'warning', 4000);
-      } else {
-        alert('Por favor ingresa tu Nombre y Apellido.');
-      }
+      if (typeof showToast === 'function') showToast('Datos requeridos', 'Por favor ingresa tu Nombre y Apellido para publicar el aviso.', 'warning', 4000);
+      else alert('Por favor ingresa tu Nombre y Apellido.');
       return;
     }
 
-    // Si es comprador o repartidor, restringir estrictamente a su ciudad registrada
-    // Si es administrador, usar la ciudad seleccionada
     let rawCity = 'lima';
-    if (!isAdmin && userData && userData.ciudad) {
-      rawCity = userData.ciudad;
-    } else {
-      rawCity = ciudadSelector || (typeof AppState !== 'undefined' && AppState.get('city')) || (userData && userData.ciudad) || 'lima';
-    }
+    if (!isAdmin && userData && userData.ciudad) rawCity = userData.ciudad;
+    else rawCity = ciudadSelector || (typeof AppState !== 'undefined' && AppState.get('city')) || (userData && userData.ciudad) || 'lima';
     const ciudadReal = String(rawCity || 'lima').toLowerCase().trim();
 
-    // Determinar nombre del autor: Nombre y Apellido
     let authorName = 'Vecino de la zona';
     if (isAdmin) {
       authorName = 'Administración NOTIGAS';
@@ -513,16 +464,12 @@ async function crearNuevoPost() {
       const ape = formApellido || userData?.apellido || '';
       authorName = [nom, ape].filter(Boolean).join(' ') || nom || 'Vecino de la zona';
 
-      // Persistir si el usuario los completó en el modal
       if (userData && (formNombre || formApellido)) {
         if (formNombre) userData.nombre = formNombre;
         if (formApellido) userData.apellido = formApellido;
         AppState.set('userData', userData);
         if (window.supabaseClient && userId) {
-          window.supabaseClient.from('profiles').update({
-            nombre: userData.nombre,
-            apellido: userData.apellido
-          }).eq('id', userId).then(() => {}).catch(() => {});
+          window.supabaseClient.from('profiles').update({ nombre: userData.nombre, apellido: userData.apellido }).eq('id', userId).then(() => {}).catch(() => {});
         }
       }
     }
@@ -532,7 +479,6 @@ async function crearNuevoPost() {
     let pubSuccess = false;
     let pubError = null;
 
-    // Intento 1: Llamar al RPC seguro rpc_crear_aviso_vecinal
     try {
       const { data: rpcData, error: rpcErr } = await window.supabaseClient.rpc('rpc_crear_aviso_vecinal', {
         p_ciudad: ciudadReal,
@@ -547,18 +493,14 @@ async function crearNuevoPost() {
         p_barrio_otb: 'Global'
       });
 
-      if (!rpcErr && rpcData && (rpcData.ok || rpcData.success)) {
-        pubSuccess = true;
-      } else {
-        pubError = rpcErr || new Error(rpcData?.error || 'Error al guardar aviso');
-      }
+      if (!rpcErr && rpcData && (rpcData.ok || rpcData.success)) pubSuccess = true;
+      else pubError = rpcErr || new Error(rpcData?.error || 'Error al guardar aviso');
     } catch(rpcException) {
       pubError = rpcException;
     }
 
-    // Intento 2: Inserción directa en tabla avisos como fallback
     if (!pubSuccess) {
-      const { data: insertData, error: insertErr } = await window.supabaseClient.from('avisos').insert([{
+      const { error: insertErr } = await window.supabaseClient.from('avisos').insert([{
         categoria: cat,
         titulo: title,
         descripcion: desc,
@@ -571,22 +513,16 @@ async function crearNuevoPost() {
         tipo: 'aviso'
       }]).select();
 
-      if (!insertErr) {
-        pubSuccess = true;
-      } else {
-        pubError = insertErr;
-      }
+      if (!insertErr) pubSuccess = true;
+      else pubError = insertErr;
     }
 
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
 
     if (!pubSuccess) {
       console.error('Error insertando aviso:', pubError);
-      if (typeof showToast === 'function') {
-        showToast('❌ Error al Publicar', pubError?.message || 'No se pudo guardar la publicación.', 'error', 5000);
-      } else {
-        alert('Hubo un error publicando el aviso: ' + (pubError?.message || 'Error desconocido'));
-      }
+      if (typeof showToast === 'function') showToast('❌ Error al Publicar', pubError?.message || 'No se pudo guardar la publicación.', 'error', 5000);
+      else alert('Hubo un error publicando el aviso: ' + (pubError?.message || 'Error desconocido'));
       return;
     }
 
@@ -594,11 +530,8 @@ async function crearNuevoPost() {
     if (titleEl) titleEl.value = '';
     if (descEl) descEl.value = '';
 
-    if (typeof showToast === 'function') {
-      showToast('📌 ¡Aviso Publicado!', `Tu aviso ya está disponible en el tablón vecinal de ${ciudadReal.toUpperCase()} (duración: 24 horas).`, 'success', 4000);
-    }
+    if (typeof showToast === 'function') showToast('📌 ¡Aviso Publicado!', `Tu aviso ya está disponible en el tablón vecinal de ${ciudadReal.toUpperCase()} (duración: 24 horas).`, 'success', 4000);
 
-    // Refrescar el feed inmediatamente
     await renderForumFeed();
   } catch (err) {
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
@@ -607,10 +540,6 @@ async function crearNuevoPost() {
   }
 }
 
-/**
- * FIX W-01: Carga comentarios de la tabla 'comentarios_avisos' (ya no del JSONB en avisos).
- * Elimina la race condition de leer + modificar array + escribir todo el campo.
- */
 async function abrirComentariosPost(postId, title, desc, cat, el) {
   activePostCommentsRef = { id: postId, element: el };
   const modal = document.getElementById('modalComments') || document.getElementById('modalPostComments');
@@ -624,7 +553,6 @@ async function abrirComentariosPost(postId, title, desc, cat, el) {
   if (elDesc) elDesc.innerText = desc;
   if (elCat) elCat.innerHTML = `<i class="fa-solid fa-comments"></i> ${window.escapeHtmlStr(cat)}`;
 
-  // Sincronizar votos y botones del post dentro del modal de comentarios
   const feedVotesSpan = el?.closest('.forum-card')?.querySelector('.forum-votes .v-count');
   const votesCount = feedVotesSpan ? parseInt(feedVotesSpan.innerText) || 1 : 1;
   const modalVotesSpan = document.getElementById('commentsPostVotes');
@@ -641,7 +569,6 @@ async function abrirComentariosPost(postId, title, desc, cat, el) {
 
   modal.style.display = 'flex';
 
-  // FIX W-01: Consultar tabla propia 'comentarios_avisos' en lugar del JSONB embebido
   const { data, error } = await window.supabaseClient
     .from('comentarios_avisos')
     .select('*')
@@ -668,12 +595,11 @@ function renderCommentsListUI(comments) {
 
     let html = '';
     comments.forEach(c => {
-        // FIX W-01: Los comentarios de la nueva tabla tienen campo 'id' de BD (bigint), siempre único.
         const cId = c.id;
         const v = typeof c.votos === 'number' ? c.votos : (c.votos ?? 1);
         const autor = c.autor || c.author || 'Vecino de la zona';
         const texto = c.texto || c.text || '';
-        const tiempo = c.created_at ? new Date(c.created_at).toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' }) : 'Ahora mismo';
+        const tiempo = c.created_at ? new Date(c.created_at).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }) : 'Ahora mismo';
         html += `
         <div style="background:#0F172A; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.05); margin-bottom:6px; display:flex; gap:10px;">
             <div style="display:flex; flex-direction:column; align-items:center; justify-content:start; min-width:24px; gap:6px; padding-top:2px;">
@@ -695,26 +621,19 @@ function renderCommentsListUI(comments) {
 }
 
 window.renderPostComments = async function(ref) {
-  if (!ref || !ref.id) return;
-  if (!window.supabaseClient) return;
+  if (!ref || !ref.id || !window.supabaseClient) return;
   try {
     const { data, error } = await window.supabaseClient
       .from('comentarios_avisos')
       .select('*')
       .eq('aviso_id', ref.id)
       .order('created_at', { ascending: true });
-    if (!error && data) {
-      renderCommentsListUI(data);
-    }
+    if (!error && data) renderCommentsListUI(data);
   } catch (e) {
     console.error('Error al actualizar comentarios en tiempo real:', e);
   }
 };
 
-/**
- * FIX W-01+W-05: Voto atómico sobre la tabla 'comentarios_avisos'.
- * Usa la RPC 'incrementar_votos_comentario' (UPDATE directo por id).
- */
 async function votarComentario(comentarioId, delta) {
   if (!window.supabaseClient || !comentarioId) return;
 
@@ -727,11 +646,8 @@ async function votarComentario(comentarioId, delta) {
   }
 
   if (!user) {
-    if (typeof showToast === 'function') {
-      showToast('🔒 Inicia Sesión', 'Debes iniciar sesión con Google para votar comentarios.', 'info', 4000);
-    } else {
-      alert('Debes iniciar sesión con Google para votar comentarios.');
-    }
+    if (typeof showToast === 'function') showToast('🔒 Inicia Sesión', 'Debes iniciar sesión con Google para votar comentarios.', 'info', 4000);
+    else alert('Debes iniciar sesión con Google para votar comentarios.');
     return;
   }
 
@@ -743,9 +659,7 @@ async function votarComentario(comentarioId, delta) {
 
   const span = document.getElementById(`c_votos_${comentarioId}`);
   const oldVal = span ? parseInt(span.innerText) || 0 : 0;
-  if (span) {
-    span.innerText = Math.max(0, oldVal + delta);
-  }
+  if (span) span.innerText = Math.max(0, oldVal + delta);
 
   try {
     const { error } = await window.supabaseClient.rpc('incrementar_votos_comentario', {
@@ -759,9 +673,7 @@ async function votarComentario(comentarioId, delta) {
       const msg = error.message && error.message.includes('Ya has votado')
         ? 'Ya has votado este comentario.'
         : (error.message || 'No se pudo registrar tu voto.');
-      if (typeof showToast === 'function') {
-        showToast('⚠️ Votación', msg, 'warning', 3500);
-      }
+      if (typeof showToast === 'function') showToast('⚠️ Votación', msg, 'warning', 3500);
       return;
     }
 
@@ -778,13 +690,8 @@ function closeCommentsModal() {
   activePostCommentsRef = null;
 }
 
-/**
- * FIX W-01: Agrega comentario insertando una fila nueva en 'comentarios_avisos'.
- */
 async function agregarComentarioPost() {
-  if (typeof window.verificarPermisoOperarEnCiudad === 'function' && !window.verificarPermisoOperarEnCiudad('comentar avisos')) {
-    return;
-  }
+  if (typeof window.verificarPermisoOperarEnCiudad === 'function' && !window.verificarPermisoOperarEnCiudad('comentar avisos')) return;
   if (!activePostCommentsRef) return;
   const input = document.getElementById('inputNewComment') || document.getElementById('inputNuevoComentario');
   const text = (input?.value || '').trim();
@@ -796,16 +703,14 @@ async function agregarComentarioPost() {
   let authorName = 'Vecino de la zona';
   let userId = null;
   try {
-    const currentAdmin = (typeof getVerifiedAdminEmail === 'function') ? getVerifiedAdminEmail() : null;
-    const isAdmin = !!currentAdmin || (typeof AppState !== 'undefined' && AppState.get('isAdmin') === true);
+    const isAdmin = typeof AppState !== 'undefined' && AppState.get('isAdmin') === true;
     if (isAdmin) {
       authorName = 'Administración NOTIGAS';
     } else {
       const u = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
       if (u) {
-        if (u.role === 'repartidor') {
-          authorName = u.nombre || 'Repartidor de la zona';
-        } else {
+        if (u.role === 'repartidor') authorName = u.nombre || 'Repartidor de la zona';
+        else {
           const nom = (u.nombre || '').trim();
           const ape = (u.apellido || '').trim();
           authorName = [nom, ape].filter(Boolean).join(' ') || nom || 'Vecino de la zona';
@@ -817,19 +722,14 @@ async function agregarComentarioPost() {
   } catch(e) {}
 
   if (!window.supabaseClient) {
-    if (typeof showToast === 'function') { showToast('Notificación', 'Error: El servidor no está disponible. Intenta de nuevo en un momento.', 'info', 4000); } else { alert('Error: El servidor no está disponible. Intenta de nuevo en un momento.'); };
+    if (typeof showToast === 'function') showToast('Notificación', 'Error: El servidor no está disponible. Intenta de nuevo en un momento.', 'info', 4000);
+    else alert('Error: El servidor no está disponible. Intenta de nuevo en un momento.');
     return;
   }
 
   const { data: newComment, error } = await window.supabaseClient
     .from('comentarios_avisos')
-    .insert([{
-      aviso_id: postId,
-      user_id: userId,
-      autor: authorName,
-      texto: text,
-      votos: 1
-    }])
+    .insert([{ aviso_id: postId, user_id: userId, autor: authorName, texto: text, votos: 1 }])
     .select()
     .single();
 
@@ -846,17 +746,15 @@ async function agregarComentarioPost() {
 
     if (activePostCommentsRef.element) {
       const numSpan = activePostCommentsRef.element.querySelector('.comment-count-num');
-      if (numSpan && updatedComments) {
-        numSpan.innerText = updatedComments.length;
-      }
+      if (numSpan && updatedComments) numSpan.innerText = updatedComments.length;
     }
   } else if (error) {
     console.error('Error publicando comentario:', error);
-    if (typeof showToast === 'function') { showToast('Notificación', 'Error publicando comentario. Verifica que estés logueado.', 'info', 4000); } else { alert('Error publicando comentario. Verifica que estés logueado.'); };
+    if (typeof showToast === 'function') showToast('Notificación', 'Error publicando comentario. Verifica que estés logueado.', 'info', 4000);
+    else alert('Error publicando comentario. Verifica que estés logueado.');
   }
 }
 
-// EXPORTACIONES GLOBALES A WINDOW PARA DISPONIBILIDAD TOTAL
 window.renderForumFeed = renderForumFeed;
 window.votarPost = votarPost;
 window.votarComentario = votarComentario;
