@@ -35,10 +35,7 @@ jobs:
             if curl -fsS http://127.0.0.1:3000/health | grep -q '^OK$'; then
               curl -fsS http://127.0.0.1:3000/ > /tmp/notigas-index.html
               grep -q '🌍 Todos' /tmp/notigas-index.html
-              if grep -q '🌍 Todos' /tmp/notigas-index.html; then
-                echo 'HTML servido conserva mojibake en filtro Todos'
-                exit 1
-              fi
+              node -e "const fs=require('fs');const s=fs.readFileSync('/tmp/notigas-index.html','utf8');if(s.includes(String.fromCharCode(0x90))){console.error('HTML servido contiene control U+0090');process.exit(1)}"
               exit 0
             fi
             sleep 0.5
