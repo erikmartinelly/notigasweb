@@ -97,9 +97,26 @@ async function main() {
     }
   });
 
-  for (const fn of ['trg_estado_pago_ocr_automatico', 'rpc_purge_old_records']) {
+  for (const fn of ['trg_estado_pago_ocr_automatico', 'rpc_purge_old_records', 'normalize_delivery_category']) {
     await test(`${fn} no es RPC anónimo`, async () => {
-      assertDenied(await request(`rpc/${fn}`, { method: 'POST', body: '{}' }), fn);
+      const body = fn === 'normalize_delivery_category' ? JSON.stringify({ p_value: 'gas' }) : '{}';
+      assertDenied(await request(`rpc/${fn}`, { method: 'POST', body }), fn);
+    });
+  }
+
+  await test('crear aviso exige sesión real', async () => {
+    assertDenied(await request('rpc/rpc_crear_aviso_vecinal', {
+      method: 'POST',
+      body: JSON.stringify({ p_ciudad: 'lima', p_titulo: 'probe', p_descripcion: 'probe' })
+    }), 'rpc_crear_aviso_vecinal');
+  });
+
+  for (const [fn, body] of [
+    ['incrementar_votos_aviso', { aviso_id: '00000000-0000-0000-0000-000000000000', incremento: 1 }],
+    ['incrementar_votos_comentario', { comentario_id: '00000000-0000-0000-0000-000000000000', incremento: -1 }]
+  ]) {
+    await test(`${fn} exige sesión real`, async () => {
+      assertDenied(await request(`rpc/${fn}`, { method: 'POST', body: JSON.stringify(body) }), fn);
     });
   }
 
