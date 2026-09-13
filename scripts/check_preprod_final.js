@@ -18,8 +18,10 @@ const readme = read('README.md');
 const snapshot = read('supabase/full_production_schema.sql');
 const migration = read('supabase/migrations/20260911205957_preprod_final_security_and_credit_messages.sql');
 const legacyDrivers = read('supabase/migrations/20260911210832_close_legacy_repartidores_public_read.sql');
+const legacyCleanup = read('supabase/migrations/20260910182449_legacy_cleanup_retention_and_privileges.sql');
 const hardening = read('supabase/migrations/20260913003000_security_surface_hardening.sql');
 const adminWrites = read('supabase/migrations/20260913004500_require_real_auth_for_administration_writes.sql');
+const recheck = read('supabase/migrations/20260913085148_recheck_retention_and_internal_rpc.sql');
 const adsSeparation = read('supabase/migrations/20260824043251_separate_ads_from_notices.sql');
 const integration = read('scripts/test_db_integration.js');
 const ci = read('.github/workflows/ci.yml');
@@ -45,6 +47,10 @@ must(/Alcanzaste tu límite de crédito: % pedidos cobrables \/ S\/ %/i.test(mig
 must(/DROP POLICY IF EXISTS "Lectura publica repartidores"/i.test(legacyDrivers), 'tabla repartidores legacy ya no es pública');
 must(/REVOKE ALL ON public\.repartidores FROM PUBLIC, anon, authenticated/i.test(legacyDrivers), 'teléfono/placa legacy quedan cerrados');
 
+must(/CREATE OR REPLACE FUNCTION public\.rpc_purge_old_records/i.test(legacyCleanup), 'migración histórica legacy_cleanup contiene el SQL remoto real');
+must(/CREATE OR REPLACE FUNCTION public\.delete_user_account/i.test(legacyCleanup), 'migración histórica conserva borrado de cuenta aplicado');
+must(/180 days/i.test(legacyCleanup), 'migración histórica conserva retención de archivo aplicada');
+
 must(/private\.is_admin_email_internal/i.test(hardening), 'autorización admin privilegiada vive fuera del API público');
 must(/public\.is_admin_email\(\)[\s\S]*SECURITY INVOKER/i.test(hardening), 'wrapper admin público usa privilegios del invocador');
 must(/internal_pre_auth\.check_device_block/i.test(hardening), 'chequeo de dispositivo privilegiado vive en esquema no expuesto');
@@ -60,13 +66,17 @@ for (const policy of [
   'anuncios_nativos_insert', 'anuncios_nativos_update', 'anuncios_nativos_delete',
   'config_publicidad_insert', 'config_publicidad_update', 'config_publicidad_delete',
   'storage_anuncios_admin_insert', 'storage_anuncios_admin_update', 'storage_anuncios_admin_delete'
-]) {
-  must(adminWrites.includes(policy), `escritura administrativa ${policy} queda redefinida`);
-}
+]) must(adminWrites.includes(policy), `escritura administrativa ${policy} queda redefinida`);
 must((adminWrites.match(/is_anonymous/g) || []).length >= 12, 'todas las escrituras administrativas exigen sesión no anónima');
 must(/CREATE POLICY "storage_anuncios_read"[\s\S]*FOR SELECT TO public/i.test(adsSeparation), 'lectura pública de media publicitaria se conserva');
 
+must((recheck.match(/interval '24 hours'/g) || []).length >= 5, 'purga final usa contrato de 24 horas');
+must(/'entregado','cancelado','recibido'/i.test(recheck), 'purga final contempla todos los estados terminales');
+must(/trg_estado_pago_ocr_automatico\(\).*FROM PUBLIC, anon, authenticated/is.test(recheck), 'trigger OCR interno no queda expuesto como RPC');
+must(/rpc_purge_old_records\(\).*FROM PUBLIC, anon, authenticated/is.test(recheck), 'purga administrativa no queda expuesta al cliente');
+
 for (const required of [
+  '20260910182449_legacy_cleanup_retention_and_privileges.sql',
   '20260911020205_preprod_states_routes_privacy.sql',
   '20260911020222_preprod_public_views_privacy.sql',
   '20260911020236_preprod_payment_configuration.sql',
@@ -82,10 +92,11 @@ for (const required of [
   '20260911211430_require_real_auth_for_banned_admin.sql',
   '20260911211439_require_real_auth_for_vote_records.sql',
   '20260913003000_security_surface_hardening.sql',
-  '20260913004500_require_real_auth_for_administration_writes.sql'
-]) {
-  must(exists(`supabase/migrations/${required}`), `Git contiene migración remota ${required}`);
-}
+  '20260913004500_require_real_auth_for_administration_writes.sql',
+  '20260913043142_optimize_security_rls_initplans.sql',
+  '20260913044520_revoke_anon_internal_table_reads.sql',
+  '20260913085148_recheck_retention_and_internal_rpc.sql'
+]) must(exists(`supabase/migrations/${required}`), `Git contiene migración remota ${required}`);
 
 must(integration.includes('order_public_radar'), 'integración verifica radar');
 must(integration.includes('rpc_get_driver_available_orders'), 'integración verifica RPC legacy revocado');
