@@ -78,6 +78,9 @@ jobs:
       - name: Verify Audit Hardening Invariants
         run: node scripts/check_audit_hardening.js
 
+      - name: Verify Yape Remesas Contract
+        run: node scripts/check_yape_remittance_contract.js
+
       - name: Verify Order Privacy Contract
         run: node scripts/check_order_privacy.js
 
