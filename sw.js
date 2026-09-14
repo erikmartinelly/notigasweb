@@ -1,31 +1,13 @@
-/* NOTIGAS SERVICE WORKER v135.0 - CACHE PROGRESIVO Y MODO OFFLINE */
-const CACHE_NAME = 'notigas-cache-v135';
+/* NOTIGAS SERVICE WORKER v136.0 - CACHE PROGRESIVO Y MODO OFFLINE */
+const CACHE_NAME = 'notigas-cache-v136';
+
+// Mantener el precache inicial deliberadamente pequeño. La página principal ya
+// descarga sus módulos durante el primer render; volver a pedir todos los JS con
+// cache:'reload' durante install duplicaba tráfico y competía con el arranque.
+// El resto de recursos se incorpora al cache progresivamente al ser utilizado.
 const ASSETS_TO_CACHE = [
-  './',
   './index.html',
   './styles/main.css?v=135',
-  './js/driver_icons.js?v=135',
-  './js/state.js?v=135',
-  './js/ui.js?v=135',
-  './js/supabase-config.js?v=135',
-  './js/voucher_ocr.js?v=135',
-  './js/auth.js?v=135',
-  './js/vendors.js?v=135',
-  './js/map.js?v=135',
-  './js/map_search.js?v=135',
-  './js/map_gps.js?v=135',
-  './js/orders.js?v=135',
-  './js/forum.js?v=135',
-  './js/promo.js?v=135',
-  './js/admin_users.js?v=135',
-  './js/admin.js?v=135',
-  './js/admin_payments.js?v=135',
-  './js/admin_payment_config.js?v=135',
-  './js/driver_payments.js?v=135',
-  './js/driver_order_rules.js?v=135',
-  './js/order_privacy_layer.js?v=135',
-  './js/app.js?v=135',
-  './js/events.js?v=135',
   './icons/camion_dina_rojo.svg',
   './icons/garrafa_red_clean.svg',
   './icons/garrafa_red-192.png',
@@ -36,7 +18,7 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => Promise.allSettled(
-      ASSETS_TO_CACHE.map((asset) => fetch(asset, { cache: 'reload' })
+      ASSETS_TO_CACHE.map((asset) => fetch(asset)
         .then((response) => {
           if (response.ok) return cache.put(asset, response);
           console.warn('SW: No se pudo cachear:', asset);
@@ -83,6 +65,8 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
+        // Stale-while-revalidate: respuesta inmediata desde cache y renovación
+        // en segundo plano sin bloquear la interacción del usuario.
         fetch(event.request, { cache: 'no-cache' }).then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
             const clone = networkResponse.clone();
@@ -91,6 +75,7 @@ self.addEventListener('fetch', (event) => {
         }).catch(() => {});
         return cachedResponse;
       }
+
       return fetch(event.request).then((networkResponse) => {
         if (networkResponse && networkResponse.status === 200) {
           const clone = networkResponse.clone();
