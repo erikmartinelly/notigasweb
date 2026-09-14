@@ -37,8 +37,13 @@ jobs:
               curl -fsS 'http://127.0.0.1:3000/js/app.js?v=135' > /tmp/notigas-app.js
               grep -q '🌍 Todos' /tmp/notigas-index.html
               grep -q '<script defer src="js/driver_icons.js?v=135"></script>' /tmp/notigas-index.html
+              grep -q '<script defer src="js/device_security.js?v=135"></script>' /tmp/notigas-index.html
               if grep -q '<script src="js/driver_icons.js?v=135"></script>' /tmp/notigas-index.html; then
                 echo 'driver_icons.js todavía bloquea el parser'
+                exit 1
+              fi
+              if grep -q '<script src="js/device_security.js?v=135"></script>' /tmp/notigas-index.html; then
+                echo 'device_security.js todavía bloquea el parser'
                 exit 1
               fi
               if grep -q "rpc_purge_old_records" /tmp/notigas-app.js; then

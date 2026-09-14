@@ -9,14 +9,17 @@ const RATE_LIMIT_MAX_REQUESTS = 200;
 const requestCounters = new Map();
 const INDEX_PATH = path.join(__dirname, 'index.html');
 const APP_JS_PATH = path.join(__dirname, 'js', 'app.js');
-// El HTML histórico conserva un carácter mojibake en el filtro "Todos" y un
-// script local que bloquea el parser. Se corrigen al servir sin reescribir el
-// monolito completo a ciegas.
+// El HTML histórico conserva un carácter mojibake y dos scripts locales que
+// bloqueaban el parser. Se corrigen al servir sin reescribir el monolito.
 const INDEX_HTML = fs.readFileSync(INDEX_PATH, 'utf8')
   .replace('🌍 Todos', '🌍 Todos')
   .replace(
     '<script src="js/driver_icons.js?v=135"></script>',
     '<script defer src="js/driver_icons.js?v=135"></script>'
+  )
+  .replace(
+    '<script src="js/device_security.js?v=135"></script>',
+    '<script defer src="js/device_security.js?v=135"></script>'
   );
 
 // Esta purga era disparada por todos los navegadores tres segundos después de
@@ -41,8 +44,6 @@ const APP_JS = fs.readFileSync(APP_JS_PATH, 'utf8').replace(
 );
 
 app.disable('x-powered-by');
-// Hostinger termina HTTPS delante de la aplicación. Con un salto de proxy,
-// req.ip sigue representando al visitante y no a toda la plataforma.
 app.set('trust proxy', 1);
 
 function limpiarContadoresExpirados(now) {
@@ -79,7 +80,6 @@ function limitarSolicitudes(req, res, next) {
   return next();
 }
 
-// Encabezados de seguridad
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
@@ -123,18 +123,15 @@ app.use((req, res, next) => {
 
 app.use(limitarSolicitudes);
 
-// Endpoint de salud
 app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
 
-// Servir ads.txt con Content-Type texto plano
 app.get('/ads.txt', (req, res) => {
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
   res.sendFile(path.join(__dirname, 'ads.txt'));
 });
 
-// Servir sw.js con encabezados de Service Worker
 app.get('/sw.js', (req, res) => {
   res.setHeader('Content-Type', 'application/javascript');
   res.setHeader('Service-Worker-Allowed', '/');
@@ -142,7 +139,6 @@ app.get('/sw.js', (req, res) => {
   res.sendFile(path.join(__dirname, 'sw.js'));
 });
 
-// Bloquear el acceso a archivos y carpetas sensibles del backend
 const blacklistedPaths = [
   '/server.js',
   '/package.json',
@@ -170,21 +166,16 @@ app.use((req, res, next) => {
 });
 
 function sendIndex(req, res) {
-  // El documento principal debe revalidarse para recibir inmediatamente nuevos
-  // despliegues y nuevas referencias de versión de los recursos.
   res.setHeader('Cache-Control', 'no-cache, must-revalidate');
   res.type('html').send(INDEX_HTML);
 }
 
-// Interceptar explícitamente documentos transformados antes de express.static.
 app.get(['/', '/index.html'], sendIndex);
 app.get('/js/app.js', (req, res) => {
   res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
   res.type('application/javascript').send(APP_JS);
 });
 
-// JS/CSS e imágenes pueden reutilizarse entre visitas. Un TTL moderado evita
-// descargar otra vez cientos de KB sin impedir que un despliegue se propague.
 const STATIC_CACHE_MAX_AGE_MS = 60 * 60 * 1000;
 app.use(express.static(__dirname, {
   index: false,
@@ -196,7 +187,6 @@ app.use(express.static(__dirname, {
   }
 }));
 
-// Fallback SPA para PWA
 app.get('*', sendIndex);
 
 app.listen(PORT, '0.0.0.0', () => {
