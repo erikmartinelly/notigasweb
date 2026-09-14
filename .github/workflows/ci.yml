@@ -41,6 +41,12 @@ jobs:
               grep -q '<script defer src="js/device_security.js?v=135"></script>' /tmp/notigas-index.html
               grep -q 'id="driverCreditProgressiveTerms"' /tmp/notigas-index.html
               grep -q 'El primer ciclo cobrable permite <strong>100 pedidos = S/ 20</strong>' /tmp/notigas-index.html
+              grep -q '🎁 PRUEBA GRATIS' /tmp/notigas-index.html
+              grep -q 'Los primeros 50 pedidos son gratis. Desde el pedido 51 en adelante se cobra <strong>S/ 0,20 por pedido</strong>.' /tmp/notigas-index.html
+              if grep -Eq 'Elige tu Modalidad de Registro|Plan Gratuito|Pedidos con <strong>3 min de espera</strong>|Ficha básica sin corona VIP' /tmp/notigas-index.html; then
+                echo 'La ficha de repartidor volvió a mostrar el selector de planes heredado'
+                exit 1
+              fi
               if grep -q 'El primer ciclo cobrable permite <strong>100 pedidos = S/ 20</strong>' /tmp/notigas-driver-rules.js; then
                 echo 'El detalle de crédito todavía aparece en el formulario de registro de repartidores'
                 exit 1
@@ -77,6 +83,9 @@ jobs:
 
       - name: Verify Audit Hardening Invariants
         run: node scripts/check_audit_hardening.js
+
+      - name: Verify Driver Free Trial Registration
+        run: node scripts/normalize_driver_free_trial.js --check
 
       - name: Verify Yape Remesas Contract
         run: node scripts/check_yape_remittance_contract.js
