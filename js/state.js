@@ -56,21 +56,45 @@ window.ORDER_STATES = Object.freeze({
    CARGADOR ASÍNCRONO DE MÓDULOS BAJO DEMANDA (CODE-SPLITTING)
    ===================================================== */
 window._loadedDynamicModules = window._loadedDynamicModules || {};
+window._dynamicModulePromises = window._dynamicModulePromises || {};
 
 window.loadScriptAsync = function(src) {
-  return new Promise((resolve, reject) => {
-    if (window._loadedDynamicModules[src] || document.querySelector(`script[src*="${src}"]`)) {
-      resolve();
-      return;
+  if (window._loadedDynamicModules[src]) return Promise.resolve();
+  if (window._dynamicModulePromises[src]) return window._dynamicModulePromises[src];
+
+  const existing = document.querySelector(`script[src*="${src}"]`);
+  if (existing) {
+    if (existing.dataset.notigasLoaded === 'true') {
+      window._loadedDynamicModules[src] = true;
+      return Promise.resolve();
     }
+    window._dynamicModulePromises[src] = new Promise((resolve, reject) => {
+      existing.addEventListener('load', () => {
+        existing.dataset.notigasLoaded = 'true';
+        window._loadedDynamicModules[src] = true;
+        delete window._dynamicModulePromises[src];
+        resolve();
+      }, { once: true });
+      existing.addEventListener('error', (e) => {
+        delete window._dynamicModulePromises[src];
+        reject(e);
+      }, { once: true });
+    });
+    return window._dynamicModulePromises[src];
+  }
+
+  window._dynamicModulePromises[src] = new Promise((resolve, reject) => {
     const script = document.createElement('script');
     script.src = `${src}?v=${window.NOTIGAS.CACHE_VERSION}`;
     script.async = true;
     script.onload = () => {
+      script.dataset.notigasLoaded = 'true';
       window._loadedDynamicModules[src] = true;
+      delete window._dynamicModulePromises[src];
       resolve();
     };
     script.onerror = (e) => {
+      delete window._dynamicModulePromises[src];
       const err = new Error(`Error al cargar el módulo dinámico: ${src}`);
       console.error(`❌ [loadScriptAsync] ${err.message}`, e);
       if (typeof showToast === 'function') {
@@ -80,6 +104,8 @@ window.loadScriptAsync = function(src) {
     };
     document.body.appendChild(script);
   });
+
+  return window._dynamicModulePromises[src];
 };
 
 window.loadAdminModules = async function() {
@@ -99,6 +125,12 @@ window.loadAdminModules = async function() {
   if (typeof window.wrapAdminPaymentsWithConfig === 'function') window.wrapAdminPaymentsWithConfig();
 };
 
+window.loadOrderPrivacyModule = async function() {
+  if (!window.NOTIGAS_ORDER_PRIVACY_READY) {
+    await window.loadScriptAsync('js/order_privacy_layer.js');
+  }
+};
+
 window.loadDriverPaymentsModule = async function() {
   if (typeof window.ensureDriverPaymentsMenu !== 'function') {
     await window.loadScriptAsync('js/driver_payments.js');
@@ -108,11 +140,8 @@ window.loadDriverPaymentsModule = async function() {
   if (typeof window.reportarNoEntregadoPedido !== 'function') {
     await window.loadScriptAsync('js/driver_order_rules.js');
   }
-  // Capa transversal para compradores y repartidores: pedidos libres solo como
-  // área aproximada de 50 m; los datos exactos se habilitan tras la asignación.
-  if (!window.NOTIGAS_ORDER_PRIVACY_READY) {
-    await window.loadScriptAsync('js/order_privacy_layer.js');
-  }
+  // La privacidad sí es transversal, pero se carga solo después de autenticar.
+  await window.loadOrderPrivacyModule();
 };
 
 window.loadForumModule = async function() {
@@ -120,22 +149,22 @@ window.loadForumModule = async function() {
   await window.loadScriptAsync('js/forum.js');
 };
 
-window._adsModuleLoadPromise = null; 
-window.loadAdsModule = async function () { 
-  if (typeof window.cargarAnunciosGuardados !== 'function') { 
-    if (!window._adsModuleLoadPromise) { 
-      window._adsModuleLoadPromise = window.loadScriptAsync(`js/promo.js`).catch((error) => { 
-        window._adsModuleLoadPromise = null; 
+window._adsModuleLoadPromise = null;
+window.loadAdsModule = async function () {
+  if (typeof window.cargarAnunciosGuardados !== 'function') {
+    if (!window._adsModuleLoadPromise) {
+      window._adsModuleLoadPromise = window.loadScriptAsync(`js/promo.js`).catch((error) => {
+        window._adsModuleLoadPromise = null;
         throw error;
-      }); 
-    } 
-    await window._adsModuleLoadPromise; 
+      });
+    }
+    await window._adsModuleLoadPromise;
   }
-  if (typeof window.initializeAdsModule === 'function') { 
-    return window.initializeAdsModule(); 
+  if (typeof window.initializeAdsModule === 'function') {
+    return window.initializeAdsModule();
   }
-  if (typeof window.cargarAnunciosGuardados === 'function') { 
-    return window.cargarAnunciosGuardados(); 
+  if (typeof window.cargarAnunciosGuardados === 'function') {
+    return window.cargarAnunciosGuardados();
   }
 };
 
@@ -352,14 +381,23 @@ window.loadAdsModule = async function () {
   window.AppState = AppState;
   console.log('✅ AppState inicializado.');
 
-  const loadDriverPayments = () => {
-    window.loadDriverPaymentsModule?.().catch((err) => {
-      console.warn('No se pudo cargar el módulo de pagos/reglas/privacidad del repartidor:', err);
+  // No cargar pagos/reglas de repartidor para visitantes y compradores. La capa
+  // de privacidad se activa al existir una sesión; los módulos exclusivos del
+  // repartidor se cargan únicamente cuando la identidad tiene ficha/rol driver.
+  const loadModulesForUser = (userData) => {
+    if (!userData || !userData.user_id) return;
+
+    window.loadOrderPrivacyModule?.().catch((err) => {
+      console.warn('No se pudo cargar la capa de privacidad de pedidos:', err);
     });
+
+    if (userData.role === 'repartidor' || userData.hasDriverProfile === true) {
+      window.loadDriverPaymentsModule?.().catch((err) => {
+        console.warn('No se pudo cargar el módulo de pagos/reglas del repartidor:', err);
+      });
+    }
   };
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadDriverPayments, { once: true });
-  } else {
-    loadDriverPayments();
-  }
+
+  AppState.on('userData', loadModulesForUser);
+  loadModulesForUser(AppState.get('userData'));
 })();
