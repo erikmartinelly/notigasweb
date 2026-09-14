@@ -8,6 +8,7 @@ const RATE_LIMIT_WINDOW_MS = 60 * 1000;
 const RATE_LIMIT_MAX_REQUESTS = 200;
 const requestCounters = new Map();
 const INDEX_PATH = path.join(__dirname, 'index.html');
+const APP_JS_PATH = path.join(__dirname, 'js', 'app.js');
 // El HTML histórico conserva un carácter mojibake en el filtro "Todos" y un
 // script local que bloquea el parser. Se corrigen al servir sin reescribir el
 // monolito completo a ciegas.
@@ -17,6 +18,27 @@ const INDEX_HTML = fs.readFileSync(INDEX_PATH, 'utf8')
     '<script src="js/driver_icons.js?v=135"></script>',
     '<script defer src="js/driver_icons.js?v=135"></script>'
   );
+
+// Esta purga era disparada por todos los navegadores tres segundos después de
+// cargar, pero producción revoca EXECUTE para anon/authenticated y pg_cron ya
+// ejecuta rpc_purge_old_records() cada hora. Servirla al cliente solo generaba
+// una petición fallida adicional contra Supabase.
+const DEAD_CLIENT_PURGE = `// Purga automática preventiva en segundo plano al iniciar la app
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    if (window.supabaseClient && typeof window.supabaseClient.rpc === 'function') {
+      window.supabaseClient.rpc('rpc_purge_old_records').then(({ data }) => {
+        if (data && (data.pedidos_eliminados > 0 || data.avisos_eliminados > 0)) {
+          console.info('Purga automática preventiva realizada:', data);
+        }
+      }).catch(() => {});
+    }
+  }, 3000);
+});`;
+const APP_JS = fs.readFileSync(APP_JS_PATH, 'utf8').replace(
+  DEAD_CLIENT_PURGE,
+  '// La purga de retención se ejecuta exclusivamente en servidor mediante pg_cron.'
+);
 
 app.disable('x-powered-by');
 // Hostinger termina HTTPS delante de la aplicación. Con un salto de proxy,
@@ -154,8 +176,12 @@ function sendIndex(req, res) {
   res.type('html').send(INDEX_HTML);
 }
 
-// Interceptar explícitamente el documento principal antes de express.static.
+// Interceptar explícitamente documentos transformados antes de express.static.
 app.get(['/', '/index.html'], sendIndex);
+app.get('/js/app.js', (req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+  res.type('application/javascript').send(APP_JS);
+});
 
 // JS/CSS e imágenes pueden reutilizarse entre visitas. Un TTL moderado evita
 // descargar otra vez cientos de KB sin impedir que un despliegue se propague.
