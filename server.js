@@ -22,7 +22,8 @@ const DRIVER_CREDIT_TERMS_COPY = `
 // El HTML histórico conserva un carácter mojibake y dos scripts locales que
 // bloqueaban el parser. Se corrigen al servir sin reescribir el monolito.
 // El detalle de escalamiento del crédito pertenece a Términos para Repartidores,
-// no al formulario de alta.
+// no al formulario de alta. La ficha de repartidor se normaliza a una única
+// modalidad con prueba gratis mediante driver_free_trial_registration.js.
 const INDEX_HTML = fs.readFileSync(INDEX_PATH, 'utf8')
   .replace('🌍 Todos', '🌍 Todos')
   .replace(
@@ -36,6 +37,10 @@ const INDEX_HTML = fs.readFileSync(INDEX_PATH, 'utf8')
   .replace(
     DRIVER_CREDIT_TERMS_HEADING,
     `${DRIVER_CREDIT_TERMS_HEADING}${DRIVER_CREDIT_TERMS_COPY}`
+  )
+  .replace(
+    '</body>',
+    '  <script defer src="js/driver_free_trial_registration.js?v=135"></script>\n</body>'
   );
 
 // Esta purga era disparada por todos los navegadores tres segundos después de
