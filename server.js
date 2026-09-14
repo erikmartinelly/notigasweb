@@ -142,6 +142,8 @@ app.use((req, res, next) => {
 });
 
 function sendIndex(req, res) {
+  // El documento principal debe revalidarse para recibir inmediatamente nuevos
+  // despliegues y nuevas referencias de versión de los recursos.
   res.setHeader('Cache-Control', 'no-cache, must-revalidate');
   res.type('html').send(INDEX_HTML);
 }
@@ -149,8 +151,18 @@ function sendIndex(req, res) {
 // Interceptar explícitamente el documento principal antes de express.static.
 app.get(['/', '/index.html'], sendIndex);
 
-// Servir archivos estáticos del proyecto
-app.use(express.static(__dirname, { index: false }));
+// JS/CSS e imágenes pueden reutilizarse entre visitas. Un TTL moderado evita
+// descargar otra vez cientos de KB sin impedir que un despliegue se propague.
+const STATIC_CACHE_MAX_AGE_MS = 60 * 60 * 1000;
+app.use(express.static(__dirname, {
+  index: false,
+  maxAge: STATIC_CACHE_MAX_AGE_MS,
+  setHeaders(res, filePath) {
+    if (/\.(?:js|css|svg|png|jpe?g|webp|ico|woff2?|ttf)$/i.test(filePath)) {
+      res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+    }
+  }
+}));
 
 // Fallback SPA para PWA
 app.get('*', sendIndex);
