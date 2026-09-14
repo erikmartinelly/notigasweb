@@ -36,14 +36,17 @@ try {
   assertHas('js/driver_order_rules.js', /promo_pedidos_gratis_(?:total|usados)/i, 'La UI no consulta el contador promocional');
   assertHas('js/driver_order_rules.js', /remesas_confirmadas/i, 'La UI no conoce el nivel de remesas');
 
-  for (const p of ['js/driver_payments.js', 'js/admin_payments.js']) {
-    assertNo(p, /Bolivia|bolivian|\bBOB\b|monto_recibido_bob|Yape Bolivia/i, 'Pagos conserva lógica Bolivia/BOB');
-  }
+  assertNo('js/admin_payments.js', /\bBOB\b|monto_recibido_bob|Yape Bolivia/i, 'Pagos admin conserva lógica BOB');
+  assertHas('js/driver_payments.js', /Yape[\s\S]{0,80}Remesas[\s\S]{0,80}Bolivia/i, 'Pagos no exige Yape Remesas a Bolivia');
   assertHas('js/driver_payments.js', /p_monto_enviado_pen/, 'Falta monto PEN en contrato OCR');
-  assertHas('js/driver_payments.js', /missing\.push\('nombre del destinatario'\)/, 'OCR cliente no exige nombre del destinatario');
-  assertHas('js/driver_payments.js', /missing\.push\('Yape del destinatario'\)/, 'OCR cliente no exige Yape del destinatario');
+  assertHas('js/driver_payments.js', /missing\.push\('nombre del beneficiario'\)/, 'OCR cliente no exige beneficiario');
+  assertHas('js/driver_payments.js', /missing\.push\('documento del beneficiario'\)/, 'OCR cliente no exige documento del beneficiario');
+  assertHas('js/driver_payments.js', /missing\.push\('cuenta de destino'\)/, 'OCR cliente no exige cuenta de destino');
+  assertHas('js/driver_payments.js', /p_pais_destino/, 'OCR cliente no envía país de destino');
+  assertHas('js/driver_payments.js', /p_canal_pago/, 'OCR cliente no envía canal de pago');
   assertHas('js/admin_payment_config.js', /disableLegacyPremiumAdmin/, 'No se neutraliza el admin Premium heredado');
-  assertHas('js/driver_payments.js', /9\[0-9\]\{8\}/, 'OCR no reconoce Yape Perú de 9 dígitos');
+  assertHas('js/voucher_ocr.js', /expectedAmount/, 'OCR sigue sin usar el monto real del cobro');
+  assertNo('js/voucher_ocr.js', /const esperado = 20/, 'OCR conserva sesgo fijo a S/20');
   assertNo('js/voucher_ocr.js', /\.rpc\(\s*['"](?:rpc_registrar_ocr_pago|rpc_driver_submit_premium_payment)['"]|\.from\(\s*['"]vouchers-premium['"]/, 'OCR genérico todavía persiste pagos o Premium');
 
   assertNo('js/admin_users.js', /Falta de pago de comisi[oó]n\s*\(S\/\s*1 por bal[oó]n\)|\.rpc\(\s*['"]rpc_ejecutar_(?:corte_semanal_comisiones|baneo_semanal_morosos)['"]/i, 'Administración conserva el modelo semanal/S1');
@@ -82,6 +85,7 @@ try {
     '20260910220052_remove_obsolete_weekly_financial_rpcs.sql',
     '20260910225938_driver_50_free_and_progressive_credit_tiers.sql',
     '20260910234110_make_payment_suspensions_reversible_on_full_payment.sql',
+    '20260914164500_yape_remittance_bolivia_auto_ocr.sql',
     '20260911011500_preprod_security_payment_hardening.sql',
     '20260911022526_secure_order_radar_and_registered_driver_visibility.sql'
   ]) {
