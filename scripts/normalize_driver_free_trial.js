@@ -62,10 +62,10 @@ try {
     'Pedidos con <strong>3 min de espera</strong>',
     'En mapa clientes con <strong>1 min de espera</strong>',
     'Ficha básica sin corona VIP',
-    'cardPlanDriverPro',
-    'cardPlanDriverGratuito',
-    'btnCambiarAProDesdeGratuito',
-    'driverPremiumGratuitoContent'
+    'id="cardPlanDriverPro"',
+    'id="cardPlanDriverGratuito"',
+    'id="btnCambiarAProDesdeGratuito"',
+    'id="driverPremiumGratuitoContent"'
   ];
   for (const token of forbiddenIndex) {
     if (index.includes(token)) throw new Error(`index.html conserva UI heredada: ${token}`);
