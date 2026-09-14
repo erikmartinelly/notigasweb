@@ -979,23 +979,6 @@ async function iniciarSesionRepartidor() {
     return;
   }
 
-  const planTipo = 'credito';
-  const fileVoucher = document.getElementById('inputDriverVoucherFile')?.files?.[0];
-  const yaEsVip = false;
-
-  // Si eligió PRO pero aún no es VIP y no ha seleccionado comprobante, advertir amablemente
-  if (false) {
-    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-    if (typeof showToast === 'function') {
-      showToast('📸 Falta Comprobante de Remesa', 'El registro de repartidor no requiere suscripción ni pago inicial.', 'warning', 6500);
-    } else {
-      alert('Para el Plan PRO, por favor sube tu captura de comprobante de Remesa por Yape al 987-654-321. O selecciona el Plan Gratuito.');
-    }
-    const sec = document.getElementById('driverPremiumPaymentSection');
-    if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    return;
-  }
-
   const repartidorData = {
     role: 'repartidor',
     nombre: nombreNegocio,
@@ -1027,15 +1010,6 @@ async function iniciarSesionRepartidor() {
 
   AppState.set('userData', repartidorData);
 
-  // Si eligió PRO y adjuntó comprobante, procesarlo de inmediato para activación instantánea
-  if (planTipo === 'pro' && fileVoucher) {
-    try {
-      await enviarComprobantePagoPremium();
-    } catch (vErr) {
-      console.warn("Aviso al procesar comprobante durante registro:", vErr);
-    }
-  }
-
   if (typeof window.cambiarCiudad === 'function') {
     try {
       await window.cambiarCiudad(ciudad.toLowerCase());
@@ -1055,14 +1029,8 @@ async function iniciarSesionRepartidor() {
     setAppMode('driver');
   }
 
-  if (planTipo === 'pro') {
-    if (typeof showToast === 'function') {
-      showToast('🎁 Cuenta de repartidor activada', `¡Bienvenido ${nombreNegocio}! Tus primeros 50 pedidos confirmados son gratuitos.`, 'success', 6500);
-    }
-  } else {
-    if (typeof showToast === 'function') {
-      showToast('🎁 Cuenta de repartidor activada', `Ficha de ${nombreNegocio} registrada. Tus primeros 50 pedidos confirmados son gratuitos.`, 'success', 6000);
-    }
+  if (typeof showToast === 'function') {
+    showToast('🎁 Cuenta de repartidor activada', `Ficha de ${nombreNegocio} registrada. Tus primeros 50 pedidos confirmados son gratuitos.`, 'success', 6000);
   }
 
   if (typeof renderVendorCards === 'function') {
@@ -2443,18 +2411,6 @@ window.actualizarVistaPreviaCamionChofer = actualizarVistaPreviaCamionChofer;
 function seleccionarPlanRegistroChofer() {
   const inputTipo = document.getElementById('inputDriverPlanTipo');
   if (inputTipo) inputTipo.value = 'credito';
-  const cardPro = document.getElementById('cardPlanDriverPro');
-  const proContent = document.getElementById('driverPremiumProContent');
-  const paymentSection = document.getElementById('driverPremiumPaymentSection');
-  const statusBadge = document.getElementById('driverPremiumStatusBadge');
-  if (cardPro) cardPro.style.display = 'none';
-  if (proContent) proContent.style.display = 'none';
-  if (paymentSection) paymentSection.style.display = 'none';
-  if (statusBadge) statusBadge.style.display = 'none';
-  const cardBase = document.getElementById('cardPlanDriverGratuito');
-  if (cardBase) { cardBase.style.display = 'block'; cardBase.style.opacity = '1'; cardBase.style.border = '2px solid #10B981'; }
-  const content = document.getElementById('driverPremiumGratuitoContent');
-  if (content) { content.style.display = 'block'; content.innerHTML = '<p style="margin:0;font-size:11px;color:#CBD5E1;line-height:1.5;">Registro sin suscripción mensual. Tus primeros 50 pedidos confirmados son gratuitos. Después se aplica S/ 0,20 por pedido: primer ciclo S/ 20, luego crédito S/ 50 tras la primera remesa y S/ 100 tras la tercera.</p>'; }
   const btnText = document.getElementById('btnDriverSubmitText');
   if (btnText) btnText.textContent = 'Guardar ficha de repartidor';
 }
@@ -2462,7 +2418,7 @@ window.seleccionarPlanRegistroChofer = seleccionarPlanRegistroChofer;
 
 
 /**
- * Carga los datos del chofer (incluyendo precio del balón de 10 Kg, tipo de plan y suscripción Premium)
+ * Carga los datos vigentes del chofer en el formulario de edición.
  * en los campos del modal de chofer (#modalDriver).
  */
 async function cargarPerfilChoferEnModal() {
@@ -2504,60 +2460,9 @@ async function cargarPerfilChoferEnModal() {
     if (driverRow.color_camion && typeof seleccionarColorCamionModal === 'function') {
       seleccionarColorCamionModal(driverRow.color_camion);
     }
-    seleccionarPlanRegistroChofer('credito');
-    actualizarEstadoUIPerfilPremium(driverRow);
+    seleccionarPlanRegistroChofer();
   } catch (err) {
     console.warn('Error al cargar perfil de chofer en modal:', err);
   }
 }
 window.cargarPerfilChoferEnModal = cargarPerfilChoferEnModal;
-
-/**
- * Oculta controles heredados de suscripción que ya no forman parte del modelo vigente.
- */
-function actualizarEstadoUIPerfilPremium() {
-  ['driverPremiumStatusBadge','driverPremiumActiveAlert','driverPremiumPendingAlert','driverPremiumProContent','driverPremiumPaymentSection'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = 'none';
-  });
-}
-window.actualizarEstadoUIPerfilPremium = actualizarEstadoUIPerfilPremium;
-
-
-let ultimoResultadoVoucherOcr = null;
-
-/**
- * Maneja el evento change al seleccionar un comprobante en el modal de chofer.
- * Ejecuta OCR automático en el cliente y muestra los resultados detectados.
- */
-async function manejarSeleccionVoucherDriver() {
-  if (typeof showToast === 'function') showToast('Pagos', 'Los pagos de comisiones se gestionan desde la sección Pagos del repartidor.', 'info', 3500);
-}
-window.manejarSeleccionVoucherDriver = manejarSeleccionVoucherDriver;
-
-
-/**
- * Sube el comprobante de pago QR a Supabase Storage (bucket 'vouchers-premium')
- * y llama al RPC 'rpc_driver_submit_premium_payment' para activación VIP inmediata.
- */
-async function enviarComprobantePagoPremium() {
-  if (typeof showToast === 'function') showToast('Función retirada', 'No existen suscripciones PRO/VIP. Usa la sección Pagos únicamente cuando alcances el límite de crédito.', 'info', 4500);
-}
-window.enviarComprobantePagoPremium = enviarComprobantePagoPremium;
-
-
-// Hook para los controles de voucher en modalDriver
-document.addEventListener('DOMContentLoaded', () => {
-  const inputVoucher = document.getElementById('inputDriverVoucherFile');
-  if (inputVoucher) {
-    inputVoucher.addEventListener('change', manejarSeleccionVoucherDriver);
-  }
-
-  const btnSubmitVoucher = document.getElementById('btnDriverSubmitVoucher');
-  if (btnSubmitVoucher) {
-    btnSubmitVoucher.addEventListener('click', (e) => {
-      e.preventDefault();
-      enviarComprobantePagoPremium();
-    });
-  }
-});
