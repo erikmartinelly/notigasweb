@@ -9,8 +9,20 @@ const RATE_LIMIT_MAX_REQUESTS = 200;
 const requestCounters = new Map();
 const INDEX_PATH = path.join(__dirname, 'index.html');
 const APP_JS_PATH = path.join(__dirname, 'js', 'app.js');
+const DRIVER_ORDER_RULES_PATH = path.join(__dirname, 'js', 'driver_order_rules.js');
+
+const DRIVER_CREDIT_TERMS_HEADING = `          <strong style="color: #FCA5A5; display: block; margin-bottom: 6px; font-size: 13px;">
+            💳 4. Ciclo de crédito, remesas y continuidad del servicio
+          </strong>`;
+const DRIVER_CREDIT_TERMS_COPY = `
+          <p id="driverCreditProgressiveTerms" style="margin:0 0 9px 0;font-size:12px;color:#FEE2E2;line-height:1.55;">
+            El primer ciclo cobrable permite <strong>100 pedidos = S/ 20</strong>. Tras la primera remesa confirmada tu crédito sube a <strong>S/ 50</strong>; la segunda mantiene S/ 50 y, tras la tercera remesa confirmada, sube al tope de <strong>S/ 100</strong>.
+          </p>`;
+
 // El HTML histórico conserva un carácter mojibake y dos scripts locales que
 // bloqueaban el parser. Se corrigen al servir sin reescribir el monolito.
+// El detalle de escalamiento del crédito pertenece a Términos para Repartidores,
+// no al formulario de alta.
 const INDEX_HTML = fs.readFileSync(INDEX_PATH, 'utf8')
   .replace('🌍 Todos', '🌍 Todos')
   .replace(
@@ -20,6 +32,10 @@ const INDEX_HTML = fs.readFileSync(INDEX_PATH, 'utf8')
   .replace(
     '<script src="js/device_security.js?v=135"></script>',
     '<script defer src="js/device_security.js?v=135"></script>'
+  )
+  .replace(
+    DRIVER_CREDIT_TERMS_HEADING,
+    `${DRIVER_CREDIT_TERMS_HEADING}${DRIVER_CREDIT_TERMS_COPY}`
   );
 
 // Esta purga era disparada por todos los navegadores tres segundos después de
@@ -41,6 +57,14 @@ document.addEventListener('DOMContentLoaded', () => {
 const APP_JS = fs.readFileSync(APP_JS_PATH, 'utf8').replace(
   DEAD_CLIENT_PURGE,
   '// La purga de retención se ejecuta exclusivamente en servidor mediante pg_cron.'
+);
+
+const DRIVER_CREDIT_FORM_BLOCK = `          <div style="margin-top:9px;background:rgba(15,23,42,.72);border-left:3px solid #F59E0B;padding:8px 10px;border-radius:0 8px 8px 0;font-size:11px;color:#FDE68A;line-height:1.5;">
+            El primer ciclo cobrable permite <strong>100 pedidos = S/ 20</strong>. Tras la primera remesa confirmada tu crédito sube a <strong>S/ 50</strong>; la segunda mantiene S/ 50 y, tras la tercera remesa confirmada, sube al tope de <strong>S/ 100</strong>.
+          </div>\n`;
+const DRIVER_ORDER_RULES_JS = fs.readFileSync(DRIVER_ORDER_RULES_PATH, 'utf8').replace(
+  DRIVER_CREDIT_FORM_BLOCK,
+  ''
 );
 
 app.disable('x-powered-by');
@@ -174,6 +198,10 @@ app.get(['/', '/index.html'], sendIndex);
 app.get('/js/app.js', (req, res) => {
   res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
   res.type('application/javascript').send(APP_JS);
+});
+app.get('/js/driver_order_rules.js', (req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+  res.type('application/javascript').send(DRIVER_ORDER_RULES_JS);
 });
 
 const STATIC_CACHE_MAX_AGE_MS = 60 * 60 * 1000;
