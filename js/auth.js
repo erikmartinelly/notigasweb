@@ -2443,18 +2443,6 @@ window.actualizarVistaPreviaCamionChofer = actualizarVistaPreviaCamionChofer;
 function seleccionarPlanRegistroChofer() {
   const inputTipo = document.getElementById('inputDriverPlanTipo');
   if (inputTipo) inputTipo.value = 'credito';
-  const cardPro = document.getElementById('cardPlanDriverPro');
-  const proContent = document.getElementById('driverPremiumProContent');
-  const paymentSection = document.getElementById('driverPremiumPaymentSection');
-  const statusBadge = document.getElementById('driverPremiumStatusBadge');
-  if (cardPro) cardPro.style.display = 'none';
-  if (proContent) proContent.style.display = 'none';
-  if (paymentSection) paymentSection.style.display = 'none';
-  if (statusBadge) statusBadge.style.display = 'none';
-  const cardBase = document.getElementById('cardPlanDriverGratuito');
-  if (cardBase) { cardBase.style.display = 'block'; cardBase.style.opacity = '1'; cardBase.style.border = '2px solid #10B981'; }
-  const content = document.getElementById('driverPremiumGratuitoContent');
-  if (content) { content.style.display = 'block'; content.innerHTML = '<p style="margin:0;font-size:11px;color:#CBD5E1;line-height:1.5;">Registro sin suscripción mensual. Tus primeros 50 pedidos confirmados son gratuitos. Después se aplica S/ 0,20 por pedido: primer ciclo S/ 20, luego crédito S/ 50 tras la primera remesa y S/ 100 tras la tercera.</p>'; }
   const btnText = document.getElementById('btnDriverSubmitText');
   if (btnText) btnText.textContent = 'Guardar ficha de repartidor';
 }
@@ -2504,7 +2492,7 @@ async function cargarPerfilChoferEnModal() {
     if (driverRow.color_camion && typeof seleccionarColorCamionModal === 'function') {
       seleccionarColorCamionModal(driverRow.color_camion);
     }
-    seleccionarPlanRegistroChofer('credito');
+    seleccionarPlanRegistroChofer();
     actualizarEstadoUIPerfilPremium(driverRow);
   } catch (err) {
     console.warn('Error al cargar perfil de chofer en modal:', err);
