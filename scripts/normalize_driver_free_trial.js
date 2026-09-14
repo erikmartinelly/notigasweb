@@ -25,6 +25,14 @@ function replaceSection(source, startMarker, endMarker, replacement, label) {
   return source.slice(0, start) + replacement + source.slice(end);
 }
 
+function removeRangeIfPresent(source, startMarker, endMarker, label) {
+  const start = source.indexOf(startMarker);
+  if (start < 0) return source;
+  const end = source.indexOf(endMarker, start + startMarker.length);
+  if (end < 0) throw new Error(`No se encontró fin de ${label}`);
+  return source.slice(0, start) + source.slice(end);
+}
+
 try {
   // 1) Ficha de registro: una sola modalidad, sin selector PRO/Gratuito.
   const indexPath = 'index.html';
@@ -56,6 +64,8 @@ try {
     index = replaceSection(index, premiumStart, premiumEnd, '', 'bloque Premium heredado');
   }
 
+  index = index.replace(/\n\s*<style id="legacy-plan-disabled">[\s\S]*?<\/style>\s*\n/, '\n');
+
   const forbiddenIndex = [
     'Elige tu Modalidad de Registro',
     'Plan Gratuito',
@@ -65,7 +75,8 @@ try {
     'id="cardPlanDriverPro"',
     'id="cardPlanDriverGratuito"',
     'id="btnCambiarAProDesdeGratuito"',
-    'id="driverPremiumGratuitoContent"'
+    'id="driverPremiumGratuitoContent"',
+    'legacy-plan-disabled'
   ];
   for (const token of forbiddenIndex) {
     if (index.includes(token)) throw new Error(`index.html conserva UI heredada: ${token}`);
@@ -76,7 +87,7 @@ try {
   }
   write(indexPath, index, indexOriginal);
 
-  // 2) Auth: mantener únicamente el tipo operativo "credito"; sin manipular tarjetas inexistentes.
+  // 2) Auth: modalidad única "credito" y sin ramas muertas PRO/VIP del alta.
   const authPath = 'js/auth.js';
   const authOriginal = read(authPath);
   let auth = authOriginal;
@@ -96,8 +107,58 @@ try {
 window.seleccionarPlanRegistroChofer = seleccionarPlanRegistroChofer;`;
   auth = auth.slice(0, authStart) + authReplacement + auth.slice(authEnd);
   auth = auth.replace(/seleccionarPlanRegistroChofer\('credito'\);/g, 'seleccionarPlanRegistroChofer();');
-  if (/cardPlanDriverPro|cardPlanDriverGratuito|driverPremiumGratuitoContent|btnCambiarAProDesdeGratuito/.test(auth)) {
-    throw new Error('auth.js conserva referencias al selector de planes retirado');
+
+  auth = removeRangeIfPresent(
+    auth,
+    "  const planTipo = 'credito';",
+    '  const repartidorData = {',
+    'variables y advertencia PRO del registro'
+  );
+
+  auth = removeRangeIfPresent(
+    auth,
+    '  // Si eligió PRO y adjuntó comprobante, procesarlo de inmediato para activación instantánea',
+    "  if (typeof window.cambiarCiudad === 'function') {",
+    'procesamiento Premium durante registro'
+  );
+
+  const toastStart = "  if (planTipo === 'pro') {";
+  const toastEnd = "\n\n  if (typeof renderVendorCards === 'function') {";
+  if (auth.includes(toastStart)) {
+    const start = auth.indexOf(toastStart);
+    const end = auth.indexOf(toastEnd, start);
+    if (end < 0) throw new Error('No se encontró fin del mensaje de alta por plan');
+    const singleToast = `  if (typeof showToast === 'function') {
+    showToast('🎁 Cuenta de repartidor activada', \`Ficha de \${nombreNegocio} registrada. Tus primeros 50 pedidos confirmados son gratuitos.\`, 'success', 6000);
+  }`;
+    auth = auth.slice(0, start) + singleToast + auth.slice(end);
+  }
+
+  auth = auth.replace(' * Carga los datos del chofer (incluyendo precio del balón de 10 Kg, tipo de plan y suscripción Premium)\n', ' * Carga los datos vigentes del chofer en el formulario de edición.\n');
+  auth = auth.replace('    actualizarEstadoUIPerfilPremium(driverRow);\n', '');
+
+  const legacyHelpersStart = '/**\n * Oculta controles heredados de suscripción que ya no forman parte del modelo vigente.\n */';
+  if (auth.includes(legacyHelpersStart)) {
+    auth = auth.slice(0, auth.indexOf(legacyHelpersStart)).trimEnd() + '\n';
+  }
+
+  const forbiddenAuth = [
+    'Plan PRO',
+    'Plan Gratuito',
+    'fileVoucher',
+    'yaEsVip',
+    "planTipo === 'pro'",
+    'driverPremiumPaymentSection',
+    'driverPremiumGratuitoContent',
+    'cardPlanDriverPro',
+    'cardPlanDriverGratuito',
+    'btnCambiarAProDesdeGratuito',
+    'manejarSeleccionVoucherDriver',
+    'enviarComprobantePagoPremium',
+    'actualizarEstadoUIPerfilPremium'
+  ];
+  for (const token of forbiddenAuth) {
+    if (auth.includes(token)) throw new Error(`auth.js conserva lógica heredada: ${token}`);
   }
   write(authPath, auth, authOriginal);
 
