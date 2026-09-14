@@ -1,5 +1,6 @@
 name: One-off normalize driver free trial
 
+# Retry after tightening source assertions.
 on:
   push:
     branches: [ fix/driver-free-trial-registration ]
