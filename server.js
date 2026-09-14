@@ -8,9 +8,15 @@ const RATE_LIMIT_WINDOW_MS = 60 * 1000;
 const RATE_LIMIT_MAX_REQUESTS = 200;
 const requestCounters = new Map();
 const INDEX_PATH = path.join(__dirname, 'index.html');
-// El HTML histórico conserva un carácter mojibake en el filtro "Todos".
-// Se sanea al servir la página sin reescribir el monolito completo a ciegas.
-const INDEX_HTML = fs.readFileSync(INDEX_PATH, 'utf8').replace('🌍 Todos', '🌍 Todos');
+// El HTML histórico conserva un carácter mojibake en el filtro "Todos" y un
+// script local que bloquea el parser. Se corrigen al servir sin reescribir el
+// monolito completo a ciegas.
+const INDEX_HTML = fs.readFileSync(INDEX_PATH, 'utf8')
+  .replace('🌍 Todos', '🌍 Todos')
+  .replace(
+    '<script src="js/driver_icons.js?v=135"></script>',
+    '<script defer src="js/driver_icons.js?v=135"></script>'
+  );
 
 app.disable('x-powered-by');
 // Hostinger termina HTTPS delante de la aplicación. Con un salto de proxy,
