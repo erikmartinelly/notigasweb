@@ -1,6 +1,6 @@
 name: One-off normalize driver free trial
 
-# Retry after tightening source assertions.
+# Final pass: remove residual PRO/VIP registration code.
 on:
   push:
     branches: [ fix/driver-free-trial-registration ]
@@ -43,5 +43,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
-          git commit -m 'fix: dejar una sola prueba gratis para repartidores'
+          git commit -m 'fix: limpiar residuos PRO del registro de repartidor'
           git push origin HEAD:fix/driver-free-trial-registration
