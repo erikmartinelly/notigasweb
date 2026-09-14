@@ -62,9 +62,10 @@ try {
     fail(`Versiones de assets mezcladas: ${uniqueHtmlVersions.join(',')}`);
   }
   const sw = read('sw.js');
-  if (!/notigas-cache-v135/.test(sw)) fail('Service worker no usa cache v135');
-  if (!/order_privacy_layer\.js\?v=135/.test(sw)) fail('Service worker no cachea la capa de privacidad');
-  if (!/fetch\(asset, \{ cache: 'reload' \}\)/.test(sw)) fail('Service worker no fuerza recarga durante instalación');
+  if (!/notigas-cache-v136/.test(sw)) fail('Service worker no usa cache progresivo v136');
+  if (/order_privacy_layer\.js\?v=135/.test(sw)) fail('Service worker vuelve a precachear módulos dinámicos pesados');
+  if (/fetch\(asset, \{ cache: 'reload' \}\)/.test(sw)) fail('Service worker vuelve a forzar recargas duplicadas durante instalación');
+  if (!/stale-while-revalidate/i.test(sw)) fail('Service worker no documenta la estrategia de cache progresivo');
 
   const runtime = read('scripts/check_runtime.js');
   for (const mod of ['js/admin_payments.js','js/admin_payment_config.js','js/driver_payments.js','js/driver_order_rules.js']) {
