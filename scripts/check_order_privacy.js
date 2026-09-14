@@ -38,9 +38,10 @@ assert(/rpc_get_my_assigned_orders/.test(privacy), 'Datos exactos se obtienen de
 assert(!/\.from\('pedidos'\)[\s\S]{0,250}telefono/.test(privacy), 'La capa de privacidad no consulta teléfono desde pedidos libres');
 assert(/Los datos del pedido se habilitan únicamente si lo tomas/.test(privacy), 'La interfaz explica la regla de privacidad');
 
-assert(/CACHE_VERSION = '135'/.test(state), 'State usa versión PWA 135');
-assert(/order_privacy_layer\.js/.test(state), 'State carga la capa de privacidad');
-assert(/notigas-cache-v135/.test(sw), 'Service worker usa caché v135');
-assert(/order_privacy_layer\.js\?v=135/.test(sw), 'Service worker precachea la capa de privacidad');
+assert(/CACHE_VERSION = '135'/.test(state), 'State mantiene la versión de assets del HTML');
+assert(/loadOrderPrivacyModule/.test(state) && /order_privacy_layer\.js/.test(state), 'State conserva carga dinámica de la capa de privacidad');
+assert(/notigas-cache-v136/.test(sw), 'Service worker usa caché progresiva v136');
+assert(!/order_privacy_layer\.js\?v=135/.test(sw), 'La capa de privacidad no compite en el precache inicial');
+assert(/fetch\(event\.request\)/.test(sw), 'Los módulos usados se incorporan al cache progresivamente');
 
 console.log('\n🔐 Contrato de privacidad de pedidos verificado.');

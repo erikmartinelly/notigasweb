@@ -124,7 +124,8 @@ must(/DROP FUNCTION IF EXISTS public\.guard_limited_content_insert\(\)/i.test(sp
 must((splitGuards.match(/EXECUTE FUNCTION private\.guard_/g) || []).length === 7, 'los siete triggers usan guards tipados privados');
 
 must(server.includes(".replace('🌍 Todos', '🌍 Todos')"), 'servidor corrige mojibake visible del filtro Todos');
-must(/express\.static\(__dirname, \{ index: false \}\)/.test(server), 'index se sirve por la ruta saneada');
+must(/express\.static\(__dirname,\s*\{[\s\S]*?index:\s*false[\s\S]*?maxAge:\s*STATIC_CACHE_MAX_AGE_MS/.test(server), 'index se sirve por ruta saneada y estáticos usan cache explícito');
+must(/stale-while-revalidate=86400/.test(server), 'servidor permite reutilizar estáticos mientras revalida en segundo plano');
 must(adminPaymentConfig.includes('window.rechazarSuscripcionPremiumAdmin = retired'), 'rechazo Premium legacy ya no llama RPC eliminado');
 
 for (const required of [
