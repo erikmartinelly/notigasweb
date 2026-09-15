@@ -68,6 +68,17 @@ async function main() {
     assert(res.ok && Array.isArray(res.data), `HTTP ${res.status}`);
   });
 
+  await test('Contrato de esquema vivo coincide con main', async () => {
+    const res = await request('rpc/rpc_public_schema_contract', {
+      method: 'POST',
+      body: '{}'
+    });
+    assert(res.ok && res.data && typeof res.data === 'object', `HTTP ${res.status}`);
+    assert(res.data.ok === true, 'Contrato vivo no responde ok');
+    assert(res.data.version === '20260915_preprod_v1', `Contrato vivo inesperado: ${res.data.version || 'sin versión'}`);
+    assert(res.data.payment_admin_queue === 'yape_remesas_bolivia_v2', 'Cola administrativa Yape/Remesas no reconciliada');
+  });
+
   for (const fn of ['is_admin_email', 'is_banned']) {
     await test(`${fn} no es RPC anónimo`, async () => {
       assertDenied(await request(`rpc/${fn}`, { method: 'POST', body: '{}' }), fn);
