@@ -43,6 +43,16 @@ jobs:
               grep -q 'El primer ciclo cobrable permite <strong>100 pedidos = S/ 20</strong>' /tmp/notigas-index.html
               grep -q '🎁 PRUEBA GRATIS' /tmp/notigas-index.html
               grep -q 'Los primeros 50 pedidos son gratis. Desde el pedido 51 en adelante se cobra <strong>S/ 0,20 por pedido</strong>.' /tmp/notigas-index.html
+              grep -q 'Color Camión o camioneta' /tmp/notigas-index.html
+              grep -q 'id="inputDriverTruckColor"' /tmp/notigas-index.html
+              if grep -q 'Color de tu Camión Toyota Dina' /tmp/notigas-index.html; then
+                echo 'La ficha de repartidor volvió a mostrar Toyota Dina en el selector de color'
+                exit 1
+              fi
+              if grep -q 'driverTruckPreviewContainer' /tmp/notigas-index.html; then
+                echo 'La ficha de repartidor volvió a mostrar la vista previa pesada del camión'
+                exit 1
+              fi
               if grep -Eq 'Elige tu Modalidad de Registro|Plan Gratuito|Pedidos con <strong>3 min de espera</strong>|Ficha básica sin corona VIP' /tmp/notigas-index.html; then
                 echo 'La ficha de repartidor volvió a mostrar el selector de planes heredado'
                 exit 1

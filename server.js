@@ -19,10 +19,30 @@ const DRIVER_CREDIT_TERMS_COPY = `
             El primer ciclo cobrable permite <strong>100 pedidos = S/ 20</strong>. Tras la primera remesa confirmada tu crédito sube a <strong>S/ 50</strong>; la segunda mantiene S/ 50 y, tras la tercera remesa confirmada, sube al tope de <strong>S/ 100</strong>.
           </p>`;
 
+const DRIVER_TRUCK_COLOR_CARD = '<div class="form-group" style="background:#0F172A; border:1px solid #334155; border-radius:10px; padding:12px; margin-top:10px; margin-bottom:12px;">';
+const DRIVER_TRUCK_COLOR_LABEL = `        <label style="color:#F8FAFC; font-weight:800; display:flex; justify-content:space-between; align-items:center;">
+          <span>🎨 Color de tu Camión Toyota Dina:</span>
+          <span id="lblDriverTruckColorName" style="color:#FF6D00; font-size:11px; font-weight:700;">Rojo Pasión</span>
+        </label>`;
+const DRIVER_TRUCK_COLOR_LABEL_MINIMAL = `        <label>Color Camión o camioneta
+          <span id="lblDriverTruckColorName" style="display:none;">Rojo Pasión</span>
+        </label>`;
+const DRIVER_TRUCK_PREVIEW = `        <!-- VISTA PREVIA EN TIEMPO REAL -->
+        <div style="background:#1E293B; border-radius:8px; padding:10px; display:flex; align-items:center; gap:14px; border:1px dashed #475569;">
+          <div id="driverTruckPreviewContainer" style="width:76px; height:48px; display:flex; align-items:center; justify-content:center;">
+            <!-- SVG dinámico del camión con iniciales -->
+          </div>
+          <div style="flex:1;">
+            <strong id="driverTruckPreviewName" style="color:#FFFFFF; font-size:12px; display:block;">Tu Camión Oficial</strong>
+            <span style="font-size:10.5px; color:#94A3B8;">Aparecerá en el mapa con este color e insignia de iniciales.</span>
+          </div>
+        </div>`;
+
 // El HTML histórico conserva un carácter mojibake y dos scripts locales que
 // bloqueaban el parser. Se corrigen al servir sin reescribir el monolito.
 // El detalle de escalamiento del crédito pertenece a Términos para Repartidores,
-// no al formulario de alta.
+// no al formulario de alta. La ficha de registro también elimina la marca/modelo
+// heredados del selector de color y conserva solo el dato operativo del vehículo.
 const INDEX_HTML = fs.readFileSync(INDEX_PATH, 'utf8')
   .replace('🌍 Todos', '🌍 Todos')
   .replace(
@@ -36,7 +56,10 @@ const INDEX_HTML = fs.readFileSync(INDEX_PATH, 'utf8')
   .replace(
     DRIVER_CREDIT_TERMS_HEADING,
     `${DRIVER_CREDIT_TERMS_HEADING}${DRIVER_CREDIT_TERMS_COPY}`
-  );
+  )
+  .replace(DRIVER_TRUCK_COLOR_CARD, '<div class="form-group">')
+  .replace(DRIVER_TRUCK_COLOR_LABEL, DRIVER_TRUCK_COLOR_LABEL_MINIMAL)
+  .replace(DRIVER_TRUCK_PREVIEW, '');
 
 // Esta purga era disparada por todos los navegadores tres segundos después de
 // cargar, pero producción revoca EXECUTE para anon/authenticated y pg_cron ya
