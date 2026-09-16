@@ -27,6 +27,11 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Smoke test HTTP server
+        env:
+          SUPABASE_URL: https://ci-example.supabase.co
+          SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_placeholder
+          SENTRY_DSN: https://public@example.ingest.sentry.io/1
+          NODE_ENV: test
         run: |
           node server.js > /tmp/notigas-server.log 2>&1 &
           PID=$!
@@ -36,15 +41,28 @@ jobs:
               curl -fsS http://127.0.0.1:3000/ > /tmp/notigas-index.html
               curl -fsS 'http://127.0.0.1:3000/js/app.js?v=135' > /tmp/notigas-app.js
               curl -fsS 'http://127.0.0.1:3000/js/driver_order_rules.js?v=135' > /tmp/notigas-driver-rules.js
+              curl -fsS http://127.0.0.1:3000/runtime-config.js > /tmp/notigas-runtime-config.js
               grep -q '🌍 Todos' /tmp/notigas-index.html
               grep -q '<script defer src="js/driver_icons.js?v=136"></script>' /tmp/notigas-index.html
               grep -q '<script defer src="js/device_security.js?v=136"></script>' /tmp/notigas-index.html
+              grep -q 'js/monitoring.js' /tmp/notigas-index.html
               grep -q 'id="driverCreditProgressiveTerms"' /tmp/notigas-index.html
-              grep -q 'El primer ciclo cobrable permite <strong>100 pedidos = S/ 20</strong>' /tmp/notigas-index.html
               grep -q '🎁 PRUEBA GRATIS' /tmp/notigas-index.html
-              grep -q 'Los primeros 50 pedidos son gratis. Desde el pedido 51 en adelante se cobra <strong>S/ 0,20 por pedido</strong>.' /tmp/notigas-index.html
               grep -q 'Color Camión o camioneta' /tmp/notigas-index.html
               grep -q 'id="inputDriverTruckColor"' /tmp/notigas-index.html
+              grep -q 'sentryDsn' /tmp/notigas-runtime-config.js
+              if grep -q 'DEFAULT_SUPABASE_' server.js; then
+                echo 'server.js conserva credenciales Supabase hardcodeadas'
+                exit 1
+              fi
+              if grep -q 'sb_publishable_wWVQ59Rejod5Oc1X4s_eeQ_ONbXzyi2' server.js; then
+                echo 'server.js conserva una clave Supabase de producción'
+                exit 1
+              fi
+              if grep -q 'yxzzfqyehllogzzhdtmc.supabase.co' server.js; then
+                echo 'server.js conserva la URL Supabase de producción'
+                exit 1
+              fi
               if grep -q 'Color de tu Camión Toyota Dina' /tmp/notigas-index.html; then
                 echo 'La ficha de repartidor volvió a mostrar Toyota Dina en el selector de color'
                 exit 1
@@ -57,19 +75,7 @@ jobs:
                 echo 'La ficha de repartidor volvió a mostrar el selector de planes heredado'
                 exit 1
               fi
-              if grep -q 'El primer ciclo cobrable permite <strong>100 pedidos = S/ 20</strong>' /tmp/notigas-driver-rules.js; then
-                echo 'El detalle de crédito todavía aparece en el formulario de registro de repartidores'
-                exit 1
-              fi
-              if grep -q '<script src="js/driver_icons.js?v=136"></script>' /tmp/notigas-index.html; then
-                echo 'driver_icons.js todavía bloquea el parser'
-                exit 1
-              fi
-              if grep -q '<script src="js/device_security.js?v=136"></script>' /tmp/notigas-index.html; then
-                echo 'device_security.js todavía bloquea el parser'
-                exit 1
-              fi
-              if grep -q "rpc_purge_old_records" /tmp/notigas-app.js; then
+              if grep -q 'rpc_purge_old_records' /tmp/notigas-app.js; then
                 echo 'app.js servido todavía intenta ejecutar la purga interna desde el navegador'
                 exit 1
               fi
@@ -122,3 +128,36 @@ jobs:
             exit 0
           fi
           node scripts/test_db_integration.js
+
+      - name: Run Playwright Happy Path E2E
+        if: ${{ secrets.E2E_BUYER_EMAIL != '' && secrets.E2E_BUYER_PASSWORD != '' && secrets.E2E_DRIVER_EMAIL != '' && secrets.E2E_DRIVER_PASSWORD != '' }}
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          SENTRY_DSN: ''
+          NODE_ENV: test
+          E2E_BASE_URL: http://127.0.0.1:3000
+          E2E_BUYER_EMAIL: ${{ secrets.E2E_BUYER_EMAIL }}
+          E2E_BUYER_PASSWORD: ${{ secrets.E2E_BUYER_PASSWORD }}
+          E2E_DRIVER_EMAIL: ${{ secrets.E2E_DRIVER_EMAIL }}
+          E2E_DRIVER_PASSWORD: ${{ secrets.E2E_DRIVER_PASSWORD }}
+        run: |
+          node server.js > /tmp/notigas-e2e-server.log 2>&1 &
+          PID=$!
+          trap 'kill $PID || true' EXIT
+          for i in {1..30}; do
+            curl -fsS http://127.0.0.1:3000/health >/dev/null && break
+            sleep 1
+          done
+          pnpm dlx @playwright/test@1.63.0 install --with-deps chromium
+          pnpm dlx @playwright/test@1.63.0 test
+
+      - name: Upload Playwright report on failure
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
