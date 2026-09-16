@@ -153,7 +153,14 @@
       return;
     }
 
-    if (isDriverMode()) await refreshDriverAccessState();
+    // El radar no es un componente de compradores: el control en RLS también
+    // lo exige, pero evitamos incluso hacer la consulta desde esa interfaz.
+    if (!isDriverMode()) {
+      clearRadarLayers();
+      return;
+    }
+
+    await refreshDriverAccessState();
 
     let query = window.supabaseClient
       .from('order_public_radar')

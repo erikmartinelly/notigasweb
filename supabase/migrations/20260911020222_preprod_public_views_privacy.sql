@@ -28,8 +28,11 @@ SELECT id,
        COALESCE(categoria, 'Gas GLP') AS categoria,
        COALESCE(titulo, 'En ruta de distribución') AS titulo,
        ciudad,
-       CASE WHEN can_private THEN latitude ELSE public.fn_blur_latitude(id, latitude) END AS latitude,
-       CASE WHEN can_private THEN longitude ELSE public.fn_blur_longitude(id, latitude, longitude) END AS longitude,
+       -- Las funciones fn_blur_* legacy fueron eliminadas por ser reversibles.
+       -- El siguiente paso de migración instala el radar aleatorizado; esta vista
+       -- intermedia mantiene la privacidad sin depender de funciones retiradas.
+       CASE WHEN can_private THEN latitude ELSE NULL::double precision END AS latitude,
+       CASE WHEN can_private THEN longitude ELSE NULL::double precision END AS longitude,
        COALESCE(garrafas_agotadas, false) AS garrafas_agotadas,
        last_active,
        CASE WHEN can_private THEN COALESCE(NULLIF(TRIM(telefono), ''), NULLIF(TRIM(telefono_whatsapp), '')) ELSE NULL::text END AS telefono,

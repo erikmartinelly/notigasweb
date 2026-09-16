@@ -1674,7 +1674,7 @@ async function renderAdminReports() {
   // 1. Fetch Denuncias
   const { data: reports, error: reportsError } = await window.supabaseClient
     .from('denuncias')
-    .select('id, denunciado_id, motivo, detalles, telefono_denunciado, created_at')
+    .select('id, denunciado_id, motivo, detalles, telefono_denunciado, pedido_id, precio_publicado, precio_reportado, created_at')
     .order('created_at', { ascending: false })
     .limit(100);
   if (reportsError) { console.error('Error cargando denuncias:', reportsError); return; }
@@ -1689,6 +1689,9 @@ async function renderAdminReports() {
       const telSnippet = rep.telefono_denunciado
         ? `<div style="font-size:10.5px; color:#22C55E; margin-top:2px; font-weight:700;"><i class="fa-brands fa-whatsapp"></i> Tel: <a href="https://wa.me/51${String(rep.telefono_denunciado).replace(/\\D/g,'')}" target="_blank" style="color:#86EFAC; text-decoration:underline;">${escapeHtmlStr(rep.telefono_denunciado)}</a></div>`
         : '';
+      const priceSnippet = rep.precio_publicado !== null && rep.precio_reportado !== null
+        ? `<div style="font-size:10.5px; color:#FCD34D; margin-top:2px; font-weight:700;">Publicado: S/ ${escapeHtmlStr(String(rep.precio_publicado))} · Reportado: S/ ${escapeHtmlStr(String(rep.precio_reportado))}</div>`
+        : '';
 
       html += `
 
@@ -1698,6 +1701,7 @@ async function renderAdminReports() {
 
             <strong style="color:#F8FAFC;">${escapeHtmlStr(rep.denunciado_id || 'Publicación')}</strong>: <span style="color:#FDE047;">${escapeHtmlStr(rep.motivo)}</span>
             ${telSnippet}
+            ${priceSnippet}
             <div style="font-size:10px; color:#94A3B8; margin-top:2px;">${escapeHtmlStr(rep.detalles || 'Sin detalle')}</div>
 
           </div>
@@ -2529,5 +2533,4 @@ function cerrarLightboxVoucher() {
   if (modal) modal.style.display = 'none';
 }
 window.cerrarLightboxVoucher = cerrarLightboxVoucher;
-
 

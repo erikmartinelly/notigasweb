@@ -53,28 +53,28 @@ const mockTrucksDB = [
   }
 ];
 
-// 1. Simulación de Vista pedidos_publicos (Security Definer logic)
-function queryPedidosPublicos(callingUserId, isEnabledDriver = false) {
+// 1. La vista de pedidos solo devuelve pedidos propios. Los pedidos disponibles
+// se entregan exclusivamente por order_public_radar a repartidores activos.
+function queryPedidosPublicos(callingUserId) {
   return mockOrdersDB
-    .filter(p => p.estado === 'pendiente' || p.estado === 'visto')
+    .filter(p => (p.estado === 'pendiente' || p.estado === 'visto') && p.user_id === callingUserId)
     .map(p => {
       const isOwner = p.user_id === callingUserId;
-      const canSeeDetails = isOwner || isEnabledDriver;
       return {
         id: p.id,
-        user_id: isOwner ? p.user_id : null,
+        user_id: p.user_id,
         categoria: p.categoria,
-        titulo: canSeeDetails ? p.titulo : 'Pedido Vecinal',
+        titulo: p.titulo,
         cantidad: p.cantidad,
-        direccion: canSeeDetails ? p.direccion : null,
-        telefono: canSeeDetails ? p.telefono : null,
+        direccion: p.direccion,
+        telefono: p.telefono,
         estado: p.estado,
-        driver_id: (isOwner || p.driver_id === callingUserId) ? p.driver_id : null,
+        driver_id: p.driver_id,
         ciudad: p.ciudad,
         barrio_otb: p.barrio_otb || 'Zona indicada en el mapa',
-        latitude: canSeeDetails ? p.latitude : Math.round(p.latitude * 1000) / 1000,
-        longitude: canSeeDetails ? p.longitude : Math.round(p.longitude * 1000) / 1000,
-        descripcion: canSeeDetails ? p.descripcion : null,
+        latitude: p.latitude,
+        longitude: p.longitude,
+        descripcion: p.descripcion,
         visto: p.visto,
         created_at: p.created_at
       };
@@ -105,16 +105,12 @@ function queryRutasRepartidoresPublicas(callingUserId) {
 
 // EJECUCIÓN DE PRUEBAS DE SEGURIDAD
 try {
-  console.log('1️⃣ Verificando que Repartidor B puede ver el pedido creado por Comprador A...');
-  const driverOrders = queryPedidosPublicos('user-driver-b', true);
-  if (driverOrders.length === 0) {
-    throw new Error('FALLO: Repartidor B no pudo ver el pedido de Comprador A en pedidos_publicos.');
+  console.log('1️⃣ Verificando que el repartidor no lee pedidos ajenos por pedidos_publicos...');
+  const driverOrders = queryPedidosPublicos('user-driver-b');
+  if (driverOrders.length !== 0) {
+    throw new Error('FALLO: Repartidor recibió un pedido ajeno por la vista genérica.');
   }
-  const orderForDriver = driverOrders[0];
-  if (orderForDriver.id !== 'order-buyer-a') {
-    throw new Error('FALLO: ID de pedido no coincide.');
-  }
-  console.log('   ✅ Repartidor B ve el pedido en pedidos_publicos con éxito.');
+  console.log('   ✅ Repartidor no recibe pedidos ajenos por pedidos_publicos; usa el radar seguro.');
 
   console.log('\n2️⃣ Verificando que Comprador A puede ver el camión transmitido por Repartidor B...');
   const buyerTrucks = queryRutasRepartidoresPublicas('user-buyer-a');
@@ -134,23 +130,12 @@ try {
   }
   console.log('   ✅ Comprador A ve el camión con todas las columnas requeridas (teléfono, placa, productos).');
 
-  console.log('\n3️⃣ Verificando privacidad de datos para Comprador C (otro vecino)...');
-  const neighborOrders = queryPedidosPublicos('user-buyer-c', false);
-  const orderForNeighbor = neighborOrders[0];
-  if (orderForNeighbor.direccion !== null) {
-    throw new Error('FALLO DE PRIVACIDAD: Dirección privada visible para otro comprador.');
+  console.log('\n3️⃣ Verificando que Comprador C no ve el pedido de Comprador A...');
+  const neighborOrders = queryPedidosPublicos('user-buyer-c');
+  if (neighborOrders.length !== 0) {
+    throw new Error('FALLO DE PRIVACIDAD: Un comprador recibió el pedido de otro comprador.');
   }
-  if (orderForNeighbor.telefono !== null) {
-    throw new Error('FALLO DE PRIVACIDAD: Teléfono privado visible para otro comprador.');
-  }
-  if (orderForNeighbor.titulo !== 'Pedido Vecinal') {
-    throw new Error('FALLO DE PRIVACIDAD: Título descriptivo privado visible para otro comprador.');
-  }
-  // Coordenadas deben estar aproximadas (3 decimales)
-  if (orderForNeighbor.latitude === mockOrdersDB[0].latitude) {
-    throw new Error('FALLO DE PRIVACIDAD: Coordenadas exactas no fueron difuminadas.');
-  }
-  console.log('   ✅ Privacidad comprobada: dirección y teléfono ocultos, coordenadas difuminadas a 3 decimales.');
+  console.log('   ✅ Comprador C no recibe ningún pedido ajeno.');
 
   console.log('\n--------------------------------------------------');
   console.log('✨ ÉXITO: 100% de pruebas de RLS y visibilidad multi-rol superadas.\n');

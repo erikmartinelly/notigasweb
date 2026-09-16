@@ -33,6 +33,8 @@ const integration = read('scripts/test_db_integration.js');
 const ci = read('.github/workflows/ci.yml');
 const server = read('server.js');
 const adminPaymentConfig = read('js/admin_payment_config.js');
+const intermediatePrivacyView = read('supabase/migrations/20260911020222_preprod_public_views_privacy.sql');
+const index = read('index.html');
 
 must(orders.includes("estado_servicio === 'suspendido_mora'"), 'UI legacy reconoce suspendido_mora');
 must(orders.includes("estado_servicio === 'suspendido_pago'"), 'UI legacy reconoce suspendido_pago');
@@ -102,6 +104,8 @@ must(/CREATE OR REPLACE FUNCTION public\.rpc_crear_aviso_vecinal/i.test(noticeRp
 must(/INSERT INTO public\.avisos\([\s\S]*mensaje, activo, votos, created_at/i.test(noticeRpc), 'RPC de aviso usa las columnas actuales');
 must(!/imagen_url/i.test(noticeRpc), 'RPC de aviso no referencia columna eliminada imagen_url');
 must(/is_anonymous/i.test(noticeRpc), 'RPC de aviso exige sesión real');
+must(!/public\.fn_blur_(latitude|longitude)/i.test(intermediatePrivacyView), 'vista intermedia no depende de funciones blur retiradas');
+must(/ELSE NULL::double precision END AS latitude/i.test(intermediatePrivacyView), 'vista intermedia no expone GPS mientras se instala el radar seguro');
 
 must(/CREATE OR REPLACE FUNCTION public\.delete_user_account/i.test(deleteAccount), 'borrado total de cuenta queda reconciliado');
 must(!/anuncios_globales\s+WHERE\s+user_id/i.test(deleteAccount), 'borrado de cuenta no referencia user_id inexistente en anuncios');
@@ -123,7 +127,15 @@ for (const fn of [
 must(/DROP FUNCTION IF EXISTS public\.guard_limited_content_insert\(\)/i.test(splitGuards), 'guard heterogéneo defectuoso queda eliminado');
 must((splitGuards.match(/EXECUTE FUNCTION private\.guard_/g) || []).length === 7, 'los siete triggers usan guards tipados privados');
 
-must(server.includes(".replace('🌍 Todos', '🌍 Todos')"), 'servidor corrige mojibake visible del filtro Todos');
+must(!/🌍 Todos/.test(index) && /🌍 Todos/.test(index), 'HTML contiene directamente el filtro Todos saneado');
+must(!/onclick=/.test(index), 'index no usa controladores inline');
+must(/data-notigas-action/.test(index) && /addEventListener\('click'/.test(read('js/events.js')), 'acciones de interfaz se delegan desde events.js');
+must(/leaflet\.js" integrity="sha384-[A-Za-z0-9+/=]+" crossorigin="anonymous"/.test(index), 'Leaflet usa SRI');
+must(/supabase\.min\.js" integrity="sha384-[A-Za-z0-9+/=]+" crossorigin="anonymous"/.test(index), 'Supabase JS usa SRI');
+must(/font-awesome[^\"]+" integrity="sha384-[A-Za-z0-9+/=]+" crossorigin="anonymous"/.test(index), 'Font Awesome usa SRI');
+must(!/fs\.readFileSync/.test(server), 'servidor no parchea recursos del frontend en memoria');
+must(/app\.get\('\/runtime-config\.js'/.test(server), 'servidor inyecta configuración pública en tiempo de ejecución');
+must(!/sb_publishable_[A-Za-z0-9_-]+/.test(read('js/supabase-config.js')), 'clave publicable no queda escrita en el frontend');
 must(/express\.static\(__dirname,\s*\{[\s\S]*?index:\s*false[\s\S]*?maxAge:\s*STATIC_CACHE_MAX_AGE_MS/.test(server), 'index se sirve por ruta saneada y estáticos usan cache explícito');
 must(/stale-while-revalidate=86400/.test(server), 'servidor permite reutilizar estáticos mientras revalida en segundo plano');
 must(adminPaymentConfig.includes('window.rechazarSuscripcionPremiumAdmin = retired'), 'rechazo Premium legacy ya no llama RPC eliminado');

@@ -448,9 +448,6 @@
           <div style="font-size:11.5px;color:#D1FAE5;line-height:1.55;">
             Tus primeros <strong>50 pedidos confirmados son totalmente gratuitos</strong>. Desde el pedido 51 se registra una comisión de <strong>S/ 0.20 por cada pedido entregado</strong>.
           </div>
-          <div style="margin-top:9px;background:rgba(15,23,42,.72);border-left:3px solid #F59E0B;padding:8px 10px;border-radius:0 8px 8px 0;font-size:11px;color:#FDE68A;line-height:1.5;">
-            El primer ciclo cobrable permite <strong>100 pedidos = S/ 20</strong>. Tras la primera remesa confirmada tu crédito sube a <strong>S/ 50</strong>; la segunda mantiene S/ 50 y, tras la tercera remesa confirmada, sube al tope de <strong>S/ 100</strong>.
-          </div>
         </div>`;
     }
 

@@ -1,94 +1,11 @@
 const express = require('express');
 const path = require('path');
-const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || process.env.SERVER_PORT || 3000;
 const RATE_LIMIT_WINDOW_MS = 60 * 1000;
 const RATE_LIMIT_MAX_REQUESTS = 200;
 const requestCounters = new Map();
-const INDEX_PATH = path.join(__dirname, 'index.html');
-const APP_JS_PATH = path.join(__dirname, 'js', 'app.js');
-const DRIVER_ORDER_RULES_PATH = path.join(__dirname, 'js', 'driver_order_rules.js');
-
-const DRIVER_CREDIT_TERMS_HEADING = `          <strong style="color: #FCA5A5; display: block; margin-bottom: 6px; font-size: 13px;">
-            💳 4. Ciclo de crédito, remesas y continuidad del servicio
-          </strong>`;
-const DRIVER_CREDIT_TERMS_COPY = `
-          <p id="driverCreditProgressiveTerms" style="margin:0 0 9px 0;font-size:12px;color:#FEE2E2;line-height:1.55;">
-            El primer ciclo cobrable permite <strong>100 pedidos = S/ 20</strong>. Tras la primera remesa confirmada tu crédito sube a <strong>S/ 50</strong>; la segunda mantiene S/ 50 y, tras la tercera remesa confirmada, sube al tope de <strong>S/ 100</strong>.
-          </p>`;
-
-const DRIVER_TRUCK_COLOR_CARD = '<div class="form-group" style="background:#0F172A; border:1px solid #334155; border-radius:10px; padding:12px; margin-top:10px; margin-bottom:12px;">';
-const DRIVER_TRUCK_COLOR_LABEL = `        <label style="color:#F8FAFC; font-weight:800; display:flex; justify-content:space-between; align-items:center;">
-          <span>🎨 Color de tu Camión Toyota Dina:</span>
-          <span id="lblDriverTruckColorName" style="color:#FF6D00; font-size:11px; font-weight:700;">Rojo Pasión</span>
-        </label>`;
-const DRIVER_TRUCK_COLOR_LABEL_MINIMAL = `        <label>Color Camión o camioneta
-          <span id="lblDriverTruckColorName" style="display:none;">Rojo Pasión</span>
-        </label>`;
-const DRIVER_TRUCK_PREVIEW = `        <!-- VISTA PREVIA EN TIEMPO REAL -->
-        <div style="background:#1E293B; border-radius:8px; padding:10px; display:flex; align-items:center; gap:14px; border:1px dashed #475569;">
-          <div id="driverTruckPreviewContainer" style="width:76px; height:48px; display:flex; align-items:center; justify-content:center;">
-            <!-- SVG dinámico del camión con iniciales -->
-          </div>
-          <div style="flex:1;">
-            <strong id="driverTruckPreviewName" style="color:#FFFFFF; font-size:12px; display:block;">Tu Camión Oficial</strong>
-            <span style="font-size:10.5px; color:#94A3B8;">Aparecerá en el mapa con este color e insignia de iniciales.</span>
-          </div>
-        </div>`;
-
-// El HTML histórico conserva un carácter mojibake y dos scripts locales que
-// bloqueaban el parser. Se corrigen al servir sin reescribir el monolito.
-// El detalle de escalamiento del crédito pertenece a Términos para Repartidores,
-// no al formulario de alta. La ficha de registro también elimina la marca/modelo
-// heredados del selector de color y conserva solo el dato operativo del vehículo.
-const INDEX_HTML = fs.readFileSync(INDEX_PATH, 'utf8')
-  .replace('🌍 Todos', '🌍 Todos')
-  .replace(
-    '<script src="js/driver_icons.js?v=135"></script>',
-    '<script defer src="js/driver_icons.js?v=135"></script>'
-  )
-  .replace(
-    '<script src="js/device_security.js?v=135"></script>',
-    '<script defer src="js/device_security.js?v=135"></script>'
-  )
-  .replace(
-    DRIVER_CREDIT_TERMS_HEADING,
-    `${DRIVER_CREDIT_TERMS_HEADING}${DRIVER_CREDIT_TERMS_COPY}`
-  )
-  .replace(DRIVER_TRUCK_COLOR_CARD, '<div class="form-group">')
-  .replace(DRIVER_TRUCK_COLOR_LABEL, DRIVER_TRUCK_COLOR_LABEL_MINIMAL)
-  .replace(DRIVER_TRUCK_PREVIEW, '');
-
-// Esta purga era disparada por todos los navegadores tres segundos después de
-// cargar, pero producción revoca EXECUTE para anon/authenticated y pg_cron ya
-// ejecuta rpc_purge_old_records() cada hora. Servirla al cliente solo generaba
-// una petición fallida adicional contra Supabase.
-const DEAD_CLIENT_PURGE = `// Purga automática preventiva en segundo plano al iniciar la app
-document.addEventListener('DOMContentLoaded', () => {
-  setTimeout(() => {
-    if (window.supabaseClient && typeof window.supabaseClient.rpc === 'function') {
-      window.supabaseClient.rpc('rpc_purge_old_records').then(({ data }) => {
-        if (data && (data.pedidos_eliminados > 0 || data.avisos_eliminados > 0)) {
-          console.info('Purga automática preventiva realizada:', data);
-        }
-      }).catch(() => {});
-    }
-  }, 3000);
-});`;
-const APP_JS = fs.readFileSync(APP_JS_PATH, 'utf8').replace(
-  DEAD_CLIENT_PURGE,
-  '// La purga de retención se ejecuta exclusivamente en servidor mediante pg_cron.'
-);
-
-const DRIVER_CREDIT_FORM_BLOCK = `          <div style="margin-top:9px;background:rgba(15,23,42,.72);border-left:3px solid #F59E0B;padding:8px 10px;border-radius:0 8px 8px 0;font-size:11px;color:#FDE68A;line-height:1.5;">
-            El primer ciclo cobrable permite <strong>100 pedidos = S/ 20</strong>. Tras la primera remesa confirmada tu crédito sube a <strong>S/ 50</strong>; la segunda mantiene S/ 50 y, tras la tercera remesa confirmada, sube al tope de <strong>S/ 100</strong>.
-          </div>\n`;
-const DRIVER_ORDER_RULES_JS = fs.readFileSync(DRIVER_ORDER_RULES_PATH, 'utf8').replace(
-  DRIVER_CREDIT_FORM_BLOCK,
-  ''
-);
 
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
@@ -186,6 +103,19 @@ app.get('/sw.js', (req, res) => {
   res.sendFile(path.join(__dirname, 'sw.js'));
 });
 
+// Estas dos variables son credenciales publicables del navegador; la clave
+// service_role no debe configurarse ni exponerse en esta aplicación.
+app.get('/runtime-config.js', (req, res) => {
+  const config = {
+    supabaseUrl: process.env.SUPABASE_URL || '',
+    supabasePublishableKey: process.env.SUPABASE_PUBLISHABLE_KEY || ''
+  };
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
+  res.type('application/javascript').send(
+    `window.NOTIGAS_RUNTIME_CONFIG = Object.freeze(${JSON.stringify(config)});`
+  );
+});
+
 const blacklistedPaths = [
   '/server.js',
   '/package.json',
@@ -214,18 +144,10 @@ app.use((req, res, next) => {
 
 function sendIndex(req, res) {
   res.setHeader('Cache-Control', 'no-cache, must-revalidate');
-  res.type('html').send(INDEX_HTML);
+  res.sendFile(path.join(__dirname, 'index.html'));
 }
 
 app.get(['/', '/index.html'], sendIndex);
-app.get('/js/app.js', (req, res) => {
-  res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
-  res.type('application/javascript').send(APP_JS);
-});
-app.get('/js/driver_order_rules.js', (req, res) => {
-  res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
-  res.type('application/javascript').send(DRIVER_ORDER_RULES_JS);
-});
 
 const STATIC_CACHE_MAX_AGE_MS = 60 * 60 * 1000;
 app.use(express.static(__dirname, {

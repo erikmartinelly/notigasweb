@@ -1,8 +1,13 @@
-// Configuración e Inicialización de Supabase
-const SUPABASE_URL = 'https://yxzzfqyehllogzzhdtmc.supabase.co';
-// Clave publicable del navegador (sb_publishable) para consultas públicas con RLS
-const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_wWVQ59Rejod5Oc1X4s_eeQ_ONbXzyi2';
+// Configuración e inicialización de Supabase. El servidor inyecta únicamente
+// las credenciales publicables en /runtime-config.js; nunca usar service_role.
+const runtimeConfig = window.NOTIGAS_RUNTIME_CONFIG || {};
+const SUPABASE_URL = String(runtimeConfig.supabaseUrl || '').trim();
+const SUPABASE_PUBLISHABLE_KEY = String(runtimeConfig.supabasePublishableKey || '').trim();
 const SUPABASE_SESSION_STORAGE_KEY = 'notigas_auth_session';
+
+if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(SUPABASE_URL) || !SUPABASE_PUBLISHABLE_KEY) {
+  throw new Error('Falta la configuración pública de Supabase. Define SUPABASE_URL y SUPABASE_PUBLISHABLE_KEY en el servidor.');
+}
 
 // Limpieza proactiva de tokens heredados/corruptos de versiones anteriores (preservando PKCE)
 (function cleanupLegacyAuthStorage() {

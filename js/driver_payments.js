@@ -222,6 +222,7 @@
             Beneficiario: <strong>${esc(instructionsRes.beneficiario_nombre || '—')}</strong><br>
             Documento de identidad: <strong>${esc(instructionsRes.beneficiario_documento || '—')}</strong><br>
             Cuenta de destino: <strong>${esc(cuentaDestino)}</strong><br>
+            Método de entrega: <strong>${esc(instructionsRes.metodo_entrega || 'Billetera Móvil Yape')}</strong><br>
             Destino: <strong>${esc(instructionsRes.pais_destino || 'Bolivia')}</strong>
           </div>
         </div>

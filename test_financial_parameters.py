@@ -72,6 +72,22 @@ def run_tests() -> None:
     assert "No se aplicó comisión" in rules
     print("✅ [4/5] Frontend fuerza 50 gratis y crédito progresivo S/20 -> S/50 -> S/100.")
 
+    orders = read("js/orders.js")
+    vendors = read("js/vendors.js")
+    accounting = read("supabase/migrations/20260910225938_driver_50_free_and_progressive_credit_tiers.sql")
+    delivery_rpc = read("supabase/migrations/20260910193151_git_reconcile_order_security_peru.sql")
+    assert "function seleccionarYPedirDirecto(catNombre)" in orders
+    assert "modalPedido.style.display = 'flex'" in orders
+    assert "data-action=\"seleccionarYPedirDirecto\"" in vendors
+    assert "function confirmarRecepcionComprador()" in orders
+    assert "rpc_confirm_order_received" in orders
+    assert "SELECT public.fn_contabilizar_entrega_confirmada(p_order_id" in delivery_rpc
+    assert "buyer_confirmed_received=true" in delivery_rpc
+    assert "coalesce(v_order.comision_registrada,false)=true" in accounting
+    assert "v_fee:=0.00" in accounting
+    assert "ELSE 'Comisión S/ 0.20 por pedido confirmado." in accounting
+    print("✅ Pedido desde mapa o ficha usa el mismo flujo; la confirmación del comprador contabiliza una sola comisión después de la promoción.")
+
     hardening = read("scripts/check_audit_hardening.js")
     assert "check_audit_hardening" not in hardening or "Audit hardening" in hardening
     assert "20260910220052_remove_obsolete_weekly_financial_rpcs.sql" in hardening

@@ -8,6 +8,8 @@ const no = (p, re, m) => { if (re.test(read(p))) fail(m); };
 
 try {
   has('js/driver_payments.js', /Yape[\s\S]{0,100}Remesas[\s\S]{0,100}Bolivia/i, 'Falta flujo exclusivo Yape Remesas Bolivia');
+  has('js/driver_payments.js', /Método de entrega:/, 'Falta método de entrega visible en las instrucciones');
+  has('supabase/migrations/20260915194000_set_yape_mobile_wallet_delivery_method.sql', /metodo_entrega\s*=\s*'Billetera Móvil Yape'/i, 'La configuración no fija Billetera Móvil Yape');
   has('js/driver_payments.js', /p_destinatario_documento/, 'Falta documento del beneficiario en RPC OCR');
   has('js/driver_payments.js', /p_pais_destino/, 'Falta país de destino en RPC OCR');
   has('js/driver_payments.js', /p_canal_pago/, 'Falta canal Yape Remesas en RPC OCR');

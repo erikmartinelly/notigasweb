@@ -104,7 +104,7 @@ cd notigasweb
 * **Canonical deployment:** apply every file in `supabase/migrations/` in ascending order using the project migration workflow. The remote migration history must match Git.
 * `supabase/full_production_schema.sql` is intentionally deprecated and aborts if executed; it must never be used for production, staging, recovery, or a fresh install.
 * Configure the real Yape beneficiary and recipient number from the protected Admin payment settings; payment data must not be committed to Git.
-* Open `js/supabase-config.js` and input your `supabaseUrl` and `supabaseAnonKey`.
+* Configure `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` as environment variables in the hosting runtime. The server exposes only these public browser values through `/runtime-config.js`; do not commit them to frontend files and never configure `SUPABASE_SERVICE_ROLE_KEY` in this app.
 
 ### 3. Configure Google Identity Services & Auth
 * In the Google Cloud Console, configure an **OAuth 2.0 Client ID** for Web Applications.
@@ -115,16 +115,19 @@ cd notigasweb
 The PWA runs natively in modern browsers with zero build step required. The `package.json` and `server.js` files are provided to support standard Node.js hosting environments (such as Hostinger Web Apps). For full local testing with Google Sign-In and Geolocation APIs, serve over HTTPS or `localhost`.
 
 ```bash
-# Optional local test server
+# Local server (use your project's public browser credentials)
+SUPABASE_URL=https://your-project.supabase.co \
+SUPABASE_PUBLISHABLE_KEY=sb_publishable_your_key \
 node server.js
 ```
 
 ### 5. Production Deployment (Hostinger)
 1. Enable SSL/HTTPS on your custom domain in Hostinger.
 2. In Hostinger Web App deployment settings, specify `npm start` as the startup command.
-3. Verify that hidden directories (`.git`, `.agents`, `scripts`, `supabase`) are restricted from public directory browsing.
-4. Validate that `https://www.notigas.com/manifest.json`, `https://www.notigas.com/ads.txt`, and `https://www.notigas.com/sw.js` serve with appropriate MIME types.
-5. In Supabase Auth, register `https://www.notigas.com` as the primary Site URL and as an authorized redirect URI.
+3. Add `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` in Hostinger's environment-variable settings before starting the application.
+4. Verify that hidden directories (`.git`, `.agents`, `scripts`, `supabase`) are restricted from public directory browsing.
+5. Validate that `https://www.notigas.com/manifest.json`, `https://www.notigas.com/ads.txt`, and `https://www.notigas.com/sw.js` serve with appropriate MIME types.
+6. In Supabase Auth, register `https://www.notigas.com` as the primary Site URL and as an authorized redirect URI.
 
 ---
 

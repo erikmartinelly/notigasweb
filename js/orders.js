@@ -1369,6 +1369,30 @@ async function confirmarRecepcionComprador() {
 }
 window.confirmarRecepcionComprador = confirmarRecepcionComprador;
 
+async function reportarIncumplimientoPrecio() {
+  const rawOrder = (typeof AppState !== 'undefined') ? AppState.get('activeOrder') : null;
+  const order = typeof rawOrder === 'string' ? JSON.parse(rawOrder) : rawOrder;
+  if (!order?.id || !order.driver_id || order.estado !== 'asignado') {
+    showToast('Queja no disponible', 'Solo puedes reportar el precio de un pedido asignado.', 'warning', 3500);
+    return;
+  }
+  const rawPrice = window.prompt('¿Qué precio te cobró el repartidor? Ingresa el monto en soles, por ejemplo: 45.00');
+  if (rawPrice === null) return;
+  const chargedPrice = Number(String(rawPrice).trim().replace(',', '.'));
+  if (!Number.isFinite(chargedPrice) || chargedPrice < 0 || chargedPrice > 1000) {
+    showToast('Precio no válido', 'Ingresa un monto válido en soles.', 'warning', 3500);
+    return;
+  }
+  showConfirmModal('⚠️', 'Reportar precio distinto', 'Se enviará a administración el precio publicado en la ficha y el monto que reportas. La queja no aplica sanciones automáticas.', 'Enviar queja', async () => {
+    const { data, error } = await window.supabaseClient.rpc('rpc_reportar_incumplimiento_precio', {
+      p_order_id: order.id, p_precio_cobrado: chargedPrice, p_detalle: null
+    });
+    if (error) { showToast('No se pudo enviar', error.message || 'Inténtalo nuevamente.', 'error', 4000); return; }
+    showToast('Queja enviada', data?.already_reported ? 'Ya habías reportado este pedido.' : 'Administración revisará el precio publicado y tu reporte.', 'success', 4500);
+  }, 'Volver');
+}
+window.reportarIncumplimientoPrecio = reportarIncumplimientoPrecio;
+
 async function abrirPanoramicaPedidos() {
   let contenido = '';
   const now = Date.now();
@@ -1391,6 +1415,9 @@ async function abrirPanoramicaPedidos() {
             ${isAsignado ? `
               <button type="button" data-action="confirmarRecepcionComprador" style="flex:1; background:linear-gradient(135deg, #10B981, #059669); color:white; border:none; padding:7px 10px; border-radius:8px; font-size:11px; font-weight:800; cursor:pointer;">
                 <i class="fa-solid fa-circle-check"></i> Ya recibí mi pedido
+              </button>
+              <button type="button" data-action="reportarIncumplimientoPrecio" style="flex:1; background:#F59E0B; color:#111827; border:none; padding:7px 10px; border-radius:8px; font-size:11px; font-weight:800; cursor:pointer;">
+                <i class="fa-solid fa-flag"></i> Queja por precio
               </button>
             ` : ''}
             <button type="button" data-action="cancelarPedidoActivo" style="flex:1; background:#ef4444; color:white; border:none; padding:7px 10px; border-radius:8px; font-size:11px; font-weight:800; cursor:pointer;">

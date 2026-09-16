@@ -61,12 +61,12 @@ try {
   const htmlVersions = [...index.matchAll(/(?:styles|js)\/[^"']+\?v=(\d+)/g)].map(m => m[1]);
   if (!htmlVersions.length) fail('No se detectaron assets versionados en index.html');
   const uniqueHtmlVersions = [...new Set(htmlVersions)];
-  if (uniqueHtmlVersions.length !== 1 || uniqueHtmlVersions[0] !== '135') {
+  if (uniqueHtmlVersions.length !== 1 || uniqueHtmlVersions[0] !== '136') {
     fail(`Versiones de assets mezcladas: ${uniqueHtmlVersions.join(',')}`);
   }
   const sw = read('sw.js');
-  if (!/notigas-cache-v136/.test(sw)) fail('Service worker no usa cache progresivo v136');
-  if (/order_privacy_layer\.js\?v=135/.test(sw)) fail('Service worker vuelve a precachear módulos dinámicos pesados');
+  if (!/notigas-cache-v137/.test(sw)) fail('Service worker no usa cache progresivo v137');
+  if (/order_privacy_layer\.js\?v=136/.test(sw)) fail('Service worker vuelve a precachear módulos dinámicos pesados');
   if (/fetch\(asset, \{ cache: 'reload' \}\)/.test(sw)) fail('Service worker vuelve a forzar recargas duplicadas durante instalación');
   if (!/stale-while-revalidate/i.test(sw)) fail('Service worker no documenta la estrategia de cache progresivo');
 
@@ -87,7 +87,8 @@ try {
     '20260910234110_make_payment_suspensions_reversible_on_full_payment.sql',
     '20260914164500_yape_remittance_bolivia_auto_ocr.sql',
     '20260911011500_preprod_security_payment_hardening.sql',
-    '20260911022526_secure_order_radar_and_registered_driver_visibility.sql'
+    '20260911022526_secure_order_radar_and_registered_driver_visibility.sql',
+    '20260915180000_restrict_order_radar_to_active_drivers.sql'
   ]) {
     if (!names.includes(required)) fail(`Falta migración crítica: ${required}`);
   }

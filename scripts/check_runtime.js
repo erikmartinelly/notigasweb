@@ -324,6 +324,10 @@ const sandbox = {
   supabase: {
     createClient: () => mockSupabaseClient
   },
+  NOTIGAS_RUNTIME_CONFIG: {
+    supabaseUrl: 'https://runtime-test.supabase.co',
+    supabasePublishableKey: 'sb_publishable_runtime_test'
+  },
   supabaseClient: mockSupabaseClient,
   google: {
     accounts: {

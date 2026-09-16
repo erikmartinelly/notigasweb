@@ -989,6 +989,7 @@ function renderActiveOrdersMap() {
             <button type="button" style="flex:1; background:linear-gradient(135deg, #10B981, #059669); color:white; border:none; padding:6px 8px; border-radius:6px; font-size:10.5px; font-weight:800; cursor:pointer;" data-action="confirmarRecepcionComprador" title="Confirmar que recibiste tu pedido">
               <i class="fa-solid fa-circle-check"></i> Ya recibí
             </button>
+            ${order.driver_id && order.estado === 'asignado' ? `<button type="button" style="flex:1; background:#F59E0B; color:#111827; border:none; padding:6px 8px; border-radius:6px; font-size:10.5px; font-weight:800; cursor:pointer;" data-action="reportarIncumplimientoPrecio" title="Reportar un precio distinto al publicado"><i class="fa-solid fa-flag"></i> Queja precio</button>` : ''}
             <button type="button" style="flex:1; background:#ef4444; color:white; border:none; padding:6px 8px; border-radius:6px; font-size:10.5px; font-weight:800; cursor:pointer;" data-action="cancelarPedidoActivo" title="Cancelar este requerimiento">
               <i class="fa-solid fa-ban"></i> Cancelar
             </button>
@@ -2066,39 +2067,22 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
           .lte('longitude', bbox.maxLng);
       }
 
-      // 2. Consulta de Pedidos Públicos (disponibles para radar y mapa en la zona metropolitana)
-      let pubQuery = window.supabaseClient
-        .from('pedidos_publicos')
-        .select(ORDER_COLUMNS)
-        .gte('created_at', activeWindow)
-        .in('estado', ['pendiente', 'visto'])
-        .limit(200);
-      if (isDriverUser) {
-        const driverCity = (u.ciudad && u.ciudad !== 'todos' && u.ciudad !== 'all') ? String(u.ciudad).toLowerCase().trim() : null;
-        if (driverCity) {
-          const dCityKeys = (typeof window.getCityMetroKeys === 'function') ? window.getCityMetroKeys(driverCity) : [driverCity];
-          pubQuery = pubQuery.in('ciudad', dCityKeys);
-        } else if (cityKeys && cityKeys.length > 0) {
+      // 2. Un repartidor jamás consulta pedidos por la vista genérica: las
+      // únicas zonas disponibles proceden de order_public_radar con RLS.
+      // Un comprador solo puede recibir sus propios pedidos por pedidos_publicos.
+      let pubQuery = null;
+      if (!isDriverUser) {
+        pubQuery = window.supabaseClient
+          .from('pedidos_publicos')
+          .select(ORDER_COLUMNS)
+          .gte('created_at', activeWindow)
+          .in('estado', ['pendiente', 'visto'])
+          .limit(50);
+        if (cityKeys && cityKeys.length > 0) {
           pubQuery = pubQuery.in('ciudad', cityKeys);
         }
-
-        const normDriverCat = (typeof window.normalizeCategoryCode === 'function')
-          ? window.normalizeCategoryCode(driverCategoria)
-          : String(driverCategoria).toLowerCase().trim();
-
-        if (normDriverCat && normDriverCat !== 'todos' && normDriverCat !== 'otros') {
-          if (normDriverCat === 'gas') {
-            pubQuery = pubQuery.in('categoria', ['gas', 'Gas', 'GAS', 'Gas GLP', 'gas glp', 'garrafa', 'Garrafa', 'GLP', 'balon', 'Balon', 'balón', 'Balón', 'balon de gas', 'balón de gas']);
-          } else if (normDriverCat === 'agua') {
-            pubQuery = pubQuery.in('categoria', ['agua', 'Agua', 'AGUA', 'Agua Potable', 'agua potable', 'botellon', 'Botellón', 'botellón']);
-          } else {
-            pubQuery = pubQuery.eq('categoria', driverCategoria);
-          }
-        }
-      } else if (cityKeys && cityKeys.length > 0) {
-        pubQuery = pubQuery.in('ciudad', cityKeys);
       }
-      if (shouldUseBbox) {
+      if (pubQuery && shouldUseBbox) {
         pubQuery = pubQuery
           .gte('latitude', bbox.minLat)
           .lte('latitude', bbox.maxLat)
@@ -2130,7 +2114,7 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
 
       // EJECUCIÓN PARALELA DE TODAS LAS CONSULTAS DE RED (Reduce latencia de T1+T2+T3 a max(T1,T2,T3))
       const [pubRes, assignedRes, trucksRes] = await Promise.all([
-        pubQuery,
+        pubQuery || Promise.resolve({ data: [], error: null }),
         assignedPromise,
         trucksQuery
       ]);

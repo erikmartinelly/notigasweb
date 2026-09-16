@@ -2416,6 +2416,25 @@ footer.promo-banner-container {
 
 .form-group { margin-bottom: 12px; }
 
+/* Registro de repartidor: menos bloques, misma información y controles. */
+.driver-registration-modal { max-width: 470px; }
+.driver-registration-subtitle { margin: 4px 0 12px; color: #94A3B8; font-size: 12px; }
+.driver-trial-summary { margin: 0 0 14px; }
+.driver-trial-card { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; border:1px solid rgba(16,185,129,.42); border-radius:9px; background:rgba(16,185,129,.08); }
+.driver-trial-heading { display:flex; align-items:center; gap:8px; }
+.driver-trial-heading strong { color:#A7F3D0; font-size:13px; }
+.driver-trial-heading span { color:#6EE7B7; font-size:10px; font-weight:800; text-transform:uppercase; }
+.driver-trial-card p { margin:0; color:#CBD5E1; font-size:11px; text-align:right; }
+.driver-registration-grid { display:grid; grid-template-columns:1fr 1fr; gap:0 10px; }
+.driver-identity-field, .driver-price-field { padding:10px 11px; border:1px solid #334155; border-radius:9px; background:#0F172A; }
+.driver-identity-field label, .driver-price-field label { display:flex; justify-content:space-between; gap:8px; }
+.driver-identity-field label span:last-child, .driver-price-field label span:last-child { color:#94A3B8; font-size:10px; font-weight:700; }
+.driver-identity-field small, .driver-price-field small { color:#94A3B8; font-size:10px; display:block; margin-top:4px; }
+.driver-color-field #driverTruckColorPicker { max-height:54px; overflow-y:auto; margin:5px 0 2px; }
+.driver-terms-compact { padding:9px 10px; margin:8px 0 12px; border:1px solid #334155; border-radius:8px; font-size:10.5px; color:#CBD5E1; line-height:1.35; }
+.driver-terms-compact a { color:#FDE68A; font-weight:800; text-decoration:underline; }
+@media (max-width: 440px) { .driver-registration-grid { grid-template-columns:1fr; } .driver-trial-card { display:block; } .driver-trial-card p { margin-top:4px; text-align:left; } }
+
 .form-group label { 
 
   display: block; 

@@ -100,6 +100,26 @@ document.addEventListener('DOMContentLoaded', () => {
       console.warn(`Acción no disponible: ${fnName}`);
     };
 
+    // Delegación: también cubre el selector de rol que app.js reconstruye
+    // dinámicamente al alternar entre comprador y repartidor.
+    document.addEventListener('click', (event) => {
+      const actionElement = event.target.closest('[data-notigas-action]');
+      if (!actionElement) return;
+
+      const action = actionElement.dataset.notigasAction;
+      if (action === 'open-driver-terms') {
+        event.preventDefault();
+        window.abrirModalTerminosRepartidores();
+      } else if (action === 'switch-role') {
+        const targetRole = actionElement.dataset.roleTarget;
+        window.cambiarModoRolUsuario(targetRole || undefined);
+      } else if (action === 'switch-legal-tab') {
+        window.switchLegalTab(actionElement.dataset.legalTab || 'general');
+      } else if (action === 'close-privacy-policy') {
+        window.cerrarModalPoliticaPrivacidad();
+      }
+    });
+
     const el_auto_event_1 = document.getElementById('auto-event-1');
     if (el_auto_event_1) el_auto_event_1.addEventListener('click', () => { safeCall('conectarGPSAuto'); });
 
@@ -569,6 +589,10 @@ document.addEventListener('click', async (e) => {
     }
     else if (action === 'confirmarRecepcionComprador') {
       if (typeof window.confirmarRecepcionComprador === 'function') window.confirmarRecepcionComprador();
+      if (typeof window.cerrarPanoramicaPedidos === 'function') window.cerrarPanoramicaPedidos();
+    }
+    else if (action === 'reportarIncumplimientoPrecio') {
+      if (typeof window.reportarIncumplimientoPrecio === 'function') window.reportarIncumplimientoPrecio();
       if (typeof window.cerrarPanoramicaPedidos === 'function') window.cerrarPanoramicaPedidos();
     }
     else if (action === 'cancelarPedidoActivo') {
