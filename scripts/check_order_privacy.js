@@ -49,7 +49,7 @@ assert(!/\.from\('pedidos'\)[\s\S]{0,250}telefono/.test(privacy), 'La capa de pr
 assert(/Los datos del pedido se habilitan únicamente si lo tomas/.test(privacy), 'La interfaz explica la regla de privacidad');
 assert(/if \(!isDriverMode\(\)\) \{[\s\S]*clearRadarLayers\(\);[\s\S]*return;/i.test(privacy), 'Frontend no consulta radar desde interfaz de comprador');
 
-assert(/CACHE_VERSION = '136'/.test(state), 'State mantiene la versión de assets del HTML');
+assert(/CACHE_VERSION = '138'/.test(state), 'State mantiene la versión de assets del HTML');
 assert(/loadOrderPrivacyModule/.test(state) && /order_privacy_layer\.js/.test(state), 'State conserva carga dinámica de la capa de privacidad');
 assert(/notigas-cache-v139/.test(sw), 'Service worker usa caché progresiva v139');
 assert(!/order_privacy_layer\.js\?v=138/.test(sw), 'La capa de privacidad no compite en el precache inicial');

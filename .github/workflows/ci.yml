@@ -34,15 +34,15 @@ jobs:
           for i in {1..20}; do
             if curl -fsS http://127.0.0.1:3000/health | grep -q '^OK$'; then
               curl -fsS http://127.0.0.1:3000/ > /tmp/notigas-index.html
-              curl -fsS 'http://127.0.0.1:3000/js/app.js?v=135' > /tmp/notigas-app.js
-              curl -fsS 'http://127.0.0.1:3000/js/driver_order_rules.js?v=135' > /tmp/notigas-driver-rules.js
+              curl -fsS 'http://127.0.0.1:3000/js/app.js?v=138' > /tmp/notigas-app.js
+              curl -fsS 'http://127.0.0.1:3000/js/driver_order_rules.js?v=138' > /tmp/notigas-driver-rules.js
               grep -q '🌍 Todos' /tmp/notigas-index.html
-              grep -q '<script defer src="js/driver_icons.js?v=136"></script>' /tmp/notigas-index.html
-              grep -q '<script defer src="js/device_security.js?v=136"></script>' /tmp/notigas-index.html
+              grep -q '<script defer src="js/driver_icons.js?v=138"></script>' /tmp/notigas-index.html
+              grep -q '<script defer src="js/device_security.js?v=138"></script>' /tmp/notigas-index.html
               grep -q 'id="driverCreditProgressiveTerms"' /tmp/notigas-index.html
-              grep -q 'El primer ciclo cobrable permite <strong>100 pedidos = S/ 20</strong>' /tmp/notigas-index.html
+              grep -q 'Cada ciclo cobrable permite <strong>250 balones = S/ 50</strong>' /tmp/notigas-index.html
               grep -q '🎁 PRUEBA GRATIS' /tmp/notigas-index.html
-              grep -q 'Los primeros 50 pedidos son gratis. Desde el pedido 51 en adelante se cobra <strong>S/ 0,20 por pedido</strong>.' /tmp/notigas-index.html
+              grep -q 'Los primeros 100 pedidos son gratis. Desde el pedido 101 en adelante se cobra <strong>S/ 0,20 por balón</strong>.' /tmp/notigas-index.html
               grep -q 'Color Camión o camioneta' /tmp/notigas-index.html
               grep -q 'id="inputDriverTruckColor"' /tmp/notigas-index.html
               if grep -q 'Color de tu Camión Toyota Dina' /tmp/notigas-index.html; then
@@ -61,11 +61,11 @@ jobs:
                 echo 'El detalle de crédito todavía aparece en el formulario de registro de repartidores'
                 exit 1
               fi
-              if grep -q '<script src="js/driver_icons.js?v=136"></script>' /tmp/notigas-index.html; then
+              if grep -q '<script src="js/driver_icons.js?v=138"></script>' /tmp/notigas-index.html; then
                 echo 'driver_icons.js todavía bloquea el parser'
                 exit 1
               fi
-              if grep -q '<script src="js/device_security.js?v=136"></script>' /tmp/notigas-index.html; then
+              if grep -q '<script src="js/device_security.js?v=138"></script>' /tmp/notigas-index.html; then
                 echo 'device_security.js todavía bloquea el parser'
                 exit 1
               fi
