@@ -8,16 +8,10 @@
   };
   const digits = (v) => String(v || '').replace(/[^0-9]/g, '');
 
-  const freshAdminVerifier = (typeof window.getVerifiedAdminEmail === 'function') ? window.getVerifiedAdminEmail : null;
-  if (freshAdminVerifier && freshAdminVerifier.constructor?.name === 'AsyncFunction') window.verifyAdminSessionEmail = freshAdminVerifier;
-  window.getVerifiedAdminEmail = function () {
-    try {
-      const isAdmin = typeof AppState !== 'undefined' && AppState.get('isAdmin') === true;
-      if (!isAdmin) return null;
-      const verified = window._verifiedAdminEmail || window._cachedAdminEmail || '';
-      return verified ? String(verified).toLowerCase().trim() : null;
-    } catch (_) { return null; }
-  };
+  // No se debe sobrescribir window.getVerifiedAdminEmail: la versión autoritativa
+  // es la asíncrona definida en admin.js, que revalida el JWT contra admin_credentials.
+  // Un override síncrono aquí anulaba esa validación y dependía de AppState.isAdmin,
+  // impidiendo guardar/eliminar anuncios de forma fiable.
 
   function ensurePanel() {
     const list = document.getElementById('adminPremiumSubscriptionsContainer');

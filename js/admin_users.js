@@ -4,7 +4,7 @@ window.globalBannedList = window.globalBannedList || [];
 
 async function descargarBaneadosDeSupabase() {
   if (!window.supabaseClient) return;
-  const isAdmin = (typeof AppState !== 'undefined' && AppState.get('isAdmin') === true) || (typeof getVerifiedAdminEmail === 'function' && !!getVerifiedAdminEmail());
+  const isAdmin = (typeof AppState !== 'undefined' && AppState.get('isAdmin') === true) || (typeof getVerifiedAdminEmail === 'function' && !!(await getVerifiedAdminEmail()));
   if (!isAdmin) return; // Sólo los administradores pueden consultar usuarios_baneados
 
   try {
@@ -32,31 +32,8 @@ document.addEventListener('notigas_auth_ready', () => {
   }
 });
 
-function esRepartidorBaneado(nombre, placa, whatsapp, gmail) {
-  if (!window.globalBannedList || window.globalBannedList.length === 0) return false;
-
-  const n = nombre ? String(nombre).toLowerCase().trim() : '';
-  const p = placa ? String(placa).toLowerCase().trim().replace(/[^a-z0-9]/g, '') : '';
-  const w = whatsapp ? String(whatsapp).toLowerCase().trim().replace(/[^0-9]/g, '') : '';
-  const g = gmail ? String(gmail).toLowerCase().trim() : '';
-
-  for (const b of window.globalBannedList) {
-    if (!b) continue;
-    const bClean = String(b).toLowerCase().trim();
-    const bDigits = bClean.replace(/[^0-9]/g, '');
-    const bAlphanum = bClean.replace(/[^a-z0-9]/g, '');
-
-    // Coincidencia exacta por correo o ID
-    if (g && bClean === g) return true;
-    // Coincidencia exacta por placa
-    if (p && bAlphanum && p === bAlphanum) return true;
-    // Coincidencia exacta por teléfono (mínimo 7 dígitos)
-    if (w && w.length >= 7 && bDigits && w === bDigits) return true;
-    // Coincidencia por nombre (estricta, mínimo 4 caracteres)
-    if (n && n.length >= 4 && (n === bClean || (bClean.length >= 6 && n.includes(bClean)))) return true;
-  }
-  return false;
-}
+// esRepartidorBaneado se define de forma única en auth.js (requerida por flujos
+// no-admin, como el registro de repartidores, antes de cargar este módulo).
 
 async function banearRepartidorAdmin(vendorUserId, vendorName, plate = '', whatsapp = '') {
   // vendorUserId debe ser el auth.uid() real del chofer.
@@ -254,21 +231,30 @@ window.banearCompradorAdmin = async function(userId, email, nombre) {
 
   if (!window.supabaseClient) return;
 
-  const { error } = await window.supabaseClient.from('usuarios_baneados').insert([{
-    user_id: userId || email,
-    email: email || null,
-    nombre: nombre || null,
-    motivo: 'Baneado por Administrador'
-  }]);
-  if (error) {
-    console.error('Error al banear comprador:', error);
-    if (typeof showToast === 'function') showToast('❌ Error', error.message || 'No se pudo bloquear al comprador.', 'error', 5000);
-    return;
-  }
+  const safeName = nombre || email || 'este comprador';
+  const doBan = async () => {
+    const { error } = await window.supabaseClient.from('usuarios_baneados').insert([{
+      user_id: userId || email,
+      email: email || null,
+      nombre: nombre || null,
+      motivo: 'Baneado por Administrador'
+    }]);
+    if (error) {
+      console.error('Error al banear comprador:', error);
+      if (typeof showToast === 'function') showToast('❌ Error', error.message || 'No se pudo bloquear al comprador.', 'error', 5000);
+      return;
+    }
 
-  await descargarBaneadosDeSupabase();
-  if (typeof renderAdminVendorsList === 'function') renderAdminVendorsList();
-  if (typeof showToast === 'function') showToast('🚫 Comprador Baneado', `Se bloqueó el acceso de "${nombre || email}".`, 'success', 4000);
+    await descargarBaneadosDeSupabase();
+    if (typeof renderAdminVendorsList === 'function') renderAdminVendorsList();
+    if (typeof showToast === 'function') showToast('🚫 Comprador Baneado', `Se bloqueó el acceso de "${nombre || email}".`, 'success', 4000);
+  };
+
+  if (typeof showConfirmModal === 'function') {
+    showConfirmModal('🚫', `¿Banear al comprador ${safeName}?`, 'El usuario no podrá hacer pedidos y su acceso será bloqueado.', 'Sí, Banear', doBan);
+  } else if (confirm(`¿Banear al comprador ${safeName}?`)) {
+    doBan();
+  }
 };
 
 window.borrarCompradorPermanente = function(userId, gmail, nombre) {

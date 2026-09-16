@@ -214,21 +214,9 @@ window.checkAndApplyAdminStatus = async function(user) {
   }
 };
 
-window.getVerifiedAdminEmail = function() {
-  try {
-    if (window._verifiedAdminEmail) return String(window._verifiedAdminEmail).toLowerCase().trim();
-    if (typeof AppState !== 'undefined' && AppState.get('isAdmin') === true) {
-      if (window._tempAuthUser && window._tempAuthUser.email) return window._tempAuthUser.email.toLowerCase().trim();
-      const data = AppState.get('userData');
-      if (data && (data.gmail || data.email)) return (data.gmail || data.email).toLowerCase().trim();
-    }
-    if (window._tempAuthUser && window._tempAuthUser.email) {
-      return window._tempAuthUser.email.toLowerCase().trim();
-    }
-    const data = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
-    return data && (data.gmail || data.email) ? (data.gmail || data.email).toLowerCase().trim() : null;
-  } catch(e) { return null; }
-};
+// window.getVerifiedAdminEmail se define de forma única y autoritativa en admin.js
+// (versión asíncrona que revalida el JWT contra admin_credentials). No duplicar aquí:
+// una versión síncrona basada en caché podía anular esa validación y romper el panel admin.
 
 window.esRepartidorBaneado = function(nombre, placa, whatsapp, gmail) {
   if (!window.globalBannedList || window.globalBannedList.length === 0) return false;

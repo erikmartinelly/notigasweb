@@ -195,6 +195,30 @@ window.pendingUploadUrls = {
   repartidores: null,
   muro_avisos: null
 };
+// Seguimiento de cambios locales sin persistir para no perder una imagen recién
+// subida/eliminada cuando otra recarga de configuración trae datos de Supabase.
+window._pendingAdChanges = { mapa: false, repartidores: false, muro_avisos: false };
+// URL persistida en Supabase por pestaña (para poder borrar el archivo real al eliminar).
+window._persistedAdImageUrl = { mapa: null, repartidores: null, muro_avisos: null };
+// Archivos recién subidos en esta sesión pendientes de confirmar/borrar.
+window._adUploadedThisSession = { mapa: [], repartidores: [], muro_avisos: [] };
+
+function adStorageFileName(url) {
+  if (!url || url === '__REMOVE__') return null;
+  const clean = String(url).split('?')[0];
+  if (!/\/storage\/v1\/object\/public\/anuncios-media\//.test(clean)) return null;
+  const parts = clean.split('/');
+  return parts[parts.length - 1] || null;
+}
+
+async function deleteAdStorageFile(url) {
+  const fileName = adStorageFileName(url);
+  if (!fileName || !window.supabaseClient) return;
+  try {
+    await window.supabaseClient.storage.from('anuncios-media').remove([fileName]);
+  } catch (_) {}
+}
+
 
 window.switchPromoSubTab = function(tabName) {
   const normTab = normalizeAdPlacement(tabName);
@@ -275,6 +299,8 @@ async function cargarConfiguracionPublicidadEnAdmin(targetCity = null) {
           if (inputTitle) inputTitle.value = ad.titulo || '';
           if (inputUrl) inputUrl.value = ad.url || '';
           if (selectState) selectState.value = (ad.activo === false) ? 'inactivo' : 'activo';
+          window._persistedAdImageUrl[pos] = ad.image_url || null;
+          if (window._pendingAdChanges[pos]) return;
           if (ad.image_url && preview && previewBox) {
             preview.src = ad.image_url;
             previewBox.style.display = 'flex';
@@ -285,6 +311,8 @@ async function cargarConfiguracionPublicidadEnAdmin(targetCity = null) {
             window.pendingUploadUrls[pos] = null;
           }
         } else {
+          window._persistedAdImageUrl[pos] = null;
+          if (window._pendingAdChanges[pos]) return;
           if (inputTitle) inputTitle.value = '';
           if (inputUrl) inputUrl.value = '';
           if (selectState) selectState.value = 'activo';
@@ -1166,9 +1194,24 @@ async function guardarPropagandaTab(tabName, silent = false) {
         });
 
         if (!rpcErr && rpcRes && rpcRes.success) {
+          if (!window._pendingAdChanges) window._pendingAdChanges = { mapa: false, repartidores: false, muro_avisos: false };
+          if (!window._adUploadedThisSession) window._adUploadedThisSession = { mapa: [], repartidores: [], muro_avisos: [] };
+          if (!window._persistedAdImageUrl) window._persistedAdImageUrl = { mapa: null, repartidores: null, muro_avisos: null };
+
           if (imgUrl === '__REMOVE__') {
+            // Borrar el archivo persistido y los subidos en esta sesión solo DESPUÉS
+            // de que la base de datos dejó de referenciarlos.
+            await deleteAdStorageFile(window._persistedAdImageUrl[pos]);
+            for (const u of (window._adUploadedThisSession[pos] || [])) await deleteAdStorageFile(u);
+            window._persistedAdImageUrl[pos] = null;
             if (window.pendingUploadUrls) window.pendingUploadUrls[pos] = null;
+          } else if (imgUrl) {
+            // La imagen subida ya quedó persistida en la base de datos.
+            window._persistedAdImageUrl[pos] = imgUrl;
           }
+
+          if (window._adUploadedThisSession) window._adUploadedThisSession[pos] = [];
+          if (window._pendingAdChanges) window._pendingAdChanges[pos] = false;
           return true;
         } else if (rpcErr) {
           lastErrMsg = rpcErr.message;
@@ -1241,6 +1284,10 @@ window.guardarSubmenuAnuncios = async function() {
 };
 
 window.guardarTodasLasPropagandas = async function() {
+  if (window._isUploadingAdImage) {
+    if (typeof showToast === 'function') showToast('Carga en progreso', 'Espera a que termine de subir la imagen antes de guardar.', 'warning', 3000);
+    return;
+  }
   if (window._isSavingAdsMutex) return;
   window._isSavingAdsMutex = true;
   const btn = document.getElementById('btnSaveAllPromoAdmin');
@@ -1321,6 +1368,15 @@ window.previewUploadAdImage = async function(event, specificTab) {
   if (btn) btn.disabled = true;
   window._isUploadingAdImage = true;
 
+  // Vigía: nunca dejar el flag de carga colgado si una red lenta o algún error
+  // evita que el finally se ejecute en un tiempo razonable (M9).
+  clearTimeout(window._adUploadWatchdogTimer);
+  window._adUploadWatchdogTimer = setTimeout(() => {
+    window._isUploadingAdImage = false;
+    const b = document.getElementById('btnSaveCurrentAdTab');
+    if (b) b.disabled = false;
+  }, 60000);
+
   try {
     if (window.supabaseClient) {
       const currentAdmin = await getVerifiedAdminEmail();
@@ -1349,7 +1405,21 @@ window.previewUploadAdImage = async function(event, specificTab) {
         if (!window.pendingUploadUrls) {
           window.pendingUploadUrls = { mapa: null, repartidores: null, muro_avisos: null };
         }
+        if (!window._pendingAdChanges) {
+          window._pendingAdChanges = { mapa: false, repartidores: false, muro_avisos: false };
+        }
+        if (!window._adUploadedThisSession) {
+          window._adUploadedThisSession = { mapa: [], repartidores: [], muro_avisos: [] };
+        }
+
+        // Si se reemplaza una imagen subida antes sin guardar, borrar la anterior.
+        const oldUploaded = window._adUploadedThisSession[pos] || [];
+        for (const oldUrl of oldUploaded) {
+          if (oldUrl && oldUrl !== publicUrl) await deleteAdStorageFile(oldUrl);
+        }
+        window._adUploadedThisSession[pos] = [publicUrl];
         window.pendingUploadUrls[pos] = publicUrl;
+        window._pendingAdChanges[pos] = true;
 
         const preview = document.getElementById(`promoImagePreview_${pos}`);
         const box = document.getElementById(`promoImagePreviewBox_${pos}`);
@@ -1364,6 +1434,7 @@ window.previewUploadAdImage = async function(event, specificTab) {
       if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
     }
   } finally {
+    clearTimeout(window._adUploadWatchdogTimer);
     window._isUploadingAdImage = false;
     if (btn) btn.disabled = false;
   }
@@ -1372,20 +1443,21 @@ window.previewUploadAdImage = async function(event, specificTab) {
 window.eliminarImagenAnuncio = async function(specificTab) {
   const pos = normalizeAdPlacement(specificTab || window.adminActivePromoTab);
 
-  if (window.pendingUploadUrls && window.pendingUploadUrls[pos] && window.supabaseClient) {
-    try {
-      const urlParts = window.pendingUploadUrls[pos].split('/');
-      const fileName = urlParts[urlParts.length - 1];
-      if (fileName) {
-        await window.supabaseClient.storage.from('anuncios-media').remove([fileName]);
-      }
-    } catch (_) {}
-  }
-
   if (!window.pendingUploadUrls) {
     window.pendingUploadUrls = { mapa: null, repartidores: null, muro_avisos: null };
   }
+  if (!window._pendingAdChanges) {
+    window._pendingAdChanges = { mapa: false, repartidores: false, muro_avisos: false };
+  }
+  if (!window._adUploadedThisSession) {
+    window._adUploadedThisSession = { mapa: [], repartidores: [], muro_avisos: [] };
+  }
+
+  // No se borra el archivo aquí: el usuario podría cancelar SIN guardar y dejaría
+  // la URL persistida apuntando a un archivo inexistente. El borrado real del
+  // archivo ocurre al guardar (guardarPropagandaTab) si el guardado tiene éxito.
   window.pendingUploadUrls[pos] = '__REMOVE__';
+  window._pendingAdChanges[pos] = true;
 
   const preview = document.getElementById(`promoImagePreview_${pos}`);
   const box = document.getElementById(`promoImagePreviewBox_${pos}`);
@@ -1395,7 +1467,7 @@ window.eliminarImagenAnuncio = async function(specificTab) {
   if (box) box.style.display = 'none';
   if (input) input.value = '';
 
-  if (typeof showToast === 'function') showToast('Eliminada', `Imagen descartada para la pestaña ${pos.toUpperCase()}.`, 'info', 3000);
+  if (typeof showToast === 'function') showToast('Eliminada', `Imagen descartada para la pestaña ${pos.toUpperCase()}. Guarda para aplicar el cambio.`, 'info', 3000);
 };
 
 window.borrarAnuncioLocalAdmin = async function(adId) {
@@ -1411,14 +1483,27 @@ window.borrarAnuncioLocalAdmin = async function(adId) {
         if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Eliminando propaganda...');
         let deleted = false;
         let delError = null;
+        let adImageUrl = null;
 
         try {
+          // Recuperar la URL de la imagen antes de borrar la fila para poder
+          // eliminar también el archivo de storage si existía (M1).
+          try {
+            const { data: adRow } = await window.supabaseClient
+              .from(_ADMIN_AD_TABLE)
+              .select('image_url')
+              .eq('id', adId)
+              .maybeSingle();
+            adImageUrl = adRow?.image_url || null;
+          } catch (_) {}
+
           const { data: rpcRes, error: rpcErr } = await window.supabaseClient.rpc('rpc_delete_local_ad', {
             p_ad_id: adId,
             p_admin_email: currentAdmin
           });
           if (!rpcErr && rpcRes && rpcRes.success) {
             deleted = true;
+            if (adImageUrl) await deleteAdStorageFile(adImageUrl);
           } else if (rpcErr) {
             delError = rpcErr;
           }
@@ -2150,60 +2235,9 @@ window.closeReportModal = (typeof closeReportModal !== 'undefined') ? closeRepor
 window.enviarDenuncia = (typeof enviarDenuncia !== 'undefined') ? enviarDenuncia : undefined;
 
 
-// Funciones para gestin de compradores
-async function banearCompradorAdmin(userId, email, name) {
-  if (typeof showConfirmModal === 'function') {
-    showConfirmModal('🚫', `¿Banear al comprador ${name}?`, 'El usuario no podrá hacer pedidos y su acceso será bloqueado.', 'Sí, Banear', async () => {
-      const target = email || userId;
-      if (!target) return;
-      const { error } = await window.supabaseClient.from('usuarios_baneados').insert([{
-        user_id: userId || null,
-        email: email || null,
-        nombre: name || null,
-        motivo: 'Comprador Baneado por Admin'
-      }]);
-      if (error) {
-         console.error('Error al banear comprador:', error);
-         if (typeof showToast === 'function') showToast('Error', error.message, 'error', 4000);
-         return;
-      }
-      if (typeof showToast === 'function') showToast('🚫 Baneo', `Comprador ${name} ha sido baneado.`, 'success', 3000);
-      if (typeof renderAdminVendorsList === 'function') renderAdminVendorsList();
-    });
-  } else {
-    if(confirm(`¿Banear al comprador ${name}?`)) {
-      await window.supabaseClient.from('usuarios_baneados').insert([{ user_id: userId || null, email: email || null, nombre: name || null, motivo: 'Comprador Baneado por Admin' }]);
-      if (typeof renderAdminVendorsList === 'function') renderAdminVendorsList();
-    }
-  }
-}
-
-async function borrarCompradorPermanente(userId, email, name) {
-  if (typeof showConfirmModal === 'function') {
-    showConfirmModal('⚠️ ELIMINAR CUENTA', `¿Borrar permanentemente a ${name}?`, 'Esta acción eliminará su cuenta de Autenticación, su perfil público y todos sus pedidos. Es irreversible.', 'Eliminar Cuenta', async () => {
-      if (userId) {
-         const { error } = await window.supabaseClient.rpc('rpc_admin_delete_user', { p_user_id: userId, p_email: email });
-         if (error) {
-             console.error('Error eliminando comprador:', error);
-             if (typeof showToast === 'function') showToast('Error', error.message, 'error', 4000);
-             return;
-         }
-      }
-      if (typeof showToast === 'function') showToast('✅ Eliminado', `Comprador ${name} eliminado permanentemente.`, 'success', 3000);
-      if (typeof renderAdminVendorsList === 'function') renderAdminVendorsList();
-    });
-  } else {
-    if(confirm(`¿Borrar permanentemente a ${name}? Esta acción es irreversible.`)) {
-      if (userId) {
-        await window.supabaseClient.rpc('rpc_admin_delete_user', { p_user_id: userId, p_email: email });
-      }
-      if (typeof renderAdminVendorsList === 'function') renderAdminVendorsList();
-    }
-  }
-}
-
-window.banearCompradorAdmin = (typeof banearCompradorAdmin !== 'undefined') ? banearCompradorAdmin : undefined;
-window.borrarCompradorPermanente = (typeof borrarCompradorPermanente !== 'undefined') ? borrarCompradorPermanente : undefined;
+// Funciones de gestión de compradores: definidas de forma única en admin_users.js
+// (banearCompradorAdmin / borrarCompradorPermanente). Se eliminaron aquí para evitar
+// definiciones duplicadas no deterministas al cargar admin.js y admin_users.js en paralelo.
 
 /* ==========================================================================
    GESTIÓN DE REPARTIDORES PREMIUM (S/ 15 / mes) & COMPROBANTES QR
