@@ -1,8 +1,8 @@
 /* ==========================================================================
    NOTIGAS - REGLAS OPERATIVAS DEL REPARTIDOR (PERÚ)
    - Sin suscripción, VIP ni ventajas temporales.
-   - Promoción: primeros 50 pedidos confirmados sin comisión.
-   - Después: S/ 0.20 por pedido. Crédito progresivo S/ 20 -> S/ 50 -> S/ 100.
+   - Promoción: primeros 100 pedidos confirmados sin comisión.
+   - Después: S/ 0.20 por balón. Ciclo fijo de S/ 50 (250 balones cobrables).
    - Liberar un pedido no entregado no genera comisión ni modifica el saldo.
    - "No entregué" registra la declaración; si el comprador confirma recepción,
      la confirmación del comprador prevalece y la entrega se contabiliza.
@@ -162,11 +162,11 @@
         if (!text) return;
         const original = text;
         text = text
-          .replace(/Comisi[oó]n\s+fija\s+de\s+S\/\s*1\.00\s+por\s+bal[oó]n\s+entregado/gi, 'Comisión de S/ 0.20 por pedido entregado')
-          .replace(/l[ií]mite\s+de\s+cr[eé]dito\s+de\s+S\/\s*50\.00/gi, 'ciclo de crédito de 100 pedidos (S/ 20)')
+          .replace(/Comisi[oó]n\s+fija\s+de\s+S\/\s*1\.00\s+por\s+bal[oó]n\s+entregado/gi, 'Comisión de S/ 0.20 por balón entregado')
+          .replace(/l[ií]mite\s+de\s+cr[eé]dito\s+de\s+S\/\s*50\.00/gi, 'ciclo fijo de crédito de 250 balones (S/ 50)')
           .replace(/corte\s+semanal\s+los\s+domingos\s+11:59\s*PM\s+y\s+baneo\s+definitivo\s+por\s+hardware\s+en\s+caso\s+de\s+incumplimiento/gi, 'suspensión al completar el ciclo hasta regularizar el pago')
           .replace(/Los\s+primeros\s+20\s+pedidos\s+confirmados\s+no\s+generan\s+comisi[oó]n\.\s*Despu[eé]s:\s*/gi, '')
-          .replace(/cr[eé]dito\s+hasta\s+100\s+unidades\s+entregadas/gi, 'ciclo de crédito de 100 pedidos');
+          .replace(/cr[eé]dito\s+hasta\s+100\s+unidades\s+entregadas/gi, 'ciclo fijo de 250 balones cobrables');
         if (text !== original) node.nodeValue = text;
       });
     }
@@ -177,14 +177,14 @@
       return !Array.from(el.children || []).some((child) => /Comisi[oó]n fija:.*S\/\s*1\.00.*S\/\s*50\.00.*Corte:.*Baneo:/i.test(String(child.textContent || '')));
     });
     deepestSummary.forEach((el) => {
-      el.textContent = 'Comisión: S/ 0.20 por pedido confirmado • Ciclo: 100 pedidos = S/ 20 • Suspensión hasta regularizar el pago';
+      el.textContent = 'Comisión: S/ 0.20 por balón confirmado • Ciclo fijo: 250 balones = S/ 50 • Bloqueo hasta confirmar el pago';
     });
   }
 
   function normalizeLegacyOrderBanners(root = document) {
     const banners = root.querySelectorAll?.('.driver-plan-banner') || [];
     banners.forEach((banner) => {
-      banner.innerHTML = '<strong style="color:#FFFFFF;">🎁 50 pedidos gratis para probar NOTIGAS</strong> · Después: S/ 0.20 por pedido. Crédito progresivo hasta S/ 100.';
+      banner.innerHTML = '<strong style="color:#FFFFFF;">🎁 100 pedidos gratis para probar NOTIGAS</strong> · Desde el pedido 101: S/ 0.20 por balón. Ciclo fijo de S/ 50.';
     });
   }
 
@@ -209,8 +209,8 @@
       const limit = Number(driver.limite_pedidos_credito || 100);
       const saldo = Number(driver.comisiones_pendientes || 0);
       const fee = Number(driver.comision_por_pedido || 0.20);
-      const creditLimit = Number(driver.limite_credito || 20);
-      const freeTotal = Number(driver.promo_pedidos_gratis_total || 50);
+      const creditLimit = Number(driver.limite_credito || 50);
+      const freeTotal = Number(driver.promo_pedidos_gratis_total || 100);
       const freeUsed = Number(driver.promo_pedidos_gratis_usados || 0);
       const freeRemaining = Math.max(0, freeTotal - freeUsed);
       const inPromo = freeRemaining > 0;
@@ -225,7 +225,7 @@
         </div>
         <div style="background:#0F172A;border-radius:6px;height:8px;width:100%;overflow:hidden;border:1px solid #334155;"><div style="background:${barColor};height:100%;width:${pct}%;"></div></div>
         <div style="display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:9.5px;color:#94A3B8;">
-          <span>${inPromo ? `${freeRemaining} pedido(s) gratis restantes` : `Comisión: S/ ${fee.toFixed(2)} por pedido confirmado`}</span>
+          <span>${inPromo ? `${freeRemaining} pedido(s) gratis restantes` : `Comisión: S/ ${fee.toFixed(2)} por balón confirmado`}</span>
           <span>${inPromo ? 'Saldo: S/ 0.00' : `Saldo: S/ ${saldo.toFixed(2)} / S/ ${creditLimit.toFixed(2)}`}</span>
         </div>`;
     } catch (err) {
@@ -250,18 +250,20 @@
         const fee = Number(accounting.comision_cargada ?? data?.comision_cargada ?? 0.20);
         const saldo = Number(accounting.comisiones_pendientes ?? data?.comisiones_pendientes ?? 0);
         const used = Number(accounting.pedidos_credito_ciclo ?? data?.pedidos_credito_ciclo ?? 0);
-        const limit = Number(accounting.limite_pedidos_credito ?? data?.limite_pedidos_credito ?? 100);
+        const limit = Number(accounting.limite_pedidos_credito ?? data?.limite_pedidos_credito ?? 250);
         const suspended = Boolean(accounting.suspendido ?? data?.suspendido ?? false);
         const freeOrder = Boolean(accounting.pedido_gratis ?? data?.pedido_gratis ?? false);
         const promoRemaining = Number(accounting.promo_restantes ?? data?.promo_restantes ?? 0);
-        const creditLimit = Number(accounting.limite_credito ?? data?.limite_credito ?? 20);
+        const creditLimit = Number(accounting.limite_credito ?? data?.limite_credito ?? 50);
 
         if (freeOrder) {
           toast('🎁 Pedido gratuito confirmado', `No se generó comisión. Te quedan ${promoRemaining} pedido(s) gratis de la promoción inicial.`, 'success', 5000);
         } else if (suspended) {
-          toast('⚠️ Límite de crédito alcanzado', `Entrega confirmada. Comisión S/ ${fee.toFixed(2)}. Alcanzaste ${used || limit}/${limit} pedidos del ciclo y S/ ${creditLimit.toFixed(2)} de crédito. Regulariza la remesa para continuar.`, 'warning', 8000);
+          toast('⚠️ Límite de crédito alcanzado', `Entrega confirmada. Comisión S/ ${fee.toFixed(2)}. Alcanzaste ${used || limit}/${limit} balones del ciclo y S/ ${creditLimit.toFixed(2)} de crédito. Regulariza la remesa para continuar.`, 'warning', 8000);
+        } else if (Boolean(accounting.aviso_inicio_cobro ?? data?.aviso_inicio_cobro ?? false)) {
+          toast('💳 Desde el pedido 101', 'Desde ahora se cobrarán S/ 0,20 por balón confirmado hasta acumular S/ 50. Al llegar a ese monto se solicitará la remesa por Yape.', 'info', 9000);
         } else {
-          toast('¡Entrega confirmada! 🎉', `Comisión S/ ${fee.toFixed(2)} registrada. Saldo: S/ ${saldo.toFixed(2)} / S/ ${creditLimit.toFixed(2)} · Ciclo: ${used}/${limit} pedidos.`, 'success', 5000);
+          toast('¡Entrega confirmada! 🎉', `Comisión S/ ${fee.toFixed(2)} registrada. Saldo: S/ ${saldo.toFixed(2)} / S/ ${creditLimit.toFixed(2)} · Ciclo: ${used}/${limit} balones.`, 'success', 5000);
         }
 
         if (typeof window.renderDriverOrdersList === 'function') await window.renderDriverOrdersList();
@@ -273,7 +275,7 @@
       }
     };
 
-    const message = '¿El comprador ya recibió su pedido? Si aún estás dentro de los primeros 50 pedidos promocionales, esta entrega es gratuita. Después se aplica S/ 0.20 por pedido confirmado.';
+    const message = '¿El comprador ya recibió su pedido? Si aún estás dentro de los primeros 100 pedidos promocionales, esta entrega es gratuita. Desde el pedido 101 se aplica S/ 0.20 por balón confirmado.';
     if (typeof window.showConfirmModal === 'function') {
       window.showConfirmModal('🏁', 'Confirmar entrega', message, 'Sí, ya entregué el pedido', execute, 'Volver');
     } else if (window.confirm(message)) {
@@ -412,7 +414,7 @@
       }
 
       if (/suscribirse.*Plan PRO|3 minutos.*pedidos|1 minuto.*clientes/i.test(text)) {
-        el.textContent = 'NOTIGAS no cobra suscripción. Los primeros 50 pedidos confirmados son gratis; después se aplica S/ 0.20 por pedido. El crédito comienza en S/ 20, sube a S/ 50 tras la primera remesa y a S/ 100 tras la tercera.';
+        el.textContent = 'NOTIGAS no cobra suscripción. Los primeros 100 pedidos confirmados son gratis; desde el pedido 101 se aplica S/ 0.20 por balón. Cada ciclo tiene un pago fijo de S/ 50 y la cuenta se reactiva al confirmarse.';
       }
     });
     normalizeLegacyFinancialCopy(document);
@@ -446,7 +448,7 @@
             <span style="background:#10B981;color:#052E16;border-radius:999px;padding:4px 9px;font-size:10px;font-weight:900;white-space:nowrap;">SIN SUSCRIPCIÓN</span>
           </div>
           <div style="font-size:11.5px;color:#D1FAE5;line-height:1.55;">
-            Tus primeros <strong>50 pedidos confirmados son totalmente gratuitos</strong>. Desde el pedido 51 se registra una comisión de <strong>S/ 0.20 por cada pedido entregado</strong>.
+            Tus primeros <strong>100 pedidos confirmados son totalmente gratuitos</strong>. Desde el pedido 101 se registra una comisión de <strong>S/ 0.20 por cada balón entregado</strong>.
           </div>
         </div>`;
     }
@@ -459,7 +461,7 @@
     const creditContent = document.getElementById('driverPremiumGratuitoContent');
     if (creditContent) {
       creditContent.style.display = 'block';
-      creditContent.innerHTML = '<p style="margin:0;font-size:11px;color:#CBD5E1;line-height:1.5;"><strong>Prueba gratis:</strong> tus primeros 50 pedidos confirmados no generan comisión. Después: S/ 0.20 por pedido, con crédito progresivo S/ 20 → S/ 50 → S/ 100.</p>';
+      creditContent.innerHTML = '<p style="margin:0;font-size:11px;color:#CBD5E1;line-height:1.5;"><strong>Prueba gratis:</strong> tus primeros 100 pedidos confirmados no generan comisión. Desde el pedido 101: S/ 0.20 por balón, con ciclo fijo de S/ 50 (250 balones cobrables).</p>';
     }
 
     const btnText = document.getElementById('btnDriverSubmitText');

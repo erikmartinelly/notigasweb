@@ -6,6 +6,10 @@ const PORT = process.env.PORT || process.env.SERVER_PORT || 3000;
 const RATE_LIMIT_WINDOW_MS = 60 * 1000;
 const RATE_LIMIT_MAX_REQUESTS = 200;
 const requestCounters = new Map();
+// Public browser fallback for hosts that do not inject environment variables.
+// This must only ever contain the Supabase publishable key, never service_role.
+const DEFAULT_SUPABASE_URL = 'https://yxzzfqyehllogzzhdtmc.supabase.co';
+const DEFAULT_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_wWVQ59Rejod5Oc1X4s_eeQ_ONbXzyi2';
 
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
@@ -107,8 +111,8 @@ app.get('/sw.js', (req, res) => {
 // service_role no debe configurarse ni exponerse en esta aplicación.
 app.get('/runtime-config.js', (req, res) => {
   const config = {
-    supabaseUrl: process.env.SUPABASE_URL || '',
-    supabasePublishableKey: process.env.SUPABASE_PUBLISHABLE_KEY || ''
+    supabaseUrl: process.env.SUPABASE_URL || DEFAULT_SUPABASE_URL,
+    supabasePublishableKey: process.env.SUPABASE_PUBLISHABLE_KEY || DEFAULT_SUPABASE_PUBLISHABLE_KEY
   };
   res.setHeader('Cache-Control', 'no-store, max-age=0');
   res.type('application/javascript').send(

@@ -47,9 +47,9 @@ try {
         <div id="driverFreeTrialCard" style="border:1.5px solid #10B981; background:#0F172A; border-radius:12px; padding:14px 12px; box-shadow:0 8px 22px rgba(0,0,0,.18);">
           <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px;">
             <strong style="color:#6EE7B7; font-size:15px; letter-spacing:.2px;">🎁 PRUEBA GRATIS</strong>
-            <span style="background:rgba(16,185,129,.15); border:1px solid rgba(16,185,129,.45); color:#A7F3D0; border-radius:999px; padding:4px 8px; font-size:10px; font-weight:900; white-space:nowrap;">50 PEDIDOS</span>
+            <span style="background:rgba(16,185,129,.15); border:1px solid rgba(16,185,129,.45); color:#A7F3D0; border-radius:999px; padding:4px 8px; font-size:10px; font-weight:900; white-space:nowrap;">100 PEDIDOS</span>
           </div>
-          <p id="driverFreeTrialCopy" style="margin:0; color:#F8FAFC; font-size:12px; line-height:1.55; font-weight:700;">Los primeros 50 pedidos son gratis. Desde el pedido 51 en adelante se cobra <strong>S/ 0,20 por pedido</strong>.</p>
+          <p id="driverFreeTrialCopy" style="margin:0; color:#F8FAFC; font-size:12px; line-height:1.55; font-weight:700;">Los primeros 100 pedidos son gratis. Desde el pedido 101 en adelante se cobra <strong>S/ 0,20 por balón</strong>.</p>
           <p style="margin:8px 0 0; color:#94A3B8; font-size:10.5px; line-height:1.45;">Sin suscripción ni pago inicial.</p>
         </div>
       </div>`;
@@ -82,7 +82,7 @@ try {
     if (index.includes(token)) throw new Error(`index.html conserva UI heredada: ${token}`);
   }
   if (!index.includes('🎁 PRUEBA GRATIS')) throw new Error('index.html no muestra PRUEBA GRATIS');
-  if (!index.includes('Los primeros 50 pedidos son gratis. Desde el pedido 51 en adelante se cobra <strong>S/ 0,20 por pedido</strong>.')) {
+  if (!index.includes('Los primeros 100 pedidos son gratis. Desde el pedido 101 en adelante se cobra <strong>S/ 0,20 por balón</strong>.')) {
     throw new Error('index.html no contiene el mensaje comercial solicitado');
   }
   write(indexPath, index, indexOriginal);
@@ -129,7 +129,7 @@ window.seleccionarPlanRegistroChofer = seleccionarPlanRegistroChofer;`;
     const end = auth.indexOf(toastEnd, start);
     if (end < 0) throw new Error('No se encontró fin del mensaje de alta por plan');
     const singleToast = `  if (typeof showToast === 'function') {
-    showToast('🎁 Cuenta de repartidor activada', \`Ficha de \${nombreNegocio} registrada. Tus primeros 50 pedidos confirmados son gratuitos.\`, 'success', 6000);
+    showToast('🎁 Cuenta de repartidor activada', \`Ficha de \${nombreNegocio} registrada. Tus primeros 100 pedidos confirmados son gratuitos.\`, 'success', 6000);
   }`;
     auth = auth.slice(0, start) + singleToast + auth.slice(end);
   }
@@ -205,7 +205,7 @@ window.seleccionarPlanRegistroChofer = seleccionarPlanRegistroChofer;`;
   }
 
   console.log(checkOnly
-    ? '✅ Registro de repartidor normalizado: PRUEBA GRATIS + 50 pedidos + S/ 0,20 desde el 51'
+    ? '✅ Registro de repartidor normalizado: PRUEBA GRATIS + 100 pedidos + S/ 0,20 por balón desde el 101'
     : `✅ Normalización aplicada: ${changed.join(', ') || 'sin cambios'}`);
 } catch (err) {
   console.error('❌ Normalización registro repartidor:', err.message);

@@ -149,7 +149,7 @@ async function renderDriverOrdersList() {
   }
 
   // 3. Estado operativo y de crédito del repartidor. La suspensión depende del
-  // ciclo de 100 pedidos entregados; el saldo es informativo y se liquida por Yape.
+  // ciclo fijo de 250 balones cobrables (S/ 50); el saldo se liquida por Yape.
   let driverFinancePromise = Promise.resolve({ data: null, error: null });
   if (localUserId) {
     driverFinancePromise = window.supabaseClient
@@ -170,10 +170,10 @@ async function renderDriverOrdersList() {
     bloqueado: Boolean(financeRow.bloqueado || userData?.bloqueado),
     motivo_bloqueo: financeRow.motivo_bloqueo || userData?.motivo_bloqueo || '',
     pedidosCiclo: Number(financeRow.pedidos_credito_ciclo ?? userData?.pedidos_credito_ciclo ?? 0),
-    pedidosLimite: Number(financeRow.limite_pedidos_credito ?? userData?.limite_pedidos_credito ?? 100),
+    pedidosLimite: Number(financeRow.limite_pedidos_credito ?? userData?.limite_pedidos_credito ?? 250),
     comisionPedido: Number(financeRow.comision_por_pedido ?? userData?.comision_por_pedido ?? 0.20),
-    limiteCredito: Number(financeRow.limite_credito ?? userData?.limite_credito ?? 20),
-    promoTotal: Number(financeRow.promo_pedidos_gratis_total ?? userData?.promo_pedidos_gratis_total ?? 50),
+    limiteCredito: Number(financeRow.limite_credito ?? userData?.limite_credito ?? 50),
+    promoTotal: Number(financeRow.promo_pedidos_gratis_total ?? userData?.promo_pedidos_gratis_total ?? 100),
     promoUsados: Number(financeRow.promo_pedidos_gratis_usados ?? userData?.promo_pedidos_gratis_usados ?? 0),
     remesasConfirmadas: Number(financeRow.remesas_confirmadas ?? userData?.remesas_confirmadas ?? 0)
   };
@@ -206,7 +206,7 @@ async function renderDriverOrdersList() {
       </div>
       <div style="background:#0F172A;border-radius:6px;height:8px;width:100%;overflow:hidden;border:1px solid #334155;"><div style="background:${barColor};height:100%;width:${pctCredito}%;"></div></div>
       <div style="display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:9.5px;color:#94A3B8;">
-        <span>${enPromo ? `${promoRestantes} pedido(s) gratis restantes` : `Comisión: S/ ${driverFinances.comisionPedido.toFixed(2)} por pedido confirmado`}</span>
+        <span>${enPromo ? `${promoRestantes} pedido(s) gratis restantes` : `Comisión: S/ ${driverFinances.comisionPedido.toFixed(2)} por balón confirmado`}</span>
         <span>${enPromo ? 'Saldo: S/ 0.00' : `Saldo: S/ ${driverFinances.comisiones.toFixed(2)} / S/ ${driverFinances.limiteCredito.toFixed(2)}`}</span>
       </div>
     </div>`;
@@ -236,7 +236,7 @@ async function renderDriverOrdersList() {
 
   const planBannerHtml = `
     <div class="driver-plan-banner" style="background:linear-gradient(135deg,rgba(16,185,129,.14),#0F172A);border:1.5px solid #10B981;border-radius:10px;padding:10px 12px;margin-bottom:12px;color:#D1FAE5;font-size:11.5px;line-height:1.45;">
-      <strong style="color:#FFFFFF;">🎁 50 pedidos gratis para probar NOTIGAS</strong> · Después: S/ 0,20 por pedido. Primer ciclo: 100 pedidos cobrables = S/ 20; luego el crédito progresa a S/ 50 y, tras la 3.ª remesa, a S/ 100.
+      <strong style="color:#FFFFFF;">🎁 100 pedidos gratis para probar NOTIGAS</strong> · Desde el pedido 101: S/ 0,20 por balón. Ciclo fijo: 250 balones cobrables = S/ 50. Al llegar al monto se bloquea hasta confirmar el pago.
     </div>`;
 
   if (!orders || orders.length === 0) {
@@ -409,7 +409,7 @@ async function renderDriverOrdersList() {
                     <i class="fa-solid fa-map-location-dot"></i> VER EN EL MAPA
                   </button>
                   ${driverFinances.isSuspended ? `
-                    <button type="button" style="background:#475569; color:#94A3B8; border:none; padding:5px 12px; border-radius:6px; font-size:10px; font-weight:800; cursor:not-allowed; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;" onclick="alert('⛔ Cuenta suspendida: Alcanzaste el ciclo de 100 pedidos (S/ 20). Regulariza tu pago por Yape para volver a tomar pedidos.');" title="Cuenta suspendida por tope de comisiones">
+                    <button type="button" style="background:#475569; color:#94A3B8; border:none; padding:5px 12px; border-radius:6px; font-size:10px; font-weight:800; cursor:not-allowed; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;" onclick="alert('⛔ Cuenta bloqueada: Alcanzaste el ciclo fijo de 250 balones (S/ 50). Confirma tu pago por Yape para volver a tomar pedidos.');" title="Cuenta bloqueada por pago pendiente">
                       <i class="fa-solid fa-ban"></i> Bloqueado
                     </button>
                   ` : `
@@ -465,11 +465,11 @@ window.aceptarPedidoRepartidor = function(orderId, lat, lng, address) {
   // Comprobar suspensión o límite del ciclo de crédito vigente.
   const curUser = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
   const pedidosCiclo = Number(curUser?.pedidos_credito_ciclo || 0);
-  const pedidosLimite = Number(curUser?.limite_pedidos_credito || 100);
+  const pedidosLimite = Number(curUser?.limite_pedidos_credito || 250);
   const saldoPendiente = Number(curUser?.comisiones_pendientes || 0);
-  const limiteCredito = Number(curUser?.limite_credito || 20);
+  const limiteCredito = Number(curUser?.limite_credito || 50);
   if (curUser && (pedidosCiclo >= pedidosLimite || saldoPendiente >= limiteCredito || curUser.estado_servicio === 'suspendido_tope' || curUser.bloqueado)) {
-    const mensaje = 'Alcanzaste el ciclo de 100 pedidos (S/ 20). Regulariza tu pago por Yape para volver a recibir pedidos.';
+    const mensaje = 'Alcanzaste el ciclo fijo de 250 balones (S/ 50). Confirma tu pago por Yape para volver a recibir pedidos.';
     if (typeof showToast === 'function') {
       showToast('⛔ Límite de crédito alcanzado', mensaje, 'error', 7000);
     } else {
@@ -594,13 +594,16 @@ async function confirmarEntregaPedido(id) {
         const newSaldo = accounting.comisiones_pendientes != null ? Number(accounting.comisiones_pendientes) : null;
         const commissionCharged = Number(accounting.comision_cargada ?? res.comision_cargada ?? 0.20);
         const ordersCycle = Number(accounting.pedidos_credito_ciclo ?? res.pedidos_credito_ciclo ?? 0);
-        const ordersLimit = Number(accounting.limite_pedidos_credito ?? res.limite_pedidos_credito ?? 100);
+        const ordersLimit = Number(accounting.limite_pedidos_credito ?? res.limite_pedidos_credito ?? 250);
         const isSuspended = Boolean(accounting.suspendido ?? res.suspendido ?? false);
+        const startChargeNotice = Boolean(accounting.aviso_inicio_cobro ?? res.aviso_inicio_cobro ?? false);
 
         if (isSuspended) {
-          showToast('⚠️ Límite de crédito alcanzado', `Pedido entregado (+S/ ${commissionCharged.toFixed(2)} de comisión). Ciclo: ${ordersCycle || ordersLimit}/${ordersLimit} pedidos (S/ 20). Regulariza tu pago para continuar.`, 'warning', 8000);
+          showToast('⚠️ Límite de crédito alcanzado', `Pedido entregado (+S/ ${commissionCharged.toFixed(2)} de comisión). Ciclo: ${ordersCycle || ordersLimit}/${ordersLimit} balones (S/ 50). Confirma tu pago para continuar.`, 'warning', 8000);
+        } else if (startChargeNotice) {
+          showToast('💳 Desde el pedido 101', 'Desde ahora se cobrarán S/ 0,20 por balón confirmado hasta acumular S/ 50. Al llegar a ese monto se solicitará la remesa por Yape.', 'info', 9000);
         } else if (newSaldo != null) {
-          showToast('¡Entrega Confirmada! 🎉', `Comisión S/ ${commissionCharged.toFixed(2)} registrada. Saldo acumulado: S/ ${newSaldo.toFixed(2)} · Ciclo: ${ordersCycle}/${ordersLimit} pedidos.`, 'success', 5000);
+          showToast('¡Entrega Confirmada! 🎉', `Comisión S/ ${commissionCharged.toFixed(2)} registrada. Saldo acumulado: S/ ${newSaldo.toFixed(2)} · Ciclo: ${ordersCycle}/${ordersLimit} balones.`, 'success', 5000);
         } else {
           showToast('¡Buen trabajo!', 'Pedido entregado y contabilizado.', 'success', 5000);
         }

@@ -36,7 +36,7 @@ Engineered with **Vanilla JavaScript**, **Supabase PostgreSQL with PostGIS**, an
 ### Current Operating Model: Peru
 NOTIGAS operates in **Peru** as a neighborhood logistics platform for LPG cylinders and other essential deliveries. Buyers publish geolocated requests and independent delivery partners compete on availability, price, coverage, and service.
 
-The current business model has **no PRO/VIP monthly subscription and no artificial visibility delay**. Driver onboarding includes the first **50 confirmed orders commission-free**. After that, the platform records **S/ 0.20 per confirmed order**. The first paid credit cycle is **100 orders = S/ 20**; after the first confirmed remittance the credit limit increases to **S/ 50**, remains S/ 50 through the second remittance, and after the third confirmed remittance increases to the maximum **S/ 100**.
+The current business model has **no PRO/VIP monthly subscription and no artificial visibility delay**. Driver onboarding includes the first **100 confirmed orders commission-free**. From order 101 onward, the platform records **S/ 0.20 per confirmed cylinder**. Every paid cycle is a fixed **250 cylinders = S/ 50**: once it is reached the account cannot take more orders until the full Yape remittance is confirmed, then it is reactivated for the next fixed cycle.
 
 The production architecture uses server-authoritative PostgreSQL RPCs and RLS for assignment, delivery confirmation, accounting, payments, suspensions, and administrative actions.
 
@@ -104,7 +104,7 @@ cd notigasweb
 * **Canonical deployment:** apply every file in `supabase/migrations/` in ascending order using the project migration workflow. The remote migration history must match Git.
 * `supabase/full_production_schema.sql` is intentionally deprecated and aborts if executed; it must never be used for production, staging, recovery, or a fresh install.
 * Configure the real Yape beneficiary and recipient number from the protected Admin payment settings; payment data must not be committed to Git.
-* Configure `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` as environment variables in the hosting runtime. The server exposes only these public browser values through `/runtime-config.js`; do not commit them to frontend files and never configure `SUPABASE_SERVICE_ROLE_KEY` in this app.
+* Configure `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` as environment variables in the hosting runtime when available. `/runtime-config.js` also contains the same browser-safe publishable fallback for static Apache/Hostinger deployments. A publishable/anon key is intentionally public and remains constrained by RLS; never configure or commit `SUPABASE_SERVICE_ROLE_KEY` in this app.
 
 ### 3. Configure Google Identity Services & Auth
 * In the Google Cloud Console, configure an **OAuth 2.0 Client ID** for Web Applications.

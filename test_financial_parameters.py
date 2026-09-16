@@ -1,12 +1,10 @@
 """NOTIGAS - verificación portable del contrato financiero vigente (Perú).
 
 Contrato esperado:
-- Primeros 50 pedidos confirmados sin comisión.
-- Desde el pedido 51: S/ 0.20 por pedido entregado y contabilizado una sola vez.
-- Primer ciclo cobrable: 100 pedidos = S/ 20.
-- 1.ª remesa confirmada -> crédito S/ 50 (250 pedidos).
-- 2.ª remesa -> mantiene S/ 50.
-- 3.ª remesa -> crédito máximo S/ 100 (500 pedidos).
+- Primeros 100 pedidos confirmados sin comisión.
+- Desde el pedido 101: S/ 0.20 por balón entregado y contabilizado una sola vez.
+- Ciclo cobrable fijo: 250 balones = S/ 50.
+- Al alcanzar S/ 50, la cuenta se bloquea hasta confirmar el pago total.
 - Sin cortes/baneos semanales automáticos.
 """
 from pathlib import Path
@@ -34,8 +32,7 @@ def run_tests() -> None:
     assert "rpc_ejecutar_corte_semanal_comisiones" not in legacy_finance
     assert "rpc_ejecutar_baneo_semanal_morosos" not in legacy_finance
     assert "S/ 1.00" not in legacy_finance
-    assert "S/ 50.00" not in legacy_finance
-    print("✅ [1/5] Migración histórica financiera saneada: S/ 0.20 y S/ 20, sin cron semanal.")
+    print("✅ [1/5] Migración histórica financiera saneada: S/ 0.20, sin cron semanal.")
 
     legacy_hardware = read("supabase/migrations/20260908005000_device_id_dni_hardware_ban.sql")
     assert "device_fingerprint" in legacy_hardware
@@ -60,21 +57,20 @@ def run_tests() -> None:
     print("✅ Suspensiones financieras reversibles: pago total verificado reactiva la cuenta.")
 
     rules = read("js/driver_order_rules.js")
-    assert "50 pedidos" in rules
-    assert "S/ 0.20 por pedido" in rules
-    assert "S/ 20" in rules
+    assert "100 pedidos" in rules
+    assert "S/ 0.20 por balón" in rules
     assert "S/ 50" in rules
-    assert "S/ 100" in rules
+    assert "250 balones" in rules
     assert "confirmarEntregaPedidoActual" in rules
     assert "pedidos_credito_ciclo" in rules
     assert "limite_pedidos_credito" in rules
     assert "normalizeLegacyFinancialCopy" in rules
     assert "No se aplicó comisión" in rules
-    print("✅ [4/5] Frontend fuerza 50 gratis y crédito progresivo S/20 -> S/50 -> S/100.")
+    print("✅ [4/5] Frontend fuerza 100 pedidos gratis y ciclo fijo S/50 por 250 balones.")
 
     orders = read("js/orders.js")
     vendors = read("js/vendors.js")
-    accounting = read("supabase/migrations/20260910225938_driver_50_free_and_progressive_credit_tiers.sql")
+    accounting = read("supabase/migrations/20260916011717_fixed_50_credit_and_100_free_orders.sql")
     delivery_rpc = read("supabase/migrations/20260910193151_git_reconcile_order_security_peru.sql")
     assert "function seleccionarYPedirDirecto(catNombre)" in orders
     assert "modalPedido.style.display = 'flex'" in orders
@@ -85,7 +81,8 @@ def run_tests() -> None:
     assert "buyer_confirmed_received=true" in delivery_rpc
     assert "coalesce(v_order.comision_registrada,false)=true" in accounting
     assert "v_fee:=0.00" in accounting
-    assert "ELSE 'Comisión S/ 0.20 por pedido confirmado." in accounting
+    assert "v_fee:=round(v_unit_fee*v_units,2)" in accounting
+    assert "aviso_inicio_cobro" in accounting
     print("✅ Pedido desde mapa o ficha usa el mismo flujo; la confirmación del comprador contabiliza una sola comisión después de la promoción.")
 
     hardening = read("scripts/check_audit_hardening.js")

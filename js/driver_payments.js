@@ -1,7 +1,7 @@
 /* ==========================================================================
    NOTIGAS - PAGOS DEL REPARTIDOR (PERU -> REMESA A BOLIVIA)
-   - Primeros 50 pedidos confirmados sin comisión.
-   - Después: S/ 0.20 por pedido. Crédito S/ 20 -> S/ 50 -> S/ 100.
+   - Primeros 100 pedidos confirmados sin comisión.
+   - Después: S/ 0.20 por balón. Ciclo fijo de S/ 50.
    - Único medio aceptado: Yape > Remesas > Bolivia.
    - El recibo se procesa localmente; la imagen NO se persiste.
    ========================================================================== */
@@ -91,7 +91,7 @@
         <span><i class="fa-solid fa-money-check-dollar"></i> PAGOS</span><span style="font-size:10px;color:#94A3B8;">(Desplegar)</span></summary>
         <div style="display:grid;gap:9px;margin-top:10px;">
           <div style="font-size:11px;color:#CBD5E1;line-height:1.45;padding:8px;border-radius:8px;background:#0F172A;">
-            <strong>Primeros 50 pedidos confirmados: GRATIS.</strong> Después: S/ 0.20 por pedido. <strong>Los pagos de comisión solo se aceptan por Yape, usando Remesas con destino Bolivia.</strong>
+            <strong>Primeros 100 pedidos confirmados: GRATIS.</strong> Desde el pedido 101: S/ 0.20 por balón. <strong>Al llegar a S/ 50 se genera el pago fijo; la cuenta sigue activa solo tras confirmarse por Yape, usando Remesas con destino Bolivia.</strong>
           </div>
           <button type="button" id="btnDriverPaymentsHistory" style="width:100%;background:#1E293B;color:#E2E8F0;border:1px solid #475569;padding:10px;border-radius:10px;font-weight:800;cursor:pointer;"><i class="fa-solid fa-clock-rotate-left"></i> Ver mis pagos</button>
           <button type="button" id="btnDriverNewPayment" style="width:100%;background:linear-gradient(135deg,#10B981,#059669);color:white;border:0;padding:10px;border-radius:10px;font-weight:900;cursor:pointer;"><i class="fa-solid fa-paper-plane"></i> Realizar un nuevo pago</button>

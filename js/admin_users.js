@@ -398,7 +398,7 @@ window.liquidarComisionesAdmin = async function(userId, name, currentSaldo) {
 // fueron retiradas del backend y estas acciones ya no ejecutan cambios.
 window.ejecutarCorteSemanalManualAdmin = function() {
   if (typeof showToast === 'function') {
-    showToast('Proceso retirado', 'El corte semanal ya no forma parte del modelo de comisiones. Se usa el ciclo de 100 pedidos = S/ 20.', 'info', 5500);
+    showToast('Proceso retirado', 'El corte semanal ya no forma parte del modelo de comisiones. Se usa el ciclo fijo de 250 pedidos = S/ 50.', 'info', 5500);
   }
 };
 

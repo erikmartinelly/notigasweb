@@ -21,15 +21,12 @@ try {
   assertNo('index.html', /S\/\s*15(?:\.00)?(?:\s*PEN|\s*\/\s*mes|\/mes)|Ventaja de 3 Minutos en Pedidos|Baneo Definitivo de Dispositivo|Corte Semanal:/i, 'Registro o términos conservan contrato PRO/S15/semanal');
 
   for (const p of ['index.html', 'js/driver_order_rules.js', 'js/driver_payments.js']) {
-    assertHas(p, /50\s+pedidos/i, 'Falta promoción de 50 pedidos gratis');
+    assertHas(p, /100\s+pedidos/i, 'Falta promoción de 100 pedidos gratis');
     assertHas(p, /S\/\s*0[.,]20/i, 'Falta comisión de S/0.20');
-    assertHas(p, /S\/\s*20/i, 'Falta primer límite S/20');
-    assertHas(p, /S\/\s*50/i, 'Falta segundo nivel S/50');
-    assertHas(p, /S\/\s*100/i, 'Falta tope S/100');
+    assertHas(p, /S\/\s*50/i, 'Falta ciclo fijo S/50');
   }
-  assertHas('index.html', /Primeros 50 pedidos confirmados gratis/i, 'Aceptación de términos no informa los 50 pedidos gratis');
-  assertHas('index.html', /primera remesa confirmada[\s\S]{0,120}S\/\s*50/i, 'Términos no explican la primera remesa');
-  assertHas('index.html', /tercera remesa confirmada[\s\S]{0,120}S\/\s*100/i, 'Términos no explican el tope después de la tercera remesa');
+  assertHas('index.html', /Primeros 100 pedidos confirmados gratis/i, 'Aceptación de términos no informa los 100 pedidos gratis');
+  assertHas('index.html', /250 balones cobrables = S\/\s*50/i, 'Términos no explican el ciclo fijo');
 
   assertHas('js/driver_order_rules.js', /no\s+genera\s+comisi[oó]n\s+ni\s+modifica\s+tu\s+saldo/i, 'Liberar un pedido parece generar cargo');
   assertHas('js/driver_order_rules.js', /pedido_gratis/i, 'La UI de entrega no distingue pedidos promocionales');
@@ -61,12 +58,12 @@ try {
   const htmlVersions = [...index.matchAll(/(?:styles|js)\/[^"']+\?v=(\d+)/g)].map(m => m[1]);
   if (!htmlVersions.length) fail('No se detectaron assets versionados en index.html');
   const uniqueHtmlVersions = [...new Set(htmlVersions)];
-  if (uniqueHtmlVersions.length !== 1 || uniqueHtmlVersions[0] !== '136') {
+  if (uniqueHtmlVersions.length !== 1 || uniqueHtmlVersions[0] !== '137') {
     fail(`Versiones de assets mezcladas: ${uniqueHtmlVersions.join(',')}`);
   }
   const sw = read('sw.js');
-  if (!/notigas-cache-v137/.test(sw)) fail('Service worker no usa cache progresivo v137');
-  if (/order_privacy_layer\.js\?v=136/.test(sw)) fail('Service worker vuelve a precachear módulos dinámicos pesados');
+  if (!/notigas-cache-v138/.test(sw)) fail('Service worker no usa cache progresivo v138');
+  if (/order_privacy_layer\.js\?v=137/.test(sw)) fail('Service worker vuelve a precachear módulos dinámicos pesados');
   if (/fetch\(asset, \{ cache: 'reload' \}\)/.test(sw)) fail('Service worker vuelve a forzar recargas duplicadas durante instalación');
   if (!/stale-while-revalidate/i.test(sw)) fail('Service worker no documenta la estrategia de cache progresivo');
 
@@ -107,14 +104,12 @@ try {
   if (!/permanente, false/.test(reversible)) fail('Comprobante observado aún podría generar baneo permanente');
   if (!/'auto_aprobado', false/.test(reversible)) fail('El OCR legado aún podría aprobar pagos sin revisión administrativa');
 
-  const tier = read('supabase/migrations/20260910225938_driver_50_free_and_progressive_credit_tiers.sql');
-  if (!/promo_pedidos_gratis_total SET DEFAULT 50/i.test(tier)) fail('La migración no fija 50 pedidos gratis');
-  if (!/remesas_confirmadas/.test(tier)) fail('La migración no registra remesas confirmadas');
-  if (!/p_count,0\) >= 3 THEN 100\.00/.test(tier)) fail('La tercera remesa no eleva el crédito a S/100');
-  if (!/p_count,0\) >= 1 THEN 50\.00/.test(tier)) fail('La primera remesa no eleva el crédito a S/50');
-  if (!/ELSE 20\.00/.test(tier)) fail('El crédito inicial no es S/20');
-  if (!/promo_entrega_gratis/.test(tier)) fail('No existe registro contable para pedidos gratuitos');
-  if (!/v_full_payment/.test(tier)) fail('Las remesas parciales podrían subir indebidamente el nivel');
+  const fixedCredit = read('supabase/migrations/20260916011717_fixed_50_credit_and_100_free_orders.sql');
+  if (!/promo_pedidos_gratis_total SET DEFAULT 100/i.test(fixedCredit)) fail('La migración no fija 100 pedidos gratis');
+  if (!/SELECT 50\.00::numeric/i.test(fixedCredit)) fail('El crédito fijo no es S/50');
+  if (!/SELECT 250/i.test(fixedCredit)) fail('El ciclo fijo no es de 250 balones');
+  if (!/v_fee:=round\(v_unit_fee\*v_units,2\)/.test(fixedCredit)) fail('La comisión no se calcula por balón');
+  if (!/aviso_inicio_cobro/.test(fixedCredit)) fail('No existe aviso de inicio de cobro en el pedido 101');
 
   const legacyFinance = read('supabase/migrations/20260908010000_financial_commission_rules.sql');
   if (/S\/\s*1\.00|S\/\s*50\.00|rpc_ejecutar_corte_semanal_comisiones|rpc_ejecutar_baneo_semanal_morosos/i.test(legacyFinance)) {
@@ -132,7 +127,7 @@ try {
   if (!/numero_cuenta = NULL/.test(payment)) fail('Placeholder de pago no se invalida');
   assertHas('js/admin_payment_config.js', /rpc_admin_set_payment_config/, 'Falta configuración segura del receptor');
 
-  console.log('✅ Audit hardening invariants OK: privacidad 50m + 50 gratis + crédito S/20 -> S/50 -> S/100');
+  console.log('✅ Audit hardening invariants OK: privacidad 50m + 100 gratis + ciclo fijo S/50');
 } catch (err) {
   console.error('❌ Audit hardening check:', err.message);
   process.exit(1);

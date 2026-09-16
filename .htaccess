@@ -49,6 +49,9 @@ DirectoryIndex index.html
     Header always set Service-Worker-Allowed "/"
     Header always set Cache-Control "no-cache, no-store, must-revalidate"
   </Files>
+  <Files "runtime-config.js">
+    Header always set Cache-Control "no-cache, no-store, must-revalidate"
+  </Files>
   <FilesMatch "\.(?:css|js|png|svg|ico)$">
     Header set Cache-Control "public, max-age=604800"
   </FilesMatch>
