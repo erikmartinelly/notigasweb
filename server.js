@@ -5,7 +5,10 @@ const app = express();
 const PORT = process.env.PORT || process.env.SERVER_PORT || 3000;
 const RATE_LIMIT_WINDOW_MS = 60 * 1000;
 const RATE_LIMIT_MAX_REQUESTS = 200;
+const RATE_LIMIT_CLEANUP_INTERVAL_MS = 30 * 1000;
+const RATE_LIMIT_HARD_CAP = 20000;
 const requestCounters = new Map();
+let lastCountersCleanupAt = 0;
 // Public browser fallback for hosts that do not inject environment variables.
 // This must only ever contain the Supabase publishable key, never service_role.
 const DEFAULT_SUPABASE_URL = 'https://yxzzfqyehllogzzhdtmc.supabase.co';
@@ -15,9 +18,20 @@ app.disable('x-powered-by');
 app.set('trust proxy', 1);
 
 function limpiarContadoresExpirados(now) {
+  // Ejecutar el barrido completo como máximo una vez por intervalo para evitar
+  // el costo O(n) en cada solicitud cuando el mapa crece.
   if (requestCounters.size < 1000) return;
+  if (now - lastCountersCleanupAt < RATE_LIMIT_CLEANUP_INTERVAL_MS) return;
+  lastCountersCleanupAt = now;
   for (const [key, value] of requestCounters.entries()) {
     if (now - value.startedAt >= RATE_LIMIT_WINDOW_MS) requestCounters.delete(key);
+  }
+  // Tope duro de memoria: si aun así el mapa crece sin control, desalojar
+  // progresivamente las entradas más antiguas (el Map conserva el orden de inserción).
+  while (requestCounters.size > RATE_LIMIT_HARD_CAP) {
+    const oldestKey = requestCounters.keys().next().value;
+    if (!oldestKey) break;
+    requestCounters.delete(oldestKey);
   }
 }
 
@@ -57,21 +71,9 @@ app.use((req, res, next) => {
   res.setHeader('Cross-Origin-Resource-Policy', 'same-site');
   res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
   res.setHeader('Origin-Agent-Cluster', '?1');
-  res.setHeader('Content-Security-Policy', [
-    "default-src 'self'",
-    "base-uri 'self'",
-    "object-src 'none'",
-    "frame-ancestors 'self'",
-    "form-action 'self' https://accounts.google.com",
-    "script-src 'self' https://accounts.google.com https://apis.google.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://partner.googleadservices.com https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com https://*.google.com https://*.gstatic.com https://*.googlesyndication.com",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com",
-    "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net",
-    "img-src 'self' data: blob: https:",
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://accounts.google.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://ep1.adtrafficquality.google https://ep2.adtrafficquality.google https://ipinfo.io https://ipapi.co https://freeipapi.com https://ipwho.is https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://router.project-osrm.org https://nominatim.openstreetmap.org https://photon.komoot.io https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.googleadservices.com",
-    "frame-src 'self' https://accounts.google.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://*.google.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net https://*.googleadservices.com",
-    "worker-src 'self' blob:",
-    "manifest-src 'self'"
-  ].join('; '));
+  // CSP unificada con .htaccess (producción Hostinger): incluye wasm-unsafe-eval
+  // para voucher_ocr.js y los orígenes de tesseract/cdn.jsdelivr.net en connect-src.
+  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://accounts.google.com https://apis.google.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://partner.googleadservices.com https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://accounts.google.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://ep1.adtrafficquality.google https://ep2.adtrafficquality.google https://ipinfo.io https://ipapi.co https://freeipapi.com https://ipwho.is https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://router.project-osrm.org https://nominatim.openstreetmap.org https://photon.komoot.io https://cdn.jsdelivr.net https://tessdata.projectnaptha.com; img-src 'self' data: blob: https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com https://*.supabase.co https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://*.google.com https://*.googleusercontent.com https://*.doubleclick.net https://*.googlesyndication.com https://unpkg.com https://cdnjs.cloudflare.com; worker-src 'self' blob:; frame-src https://accounts.google.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://*.google.com https://pagead2.googlesyndication.com; form-action 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'");
   if (req.secure || String(req.headers['x-forwarded-proto'] || '').toLowerCase() === 'https') {
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
   }
@@ -129,9 +131,11 @@ const blacklistedPaths = [
   '/.env',
   '/.htaccess',
   '/.gitignore',
+  '/.github',
   '/supabase',
   '/scripts',
   '/node_modules',
+  '/node-v20.11.1-win-x64',
   '/.git',
   '/.agents'
 ];

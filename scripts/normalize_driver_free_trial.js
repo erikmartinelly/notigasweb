@@ -6,15 +6,22 @@ const path = require('path');
 const root = path.resolve(__dirname, '..');
 const checkOnly = process.argv.includes('--check');
 const changed = [];
+// Preserva la terminación de línea original de Windows (\r\n) para no generar
+// diffs masivos: se normaliza a \n al operar y se restaura al escribir.
+const newlineCache = new Map();
 
 function read(rel) {
-  return fs.readFileSync(path.join(root, rel), 'utf8');
+  const raw = fs.readFileSync(path.join(root, rel), 'utf8');
+  newlineCache.set(rel, raw.includes('\r\n') ? '\r\n' : '\n');
+  return raw.split('\r\n').join('\n');
 }
 
 function write(rel, content, original) {
   if (content === original) return;
+  const nl = (newlineCache.get(rel) === '\r\n') ? '\r\n' : '\n';
+  const output = (nl === '\r\n') ? content.split('\n').join('\r\n') : content;
   changed.push(rel);
-  if (!checkOnly) fs.writeFileSync(path.join(root, rel), content, 'utf8');
+  if (!checkOnly) fs.writeFileSync(path.join(root, rel), output, 'utf8');
 }
 
 function replaceSection(source, startMarker, endMarker, replacement, label) {

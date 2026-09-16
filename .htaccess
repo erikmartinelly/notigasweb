@@ -12,7 +12,7 @@ DirectoryIndex index.html
   RewriteRule ^(.*)$ https://www.notigas.com/$1 [R=301,L]
 
   # Nunca publicar material interno del proyecto.
-  RewriteRule ^(?:\.git|\.agents|scripts|supabase)(?:/|$) - [F,L,NC]
+  RewriteRule ^(?:\.git|\.agents|\.github|scripts|supabase|node-v20[^/]*)(?:/|$) - [F,L,NC]
 
   # Fallback de navegacion para la PWA, sin convertir recursos faltantes en HTML.
   RewriteCond %{REQUEST_FILENAME} !-f
