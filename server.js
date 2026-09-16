@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || process.env.SERVER_PORT || 3000;
@@ -105,9 +106,7 @@ app.get('/sw.js', (req, res) => {
 
 app.get('/runtime-config.js', (req, res) => {
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-    return res.status(503).type('application/javascript').send(
-      "throw new Error('Configuración pública de Supabase no disponible en el entorno del servidor.');"
-    );
+    return res.status(503).type('application/javascript').send("throw new Error('Configuración pública de Supabase no disponible en el entorno del servidor.');");
   }
   const config = {
     supabaseUrl: SUPABASE_URL,
@@ -130,7 +129,15 @@ app.use((req, res, next) => {
 
 function sendIndex(req, res) {
   res.setHeader('Cache-Control', 'no-cache, must-revalidate');
-  res.sendFile(path.join(__dirname, 'index.html'));
+  try {
+    let html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
+    if (!html.includes('js/monitoring.js')) {
+      html = html.replace('</body>', '  <script defer src="js/monitoring.js?v=1"></script>\n</body>');
+    }
+    return res.type('html').send(html);
+  } catch (error) {
+    return res.status(500).send('No se pudo cargar NOTIGAS.');
+  }
 }
 app.get(['/', '/index.html'], sendIndex);
 
