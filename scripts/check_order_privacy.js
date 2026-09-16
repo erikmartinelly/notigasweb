@@ -13,8 +13,8 @@ function assert(condition, message) {
 }
 
 const migrationPath = 'supabase/migrations/20260911022526_secure_order_radar_and_registered_driver_visibility.sql';
-const roleMigrationPath = 'supabase/migrations/20260915180000_restrict_order_radar_to_active_drivers.sql';
-const truckVisibilityMigrationPath = 'supabase/migrations/20260915193000_public_truck_and_price_visibility.sql';
+const roleMigrationPath = 'supabase/migrations/20260916005326_restrict_order_radar_to_active_drivers.sql';
+const truckVisibilityMigrationPath = 'supabase/migrations/20260915191531_public_truck_and_price_visibility.sql';
 const grantPath = 'supabase/migrations/20260911023909_allow_radar_policy_helper_for_authenticated.sql';
 const migration = read(migrationPath);
 const roleMigration = read(roleMigrationPath);

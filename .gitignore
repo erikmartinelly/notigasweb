@@ -17,6 +17,7 @@ npm-debug.log*
 *service-account*.json
 service-account*.json
 .supabase/.temp/
+supabase/.temp/
 
 # Archivos de Build y Binarios Pesados
 *.apk

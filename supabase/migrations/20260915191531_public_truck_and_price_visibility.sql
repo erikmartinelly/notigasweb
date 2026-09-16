@@ -18,6 +18,5 @@ grant select on public.driver_public_presence to anon, authenticated;
 grant select on public.choferes_publicos to anon, authenticated;
 grant select on public.rutas_repartidores_publicas to anon, authenticated;
 
--- No se concede acceso anónimo al radar ni a pedidos, rutas base o perfiles privados.
 revoke all on public.order_public_radar from anon;
 revoke all on public.pedidos_publicos from anon;

@@ -85,10 +85,14 @@ try {
     '20260910220052_remove_obsolete_weekly_financial_rpcs.sql',
     '20260910225938_driver_50_free_and_progressive_credit_tiers.sql',
     '20260910234110_make_payment_suspensions_reversible_on_full_payment.sql',
-    '20260914164500_yape_remittance_bolivia_auto_ocr.sql',
-    '20260911011500_preprod_security_payment_hardening.sql',
+    '20260911020205_preprod_states_routes_privacy.sql',
+    '20260911020236_preprod_payment_configuration.sql',
+    '20260911020258_preprod_ocr_fail_closed.sql',
+    '20260915041809_preprod_reconcile_payment_contract_rls.sql',
     '20260911022526_secure_order_radar_and_registered_driver_visibility.sql',
-    '20260915180000_restrict_order_radar_to_active_drivers.sql'
+    '20260916005326_restrict_order_radar_to_active_drivers.sql',
+    '20260916005329_buyer_published_price_complaint.sql',
+    '20260916005332_set_yape_mobile_wallet_delivery_method.sql'
   ]) {
     if (!names.includes(required)) fail(`Falta migración crítica: ${required}`);
   }
@@ -119,11 +123,13 @@ try {
   const legacyHardware = read('supabase/migrations/20260908005000_device_id_dni_hardware_ban.sql');
   if (/rpc_banear_repartidor_completo|S\/\s*1\b/i.test(legacyHardware)) fail('Migración histórica de hardware reintroduce baneo financiero antiguo');
 
-  const preprod = read('supabase/migrations/20260911011500_preprod_security_payment_hardening.sql');
-  if (!/suspendido_mora/.test(preprod) || !/suspendido_pago/.test(preprod)) fail('Migración final no permite estados reversibles');
-  if (!/rutas_select_own_or_admin/.test(preprod)) fail('Tabla base de rutas no está restringida');
-  if (!/No se detectó el nombre del destinatario/.test(preprod) || !/No se detectó un Yape destinatario válido/.test(preprod)) fail('OCR servidor no falla cerrado');
-  if (!/numero_cuenta = NULL/.test(preprod)) fail('Placeholder de pago no se invalida');
+  const states = read('supabase/migrations/20260911020205_preprod_states_routes_privacy.sql');
+  const payment = read('supabase/migrations/20260911020236_preprod_payment_configuration.sql');
+  const ocr = read('supabase/migrations/20260911020258_preprod_ocr_fail_closed.sql');
+  if (!/suspendido_mora/.test(states) || !/suspendido_pago/.test(states)) fail('Migración final no permite estados reversibles');
+  if (!/rutas_select_own_or_admin/.test(states)) fail('Tabla base de rutas no está restringida');
+  if (!/No se detectó el nombre del destinatario/.test(ocr) || !/No se detectó un Yape destinatario válido/.test(ocr)) fail('OCR servidor no falla cerrado');
+  if (!/numero_cuenta = NULL/.test(payment)) fail('Placeholder de pago no se invalida');
   assertHas('js/admin_payment_config.js', /rpc_admin_set_payment_config/, 'Falta configuración segura del receptor');
 
   console.log('✅ Audit hardening invariants OK: privacidad 50m + 50 gratis + crédito S/20 -> S/50 -> S/100');
