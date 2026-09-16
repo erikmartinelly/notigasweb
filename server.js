@@ -6,10 +6,11 @@ const PORT = process.env.PORT || process.env.SERVER_PORT || 3000;
 const RATE_LIMIT_WINDOW_MS = 60 * 1000;
 const RATE_LIMIT_MAX_REQUESTS = 200;
 const requestCounters = new Map();
-// Public browser fallback for hosts that do not inject environment variables.
-// This must only ever contain the Supabase publishable key, never service_role.
-const DEFAULT_SUPABASE_URL = 'https://yxzzfqyehllogzzhdtmc.supabase.co';
-const DEFAULT_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_wWVQ59Rejod5Oc1X4s_eeQ_ONbXzyi2';
+
+const SUPABASE_URL = String(process.env.SUPABASE_URL || '').trim();
+const SUPABASE_PUBLISHABLE_KEY = String(process.env.SUPABASE_PUBLISHABLE_KEY || '').trim();
+const SENTRY_DSN = String(process.env.SENTRY_DSN || '').trim();
+const APP_ENVIRONMENT = String(process.env.NODE_ENV || 'production').trim();
 
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
@@ -56,18 +57,17 @@ app.use((req, res, next) => {
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
   res.setHeader('Cross-Origin-Resource-Policy', 'same-site');
   res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
-  res.setHeader('Origin-Agent-Cluster', '?1');
   res.setHeader('Content-Security-Policy', [
     "default-src 'self'",
     "base-uri 'self'",
     "object-src 'none'",
     "frame-ancestors 'self'",
     "form-action 'self' https://accounts.google.com",
-    "script-src 'self' https://accounts.google.com https://apis.google.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://partner.googleadservices.com https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com https://*.google.com https://*.gstatic.com https://*.googlesyndication.com",
+    "script-src 'self' https://accounts.google.com https://apis.google.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://partner.googleadservices.com https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com https://browser.sentry-cdn.com https://*.google.com https://*.gstatic.com https://*.googlesyndication.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com",
     "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net",
     "img-src 'self' data: blob: https:",
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://accounts.google.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://ep1.adtrafficquality.google https://ep2.adtrafficquality.google https://ipinfo.io https://ipapi.co https://freeipapi.com https://ipwho.is https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://router.project-osrm.org https://nominatim.openstreetmap.org https://photon.komoot.io https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.googleadservices.com",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://accounts.google.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://ep1.adtrafficquality.google https://ep2.adtrafficquality.google https://ipinfo.io https://ipapi.co https://freeipapi.com https://ipwho.is https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://router.project-osrm.org https://nominatim.openstreetmap.org https://photon.komoot.io https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.googleadservices.com https://*.ingest.sentry.io",
     "frame-src 'self' https://accounts.google.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://*.google.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net https://*.googleadservices.com",
     "worker-src 'self' blob:",
     "manifest-src 'self'"
@@ -83,17 +83,13 @@ app.use((req, res, next) => {
     res.setHeader('Allow', 'GET, HEAD, OPTIONS');
     return res.status(405).json({ error: 'Método no permitido.' });
   }
-  if (req.originalUrl.length > 2048) {
-    return res.status(414).json({ error: 'Solicitud demasiado larga.' });
-  }
+  if (req.originalUrl.length > 2048) return res.status(414).json({ error: 'Solicitud demasiado larga.' });
   return next();
 });
 
 app.use(limitarSolicitudes);
 
-app.get('/health', (req, res) => {
-  res.status(200).send('OK');
-});
+app.get('/health', (req, res) => res.status(200).send('OK'));
 
 app.get('/ads.txt', (req, res) => {
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
@@ -107,41 +103,27 @@ app.get('/sw.js', (req, res) => {
   res.sendFile(path.join(__dirname, 'sw.js'));
 });
 
-// Estas dos variables son credenciales publicables del navegador; la clave
-// service_role no debe configurarse ni exponerse en esta aplicación.
 app.get('/runtime-config.js', (req, res) => {
+  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+    return res.status(503).type('application/javascript').send(
+      "throw new Error('Configuración pública de Supabase no disponible en el entorno del servidor.');"
+    );
+  }
   const config = {
-    supabaseUrl: process.env.SUPABASE_URL || DEFAULT_SUPABASE_URL,
-    supabasePublishableKey: process.env.SUPABASE_PUBLISHABLE_KEY || DEFAULT_SUPABASE_PUBLISHABLE_KEY
+    supabaseUrl: SUPABASE_URL,
+    supabasePublishableKey: SUPABASE_PUBLISHABLE_KEY,
+    sentryDsn: SENTRY_DSN,
+    environment: APP_ENVIRONMENT
   };
   res.setHeader('Cache-Control', 'no-store, max-age=0');
-  res.type('application/javascript').send(
-    `window.NOTIGAS_RUNTIME_CONFIG = Object.freeze(${JSON.stringify(config)});`
-  );
+  return res.type('application/javascript').send(`window.NOTIGAS_RUNTIME_CONFIG = Object.freeze(${JSON.stringify(config)});`);
 });
 
-const blacklistedPaths = [
-  '/server.js',
-  '/package.json',
-  '/package-lock.json',
-  '/pnpm-lock.yaml',
-  '/readme.md',
-  '/.env',
-  '/.htaccess',
-  '/.gitignore',
-  '/supabase',
-  '/scripts',
-  '/node_modules',
-  '/.git',
-  '/.agents'
-];
-
+const blacklistedPaths = ['/server.js','/package.json','/package-lock.json','/pnpm-lock.yaml','/readme.md','/.env','/.htaccess','/.gitignore','/supabase','/scripts','/node_modules','/.git','/.agents'];
 app.use((req, res, next) => {
   const reqPath = req.path.toLowerCase();
   for (const item of blacklistedPaths) {
-    if (reqPath === item || reqPath.startsWith(`${item}/`)) {
-      return res.status(403).json({ error: 'Acceso denegado a recursos del sistema.' });
-    }
+    if (reqPath === item || reqPath.startsWith(`${item}/`)) return res.status(403).json({ error: 'Acceso denegado a recursos del sistema.' });
   }
   next();
 });
@@ -150,22 +132,15 @@ function sendIndex(req, res) {
   res.setHeader('Cache-Control', 'no-cache, must-revalidate');
   res.sendFile(path.join(__dirname, 'index.html'));
 }
-
 app.get(['/', '/index.html'], sendIndex);
 
-const STATIC_CACHE_MAX_AGE_MS = 60 * 60 * 1000;
 app.use(express.static(__dirname, {
   index: false,
-  maxAge: STATIC_CACHE_MAX_AGE_MS,
+  maxAge: 60 * 60 * 1000,
   setHeaders(res, filePath) {
-    if (/\.(?:js|css|svg|png|jpe?g|webp|ico|woff2?|ttf)$/i.test(filePath)) {
-      res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
-    }
+    if (/\.(?:js|css|svg|png|jpe?g|webp|ico|woff2?|ttf)$/i.test(filePath)) res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
   }
 }));
 
 app.get('*', sendIndex);
-
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ NOTIGAS iniciado exitosamente en puerto ${PORT}`);
-});
+app.listen(PORT, '0.0.0.0', () => console.log(`✅ NOTIGAS iniciado exitosamente en puerto ${PORT}`));
