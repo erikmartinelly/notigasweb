@@ -51,8 +51,8 @@ assert(/if \(!isDriverMode\(\)\) \{[\s\S]*clearRadarLayers\(\);[\s\S]*return;/i.
 
 assert(/CACHE_VERSION = '136'/.test(state), 'State mantiene la versión de assets del HTML');
 assert(/loadOrderPrivacyModule/.test(state) && /order_privacy_layer\.js/.test(state), 'State conserva carga dinámica de la capa de privacidad');
-assert(/notigas-cache-v138/.test(sw), 'Service worker usa caché progresiva v138');
-assert(!/order_privacy_layer\.js\?v=137/.test(sw), 'La capa de privacidad no compite en el precache inicial');
+assert(/notigas-cache-v139/.test(sw), 'Service worker usa caché progresiva v139');
+assert(!/order_privacy_layer\.js\?v=138/.test(sw), 'La capa de privacidad no compite en el precache inicial');
 assert(/fetch\(event\.request\)/.test(sw), 'Los módulos usados se incorporan al cache progresivamente');
 
 console.log('\n🔐 Contrato de privacidad de pedidos verificado.');

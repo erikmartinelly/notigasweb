@@ -87,6 +87,19 @@ function getSafeAdImageUrl(value) {
   }
 }
 
+function mostrarRespaldoBannerInferior() {
+  const banner = document.getElementById('localPromoContent');
+  if (!banner) return;
+  banner.style.backgroundImage = 'none';
+  banner.style.display = 'flex';
+  const title = document.getElementById('promoTitleText');
+  const text = document.getElementById('promoText');
+  if (title) title.style.display = 'none';
+  if (text && !text.textContent.trim()) {
+    text.textContent = 'Espacio publicitario disponible en NOTIGAS • Haz clic para contactar';
+  }
+}
+
 /**
  * Inicializar suscripción Realtime para anuncios locales por ciudad
  */
@@ -162,15 +175,16 @@ async function cargarAnunciosGuardados() {
       muro_avisos: { activo: false }
     };
     window._currentLocalAdData = window._localAds.mapa;
-    if (localPromoContent) localPromoContent.style.display = 'none';
+    mostrarRespaldoBannerInferior();
     return;
   }
 
   try {
     const citiesToQuery = (normCity && normCity !== 'global') ? [normCity, 'global'] : ['global'];
-    let { data, error } = await window.supabaseClient
+      let { data, error } = await window.supabaseClient
       .from(_ADS_AD_TABLE)
       .select('id, titulo, descripcion, url, image_url, ciudad, posicion, activo, created_at')
+      .eq('activo', true)
       .in('ciudad', citiesToQuery)
       .order('created_at', { ascending: false });
 
@@ -222,15 +236,9 @@ async function cargarAnunciosGuardados() {
 
   } catch (e) {
     console.error("Error cargando anuncios desde Supabase:", e);
-    window._localAds = {
-      mapa: null,
-      repartidores: null,
-      muro_avisos: null
-    };
-    window._currentLocalAdData = null;
-    if (localPromoContent) {
-      localPromoContent.style.display = 'none';
-    }
+    // No desaparece la franja inferior por una desconexión puntual: conserva
+    // el último anuncio o el respaldo visible hasta que Realtime recupere datos.
+    if (!window._localAds?.mapa) mostrarRespaldoBannerInferior();
   }
 }
 window.cargarAnunciosGuardados = cargarAnunciosGuardados;

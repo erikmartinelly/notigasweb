@@ -1,5 +1,5 @@
-Warning: truncated output (original token count: 24070)
-Total output lines: 2468
+Warning: truncated output (original token count: 24216)
+Total output lines: 2480
 
 
 // VALIDACIONES PERUANAS PARA DNI Y WHATSAPP
@@ -522,6 +522,12 @@ function selectAuthMethod(method) {
 
 /* INICIALIZACIÓN OFICIAL Y DE ALTA COMPATIBILIDAD CON FIREFOX / SAFARI / CHROME / BRAVE */
 let _googleGisInitialized = false;
+function mostrarAccesoGoogleAlternativo() {
+  const button = document.getElementById('btnGoogleOAuthFallback');
+  if (button) button.style.display = 'inline-flex';
+}
+window.mostrarAccesoGoogleAlternativo = mostrarAccesoGoogleAlternativo;
+
 function initGoogleOneTap() {
   if (_googleGisInitialized) return;
   if (typeof google !== 'undefined' && google && google.accounts && google.accounts.id) {
@@ -550,7 +556,10 @@ function initGoogleOneTap() {
       }
     } catch(e) {
       console.warn("Google GIS SDK Warning:", e);
+      mostrarAccesoGoogleAlternativo();
     }
+  } else {
+    mostrarAccesoGoogleAlternativo();
   }
 }
 
@@ -561,6 +570,8 @@ function tryInitGoogleGis() {
   if ((typeof google === 'undefined' || !google || !google.accounts || !google.accounts.id) && googleGisRetryCount < 12) {
     googleGisRetryCount++;
     setTimeout(tryInitGoogleGis, 350);
+  } else if (!_googleGisInitialized) {
+    mostrarAccesoGoogleAlternativo();
   }
 }
 
@@ -617,7 +628,7 @@ async function iniciarConGoogleOAuthRedirect() {
     });
     if (error) {
       if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-      if (typeof showToast === 'function') showToast('Error Google OAuth', error.message, 'error', 5000);
+      if (typeof showToast === 'function') showToast('Error Google OAuth', `${error.message}. Revisa que Google esté habilitado en Supabase Auth y que www.notigas.com esté autorizado.`, 'error', 6500);
     }
   } catch (err) {
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
@@ -646,8 +657,9 @@ async function handleCredentialResponse(response) {
     if (error) {
       if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
       console.error("Error en signInWithIdToken:", error);
+      mostrarAccesoGoogleAlternativo();
       if (typeof showToast === 'function') {
-        showToast('Error de autenticación Google', error.message || 'Verifica que el dominio actual esté autorizado en Google Cloud Console.', 'error', 6000);
+        showToast('Error de autenticación Google', `${error.message || 'El inicio directo fue rechazado.'} Usa «acceso alternativo» o verifica el dominio en Google Cloud Console.`, 'error', 7000);
       }
       return;
     }
@@ -1013,27 +1025,7 @@ async function iniciarSesionRepartidor() {
 
   AppState.set('userData', repartidorData);
 
-  if (typeof window.cambiarCiudad === 'function') {
-    try {
-      await window.cambiarCiudad(ciudad.toLowerCase());
-    } catch(e) {
-      AppState.set('city', ciudad.toLowerCase());
-    }
-  } else {
-    AppState.set('city', ciudad.toLowerCase());
-  }
-
-  sessionStorage.removeItem('notigas_temp_gmail');
-
-  if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-  closeDriverModal();
-
-  if (typeof setAppMode === 'function') {
-    setAppMode('driver');
-  }
-
-  if (typeof showToast === 'function') {
-    showToast('🎁 Cuenta de repartidor activada', `Ficha de ${nombreNegocio} registrada. Tus primeros 100 pedi…4070 tokens truncated…ToRemove = [];
+  if (typeof window.cambiarCiudad === 'funct…4216 tokens truncated…ToRemove = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (key && key.startsWith('notigas_')) keysToRemove.push(key);

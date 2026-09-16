@@ -153,7 +153,7 @@ window._adsModuleLoadPromise = null;
 window.loadAdsModule = async function () {
   if (typeof window.cargarAnunciosGuardados !== 'function') {
     if (!window._adsModuleLoadPromise) {
-      window._adsModuleLoadPromise = window.loadScriptAsync(`js/promo.js`).catch((error) => {
+      window._adsModuleLoadPromise = window.loadScriptAsync(`js/promo.js?v=138`).catch((error) => {
         window._adsModuleLoadPromise = null;
         throw error;
       });

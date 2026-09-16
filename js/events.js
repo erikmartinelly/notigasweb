@@ -346,6 +346,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_btnAuthMethodGoogle = document.getElementById('btnAuthMethodGoogle');
     if (el_btnAuthMethodGoogle) el_btnAuthMethodGoogle.addEventListener('click', () => { safeCall('selectAuthMethod', 'google'); });
 
+    const el_btnGoogleOAuthFallback = document.getElementById('btnGoogleOAuthFallback');
+    if (el_btnGoogleOAuthFallback) el_btnGoogleOAuthFallback.addEventListener('click', () => { safeCall('iniciarConGoogleOAuthRedirect'); });
+
     const el_btnEmailAction = document.getElementById('btnEmailAction');
     if (el_btnEmailAction) el_btnEmailAction.addEventListener('click', () => { safeCall('procesarAccionEmail'); });
 

@@ -58,12 +58,12 @@ try {
   const htmlVersions = [...index.matchAll(/(?:styles|js)\/[^"']+\?v=(\d+)/g)].map(m => m[1]);
   if (!htmlVersions.length) fail('No se detectaron assets versionados en index.html');
   const uniqueHtmlVersions = [...new Set(htmlVersions)];
-  if (uniqueHtmlVersions.length !== 1 || uniqueHtmlVersions[0] !== '137') {
+  if (uniqueHtmlVersions.length !== 1 || uniqueHtmlVersions[0] !== '138') {
     fail(`Versiones de assets mezcladas: ${uniqueHtmlVersions.join(',')}`);
   }
   const sw = read('sw.js');
-  if (!/notigas-cache-v138/.test(sw)) fail('Service worker no usa cache progresivo v138');
-  if (/order_privacy_layer\.js\?v=137/.test(sw)) fail('Service worker vuelve a precachear módulos dinámicos pesados');
+  if (!/notigas-cache-v139/.test(sw)) fail('Service worker no usa cache progresivo v139');
+  if (/order_privacy_layer\.js\?v=138/.test(sw)) fail('Service worker vuelve a precachear módulos dinámicos pesados');
   if (/fetch\(asset, \{ cache: 'reload' \}\)/.test(sw)) fail('Service worker vuelve a forzar recargas duplicadas durante instalación');
   if (!/stale-while-revalidate/i.test(sw)) fail('Service worker no documenta la estrategia de cache progresivo');
 
