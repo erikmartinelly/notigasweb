@@ -19,7 +19,6 @@ CREATE INDEX IF NOT EXISTS idx_pedidos_requested_driver_pending
   ON public.pedidos (requested_driver_id, driver_request_status, driver_request_expires_at)
   WHERE requested_driver_id IS NOT NULL AND driver_request_status = 'requested';
 
--- El repartidor elegido puede leer únicamente su propia solicitud dirigida.
 DROP POLICY IF EXISTS pedidos_select_requested_driver ON public.pedidos;
 CREATE POLICY pedidos_select_requested_driver ON public.pedidos
 FOR SELECT TO authenticated
@@ -29,9 +28,6 @@ USING (
   AND driver_id IS NULL
   AND estado IN ('pendiente','visto')
 );
-
--- La aceptación se hace exclusivamente por RPC SECURITY DEFINER; no se concede
--- UPDATE directo adicional al navegador.
 
 CREATE OR REPLACE FUNCTION public.rpc_request_order_to_driver(
   p_driver_id text,
@@ -52,28 +48,14 @@ SET search_path = public, pg_temp
 AS $$
 DECLARE
   v_uid text := (select auth.uid())::text;
-  v_driver uuid;
   v_city text;
   v_order public.pedidos;
 BEGIN
-  IF v_uid IS NULL THEN
+  IF v_uid IS NULL OR coalesce(((select auth.jwt())->>'is_anonymous')::boolean, false) THEN
     RAISE EXCEPTION 'Debes iniciar sesión para solicitar un pedido';
   END IF;
-  IF coalesce(((select auth.jwt())->>'is_anonymous')::boolean, false) THEN
-    RAISE EXCEPTION 'La cuenta anónima no puede crear pedidos';
-  END IF;
-  IF p_driver_id IS NULL OR p_driver_id = '' THEN
-    RAISE EXCEPTION 'Distribuidor no válido';
-  END IF;
-  IF p_categoria IS NULL OR trim(p_categoria) = '' THEN
-    RAISE EXCEPTION 'Categoría de pedido obligatoria';
-  END IF;
-
-  BEGIN
-    v_driver := p_driver_id::uuid;
-  EXCEPTION WHEN invalid_text_representation THEN
-    RAISE EXCEPTION 'Distribuidor no válido';
-  END;
+  IF p_driver_id IS NULL OR p_driver_id = '' THEN RAISE EXCEPTION 'Distribuidor no válido'; END IF;
+  IF p_categoria IS NULL OR trim(p_categoria) = '' THEN RAISE EXCEPTION 'Categoría de pedido obligatoria'; END IF;
 
   SELECT lower(trim(ch.ciudad)) INTO v_city
   FROM public.choferes_habilitados ch
@@ -82,10 +64,7 @@ BEGIN
     AND coalesce(ch.bloqueado, false) = false
   LIMIT 1;
 
-  IF v_city IS NULL THEN
-    RAISE EXCEPTION 'El distribuidor seleccionado no está habilitado';
-  END IF;
-
+  IF v_city IS NULL THEN RAISE EXCEPTION 'El distribuidor seleccionado no está habilitado'; END IF;
   IF p_ciudad IS NOT NULL AND lower(trim(p_ciudad)) <> v_city THEN
     RAISE EXCEPTION 'El distribuidor no pertenece a la ciudad seleccionada';
   END IF;
@@ -97,20 +76,55 @@ BEGIN
   ) VALUES (
     v_uid,
     coalesce(nullif(trim(p_titulo), ''), 'Pedido de ' || initcap(trim(p_categoria))),
-    trim(p_categoria),
-    coalesce(nullif(trim(p_cantidad), ''), '1 un'),
-    nullif(trim(p_direccion), ''),
-    nullif(trim(p_telefono), ''),
-    p_latitude, p_longitude,
-    coalesce(nullif(lower(trim(p_ciudad)), ''), v_city),
-    nullif(trim(p_barrio_otb), ''),
-    'pendiente',
-    p_driver_id,
-    'requested',
-    now() + interval '30 seconds'
-  )
+    trim(p_categoria), coalesce(nullif(trim(p_cantidad), ''), '1 un'),
+    nullif(trim(p_direccion), ''), nullif(trim(p_telefono), ''),
+    p_latitude, p_longitude, coalesce(nullif(lower(trim(p_ciudad)), ''), v_city),
+    nullif(trim(p_barrio_otb), ''), 'pendiente',
+    p_driver_id, 'requested', now() + interval '30 seconds'
+  ) RETURNING * INTO v_order;
+  RETURN v_order;
+END;
+$$;
+
+-- Convierte un pedido normal recién creado en una solicitud dirigida. Solo el
+-- comprador dueño puede hacerlo y solo mientras el pedido siga pendiente.
+CREATE OR REPLACE FUNCTION public.rpc_target_existing_order_to_driver(p_order_id uuid, p_driver_id text)
+RETURNS public.pedidos
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_uid text := (select auth.uid())::text;
+  v_city text;
+  v_order public.pedidos;
+BEGIN
+  IF v_uid IS NULL OR coalesce(((select auth.jwt())->>'is_anonymous')::boolean, false) THEN
+    RAISE EXCEPTION 'Debes iniciar sesión';
+  END IF;
+
+  SELECT lower(trim(ch.ciudad)) INTO v_city
+  FROM public.choferes_habilitados ch
+  WHERE ch.user_id::text = p_driver_id
+    AND coalesce(ch.estado_verificacion, 'aprobado') = 'aprobado'
+    AND coalesce(ch.bloqueado, false) = false
+  LIMIT 1;
+  IF v_city IS NULL THEN RAISE EXCEPTION 'El distribuidor seleccionado no está habilitado'; END IF;
+
+  UPDATE public.pedidos
+  SET requested_driver_id = p_driver_id,
+      driver_request_status = 'requested',
+      driver_request_expires_at = now() + interval '30 seconds',
+      driver_request_expanded_at = NULL,
+      updated_at = now()
+  WHERE id = p_order_id
+    AND user_id = v_uid
+    AND driver_id IS NULL
+    AND estado IN ('pendiente','visto')
+    AND lower(trim(coalesce(ciudad, ''))) = v_city
   RETURNING * INTO v_order;
 
+  IF v_order.id IS NULL THEN RAISE EXCEPTION 'El pedido ya no está disponible para dirigirlo a este distribuidor'; END IF;
   RETURN v_order;
 END;
 $$;
@@ -125,10 +139,7 @@ DECLARE
   v_uid text := (select auth.uid())::text;
   v_order public.pedidos;
 BEGIN
-  IF v_uid IS NULL THEN
-    RAISE EXCEPTION 'Debes iniciar sesión';
-  END IF;
-
+  IF v_uid IS NULL THEN RAISE EXCEPTION 'Debes iniciar sesión'; END IF;
   UPDATE public.pedidos
   SET driver_id = v_uid,
       requested_driver_id = NULL,
@@ -143,24 +154,18 @@ BEGIN
     AND estado IN ('pendiente','visto')
     AND coalesce(driver_request_expires_at, now()) > now()
   RETURNING * INTO v_order;
-
-  IF v_order.id IS NULL THEN
-    RAISE EXCEPTION 'La solicitud ya no está disponible para este distribuidor';
-  END IF;
-
+  IF v_order.id IS NULL THEN RAISE EXCEPTION 'La solicitud ya no está disponible para este distribuidor'; END IF;
   RETURN v_order;
 END;
 $$;
 
--- Expande solicitudes sin respuesta. Se ejecuta desde pg_cron si está disponible.
 CREATE OR REPLACE FUNCTION public.rpc_expand_expired_driver_requests()
 RETURNS integer
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $$
-DECLARE
-  v_count integer := 0;
+DECLARE v_count integer := 0;
 BEGIN
   UPDATE public.pedidos
   SET requested_driver_id = NULL,
@@ -173,7 +178,6 @@ BEGIN
     AND driver_request_status = 'requested'
     AND driver_request_expires_at <= now()
     AND estado IN ('pendiente','visto');
-
   GET DIAGNOSTICS v_count = ROW_COUNT;
   RETURN v_count;
 END;
@@ -181,11 +185,15 @@ $$;
 
 REVOKE ALL ON FUNCTION public.rpc_request_order_to_driver(text,text,text,text,text,text,text,text,double precision,double precision) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.rpc_request_order_to_driver(text,text,text,text,text,text,text,text,double precision,double precision) TO authenticated;
+REVOKE ALL ON FUNCTION public.rpc_target_existing_order_to_driver(uuid,text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.rpc_target_existing_order_to_driver(uuid,text) TO authenticated;
 REVOKE ALL ON FUNCTION public.rpc_accept_direct_distributor_request(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.rpc_accept_direct_distributor_request(uuid) TO authenticated;
 REVOKE ALL ON FUNCTION public.rpc_expand_expired_driver_requests() FROM PUBLIC, anon, authenticated;
 
-DO $$
+-- Fallback server-side: pg_cron corre cada minuto. El navegador ejecuta la
+-- expansión exactamente a los 30s mientras esté abierto; cron cubre cierres/offline.
+DO $do$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'cron') THEN
     IF EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'notigas_expand_direct_driver_requests') THEN
@@ -194,9 +202,9 @@ BEGIN
     PERFORM cron.schedule(
       'notigas_expand_direct_driver_requests',
       '* * * * *',
-      $$SELECT public.rpc_expand_expired_driver_requests();$$
+      $cron$SELECT public.rpc_expand_expired_driver_requests();$cron$
     );
   END IF;
 EXCEPTION WHEN OTHERS THEN
   RAISE NOTICE 'No se pudo registrar pg_cron para solicitudes dirigidas: %', SQLERRM;
-END $$;
+END $do$;
