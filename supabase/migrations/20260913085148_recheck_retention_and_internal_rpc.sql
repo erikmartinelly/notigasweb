@@ -65,7 +65,16 @@ $$;
 REVOKE ALL ON FUNCTION public.rpc_purge_old_records() FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.rpc_purge_old_records() TO service_role;
 
-REVOKE ALL ON FUNCTION public.trg_estado_pago_ocr_automatico() FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.trg_estado_pago_ocr_automatico() TO service_role;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+    WHERE n.nspname='public' AND p.proname='trg_estado_pago_ocr_automatico'
+      AND pg_get_function_identity_arguments(p.oid)=''
+  ) THEN
+    REVOKE ALL ON FUNCTION public.trg_estado_pago_ocr_automatico() FROM PUBLIC, anon, authenticated;
+    GRANT EXECUTE ON FUNCTION public.trg_estado_pago_ocr_automatico() TO service_role;
+  END IF;
+END $$;
 
 NOTIFY pgrst, 'reload schema';

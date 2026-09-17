@@ -86,8 +86,17 @@ DROP POLICY IF EXISTS reportes_spam_insert ON public.reportes_spam;
 CREATE POLICY reportes_spam_insert ON public.reportes_spam FOR INSERT TO authenticated
 WITH CHECK (COALESCE((auth.jwt()->>'is_anonymous')::boolean, false) = false AND auth.uid() IS NOT NULL AND user_id = auth.uid()::text);
 
-REVOKE ALL ON FUNCTION public.trg_estado_pago_ocr_automatico() FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.trg_estado_pago_ocr_automatico() TO service_role;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+    WHERE n.nspname='public' AND p.proname='trg_estado_pago_ocr_automatico'
+      AND pg_get_function_identity_arguments(p.oid)=''
+  ) THEN
+    REVOKE ALL ON FUNCTION public.trg_estado_pago_ocr_automatico() FROM PUBLIC, anon, authenticated;
+    GRANT EXECUTE ON FUNCTION public.trg_estado_pago_ocr_automatico() TO service_role;
+  END IF;
+END $$;
 REVOKE ALL ON FUNCTION public.normalize_delivery_category(text) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.normalize_delivery_category(text) TO service_role;
 
