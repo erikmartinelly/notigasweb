@@ -146,7 +146,9 @@ REVOKE ALL ON FUNCTION public.rpc_target_existing_order_to_driver(uuid,text) FRO
 GRANT EXECUTE ON FUNCTION public.rpc_target_existing_order_to_driver(uuid,text) TO authenticated;
 REVOKE ALL ON FUNCTION public.rpc_accept_direct_distributor_request(uuid) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.rpc_accept_direct_distributor_request(uuid) TO authenticated;
-REVOKE ALL ON FUNCTION public.rpc_expand_expired_driver_requests() FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.rpc_expand_expired_driver_requests() FROM PUBLIC,anon;
+-- El navegador del comprador la invoca a los 30s; solo expande solicitudes ya vencidas.
+GRANT EXECUTE ON FUNCTION public.rpc_expand_expired_driver_requests() TO authenticated;
 
 DO $do$
 BEGIN
