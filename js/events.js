@@ -538,9 +538,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_btnCloseVoucherLightbox = document.getElementById('btnCloseVoucherLightbox');
     if (el_btnCloseVoucherLightbox) el_btnCloseVoucherLightbox.addEventListener('click', () => { safeCall('cerrarLightboxVoucher'); });
 
-    const el_btnAdminPurgeExpiredVouchers = document.getElementById('btnAdminPurgeExpiredVouchers');
-    if (el_btnAdminPurgeExpiredVouchers) el_btnAdminPurgeExpiredVouchers.addEventListener('click', () => { safeCall('depurarVouchersCaducadosAdmin'); });
-
     const el_btnVerMiPedidoTrip = document.getElementById('btnVerMiPedidoTrip');
     if (el_btnVerMiPedidoTrip) el_btnVerMiPedidoTrip.addEventListener('click', () => { safeCall('centrarMapaEnMiPedido'); });
 

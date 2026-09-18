@@ -100,6 +100,8 @@
     window.rechazarSuscripcionPremiumAdmin = retired;
     window.revocarSuscripcionPremiumAdmin = retired;
     window.banearRepartidorDesdePremium = retired;
+    window.banearRepartidorPorVoucherInvalidoAdmin = retired;
+    window.depurarVouchersCaducadosAdmin = retired;
   }
 
   window.ensureAdminPaymentConfigPanel = ensurePanel;
