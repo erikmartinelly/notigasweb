@@ -36,9 +36,12 @@ jobs:
               curl -fsS http://127.0.0.1:3000/ > /tmp/notigas-index.html
               curl -fsS 'http://127.0.0.1:3000/js/app.js?v=138' > /tmp/notigas-app.js
               curl -fsS 'http://127.0.0.1:3000/js/driver_order_rules.js?v=138' > /tmp/notigas-driver-rules.js
+              curl -fsS 'http://127.0.0.1:3000/runtime-config.js?v=138' > /tmp/notigas-runtime-config.js
               grep -q '🌍 Todos' /tmp/notigas-index.html
               grep -q '<script defer src="js/driver_icons.js?v=138"></script>' /tmp/notigas-index.html
               grep -q '<script defer src="js/device_security.js?v=138"></script>' /tmp/notigas-index.html
+              grep -q '<script defer src="js/monitoring.js?v=138"></script>' /tmp/notigas-index.html
+              grep -q 'sentryDsn' /tmp/notigas-runtime-config.js
               grep -q 'id="driverCreditProgressiveTerms"' /tmp/notigas-index.html
               grep -q 'Cada ciclo cobrable permite <strong>250 balones = S/ 50</strong>' /tmp/notigas-index.html
               grep -q '🎁 PRUEBA GRATIS' /tmp/notigas-index.html

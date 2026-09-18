@@ -135,6 +135,11 @@ must(/supabase\.min\.js" integrity="sha384-[A-Za-z0-9+/=]+" crossorigin="anonymo
 must(/font-awesome[^\"]+" integrity="sha384-[A-Za-z0-9+/=]+" crossorigin="anonymous"/.test(index), 'Font Awesome usa SRI');
 must(!/fs\.readFileSync/.test(server), 'servidor no parchea recursos del frontend en memoria');
 must(/app\.get\('\/runtime-config\.js'/.test(server), 'servidor inyecta configuración pública en tiempo de ejecución');
+must(/const SENTRY_DSN = String\(process\.env\.SENTRY_DSN/.test(server) && /sentryDsn: SENTRY_DSN/.test(server), 'runtime-config inyecta el DSN de Sentry desde el entorno');
+must(!/https:\/\/[A-Za-z0-9]{16,}@[^'"\s]+\.sentry\.io/.test(server) && !/https:\/\/[A-Za-z0-9]{16,}@[^'"\s]+\.sentry\.io/.test(index), 'el DSN de Sentry no queda escrito en el repositorio');
+must(/js\/monitoring\.js/.test(index), 'HTML carga el monitoreo de errores de producción');
+must(/if \(!dsn\)/.test(read('js/monitoring.js')), 'el monitoreo de Sentry se activa solo cuando hay DSN');
+must(/browser\.sentry-cdn\.com/.test(server) && /browser\.sentry-cdn\.com/.test(read('.htaccess')), 'CSP autoriza el CDN de Sentry en servidor y Apache');
 must(!/sb_publishable_[A-Za-z0-9_-]+/.test(read('js/supabase-config.js')), 'clave publicable no queda escrita en el frontend');
 must(/express\.static\(__dirname,\s*\{[\s\S]*?index:\s*false[\s\S]*?maxAge:\s*STATIC_CACHE_MAX_AGE_MS/.test(server), 'index se sirve por ruta saneada y estáticos usan cache explícito');
 must(/stale-while-revalidate=86400/.test(server), 'servidor permite reutilizar estáticos mientras revalida en segundo plano');
