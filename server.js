@@ -9,13 +9,19 @@ const RATE_LIMIT_CLEANUP_INTERVAL_MS = 30 * 1000;
 const RATE_LIMIT_HARD_CAP = 20000;
 const requestCounters = new Map();
 let lastCountersCleanupAt = 0;
-// Public browser fallback for hosts that do not inject environment variables.
-// This must only ever contain the Supabase publishable key, never service_role.
-const DEFAULT_SUPABASE_URL = 'https://yxzzfqyehllogzzhdtmc.supabase.co';
-const DEFAULT_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_wWVQ59Rejod5Oc1X4s_eeQ_ONbXzyi2';
+// Credenciales publicables inyectadas por el hosting en tiempo de ejecución.
+// Son las ÚNICAS credenciales que el navegador necesita; nunca configurar ni
+// exponer SUPABASE_SERVICE_ROLE_KEY en esta aplicación.
+const SUPABASE_URL = String(process.env.SUPABASE_URL || '').trim();
+const SUPABASE_PUBLISHABLE_KEY = String(process.env.SUPABASE_PUBLISHABLE_KEY || '').trim();
+const SUPABASE_CONFIGURED = Boolean(SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY);
 // Monitoreo opcional del navegador: sin SENTRY_DSN no se descarga ningún SDK externo.
 const SENTRY_DSN = String(process.env.SENTRY_DSN || '').trim();
 const APP_ENVIRONMENT = String(process.env.NODE_ENV || 'production').trim();
+
+if (!SUPABASE_CONFIGURED) {
+  console.warn('⚠️ Faltan SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY en el entorno del servidor. El navegador no podrá inicializar Supabase hasta definirlas (ver .env.example).');
+}
 
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
@@ -116,10 +122,11 @@ app.get('/sw.js', (req, res) => {
 // service_role no debe configurarse ni exponerse en esta aplicación.
 app.get('/runtime-config.js', (req, res) => {
   const config = {
-    supabaseUrl: process.env.SUPABASE_URL || DEFAULT_SUPABASE_URL,
-    supabasePublishableKey: process.env.SUPABASE_PUBLISHABLE_KEY || DEFAULT_SUPABASE_PUBLISHABLE_KEY,
+    supabaseUrl: SUPABASE_URL,
+    supabasePublishableKey: SUPABASE_PUBLISHABLE_KEY,
     sentryDsn: SENTRY_DSN,
-    environment: APP_ENVIRONMENT
+    environment: APP_ENVIRONMENT,
+    configured: SUPABASE_CONFIGURED
   };
   res.setHeader('Cache-Control', 'no-store, max-age=0');
   res.type('application/javascript').send(
@@ -127,31 +134,61 @@ app.get('/runtime-config.js', (req, res) => {
   );
 });
 
-const blacklistedPaths = [
-  '/server.js',
-  '/package.json',
-  '/package-lock.json',
-  '/pnpm-lock.yaml',
-  '/readme.md',
-  '/.env',
-  '/.htaccess',
-  '/.gitignore',
-  '/.github',
-  '/supabase',
-  '/scripts',
-  '/node_modules',
-  '/node-v20.11.1-win-x64',
+// Allowlist de extensiones de archivos web que se sirven al navegador. Cualquier
+// recurso con otra extensión (SQL, env, logs, backups, fuentes del servidor,
+// scripts internos, etc.) se rechaza aunque exista físicamente en el repositorio.
+const SAFE_WEB_FILE_EXTENSIONS = new Set([
+  '.html', '.htm', '.css', '.js', '.mjs',
+  '.png', '.jpg', '.jpeg', '.gif', '.webp', '.avif', '.svg', '.ico',
+  '.woff', '.woff2', '.ttf', '.otf',
+  '.json', '.txt', '.xml', '.webmanifest', '.pdf', '.wasm'
+]);
+
+// Archivos del sistema que siempre se bloquean aunque tengan extensión segura.
+const FORBIDDEN_STATIC_BASENAMES = new Set([
+  'server.js',
+  'package.json',
+  'package-lock.json',
+  'pnpm-lock.yaml',
+  'runtime-config.js'
+]);
+
+// Directorios internos que nunca deben servirse como estáticos públicos.
+const FORBIDDEN_STATIC_DIRS = [
   '/.git',
-  '/.agents'
+  '/.agents',
+  '/.github',
+  '/scripts',
+  '/supabase',
+  '/node_modules',
+  '/node-v20.11.1-win-x64'
 ];
 
 app.use((req, res, next) => {
-  const reqPath = req.path.toLowerCase();
-  for (const item of blacklistedPaths) {
-    if (reqPath === item || reqPath.startsWith(`${item}/`)) {
+  let reqPath = req.path;
+  try { reqPath = decodeURIComponent(reqPath); } catch (_) {}
+  const lower = reqPath.toLowerCase();
+
+  for (const dir of FORBIDDEN_STATIC_DIRS) {
+    if (lower === dir || lower.startsWith(`${dir}/`)) {
       return res.status(403).json({ error: 'Acceso denegado a recursos del sistema.' });
     }
   }
+
+  const base = path.basename(lower);
+  if (base.startsWith('.')) {
+    return res.status(403).json({ error: 'Acceso denegado a recursos del sistema.' });
+  }
+  if (FORBIDDEN_STATIC_BASENAMES.has(base)) {
+    return res.status(403).json({ error: 'Acceso denegado a recursos del sistema.' });
+  }
+
+  const ext = path.extname(lower);
+  if (ext && !SAFE_WEB_FILE_EXTENSIONS.has(ext)) {
+    return res.status(403).json({ error: 'Acceso denegado a recursos del sistema.' });
+  }
+
+  // Sin extensión: no se sirve ningún archivo; se delega al shell de la PWA.
   next();
 });
 

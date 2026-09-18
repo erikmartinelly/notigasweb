@@ -104,7 +104,7 @@ cd notigasweb
 * **Canonical deployment:** apply every file in `supabase/migrations/` in ascending order using the project migration workflow. The remote migration history must match Git.
 * `supabase/full_production_schema.sql` is intentionally deprecated and aborts if executed; it must never be used for production, staging, recovery, or a fresh install.
 * Configure the real Yape beneficiary and recipient number from the protected Admin payment settings; payment data must not be committed to Git.
-* Configure `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` as environment variables in the hosting runtime when available. `/runtime-config.js` also contains the same browser-safe publishable fallback for static Apache/Hostinger deployments. A publishable/anon key is intentionally public and remains constrained by RLS; never configure or commit `SUPABASE_SERVICE_ROLE_KEY` in this app.
+* Configure `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` as environment variables in the hosting runtime. `server.js` builds `/runtime-config.js` from those variables on each request; the static `runtime-config.js` file in the repository is a security placeholder with no credentials and will fail explicitly if loaded by a pure Apache deployment. A publishable/anon key is intentionally public and remains constrained by RLS; never configure or commit `SUPABASE_SERVICE_ROLE_KEY` in this app.
 
 ### 3. Configure Google Identity Services & Auth
 * In the Google Cloud Console, configure an **OAuth 2.0 Client ID** for Web Applications.

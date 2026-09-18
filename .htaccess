@@ -22,7 +22,7 @@ DirectoryIndex index.html
 </IfModule>
 
 <IfModule mod_authz_core.c>
-  <FilesMatch "(^\.|package\.json|package-lock\.json|pnpm-lock\.yaml|server\.js|node_modules|\.(?:sql|md|sh|log|lock|ini|bak|dist|env)$)">
+  <FilesMatch "(^\.|package\.json|package-lock\.json|pnpm-lock\.yaml|server\.js|node_modules|\.(?:sql|md|sh|log|lock|ini|bak|dist|env|py|pem|key|p12|pfx|db|sqlite3|php|conf|cfg|map|apk|aab|zip|rar|tar|gz|exe|mp4|mov|avi)$)">
     Require all denied
   </FilesMatch>
 </IfModule>
