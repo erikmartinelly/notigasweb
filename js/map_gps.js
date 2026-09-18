@@ -272,6 +272,20 @@ function iniciarWatchGPSRepartidor() {
 function conectarGPSAuto(forceReset = false) {
     const isDriver = esModoRepartidor();
 
+    // ADMIN: no se solicita GPS automáticamente; se posiciona directo al centro de Lima, Perú.
+    // El botón GPS (forceReset=true) sí puede activarlo si el admin lo desea.
+    if (window.esAdminSesion && window.esAdminSesion() && !forceReset) {
+        if (!window.currentGpsLat && typeof window.applyGpsPosition === 'function') {
+            window.applyGpsPosition(-12.0460, -77.0306, 'Centro de Lima (sesión admin)', true, false);
+        }
+        if (typeof window.cambiarCiudad === 'function') {
+            window.cambiarCiudad('lima');
+        } else if (typeof AppState !== 'undefined') {
+            AppState.set('city', 'lima');
+        }
+        return;
+    }
+
     // =====================================================
     // REPARTIDOR
     // =====================================================
@@ -370,6 +384,7 @@ function conectarGPSAuto(forceReset = false) {
 }
 
 function verificarGpsAndroidObligatorio() {
+    if (window.esAdminSesion && window.esAdminSesion()) return;
     const isAndroid = /Android/i.test(navigator.userAgent);
     if (isAndroid && !window.isGpsExact) {
         const floatingBanner = document.getElementById('gpsFloatingBanner');

@@ -214,6 +214,14 @@ window.checkAndApplyAdminStatus = async function(user) {
   }
 };
 
+window.esAdminSesion = function() {
+  return Boolean(
+    window._cachedIsAdmin ||
+    window._verifiedAdminEmail ||
+    (typeof AppState !== 'undefined' && AppState.get && AppState.get('isAdmin'))
+  );
+};
+
 // window.getVerifiedAdminEmail se define de forma única y autoritativa en admin.js
 // (versión asíncrona que revalida el JWT contra admin_credentials). No duplicar aquí:
 // una versión síncrona basada en caché podía anular esa validación y romper el panel admin.
@@ -354,6 +362,12 @@ async function guardarUbicacionHabitualUsuario(
 
 async function solicitarYGuardarUbicacionHabitual(user) {
     const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    // El admin no necesita habilitar GPS: se ubica directo al centro de Lima, Perú.
+    if (window.esAdminSesion && window.esAdminSesion()) {
+        await guardarUbicacionHabitualUsuario(user, -12.0460, -77.0306);
+        return true;
+    }
 
     try {
         let lat = window.currentGpsLat;
@@ -1190,6 +1204,12 @@ window.abrirRegistroRepartidores = async function() {
       if (typeof showToast === 'function') {
         showToast('🟢 Modo Repartidor', '¡Sesión de repartidor activada!', 'success', 3000);
       }
+    } else if (window.esAdminSesion && window.esAdminSesion()) {
+      // Admin sin ficha publicada: entra al modo repartidor para operar la vista libremente.
+      if (typeof setAppMode === 'function') setAppMode('driver');
+      if (typeof showToast === 'function') {
+        showToast('🟢 Modo Repartidor', 'Modo repartidor activado como administrador (sin ficha pública).', 'success', 3000);
+      }
     } else {
       const modalDriver = document.getElementById('modalDriver');
       if (modalDriver) {
@@ -1884,7 +1904,7 @@ async function procesarSesionExitosa(user, isInteractive = false) {
             if (existingProfile.apellido) userApellido = existingProfile.apellido;
           }
           if (window.checkAndApplyAdminStatus) {
-            window.checkAndApplyAdminStatus(user).catch(() => {});
+            await window.checkAndApplyAdminStatus(user).catch(() => {});
           }
         }
 
@@ -1909,8 +1929,9 @@ async function procesarSesionExitosa(user, isInteractive = false) {
       }
     }
 
-    // 2. Si es un usuario 100% NUEVO (no existe chofer ni perfil, y no ha seleccionado rol aún)
-    if (!esRepartidorDB && !existingProfile && !window._roleSelectedNow) {
+    // 2. Si es un usuario 100% NUEVO (no existe chofer ni perfil, y no ha seleccionado rol aún).
+    //    El admin queda exento: entra como Comprador directo, sin modal de rol ni registro.
+    if (!esRepartidorDB && !existingProfile && !window._roleSelectedNow && !(window.esAdminSesion && window.esAdminSesion())) {
       if (window._targetAuthRole === 'driver') {
         currentSelectedRole = 'driver';
       } else {
@@ -1970,26 +1991,30 @@ async function procesarSesionExitosa(user, isInteractive = false) {
           }
         }
 
-        // Mostrar formulario de registro de negocio
-        if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-        if (modalAuth) modalAuth.style.display = 'none';
+        const esAdminActivo = window.esAdminSesion && window.esAdminSesion();
+        if (!esAdminActivo) {
+          // Mostrar formulario de registro de negocio
+          if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+          if (modalAuth) modalAuth.style.display = 'none';
 
-        const inputDriverNombre = document.getElementById('inputDriverNombre');
-        if (inputDriverNombre) inputDriverNombre.value = clienteData.nombre;
+          const inputDriverNombre = document.getElementById('inputDriverNombre');
+          if (inputDriverNombre) inputDriverNombre.value = clienteData.nombre;
 
-        const inputDriverDni = document.getElementById('inputDriverDni');
-        if (inputDriverDni && clienteData.dni) inputDriverDni.value = clienteData.dni;
+          const inputDriverDni = document.getElementById('inputDriverDni');
+          if (inputDriverDni && clienteData.dni) inputDriverDni.value = clienteData.dni;
 
-        const modalDriver = document.getElementById('modalDriver');
-        if (modalDriver) modalDriver.style.display = 'flex';
+          const modalDriver = document.getElementById('modalDriver');
+          if (modalDriver) modalDriver.style.display = 'flex';
 
-        const titleEl = document.getElementById('driverModalTitleText');
-        const subtitleEl = document.getElementById('driverModalSubtitle');
-        if (titleEl) titleEl.textContent = 'Registro de Repartidor';
-        if (subtitleEl) subtitleEl.textContent = 'Completa tu ficha de negocio. Aparecerá en la lista de repartidores de la zona.';
+          const titleEl = document.getElementById('driverModalTitleText');
+          const subtitleEl = document.getElementById('driverModalSubtitle');
+          if (titleEl) titleEl.textContent = 'Registro de Repartidor';
+          if (subtitleEl) subtitleEl.textContent = 'Completa tu ficha de negocio. Aparecerá en la lista de repartidores de la zona.';
 
-        sessionStorage.setItem('notigas_temp_gmail', gmail);
-        return;
+          sessionStorage.setItem('notigas_temp_gmail', gmail);
+          return;
+        }
+        // Admin: entra al modo repartidor sin ficha publicada
       }
     }
 
