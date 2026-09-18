@@ -2,6 +2,118 @@
    NOTIGAS - MÓDULO DE MINI PÁGINAS DE NEGOCIO ESTILO FACEBOOK POR CATEGORÍA
    ========================================================================== */
 const defaultVendorsList = [];
+
+const NOTIGAS_LIVE_DRIVER_RADIUS_KM = 10;
+let _liveDriverFallbackTimer = null;
+let _liveDriverFallbackBusy = false;
+
+function getBuyerMapPosition() {
+  const active = typeof window.getActiveUserLocation === 'function' ? window.getActiveUserLocation() : null;
+  const lat = Number(active?.lat ?? active?.latitude ?? (typeof AppState !== 'undefined' ? AppState.get('gpsLat') : null) ?? window.currentGpsLat);
+  const lng = Number(active?.lng ?? active?.longitude ?? (typeof AppState !== 'undefined' ? AppState.get('gpsLng') : null) ?? window.currentGpsLng);
+  return Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180 ? { lat, lng } : null;
+}
+
+function distanciaKm(lat1, lng1, lat2, lng2) {
+  const rad = Math.PI / 180;
+  const dLat = (lat2 - lat1) * rad;
+  const dLng = (lng2 - lng1) * rad;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLng / 2) ** 2;
+  return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function getLiveDriverFallbackContainer() {
+  const tab = document.getElementById('tab0');
+  if (!tab) return null;
+  let container = document.getElementById('noLiveDriversFallback');
+  if (!container) {
+    container = document.createElement('section');
+    container.id = 'noLiveDriversFallback';
+    container.setAttribute('aria-live', 'polite');
+    container.style.cssText = 'display:none;margin:12px 10px 20px;padding:16px;background:#0F172A;border:1px solid #334155;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.25);';
+    const map = document.getElementById('map');
+    if (map && map.parentNode === tab) map.insertAdjacentElement('afterend', container);
+    else tab.appendChild(container);
+  }
+  return container;
+}
+
+function hideLiveDriverFallback() {
+  const container = getLiveDriverFallbackContainer();
+  if (container) {
+    container.style.display = 'none';
+    container.innerHTML = '';
+  }
+}
+
+function renderLiveDriverFallback(vendors) {
+  const container = getLiveDriverFallbackContainer();
+  if (!container) return;
+  const list = Array.isArray(vendors) ? vendors.slice(0, 8) : [];
+  const safe = typeof escapeHtmlStr === 'function' ? escapeHtmlStr : (value) => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+
+  const cards = list.map(vendor => {
+    const driverId = safe(String(vendor.driverProfileId || String(vendor.id || '').replace(/^driver_/, '')));
+    const name = safe(vendor.name || 'Distribuidor registrado');
+    const category = safe(vendor.category || 'Gas GLP');
+    const products = safe(vendor.products || 'Servicios de reparto a domicilio');
+    const zones = safe(vendor.zones || 'Zona local');
+    const price = Number(vendor.precio_balon_10kg);
+    const priceHtml = Number.isFinite(price) && price > 0 ? `<div style="margin:5px 0;padding:5px 8px;border-radius:8px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);color:#A7F3D0;font-weight:800;">🔥 Balón 10 Kg: <span style="color:#22C55E;">S/ ${price.toFixed(2)}</span></div>` : '';
+    return `<article style="background:#1E293B;border:1px solid #334155;border-radius:12px;padding:11px;margin-top:8px;"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;"><div><strong style="color:#F8FAFC;font-size:13px;">${name}</strong><div style="color:#94A3B8;font-size:11px;margin-top:2px;">${category}</div></div><span style="font-size:10px;color:#86EFAC;font-weight:800;">REGISTRADO</span></div>${priceHtml}<div style="color:#CBD5E1;font-size:11px;margin-top:6px;">📦 ${products}</div><div style="color:#CBD5E1;font-size:11px;margin-top:3px;">🗺️ ${zones}</div><button type="button" class="btn-vendor-order" style="width:100%;margin-top:9px;" data-action="seleccionarYPedirDirecto" data-cat="${encodeURIComponent(vendor.category || 'Gas GLP')}" data-driver-id="${driverId}" data-driver-name="${name}"><i class="fa-solid fa-cart-plus"></i> Solicitar Pedido</button></article>`;
+  }).join('');
+
+  container.innerHTML = `<div style="text-align:center;"><div style="font-size:25px;margin-bottom:5px;">🚚</div><strong style="display:block;color:#F8FAFC;font-size:14px;">No hay repartidores en vivo en tu zona en este momento.</strong><p style="margin:6px 0 10px;color:#CBD5E1;font-size:12px;line-height:1.45;">Pero puedes dejar tu pedido a estos distribuidores registrados y te contactarán en breve.</p></div><div>${cards || '<div style="text-align:center;color:#94A3B8;font-size:12px;padding:10px 0;">No hay distribuidores registrados disponibles en esta zona.</div>'}</div>`;
+  container.style.display = 'block';
+}
+
+async function actualizarFallbackRepartidoresEnVivo() {
+  if (_liveDriverFallbackBusy || !window.supabaseClient) return;
+  const tab = document.getElementById('tab0');
+  if (!tab || !tab.classList.contains('active')) {
+    hideLiveDriverFallback();
+    return;
+  }
+  const position = getBuyerMapPosition();
+  if (!position) return;
+
+  _liveDriverFallbackBusy = true;
+  try {
+    const city = typeof AppState !== 'undefined' ? (AppState.get('city') || '').trim().toLowerCase() : '';
+    const cityKeys = city && typeof window.getCityMetroKeys === 'function' ? window.getCityMetroKeys(city) : (city ? [city] : []);
+    let query = window.supabaseClient.from('rutas_repartidores_publicas').select('id,user_id,latitude,longitude,last_active,ciudad').gte('last_active', new Date(Date.now() - 10 * 60000).toISOString()).limit(100);
+    if (cityKeys.length) query = query.in('ciudad', cityKeys);
+    const { data, error } = await query;
+    if (error) throw error;
+
+    const liveNearby = (data || []).filter(route => {
+      const lat = Number(route.latitude);
+      const lng = Number(route.longitude);
+      return Number.isFinite(lat) && Number.isFinite(lng) && distanciaKm(position.lat, position.lng, lat, lng) <= NOTIGAS_LIVE_DRIVER_RADIUS_KM;
+    });
+
+    if (liveNearby.length > 0) {
+      hideLiveDriverFallback();
+      return;
+    }
+
+    if (!(AppState.get('notigas_vendors_directory') || []).length) {
+      await descargarChoferesYRenderizar('TODOS');
+    }
+    renderLiveDriverFallback(getStoredVendors());
+  } catch (error) {
+    console.warn('[NOTIGAS] No se pudo determinar si existen repartidores en vivo:', error);
+  } finally {
+    _liveDriverFallbackBusy = false;
+  }
+}
+
+function iniciarFallbackRepartidoresEnVivo() {
+  clearInterval(_liveDriverFallbackTimer);
+  actualizarFallbackRepartidoresEnVivo();
+  _liveDriverFallbackTimer = setInterval(actualizarFallbackRepartidoresEnVivo, 15000);
+}
+
 async function descargarChoferesYRenderizar(cat = 'TODOS') {
   if (!window.supabaseClient) { renderVendorCards(cat); return; }
   const city = AppState.get('city');
@@ -30,11 +142,16 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
   } catch (e) { console.error('Error fetching local drivers:', e); }
   renderVendorCards(cat);
 }
+
 document.addEventListener('notigas_auth_ready', () => {
   const tab1 = document.getElementById('tab1');
   if (tab1 && tab1.classList.contains('active')) descargarChoferesYRenderizar('TODOS');
   instalarFlujoSolicitudDistribuidor();
+  iniciarFallbackRepartidoresEnVivo();
 });
+document.addEventListener('supabase_ready', iniciarFallbackRepartidoresEnVivo);
+window.addEventListener('load', iniciarFallbackRepartidoresEnVivo);
+
 function filterVendorCategory(cat, chipElem) {
   document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
   if (chipElem) chipElem.classList.add('active'); renderVendorCards(cat);
