@@ -52,6 +52,10 @@
     return AppState.get('appMode') === 'driver' || AppState.get('userRole') === 'repartidor';
   }
 
+  function esAdminActivo() {
+    return !!(window.esAdminSesion && window.esAdminSesion());
+  }
+
   function showSuspendedMessage(reason) {
     const message = reason || 'Tu cuenta está suspendida. Regulariza el motivo pendiente para volver a tomar pedidos.';
     if (typeof window.showToast === 'function') {
@@ -64,6 +68,10 @@
   async function refreshDriverAccessState() {
     driverCanTakeOrders = false;
     driverSuspensionReason = '';
+
+    if (window.esAdminSesion && window.esAdminSesion()) {
+      return { canTake: false, reason: '' };
+    }
 
     if (!isDriverMode() || !window.supabaseClient) {
       return { canTake: false, reason: '' };
@@ -117,9 +125,13 @@
     const radius = Number(row.radius_m || 50);
     let action = '';
     if (isDriverMode()) {
-      action = driverCanTakeOrders
-        ? `<button type="button" style="margin-top:8px;width:100%;padding:7px 10px;border:0;border-radius:7px;font-weight:800;cursor:pointer;" onclick="window.tomarPedidoDesdeZonaPrivada('${escapeHtml(row.order_id)}',${Number(row.latitude)},${Number(row.longitude)})">Tomar pedido</button>`
-        : `<div style="margin-top:8px;padding:7px 9px;border-radius:7px;font-size:11px;font-weight:800;">Cuenta suspendida: puedes ver la zona, pero no tomar nuevos pedidos.</div>`;
+      if (esAdminActivo()) {
+        action = `<div style="margin-top:8px;padding:7px 9px;border-radius:7px;font-size:11px;font-weight:800;">Vista administrador: puedes ver la zona. Tomar pedidos requiere una cuenta de repartidor habilitada.</div>`;
+      } else if (driverCanTakeOrders) {
+        action = `<button type="button" style="margin-top:8px;width:100%;padding:7px 10px;border:0;border-radius:7px;font-weight:800;cursor:pointer;" onclick="window.tomarPedidoDesdeZonaPrivada('${escapeHtml(row.order_id)}',${Number(row.latitude)},${Number(row.longitude)})">Tomar pedido</button>`;
+      } else {
+        action = `<div style="margin-top:8px;padding:7px 9px;border-radius:7px;font-size:11px;font-weight:800;">Cuenta suspendida: puedes ver la zona, pero no tomar nuevos pedidos.</div>`;
+      }
     }
     return `<div style="min-width:180px;line-height:1.4;"><strong>Pedido disponible</strong><br><span>Ubicación aproximada dentro de un área de ${radius} m.</span>${action}</div>`;
   }
@@ -188,7 +200,13 @@
     if (!isDriverMode()) return;
     const access = await refreshDriverAccessState();
     if (!access.canTake) {
-      showSuspendedMessage(access.reason);
+      if (window.esAdminSesion && window.esAdminSesion()) {
+        if (typeof window.showToast === 'function') {
+          window.showToast('Vista administrador', 'Para tomar pedidos inicia sesión con una cuenta de repartidor habilitada.', 'info', 4000);
+        }
+      } else {
+        showSuspendedMessage(access.reason);
+      }
       return;
     }
     if (typeof window.aceptarPedidoRepartidor === 'function') {
@@ -210,6 +228,17 @@
     return String(raw || '').replace(/\D/g, '');
   }
 
+  async function loadAdminAssignedOrders() {
+    if (!window.supabaseClient) return { data: [], error: null };
+    try {
+      const { data, error } = await window.supabaseClient.rpc('rpc_admin_list_assigned_orders');
+      if (error) return { data: [], error };
+      return { data: data || [], error: null };
+    } catch (e) {
+      return { data: [], error: e };
+    }
+  }
+
   async function secureRenderDriverOrdersList() {
     const container = document.getElementById('driverOrdersContainer') || document.getElementById('driverOrdersList');
     if (!container || !window.supabaseClient) return;
@@ -227,9 +256,11 @@
       else radarQuery = radarQuery.eq('ciudad', city);
     }
 
+    const esAdmin = esAdminActivo();
+
     const [radarRes, assignedRes] = await Promise.all([
       radarQuery,
-      window.supabaseClient.rpc('rpc_get_my_assigned_orders')
+      esAdmin ? loadAdminAssignedOrders() : window.supabaseClient.rpc('rpc_get_my_assigned_orders')
     ]);
 
     if (radarRes.error) console.warn('[OrderPrivacy] Radar:', radarRes.error.message || radarRes.error);
@@ -239,26 +270,33 @@
     const available = radarRes.data || [];
     let html = '<div style="padding:10px 0 6px;font-weight:900;">Pedidos</div>';
 
-    if (!access.canTake) {
+    if (!access.canTake && !esAdmin) {
       html += `<div style="padding:10px;margin:8px 0 12px;border:1px solid rgba(239,68,68,.55);border-radius:8px;background:rgba(239,68,68,.10);font-size:11px;line-height:1.45;"><strong>Cuenta suspendida para nuevos pedidos.</strong><br>${escapeHtml(access.reason || driverSuspensionReason)}</div>`;
     }
 
     if (assigned.length) {
-      html += '<div style="font-size:11px;font-weight:800;margin:8px 0;">MIS PEDIDOS TOMADOS</div>';
+      html += esAdmin
+        ? '<div style="font-size:11px;font-weight:800;margin:8px 0;">PEDIDOS ASIGNADOS · VISTA ADMIN (todos los repartidores)</div>'
+        : '<div style="font-size:11px;font-weight:800;margin:8px 0;">MIS PEDIDOS TOMADOS</div>';
       assigned.forEach((o) => {
         const lat = Number(o.latitude || 0);
         const lng = Number(o.longitude || 0);
         const tel = String(o.telefono || '').trim();
         const wa = normalizeWhatsapp(tel);
+        const cityLabel = esAdmin && o.ciudad ? ` · ${escapeHtml(String(o.ciudad).toUpperCase())}` : '';
+        const actionButtons = esAdmin
+          ? `${wa ? `<a href="https://wa.me/${wa}" target="_blank" rel="noopener noreferrer" style="padding:6px 9px;border-radius:6px;text-decoration:none;font-weight:800;">WhatsApp</a>` : ''}
+            <button type="button" onclick="window.centrarPedidoEnMapa?.(${lat},${lng},'${escapeHtml(o.id)}')" style="padding:6px 9px;border-radius:6px;border:0;font-weight:800;cursor:pointer;">Ver ubicación exacta</button>`
+          : `${wa ? `<a href="https://wa.me/${wa}" target="_blank" rel="noopener noreferrer" style="padding:6px 9px;border-radius:6px;text-decoration:none;font-weight:800;">WhatsApp</a>` : ''}
+            <button type="button" onclick="window.centrarPedidoEnMapa?.(${lat},${lng},'${escapeHtml(o.id)}')" style="padding:6px 9px;border-radius:6px;border:0;font-weight:800;cursor:pointer;">Ver ubicación exacta</button>
+            <button type="button" data-action="confirmarEntregaPedido" data-id="${escapeHtml(o.id)}" style="padding:6px 9px;border-radius:6px;border:0;font-weight:800;cursor:pointer;">Entregado</button>
+            <button type="button" data-action="liberarPedidoRepartidor" data-id="${escapeHtml(o.id)}" style="padding:6px 9px;border-radius:6px;border:0;font-weight:800;cursor:pointer;">No podré</button>`;
         html += `<div style="padding:10px;margin-bottom:9px;border:1px solid rgba(255,255,255,.14);border-radius:8px;">
-          <div style="font-weight:800;">Pedido en entrega</div>
+          <div style="font-weight:800;">${esAdmin ? 'Pedido asignado' : 'Pedido en entrega'}${cityLabel}</div>
           <div style="margin-top:5px;">📍 ${escapeHtml(o.direccion || o.barrio_otb || 'Ubicación exacta en el mapa')}</div>
           ${tel ? `<div style="margin-top:4px;">📞 ${escapeHtml(tel)}</div>` : ''}
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
-            ${wa ? `<a href="https://wa.me/${wa}" target="_blank" rel="noopener noreferrer" style="padding:6px 9px;border-radius:6px;text-decoration:none;font-weight:800;">WhatsApp</a>` : ''}
-            <button type="button" onclick="window.centrarPedidoEnMapa?.(${lat},${lng},'${escapeHtml(o.id)}')" style="padding:6px 9px;border-radius:6px;border:0;font-weight:800;cursor:pointer;">Ver ubicación exacta</button>
-            <button type="button" data-action="confirmarEntregaPedido" data-id="${escapeHtml(o.id)}" style="padding:6px 9px;border-radius:6px;border:0;font-weight:800;cursor:pointer;">Entregado</button>
-            <button type="button" data-action="liberarPedidoRepartidor" data-id="${escapeHtml(o.id)}" style="padding:6px 9px;border-radius:6px;border:0;font-weight:800;cursor:pointer;">No podré</button>
+            ${actionButtons}
           </div>
         </div>`;
       });

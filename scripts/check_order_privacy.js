@@ -46,6 +46,13 @@ assert(/from\('order_public_radar'\)/.test(privacy), 'Frontend consume exclusiva
 assert(/L\.circle\(\[lat, lng\]/.test(privacy), 'Pedidos libres se dibujan como área, no como pin exacto');
 assert(/rpc_get_my_assigned_orders/.test(privacy), 'Datos exactos se obtienen desde pedidos asignados');
 assert(!/\.from\('pedidos'\)[\s\S]{0,250}telefono/.test(privacy), 'La capa de privacidad no consulta teléfono desde pedidos libres');
+assert(/rpc\('rpc_admin_list_assigned_orders'\)/.test(privacy), 'La vista admin de asignados usa el RPC administrado');
+
+const adminRpcMigrationPath = 'supabase/migrations/20260918150000_admin_assigned_orders_rpc.sql';
+const adminRpcMigration = read(adminRpcMigrationPath);
+assert(/create or replace function public\.rpc_admin_list_assigned_orders[\s\S]*security definer/i.test(adminRpcMigration), 'RPC admin de asignados es SECURITY DEFINER');
+assert(/if not public\.is_admin_email\(\)[\s\S]*raise exception/i.test(adminRpcMigration), 'RPC admin de asignados valida la sesión dentro del servidor');
+assert(/grant execute on function public\.rpc_admin_list_assigned_orders\(\) to authenticated/i.test(adminRpcMigration), 'RPC admin de asignados queda fuera del alcance anónimo');
 assert(/Los datos del pedido se habilitan únicamente si lo tomas/.test(privacy), 'La interfaz explica la regla de privacidad');
 assert(/if \(!isDriverMode\(\)\) \{[\s\S]*clearRadarLayers\(\);[\s\S]*return;/i.test(privacy), 'Frontend no consulta radar desde interfaz de comprador');
 

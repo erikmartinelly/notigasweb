@@ -155,6 +155,10 @@ async function main() {
     assertDenied(await request('rpc/rpc_get_payment_instructions', { method: 'POST', body: '{}' }), 'rpc_get_payment_instructions');
   });
 
+  await test('rpc_admin_list_assigned_orders exige sesión', async () => {
+    assertDenied(await request('rpc/rpc_admin_list_assigned_orders', { method: 'POST', body: '{}' }), 'rpc_admin_list_assigned_orders');
+  });
+
   console.log(`\nResultado: ${passed} OK / ${failed} fallos`);
   if (failed) process.exit(1);
 }
