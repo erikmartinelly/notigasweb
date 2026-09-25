@@ -75,8 +75,15 @@ async function main() {
     });
     assert(res.ok && res.data && typeof res.data === 'object', `HTTP ${res.status}`);
     assert(res.data.ok === true, 'Contrato vivo no responde ok');
-    assert(res.data.version === '20260915_preprod_v1', `Contrato vivo inesperado: ${res.data.version || 'sin versión'}`);
-    assert(res.data.payment_admin_queue === 'yape_remesas_bolivia_v2', 'Cola administrativa Yape/Remesas no reconciliada');
+    assert(res.data.version === '20260925_bolivia_v1', `Contrato vivo inesperado: ${res.data.version || 'sin versión'}`);
+    assert(res.data.pais === 'BO', `El contrato vivo no declara Bolivia: ${res.data.pais}`);
+    assert(res.data.ciudad_predeterminada === 'cochabamba', `Ciudad por defecto inesperada: ${res.data.ciudad_predeterminada}`);
+    assert(res.data.moneda === 'BOB', `Moneda inesperada: ${res.data.moneda}`);
+    assert(res.data.comision_por_pedido === 0, `El contrato vivo declara comisión por pedido: ${res.data.comision_por_pedido}`);
+    assert(res.data.tablas_de_cobros === 'ninguna', `El contrato vivo anuncia tablas de cobros: ${res.data.tablas_de_cobros}`);
+    // El contrato no debe volver a anunciar una cola de pagos: las tablas
+    // pagos_comisiones y registro_comisiones fueron eliminadas.
+    assert(res.data.payment_admin_queue === undefined, 'El contrato vivo todavía expone una cola de cobros');
   });
 
   for (const fn of ['is_admin_email', 'is_banned']) {

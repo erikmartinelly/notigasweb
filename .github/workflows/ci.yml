@@ -113,7 +113,7 @@ jobs:
         run: node scripts/test_rls_security.js
 
       - name: Verify Audit Hardening Invariants
-        run: node scripts/check_audit_hardening.js
+        run: python3 scripts/check_audit_hardening.py
 
       - name: Verify No Legacy Plan UI (read-only)
         run: python3 scripts/check_no_legacy_plan_ui.py
