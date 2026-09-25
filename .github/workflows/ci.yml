@@ -37,18 +37,33 @@ jobs:
           for i in {1..20}; do
             if curl -fsS http://127.0.0.1:3000/health | grep -q '^OK$'; then
               curl -fsS http://127.0.0.1:3000/ > /tmp/notigas-index.html
-              curl -fsS 'http://127.0.0.1:3000/js/app.js?v=138' > /tmp/notigas-app.js
-              curl -fsS 'http://127.0.0.1:3000/js/driver_order_rules.js?v=138' > /tmp/notigas-driver-rules.js
-              curl -fsS 'http://127.0.0.1:3000/runtime-config.js?v=138' > /tmp/notigas-runtime-config.js
+              curl -fsS http://127.0.0.1:3000/js/app.js > /tmp/notigas-app.js
+              curl -fsS http://127.0.0.1:3000/js/driver_order_rules.js > /tmp/notigas-driver-rules.js
+              curl -fsS http://127.0.0.1:3000/js/notigas_bo.js > /tmp/notigas-bo.js
+              curl -fsS http://127.0.0.1:3000/runtime-config.js > /tmp/notigas-runtime-config.js
               grep -q '🌍 Todos' /tmp/notigas-index.html
-              grep -q '<script defer src="js/driver_icons.js?v=138"></script>' /tmp/notigas-index.html
-              grep -q '<script defer src="js/device_security.js?v=138"></script>' /tmp/notigas-index.html
-              grep -q '<script defer src="js/monitoring.js?v=138"></script>' /tmp/notigas-index.html
+              grep -Eq '<script defer src="js/driver_icons\.js\?v=[0-9]+"></script>' /tmp/notigas-index.html
+              grep -Eq '<script defer src="js/device_security\.js\?v=[0-9]+"></script>' /tmp/notigas-index.html
+              grep -Eq '<script defer src="js/monitoring\.js\?v=[0-9]+"></script>' /tmp/notigas-index.html
               grep -q 'sentryDsn' /tmp/notigas-runtime-config.js
               grep -q 'id="driverCreditProgressiveTerms"' /tmp/notigas-index.html
-              grep -q 'Cada ciclo cobrable permite <strong>250 balones = S/ 50</strong>' /tmp/notigas-index.html
-              grep -q '🎁 PRUEBA GRATIS' /tmp/notigas-index.html
-              grep -q 'Los primeros 100 pedidos son gratis. Desde el pedido 101 en adelante se cobra <strong>S/ 0,20 por balón</strong>.' /tmp/notigas-index.html
+              # Bolivia: la configuracion central debe servirse y declarar Bs/Cochabamba
+              grep -q 'CIUDAD_PREDETERMINADA' /tmp/notigas-bo.js
+              grep -q 'cochabamba' /tmp/notigas-bo.js
+              grep -q 'BOB' /tmp/notigas-bo.js
+              grep -q 'es-BO' /tmp/notigas-bo.js
+              if grep -qE 'S/[[:space:]]*[0-9]' /tmp/notigas-index.html; then
+                echo 'El HTML servido volvió a mostrar tarifas en soles'
+                exit 1
+              fi
+              if grep -q 'PRUEBA GRATIS' /tmp/notigas-index.html; then
+                echo 'El HTML servido volvió a mostrar la prueba gratis peruana'
+                exit 1
+              fi
+              if grep -q 'ciclo cobrable' /tmp/notigas-index.html; then
+                echo 'El HTML servido volvió a mostrar ciclos de crédito'
+                exit 1
+              fi
               grep -q 'Color Camión o camioneta' /tmp/notigas-index.html
               grep -q 'id="inputDriverTruckColor"' /tmp/notigas-index.html
               if grep -q 'Color de tu Camión Toyota Dina' /tmp/notigas-index.html; then
@@ -67,11 +82,11 @@ jobs:
                 echo 'El detalle de crédito todavía aparece en el formulario de registro de repartidores'
                 exit 1
               fi
-              if grep -q '<script src="js/driver_icons.js?v=138"></script>' /tmp/notigas-index.html; then
+              if grep -Eq '<script src="js/driver_icons\.js\?v=[0-9]+"></script>' /tmp/notigas-index.html; then
                 echo 'driver_icons.js todavía bloquea el parser'
                 exit 1
               fi
-              if grep -q '<script src="js/device_security.js?v=138"></script>' /tmp/notigas-index.html; then
+              if grep -Eq '<script src="js/device_security\.js\?v=[0-9]+"></script>' /tmp/notigas-index.html; then
                 echo 'device_security.js todavía bloquea el parser'
                 exit 1
               fi
@@ -100,11 +115,11 @@ jobs:
       - name: Verify Audit Hardening Invariants
         run: node scripts/check_audit_hardening.js
 
-      - name: Verify Driver Free Trial Registration
-        run: node scripts/normalize_driver_free_trial.js --check
+      - name: Verify No Legacy Plan UI (read-only)
+        run: python3 scripts/check_no_legacy_plan_ui.py
 
-      - name: Verify Yape Remesas Contract
-        run: node scripts/check_yape_remittance_contract.js
+      - name: Verify Bolivia No-Cobros Contract
+        run: python3 scripts/check_bolivia_no_cobros_contract.py
 
       - name: Verify Order Privacy Contract
         run: node scripts/check_order_privacy.js
@@ -112,11 +127,8 @@ jobs:
       - name: Verify Final Preproduction Guardrails
         run: node scripts/check_preprod_final.js
 
-      - name: Verify Driver Promotion and Credit Tiers
-        run: node scripts/test_driver_plans.js
-
-      - name: Verify Financial Contract
-        run: python3 test_financial_parameters.py
+      - name: Verify Driver Services Contract
+        run: python3 scripts/check_driver_services_contract.py
 
       - name: Verify Live Supabase Public Boundary
         env:

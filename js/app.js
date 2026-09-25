@@ -457,14 +457,14 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
           color: uData.color_camion
         });
       } else {
-        favEl.href = "favicon.svg?v=125";
+        favEl.href = "favicon.svg?v=142";
       }
       document.title = "🚛 DISTRIBUIDOR OFICIAL - NOTIGAS en Vivo";
     } else {
       if (typeof window.restaurarFaviconDefault === 'function') {
         window.restaurarFaviconDefault();
       } else {
-        favEl.href = "icons/camion_reciclaje.svg?v=140";
+        favEl.href = "icons/camion_reciclaje.svg?v=142";
       }
       document.title = "NOTIGAS: Noticias de Generadores de residuos seleccionados";
     }
@@ -472,7 +472,7 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
   }
 
   if (estado === 'asignado') {
-    favEl.href = "icons/camion_3d_rojo.svg?v=86";
+    favEl.href = "icons/camion_3d_rojo.svg?v=142";
     document.title = "🚚 Pedido en Camino: Repartidor Asignado - NOTIGAS";
     return;
   }
@@ -485,7 +485,7 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
   else if (estado === 'cancelado' || estado === 'entregado') color = "#00E676"; // final = verde
 
   if (cat.includes('gas')) {
-    favEl.href = "icons/garrafa_red-192.png?v=85";
+    favEl.href = "icons/garrafa_red-192.png?v=142";
     document.title = "🔥 Pedido Activo: Garrafa de Gas GLP - NOTIGAS";
   } else if (cat.includes('detergente') || cat.includes('limpieza')) {
     favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="${color}"/><path d="M40 10h20v15H40V10zm25 25H35v60h30V35zm-15 15c5 0 9 4 9 9s-4 9-9 9-9-4-9-9 4-9 9-9z" fill="#FFF"/></svg>`);

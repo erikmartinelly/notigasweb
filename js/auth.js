@@ -1073,7 +1073,7 @@ async function iniciarSesionRepartidor() {
   }
 
   if (typeof showToast === 'function') {
-    showToast('🎁 Cuenta de repartidor activada', `Ficha de ${nombreNegocio} registrada. Tus primeros 100 pedidos confirmados son gratuitos.`, 'success', 6000);
+    showToast('🎁 Cuenta de repartidor activada', `Ficha de ${nombreNegocio} registrada. Operas sin comisiones, sin saldos pendientes y sin cobros por NOTIGAS.`, 'success', 6000);
   }
 
   if (typeof renderVendorCards === 'function') {
@@ -2462,7 +2462,7 @@ window.actualizarVistaPreviaCamionChofer = actualizarVistaPreviaCamionChofer;
  */
 function seleccionarPlanRegistroChofer() {
   const inputTipo = document.getElementById('inputDriverPlanTipo');
-  if (inputTipo) inputTipo.value = 'credito';
+  if (inputTipo) inputTipo.value = 'sin_comision';
   const btnText = document.getElementById('btnDriverSubmitText');
   if (btnText) btnText.textContent = 'Guardar ficha de repartidor';
 }
