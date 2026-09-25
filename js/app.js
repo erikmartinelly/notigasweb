@@ -464,9 +464,9 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
       if (typeof window.restaurarFaviconDefault === 'function') {
         window.restaurarFaviconDefault();
       } else {
-        favEl.href = "favicon.svg?v=125";
+        favEl.href = "icons/camion_reciclaje.svg?v=140";
       }
-      document.title = "NOTIGAS - Plataforma Vecinal en Vivo";
+      document.title = "NOTIGAS: Noticias de Generadores de residuos seleccionados";
     }
     return;
   }

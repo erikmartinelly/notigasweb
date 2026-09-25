@@ -780,7 +780,7 @@
   window.actualizarFaviconCamion = actualizarFaviconCamion;
 
   function restaurarFaviconDefault() {
-    const defaultHref = "favicon.svg?v=125";
+    const defaultHref = "icons/camion_reciclaje.svg?v=140";
     const favEl = document.getElementById('dynamicFavicon') || document.querySelector("link[rel*='icon']");
     if (favEl) {
       favEl.type = "image/svg+xml";

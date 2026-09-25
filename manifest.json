@@ -1,27 +1,33 @@
 {
-  "name": "NOTIGAS - Plataforma Barrial y Mapa en Vivo",
+  "name": "NOTIGAS: Noticias de Generadores de residuos seleccionados",
   "short_name": "NOTIGAS",
   "start_url": ".",
   "id": "/",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#0F172A",
-  "theme_color": "#FF6D00",
-  "description": "Plataforma vecinal en vivo con mapa GPS, mini páginas de negocio para repartidores y avisos de la zona.",
+  "background_color": "#047857",
+  "theme_color": "#047857",
+  "description": "NOTIGAS: Noticias de Generadores de residuos seleccionados. Mapa GPS en vivo, pedidos y repartidores de reciclaje en Bolivia.",
   "orientation": "portrait-primary",
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "icons/garrafa_red-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "src": "icons/camion_reciclaje.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
     },
     {
-      "src": "icons/garrafa_red-512.png",
+      "src": "icons/Icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/Icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }
