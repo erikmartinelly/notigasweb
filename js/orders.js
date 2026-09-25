@@ -521,7 +521,7 @@ window.abrirRutaGoogleMaps = function (a, b, c, d) {
     destination = `${lat},${lng}`;
   } else if (address && String(address).trim() !== '') {
     const activeCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || '') : '';
-    destination = `${String(address).trim()}, ${activeCity}, Perú`;
+    destination = `${String(address).trim()}, ${activeCity}, Bolivia`;
   } else {
     console.error('Coordenadas o dirección no válidas para Google Maps:', { orderId, lat, lng, address });
     if (typeof showToast === 'function') {
@@ -1085,7 +1085,7 @@ async function seleccionarYPedirDirecto(catNombre) {
     }
   }
 
-  // Auto-completar teléfono registrado del cliente en Perú
+  // Auto-completar teléfono registrado del cliente en Bolivia
   const inputTel = document.getElementById('inputTelefonoComprador');
   if (inputTel && !inputTel.value) {
     const curPhone = (typeof AppState !== 'undefined') ? (AppState.get('userData')?.telefono || '') : '';

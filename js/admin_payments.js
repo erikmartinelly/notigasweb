@@ -1,197 +1,66 @@
-/* ==========================================================================
-   NOTIGAS - PANEL ADMINISTRATIVO DE PAGOS (PERU -> REMESAS A BOLIVIA)
-   OCR local -> aprobación automática -> verificación posterior de recepción.
-   La recepción administrativa NO vuelve a liquidar un pago ya auto-aplicado.
-   ========================================================================== */
+/* NOTIGAS - Panel administrativo de pagos (retirado: NOTIGAS no cobra) */
 (function () {
   'use strict';
 
   const esc = (value) => {
     if (typeof window.escapeHtmlStr === 'function') return window.escapeHtmlStr(value ?? '');
-    return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-  };
-  const fmtMoney = (value) => {
-    const n = Number(value);
-    return Number.isFinite(n) ? `Bs ${n.toFixed(2)}` : '—';
-  };
-  const fmtDate = (value) => {
-    if (!value) return '—';
-    try { return new Date(value).toLocaleString('es-BO', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }); }
-    catch (_) { return String(value); }
-  };
-  const boolBadge = (value, okText, failText, unknownText = 'No disponible') => {
-    if (value === true) return `<span style="color:#16A34A;font-weight:800;">✓ ${esc(okText)}</span>`;
-    if (value === false) return `<span style="color:#DC2626;font-weight:800;">✕ ${esc(failText)}</span>`;
-    return `<span style="color:#94A3B8;">• ${esc(unknownText)}</span>`;
+    return String(value ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   };
 
-  function estadoBadge(estado) {
-    const e = String(estado || '').toLowerCase();
-    const map = {
-      pendiente_verificacion_recepcion: ['#F59E0B', 'Aprobado automáticamente · verificar llegada'],
-      confirmado: ['#16A34A', 'Remesa recibida · confirmada'],
-      no_recibido: ['#64748B', 'Remesa no recibida'],
-      fraude_confirmado: ['#DC2626', 'Comprobante observado · cuenta suspendida'],
-      ocr_no_valido: ['#DC2626', 'Recibo no válido'],
-      generado: ['#2563EB', 'Cobro generado'],
-      pendiente: ['#F59E0B', 'Pendiente']
-    };
-    const [color, label] = map[e] || ['#64748B', e || 'Sin estado'];
-    return `<span style="display:inline-block;border:1px solid ${color};color:${color};padding:4px 8px;border-radius:999px;font-size:11px;font-weight:800;">${esc(label)}</span>`;
-  }
-
+  /* Reetiqueta la pestaña 4 del admin, que historicamente fue "Suscripciones
+     PRO/VIP" y luego "Pagos con Yape Remesas". Ahora solo informa que
+     NOTIGAS no cobra. */
   function normalizarEtiquetasPanelPagos() {
     const buttons = Array.from(document.querySelectorAll('.modal-tab-btn'));
     if (buttons[3]) {
-      buttons[3].innerHTML = '<i class="fa-solid fa-money-check-dollar"></i> Pagos';
-      buttons[3].title = 'Remesas de comisiones por Yape a Bolivia';
+      buttons[3].innerHTML = '<i class="fa-solid fa-qrcode"></i> QR local';
+      buttons[3].title = 'Medio de pago local. NOTIGAS no cobra comisiones.';
     }
     const panes = Array.from(document.querySelectorAll('.modal-tab-pane'));
     const pane = panes[3];
     if (!pane) return;
     pane.querySelectorAll('h2,h3,h4,p').forEach((el) => {
       const text = String(el.textContent || '').trim();
-      if (/premium|vip|suscripci[oó]n/i.test(text)) {
-        if (/h2|h3|h4/i.test(el.tagName)) el.textContent = 'Pagos de repartidores';
-        else el.textContent = 'Recibos de Yape Remesas a Bolivia aprobados automáticamente, pendientes de comprobar la llegada efectiva del dinero.';
+      if (/premium|vip|suscripci[oó]n|yape|comisi[oó]n|remesa/i.test(text)) {
+        if (/^H[234]$/.test(el.tagName)) el.textContent = 'Medio de pago';
+        else el.textContent = 'NOTIGAS no cobra ni custodia fondos. No hay comisiones, vouchers ni cobros que revisar. El pago se acuerda directamente entre comprador y repartidor por QR local (Simple / Banesco QR), destino Bolivia.';
       }
     });
   }
 
-  async function llamarRevision(pagoId, action, observacion) {
-    if (!window.supabaseClient) throw new Error('Sin conexión con Supabase');
-    const { data, error } = await window.supabaseClient.rpc('rpc_admin_review_commission_voucher', {
-      p_pago_id: pagoId,
-      p_action: action,
-      p_observacion: observacion || null
-    });
-    if (error) throw error;
-    return data;
-  }
-
-  async function confirmarRecepcionPagoAdmin(pagoId) {
-    const ejecutar = async () => {
-      try {
-        if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Confirmando llegada de la remesa...');
-        const data = await llamarRevision(pagoId, 'confirmar_recepcion', 'Remesa recibida en Bolivia y verificada por administración');
-        if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-        if (typeof showToast === 'function') showToast('Remesa confirmada', data?.mensaje || 'La llegada del dinero quedó confirmada.', 'success', 4500);
-        await renderAdminPaymentsReview();
-      } catch (err) {
-        if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-        if (typeof showToast === 'function') showToast('Error', err.message || 'No se pudo confirmar la recepción.', 'error', 4500);
-        else alert(err.message || 'No se pudo confirmar la recepción.');
-      }
-    };
-    const text = 'Confirma solo si verificaste que la remesa enviada mediante Yape llegó efectivamente al beneficiario en Bolivia. Si el OCR ya aplicó el pago, esta acción solo confirma recepción y no vuelve a liquidarlo.';
-    if (typeof showConfirmModal === 'function') showConfirmModal('💰', 'Confirmar llegada de remesa', text, 'Confirmar recepción', ejecutar);
-    else if (confirm(text)) ejecutar();
-  }
-
-  async function marcarPagoNoRecibidoAdmin(pagoId) {
-    const ejecutar = async () => {
-      try {
-        if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Revirtiendo pago no recibido...');
-        const data = await llamarRevision(pagoId, 'no_recibido', 'No se verificó la llegada efectiva de la remesa a Bolivia');
-        if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-        if (typeof showToast === 'function') showToast('Remesa no recibida', data?.mensaje || 'La aplicación automática fue revertida.', 'warning', 4500);
-        await renderAdminPaymentsReview();
-      } catch (err) {
-        if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-        if (typeof showToast === 'function') showToast('Error', err.message || 'No se pudo actualizar el pago.', 'error', 4500);
-      }
-    };
-    const text = 'Usa esta opción cuando el recibo pasó el OCR y el pago fue aplicado automáticamente, pero la remesa no llegó al beneficiario en Bolivia. El sistema revertirá la liquidación y volverá a suspender por deuda.';
-    if (typeof showConfirmModal === 'function') showConfirmModal('⚠️', 'Remesa no recibida', text, 'Revertir pago', ejecutar);
-    else if (confirm(text)) ejecutar();
-  }
-
-  async function banearPorFraudePagoAdmin(pagoId) {
-    const ejecutar = async () => {
-      try {
-        if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Suspendiendo cuenta por comprobante observado...');
-        const data = await llamarRevision(pagoId, 'fraude', 'Comprobante de Yape Remesas falsificado o manipulado');
-        if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-        if (typeof showToast === 'function') showToast('Cuenta suspendida', data?.mensaje || 'La cuenta quedó suspendida hasta que se verifique el pago total.', 'warning', 5500);
-        await renderAdminPaymentsReview();
-      } catch (err) {
-        if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-        if (typeof showToast === 'function') showToast('Error', err.message || 'No se pudo suspender la cuenta.', 'error', 4500);
-      }
-    };
-    const text = 'Esta acción marca el comprobante como observado y suspende temporalmente la cuenta. Si posteriormente se verifica el pago total adeudado, el repartidor se reactiva.';
-    if (typeof showConfirmModal === 'function') showConfirmModal('⚠️', 'Suspender por comprobante observado', text, 'Suspender temporalmente', ejecutar);
-    else if (confirm(text)) ejecutar();
-  }
-
-  function accionesPago(row) {
-    const estado = String(row.estado || '').toLowerCase();
-    const id = esc(row.pago_id);
-    if (estado === 'pendiente_verificacion_recepcion') {
-      return `<div style="display:grid;gap:6px;min-width:190px;">
-        <button type="button" onclick="window.confirmarRecepcionPagoAdmin('${id}')" style="background:#16A34A;color:white;border:0;padding:8px 10px;border-radius:8px;font-weight:800;cursor:pointer;">✓ Confirmar llegada</button>
-        <button type="button" onclick="window.marcarPagoNoRecibidoAdmin('${id}')" style="background:#475569;color:white;border:0;padding:8px 10px;border-radius:8px;font-weight:700;cursor:pointer;">No recibido · revertir</button>
-        <button type="button" onclick="window.banearPorFraudePagoAdmin('${id}')" style="background:#DC2626;color:white;border:0;padding:8px 10px;border-radius:8px;font-weight:800;cursor:pointer;">⚠️ Comprobante observado</button>
-      </div>`;
+  /* Las tres acciones quedan como no-op informativas. Antes llamaban a
+     rpc_admin_review_commission_voucher, que fue eliminada junto con el
+     sistema de comisiones, por lo que ya no hay nada que revisar. */
+  function accionRetirada() {
+    if (typeof showToast === 'function') {
+      showToast('Función retirada', 'NOTIGAS no cobra comisiones ni procesa pagos. No hay nada que confirmar, revertir ni observar.', 'info', 4000);
     }
-    if (estado === 'ocr_no_valido' || estado === 'no_recibido') {
-      return `<button type="button" onclick="window.banearPorFraudePagoAdmin('${id}')" style="background:#DC2626;color:white;border:0;padding:8px 10px;border-radius:8px;font-weight:800;cursor:pointer;">⚠️ Comprobante observado</button>`;
-    }
-    return '<span style="color:#94A3B8;font-size:12px;">Sin acciones pendientes</span>';
   }
 
   async function renderAdminPaymentsReview() {
     normalizarEtiquetasPanelPagos();
     const container = document.getElementById('adminPremiumSubscriptionsContainer');
-    if (!container || !window.supabaseClient) return;
-    container.innerHTML = '<div style="color:#94A3B8;text-align:center;padding:24px;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando pagos...</div>';
-    try {
-      const { data, error } = await window.supabaseClient.rpc('rpc_admin_list_commission_vouchers');
-      if (error) throw error;
-      const rows = Array.isArray(data) ? data : [];
-      const pending = rows.filter((r) => r.estado === 'pendiente_verificacion_recepcion').length;
-      const confirmed = rows.filter((r) => r.estado === 'confirmado').length;
-      const fraud = rows.filter((r) => r.estado === 'fraude_confirmado').length;
-      let html = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px;">
-        <div style="background:#1E293B;border:1px solid #F59E0B;border-radius:10px;padding:12px;"><div style="font-size:11px;color:#CBD5E1;">Llegada por verificar</div><div style="font-size:24px;font-weight:900;color:#F59E0B;">${pending}</div></div>
-        <div style="background:#1E293B;border:1px solid #16A34A;border-radius:10px;padding:12px;"><div style="font-size:11px;color:#CBD5E1;">Recibidos</div><div style="font-size:24px;font-weight:900;color:#16A34A;">${confirmed}</div></div>
-        <div style="background:#1E293B;border:1px solid #DC2626;border-radius:10px;padding:12px;"><div style="font-size:11px;color:#CBD5E1;">Comprobantes observados</div><div style="font-size:24px;font-weight:900;color:#DC2626;">${fraud}</div></div>
+    if (!container) return;
+    container.innerHTML = `
+      <div style="padding:24px;text-align:center;color:#94A3B8;">
+        <div style="font-size:40px;margin-bottom:10px;"><i class="fa-solid fa-qrcode"></i></div>
+        <div style="font-size:15px;font-weight:800;color:#16A34A;margin-bottom:8px;">SIN COBROS · SIN COMISIONES</div>
+        <div style="max-width:520px;margin:0 auto;font-size:12px;line-height:1.7;">
+          NOTIGAS no cobra, no liquida comisiones y no custodia fondos. Las tablas
+          <code>pagos_comisiones</code> y <code>registro_comisiones</code> y sus RPCs
+          fueron eliminadas de la base de datos.
+          <br><br>
+          El pago se acuerda directamente entre comprador y repartidor por
+          <strong>QR local (Simple / Banesco QR)</strong>, destino Bolivia.
+        </div>
       </div>`;
-      if (!rows.length) { container.innerHTML = html + '<div style="padding:28px;text-align:center;color:#94A3B8;">No hay pagos registrados.</div>'; return; }
-      html += `<div style="overflow:auto;border:1px solid #334155;border-radius:10px;"><table style="width:100%;border-collapse:collapse;min-width:1300px;font-size:12px;">
-        <thead style="background:#0F172A;color:#CBD5E1;text-align:left;"><tr><th style="padding:10px;">Estado</th><th style="padding:10px;">Repartidor</th><th style="padding:10px;">Orden/transacción</th><th style="padding:10px;">Monto</th><th style="padding:10px;">Fecha / hora</th><th style="padding:10px;">Beneficiario / destino</th><th style="padding:10px;">Remitente</th><th style="padding:10px;">Validación automática</th><th style="padding:10px;">Acciones</th></tr></thead><tbody>`;
-      for (const row of rows) {
-        const validation = [
-          boolBadge(row.ocr_valido, 'OCR', 'OCR'),
-          boolBadge(row.monto_valido, 'Monto', 'Monto'),
-          boolBadge(row.fecha_valida, 'Fecha', 'Fecha'),
-          boolBadge(row.transaccion_unica, 'Orden única', 'Orden repetida'),
-          boolBadge(row.destinatario_nombre_coincide, 'Beneficiario', 'Beneficiario distinto'),
-          boolBadge(row.destinatario_documento_coincide, 'Documento', 'Documento distinto'),
-          boolBadge(row.destinatario_yape_coincide, 'Cuenta destino', 'Cuenta distinta'),
-          boolBadge(row.pais_destino_coincide, 'Bolivia', 'País distinto'),
-          boolBadge(row.canal_pago_coincide, 'Yape Remesas', 'Canal distinto')
-        ].join('<br>');
-        html += `<tr style="border-top:1px solid #334155;vertical-align:top;color:#E2E8F0;">
-          <td style="padding:10px;">${estadoBadge(row.estado)}<div style="margin-top:6px;color:#94A3B8;font-size:10px;">OCR: ${fmtDate(row.validado_automaticamente_at)}</div>${row.auto_liquidado_at ? `<div style="color:#16A34A;font-size:10px;">Aplicado: ${fmtDate(row.auto_liquidado_at)}</div>` : ''}${row.auto_revertido_at ? `<div style="color:#DC2626;font-size:10px;">Revertido: ${fmtDate(row.auto_revertido_at)}</div>` : ''}</td>
-          <td style="padding:10px;"><strong>${esc(row.driver_nombre || 'Repartidor')}</strong><br><span style="color:#94A3B8;">DNI ${esc(row.driver_dni || '—')} · ${esc(row.driver_placa || '—')}</span><br><span style="color:#94A3B8;">${esc(row.driver_telefono || '')}</span></td>
-          <td style="padding:10px;"><strong>${esc(row.numero_transaccion || '—')}</strong><br><span style="color:#94A3B8;">${esc(row.canal_pago || row.metodo || 'Yape Remesas')}</span></td>
-          <td style="padding:10px;"><strong>${fmtMoney(row.monto_enviado_pen ?? row.monto)}</strong></td>
-          <td style="padding:10px;">${fmtDate(row.pago_fecha)}<br><span style="color:#94A3B8;">Cobro: ${fmtDate(row.cobro_generado_at)}</span></td>
-          <td style="padding:10px;"><strong>${esc(row.destinatario_nombre || '—')}</strong><br><span style="color:#94A3B8;">Doc: ${esc(row.destinatario_documento || '—')}</span><br><span style="color:#94A3B8;">Cuenta: ${esc(row.destinatario_yape || '—')} · ${esc(row.pais_destino || '—')}</span></td>
-          <td style="padding:10px;"><strong>${esc(row.remitente_nombre || '—')}</strong><br><span style="color:#94A3B8;">DNI: ${esc(row.remitente_dni || '—')} · Yape: ${esc(row.remitente_yape || '—')}</span><br><span style="color:#94A3B8;">Dispositivo: ${esc(row.device_id || '—')}</span></td>
-          <td style="padding:10px;line-height:1.55;">${validation}</td><td style="padding:10px;">${accionesPago(row)}</td>
-        </tr>`;
-      }
-      container.innerHTML = html + '</tbody></table></div>';
-    } catch (err) { container.innerHTML = `<div style="padding:20px;color:#EF4444;">${esc(err.message || err)}</div>`; }
   }
 
-  window.confirmarRecepcionPagoAdmin = confirmarRecepcionPagoAdmin;
-  window.marcarPagoNoRecibidoAdmin = marcarPagoNoRecibidoAdmin;
-  window.banearPorFraudePagoAdmin = banearPorFraudePagoAdmin;
+  window.confirmarRecepcionPagoAdmin = accionRetirada;
+  window.marcarPagoNoRecibidoAdmin = accionRetirada;
+  window.banearPorFraudePagoAdmin = accionRetirada;
   window.renderAdminPaymentsReview = renderAdminPaymentsReview;
   window.renderAdminPremiumSubscriptions = renderAdminPaymentsReview;
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', normalizarEtiquetasPanelPagos, { once:true });
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', normalizarEtiquetasPanelPagos, { once: true });
   else normalizarEtiquetasPanelPagos();
 })();

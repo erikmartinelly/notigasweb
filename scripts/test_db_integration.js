@@ -87,7 +87,7 @@ async function main() {
 
   await test('is_current_enabled_driver no es RPC anónimo', async () => {
     assertDenied(await request('rpc/is_current_enabled_driver', {
-      method: 'POST', body: JSON.stringify({ p_ciudad: 'lima', p_categoria: 'gas' })
+      method: 'POST', body: JSON.stringify({ p_ciudad: 'cochabamba', p_categoria: 'gas' })
     }), 'is_current_enabled_driver');
   });
 
@@ -118,7 +118,7 @@ async function main() {
   await test('crear aviso exige sesión real', async () => {
     assertDenied(await request('rpc/rpc_crear_aviso_vecinal', {
       method: 'POST',
-      body: JSON.stringify({ p_ciudad: 'lima', p_titulo: 'probe', p_descripcion: 'probe' })
+      body: JSON.stringify({ p_ciudad: 'cochabamba', p_titulo: 'probe', p_descripcion: 'probe' })
     }), 'rpc_crear_aviso_vecinal');
   });
 
@@ -147,7 +147,7 @@ async function main() {
 
   await test('RPC antiguo de pedidos libres permanece revocado', async () => {
     assertDenied(await request('rpc/rpc_get_driver_available_orders', {
-      method: 'POST', body: JSON.stringify({ p_ciudad: 'lima', p_categoria: 'gas' })
+      method: 'POST', body: JSON.stringify({ p_ciudad: 'cochabamba', p_categoria: 'gas' })
     }), 'rpc_get_driver_available_orders');
   });
 

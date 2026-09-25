@@ -127,8 +127,8 @@ window.iniciarSuscripcionAvisos = function() {
 window.iniciarSuscripcionesRealtime = async function() {
     if (!window.supabaseClient) return;
 
-    const rawCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || 'lima') : 'lima';
-    const activeCity = String(rawCity || 'lima').toLowerCase().trim();
+    const rawCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || 'cochabamba') : 'cochabamba';
+    const activeCity = String(rawCity || 'cochabamba').toLowerCase().trim();
     if (!activeCity) {
         console.warn('⚠️ No hay ciudad activa definida para suscripción Realtime.');
         return;

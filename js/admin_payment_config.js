@@ -1,4 +1,4 @@
-/* NOTIGAS - Configuración administrativa de remesas Yape a Bolivia */
+/* NOTIGAS - Panel administrativo de medio de pago (QR local Bolivia) */
 (function () {
   'use strict';
 
@@ -6,7 +6,6 @@
     if (typeof window.escapeHtmlStr === 'function') return window.escapeHtmlStr(value ?? '');
     return String(value ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   };
-  const digits = (v) => String(v || '').replace(/[^0-9]/g, '');
 
   // No se debe sobrescribir window.getVerifiedAdminEmail: la versión autoritativa
   // es la asíncrona definida en admin.js, que revalida el JWT contra admin_credentials.
@@ -19,7 +18,7 @@
     const panel = document.createElement('section');
     panel.id = 'adminPaymentConfigPanel';
     panel.style.cssText = 'margin-bottom:14px;padding:14px;border:1px solid #334155;border-radius:12px;background:#0F172A;color:#E2E8F0;';
-    panel.innerHTML = '<div style="color:#94A3B8;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando configuración de remesas...</div>';
+    panel.innerHTML = '<div style="color:#94A3B8;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando medio de pago...</div>';
     list.parentNode.insertBefore(panel, list);
   }
 
@@ -30,36 +29,28 @@
     try {
       const { data, error } = await window.supabaseClient.rpc('rpc_admin_get_payment_config');
       if (error) throw error;
-      const account = digits(data?.numero_cuenta);
-      const doc = digits(data?.beneficiario_documento);
-      const configured = Boolean(data?.beneficiario_nombre && doc && account.length >= 6 && account.length <= 20);
+      const metodo = data?.metodo_entrega || 'QR local (Simple / Banesco QR)';
+      const pais = data?.pais_destino || 'Bolivia';
       panel.innerHTML = `
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;">
-          <strong><i class="fa-solid fa-earth-americas"></i> Yape Remesas → Bolivia</strong>
-          <span style="font-size:11px;font-weight:800;color:${configured ? '#16A34A' : '#DC2626'};">${configured ? '✓ CONFIGURADO' : '⚠ CONFIGURACIÓN REQUERIDA'}</span>
+          <strong><i class="fa-solid fa-qrcode"></i> ${esc(metodo)}</strong>
+          <span style="font-size:11px;font-weight:800;color:#16A34A;">✓ SIN COBROS</span>
         </div>
-        <div style="font-size:11px;color:#94A3B8;margin-bottom:10px;">Único medio aceptado para comisiones: Yape, opción Remesas, destino Bolivia. Los datos sensibles se guardan en Supabase y no se escriben en el código público.</div>
+        <div style="font-size:11px;color:#94A3B8;margin-bottom:10px;">
+          NOTIGAS no cobra, no custodia fondos y no procesa pagos. No hay cuenta de cobro
+          que registrar ni comisiones que liquidar. El pago se acuerda directamente entre
+          comprador y repartidor por QR local (Simple / Banesco QR), destino ${esc(pais)}.
+        </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;">
-          <label style="font-size:11px;color:#CBD5E1;">Beneficiario
-            <input id="adminPaymentBeneficiary" value="${esc(data?.beneficiario_nombre || '')}" autocomplete="off" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:9px;border-radius:8px;border:1px solid #475569;background:#111827;color:white;">
+          <label style="font-size:11px;color:#CBD5E1;">Método de pago
+            <input value="${esc(metodo)}" readonly autocomplete="off" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:9px;border-radius:8px;border:1px solid #475569;background:#0B1220;color:#94A3B8;">
           </label>
-          <label style="font-size:11px;color:#CBD5E1;">Cuenta de destino
-            <input id="adminPaymentYape" value="${esc(account)}" inputmode="numeric" maxlength="20" autocomplete="off" placeholder="Cuenta de remesa" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:9px;border-radius:8px;border:1px solid #475569;background:#111827;color:white;">
+          <label style="font-size:11px;color:#CBD5E1;">País
+            <input value="${esc(pais)}" readonly autocomplete="off" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:9px;border-radius:8px;border:1px solid #475569;background:#0B1220;color:#94A3B8;">
           </label>
-          <label style="font-size:11px;color:#CBD5E1;grid-column:1/-1;">Documento de identidad del beneficiario
-            <input id="adminPaymentDocument" value="${esc(data?.beneficiario_documento || '')}" inputmode="numeric" autocomplete="off" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:9px;border-radius:8px;border:1px solid #475569;background:#111827;color:white;">
-          </label>
-        </div>
-        <button type="button" id="btnSaveAdminPaymentConfig" style="margin-top:10px;background:#16A34A;color:white;border:0;padding:9px 13px;border-radius:8px;font-weight:900;cursor:pointer;">Guardar datos de remesa</button>`;
-      panel.querySelector('#btnSaveAdminPaymentConfig')?.addEventListener('click', saveConfig);
+        </div>`;
     } catch (err) {
-      panel.innerHTML = `<div style="color:#EF4444;">No se pudo leer la configuración de remesas: ${esc(err.message || err)}</div>`;
-    }
-  }
-
-  async function saveConfig() {
-    if (typeof showToast === 'function') {
-      showToast('Nada que configurar', 'NOTIGAS no cobra ni custodia fondos: no hay cuenta de cobro que registrar. El pago se acuerda entre comprador y repartidor por QR local.', 'info', 5000);
+      panel.innerHTML = `<div style="color:#EF4444;">No se pudo leer el medio de pago: ${esc(err.message || err)}</div>`;
     }
   }
 

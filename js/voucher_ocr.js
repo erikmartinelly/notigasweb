@@ -99,7 +99,7 @@
     return null;
   }
 
-  function extraerFechaHoraPeru(rawText) {
+  function extraerFechaHoraBolivia(rawText) {
     const text = String(rawText || '');
     const mFecha = text.match(/\b(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})\b/);
     if (!mFecha) return { fechaTexto: null, fechaISO: null, tieneHora: false };
@@ -118,7 +118,7 @@
     const pad = (n) => String(n).padStart(2, '0');
     return {
       fechaTexto: `${mFecha[0]} ${mHora[0]}`,
-      fechaISO: `${yyyy}-${pad(mm)}-${pad(dd)}T${pad(hh)}:${pad(min)}:${pad(sec)}-05:00`,
+      fechaISO: `${yyyy}-${pad(mm)}-${pad(dd)}T${pad(hh)}:${pad(min)}:${pad(sec)}-04:00`,
       tieneHora: true
     };
   }
@@ -156,7 +156,7 @@
     const clean = limpiarTexto(rawText);
     if (!clean) {
       return { rawText: '', monto: null, app: 'Desconocida', operacion: null, fecha: null, fechaISO: null,
-        remitenteNombre: null, remitenteDni: null, remitenteYape: null, paisDestino: null, canalPago: null,
+        remitenteNombre: null, remitenteDni: null, remitenteCelular: null, paisDestino: null, canalPago: null,
         confianza: confidence, esValido: false, resumen: 'No se detectó texto legible' };
     }
     const lower = clean.toLowerCase();
@@ -167,9 +167,9 @@
     const canalPago = esBanesco ? 'QR Banesco' : (esSimple ? 'QR Simple' : (esQrLocal ? 'QR local' : null));
     const monto = extraerMonto(clean, expectedAmount);
     const operacion = extraerOperacion(clean);
-    const fechaInfo = extraerFechaHoraPeru(rawText);
+    const fechaInfo = extraerFechaHoraBolivia(rawText);
     const remitenteDni = extraerDocumento(clean);
-    const remitenteYape = extraerCelular(clean);
+    const remitenteCelular = extraerCelular(clean);
     const remitenteNombre = extraerNombreRemitente(rawText);
     const camposMinimos = monto !== null && !!operacion && !!fechaInfo.fechaISO && esQrLocal && paisDestino === 'Bolivia';
     const faltantes = [];
@@ -181,7 +181,7 @@
     return {
       rawText: clean, monto, app: canalPago || 'Desconocida', operacion,
       fecha: fechaInfo.fechaTexto, fechaISO: fechaInfo.fechaISO,
-      remitenteNombre, remitenteDni, remitenteYape, paisDestino, canalPago,
+      remitenteNombre, remitenteDni, remitenteCelular, paisDestino, canalPago,
       confianza: confidence, esValido: Boolean(camposMinimos),
       resumen: camposMinimos
         ? `OCR completado: ${canalPago} en Bolivia, Bs ${monto.toFixed(2)}, orden ${operacion}.`
