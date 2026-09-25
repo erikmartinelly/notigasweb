@@ -1,12 +1,12 @@
 
-function sincronizarSelectCiudadesPeruEnModal(selectEl, selectedVal) {
+function sincronizarSelectCiudadesBoliviaEnModal(selectEl, selectedVal) {
   if (!selectEl) return;
-  const currentVal = (selectedVal || selectEl.value || (typeof AppState !== 'undefined' ? AppState.get('city') : 'lima') || 'lima').toLowerCase().trim();
+  const currentVal = (selectedVal || selectEl.value || (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba') || 'cochabamba').toLowerCase().trim();
   
-  if (window.PERU_CITIES && Object.keys(window.PERU_CITIES).length > 0) {
+  if (window.BOLIVIA_CITIES && Object.keys(window.BOLIVIA_CITIES).length > 0) {
     selectEl.innerHTML = '';
-    Object.keys(window.PERU_CITIES).forEach(key => {
-      const c = window.PERU_CITIES[key];
+    Object.keys(window.BOLIVIA_CITIES).forEach(key => {
+      const c = window.BOLIVIA_CITIES[key];
       const opt = document.createElement('option');
       opt.value = key;
       opt.textContent = `📍 ${c.nombre || c.name || key}`;
@@ -15,7 +15,8 @@ function sincronizarSelectCiudadesPeruEnModal(selectEl, selectedVal) {
     });
   }
 }
-window.sincronizarSelectCiudadesPeruEnModal = sincronizarSelectCiudadesPeruEnModal;
+window.sincronizarSelectCiudadesBoliviaEnModal = sincronizarSelectCiudadesBoliviaEnModal;
+window.sincronizarSelectCiudadesPeruEnModal = sincronizarSelectCiudadesBoliviaEnModal;
 
 /* ==========================================================================
    NOTIGAS - GESTIÓN DE PEDIDOS Y ALERTAS VECINALES (V105)
@@ -38,7 +39,7 @@ function abrirModalDriverOrders() {
   const modal = document.getElementById('modalDriverOrders');
   if (modal) {
     const selCity = document.getElementById('selectDriverModalCity');
-    const curCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || 'lima') : 'lima';
+    const curCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || 'cochabamba') : 'cochabamba';
     if (selCity) {
       if (typeof sincronizarSelectCiudadesPeruEnModal === 'function') {
         sincronizarSelectCiudadesPeruEnModal(selCity, curCity);
@@ -148,13 +149,13 @@ async function renderDriverOrdersList() {
     assignedPromise = assignedQuery;
   }
 
-  // 3. Estado operativo y de crédito del repartidor. La suspensión depende del
-  // ciclo fijo de 250 balones cobrables (S/ 50); el saldo se liquida por Yape.
+  // 3. Estado operativo del repartidor. NOTIGAS no cobra comisión ni saldo:
+  // la suspensión solo puede ser una sanción administrativa.
   let driverFinancePromise = Promise.resolve({ data: null, error: null });
   if (localUserId) {
     driverFinancePromise = window.supabaseClient
       .from('choferes_habilitados')
-      .select('comisiones_pendientes, estado_servicio, bloqueado, motivo_bloqueo, pedidos_credito_ciclo, limite_pedidos_credito, limite_credito, comision_por_pedido, promo_pedidos_gratis_total, promo_pedidos_gratis_usados, remesas_confirmadas')
+      .select('estado_servicio, bloqueado, motivo_bloqueo')
       .eq('user_id', localUserId)
       .maybeSingle();
   }
@@ -165,24 +166,14 @@ async function renderDriverOrdersList() {
 
   const financeRow = finRes?.data || {};
   const driverFinances = {
-    comisiones: Number(financeRow.comisiones_pendientes ?? userData?.comisiones_pendientes ?? 0),
     estado_servicio: financeRow.estado_servicio || userData?.estado_servicio || 'activo',
     bloqueado: Boolean(financeRow.bloqueado || userData?.bloqueado),
-    motivo_bloqueo: financeRow.motivo_bloqueo || userData?.motivo_bloqueo || '',
-    pedidosCiclo: Number(financeRow.pedidos_credito_ciclo ?? userData?.pedidos_credito_ciclo ?? 0),
-    pedidosLimite: Number(financeRow.limite_pedidos_credito ?? userData?.limite_pedidos_credito ?? 250),
-    comisionPedido: Number(financeRow.comision_por_pedido ?? userData?.comision_por_pedido ?? 0.20),
-    limiteCredito: Number(financeRow.limite_credito ?? userData?.limite_credito ?? 50),
-    promoTotal: Number(financeRow.promo_pedidos_gratis_total ?? userData?.promo_pedidos_gratis_total ?? 100),
-    promoUsados: Number(financeRow.promo_pedidos_gratis_usados ?? userData?.promo_pedidos_gratis_usados ?? 0),
-    remesasConfirmadas: Number(financeRow.remesas_confirmadas ?? userData?.remesas_confirmadas ?? 0)
+    motivo_bloqueo: financeRow.motivo_bloqueo || userData?.motivo_bloqueo || ''
   };
+  // Solo sankciones administrativas suspenden: no hay suspension por mora ni por pago.
   driverFinances.isSuspended = Boolean(
     driverFinances.bloqueado ||
-    driverFinances.estado_servicio === 'suspendido_tope' ||
     driverFinances.estado_servicio === 'suspendido' ||
-    driverFinances.estado_servicio === 'suspendido_mora' ||
-    driverFinances.estado_servicio === 'suspendido_pago' ||
     driverFinances.estado_servicio === 'baneado'
   );
 
@@ -191,28 +182,23 @@ async function renderDriverOrdersList() {
     AppState.set('userData', { ...curU, ...financeRow });
   }
 
-  const promoRestantes = Math.max(0, driverFinances.promoTotal - driverFinances.promoUsados);
-  const enPromo = promoRestantes > 0;
-  const pctCredito = enPromo
-    ? (driverFinances.promoTotal > 0 ? Math.min(100, Math.round((driverFinances.promoUsados / driverFinances.promoTotal) * 100)) : 0)
-    : (driverFinances.pedidosLimite > 0 ? Math.min(100, Math.round((driverFinances.pedidosCiclo / driverFinances.pedidosLimite) * 100)) : 0);
-  const barColor = driverFinances.isSuspended || pctCredito >= 100 ? '#EF4444' : (pctCredito >= 70 ? '#F59E0B' : '#10B981');
+  const barColor = driverFinances.isSuspended ? '#EF4444' : '#10B981';
 
   let financialWidgetHtml = `
     <div class="driver-financial-card" style="background:linear-gradient(135deg,#1E293B 0%,#0F172A 100%);border:1.5px solid ${driverFinances.isSuspended ? '#EF4444' : '#334155'};border-radius:10px;padding:10px 12px;margin-bottom:12px;">
       <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:6px;">
-        <span style="font-size:11px;font-weight:800;color:#E2E8F0;">${enPromo ? '🎁 Prueba gratis' : '💳 Crédito por uso'}</span>
-        <span style="font-size:11px;font-weight:900;color:${barColor};">${enPromo ? `${driverFinances.promoUsados}/${driverFinances.promoTotal} gratis` : `${driverFinances.pedidosCiclo}/${driverFinances.pedidosLimite} pedidos`}</span>
+        <span style="font-size:11px;font-weight:800;color:#E2E8F0;">🇧🇴 Acceso gratuito</span>
+        <span style="font-size:11px;font-weight:900;color:${barColor};">${driverFinances.isSuspended ? 'Suspendido' : 'Sin cobros'}</span>
       </div>
-      <div style="background:#0F172A;border-radius:6px;height:8px;width:100%;overflow:hidden;border:1px solid #334155;"><div style="background:${barColor};height:100%;width:${pctCredito}%;"></div></div>
+      <div style="background:#0F172A;border-radius:6px;height:8px;width:100%;overflow:hidden;border:1px solid #334155;"><div style="background:${barColor};height:100%;width:100%;"></div></div>
       <div style="display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:9.5px;color:#94A3B8;">
-        <span>${enPromo ? `${promoRestantes} pedido(s) gratis restantes` : `Comisión: S/ ${driverFinances.comisionPedido.toFixed(2)} por balón confirmado`}</span>
-        <span>${enPromo ? 'Saldo: S/ 0.00' : `Saldo: S/ ${driverFinances.comisiones.toFixed(2)} / S/ ${driverFinances.limiteCredito.toFixed(2)}`}</span>
+        <span>Comisión por pedido: Bs 0,00</span>
+        <span>NOTIGAS no procesa fondos</span>
       </div>
     </div>`;
 
   if (driverFinances.isSuspended) {
-    const motivo = driverFinances.motivo_bloqueo || 'Alcanzaste el límite del ciclo de crédito. Regulariza la remesa pendiente para continuar.';
+    const motivo = driverFinances.motivo_bloqueo || 'Cuenta suspendida por una sanción administrativa.';
     financialWidgetHtml += `<div class="driver-lockout-banner" style="background:rgba(239,68,68,.15);border:2px solid #EF4444;border-radius:10px;padding:12px;margin-bottom:12px;color:#FECACA;"><strong>⛔ CUENTA SUSPENDIDA</strong><div style="margin-top:5px;font-size:11px;line-height:1.45;">${typeof escapeHtmlStr === 'function' ? escapeHtmlStr(motivo) : motivo}</div></div>`;
   }
 
@@ -236,7 +222,7 @@ async function renderDriverOrdersList() {
 
   const planBannerHtml = `
     <div class="driver-plan-banner" style="background:linear-gradient(135deg,rgba(16,185,129,.14),#0F172A);border:1.5px solid #10B981;border-radius:10px;padding:10px 12px;margin-bottom:12px;color:#D1FAE5;font-size:11.5px;line-height:1.45;">
-      <strong style="color:#FFFFFF;">🎁 100 pedidos gratis para probar NOTIGAS</strong> · Desde el pedido 101: S/ 0,20 por balón. Ciclo fijo: 250 balones cobrables = S/ 50. Al llegar al monto se bloquea hasta confirmar el pago.
+      <strong style="color:#FFFFFF;">🇧🇴 Bolivia · Acceso gratuito sin comisión</strong> · NOTIGAS no cobra por pedido ni por generar o escanear un QR local. El pago se acuerda directo con el comprador en bolivianos.
     </div>`;
 
   if (!orders || orders.length === 0) {
@@ -409,7 +395,7 @@ async function renderDriverOrdersList() {
                     <i class="fa-solid fa-map-location-dot"></i> VER EN EL MAPA
                   </button>
                   ${driverFinances.isSuspended ? `
-                    <button type="button" style="background:#475569; color:#94A3B8; border:none; padding:5px 12px; border-radius:6px; font-size:10px; font-weight:800; cursor:not-allowed; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;" onclick="alert('⛔ Cuenta bloqueada: Alcanzaste el ciclo fijo de 250 balones (S/ 50). Confirma tu pago por Yape para volver a tomar pedidos.');" title="Cuenta bloqueada por pago pendiente">
+                    <button type="button" style="background:#475569; color:#94A3B8; border:none; padding:5px 12px; border-radius:6px; font-size:10px; font-weight:800; cursor:not-allowed; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;" onclick="alert('⛔ Cuenta bloqueada por una sanción administrativa. Contacta a soporte de NOTIGAS para conocer el motivo.');" title="Cuenta bloqueada por sanción administrativa">
                       <i class="fa-solid fa-ban"></i> Bloqueado
                     </button>
                   ` : `
@@ -462,16 +448,12 @@ window.aceptarPedidoRepartidor = function(orderId, lat, lng, address) {
     return;
   }
 
-  // Comprobar suspensión o límite del ciclo de crédito vigente.
+  // Suspender solo por sanción administrativa: NOTIGAS no aplica límites de crédito ni saldo.
   const curUser = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
-  const pedidosCiclo = Number(curUser?.pedidos_credito_ciclo || 0);
-  const pedidosLimite = Number(curUser?.limite_pedidos_credito || 250);
-  const saldoPendiente = Number(curUser?.comisiones_pendientes || 0);
-  const limiteCredito = Number(curUser?.limite_credito || 50);
-  if (curUser && (pedidosCiclo >= pedidosLimite || saldoPendiente >= limiteCredito || curUser.estado_servicio === 'suspendido_tope' || curUser.bloqueado)) {
-    const mensaje = 'Alcanzaste el ciclo fijo de 250 balones (S/ 50). Confirma tu pago por Yape para volver a recibir pedidos.';
+  if (curUser && (curUser.estado_servicio === 'suspendido_tope' || curUser.bloqueado)) {
+    const mensaje = 'Tu cuenta está suspendida por una sanción administrativa. NOTIGAS no cobra comisiones ni aplica bloqueos por monto pendiente.';
     if (typeof showToast === 'function') {
-      showToast('⛔ Límite de crédito alcanzado', mensaje, 'error', 7000);
+      showToast('⛔ Cuenta suspendida', mensaje, 'error', 7000);
     } else {
       alert('⛔ Cuenta suspendida: ' + mensaje);
     }
@@ -489,9 +471,8 @@ window.aceptarPedidoRepartidor = function(orderId, lat, lng, address) {
 
     if (error) {
       console.error('Error asignando pedido:', error);
-      const isFinLimit = error.message && (error.message.includes('Límite de crédito') || error.message.includes('Regulariza tus comisiones'));
       if (typeof showToast === 'function') {
-        showToast(isFinLimit ? '⛔ Límite de Crédito' : 'Pedido no disponible', error.message || 'Otro repartidor pudo tomarlo antes.', 'error', isFinLimit ? 7000 : 4000);
+        showToast('Pedido no disponible', error.message || 'Otro repartidor pudo tomarlo antes.', 'error', 4000);
       } else {
         alert('❌ ' + (error.message || 'No se pudo asignar el pedido.'));
       }
@@ -591,21 +572,12 @@ async function confirmarEntregaPedido(id) {
         closeDriverOrdersModal();
         const res = data || {};
         const accounting = res.accounting || res;
-        const newSaldo = accounting.comisiones_pendientes != null ? Number(accounting.comisiones_pendientes) : null;
-        const commissionCharged = Number(accounting.comision_cargada ?? res.comision_cargada ?? 0.20);
-        const ordersCycle = Number(accounting.pedidos_credito_ciclo ?? res.pedidos_credito_ciclo ?? 0);
-        const ordersLimit = Number(accounting.limite_pedidos_credito ?? res.limite_pedidos_credito ?? 250);
         const isSuspended = Boolean(accounting.suspendido ?? res.suspendido ?? false);
-        const startChargeNotice = Boolean(accounting.aviso_inicio_cobro ?? res.aviso_inicio_cobro ?? false);
 
         if (isSuspended) {
-          showToast('⚠️ Límite de crédito alcanzado', `Pedido entregado (+S/ ${commissionCharged.toFixed(2)} de comisión). Ciclo: ${ordersCycle || ordersLimit}/${ordersLimit} balones (S/ 50). Confirma tu pago para continuar.`, 'warning', 8000);
-        } else if (startChargeNotice) {
-          showToast('💳 Desde el pedido 101', 'Desde ahora se cobrarán S/ 0,20 por balón confirmado hasta acumular S/ 50. Al llegar a ese monto se solicitará la remesa por Yape.', 'info', 9000);
-        } else if (newSaldo != null) {
-          showToast('¡Entrega Confirmada! 🎉', `Comisión S/ ${commissionCharged.toFixed(2)} registrada. Saldo acumulado: S/ ${newSaldo.toFixed(2)} · Ciclo: ${ordersCycle}/${ordersLimit} balones.`, 'success', 5000);
+          showToast('⚠️ Cuenta suspendida', 'Pedido entregado. Tu cuenta está suspendida por una sanción administrativa.', 'warning', 8000);
         } else {
-          showToast('¡Buen trabajo!', 'Pedido entregado y contabilizado.', 'success', 5000);
+          showToast('¡Entrega confirmada! 🎉', 'Entrega registrada. Sin comisión y sin saldo pendiente: el pago se coordina directo con el comprador (QR local Simple o Banesco QR).', 'success', 5000);
         }
 
         if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
@@ -1159,7 +1131,7 @@ function confirmarPedido() {
     return;
   }
 
-  const currentCity = (typeof AppState !== 'undefined' && AppState.get('city')) ? AppState.get('city') : (window.selectedCity || 'lima');
+  const currentCity = (typeof AppState !== 'undefined' && AppState.get('city')) ? AppState.get('city') : (window.selectedCity || 'cochabamba');
 
   const orderData = {
     categoria,
@@ -1379,11 +1351,11 @@ async function reportarIncumplimientoPrecio() {
     showToast('Queja no disponible', 'Solo puedes reportar el precio de un pedido asignado.', 'warning', 3500);
     return;
   }
-  const rawPrice = window.prompt('¿Qué precio te cobró el repartidor? Ingresa el monto en soles, por ejemplo: 45.00');
+  const rawPrice = window.prompt('¿Qué precio te cobró el repartidor? Ingresa el monto en bolivianos, por ejemplo: 45.00');
   if (rawPrice === null) return;
   const chargedPrice = Number(String(rawPrice).trim().replace(',', '.'));
   if (!Number.isFinite(chargedPrice) || chargedPrice < 0 || chargedPrice > 1000) {
-    showToast('Precio no válido', 'Ingresa un monto válido en soles.', 'warning', 3500);
+    showToast('Precio no válido', 'Ingresa un monto válido en bolivianos.', 'warning', 3500);
     return;
   }
   showConfirmModal('⚠️', 'Reportar precio distinto', 'Se enviará a administración el precio publicado en la ficha y el monto que reportas. La queja no aplica sanciones automáticas.', 'Enviar queja', async () => {
@@ -1570,7 +1542,7 @@ async function notificarEscucheCamion() {
         tipo: 'camion_cerca',
         latitud: payload.lat,
         longitud: payload.lng,
-        departamento: (typeof AppState !== 'undefined') ? (AppState.get('city') || 'Lima') : 'Lima'
+        departamento: (typeof AppState !== 'undefined') ? (AppState.get('city') || 'Cochabamba') : 'Cochabamba'
       }]);
       saved = !error;
     }
@@ -1615,7 +1587,7 @@ async function lanzarEspecialEsperame() {
         tipo: 'vecino_esperando',
         latitud: payload.lat,
         longitud: payload.lng,
-        departamento: (typeof AppState !== 'undefined') ? (AppState.get('city') || 'Lima') : 'Lima'
+        departamento: (typeof AppState !== 'undefined') ? (AppState.get('city') || 'Cochabamba') : 'Cochabamba'
       }]);
       saved = !error;
     }

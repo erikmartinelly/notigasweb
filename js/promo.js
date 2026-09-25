@@ -42,11 +42,11 @@ function formatExternalUrl(value) {
   let str = value.trim();
   if (!str) return '';
 
-  // Número móvil peruano: 9 dígitos, opcionalmente precedido por +51/51.
+  // Número móvil boliviano: 8 dígitos, opcionalmente precedido por +591.
   const digitsOnly = str.replace(/[^0-9]/g, '');
-  if (/^(?:\+?51)?9[0-9]{8}$/.test(str) || (/^(?:51)?9[0-9]{8}$/.test(digitsOnly) && !str.includes('.') && !str.includes('/'))) {
-    const localNumber = digitsOnly.startsWith('51') ? digitsOnly.slice(2) : digitsOnly;
-    return `https://wa.me/51${localNumber}`;
+  if (/^(?:\+?591)?[2-9][0-9]{7}$/.test(str) || (/^(?:591)?[2-9][0-9]{7}$/.test(digitsOnly) && !str.includes('.') && !str.includes('/'))) {
+    const localNumber = (digitsOnly.length === 11 && digitsOnly.startsWith('591')) ? digitsOnly.slice(3) : digitsOnly;
+    return `https://wa.me/591${localNumber}`;
   }
 
   // Si ya tiene protocolo http/https
@@ -155,8 +155,8 @@ async function cargarAnunciosGuardados() {
   const mode = window.ADS_CONFIG.mode || 'local';
 
   const localPromoContent = document.getElementById('localPromoContent');
-  const activeCity = (typeof AppState !== 'undefined') ? AppState.get('city') : 'lima';
-  const normCity = String(activeCity || 'lima').toLowerCase().trim();
+  const activeCity = (typeof AppState !== 'undefined') ? AppState.get('city') : 'cochabamba';
+  const normCity = String(activeCity || 'cochabamba').toLowerCase().trim();
   if (mode === 'disabled') {
     if (localPromoContent) localPromoContent.style.display = 'none';
     window._localAds = {
@@ -364,7 +364,7 @@ window.getAdSenseFeedMarkup = function(placement) {
   const safeCity = (typeof window.escapeHtmlStr === 'function')
     ? window.escapeHtmlStr(String(ad.ciudad || (typeof AppState !== 'undefined' ? AppState.get('city') : 'Local') || 'Local').toUpperCase())
     : String(ad.ciudad || 'Local').toUpperCase();
-  const safeUrl = getSafeExternalUrl(ad.url) || 'https://wa.me/51900000000?text=Hola';
+  const safeUrl = getSafeExternalUrl(ad.url) || 'https://wa.me/59100000000?text=Hola';
   const safeImg = getSafeAdImageUrl(ad.image_url);
 
   const bgStyle = safeImg
@@ -443,7 +443,7 @@ async function initializeAdsModule() {
     _adsInitialized = true;
     document.dispatchEvent(
       new CustomEvent('notigas_ads_config_ready', {
-        detail: { city: typeof AppState !== 'undefined' ? AppState.get('city') : 'lima' }
+        detail: { city: typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba' }
       })
     );
     return true;

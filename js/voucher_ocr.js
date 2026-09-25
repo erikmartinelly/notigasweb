@@ -1,8 +1,9 @@
 /* ==========================================================================
-   NOTIGAS - OCR LOCAL DE COMPROBANTES YAPE / REMESAS
+   NOTIGAS - OCR LOCAL DE COMPROBANTES DE QR LOCAL (SIMPLE / BANESCO QR)
    - OCR gratuito con Tesseract.js en el navegador.
    - La imagen NO se persiste: solo se envían datos estructurados al servidor.
-   - El monto esperado proviene del cobro real generado por Supabase.
+   - El voucher acredita el pago acordado entre comprador y repartidor.
+     NOTIGAS no cobra comisión ni procesa fondos.
    ========================================================================== */
 (function () {
   'use strict';
@@ -64,7 +65,7 @@
 
   function extraerMonto(clean, expectedAmount = null) {
     const candidatos = [];
-    const reMoneda = /(?:S\/?\.?|PEN|soles?)\s*[:=]?\s*([0-9]{1,6}(?:[.,][0-9]{1,2})?)/gi;
+    const reMoneda = /(?:Bs\.?|BOB|bolivianos?)\s*[:=]?\s*([0-9]{1,6}(?:[.,][0-9]{1,2})?)/gi;
     let match;
     while ((match = reMoneda.exec(clean)) !== null) {
       const val = Number(String(match[1]).replace(',', '.'));
@@ -122,15 +123,15 @@
     };
   }
 
-  function extraerDni(clean) {
-    const labelled = clean.match(/(?:DNI|documento|doc\.?\s*identidad|c\.?i\.?)\s*[:#-]?\s*([0-9]{5,12})\b/i);
+  function extraerDocumento(clean) {
+    const labelled = clean.match(/(?:CI|NIT|DNI|documento|doc\.?\s*identidad|c\.?i\.?)\s*[:#-]?\s*([0-9]{4,13})\b/i);
     return labelled?.[1] || null;
   }
 
-  function extraerYapeRemitente(clean) {
+  function extraerCelular(clean) {
     const patrones = [
-      /(?:mi\s+yape|yape\s+remitente|celular|tel[eé]fono)[\s:#-]*(9[0-9]{8})\b/i,
-      /(?:desde|de)[\s:#-]*(9[0-9]{8})\b/i
+      /(?:mi\s+celular|celular|tel[eé]fono|whatsapp)[\s:#-]*(?:\+?591[\s-]?)?([67][0-9]{7})\b/i,
+      /(?:desde|de)[\s:#-]*(?:\+?591[\s-]?)?([67][0-9]{7})\b/i
     ];
     for (const re of patrones) {
       const m = clean.match(re);
@@ -159,20 +160,20 @@
         confianza: confidence, esValido: false, resumen: 'No se detectó texto legible' };
     }
     const lower = clean.toLowerCase();
-    const esYape = lower.includes('yape');
-    const esRemesa = /remesa|remesas|env[ií]o\s+internacional|enviar\s+dinero/i.test(clean);
+    const esSimple = /simple\b/.test(lower) || /qr\s*simple/.test(lower);
+    const esBanesco = /banesco\b/.test(lower) || /banesco\s*qr/.test(lower);
+    const esQrLocal = esSimple || esBanesco || /qr\s*(local|banesco|simple)/.test(lower);
     const paisDestino = /\bbolivia\b/i.test(clean) ? 'Bolivia' : null;
-    const canalPago = esYape && esRemesa ? 'Yape Remesas' : (esYape ? 'Yape' : null);
+    const canalPago = esBanesco ? 'QR Banesco' : (esSimple ? 'QR Simple' : (esQrLocal ? 'QR local' : null));
     const monto = extraerMonto(clean, expectedAmount);
     const operacion = extraerOperacion(clean);
     const fechaInfo = extraerFechaHoraPeru(rawText);
-    const remitenteDni = extraerDni(clean);
-    const remitenteYape = extraerYapeRemitente(clean);
+    const remitenteDni = extraerDocumento(clean);
+    const remitenteYape = extraerCelular(clean);
     const remitenteNombre = extraerNombreRemitente(rawText);
-    const camposMinimos = monto !== null && !!operacion && !!fechaInfo.fechaISO && esYape && esRemesa && paisDestino === 'Bolivia';
+    const camposMinimos = monto !== null && !!operacion && !!fechaInfo.fechaISO && esQrLocal && paisDestino === 'Bolivia';
     const faltantes = [];
-    if (!esYape) faltantes.push('Yape');
-    if (!esRemesa) faltantes.push('Remesas');
+    if (!esQrLocal) faltantes.push('QR local (Simple / Banesco QR)');
     if (!paisDestino) faltantes.push('Bolivia');
     if (monto === null) faltantes.push('monto');
     if (!operacion) faltantes.push('número de orden/transacción');
@@ -183,8 +184,8 @@
       remitenteNombre, remitenteDni, remitenteYape, paisDestino, canalPago,
       confianza: confidence, esValido: Boolean(camposMinimos),
       resumen: camposMinimos
-        ? `OCR completado: Yape Remesas a Bolivia, S/ ${monto.toFixed(2)}, orden ${operacion}.`
-        : `OCR incompleto. Falta: ${faltantes.join(', ') || 'confirmar datos de la remesa'}.`
+        ? `OCR completado: ${canalPago} en Bolivia, Bs ${monto.toFixed(2)}, orden ${operacion}.`
+        : `OCR incompleto. Falta: ${faltantes.join(', ') || 'confirmar datos del voucher'}.`
     };
   }
 
@@ -194,7 +195,7 @@
     try {
       onProgress?.({ status: 'preparando', message: 'Preparando recibo digital localmente...' });
       const processedSrc = await preprocesarImagenCanvas(imageFile);
-      onProgress?.({ status: 'cargando_ocr', message: 'Iniciando OCR del recibo Yape...' });
+      onProgress?.({ status: 'cargando_ocr', message: 'Iniciando OCR del voucher de QR local...' });
       const Tesseract = await obtenerTesseract();
       if (!Tesseract) return { esValido: false, resumen: 'OCR no disponible. No se guardó la imagen.', monto: null, operacion: null, fechaISO: null };
       const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Tiempo de espera OCR agotado')), 22000));

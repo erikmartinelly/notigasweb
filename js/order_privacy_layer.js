@@ -43,8 +43,8 @@
   }
 
   function currentCity() {
-    const raw = (typeof AppState !== 'undefined' && AppState.get('city')) || 'lima';
-    return String(raw || 'lima').toLowerCase().trim();
+    const raw = (typeof AppState !== 'undefined' && AppState.get('city')) || 'cochabamba';
+    return String(raw || 'cochabamba').toLowerCase().trim();
   }
 
   function isDriverMode() {

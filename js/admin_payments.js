@@ -12,11 +12,11 @@
   };
   const fmtMoney = (value) => {
     const n = Number(value);
-    return Number.isFinite(n) ? `S/ ${n.toFixed(2)}` : '—';
+    return Number.isFinite(n) ? `Bs ${n.toFixed(2)}` : '—';
   };
   const fmtDate = (value) => {
     if (!value) return '—';
-    try { return new Date(value).toLocaleString('es-PE', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }); }
+    try { return new Date(value).toLocaleString('es-BO', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }); }
     catch (_) { return String(value); }
   };
   const boolBadge = (value, okText, failText, unknownText = 'No disponible') => {

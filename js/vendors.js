@@ -59,7 +59,7 @@ function renderLiveDriverFallback(vendors) {
     const products = safe(vendor.products || 'Servicios de reparto a domicilio');
     const zones = safe(vendor.zones || 'Zona local');
     const price = Number(vendor.precio_balon_10kg);
-    const priceHtml = Number.isFinite(price) && price > 0 ? `<div style="margin:5px 0;padding:5px 8px;border-radius:8px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);color:#A7F3D0;font-weight:800;">🔥 Balón 10 Kg: <span style="color:#22C55E;">S/ ${price.toFixed(2)}</span></div>` : '';
+    const priceHtml = Number.isFinite(price) && price > 0 ? `<div style="margin:5px 0;padding:5px 8px;border-radius:8px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);color:#A7F3D0;font-weight:800;">🔥 Balón 10 Kg: <span style="color:#22C55E;">Bs ${price.toFixed(2)}</span></div>` : '';
     return `<article style="background:#1E293B;border:1px solid #334155;border-radius:12px;padding:11px;margin-top:8px;"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;"><div><strong style="color:#F8FAFC;font-size:13px;">${name}</strong><div style="color:#94A3B8;font-size:11px;margin-top:2px;">${category}</div></div><span style="font-size:10px;color:#86EFAC;font-weight:800;">REGISTRADO</span></div>${priceHtml}<div style="color:#CBD5E1;font-size:11px;margin-top:6px;">📦 ${products}</div><div style="color:#CBD5E1;font-size:11px;margin-top:3px;">🗺️ ${zones}</div><button type="button" class="btn-vendor-order" style="width:100%;margin-top:9px;" data-action="seleccionarYPedirDirecto" data-cat="${encodeURIComponent(vendor.category || 'Gas GLP')}" data-driver-id="${driverId}" data-driver-name="${name}"><i class="fa-solid fa-cart-plus"></i> Solicitar Pedido</button></article>`;
   }).join('');
 
@@ -122,7 +122,7 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
     const cityNormalized = city.trim().toLowerCase();
     const cityKeys = typeof window.getCityMetroKeys === 'function' ? window.getCityMetroKeys(cityNormalized) : [cityNormalized];
     const { data, error } = await window.supabaseClient.from('choferes_publicos')
-      .select('id, nombre_completo, categoria, ciudad, telefono, descripcion, foto_url, estado_verificacion, created_at, color_camion, precio_balon_10kg, es_premium')
+      .select('id, nombre_completo, categoria, ciudad, telefono, descripcion, foto_url, estado_verificacion, created_at, color_camion, precio_balon_10kg')
       .in('ciudad', cityKeys);
     if (error) {
       console.error('Error descargando choferes desde choferes_publicos:', error);
@@ -135,7 +135,7 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
         plate: d.placa || 'Placa registrada', products: d.productos || 'Servicios de reparto a domicilio',
         zones: d.zonas || 'zona local', schedule: d.schedule || 'Lunes a Sábado',
         color_camion: d.color_camion || '', precio_balon_10kg: d.precio_balon_10kg || null,
-        es_premium: false, active: true
+        active: true
       }));
       AppState.set('notigas_vendors_directory', list);
     } else AppState.set('notigas_vendors_directory', []);
@@ -178,7 +178,7 @@ function renderVendorCards(filterCat) {
     const safeProfileId = escapeHtmlStr(String(vendor.driverProfileId || String(vendor.id || '').replace(/^driver_/, '')));
     const safeVendorIcon = typeof window.crearAvatarCamionChoferHtml === 'function' ? window.crearAvatarCamionChoferHtml(vendor.name, {category: vendor.category, color: vendor.color_camion, price: vendor.precio_balon_10kg, es_premium: false}) : escapeHtmlStr(vendor.icon || getIconForCategory(vendor.category));
     let price10kgHtml = '';
-    if (vendor.precio_balon_10kg && !isNaN(Number(vendor.precio_balon_10kg)) && Number(vendor.precio_balon_10kg) > 0) price10kgHtml = `<div class="vendor-field vendor-field-price" style="background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.35);padding:6px 10px;border-radius:8px;margin:2px 0;"><strong style="color:#A7F3D0;font-size:12px;">🔥 Balón 10 Kg:</strong><span class="vendor-price-highlight" style="color:#22C55E;font-size:14.5px;font-weight:900;margin-left:auto;">S/ ${Number(vendor.precio_balon_10kg).toFixed(2)}</span></div>`;
+    if (vendor.precio_balon_10kg && !isNaN(Number(vendor.precio_balon_10kg)) && Number(vendor.precio_balon_10kg) > 0) price10kgHtml = `<div class="vendor-field vendor-field-price" style="background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.35);padding:6px 10px;border-radius:8px;margin:2px 0;"><strong style="color:#A7F3D0;font-size:12px;">🔥 Balón 10 Kg:</strong><span class="vendor-price-highlight" style="color:#22C55E;font-size:14.5px;font-weight:900;margin-left:auto;">Bs ${Number(vendor.precio_balon_10kg).toFixed(2)}</span></div>`;
     html += `<div class="vendor-fb-card"><div class="vendor-fb-header"><div class="vendor-profile"><div class="vendor-avatar" style="background:transparent;border:none;width:auto;height:auto;padding:0;overflow:visible;">${safeVendorIcon}</div><div class="vendor-meta"><span class="vendor-name">${escapeHtmlStr(vendor.name)}</span><span class="vendor-badge-cat"><i class="fa-solid fa-circle-check"></i> ${escapeHtmlStr(vendor.category)}</span></div></div><div style="display:flex;align-items:center;gap:6px;">${isAdmin ? `<button data-action="eliminarFichaAdmin" data-id="${safeVendorId}" style="background:#D32F2F;color:white;border:none;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;" title="Borrar como Admin"><i class="fa-solid fa-trash"></i> Borrar (Admin)</button>` : `<span class="promo-badge" style="background:rgba(0,230,118,.15);color:#00E676;border-color:rgba(0,230,118,.4);">REPARTIDOR ACTIVO</span>`}</div></div><div class="vendor-fb-body">${price10kgHtml}<div class="vendor-field"><strong>⭐ Calificación:</strong> Sin calificaciones todavía</div><div class="vendor-field"><strong>📦 Productos:</strong> ${escapeHtmlStr(vendor.products)}</div><div class="vendor-field"><strong>🗺️ Zona de cobertura:</strong> ${escapeHtmlStr(vendor.zones)}</div></div><div class="vendor-fb-footer"><button class="btn-vendor-order" data-action="seleccionarYPedirDirecto" data-cat="${encodeURIComponent(vendor.category)}" data-driver-id="${safeProfileId}" data-driver-name="${escapeHtmlStr(vendor.name || 'el distribuidor seleccionado')}"><i class="fa-solid fa-cart-plus"></i> Solicitar Pedido</button></div></div>`;
     if (index === adInsertAfterIndex && typeof window.getAdSenseFeedMarkup === 'function') html += window.getAdSenseFeedMarkup('vendors');
   });
@@ -195,8 +195,11 @@ async function eliminarFichaAdmin(vendorId) {
 }
 function getIconForCategory(cat) {
   if (!cat) return '📦'; const c = cat.toLowerCase();
-  if (c.includes('gas')) return '🔥'; if (c.includes('agua')) return '💧'; if (c.includes('chatarra')) return '♻️'; if (c.includes('papel')) return '📄';
-  if (c.includes('frutas') || c.includes('verduras')) return '🍎'; if (c.includes('detergente') || c.includes('limpieza')) return '🧼'; if (c.includes('carbón') || c.includes('leña')) return '🪵'; return '📦';
+  if (c.includes('chatarra') || c.includes('metal')) return '♻️'; if (c.includes('papel') || c.includes('carton') || c.includes('cartón')) return '📄';
+  if (c.includes('botella') || c.includes('plastico') || c.includes('plástico') || c.includes('vidrio')) return '🥤';
+  if (c.includes('gas')) return '🔥'; if (c.includes('agua')) return '💧';
+  if (c.includes('frutas') || c.includes('verduras')) return '🍎'; if (c.includes('detergente') || c.includes('limpieza')) return '🧼';
+  if (c.includes('carbón') || c.includes('carbon') || c.includes('leña') || c.includes('lena')) return '🪵'; return '📦';
 }
 
 let _directDistributorTarget = null;

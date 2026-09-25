@@ -1,33 +1,37 @@
 
-// VALIDACIONES PERUANAS PARA DNI Y WHATSAPP
-function validarDniPeru(dni) {
+// VALIDACIONES BOLIVIANAS PARA CI/NIT Y WHATSAPP (+591)
+function validarDocumentoBolivia(dni) {
   const clean = (dni || '').toString().replace(/\D/g, '');
-  return clean.length === 8;
+  return clean.length >= 4 && clean.length <= 13;
 }
-window.validarDniPeru = validarDniPeru;
+window.validarDocumentoBolivia = validarDocumentoBolivia;
+window.validarDniPeru = validarDocumentoBolivia;
 
-function normalizarDniPeru(dni) {
-  return (dni || '').toString().replace(/\D/g, '').slice(0, 8);
+function normalizarDocumentoBolivia(dni) {
+  return (dni || '').toString().replace(/\D/g, '').slice(0, 13);
 }
-window.normalizarDniPeru = normalizarDniPeru;
+window.normalizarDocumentoBolivia = normalizarDocumentoBolivia;
+window.normalizarDniPeru = normalizarDocumentoBolivia;
 
-function validarTelefonoPeru(tel) {
+function validarTelefonoBolivia(tel) {
   let clean = (tel || '').toString().replace(/\D/g, '');
-  if (clean.startsWith('51') && clean.length === 11) {
-    clean = clean.slice(2);
+  if (clean.startsWith('591') && clean.length === 11) {
+    clean = clean.slice(3);
   }
-  return clean.length === 9 && clean.startsWith('9');
+  return clean.length === 8 && (clean.startsWith('6') || clean.startsWith('7'));
 }
-window.validarTelefonoPeru = validarTelefonoPeru;
+window.validarTelefonoBolivia = validarTelefonoBolivia;
+window.validarTelefonoPeru = validarTelefonoBolivia;
 
-function normalizarTelefonoPeru(tel) {
+function normalizarTelefonoBolivia(tel) {
   let clean = (tel || '').toString().replace(/\D/g, '');
-  if (clean.startsWith('51') && clean.length === 11) {
-    clean = clean.slice(2);
+  if (clean.startsWith('591') && clean.length === 11) {
+    clean = clean.slice(3);
   }
-  return clean.slice(0, 9);
+  return clean.slice(0, 8);
 }
-window.normalizarTelefonoPeru = normalizarTelefonoPeru;
+window.normalizarTelefonoBolivia = normalizarTelefonoBolivia;
+window.normalizarTelefonoPeru = normalizarTelefonoBolivia;
 
 /* ==========================================================================
    NOTIGAS - MÓDULO DE AUTENTICACIÓN & GOOGLE IDENTITY SERVICES (1-TAP SIGN-IN)
@@ -283,15 +287,15 @@ async function guardarPerfilSupabase(user, changes = {}) {
         );
     }
 
-    const currentCity = (changes.ciudad || AppState.get('city') || 'lima').toLowerCase().trim();
+    const currentCity = (changes.ciudad || AppState.get('city') || 'cochabamba').toLowerCase().trim();
     const payload = {
         id: user.id,
         role: changes.role || 'vecino',
-        ciudad: currentCity || 'lima',
+        ciudad: currentCity || 'cochabamba',
         ...changes,
         updated_at: new Date().toISOString()
     };
-    if (!payload.ciudad) payload.ciudad = 'lima';
+    if (!payload.ciudad) payload.ciudad = 'cochabamba';
 
     const { data, error } =
         await window.supabaseClient
@@ -322,13 +326,13 @@ async function guardarUbicacionHabitualUsuario(
     lng
 ) {
     const inferred = typeof inferMainCityFromCoords === 'function' ? inferMainCityFromCoords(lat, lng) : null;
-    const ciudad = (inferred || AppState.get('city') || 'lima').toLowerCase().trim();
+    const ciudad = (inferred || AppState.get('city') || 'cochabamba').toLowerCase().trim();
 
     await guardarPerfilSupabase(
         user,
         {
             role: 'vecino',
-            ciudad: ciudad || 'lima',
+            ciudad: ciudad || 'cochabamba',
             latitude: lat,
             longitude: lng,
             location_updated_at:
@@ -363,7 +367,7 @@ async function guardarUbicacionHabitualUsuario(
 async function solicitarYGuardarUbicacionHabitual(user) {
     const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-    // El admin no necesita habilitar GPS: se ubica directo al centro de Lima, Perú.
+    // El admin no necesita habilitar GPS: se ubica directo al centro de Cochabamba, Bolivia.
     if (window.esAdminSesion && window.esAdminSesion()) {
         await guardarUbicacionHabitualUsuario(user, -12.0460, -77.0306);
         return true;
@@ -395,11 +399,11 @@ async function solicitarYGuardarUbicacionHabitual(user) {
             }
         }
 
-        // Si todavía no hay coords, usar la capital actual de PERU_CITIES
+        // Si todavía no hay coords, usar la capital actual de BOLIVIA_CITIES
         if (lat == null || lng == null) {
-            const currentCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || 'lima') : 'lima';
-            const citiesObj = window.PERU_CITIES || {};
-            const cityDef = citiesObj[currentCity] || { lat: -12.0460, lon: -77.0306 };
+            const currentCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || 'cochabamba') : 'cochabamba';
+            const citiesObj = window.BOLIVIA_CITIES || {};
+            const cityDef = citiesObj[currentCity] || { lat: -17.3895, lon: -66.1568 };
             lat = cityDef.lat;
             lng = cityDef.lon || cityDef.lng;
         }
@@ -413,9 +417,9 @@ async function solicitarYGuardarUbicacionHabitual(user) {
         return true;
     } catch (error) {
         console.warn('Ubicación base asignada por fallback:', error);
-        const currentCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || 'lima') : 'lima';
-        const citiesObj = window.PERU_CITIES || {};
-        const cityDef = citiesObj[currentCity] || { lat: -12.0460, lon: -77.0306 };
+        const currentCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || 'cochabamba') : 'cochabamba';
+        const citiesObj = window.BOLIVIA_CITIES || {};
+        const cityDef = citiesObj[currentCity] || { lat: -17.3895, lon: -66.1568 };
 
         await guardarUbicacionHabitualUsuario(user, cityDef.lat, cityDef.lon || cityDef.lng);
         return true;
@@ -755,7 +759,7 @@ async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
     await guardarPerfilSupabase(authData.user, {
       role: 'repartidor',
       nombre: repartidorObj.nombre,
-      ciudad: repartidorObj.ciudad || AppState.get('city') || 'lima',
+      ciudad: repartidorObj.ciudad || AppState.get('city') || 'cochabamba',
       dni: repartidorObj.dni || null
     });
   } catch (profileError) {
@@ -803,11 +807,13 @@ async function guardarRegistroUnico() {
     else if (categoria === 'detergentes') productos = 'Detergentes y Productos de Limpieza';
     else if (categoria === 'chatarra') productos = 'Compra de Chatarra y Metales';
     else if (categoria === 'papel') productos = 'Papel, Cartón y Reciclaje';
+    else if (categoria === 'botellas') productos = 'Botellas Plástico y Vidrio';
+    else if (categoria === 'carbon') productos = 'Carbón y Leña';
     else if (categoria === 'frutas') productos = 'Frutas, Verduras y Hortalizas';
     else productos = 'Varios';
 
     const schedule = (document.getElementById('regSchedule')?.value || '').trim() || 'Lunes a Sábado: 07:00 a 18:00';
-    const ciudad = (document.getElementById('newUserCity')?.value || AppState.get('city') || 'lima').trim();
+    const ciudad = (document.getElementById('newUserCity')?.value || AppState.get('city') || 'cochabamba').trim();
 
     if (!ciudad) {
       if (typeof showToast === 'function') showToast('⚠️ Ciudad Requerida', 'Por favor selecciona la ciudad de operación para tu registro.', 'warning', 4000);
@@ -878,28 +884,51 @@ function closeDriverModal() {
   if (modalDriver) modalDriver.style.display = 'none';
 }
 
+function leerServiciosRepartidor() {
+  const cbs = Array.from(document.querySelectorAll('input[name="driverServicio"]:checked'));
+  return cbs.map(cb => cb.value).filter(Boolean);
+}
+
+function fusionarServiciosEnProductos(productosBase, servicios) {
+  const base = (productosBase || '').trim();
+  const extras = (servicios || []).filter(s => s && !base.toLowerCase().includes(s.toLowerCase()));
+  if (!extras.length) return base;
+  return [base.replace(/[,\s]+$/, ''), ...extras].filter(Boolean).join(', ');
+}
+
+function aplicarServiciosEnFormulario(productos) {
+  const texto = (productos || '').toLowerCase();
+  document.querySelectorAll('input[name="driverServicio"]').forEach(cb => {
+    cb.checked = texto.includes((cb.value || '').toLowerCase());
+  });
+  const hidden = document.getElementById('inputDriverServicios');
+  if (hidden) hidden.value = leerServiciosRepartidor().join(', ');
+}
+
 async function iniciarSesionRepartidor() {
   const nombreNegocio = (document.getElementById('inputDriverNombre')?.value || '').trim();
   const whatsapp = (document.getElementById('inputDriverTelRef')?.value || '').trim();
   const plate = (document.getElementById('inputDriverPlate')?.value || '').trim().toUpperCase();
   const dni = (document.getElementById('inputDriverDni')?.value || '').trim().replace(/[^0-9]/g, '');
   const categoria = (document.getElementById('inputDriverCat')?.value || 'gas').trim();
-  const productos = (document.getElementById('inputDriverProductos')?.value || '').trim();
+  const productosRaw = (document.getElementById('inputDriverProductos')?.value || '').trim();
+  const servicios = leerServiciosRepartidor();
+  const productos = fusionarServiciosEnProductos(productosRaw, servicios);
   const schedule = (document.getElementById('inputDriverSchedule')?.value || '').trim();
   const colorCamion = (document.getElementById('inputDriverTruckColor')?.value || '').trim();
   const precio10kgRaw = (document.getElementById('inputDriverPrecioBalon10kg')?.value || '').trim();
 
-  if (!nombreNegocio || !whatsapp || !plate || !productos) {
+  if (!nombreNegocio || !whatsapp || !plate || (!productosRaw && !servicios.length)) {
     if (typeof showToast === 'function') showToast('⚠️ Campos Requeridos', 'Por favor completa todos los campos requeridos.', 'warning', 2000);
     return;
   }
 
-  // VALIDACIÓN ESTRICTA DE DNI (8 DÍGITOS PERUANOS)
-  if (!dni || dni.length !== 8) {
+  // VALIDACIÓN ESTRICTA DE CI / NIT (BOLIVIA)
+  if (!dni || dni.length < 4 || dni.length > 13) {
     if (typeof showToast === 'function') {
-      showToast('🪪 DNI Obligatorio', 'Debes ingresar un número de DNI válido de 8 dígitos para registrarte como repartidor.', 'warning', 4000);
+      showToast('🪪 CI o NIT Obligatorio', 'Debes ingresar un número de CI o NIT válido para registrarte como repartidor.', 'warning', 4000);
     } else {
-      alert('Debes ingresar un número de DNI válido de 8 dígitos para registrarte como repartidor.');
+      alert('Debes ingresar un número de CI o NIT válido para registrarte como repartidor.');
     }
     const inputDniEl = document.getElementById('inputDriverDni');
     if (inputDniEl) inputDniEl.focus();
@@ -943,7 +972,7 @@ async function iniciarSesionRepartidor() {
     return;
   }
 
-  // COMPROBACIÓN DE HARDWARE / DEVICE ID / DNI / PLACA EN SUPABASE
+  // COMPROBACIÓN DE HARDWARE / DEVICE ID / CI-NIT / PLACA EN SUPABASE
   if (window.DeviceSecurity && typeof window.DeviceSecurity.checkBlockedStatus === 'function') {
     const lockCheck = await window.DeviceSecurity.checkBlockedStatus(dni, plate);
     if (lockCheck && lockCheck.bloqueado) {
@@ -981,11 +1010,11 @@ async function iniciarSesionRepartidor() {
     existingUserId = session.user.id;
   }
 
-  let ciudad = (document.getElementById('inputDriverCiudad')?.value || '').trim() || cachedUser.ciudad || 'lima';
+  let ciudad = (document.getElementById('inputDriverCiudad')?.value || '').trim() || cachedUser.ciudad || 'cochabamba';
 
-  const validCities = window.PERU_CITIES
-    ? Object.keys(window.PERU_CITIES)
-    : ['lima', 'callao', 'arequipa', 'trujillo', 'chiclayo', 'piura', 'cusco', 'huancayo', 'iquitos', 'pucallpa', 'tacna', 'ica', 'huaraz', 'cajamarca', 'ayacucho', 'huanuco', 'puno', 'tarapoto', 'moyobamba', 'tumbes', 'moquegua', 'puertomaldonado', 'abancay', 'huancavelica', 'cerrodepasco', 'chachapoyas'];
+  const validCities = window.BOLIVIA_CITIES
+    ? Object.keys(window.BOLIVIA_CITIES)
+    : ['cochabamba', 'lapaz', 'santacruz', 'sucre', 'oruro', 'potosi', 'tarija', 'trinidad', 'cobija'];
   if (!ciudad || !validCities.includes(ciudad.toLowerCase())) {
     if (typeof showToast === 'function') showToast('Error', 'Debes seleccionar una ciudad válida', 'error', 3000);
     else if (typeof showToast === 'function') { showToast('Notificación', '❌ Error: Debes seleccionar una ciudad válida', 'info', 4000); } else { alert('❌ Error: Debes seleccionar una ciudad válida'); };
@@ -1008,7 +1037,7 @@ async function iniciarSesionRepartidor() {
     color_camion: colorCamion,
     precio_balon_10kg: precio10kgRaw !== '' ? parseFloat(precio10kgRaw) : null,
     user_id: existingUserId,
-    tipo_plan: 'credito',
+    tipo_plan: 'sin_comision',
     es_premium: false
   };
 
@@ -1164,7 +1193,7 @@ window.abrirRegistroRepartidores = async function() {
       try {
         const { data: driverRow } = await window.supabaseClient
           .from('choferes_habilitados')
-          .select('id, nombre_completo, placa, dni, bloqueado, motivo_bloqueo, categoria, telefono_whatsapp, ciudad, schedule, productos, comisiones_pendientes, limite_credito, estado_servicio')
+          .select('id, nombre_completo, placa, dni, bloqueado, motivo_bloqueo, categoria, telefono_whatsapp, ciudad, schedule, productos, estado_servicio')
           .eq('user_id', userId)
           .maybeSingle();
 
@@ -1189,8 +1218,6 @@ window.abrirRegistroRepartidores = async function() {
             productos: driverRow.productos,
             schedule: driverRow.schedule,
             ciudad: driverRow.ciudad,
-            comisiones_pendientes: Number(driverRow.comisiones_pendientes || 0),
-            limite_credito: Number(driverRow.limite_credito || 50),
             estado_servicio: driverRow.estado_servicio || 'activo'
           });
         }
@@ -1327,7 +1354,7 @@ async function cambiarRepartidorAComprador() {
 
     await guardarPerfilSupabase(authData.user, {
       role: 'vecino',
-      ciudad: AppState.get('city') || 'lima'
+      ciudad: AppState.get('city') || 'cochabamba'
     });
 
     if (typeof window.pausarRecorridoRepartidor === 'function') {
@@ -1593,7 +1620,7 @@ async function migrarDatosAntiguosARepartidor() {
             productos: driverRow.productos || '',
             zonas: driverRow.zonas || '',
             schedule: driverRow.schedule || '',
-            ciudad: driverRow.ciudad || AppState.get('city') || 'lima',
+            ciudad: driverRow.ciudad || AppState.get('city') || 'cochabamba',
             user_id: user.id,
             gmail: user.email || current.gmail || ''
           };
@@ -1628,7 +1655,7 @@ async function migrarDatosAntiguosARepartidor() {
       productos: driverProfile.productos || driverProfile.products || 'Balones de Gas GLP 10kg',
       zonas: driverProfile.zonas || driverProfile.zones || 'Calles y zonas de cobertura vecinal',
       schedule: driverProfile.schedule || 'Lunes a Sábado: 07:00 a 18:00',
-      ciudad: driverProfile.ciudad || AppState.get('city') || 'lima',
+      ciudad: driverProfile.ciudad || AppState.get('city') || 'cochabamba',
       user_id: existingUserId
     };
 
@@ -1725,28 +1752,28 @@ async function registrarEmail() {
     return;
   }
 
-  if (!validarTelefonoPeru(rawTelefono)) {
+  if (!validarTelefonoBolivia(rawTelefono)) {
     if (typeof showToast === 'function') {
-      showToast('⚠️ Teléfono Inválido', 'En Perú el número de WhatsApp debe tener 9 dígitos y comenzar con 9 (Ej: 987654321).', 'warning', 5000);
+      showToast('⚠️ Teléfono Inválido', 'En Bolivia el número de WhatsApp debe tener 8 dígitos y comenzar con 6 o 7 (Ej: 70123456).', 'warning', 5000);
     } else {
-      alert('En Perú el número de WhatsApp debe tener 9 dígitos y comenzar con 9.');
+      alert('En Bolivia el número de WhatsApp debe tener 8 dígitos y comenzar con 6 o 7.');
     }
     if (telefonoEl) telefonoEl.focus();
     return;
   }
 
-  if (!validarDniPeru(rawDni)) {
+  if (!validarDocumentoBolivia(rawDni)) {
     if (typeof showToast === 'function') {
-      showToast('⚠️ DNI Inválido', 'En Perú el DNI consta de exactamente 8 dígitos numéricos (Ej: 12345678).', 'warning', 5000);
+      showToast('🪪 CI o NIT Inválido', 'En Bolivia el CI consta de 4 a 13 dígitos numéricos y el NIT de 13 dígitos (Ej: 1234567).', 'warning', 5000);
     } else {
-      alert('En Perú el DNI consta de exactamente 8 dígitos numéricos.');
+      alert('En Bolivia el CI o NIT debe tener entre 4 y 13 dígitos numéricos.');
     }
     if (dniEl) dniEl.focus();
     return;
   }
 
-  const telefono = normalizarTelefonoPeru(rawTelefono);
-  const dni = normalizarDniPeru(rawDni);
+  const telefono = normalizarTelefonoBolivia(rawTelefono);
+  const dni = normalizarDocumentoBolivia(rawDni);
 
   if (!email || !password) {
     if (typeof showToast === 'function') showToast('Error', 'Ingresa correo y contraseña', 'error');
@@ -1760,7 +1787,7 @@ async function registrarEmail() {
   if (emailAuthRequestInFlight) return;
 
   emailAuthRequestInFlight = true;
-  if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Registrando cuenta en NOTIGAS Perú...');
+  if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Registrando cuenta en NOTIGAS Bolivia...');
   try {
     const { data, error } = await window.supabaseClient.auth.signUp({
       email,
@@ -1790,13 +1817,13 @@ async function registrarEmail() {
           apellido,
           telefono,
           dni,
-          ciudad: AppState.get('city') || 'lima',
+          ciudad: AppState.get('city') || 'cochabamba',
           role: 'vecino'
         });
       } catch(e) {
         console.warn('Error guardando perfil post-registro:', e);
       }
-      if (typeof showToast === 'function') showToast('Éxito', '¡Bienvenido a NOTIGAS Perú! Registro completado.', 'success');
+      if (typeof showToast === 'function') showToast('Éxito', '¡Bienvenido a NOTIGAS Bolivia! Registro completado.', 'success');
       await procesarSesionExitosa(data.user, true);
     } else if (data && data.user) {
       clearAuthThrottle('register');
@@ -1806,7 +1833,7 @@ async function registrarEmail() {
           apellido,
           telefono,
           dni,
-          ciudad: AppState.get('city') || 'lima',
+          ciudad: AppState.get('city') || 'cochabamba',
           role: 'vecino'
         });
       } catch(e) {}
@@ -1878,7 +1905,7 @@ async function procesarSesionExitosa(user, isInteractive = false) {
           const [driverRes, profileRes] = await Promise.all([
             window.supabaseClient
               .from('choferes_habilitados')
-              .select('ciudad, categoria, productos, schedule, estado_verificacion, bloqueado, motivo_bloqueo, dni, placa, comisiones_pendientes, limite_credito, estado_servicio')
+              .select('ciudad, categoria, productos, schedule, estado_verificacion, bloqueado, motivo_bloqueo, dni, placa, estado_servicio')
               .eq('user_id', user.id)
               .maybeSingle(),
             window.supabaseClient
@@ -1955,7 +1982,7 @@ async function procesarSesionExitosa(user, isInteractive = false) {
       }
     }
 
-    const resolvedCity = (choferData?.ciudad || existingProfile?.ciudad || AppState.get('city') || 'lima').toLowerCase().trim();
+    const resolvedCity = (choferData?.ciudad || existingProfile?.ciudad || AppState.get('city') || 'cochabamba').toLowerCase().trim();
 
     const clienteData = {
       role: currentSelectedRole === 'driver' ? 'repartidor' : 'vecino',
@@ -2041,7 +2068,7 @@ async function procesarSesionExitosa(user, isInteractive = false) {
               nombre: clienteData.nombre,
               apellido: clienteData.apellido,
               role: 'vecino',
-              ciudad: clienteData.ciudad || AppState.get('city') || 'lima'
+              ciudad: clienteData.ciudad || AppState.get('city') || 'cochabamba'
           }).catch(err => console.warn('Aviso creando perfil nuevo:', err));
         }
 
@@ -2109,31 +2136,31 @@ window.finalizeRoleSelection = async function(role) {
     return;
   }
 
-  // Validación de WhatsApp y DNI para clientes de Perú
+  // Validación de WhatsApp y CI/NIT para clientes de Bolivia
   if (role !== 'repartidor') {
-    if (!validarTelefonoPeru(rawPhone)) {
+    if (!validarTelefonoBolivia(rawPhone)) {
       if (typeof showToast === 'function') {
-        showToast('⚠️ WhatsApp Requerido', 'En Perú el número móvil/WhatsApp debe tener 9 dígitos y comenzar con 9 (Ej: 987654321).', 'warning', 5000);
+        showToast('⚠️ WhatsApp Requerido', 'En Bolivia el número de WhatsApp debe tener 8 dígitos y comenzar con 6 o 7 (Ej: 70123456).', 'warning', 5000);
       } else {
-        alert('En Perú el número de WhatsApp debe tener 9 dígitos y comenzar con 9.');
+        alert('En Bolivia el número de WhatsApp debe tener 8 dígitos y comenzar con 6 o 7.');
       }
       if (phoneInput) phoneInput.focus();
       return;
     }
 
-    if (!validarDniPeru(rawDni)) {
+    if (!validarDocumentoBolivia(rawDni)) {
       if (typeof showToast === 'function') {
-        showToast('⚠️ DNI Requerido', 'En Perú el DNI consta de exactamente 8 dígitos numéricos (Ej: 12345678).', 'warning', 5000);
+        showToast('🪪 CI o NIT Requerido', 'En Bolivia el CI o NIT debe tener entre 4 y 13 dígitos numéricos.', 'warning', 5000);
       } else {
-        alert('En Perú el DNI consta de exactamente 8 dígitos numéricos.');
+        alert('En Bolivia el CI o NIT debe tener entre 4 y 13 dígitos numéricos.');
       }
       if (dniInput) dniInput.focus();
       return;
     }
   }
 
-  const selectedPhone = normalizarTelefonoPeru(rawPhone);
-  const selectedDni = normalizarDniPeru(rawDni);
+  const selectedPhone = normalizarTelefonoBolivia(rawPhone);
+  const selectedDni = normalizarDocumentoBolivia(rawDni);
 
   let selectedCity = null;
   if (citySelect && citySelect.value) {
@@ -2270,27 +2297,27 @@ async function guardarFichaComprador() {
   const apellido = document.getElementById('inputBuyerProfileApellido')?.value?.trim();
   const rawTel = document.getElementById('inputBuyerProfileTelefono')?.value?.trim();
   const rawDni = document.getElementById('inputBuyerProfileDni')?.value?.trim();
-  const ciudad = document.getElementById('selectBuyerProfileCiudad')?.value?.toLowerCase()?.trim() || 'lima';
+  const ciudad = document.getElementById('selectBuyerProfileCiudad')?.value?.toLowerCase()?.trim() || 'cochabamba';
 
   if (!nombre || !apellido) {
     showToast('⚠️ Datos Requeridos', 'Por favor ingresa tu Nombre y Apellido completos.', 'warning', 4000);
     return;
   }
 
-  if (!validarTelefonoPeru(rawTel)) {
-    showToast('⚠️ Teléfono Inválido', 'En Perú el número de WhatsApp debe tener 9 dígitos y comenzar con 9 (Ej: 987654321).', 'warning', 5000);
+  if (!validarTelefonoBolivia(rawTel)) {
+    showToast('⚠️ Teléfono Inválido', 'En Bolivia el número de WhatsApp debe tener 8 dígitos y comenzar con 6 o 7 (Ej: 70123456).', 'warning', 5000);
     document.getElementById('inputBuyerProfileTelefono')?.focus();
     return;
   }
 
-  if (!validarDniPeru(rawDni)) {
-    showToast('⚠️ DNI Inválido', 'En Perú el DNI consta de exactamente 8 dígitos numéricos.', 'warning', 5000);
+  if (!validarDocumentoBolivia(rawDni)) {
+    showToast('🪪 CI o NIT Inválido', 'En Bolivia el CI o NIT debe tener entre 4 y 13 dígitos numéricos.', 'warning', 5000);
     document.getElementById('inputBuyerProfileDni')?.focus();
     return;
   }
 
-  const telefono = normalizarTelefonoPeru(rawTel);
-  const dni = normalizarDniPeru(rawDni);
+  const telefono = normalizarTelefonoBolivia(rawTel);
+  const dni = normalizarDocumentoBolivia(rawDni);
 
   if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Guardando ficha de comprador...');
   try {
@@ -2456,7 +2483,7 @@ async function cargarPerfilChoferEnModal() {
 
     const { data: driverRow, error } = await window.supabaseClient
       .from('choferes_habilitados')
-      .select('id, user_id, nombre_completo, telefono_whatsapp, placa, dni, categoria, productos, schedule, ciudad, color_camion, precio_balon_10kg, comisiones_pendientes, limite_credito, estado_servicio')
+      .select('id, user_id, nombre_completo, telefono_whatsapp, placa, dni, categoria, productos, schedule, ciudad, color_camion, precio_balon_10kg, estado_servicio')
       .eq('user_id', userId)
       .maybeSingle();
 
@@ -2476,7 +2503,14 @@ async function cargarPerfilChoferEnModal() {
     if (inputPlaca && driverRow.placa) inputPlaca.value = driverRow.placa;
     if (inputDni && driverRow.dni) inputDni.value = driverRow.dni;
     if (inputCat && driverRow.categoria) inputCat.value = driverRow.categoria;
-    if (inputProd && driverRow.productos) inputProd.value = driverRow.productos;
+    if (inputProd && driverRow.productos) {
+      const conocidos = Array.from(document.querySelectorAll('input[name="driverServicio"]'))
+        .map(cb => (cb.value || '').trim().toLowerCase()).filter(Boolean);
+      const base = String(driverRow.productos).split(',').map(s => s.trim())
+        .filter(s => s && !conocidos.includes(s.toLowerCase())).join(', ');
+      inputProd.value = base;
+      aplicarServiciosEnFormulario(driverRow.productos);
+    }
     if (inputCiudad && driverRow.ciudad) inputCiudad.value = driverRow.ciudad;
     if (inputPrecio10kg && driverRow.precio_balon_10kg != null) {
       inputPrecio10kg.value = driverRow.precio_balon_10kg;

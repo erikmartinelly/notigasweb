@@ -86,8 +86,8 @@
     "badgeBorder": "#FCE7F3"
   },
   {
-    "key": "lima",
-    "name": "Verde Lima",
+    "key": "cochabamba",
+    "name": "Verde Cochabamba",
     "primary": "#65A30D",
     "dark": "#4D7C0F",
     "light": "#A3E635",
@@ -547,7 +547,7 @@
     if (rawPrice && !isNaN(Number(rawPrice)) && Number(rawPrice) > 0) {
       const numPrice = Number(rawPrice);
       const priceFormatted = numPrice % 1 === 0 ? numPrice.toFixed(0) : numPrice.toFixed(1);
-      badgeContent = `${initials} • S/${priceFormatted}`;
+      badgeContent = `${initials} • Bs ${priceFormatted}`;
     }
 
     const truckSvg = generarSvgCamionDina({
@@ -617,7 +617,7 @@
     if (rawPrice && !isNaN(Number(rawPrice)) && Number(rawPrice) > 0) {
       const numPrice = Number(rawPrice);
       const priceFormatted = numPrice % 1 === 0 ? numPrice.toFixed(0) : numPrice.toFixed(1);
-      badgeText = `S/${priceFormatted}`;
+      badgeText = `Bs ${priceFormatted}`;
       badgeCustomStyle = 'border-radius:8px; min-width:28px; width:auto; padding:0 3px; height:17px; font-size:8.5px; font-weight:900;';
     }
 

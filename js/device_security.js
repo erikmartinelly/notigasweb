@@ -140,7 +140,7 @@
         ctx.fillStyle = '#FF6D00';
         ctx.fillRect(10, 5, 80, 25);
         ctx.fillStyle = '#0F172A';
-        ctx.fillText('NOTIGAS_SEC_PERU_GLP', 12, 10);
+        ctx.fillText('NOTIGAS_SEC_BOL_GLP', 12, 10);
         components.push(`cvs:${canvas.toDataURL().slice(-96)}`);
       }
     } catch (_) {}
@@ -249,7 +249,7 @@
       }
 
       if (data && data.bloqueado === true) {
-        const motivo = data.motivo || 'Cuenta de repartidor suspendida. Regulariza la remesa pendiente para continuar.';
+        const motivo = data.motivo || 'Cuenta de repartidor suspendida por una sanción administrativa. Contacta a soporte de NOTIGAS para conocer el motivo.';
         writeLocalLock(motivo);
         triggerLockout(motivo);
         return data;

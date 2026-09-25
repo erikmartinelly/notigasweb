@@ -1,9 +1,10 @@
 /* ==========================================================================
-   NOTIGAS - REGLAS OPERATIVAS DEL REPARTIDOR (PERÚ)
-   - Sin suscripción, VIP ni ventajas temporales.
-   - Promoción: primeros 100 pedidos confirmados sin comisión.
-   - Después: S/ 0.20 por balón. Ciclo fijo de S/ 50 (250 balones cobrables).
-   - Liberar un pedido no entregado no genera comisión ni modifica el saldo.
+   NOTIGAS - REGLAS OPERATIVAS DEL REPARTIDOR (BOLIVIA)
+   - Sin suscripción, VIP, ventajas temporales ni comisión alguna.
+   - NOTIGAS no cobra, no procesa fondos y no aplica bloqueo por monto.
+   - Los pagos se acuerdan directo entre comprador y repartidor,
+     en bolivianos, por QR local (Simple / Banesco QR) u otro medio local.
+   - Liberar un pedido no entregado no genera ningún cobro.
    - "No entregué" registra la declaración; si el comprador confirma recepción,
      la confirmación del comprador prevalece y la entrega se contabiliza.
    ========================================================================== */
@@ -26,7 +27,7 @@
   async function liberarPedidoRepartidor(orderId) {
     if (!window.supabaseClient || !orderId) return;
 
-    const msg = 'Este pedido ya fue tomado por ti. Si lo liberas volverá a quedar disponible para otros repartidores. Como no fue entregado, no genera comisión ni modifica tu saldo.';
+    const msg = 'Este pedido ya fue tomado por ti. Si lo liberas volverá a quedar disponible para otros repartidores. Como no fue entregado, no genera ningún cobro.';
 
     const execute = async () => {
       if (typeof window.showLoadingOverlay === 'function') {
@@ -49,7 +50,7 @@
 
         toast(
           'Pedido liberado',
-          data?.message || 'El pedido volvió a estar disponible. No se aplicó comisión.',
+          data?.message || 'El pedido volvió a estar disponible. No se aplicó ningún cobro.',
           'info',
           4500
         );
@@ -139,11 +140,11 @@
 
   function normalizeLegacyFinancialCopy(root = document) {
     const scope = root && root.nodeType ? root : document;
-    const weeklyButtonRx = /Corte\s+Dom|Corte\s+Semanal|Baneo\s+Lun|Baneo\s+Semanal/i;
+    const legacyRx = /Corte\s+Dom|Corte\s+Semanal|Baneo\s+Lun|Baneo\s+Semanal|Comisi[oó]n\s+fija|Ciclo\s+fijo|L[ií]mite\s+de\s+Cr[eé]dito|[Rr]emesa|[Pp]edidos?\s+gratis/i;
 
     const buttons = scope.querySelectorAll?.('button') || [];
     buttons.forEach((button) => {
-      if (weeklyButtonRx.test(String(button.textContent || ''))) {
+      if (legacyRx.test(String(button.textContent || ''))) {
         button.style.display = 'none';
         button.disabled = true;
         button.setAttribute('aria-hidden', 'true');
@@ -162,11 +163,15 @@
         if (!text) return;
         const original = text;
         text = text
-          .replace(/Comisi[oó]n\s+fija\s+de\s+S\/\s*1\.00\s+por\s+bal[oó]n\s+entregado/gi, 'Comisión de S/ 0.20 por balón entregado')
-          .replace(/l[ií]mite\s+de\s+cr[eé]dito\s+de\s+S\/\s*50\.00/gi, 'ciclo fijo de crédito de 250 balones (S/ 50)')
-          .replace(/corte\s+semanal\s+los\s+domingos\s+11:59\s*PM\s+y\s+baneo\s+definitivo\s+por\s+hardware\s+en\s+caso\s+de\s+incumplimiento/gi, 'suspensión al completar el ciclo hasta regularizar el pago')
+          .replace(/Comisi[oó]n\s+fija\s+de\s+S\/\s*1\.00\s+por\s+bal[oó]n\s+entregado/gi, 'Sin comisión por balón entregado')
+          .replace(/Comisi[oó]n\s+de\s+S\/\s*0\.\d{2}\s+por\s+bal[oó]n(\s+entregado|\s+confirmado)?/gi, 'Sin comisión por balón entregado')
+          .replace(/l[ií]mite\s+de\s+cr[eé]dito\s+de\s+S\/\s*50\.00/gi, 'acceso gratuito sin cobros')
+          .replace(/ciclo\s+fijo\s+de\s+cr[eé]dito\s+de\s+250\s+balones\s*\(?S\/\s*50\)?/gi, 'acceso gratuito sin cobros')
+          .replace(/Ciclo\s+fijo:?\s*250\s+balones\s*=\s*S\/\s*50/gi, 'Sin cobros')
+          .replace(/corte\s+semanal\s+los\s+domingos\s+11:59\s*PM\s+y\s+baneo\s+definitivo\s+por\s+hardware\s+en\s+caso\s+de\s+incumplimiento/gi, 'sin cortes por deuda ni baneos por monto')
           .replace(/Los\s+primeros\s+20\s+pedidos\s+confirmados\s+no\s+generan\s+comisi[oó]n\.\s*Despu[eé]s:\s*/gi, '')
-          .replace(/cr[eé]dito\s+hasta\s+100\s+unidades\s+entregadas/gi, 'ciclo fijo de 250 balones cobrables');
+          .replace(/primeros\s+100\s+pedidos\s+confirmados\s+son\s+(?:gratis|gratuitos|tot gratuitamente\s+gratis)[^.]*\./gi, '')
+          .replace(/cr[eé]dito\s+hasta\s+100\s+unidades\s+entregadas/gi, 'acceso gratuito');
         if (text !== original) node.nodeValue = text;
       });
     }
@@ -177,14 +182,14 @@
       return !Array.from(el.children || []).some((child) => /Comisi[oó]n fija:.*S\/\s*1\.00.*S\/\s*50\.00.*Corte:.*Baneo:/i.test(String(child.textContent || '')));
     });
     deepestSummary.forEach((el) => {
-      el.textContent = 'Comisión: S/ 0.20 por balón confirmado • Ciclo fijo: 250 balones = S/ 50 • Bloqueo hasta confirmar el pago';
+      el.textContent = 'Sin comisión • Sin ciclo de crédito • NOTIGAS no cobra ni procesa fondos';
     });
   }
 
   function normalizeLegacyOrderBanners(root = document) {
     const banners = root.querySelectorAll?.('.driver-plan-banner') || [];
     banners.forEach((banner) => {
-      banner.innerHTML = '<strong style="color:#FFFFFF;">🎁 100 pedidos gratis para probar NOTIGAS</strong> · Desde el pedido 101: S/ 0.20 por balón. Ciclo fijo de S/ 50.';
+      banner.innerHTML = '<strong style="color:#FFFFFF;">🇧🇴 Bolivia · Acceso gratuito sin comisión</strong> · NOTIGAS no cobra por pedido ni por generar o escanear un QR local.';
     });
   }
 
@@ -200,36 +205,25 @@
 
       const { data: driver, error } = await window.supabaseClient
         .from('choferes_habilitados')
-        .select('comisiones_pendientes,pedidos_credito_ciclo,limite_pedidos_credito,limite_credito,comision_por_pedido,promo_pedidos_gratis_total,promo_pedidos_gratis_usados,remesas_confirmadas,estado_servicio,bloqueado')
+        .select('estado_servicio,bloqueado')
         .eq('user_id', uid)
         .maybeSingle();
       if (error || !driver) return;
 
-      const used = Number(driver.pedidos_credito_ciclo || 0);
-      const limit = Number(driver.limite_pedidos_credito || 100);
-      const saldo = Number(driver.comisiones_pendientes || 0);
-      const fee = Number(driver.comision_por_pedido || 0.20);
-      const creditLimit = Number(driver.limite_credito || 50);
-      const freeTotal = Number(driver.promo_pedidos_gratis_total || 100);
-      const freeUsed = Number(driver.promo_pedidos_gratis_usados || 0);
-      const freeRemaining = Math.max(0, freeTotal - freeUsed);
-      const inPromo = freeRemaining > 0;
-      const pct = inPromo ? Math.min(100, Math.round((freeUsed / Math.max(freeTotal,1)) * 100)) : (limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0);
-      const suspended = Boolean(driver.bloqueado || driver.estado_servicio === 'suspendido_tope' || driver.estado_servicio === 'baneado');
-      const barColor = suspended || pct >= 100 ? '#EF4444' : (pct >= 70 ? '#F59E0B' : '#10B981');
+      const suspended = Boolean(driver.bloqueado || driver.estado_servicio === 'baneado');
 
       card.innerHTML = `
         <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:6px;">
-          <span style="font-size:11px;font-weight:800;color:#E2E8F0;">${inPromo ? '🎁 Prueba gratis' : '💳 Crédito por uso'}</span>
-          <span style="font-size:11px;font-weight:900;color:${barColor};">${inPromo ? `${freeUsed}/${freeTotal} gratis` : `${used}/${limit} pedidos`}</span>
+          <span style="font-size:11px;font-weight:800;color:#E2E8F0;">🇧🇴 Acceso gratuito</span>
+          <span style="font-size:11px;font-weight:900;color:${suspended ? '#EF4444' : '#10B981'};">${suspended ? 'Suspendido' : 'Sin cobros'}</span>
         </div>
-        <div style="background:#0F172A;border-radius:6px;height:8px;width:100%;overflow:hidden;border:1px solid #334155;"><div style="background:${barColor};height:100%;width:${pct}%;"></div></div>
+        <div style="background:#0F172A;border-radius:6px;height:8px;width:100%;overflow:hidden;border:1px solid #334155;"><div style="background:${suspended ? '#EF4444' : '#10B981'};height:100%;width:100%;"></div></div>
         <div style="display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:9.5px;color:#94A3B8;">
-          <span>${inPromo ? `${freeRemaining} pedido(s) gratis restantes` : `Comisión: S/ ${fee.toFixed(2)} por balón confirmado`}</span>
-          <span>${inPromo ? 'Saldo: S/ 0.00' : `Saldo: S/ ${saldo.toFixed(2)} / S/ ${creditLimit.toFixed(2)}`}</span>
+          <span>Comisión por pedido: Bs 0,00</span>
+          <span>NOTIGAS no procesa fondos</span>
         </div>`;
     } catch (err) {
-      console.warn('No se pudo sincronizar el crédito del repartidor:', err);
+      console.warn('No se pudo sincronizar el estado del repartidor:', err);
     }
   }
 
@@ -246,24 +240,12 @@
           return;
         }
 
-        const accounting = data?.accounting || data || {};
-        const fee = Number(accounting.comision_cargada ?? data?.comision_cargada ?? 0.20);
-        const saldo = Number(accounting.comisiones_pendientes ?? data?.comisiones_pendientes ?? 0);
-        const used = Number(accounting.pedidos_credito_ciclo ?? data?.pedidos_credito_ciclo ?? 0);
-        const limit = Number(accounting.limite_pedidos_credito ?? data?.limite_pedidos_credito ?? 250);
-        const suspended = Boolean(accounting.suspendido ?? data?.suspendido ?? false);
-        const freeOrder = Boolean(accounting.pedido_gratis ?? data?.pedido_gratis ?? false);
-        const promoRemaining = Number(accounting.promo_restantes ?? data?.promo_restantes ?? 0);
-        const creditLimit = Number(accounting.limite_credito ?? data?.limite_credito ?? 50);
+        const suspended = Boolean(data?.suspendido ?? false);
 
-        if (freeOrder) {
-          toast('🎁 Pedido gratuito confirmado', `No se generó comisión. Te quedan ${promoRemaining} pedido(s) gratis de la promoción inicial.`, 'success', 5000);
-        } else if (suspended) {
-          toast('⚠️ Límite de crédito alcanzado', `Entrega confirmada. Comisión S/ ${fee.toFixed(2)}. Alcanzaste ${used || limit}/${limit} balones del ciclo y S/ ${creditLimit.toFixed(2)} de crédito. Regulariza la remesa para continuar.`, 'warning', 8000);
-        } else if (Boolean(accounting.aviso_inicio_cobro ?? data?.aviso_inicio_cobro ?? false)) {
-          toast('💳 Desde el pedido 101', 'Desde ahora se cobrarán S/ 0,20 por balón confirmado hasta acumular S/ 50. Al llegar a ese monto se solicitará la remesa por Yape.', 'info', 9000);
+        if (suspended) {
+          toast('⚠️ Cuenta suspendida', 'Entrega registrada. Tu cuenta está suspendida por una sanción administrativa.', 'warning', 8000);
         } else {
-          toast('¡Entrega confirmada! 🎉', `Comisión S/ ${fee.toFixed(2)} registrada. Saldo: S/ ${saldo.toFixed(2)} / S/ ${creditLimit.toFixed(2)} · Ciclo: ${used}/${limit} balones.`, 'success', 5000);
+          toast('¡Entrega confirmada! 🎉', 'Entrega registrada. Sin comisión y sin saldo pendiente. El pago se coordina directo con el comprador (QR local Simple o Banesco QR).', 'success', 5000);
         }
 
         if (typeof window.renderDriverOrdersList === 'function') await window.renderDriverOrdersList();
@@ -275,7 +257,7 @@
       }
     };
 
-    const message = '¿El comprador ya recibió su pedido? Si aún estás dentro de los primeros 100 pedidos promocionales, esta entrega es gratuita. Desde el pedido 101 se aplica S/ 0.20 por balón confirmado.';
+    const message = '¿El comprador ya recibió su pedido? NOTIGAS no cobra comisión: confirma la entrega para que el comprador pueda coordinarse contigo.';
     if (typeof window.showConfirmModal === 'function') {
       window.showConfirmModal('🏁', 'Confirmar entrega', message, 'Sí, ya entregué el pedido', execute, 'Volver');
     } else if (window.confirm(message)) {
@@ -409,12 +391,12 @@
       }
 
       if (/Acceso Gratuito.*Plan PRO/i.test(text)) {
-        el.textContent = '1. Acceso sin suscripción y comisión por entrega';
+        el.textContent = '1. Acceso sin suscripción y sin comisión por entrega';
         return;
       }
 
       if (/suscribirse.*Plan PRO|3 minutos.*pedidos|1 minuto.*clientes/i.test(text)) {
-        el.textContent = 'NOTIGAS no cobra suscripción. Los primeros 100 pedidos confirmados son gratis; desde el pedido 101 se aplica S/ 0.20 por balón. Cada ciclo tiene un pago fijo de S/ 50 y la cuenta se reactiva al confirmarse.';
+        el.textContent = 'NOTIGAS no cobra suscripción ni comisión. Los repartidores operan sin costo, sin saldos pendientes y sin bloqueos por monto.';
       }
     });
     normalizeLegacyFinancialCopy(document);
@@ -422,19 +404,19 @@
 
   function normalizeDriverRegistrationOffer() {
     const inputTipo = document.getElementById('inputDriverPlanTipo');
-    if (inputTipo) inputTipo.value = 'credito';
+    if (inputTipo) inputTipo.value = 'sin_comision';
 
     const originalSelector = window._notigasOriginalSeleccionarPlanRegistroChofer || window.seleccionarPlanRegistroChofer;
     if (!window._notigasOriginalSeleccionarPlanRegistroChofer && typeof originalSelector === 'function') {
       window._notigasOriginalSeleccionarPlanRegistroChofer = originalSelector;
       window.seleccionarPlanRegistroChofer = function () {
-        return window._notigasOriginalSeleccionarPlanRegistroChofer('credito');
+        return window._notigasOriginalSeleccionarPlanRegistroChofer('sin_comision');
       };
     }
 
     try {
       if (typeof window._notigasOriginalSeleccionarPlanRegistroChofer === 'function') {
-        window._notigasOriginalSeleccionarPlanRegistroChofer('credito');
+        window._notigasOriginalSeleccionarPlanRegistroChofer('sin_comision');
       }
     } catch (_) {}
 
@@ -444,11 +426,11 @@
       grid.innerHTML = `
         <div style="border:1.5px solid #10B981;background:linear-gradient(135deg,rgba(16,185,129,.14),rgba(15,23,42,.95));border-radius:12px;padding:14px;">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;">
-            <strong style="color:#FFFFFF;font-size:14px;">Crédito operativo NOTIGAS</strong>
-            <span style="background:#10B981;color:#052E16;border-radius:999px;padding:4px 9px;font-size:10px;font-weight:900;white-space:nowrap;">SIN SUSCRIPCIÓN</span>
+            <strong style="color:#FFFFFF;font-size:14px;">Acceso gratuito NOTIGAS Bolivia</strong>
+            <span style="background:#10B981;color:#052E16;border-radius:999px;padding:4px 9px;font-size:10px;font-weight:900;white-space:nowrap;">SIN COMISIÓN</span>
           </div>
           <div style="font-size:11.5px;color:#D1FAE5;line-height:1.55;">
-            Tus primeros <strong>100 pedidos confirmados son totalmente gratuitos</strong>. Desde el pedido 101 se registra una comisión de <strong>S/ 0.20 por cada balón entregado</strong>.
+            Operas <strong>sin costo y sin comisión</strong>: no hay cuota mensual, ni saldo pendiente, ni ciclo de crédito, ni bloqueo por monto. El pago se acuerda directo con el comprador en <strong>bolivianos (Bs)</strong>, únicamente por <strong>QR local (Simple / Banesco QR)</strong>.
           </div>
         </div>`;
     }
@@ -461,7 +443,7 @@
     const creditContent = document.getElementById('driverPremiumGratuitoContent');
     if (creditContent) {
       creditContent.style.display = 'block';
-      creditContent.innerHTML = '<p style="margin:0;font-size:11px;color:#CBD5E1;line-height:1.5;"><strong>Prueba gratis:</strong> tus primeros 100 pedidos confirmados no generan comisión. Desde el pedido 101: S/ 0.20 por balón, con ciclo fijo de S/ 50 (250 balones cobrables).</p>';
+      creditContent.innerHTML = '<p style="margin:0;font-size:11px;color:#CBD5E1;line-height:1.5;"><strong>Sin comisión:</strong> no pagas nada por usar NOTIGAS. El pago con el comprador se realiza en bolivianos, únicamente por QR local (Simple / Banesco QR).</p>';
     }
 
     const btnText = document.getElementById('btnDriverSubmitText');

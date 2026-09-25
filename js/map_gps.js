@@ -136,8 +136,8 @@ async function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
             const res = await provider();
             if (res && Number.isFinite(res.lat) && Number.isFinite(res.lng)) {
                 const country = String(res.countryCode || '').toUpperCase();
-                const inPeru = res.lat >= -18.5 && res.lat <= -0.0 && res.lng >= -81.5 && res.lng <= -68.5;
-                if (inPeru && (!country || country === 'PE')) {
+                const inBolivia = res.lat >= -22.95 && res.lat <= -9.85 && res.lng >= -69.65 && res.lng <= -57.45;
+                if (inBolivia && (!country || country === 'BO')) {
                     return res;
                 }
             }
@@ -146,26 +146,26 @@ async function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
     } catch (_) {}
 
     if (!item) {
-        // Fallback seguro a Lima por defecto
-        item = { lat: -12.0460, lng: -77.0306, city: 'Lima', region: 'Lima' };
+        // Fallback seguro a Cochabamba por defecto
+        item = { lat: -17.3895, lng: -66.1568, city: 'Cochabamba', region: 'Cochabamba' };
     }
 
     const coords = { lat: item.lat, lng: item.lng, city: item.city, region: item.region, time: Date.now(), exact: false };
 
-    let detectedCity = 'lima';
+    let detectedCity = 'cochabamba';
     if (typeof window.inferMainCityFromCoords === 'function') {
         detectedCity = window.inferMainCityFromCoords(coords.lat, coords.lng);
     }
     if (!detectedCity || detectedCity === 'fuera_de_cobertura') {
         if (typeof window.matchCityByNameOrRegion === 'function') {
-            detectedCity = window.matchCityByNameOrRegion(coords.city, coords.region) || 'lima';
+            detectedCity = window.matchCityByNameOrRegion(coords.city, coords.region) || 'cochabamba';
         } else {
-            detectedCity = 'lima';
+            detectedCity = 'cochabamba';
         }
     }
 
-    const cityDefs = (typeof window.PERU_CITIES !== 'undefined') ? window.PERU_CITIES : null;
-    const cityData = (cityDefs && cityDefs[detectedCity]) ? cityDefs[detectedCity] : { key: 'lima', nombre: 'Lima', lat: -12.0460, lon: -77.0306 };
+    const cityDefs = (typeof window.BOLIVIA_CITIES !== 'undefined') ? window.BOLIVIA_CITIES : null;
+    const cityData = (cityDefs && cityDefs[detectedCity]) ? cityDefs[detectedCity] : { key: 'cochabamba', nombre: 'Cochabamba', lat: -17.3895, lon: -66.1568 };
 
     const finalLat = coords.lat;
     const finalLng = coords.lng;
@@ -272,16 +272,16 @@ function iniciarWatchGPSRepartidor() {
 function conectarGPSAuto(forceReset = false) {
     const isDriver = esModoRepartidor();
 
-    // ADMIN: no se solicita GPS automáticamente; se posiciona directo al centro de Lima, Perú.
+    // ADMIN: no se solicita GPS automáticamente; se posiciona directo al centro de Cochabamba, Bolivia.
     // El botón GPS (forceReset=true) sí puede activarlo si el admin lo desea.
     if (window.esAdminSesion && window.esAdminSesion() && !forceReset) {
         if (!window.currentGpsLat && typeof window.applyGpsPosition === 'function') {
-            window.applyGpsPosition(-12.0460, -77.0306, 'Centro de Lima (sesión admin)', true, false);
+            window.applyGpsPosition(-17.3895, -66.1568, 'Centro de Cochabamba (sesión admin)', true, false);
         }
         if (typeof window.cambiarCiudad === 'function') {
-            window.cambiarCiudad('lima');
+            window.cambiarCiudad('cochabamba');
         } else if (typeof AppState !== 'undefined') {
-            AppState.set('city', 'lima');
+            AppState.set('city', 'cochabamba');
         }
         return;
     }

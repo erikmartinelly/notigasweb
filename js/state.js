@@ -183,7 +183,7 @@ window.loadAdsModule = async function () {
   const _state = {
     userRole: 'vecino',        // 'vecino' | 'repartidor' | 'admin'
     userData: null,            // Objeto con datos del usuario autenticado
-    city: 'lima',              // Ciudad por defecto segura (se actualiza por GPS/login/selector)
+    city: 'cochabamba',              // Ciudad por defecto segura (se actualiza por GPS/login/selector)
     gpsLat: null,
     gpsLng: null,
     gpsReady: false,

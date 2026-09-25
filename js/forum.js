@@ -28,13 +28,13 @@ async function renderForumFeed() {
     
     // Si es comprador o repartidor registrado, mostrar estrictamente los avisos de su ciudad registrada
     // Si es administrador o visitante, usar la ciudad seleccionada en la cabecera
-    let rawCity = 'lima';
+    let rawCity = 'cochabamba';
     if (!isAdmin && userData && userData.ciudad) {
       rawCity = userData.ciudad;
     } else {
-      rawCity = ciudadSelector || (typeof AppState !== 'undefined' && AppState.get('city')) || (userData && userData.ciudad) || 'lima';
+      rawCity = ciudadSelector || (typeof AppState !== 'undefined' && AppState.get('city')) || (userData && userData.ciudad) || 'cochabamba';
     }
-    const ciudadReal = String(rawCity || 'lima').toLowerCase().trim();
+    const ciudadReal = String(rawCity || 'cochabamba').toLowerCase().trim();
 
     // Consultar avisos activos para la ciudad (insensible a mayúsculas) y estrictamente últimas 24h
     const { data: localPosts, error } = await window.supabaseClient.from('avisos')
@@ -344,11 +344,11 @@ function abrirModalNuevoPost() {
   const isAdmin = typeof AppState !== 'undefined' && AppState.get('isAdmin') === true;
   const ciudadSelector = document.getElementById('selectCiudadCapital')?.value;
 
-  let rawCity = 'lima';
+  let rawCity = 'cochabamba';
   if (!isAdmin && userData && userData.ciudad) {
     rawCity = userData.ciudad;
   } else {
-    rawCity = ciudadSelector || (typeof AppState !== 'undefined' && AppState.get('city')) || (userData && userData.ciudad) || 'lima';
+    rawCity = ciudadSelector || (typeof AppState !== 'undefined' && AppState.get('city')) || (userData && userData.ciudad) || 'cochabamba';
   }
 
   const cityLabel = document.getElementById('newPostCityLabel');
@@ -451,10 +451,10 @@ async function crearNuevoPost() {
       return;
     }
 
-    let rawCity = 'lima';
+    let rawCity = 'cochabamba';
     if (!isAdmin && userData && userData.ciudad) rawCity = userData.ciudad;
-    else rawCity = ciudadSelector || (typeof AppState !== 'undefined' && AppState.get('city')) || (userData && userData.ciudad) || 'lima';
-    const ciudadReal = String(rawCity || 'lima').toLowerCase().trim();
+    else rawCity = ciudadSelector || (typeof AppState !== 'undefined' && AppState.get('city')) || (userData && userData.ciudad) || 'cochabamba';
+    const ciudadReal = String(rawCity || 'cochabamba').toLowerCase().trim();
 
     let authorName = 'Vecino de la zona';
     if (isAdmin) {
@@ -599,7 +599,7 @@ function renderCommentsListUI(comments) {
         const v = typeof c.votos === 'number' ? c.votos : (c.votos ?? 1);
         const autor = c.autor || c.author || 'Vecino de la zona';
         const texto = c.texto || c.text || '';
-        const tiempo = c.created_at ? new Date(c.created_at).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }) : 'Ahora mismo';
+        const tiempo = c.created_at ? new Date(c.created_at).toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' }) : 'Ahora mismo';
         html += `
         <div style="background:#0F172A; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.05); margin-bottom:6px; display:flex; gap:10px;">
             <div style="display:flex; flex-direction:column; align-items:center; justify-content:start; min-width:24px; gap:6px; padding-top:2px;">

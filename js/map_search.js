@@ -6,10 +6,10 @@ function buscarCalle() {
   const input = document.getElementById('inputSearchStreet');
   const selectCity = document.getElementById('selectCiudadCapital') || document.getElementById('selectMunicipioSearch');
   const query = (input?.value || '').trim();
-  const selectedKey = selectCity?.value || 'lima';
+  const selectedKey = selectCity?.value || 'cochabamba';
 
-  const munList = (typeof GEO_PERU_MUNICIPIOS !== 'undefined') ? GEO_PERU_MUNICIPIOS : [];
-  const munObj = munList.find(m => m.key === selectedKey) || munList[0] || { key: 'lima', nombre: 'Lima', lat: -12.0460, lon: -77.0306, querySuffix: 'Lima, Perú' };
+  const munList = (typeof GEO_BO_MUNICIPIOS !== 'undefined') ? GEO_BO_MUNICIPIOS : [];
+  const munObj = munList.find(m => m.key === selectedKey) || munList[0] || { key: 'cochabamba', nombre: 'Cochabamba', lat: -17.3895, lon: -66.1568, querySuffix: 'Cochabamba, Bolivia' };
 
   if (!query) {
     cambiarCiudadCapital(selectedKey);
@@ -26,7 +26,7 @@ function buscarCalle() {
   const calleQuery = query;
 
   // 1º Motor: Nominatim con Viewbox Metropolitano Ampliado
-  const searchUrlNominatim = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(calleQuery + ', ' + munObj.querySuffix)}&viewbox=${left},${top},${right},${bottom}&bounded=1&countrycodes=pe`;
+  const searchUrlNominatim = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(calleQuery + ', ' + munObj.querySuffix)}&viewbox=${left},${top},${right},${bottom}&bounded=1&countrycodes=bo`;
 
   fetch(searchUrlNominatim)
     .then(res => res.json())
@@ -95,7 +95,7 @@ function buscarCalle() {
             }
 
             // 3º Fallback: Búsqueda metropolitana amplia
-            const searchUrlFallback = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(calleQuery + ', ' + munObj.nombre + ', Perú')}&countrycodes=pe`;
+            const searchUrlFallback = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(calleQuery + ', ' + munObj.nombre + ', Bolivia')}&countrycodes=bo`;
             fetch(searchUrlFallback)
               .then(r => r.json())
               .then(fallbackData => {

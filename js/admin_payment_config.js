@@ -58,26 +58,8 @@
   }
 
   async function saveConfig() {
-    const panel = document.getElementById('adminPaymentConfigPanel');
-    const name = String(panel?.querySelector('#adminPaymentBeneficiary')?.value || '').trim();
-    const account = digits(panel?.querySelector('#adminPaymentYape')?.value);
-    const doc = digits(panel?.querySelector('#adminPaymentDocument')?.value);
-    if (name.length < 3) { if (typeof showToast === 'function') showToast('Dato inválido', 'Ingresa el nombre completo del beneficiario.', 'warning', 3500); return; }
-    if (!doc || doc.length < 5 || doc.length > 20) { if (typeof showToast === 'function') showToast('Dato inválido', 'Ingresa un documento de identidad válido.', 'warning', 3500); return; }
-    if (!account || account.length < 6 || account.length > 20) { if (typeof showToast === 'function') showToast('Dato inválido', 'La cuenta de destino debe tener entre 6 y 20 dígitos.', 'warning', 3500); return; }
-    try {
-      const { data, error } = await window.supabaseClient.rpc('rpc_admin_set_payment_config', {
-        p_beneficiario_nombre: name,
-        p_numero_cuenta: account,
-        p_beneficiario_documento: doc
-      });
-      if (error) throw error;
-      if (!data?.ok) throw new Error('Supabase no confirmó la actualización');
-      if (typeof showToast === 'function') showToast('Remesa actualizada', 'Los datos de Yape Remesas a Bolivia quedaron configurados.', 'success', 3500);
-      await loadConfig();
-    } catch (err) {
-      if (typeof showToast === 'function') showToast('Error', err.message || 'No se pudo guardar la configuración.', 'error', 4500);
-      else alert(err.message || 'No se pudo guardar la configuración.');
+    if (typeof showToast === 'function') {
+      showToast('Nada que configurar', 'NOTIGAS no cobra ni custodia fondos: no hay cuenta de cobro que registrar. El pago se acuerda entre comprador y repartidor por QR local.', 'info', 5000);
     }
   }
 

@@ -9,10 +9,10 @@ window.cambiarModoRolUsuario = function(targetMode) {
   if (newMode === 'driver') {
     userData.role = 'repartidor';
     if (!userData.nombre) userData.nombre = 'Repartidor de Pruebas';
-    if (!userData.telefono) userData.telefono = '987654321';
+    if (!userData.telefono) userData.telefono = '70123456';
     if (!userData.categoria) userData.categoria = 'Gas GLP';
     if (!userData.placa) userData.placa = 'TEST-01';
-    if (!userData.ciudad) userData.ciudad = (AppState.get('city') || 'lima');
+    if (!userData.ciudad) userData.ciudad = (AppState.get('city') || 'cochabamba');
     userData.hasDriverProfile = true;
     AppState.set('userData', userData);
 
@@ -43,7 +43,7 @@ window.verificarPermisoOperarEnCiudad = function(accionNombre) {
   const userData = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
   const userRole = userData.role || (typeof AppState !== 'undefined' ? AppState.get('userRole') : 'vecino');
   const ciudadUsuario = (userData.ciudad || '').toLowerCase().trim();
-  const ciudadActiva = (typeof AppState !== 'undefined' ? AppState.get('city') || 'lima' : 'lima').toLowerCase().trim();
+  const ciudadActiva = (typeof AppState !== 'undefined' ? AppState.get('city') || 'cochabamba' : 'cochabamba').toLowerCase().trim();
 
   // Si no está autenticado, permitir que el flujo estándar de login lo maneje
   const uid = userData.user_id || (typeof getCurrentUserId === 'function' ? getCurrentUserId() : null);
@@ -57,7 +57,7 @@ window.verificarPermisoOperarEnCiudad = function(accionNombre) {
   }
 
   // Si está explorando otra ciudad distinta a la suya, bloquear la operación y sugerir editar ficha
-  const getCityLabel = (key) => (window.PERU_CITIES && (window.PERU_CITIES[key]?.nombre || window.PERU_CITIES[key]?.name)) || (key ? key.toUpperCase() : 'LIMA');
+  const getCityLabel = (key) => (window.BOLIVIA_CITIES && (window.BOLIVIA_CITIES[key]?.nombre || window.BOLIVIA_CITIES[key]?.name)) || (key ? key.toUpperCase() : 'COCHABAMBA');
   const esDriver = (userRole === 'repartidor' || userData.hasDriverProfile);
   const tipoFicha = esDriver ? 'repartidor' : 'comprador';
 
@@ -420,13 +420,15 @@ function obtenerIconoHtmlPorCategoria(catNombre) {
     return `<i class="fa-solid fa-bottle-water" style="color:#00B0FF; font-size:22px; vertical-align:middle; margin-right:6px;"></i>`;
   } else if (c.includes('chatarra')) {
     return `<i class="fa-solid fa-recycle" style="color:#00E676; font-size:22px; vertical-align:middle; margin-right:6px;"></i>`;
-  } else if (c.includes('papel') || c.includes('cartón')) {
+  } else if (c.includes('papel') || c.includes('cartón') || c.includes('carton')) {
     return `<i class="fa-solid fa-box-open" style="color:#FFB300; font-size:22px; vertical-align:middle; margin-right:6px;"></i>`;
+  } else if (c.includes('botella') || c.includes('plástico') || c.includes('plastico') || c.includes('vidrio')) {
+    return `<i class="fa-solid fa-bottle-dispenser" style="color:#00E5FF; font-size:22px; vertical-align:middle; margin-right:6px;"></i>`;
   } else if (c.includes('fruta') || c.includes('verdura')) {
     return `<i class="fa-solid fa-apple-whole" style="color:#FF5252; font-size:22px; vertical-align:middle; margin-right:6px;"></i>`;
   } else if (c.includes('detergente') || c.includes('limpieza')) {
     return `<i class="fa-solid fa-pump-soap" style="color:#E040FB; font-size:22px; vertical-align:middle; margin-right:6px;"></i>`;
-  } else if (c.includes('carbón') || c.includes('leña')) {
+  } else if (c.includes('carbón') || c.includes('carbon') || c.includes('leña') || c.includes('lena')) {
     return `<i class="fa-solid fa-fire" style="color:#FF6D00; font-size:22px; vertical-align:middle; margin-right:6px;"></i>`;
   } else if (!c.includes('gas')) {
     return `<i class="fa-solid fa-box" style="color:#94A3B8; font-size:22px; vertical-align:middle; margin-right:6px;"></i>`;
@@ -497,10 +499,13 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
   } else if (cat.includes('papel')) {
     favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="${color}"/><rect x="25" y="20" width="50" height="60" rx="4" fill="#FFF"/><line x1="35" y1="35" x2="65" y2="35" stroke="#0288D1" stroke-width="4"/><line x1="35" y1="50" x2="65" y2="50" stroke="#0288D1" stroke-width="4"/><line x1="35" y1="65" x2="55" y2="65" stroke="#0288D1" stroke-width="4"/></svg>`);
     document.title = "📄 Pedido Activo: Papel / Cartón - NOTIGAS";
+  } else if (cat.includes('botellas') || cat.includes('botella') || cat.includes('plástico') || cat.includes('plastico') || cat.includes('vidrio')) {
+    favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="${color}"/><path d="M40 10h20v12H40z" fill="#FFF"/><path d="M38 22h24l-4 12v42a6 6 0 0 1-6 6H48a6 6 0 0 1-6-6V34z" fill="#FFF"/></svg>`);
+    document.title = "🥤 Pedido Activo: Botellas Plástico / Vidrio - NOTIGAS";
   } else if (cat.includes('frutas') || cat.includes('verduras')) {
     favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="${color}"/><path d="M50 30 C30 30, 20 50, 20 65 C20 80, 35 90, 50 90 C65 90, 80 80, 80 65 C80 50, 70 30, 50 30 Z" fill="#FFF"/><path d="M50 15 Q60 10 65 25" stroke="#4CAF50" stroke-width="6" fill="none"/></svg>`);
     document.title = "🍎 Pedido Activo: Frutas / Verduras - NOTIGAS";
-  } else if (cat.includes('carbón') || cat.includes('leña')) {
+  } else if (cat.includes('carbón') || cat.includes('carbon') || cat.includes('leña') || cat.includes('lena')) {
     favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="${color}"/><path d="M50 15 C30 45, 60 55, 35 85 C65 85, 80 60, 50 15 Z" fill="#FFF"/></svg>`);
     document.title = "🪵 Pedido Activo: Carbón / Leña - NOTIGAS";
   } else {

@@ -33,40 +33,25 @@ const TRUCK_ANIM_INTERVAL_MS = 80;
 const DRIVER_RADAR_MAX_ZOOM = 14;
 window.DRIVER_RADAR_MAX_ZOOM = DRIVER_RADAR_MAX_ZOOM;
 
-// COORDENADAS OFICIALES DE CIUDADES CAPITALES DE PERÚ
-const GEO_PERU_MUNICIPIOS = [
-  { key: "lima", nombre: "Lima", keywords: ["lima", "miraflores", "san isidro", "surco", "los olivos", "san borja", "comas", "ate", "chorrillos"], lat: -12.0460, lon: -77.0306, querySuffix: "Lima, Perú" },
-  { key: "callao", nombre: "Callao", keywords: ["callao", "bellavista", "la perla", "ventanilla"], lat: -11.9489, lon: -77.1294, querySuffix: "Callao, Perú" },
-  { key: "arequipa", nombre: "Arequipa", keywords: ["arequipa", "cayma", "yanahuara", "cerro colorado", "paucarpata"], lat: -16.3989, lon: -71.5370, querySuffix: "Arequipa, Perú" },
-  { key: "trujillo", nombre: "Trujillo", keywords: ["trujillo", "la libertad", "huanchaco", "victor larco"], lat: -8.1117, lon: -79.0288, querySuffix: "Trujillo, La Libertad, Perú" },
-  { key: "chiclayo", nombre: "Chiclayo", keywords: ["chiclayo", "lambayeque", "la victoria"], lat: -6.7716, lon: -79.8387, querySuffix: "Chiclayo, Lambayeque, Perú" },
-  { key: "piura", nombre: "Piura", keywords: ["piura", "castilla", "sullana", "talara"], lat: -5.1945, lon: -80.6328, querySuffix: "Piura, Perú" },
-  { key: "cusco", nombre: "Cusco", keywords: ["cusco", "cuzco", "wanchaq", "santiago"], lat: -13.5171, lon: -71.9785, querySuffix: "Cusco, Perú" },
-  { key: "huancayo", nombre: "Huancayo", keywords: ["huancayo", "junin", "el tambo", "chilca"], lat: -12.0681, lon: -75.2101, querySuffix: "Huancayo, Junín, Perú" },
-  { key: "iquitos", nombre: "Iquitos", keywords: ["iquitos", "loreto", "punchana", "belen"], lat: -3.7494, lon: -73.2444, querySuffix: "Iquitos, Loreto, Perú" },
-  { key: "pucallpa", nombre: "Pucallpa", keywords: ["pucallpa", "ucayali", "coronel portillo"], lat: -8.3821, lon: -74.5388, querySuffix: "Pucallpa, Ucayali, Perú" },
-  { key: "tacna", nombre: "Tacna", keywords: ["tacna", "alto de la alianza"], lat: -18.0139, lon: -70.2511, querySuffix: "Tacna, Perú" },
-  { key: "ica", nombre: "Ica", keywords: ["ica", "parcona", "chincha", "pisco"], lat: -14.0678, lon: -75.7286, querySuffix: "Ica, Perú" },
-  { key: "huaraz", nombre: "Huaraz", keywords: ["huaraz", "ancash", "chimbote"], lat: -9.5299, lon: -77.5290, querySuffix: "Huaraz, Áncash, Perú" },
-  { key: "cajamarca", nombre: "Cajamarca", keywords: ["cajamarca", "baños del inca"], lat: -7.1617, lon: -78.5126, querySuffix: "Cajamarca, Perú" },
-  { key: "ayacucho", nombre: "Ayacucho", keywords: ["ayacucho", "huamanga"], lat: -13.1588, lon: -74.2239, querySuffix: "Ayacucho, Perú" },
-  { key: "huanuco", nombre: "Huánuco", keywords: ["huanuco", "huánuco", "amarilis", "tingo maria"], lat: -9.9306, lon: -76.2422, querySuffix: "Huánuco, Perú" },
-  { key: "puno", nombre: "Puno", keywords: ["puno", "juliaca"], lat: -15.8402, lon: -70.0219, querySuffix: "Puno, Perú" },
-  { key: "tarapoto", nombre: "Tarapoto", keywords: ["tarapoto", "san martin", "morales"], lat: -6.4877, lon: -76.3599, querySuffix: "Tarapoto, San Martín, Perú" },
-  { key: "moyobamba", nombre: "Moyobamba", keywords: ["moyobamba", "san martin"], lat: -6.0347, lon: -76.9747, querySuffix: "Moyobamba, San Martín, Perú" },
-  { key: "tumbes", nombre: "Tumbes", keywords: ["tumbes", "zarumilla"], lat: -3.5669, lon: -80.4515, querySuffix: "Tumbes, Perú" },
-  { key: "moquegua", nombre: "Moquegua", keywords: ["moquegua", "ilo"], lat: -17.1983, lon: -70.9357, querySuffix: "Moquegua, Perú" },
-  { key: "puertomaldonado", nombre: "Puerto Maldonado", keywords: ["puerto maldonado", "madre de dios"], lat: -12.5939, lon: -69.1867, querySuffix: "Puerto Maldonado, Madre de Dios, Perú" },
-  { key: "abancay", nombre: "Abancay", keywords: ["abancay", "apurimac"], lat: -13.6373, lon: -72.8789, querySuffix: "Abancay, Apurímac, Perú" },
-  { key: "huancavelica", nombre: "Huancavelica", keywords: ["huancavelica"], lat: -12.7864, lon: -74.9727, querySuffix: "Huancavelica, Perú" },
-  { key: "pasco", nombre: "Cerro de Pasco", keywords: ["cerro de pasco", "pasco"], lat: -10.6836, lon: -76.2561, querySuffix: "Cerro de Pasco, Perú" },
-  { key: "chachapoyas", nombre: "Chachapoyas", keywords: ["chachapoyas", "amazonas"], lat: -6.2293, lon: -77.8715, querySuffix: "Chachapoyas, Amazonas, Perú" }
+// COORDENADAS OFICIALES DE CIUDADES CAPITALES DE BOLIVIA
+const GEO_BO_MUNICIPIOS = [
+  { key: "cochabamba", nombre: "Cochabamba", keywords: ["cochabamba", "cbi", "quillacollo", "sacaba", "tiquipaya", "villa llamas", "pajata", "capataz", "tataenda", "punkata", "quvorani"], lat: -17.3895, lon: -66.1568, querySuffix: "Cochabamba, Bolivia" },
+  { key: "lapaz", nombre: "La Paz", keywords: ["la paz", "lp", "el alto", "muela", "zona sur", "sanjuanino", "tembladeres", "calacoto", "chusispa", "achocalla"], lat: -16.4897, lon: -68.1193, querySuffix: "La Paz, Bolivia" },
+  { key: "santacruz", nombre: "Santa Cruz de la Sierra", keywords: ["santa cruz", "santa cruz de la sierra", "sbc", "equipetrol", "sirito", "av. tolerancia", "mercado los pocitos", "plan tres"], lat: -17.7833, lon: -63.1821, querySuffix: "Santa Cruz de la Sierra, Bolivia" },
+  { key: "sucre", nombre: "Sucre", keywords: ["sucre", "azurduy", "san felipe", "yotala", "marcapata"], lat: -19.0196, lon: -65.2619, querySuffix: "Sucre, Bolivia" },
+  { key: "oruro", nombre: "Oruro", keywords: ["oruro", "centro", "norte", "sur", "san felipe"], lat: -17.9673, lon: -67.1148, querySuffix: "Oruro, Bolivia" },
+  { key: "potosi", nombre: "Potosí", keywords: ["potosi", "potosí", "tupiza", "santa barbara", "llallagua", "villazón", "colcha k"], lat: -19.5836, lon: -65.7531, querySuffix: "Potosí, Bolivia" },
+  { key: "tarija", nombre: "Tarija", keywords: ["tarija", "yacuiba", "tomatas", "bermejo"], lat: -21.5359, lon: -64.7292, querySuffix: "Tarija, Bolivia" },
+  { key: "trinidad", nombre: "Trinidad", keywords: ["trinidad", "beni", "san jose de chiquitos", "riberalta", "yucanes"], lat: -14.8333, lon: -64.9000, querySuffix: "Trinidad, Beni, Bolivia" },
+  { key: "cobija", nombre: "Cobija", keywords: ["cobija", "norte amazonico", "puerto suarez", "madre de dios"], lat: -11.0333, lon: -68.7667, querySuffix: "Cobija, Bolivia" }
 ];
 
-window.PERU_CITIES = {};
-GEO_PERU_MUNICIPIOS.forEach(c => {
-  window.PERU_CITIES[c.key] = c;
+window.BOLIVIA_CITIES = {};
+GEO_BO_MUNICIPIOS.forEach(c => {
+  window.BOLIVIA_CITIES[c.key] = c;
 });
+window.GEO_BO_MUNICIPIOS = GEO_BO_MUNICIPIOS;
+
 
 // El icono oficial rojo se mantiene igual; el estado se comunica con un indicador de color.
 const garrafaSvgMarkerHtml = `
@@ -298,10 +283,13 @@ function formatearDistanciaTriangulada(distMetros) {
 window.normalizeCategoryCode = function(cat) {
   const c = String(cat || '').toLowerCase().trim();
   if (c.includes('gas') || c.includes('glp') || c.includes('garrafa') || c.includes('balon') || c.includes('balón')) return 'gas';
-  if (c.includes('agua') || c.includes('botell')) return 'agua';
   if (c.includes('deterg') || c.includes('limpieza')) return 'detergentes';
   if (c.includes('chatarra')) return 'chatarra';
   if (c.includes('papel') || c.includes('carton') || c.includes('cartón')) return 'papel';
+  if ((c.includes('botell') || c.includes('plastic') || c.includes('plástic') || c.includes('vidrio'))
+      && !c.includes('botellon') && !c.includes('botellón') && !c.includes('agua')) return 'botellas';
+  if (c.includes('agua') || c.includes('botell')) return 'agua';
+  if (c.includes('carbon') || c.includes('carbón') || c.includes('lena') || c.includes('leña')) return 'carbon';
   if (c.includes('fruta') || c.includes('verdur')) return 'frutas';
   return c || 'gas';
 };
@@ -326,7 +314,7 @@ function isOrderCategoryMatchingDriver(orderCategory, driverCatInput) {
 
 window.matchCityByNameOrRegion = function(cityName, regionName) {
   const text = `${cityName || ''} ${regionName || ''}`.toLowerCase();
-  const citiesObj = window.PERU_CITIES || {};
+  const citiesObj = window.BOLIVIA_CITIES || {};
   for (const key of Object.keys(citiesObj)) {
     const c = citiesObj[key];
     if (c.keywords && c.keywords.some(k => text.includes(k))) {
@@ -339,25 +327,22 @@ window.matchCityByNameOrRegion = function(cityName, regionName) {
 window.getCityMetroKeys = function(cityKey) {
   const norm = String(cityKey || '').toLowerCase().trim();
   if (!norm || norm === 'todos' || norm === 'all') return null;
-  if (norm === 'lima') {
-    return ['lima', 'callao', 'metropolitana'];
+  if (norm === 'lapaz') {
+    return ['lapaz', 'elalto', 'el alto'];
   }
-  if (norm === 'callao') {
-    return ['callao', 'lima'];
+  if (norm === 'santacruz') {
+    return ['santacruz', 'santa cruz de la sierra', 'sbc'];
   }
-  if (norm === 'puno' || norm === 'juliaca') {
-    return ['puno', 'juliaca'];
-  }
-  if (norm === 'tarapoto' || norm === 'moyobamba') {
-    return ['tarapoto', 'moyobamba', 'san martin'];
+  if (norm === 'trinidad') {
+    return ['trinidad', 'beni', 'riberalta'];
   }
   return [norm];
 };
 
 window.inferMainCityFromCoords = function(lat, lng) {
-  if (lat == null || lng == null || isNaN(lat) || isNaN(lng)) return 'lima';
-  const cities = Object.values(window.PERU_CITIES || {});
-  let closest = 'lima';
+  if (lat == null || lng == null || isNaN(lat) || isNaN(lng)) return 'cochabamba';
+  const cities = Object.values(window.BOLIVIA_CITIES || {});
+  let closest = 'cochabamba';
   let minDist = Infinity;
   for (const c of cities) {
     const d = (typeof calcularDistanciaMetros === 'function')
@@ -415,10 +400,15 @@ function obtenerIconoCategoriaMapa(catNombre) {
     badgeLabel = '♻️ Chatarra';
     badgeColor = '#00E676';
     iconContent = `<div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #00E676);"><i class="fa-solid fa-recycle" style="font-size: 36px; color: #00E676; animation: pulseGlow 1.2s infinite alternate;"></i></div>`;
-  } else if (c.includes('papel') || c.includes('cartón')) {
+  } else if (c.includes('papel') || c.includes('cartón') || c.includes('carton')) {
     badgeLabel = '📄 Papel';
     badgeColor = '#FFB300';
     iconContent = `<div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #FFB300);"><i class="fa-solid fa-box-open" style="font-size: 34px; color: #FFB300;"></i></div>`;
+  } else if ((c.includes('botell') || c.includes('plástic') || c.includes('plastico') || c.includes('vidrio'))
+             && !c.includes('botellon') && !c.includes('botellón') && !c.includes('agua')) {
+    badgeLabel = '🥤 Botellas';
+    badgeColor = '#00E5FF';
+    iconContent = `<div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #00E5FF);"><i class="fa-solid fa-bottle-dispenser" style="font-size: 34px; color: #00E5FF;"></i></div>`;
   } else if (c.includes('fruta') || c.includes('verdura')) {
     badgeLabel = '🍎 Frutas';
     badgeColor = '#FF5252';
@@ -427,7 +417,7 @@ function obtenerIconoCategoriaMapa(catNombre) {
     badgeLabel = '🧼 Detergente';
     badgeColor = '#E040FB';
     iconContent = `<div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #E040FB);"><i class="fa-solid fa-pump-soap" style="font-size: 34px; color: #E040FB;"></i></div>`;
-  } else if (c.includes('carbón') || c.includes('leña')) {
+  } else if (c.includes('carbón') || c.includes('carbon') || c.includes('leña') || c.includes('lena')) {
     badgeLabel = '🪵 Carbón';
     badgeColor = '#FF6D00';
     iconContent = `<div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #FF6D00);"><i class="fa-solid fa-fire" style="font-size: 34px; color: #FF6D00;"></i></div>`;
@@ -479,7 +469,7 @@ async function obtenerFichaChoferEnMemoria(userId, userData) {
       telefono_whatsapp: userData.whatsapp || userData.telefono || '',
       placa: userData.placa || 'Camión',
       categoria: userData.categoria || 'Gas GLP',
-      ciudad: userData.ciudad || (typeof AppState !== 'undefined' ? AppState.get('city') : 'lima')
+      ciudad: userData.ciudad || (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba')
     };
   }
 
@@ -1073,7 +1063,7 @@ function actualizarRepartidorEnMapa(data) {
   let priceHtml = '';
   if (rawPrice10kg && !isNaN(Number(rawPrice10kg)) && Number(rawPrice10kg) > 0) {
     const numPrice = Number(rawPrice10kg);
-    priceHtml = `<div style="margin:4px 0; background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.4); border-radius:8px; padding:3px 8px; display:inline-block;"><span style="color:#A7F3D0; font-size:10.5px; font-weight:700;">🔥 Balón 10 Kg:</span> <strong style="color:#22C55E; font-size:12.5px; font-weight:900;">S/ ${numPrice.toFixed(2)}</strong></div><br>`;
+    priceHtml = `<div style="margin:4px 0; background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.4); border-radius:8px; padding:3px 8px; display:inline-block;"><span style="color:#A7F3D0; font-size:10.5px; font-weight:700;">🔥 Balón 10 Kg:</span> <strong style="color:#22C55E; font-size:12.5px; font-weight:900;">Bs ${numPrice.toFixed(2)}</strong></div><br>`;
   }
 
   const premiumBannerHtml = isDriverPremium
@@ -1816,9 +1806,9 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
 }
 
 async function cambiarCiudadCapital(cityKey) {
-  const mun = GEO_PERU_MUNICIPIOS.find(m => m.key === cityKey)
-    || (window.PERU_CITIES && window.PERU_CITIES[cityKey])
-    || GEO_PERU_MUNICIPIOS[0];
+  const mun = GEO_BO_MUNICIPIOS.find(m => m.key === cityKey)
+    || (window.BOLIVIA_CITIES && window.BOLIVIA_CITIES[cityKey])
+    || GEO_BO_MUNICIPIOS[0];
 
   currentGpsLat = mun.lat;
   window.currentGpsLat = currentGpsLat;
@@ -1958,7 +1948,7 @@ async function transmitirUbicacionRepartidorServidorDB(lat, lng) {
               distribuidor_nombre: driver.nombre_completo || 'Repartidor GLP',
               categoria: driver.categoria || 'Gas GLP',
               titulo: driver.placa || 'Camión',
-              ciudad: driver.ciudad || (typeof AppState !== 'undefined' ? AppState.get('city') : 'lima'),
+              ciudad: driver.ciudad || (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba'),
               latitude: lat,
               longitude: lng,
               telefono: driver.telefono_whatsapp || '',
@@ -2279,13 +2269,13 @@ function initNotigasMap() {
   let isNationalView = false;
   if (!startLat || !startLng) {
     const savedCity = (typeof AppState !== 'undefined') ? AppState.get('city') : null;
-    const citiesObj = window.PERU_CITIES || {};
+    const citiesObj = window.BOLIVIA_CITIES || {};
     if (savedCity && citiesObj[savedCity]) {
       startLat = citiesObj[savedCity].lat;
       startLng = citiesObj[savedCity].lon || citiesObj[savedCity].lng;
     } else {
-      startLat = -12.0460;
-      startLng = -77.0306;
+      startLat = -17.3895;
+      startLng = -66.1568;
     }
   }
 

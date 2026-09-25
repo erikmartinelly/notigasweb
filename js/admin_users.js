@@ -328,68 +328,27 @@ function verificarBloqueoAppUsuario() {
 }
 
 // ==========================================
-// CONTROL FINANCIERO Y COMISIONES NOTIGAS
+// CONTROL FINANCIERO: NOTIGAS NO COBRA COMISIONES
 // ==========================================
 
 window.liquidarComisionesAdmin = async function(userId, name, currentSaldo) {
-  if (!userId) {
-    if (typeof showToast === 'function') showToast('Error', 'Falta el identificador del chofer.', 'error');
-    return;
+  if (typeof showToast === 'function') {
+    showToast('Notificación', 'NOTIGAS no cobra comisiones ni saldos a los repartidores. No hay nada que liquidar.', 'info', 5000);
+  } else {
+    alert('NOTIGAS no cobra comisiones ni saldos a los repartidores. No hay nada que liquidar.');
   }
-  const defaultMonto = currentSaldo > 0 ? currentSaldo : '';
-  const inputPrompt = prompt(`💰 Registrar Liquidación de Comisiones\nRepartidor: ${name}\nSaldo adeudado actual: S/ ${Number(currentSaldo || 0).toFixed(2)}\n\nIngresa el monto recibido vía Yape / Plin (deja en blanco para liquidar el saldo total):`, defaultMonto);
-
-  if (inputPrompt === null) return;
-
-  const monto = inputPrompt.trim() === '' ? null : parseFloat(inputPrompt);
-  if (inputPrompt.trim() !== '' && (isNaN(monto) || monto <= 0)) {
-    alert('Por favor ingresa un monto numérico válido.');
-    return;
-  }
-
-  const ref = prompt('Referencia o Código de Operación Yape/Plin (opcional):', 'Pago Yape') || 'Pago Yape';
-
-  if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Procesando liquidación de comisiones...');
-
-  try {
-    const { data, error } = await window.supabaseClient.rpc('rpc_liquidar_comisiones_chofer', {
-      p_driver_id: userId,
-      p_monto: monto,
-      p_referencia: ref
-    });
-
-    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-
-    if (error) {
-      console.error('Error liquidando comisiones:', error);
-      if (typeof showToast === 'function') showToast('Error', error.message || 'No se pudo registrar el pago.', 'error');
-      else alert('Error: ' + error.message);
-      return;
-    }
-
-    if (typeof showToast === 'function') {
-      showToast('✅ Pago Liquidado', `Se registró el abono de S/ ${data.abono} para ${name}. Nuevo saldo deudor: S/ ${data.saldo_nuevo}.`, 'success', 5000);
-    }
-
-    await descargarBaneadosDeSupabase();
-    if (typeof renderAdminVendorsList === 'function') renderAdminVendorsList();
-    if (typeof renderAdminDashboardKPIs === 'function') renderAdminDashboardKPIs();
-  } catch(e) {
-    if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-    console.error('Error inesperado al liquidar comisiones:', e);
-  }
+  return;
 };
-
-// Compatibilidad temporal con botones heredados del HTML: las tareas semanales
-// fueron retiradas del backend y estas acciones ya no ejecutan cambios.
+// Compatibilidad con botones heredados del HTML: el modelo financiero de NOTIGAS
+// no contempla comisiones, cortes, mora ni saldos para los repartidores.
 window.ejecutarCorteSemanalManualAdmin = function() {
   if (typeof showToast === 'function') {
-    showToast('Proceso retirado', 'El corte semanal ya no forma parte del modelo de comisiones. Se usa el ciclo fijo de 250 pedidos = S/ 50.', 'info', 5500);
+    showToast('Proceso retirado', 'NOTIGAS no cobra comisiones ni aplica cortes por mora. No existe este proceso.', 'info', 5500);
   }
 };
 
 window.ejecutarBaneoSemanalManualAdmin = function() {
   if (typeof showToast === 'function') {
-    showToast('Proceso retirado', 'El baneo semanal por mora fue eliminado. La suspensión se gestiona al alcanzar el límite del ciclo y se reactiva al validar el pago.', 'info', 6000);
+    showToast('Proceso retirado', 'NOTIGAS no aplica baneos por mora ni saldo pendiente. Solo hay sanciones administrativas.', 'info', 6000);
   }
 };
