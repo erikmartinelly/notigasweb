@@ -721,9 +721,9 @@ async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
     color_camion: repartidorObj.color_camion || '',
     tipo_plan: repartidorObj.tipo_plan || 'gratuito'
   };
-  // precio_balon_10kg queda obsoleto: el precio se acuerda directo entre las
-  // partes, asi que el cliente nunca lo escribe. La columna sigue existiendo
-  // en la BD por compatibilidad, pero siempre en NULL.
+  // El precio se acuerda directo entre las partes, asi que NOTIGAS no lo
+  // almacena: la columna precio_balon_10kg se elimino de la base de datos y el
+  // cliente nunca la escribe.
 
   const { data, error } = await window.supabaseClient.from('choferes_habilitados').upsert([payload], { onConflict: 'user_id' })
     .select('estado_verificacion')
