@@ -23,6 +23,7 @@ const grantMigration = read(grantPath);
 const privacy = read('js/order_privacy_layer.js');
 const state = read('js/state.js');
 const sw = read('sw.js');
+const index = read('index.html');
 
 assert(/create table if not exists public\.order_public_radar/i.test(migration), 'Existe radar sanitizado de pedidos');
 assert(/radius_m integer not null default 50 check \(radius_m = 50\)/i.test(migration), 'El radio público está fijado en 50 m');
@@ -56,10 +57,23 @@ assert(/grant execute on function public\.rpc_admin_list_assigned_orders\(\) to 
 assert(/Los datos del pedido se habilitan únicamente si lo tomas/.test(privacy), 'La interfaz explica la regla de privacidad');
 assert(/if \(!isDriverMode\(\)\) \{[\s\S]*clearRadarLayers\(\);[\s\S]*return;/i.test(privacy), 'Frontend no consulta radar desde interfaz de comprador');
 
-assert(/CACHE_VERSION = '138'/.test(state), 'State mantiene la versión de assets del HTML');
+// La version de assets se deriva de state.js y se compara en todas partes.
+// Asi el guard no se rompe en cada bump de version, que es como sobreviven tres
+// literales obsoletos (138/139) que dejaron de coincidir con el precache real.
+const versionMatch = state.match(/CACHE_VERSION\s*=\s*'(\d+)'/);
+assert(Boolean(versionMatch), 'State declara CACHE_VERSION');
+const assetVersion = versionMatch ? versionMatch[1] : null;
+assert(new RegExp(`notigas-cache-v${assetVersion}\\b`).test(sw), 'Service worker usa la misma versión de caché que State');
+assert(new RegExp(`\\./styles/main\\.css\\?v=${assetVersion}\\b`).test(sw), 'El precache sirve el CSS con la versión vigente');
+assert(new RegExp(`js/state\\.js\\?v=${assetVersion}\\b`).test(index), 'El HTML carga state.js con la versión vigente');
+
+// La capa de privacidad se carga bajo demanda: no debe competir en el precache
+// inicial, y si se versiona debe usar la misma version que el resto.
+const privacyPrecached = new RegExp(`order_privacy_layer\\.js\\?v=\\d+`).test(sw);
+assert(!privacyPrecached, 'La capa de privacidad no compite en el precache inicial');
+assert(!/order_privacy_layer\.js/.test(sw), 'La capa de privacidad no se precachea en ninguna forma');
+assert(!new RegExp(`\\?v=(?!${assetVersion}\\b)\\d+`).test(sw), 'El service worker no mezcla versiones de assets');
 assert(/loadOrderPrivacyModule/.test(state) && /order_privacy_layer\.js/.test(state), 'State conserva carga dinámica de la capa de privacidad');
-assert(/notigas-cache-v139/.test(sw), 'Service worker usa caché progresiva v139');
-assert(!/order_privacy_layer\.js\?v=138/.test(sw), 'La capa de privacidad no compite en el precache inicial');
 assert(/fetch\(event\.request\)/.test(sw), 'Los módulos usados se incorporan al cache progresivamente');
 
 console.log('\n🔐 Contrato de privacidad de pedidos verificado.');

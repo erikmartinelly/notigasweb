@@ -16,6 +16,21 @@ function loadPublicConfig() {
 
 const PUBLIC_CONFIG = loadPublicConfig();
 
+// La version esperada se deriva de la ultima migracion del repo que define el
+// contrato, no de un literal. Asi el guard sigue a main automaticamente en vez de
+// romperse cada vez que se publica una migracion de contrato nueva.
+function expectedSchemaContract() {
+  const dir = path.join(__dirname, '..', 'supabase', 'migrations');
+  const files = fs.readdirSync(dir).filter((f) => f.endsWith('.sql')).sort();
+  for (const file of files.reverse()) {
+    const src = fs.readFileSync(path.join(dir, file), 'utf8');
+    if (!/rpc_public_schema_contract/i.test(src)) continue;
+    const version = src.match(/'(20\d{6}_[a-z0-9_]+)'/);
+    if (version) return { version: version[1], file };
+  }
+  return { version: null, file: null };
+}
+
 async function request(endpoint, options = {}) {
   const url = `${PUBLIC_CONFIG.url}/rest/v1/${endpoint.replace(/^\//, '')}`;
   const headers = {
@@ -69,13 +84,16 @@ async function main() {
   });
 
   await test('Contrato de esquema vivo coincide con main', async () => {
+    const expected = expectedSchemaContract();
+    assert(Boolean(expected.version), 'El repo declara una migración de contrato con versión');
     const res = await request('rpc/rpc_public_schema_contract', {
       method: 'POST',
       body: '{}'
     });
     assert(res.ok && res.data && typeof res.data === 'object', `HTTP ${res.status}`);
     assert(res.data.ok === true, 'Contrato vivo no responde ok');
-    assert(res.data.version === '20260925_bolivia_v1', `Contrato vivo inesperado: ${res.data.version || 'sin versión'}`);
+    assert(res.data.version === expected.version,
+      `Contrato vivo ${res.data.version || 'sin versión'} no coincide con main ${expected.version || 'sin versión'} (${expected.file})`);
     assert(res.data.pais === 'BO', `El contrato vivo no declara Bolivia: ${res.data.pais}`);
     assert(res.data.ciudad_predeterminada === 'cochabamba', `Ciudad por defecto inesperada: ${res.data.ciudad_predeterminada}`);
     assert(res.data.moneda === 'BOB', `Moneda inesperada: ${res.data.moneda}`);

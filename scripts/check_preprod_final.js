@@ -36,11 +36,20 @@ const adminPaymentConfig = read('js/admin_payment_config.js');
 const intermediatePrivacyView = read('supabase/migrations/20260911020222_preprod_public_views_privacy.sql');
 const index = read('index.html');
 
-must(orders.includes("estado_servicio === 'suspendido_mora'"), 'UI legacy reconoce suspendido_mora');
-must(orders.includes("estado_servicio === 'suspendido_pago'"), 'UI legacy reconoce suspendido_pago');
+// Bolivia no cobra por pedido, asi que el motor de comisiones/mora dejo de existir:
+// ninguna funcion viva asigna suspendido_mora ni suspendido_pago. La UI legacy solo
+// debe reconocer los estados que el servidor aun puede emitir.
+must(orders.includes("estado_servicio === 'baneado'"), 'UI legacy reconoce baneado');
+must(orders.includes("estado_servicio === 'suspendido'"), 'UI legacy reconoce suspendido');
+must(orders.includes("estado_servicio === 'suspendido_mora'") === false, 'UI legacy no reintroduce suspendido_mora');
+must(orders.includes("estado_servicio === 'suspendido_pago'") === false, 'UI legacy no reintroduce suspendido_pago');
 must(orders.includes('secureRenderDriverOrdersList'), 'lista legacy delega al radar seguro');
+// El radar si mantiene los estados heredados a proposito: cubre defensivamente
+// todo lo que admite el CHECK de la BD, sin depender de quien lo asigno.
 must(privacy.includes("'suspendido_mora'"), 'radar seguro reconoce suspendido_mora');
 must(privacy.includes("'suspendido_pago'"), 'radar seguro reconoce suspendido_pago');
+must(privacy.includes("'baneado'"), 'radar seguro reconoce baneado');
+must(/driverCanTakeOrders = !suspended && state === 'activo'/.test(privacy), 'radar solo habilita Tomar con estado activo');
 must(privacy.includes('driverCanTakeOrders'), 'radar controla permiso de tomar pedidos');
 must(/tomarPedidoDesdeZonaPrivada\s*=\s*async/.test(privacy), 'acción Tomar revalida estado en servidor');
 must(/if \(!access\.canTake\)/.test(privacy), 'acción Tomar se detiene para cuentas suspendidas');
