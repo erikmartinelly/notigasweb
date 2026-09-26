@@ -16,7 +16,6 @@ function sincronizarSelectCiudadesBoliviaEnModal(selectEl, selectedVal) {
   }
 }
 window.sincronizarSelectCiudadesBoliviaEnModal = sincronizarSelectCiudadesBoliviaEnModal;
-window.sincronizarSelectCiudadesPeruEnModal = sincronizarSelectCiudadesBoliviaEnModal;
 
 /* ==========================================================================
    NOTIGAS - GESTIÓN DE PEDIDOS Y ALERTAS VECINALES (V105)
@@ -41,8 +40,8 @@ function abrirModalDriverOrders() {
     const selCity = document.getElementById('selectDriverModalCity');
     const curCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || 'cochabamba') : 'cochabamba';
     if (selCity) {
-      if (typeof sincronizarSelectCiudadesPeruEnModal === 'function') {
-        sincronizarSelectCiudadesPeruEnModal(selCity, curCity);
+      if (typeof sincronizarSelectCiudadesBoliviaEnModal === 'function') {
+        sincronizarSelectCiudadesBoliviaEnModal(selCity, curCity);
       }
       selCity.value = curCity;
     }

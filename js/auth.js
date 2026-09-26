@@ -5,13 +5,11 @@ function validarDocumentoBolivia(dni) {
   return clean.length >= 4 && clean.length <= 13;
 }
 window.validarDocumentoBolivia = validarDocumentoBolivia;
-window.validarDniPeru = validarDocumentoBolivia;
 
 function normalizarDocumentoBolivia(dni) {
   return (dni || '').toString().replace(/\D/g, '').slice(0, 13);
 }
 window.normalizarDocumentoBolivia = normalizarDocumentoBolivia;
-window.normalizarDniPeru = normalizarDocumentoBolivia;
 
 function validarTelefonoBolivia(tel) {
   let clean = (tel || '').toString().replace(/\D/g, '');
@@ -21,7 +19,6 @@ function validarTelefonoBolivia(tel) {
   return clean.length === 8 && (clean.startsWith('6') || clean.startsWith('7'));
 }
 window.validarTelefonoBolivia = validarTelefonoBolivia;
-window.validarTelefonoPeru = validarTelefonoBolivia;
 
 function normalizarTelefonoBolivia(tel) {
   let clean = (tel || '').toString().replace(/\D/g, '');
@@ -31,7 +28,6 @@ function normalizarTelefonoBolivia(tel) {
   return clean.slice(0, 8);
 }
 window.normalizarTelefonoBolivia = normalizarTelefonoBolivia;
-window.normalizarTelefonoPeru = normalizarTelefonoBolivia;
 
 /* ==========================================================================
    NOTIGAS - MÓDULO DE AUTENTICACIÓN & GOOGLE IDENTITY SERVICES (1-TAP SIGN-IN)

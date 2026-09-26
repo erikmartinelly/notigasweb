@@ -121,7 +121,7 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
     const cityNormalized = city.trim().toLowerCase();
     const cityKeys = typeof window.getCityMetroKeys === 'function' ? window.getCityMetroKeys(cityNormalized) : [cityNormalized];
     const { data, error } = await window.supabaseClient.from('choferes_publicos')
-      .select('id, nombre_completo, categoria, ciudad, telefono, descripcion, foto_url, estado_verificacion, created_at, color_camion, precio_balon_10kg')
+      .select('id, nombre_completo, categoria, ciudad, telefono, descripcion, foto_url, estado_verificacion, created_at, color_camion')
       .in('ciudad', cityKeys);
     if (error) {
       console.error('Error descargando choferes desde choferes_publicos:', error);
@@ -133,7 +133,7 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
         icon: typeof getIconForCategory === 'function' ? getIconForCategory(d.categoria) : '🚛',
         plate: d.placa || 'Placa registrada', products: d.productos || 'Servicios de reparto a domicilio',
         zones: d.zonas || 'zona local', schedule: d.schedule || 'Lunes a Sábado',
-        color_camion: d.color_camion || '', precio_balon_10kg: d.precio_balon_10kg || null,
+        color_camion: d.color_camion || '',
         active: true
       }));
       AppState.set('notigas_vendors_directory', list);

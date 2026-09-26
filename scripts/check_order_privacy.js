@@ -33,8 +33,9 @@ assert(/revoke all on function public\.rpc_get_driver_available_orders\(text,tex
 assert(/create policy pedidos_select_strict[\s\S]*user_id=.*auth\.uid[\s\S]*driver_id=.*auth\.uid/i.test(migration), 'La tabla pedidos solo expone propietario, repartidor asignado o admin');
 assert(/security_invoker=true/i.test(migration), 'Las vistas públicas usan SECURITY INVOKER');
 assert(/grant select on public\.rutas_repartidores_publicas to anon, authenticated/i.test(truckVisibilityMigration), 'Visitantes y compradores leen camiones públicos');
-assert(/grant select on public\.choferes_publicos to anon, authenticated/i.test(truckVisibilityMigration), 'Visitantes y compradores leen fichas públicas con precio');
-assert(/precio_balon_10kg/i.test(migration), 'La presencia pública incluye el precio del balón');
+assert(/grant select on public\.choferes_publicos to anon, authenticated/i.test(truckVisibilityMigration), 'Visitantes y compradores leen fichas públicas de repartidor');
+assert(!/precio_balon_10kg/i.test(read('js/vendors.js')), 'El directorio de repartidores no pide el precio del balón peruano');
+assert(!/precio_balon_10kg/i.test(read('js/map.js')), 'El mapa no lee ni escribe el precio del balón peruano');
 assert(/revoke all on public\.order_public_radar from anon/i.test(truckVisibilityMigration), 'Visitantes no leen el radar de pedidos');
 assert(/revoke all on public\.pedidos_publicos from anon/i.test(truckVisibilityMigration), 'Visitantes no leen pedidos');
 assert(/grant usage on schema private to authenticated/i.test(grantMigration), 'La policy puede resolver el helper del schema privado');

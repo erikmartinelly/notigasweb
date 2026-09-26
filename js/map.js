@@ -1956,7 +1956,6 @@ async function transmitirUbicacionRepartidorServidorDB(lat, lng) {
               latitude: lat,
               longitude: lng,
               telefono: driver.telefono_whatsapp || '',
-              precio_balon_10kg: driver.precio_balon_10kg || null,
               es_premium: Boolean(driver.es_premium),
               last_active: new Date().toISOString()
             },
@@ -2016,7 +2015,7 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
 
       // Proyección explícita de columnas necesarias incluyendo visto y subestado
       const ORDER_COLUMNS = 'id, user_id, categoria, tipo_solicitud, titulo, cantidad, direccion, telefono, estado, driver_id, ciudad, latitude, longitude, visto, subestado, created_at, updated_at';
-      const TRUCK_COLUMNS = 'id, user_id, distribuidor_nombre, categoria, titulo, ciudad, latitude, longitude, garrafas_agotadas, last_active, telefono, placa, productos, color_camion, precio_balon_10kg, es_premium, route_created_at, tipo_plan';
+      const TRUCK_COLUMNS = 'id, user_id, distribuidor_nombre, categoria, titulo, ciudad, latitude, longitude, garrafas_agotadas, last_active, telefono, placa, productos, color_camion, es_premium, route_created_at, tipo_plan';
 
       // Obtener Bounding Box del viewport visible con margen de 25% para pre-carga suave
       let bbox = null;
