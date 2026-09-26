@@ -8,11 +8,11 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-  <title>NOTIGAS: Noticias de Generadores de residuos seleccionados</title>
+  <title>NOTIGAS: Noticias de Generadores de residuos seleccionados - NOTIGAS</title>
 
-  <meta name="description" content="NOTIGAS - Plataforma en tiempo real con mapa interactivo y GPS. Recoge chatarra, papel y botellas, y pide gas GLP, agua y servicios de entrega en tu barrio en Cochabamba y ciudades de Bolivia.">
+  <meta name="description" content="NOTIGAS - Bolivia 🇧🇴 | 🗑️ Generadores de residuos | ♻️ Reciclaje | 🚛 Repartidores | 💧 Agua | 🧴 Detergentes | 🧂 Sal | 🔪 Afilado">
 
-  <meta name="keywords" content="notigas, bolivia, recoger chatarra, recoger papel carton, recoger botellas, reciclar cochabamba, pedir gas glp, camion de gas, pedidos en vivo, mapa repartidores, cochabamba, la paz, santa cruz">
+  <meta name="keywords" content="notigas, bolivia, recoger plastico, recoger papel carton, recoger chatarra, recoger botellas, recoger organico, reciclar cochabamba, camion de reciclaje, compra de agua, detergentes, sal, afilado de cuchillos, mapa repartidores, cochabamba, la paz, santa cruz">
 
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
 
@@ -39,19 +39,19 @@
 
   <meta property="og:site_name" content="NOTIGAS">
 
-  <meta property="og:title" content="NOTIGAS: Noticias de Generadores de residuos seleccionados">
+  <meta property="og:title" content="NOTIGAS: Noticias de Generadores de residuos seleccionados - NOTIGAS">
 
-  <meta property="og:description" content="NOTIGAS: Noticias de Generadores de residuos seleccionados. Mapa GPS en vivo, pedidos y repartidores de reciclaje en Bolivia.">
+  <meta property="og:description" content="NOTIGAS - Bolivia 🇧🇴 | 🗑️ Generadores de residuos | ♻️ Reciclaje | 🚛 Repartidores | 💧 Agua | 🧴 Detergentes | 🧂 Sal | 🔪 Afilado">
 
   <meta property="og:image" content="https://www.notigas.com/icons/Icon-512.png">
 
   <meta property="twitter:card" content="summary_large_image">
 
-  <meta property="twitter:title" content="NOTIGAS - Chatarra, Papel y Botellas en Bolivia">
+  <meta property="twitter:title" content="NOTIGAS: Noticias de Generadores de residuos seleccionados - NOTIGAS">
 
-  <meta property="twitter:description" content="Recolectores de chatarra, papel y botellas, y pedidos de gas GLP y agua en tu barrio en Bolivia.">
+  <meta property="twitter:description" content="NOTIGAS - Bolivia 🇧🇴 | 🗑️ Generadores de residuos | ♻️ Reciclaje | 🚛 Repartidores | 💧 Agua | 🧴 Detergentes | 🧂 Sal | 🔪 Afilado">
 
-  <meta property="twitter:image" content="https://www.notigas.com/icons/garrafa_red-512.png">
+  <meta property="twitter:image" content="https://www.notigas.com/icons/Icon-512.png">
 
   <!-- DATOS ESTRUCTURADOS SCHEMA.ORG (JSON-LD) PARA GOOGLE SEARCH -->
 
@@ -73,7 +73,7 @@
 
     "browserRequirements": "Requires JavaScript. Requires HTML5.",
 
-    "description": "Plataforma de geolocalización en tiempo real para conectar a vecinos con recolectores de chatarra, papel y botellas, y con repartidores de balones de gas GLP, agua potable y suministros esenciales en Bolivia.",
+      "description": "Plataforma de geolocalización en tiempo real para conectar a vecinos que publican material reciclable con repartidores que lo recogen, y para pedir agua, detergentes, sal y afilado en Bolivia.",
 
     "areaServed": {
 
@@ -111,11 +111,11 @@
 
   <link rel="manifest" href="manifest.json">
 
-  <link id="dynamicFavicon" rel="icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=142"/>
+  <link id="dynamicFavicon" rel="icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=143"/>
 
-  <link rel="icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=142"/>
+  <link rel="icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=143"/>
 
-  <link rel="shortcut icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=142"/>
+  <link rel="shortcut icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=143"/>
 
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
@@ -137,7 +137,7 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="styles/main.css?v=142">
+  <link rel="stylesheet" href="styles/main.css?v=143">
 
   <!-- SERVICIOS EXTERNOS -->
 
@@ -162,7 +162,7 @@
 
     <div class="brand">
 
-      <img src="icons/garrafa_red_clean.svg" class="brand-img" alt="Logo oficial rojo de NOTIGAS"> NOTIGAS
+      <img src="icons/camion_reciclaje.svg" class="brand-img" alt="Logo oficial de NOTIGAS: camión de reciclaje"> NOTIGAS
 
     </div>
 
@@ -231,6 +231,25 @@
     <div class="tab-content active" id="tab0">
 
       <div id="map"></div>
+
+      <!-- LETRERO CENTRAL DEL MAPA: explica qué publica cada casa y qué lleva el camión -->
+      <section class="mapa-letrero" id="mapaLetrero" aria-label="Leyenda del mapa de reciclaje">
+        <button type="button" class="mapa-letrero__toggle" id="mapaLetreroToggle"
+                aria-expanded="true" aria-controls="mapaLetreroBody">
+          <span class="mapa-letrero__punto" aria-hidden="true"></span>
+          <span class="mapa-letrero__titulo">♻️ Material cerca de ti</span>
+          <i class="fa-solid fa-chevron-up mapa-letrero__flecha" aria-hidden="true"></i>
+        </button>
+
+        <div class="mapa-letrero__body" id="mapaLetreroBody">
+          <p class="mapa-letrero__texto">
+            Cada casa publica lo que tiene. <strong>RECOGER</strong> es material que
+            recogemos de tu domicilio; <strong>PEDIDO</strong> es un producto que te llevamos.
+          </p>
+          <div class="mapa-letrero__grupo" id="mapaLetreroRecogida"></div>
+          <div class="mapa-letrero__grupo" id="mapaLetreroCompra"></div>
+        </div>
+      </section>
 
       <!-- Aviso lateral del pedido activo, sincronizado con Supabase -->
 
@@ -438,21 +457,25 @@
 
         <button class="cat-chip active"  id="auto-event-12" >🌍 Todos</button>
 
-        <button class="cat-chip"  id="auto-event-15" >♻️  Chatarra</button>
+        <button class="cat-chip"  id="auto-event-90" >♻️  Plástico</button>
 
         <button class="cat-chip"  id="auto-event-16" >📄 Papel / Cartón</button>
 
+        <button class="cat-chip"  id="auto-event-15" >⚙️  Chatarra</button>
+
         <button class="cat-chip"  id="auto-event-72" >🥤 Botellas Plástico / Vidrio</button>
 
-        <button class="cat-chip"  id="auto-event-13" >🔥 Gas GLP</button>
+        <button class="cat-chip"  id="auto-event-91" >🌿 Orgánico Seleccionado</button>
 
-        <button class="cat-chip"  id="auto-event-19" >🪵 Carbón / Leña</button>
-
-        <button class="cat-chip"  id="auto-event-14" >💧 Agua 20L</button>
+        <button class="cat-chip"  id="auto-event-17" >🍎 Frutas & Verduras</button>
 
         <button class="cat-chip"  id="auto-event-18" >🧽 Detergentes & Limpieza</button>
 
-        <button class="cat-chip"  id="auto-event-17" >🍎 Frutas & Verduras</button>
+        <button class="cat-chip"  id="auto-event-92" >🧂 Sal</button>
+
+        <button class="cat-chip"  id="auto-event-93" >🔪 Afilado de Cuchillos</button>
+
+        <button class="cat-chip"  id="auto-event-14" >💧 Agua Purificada 20L</button>
 
         <button class="cat-chip"  id="auto-event-20" >📦 Otros Pedidos</button>
 
@@ -874,25 +897,29 @@
 
         <label>Tipo de REPARTIDOR:</label>
 
-        <select id="inputDriverCat">
+        <select id="inputDriverCat" data-notigas-catalogo="todos">
 
-          <option value="chatarra">Chatarra</option>
+          <option value="plastico">♻️  Plástico</option>
 
-          <option value="papel">Papel / Cartón</option>
+          <option value="papel">📄 Papel / Cartón</option>
 
-          <option value="botellas">Botellas Plástico / Vidrio</option>
+          <option value="chatarra">⚙️  Chatarra</option>
 
-          <option value="gas">Gas GLP</option>
+          <option value="botellas">🥤 Botellas Plástico / Vidrio</option>
 
-          <option value="carbon">Carbón / Leña</option>
+          <option value="organico">🌿 Orgánico Seleccionado</option>
 
-          <option value="agua">Agua Purificada</option>
+          <option value="frutas">🍎 Frutas & Verduras</option>
 
-          <option value="detergentes">Detergentes & Limpieza</option>
+          <option value="detergentes">🧽 Detergentes & Limpieza</option>
 
-          <option value="frutas">Frutas & Verduras</option>
+          <option value="sal">🧂 Sal</option>
 
-          <option value="otros">Otros</option>
+          <option value="afilado">🔪 Afilado de Cuchillos</option>
+
+          <option value="agua">💧 Agua Purificada 20L</option>
+
+          <option value="otros">📦 Otros Pedidos</option>
 
         </select>
 
@@ -912,9 +939,9 @@
 
       <div class="form-group driver-color-field">
 
-        <label>¿Qué Vende / Oferta?:</label>
+        <label>¿Qué Recoge / Entrega?:</label>
 
-        <input type="text" id="inputDriverProductos" placeholder="Ej: Balones de gas GLP 10kg, reguladores, mangueras">
+        <input type="text" id="inputDriverProductos" placeholder="Ej: fundas, cajas, botellas PET, cartón, chatarra mixta">
 
       </div>
 
@@ -941,20 +968,8 @@
 
       </div>
 
-      <!-- PRECIO BALÓN DE GAS 10 KG -->
-      <div class="form-group driver-price-field">
-        <label>
-          <span>Precio balón de gas 10 kg</span>
-          <span>Visible al comprador</span>
-        </label>
-        <div style="position:relative; margin-top:6px;">
-          <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#FEF08A; font-weight:bold; font-size:15px;">Bs</span>
-          <input type="number" id="inputDriverPrecioBalon10kg" step="0.50" min="10" max="300" placeholder="Ej: 40.00" style="padding-left:38px; font-size:15px; font-weight:bold; color:#22C55E; background:#1E293B; border:1px solid #334155; border-radius:8px; width:100%; box-sizing:border-box;">
-        </div>
-        <small>Se muestra en tu ficha y en el mapa.</small>
-      </div>
-
-
+      <!-- NOTIGAS no intermedia fondos ni precios: el reparto se coordina
+           directamente entre la persona que publica y quien recoge o entrega. -->
 
       <div class="form-group">
 
@@ -1350,7 +1365,7 @@
 
           <ul class="ng-inline-73">
 
-            <li><strong>Pedidos Reales y Responsables:</strong> Solo publica pedidos que realmente vayas a comprar (Gas GLP, agua, servicios). Está prohibido emitir pedidos ficticios o duplicados de broma.</li>
+            <li><strong>Pedidos Reales y Responsables:</strong> Solo publica material que de verdad tengas en casa, o productos que realmente vayas a comprar (agua, detergentes, sal, afilado). Está prohibido emitir publicaciones ficticias o duplicadas de broma.</li>
 
             <li><strong>Ubicación Correcta:</strong> Asegúrate de que el pin del mapa coincida con tu domicilio exacto para facilitar la ruta del repartidor.</li>
 
@@ -1366,7 +1381,7 @@
 
           <ul class="ng-inline-73">
 
-            <li><strong>Transparencia de Tarifas:</strong> Respeta los precios oficiales y tarifas justas para el balón de gas GLP en Bolivia y en otros insumos.</li>
+            <li><strong>Transparencia de Tarifas:</strong> Publica a cuánto vendes tu material o cuánto cuestan los productos que pides. Las partes acuerdan el precio directamente.</li>
 
             <li><strong>Transmisión GPS Ética:</strong> Activa tu GPS en vivo únicamente cuando estés efectivamente en recorrido o prestando servicio en la zona.</li>
 
@@ -1531,7 +1546,7 @@
             2. Rol Exclusivo de Intermediación Tecnológica Neutral
           </strong>
           <p style="margin: 0 0 6px 0;">
-            NOTIGAS opera exclusivamente como un <strong>directorio digital, mapa interactivo con GPS en vivo y tablón comunitario</strong> que facilita el contacto voluntario y directo entre vecinos que necesitan balones de gas GLP, agua de mesa u otros servicios, y repartidores o distribuidoras independientes.
+            NOTIGAS opera exclusivamente como un <strong>directorio digital, mapa interactivo con GPS en vivo y tablón comunitario</strong> que facilita el contacto voluntario y directo entre vecinos que publican material reciclable y repartidores que lo recogen, y entre quien necesita agua, detergentes, sal o afilado y quien se lo lleva.
           </p>
           <p style="margin: 0; color: #94A3B8; font-size: 12px;">
             NOTIGAS <strong>NO es comercializadora de gas, NO es planta envasadora, NO posee vehículos de transporte ni mantiene relación laboral, de subordinación o de agencia</strong> con los repartidores. Los choferes y distribuidores prestan sus servicios de manera autónoma e independiente bajo su propia responsabilidad.
@@ -1548,22 +1563,22 @@
           </p>
           <ul style="margin: 0 0 0 16px; padding: 0; font-size: 11.5px; color: #FECACA; line-height: 1.5;">
             <li><strong>Precios y Pagos:</strong> El precio final pactado, el método de pago (efectivo, QR local como Simple o Banesco QR, transferencia o tarjeta) y la entrega de comprobantes de pago (factura o nota de venta) son acordados de forma directa y exclusiva entre el comprador y el repartidor. NOTIGAS no interviene, procesa, recauda ni custodia fondos.</li>
-            <li><strong>Calidad, Contenido y Peso de Productos:</strong> NOTIGAS no inspecciona físicamente los cilindros de gas GLP, bidones de agua u otros artículos, ni garantiza su contenido neto o estado. La responsabilidad civil, comercial y técnica corresponde exclusivamente al distribuidor o repartidor.</li>
+            <li><strong>Calidad, Contenido y Peso del Material:</strong> NOTIGAS no inspecciona físicamente el material publicado ni los productos entregados, ni garantiza su contenido neto, peso o estado. La responsabilidad civil, comercial y técnica corresponde exclusivamente a quien publica o entrega.</li>
             <li><strong>Despacho y Tiempos de Entrega:</strong> Los tiempos de llegada, demoras en ruta o cancelaciones son gestionados directamente entre las partes.</li>
             <li><strong>Discrepancias y Reclamaciones:</strong> Cualquier diferencia o reclamo derivado del servicio o producto debe ser canalizado directamente entre el comprador y el repartidor o distribuidor correspondiente.</li>
           </ul>
         </div>
 
-        <!-- 4. SEGURIDAD Y NORMATIVA DE HIDROCARBUROS (SUPERHIDROCARBUROS) -->
+        <!-- 4. SEGURIDAD, MANIPULO Y TRANSITO -->
         <div style="margin-bottom: 14px;">
           <strong style="color: #10B981; display: block; margin-bottom: 4px; font-size: 13px;">
-            4. Seguridad, Normativa Técnica de GLP y Tránsito
+            4. Seguridad, Manipulo y Tránsito
           </strong>
           <p style="margin: 0 0 6px 0;">
-            Los repartidores y distribuidores registrados son los únicos responsables de cumplir con las normativas legales y de seguridad vigentes en Bolivia, incluyendo las disposiciones de la <strong>Superintendencia de Hidrocarburos y Combustibles</strong> respecto a cilindros certificados, válvulas reglamentarias, pesaje exacto, condiciones mecánicas del vehículo y póliza SOAT vigente.
+            Las personas repartidoras registradas son las únicas responsables de cumplir con las normativas legales y de seguridad vigentes en Bolivia: condiciones mecánicas del vehículo, peso y estiba adecuados al material transportado, elementos de seguridad requeridos y póliza SOAT vigente.
           </p>
           <p style="margin: 0; color: #94A3B8; font-size: 12px;">
-            Se exhorta a los compradores a verificar el precinto de seguridad del balón de gas y exigir el respectivo comprobante de pago emitido por el distribuidor autorizado.
+            Quien recoge material debe confirmarlo sellado y separado para evitar derrames o roturas, y quien transporta agua, detergentes, sal o servicios debe señalizar la carga. Se exhorta a las partes a acordar el precio de forma directa y clara antes de entregar el material o el producto, y a emitir su propio comprobante.
           </p>
         </div>
 
@@ -1631,11 +1646,11 @@
 
       <div class="submenu-grid">
 
-        <div class="submenu-card"  id="auto-event-41" >
+        <div class="submenu-card"  id="auto-event-94" >
 
           <i class="fa-solid fa-recycle ng-inline-84"></i>
 
-          <span class="submenu-title">♻️  Chatarra</span>
+          <span class="submenu-title">♻️  Plástico</span>
 
         </div>
 
@@ -1647,6 +1662,14 @@
 
         </div>
 
+        <div class="submenu-card"  id="auto-event-41" >
+
+          <i class="fa-solid fa-gears ng-inline-84"></i>
+
+          <span class="submenu-title">⚙️  Chatarra</span>
+
+        </div>
+
         <div class="submenu-card"  id="auto-event-73" >
 
           <i class="fa-solid fa-bottle-dispenser ng-inline-83"></i>
@@ -1655,27 +1678,19 @@
 
         </div>
 
-        <div class="submenu-card"  id="auto-event-39" >
+        <div class="submenu-card"  id="auto-event-95" >
 
-          <img class="ng-inline-82" src="icons/garrafa_red_clean.svg" alt="Balón de gas GLP rojo de NOTIGAS">
+          <i class="fa-solid fa-seedling ng-inline-87"></i>
 
-          <span class="submenu-title">🔥 Balón de Gas</span>
-
-        </div>
-
-        <div class="submenu-card"  id="auto-event-45" >
-
-          <i class="fa-solid fa-fire-flame-curved ng-inline-87"></i>
-
-          <span class="submenu-title">🪵 Carbón / Leña</span>
+          <span class="submenu-title">🌿 Orgánico Seleccionado</span>
 
         </div>
 
-        <div class="submenu-card"  id="auto-event-40" >
+        <div class="submenu-card"  id="auto-event-43" >
 
-          <i class="fa-solid fa-bottle-water ng-inline-83"></i>
+          <i class="fa-solid fa-apple-whole ng-inline-85"></i>
 
-          <span class="submenu-title">💧 Agua 20L</span>
+          <span class="submenu-title">🍎 Frutas & Verduras</span>
 
         </div>
 
@@ -1687,11 +1702,27 @@
 
         </div>
 
-        <div class="submenu-card"  id="auto-event-43" >
+        <div class="submenu-card"  id="auto-event-96" >
 
-          <div class="submenu-icon">🍎</div>
+          <i class="fa-solid fa-mortar-pestle ng-inline-86"></i>
 
-          <span class="submenu-title">🍎 Frutas / Verduras</span>
+          <span class="submenu-title">🧂 Sal</span>
+
+        </div>
+
+        <div class="submenu-card"  id="auto-event-97" >
+
+          <i class="fa-solid fa-scissors ng-inline-86"></i>
+
+          <span class="submenu-title">🔪 Afilado de Cuchillos</span>
+
+        </div>
+
+        <div class="submenu-card"  id="auto-event-40" >
+
+          <i class="fa-solid fa-bottle-water ng-inline-83"></i>
+
+          <span class="submenu-title">💧 Agua Purificada 20L</span>
 
         </div>
 
@@ -1717,35 +1748,70 @@
 
       <div class="modal-title">
 
-        <span>📦 Ficha de Pedido</span>
+        <span id="modalPedidoTitle">📦 Ficha de Solicitud</span>
 
         <button class="btn-close"  id="auto-event-47" >✖</button>
 
       </div>
 
+      <!-- TIPO DE SOLICITUD: la casa ofrece material o el comprador pide producto -->
+
       <div class="form-group">
 
-        <label>Producto / Servicio Seleccionado:</label>
+        <label>¿Qué necesitas?</label>
+
+        <div id="tipoSolicitudToggle" style="display:flex; gap:8px; margin-top:4px;">
+
+          <button type="button" data-tipo="recogida"
+                  style="flex:1; padding:12px 8px; border-radius:10px; border:2px solid #22C55E; background:rgba(34,197,94,0.18); color:#BBF7D0; font-weight:900; font-size:12.5px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px;">
+            <span style="font-size:20px;">♻️</span>
+            <span>RECOGER MATERIAL</span>
+            <span style="font-size:10px; font-weight:600; opacity:0.85;">Tienes material en casa</span>
+          </button>
+
+          <button type="button" data-tipo="compra"
+                  style="flex:1; padding:12px 8px; border-radius:10px; border:2px solid #1E293B; background:rgba(30,41,59,0.6); color:#94A3B8; font-weight:900; font-size:12.5px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px;">
+            <span style="font-size:20px;">🛒</span>
+            <span>COMPRAR / PEDIR</span>
+            <span style="font-size:10px; font-weight:600; opacity:0.85;">Necesitas que te lo lleven</span>
+          </button>
+
+        </div>
+
+      </div>
+
+      <p id="tipoSolicitudAyuda"
+         style="margin:0 0 12px; padding:9px 11px; border-radius:8px; background:rgba(34,197,94,0.12); border-left:3px solid #22C55E; color:#BBF7D0; font-size:12px; line-height:1.45;">
+        Publica el material que tienes en casa. Los repartidores cercanos verán tu punto en el mapa y nullptrán a recogerlo. NOTIGAS no cobra por la recogida.
+      </p>
+
+      <div class="form-group">
+
+        <label id="labelCategoria">Material que tienes disponible:</label>
 
         <select id="selectCategoria" >
 
-          <option value="chatarra">♻️  Chatarra</option>
+          <option value="plastico">♻️  Plástico</option>
 
           <option value="papel">📄 Papel / Cartón</option>
 
+          <option value="chatarra">⚙️  Chatarra</option>
+
           <option value="botellas">🥤 Botellas Plástico / Vidrio</option>
 
-          <option value="gas">🔥 Balón de Gas GLP</option>
-
-          <option value="carbon">🪵 Carbón / Leña</option>
-
-          <option value="agua">💧 Botellón Agua Purificada 20L</option>
-
-          <option value="detergentes">🧽 Detergentes & Limpieza</option>
+          <option value="organico">🌿 Orgánico Seleccionado</option>
 
           <option value="frutas">🍎 Frutas & Verduras</option>
 
-          <option value="otros">📦 Encargos & Otros Pedidos</option>
+          <option value="detergentes">🧽 Detergentes & Limpieza</option>
+
+          <option value="sal">🧂 Sal</option>
+
+          <option value="afilado">🔪 Afilado de Cuchillos</option>
+
+          <option value="agua">💧 Agua Purificada 20L</option>
+
+          <option value="otros">📦 Otros Pedidos</option>
 
         </select>
 
@@ -1755,7 +1821,23 @@
 
         <label>¿Qué tipo de vendedor necesitas?:</label>
 
-        <input type="text" id="inputOrderOtrosDetalle" placeholder="Ej: sal, helado, afilador de cuchillos...">
+        <input type="text" id="inputOrderOtrosDetalle" placeholder="Ej: hielo, pan, abarrotes...">
+
+      </div>
+
+      <div class="form-group">
+
+        <label id="labelCantidad">¿Cuánto material tienes? (Ej: 3 bolsas, 1 quintillo):</label>
+
+        <input type="text" id="inputCantidad" maxlength="60" placeholder="Ej: 3 bolsas">
+
+      </div>
+
+      <div class="form-group">
+
+        <label>📝 Detalle o Referencia (Opcional):</label>
+
+        <input type="text" id="inputOrderDescripcion" maxlength="200" placeholder="Ej: está en la puerta trasera, se puede entrar">
 
       </div>
 
@@ -1775,7 +1857,7 @@
 
       </div>
 
-      <button class="btn-submit"  id="auto-event-48" ><i class="fa-solid fa-truck-fast ng-inline-89"></i> <img class="ng-inline-90" src="icons/garrafa_red_clean.svg" alt="Gas NOTIGAS"> Confirmar y Solicitar en Mapa Vivo</button>
+      <button class="btn-submit"  id="auto-event-48" ><i class="fa-solid fa-truck-fast ng-inline-89"></i> <img class="ng-inline-90" src="icons/camion_reciclaje.svg" alt="Camión NOTIGAS" style="vertical-align:middle;"> <span id="btnPedidoTexto">Publicar Recogida</span></button>
 
     </div>
 
@@ -2763,8 +2845,6 @@
 
     </div>
 
-  </div>
-
   <!-- MODAL LIGHTBOX PARA VER COMPROBANTE DE PAGO QR EN GRANDE -->
   <div class="modal" id="modalVoucherLightbox" style="display:none; z-index:20000; background:rgba(0,0,0,0.88); align-items:center; justify-content:center;">
     <div style="position:relative; max-width:92vw; max-height:92vh; background:#0F172A; border:2px solid #F59E0B; border-radius:12px; padding:14px; display:flex; flex-direction:column; align-items:center; box-shadow:0 8px 30px rgba(0,0,0,0.85);">
@@ -2810,34 +2890,34 @@
 
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3/dist/umd/supabase.min.js" integrity="sha384-l8ah+VgaWtk1mvOe9VC+OirC6qHFF4yH7l7mKRidV9MSti3E9F463bMp6ZVN4kuC" crossorigin="anonymous"></script>
 
-  <script defer src="js/notigas_bo.js?v=142"></script>
-  <script defer src="js/driver_icons.js?v=142"></script>
-  <script defer src="js/state.js?v=142"></script>
+  <script defer src="js/notigas_bo.js?v=143"></script>
+  <script defer src="js/driver_icons.js?v=143"></script>
+  <script defer src="js/state.js?v=143"></script>
 
-  <script defer src="js/ui.js?v=142"></script>
+  <script defer src="js/ui.js?v=143"></script>
 
-  <script defer src="/runtime-config.js?v=142"></script>
-  <script defer src="js/monitoring.js?v=142"></script>
-  <script defer src="js/supabase-config.js?v=142"></script>
+  <script defer src="/runtime-config.js?v=143"></script>
+  <script defer src="js/monitoring.js?v=143"></script>
+  <script defer src="js/supabase-config.js?v=143"></script>
 
-  <script defer src="js/device_security.js?v=142"></script>
-  <script defer src="js/voucher_ocr.js?v=142"></script>
+  <script defer src="js/device_security.js?v=143"></script>
+  <script defer src="js/voucher_ocr.js?v=143"></script>
 
-  <script defer src="js/auth.js?v=142"></script>
+  <script defer src="js/auth.js?v=143"></script>
 
-  <script defer src="js/vendors.js?v=142"></script>
+  <script defer src="js/vendors.js?v=143"></script>
 
-  <script defer src="js/map.js?v=142"></script>
+  <script defer src="js/map.js?v=143"></script>
 
-  <script defer src="js/map_search.js?v=142"></script>
+  <script defer src="js/map_search.js?v=143"></script>
 
-  <script defer src="js/map_gps.js?v=142"></script>
+  <script defer src="js/map_gps.js?v=143"></script>
 
-  <script defer src="js/orders.js?v=142"></script>
+  <script defer src="js/orders.js?v=143"></script>
 
-  <script defer src="js/app.js?v=142"></script>
+  <script defer src="js/app.js?v=143"></script>
 
-  <script defer src="js/events.js?v=142"></script>
+  <script defer src="js/events.js?v=143"></script>
 
 </body>
 

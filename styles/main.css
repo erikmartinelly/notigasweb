@@ -5873,6 +5873,188 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 .order-label strong { margin-top: 2px; color: #ff7620; font-size: 8px; }
 
+/* LETRERO CENTRAL DEL MAPA ---------------------------------------------------
+   Es lo primero que ve la persona al abrir la app: dice qué es cada pin.
+   Los chips se pintan con el color real de la categoría, así que la leyenda
+   y los pines no pueden desincronizarse. */
+.mapa-letrero {
+
+  position: absolute;
+
+  top: 12px;
+
+  left: 12px;
+
+  z-index: 1900;
+
+  width: 300px;
+
+  max-width: calc(100% - 24px);
+
+  background: rgba(6,32,24,.94);
+
+  border: 1px solid rgba(74,222,128,.35);
+
+  border-radius: 14px;
+
+  box-shadow: 0 10px 28px rgba(0,0,0,.45);
+
+  overflow: hidden;
+
+  backdrop-filter: blur(8px);
+
+}
+
+.mapa-letrero__toggle {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  width: 100%;
+
+  padding: 10px 12px;
+
+  background: transparent;
+
+  border: 0;
+
+  color: #ecfdf5;
+
+  font: inherit;
+
+  font-size: 13px;
+
+  font-weight: 800;
+
+  text-align: left;
+
+  cursor: pointer;
+
+}
+
+.mapa-letrero__punto {
+
+  width: 9px;
+
+  height: 9px;
+
+  border-radius: 50%;
+
+  background: #4ade80;
+
+  box-shadow: 0 0 0 0 rgba(74,222,128,.7);
+
+  animation: mapaLetreroLatido 2s infinite;
+
+  flex: 0 0 auto;
+
+}
+
+@keyframes mapaLetreroLatido {
+
+  0%   { box-shadow: 0 0 0 0 rgba(74,222,128,.7); }
+  70%  { box-shadow: 0 0 0 9px rgba(74,222,128,0); }
+  100% { box-shadow: 0 0 0 0 rgba(74,222,128,0); }
+
+}
+
+.mapa-letrero__titulo { flex: 1 1 auto; }
+
+.mapa-letrero__flecha {
+
+  font-size: 11px;
+
+  color: #6ee7b7;
+
+  transition: transform .2s ease;
+
+}
+
+.mapa-letrero[data-abierto="false"] .mapa-letrero__flecha { transform: rotate(180deg); }
+
+.mapa-letrero[data-abierto="false"] .mapa-letrero__body { display: none; }
+
+.mapa-letrero__body { padding: 0 12px 12px; }
+
+.mapa-letrero__texto {
+
+  margin: 0 0 10px;
+
+  color: #a7f3d0;
+
+  font-size: 11px;
+
+  line-height: 1.5;
+
+}
+
+.mapa-letrero__texto strong { color: #ffffff; }
+
+.mapa-letrero__grupo {
+
+  display: flex;
+
+  flex-wrap: wrap;
+
+  gap: 5px;
+
+  margin-top: 7px;
+
+}
+
+.mapa-letrero__chip {
+
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 4px;
+
+  padding: 3px 8px;
+
+  border-radius: 999px;
+
+  border: 1px solid currentColor;
+
+  background: rgba(255,255,255,.06);
+
+  font-size: 10px;
+
+  font-weight: 800;
+
+  white-space: nowrap;
+
+}
+
+.mapa-letrero__etiqueta-grupo {
+
+  width: 100%;
+
+  margin: 2px 0 0;
+
+  color: #6ee7b7;
+
+  font-size: 9px;
+
+  font-weight: 900;
+
+  letter-spacing: .8px;
+
+  text-transform: uppercase;
+
+}
+
+@media (max-width: 480px) {
+
+  .mapa-letrero { top: 8px; left: 8px; width: calc(100% - 16px); }
+
+  .mapa-letrero__texto { font-size: 10.5px; }
+
+}
+
 .notigas-trip-card {
 
   position: absolute;

@@ -541,14 +541,10 @@
     const theme = getDriverColorTheme(key, data.color_camion);
     const isPremium = false; // campo legado ignorado: no existe prioridad Premium
 
-    // Formatear precio de 10 Kg si está disponible
-    const rawPrice = data.precio_balon_10kg || data.precio;
-    let badgeContent = initials;
-    if (rawPrice && !isNaN(Number(rawPrice)) && Number(rawPrice) > 0) {
-      const numPrice = Number(rawPrice);
-      const priceFormatted = numPrice % 1 === 0 ? numPrice.toFixed(0) : numPrice.toFixed(1);
-      badgeContent = `${initials} • Bs ${priceFormatted}`;
-    }
+    // El avatar nunca muestra precios: NOTIGAS no intermedia fondos y el
+    // acuerdo econ\u00f3mico es directo entre las partes.
+    const badgeContent = initials;
+
 
     const truckSvg = generarSvgCamionDina({
       name: driverName,
@@ -611,15 +607,9 @@
     const theme = getDriverColorTheme(name, options.color);
     const isPremium = Boolean(options.es_premium);
 
-    const rawPrice = options.price || options.precio_balon_10kg;
-    let badgeText = initials;
-    let badgeCustomStyle = 'border-radius:50%; width:18px; height:18px; font-size:9.5px;';
-    if (rawPrice && !isNaN(Number(rawPrice)) && Number(rawPrice) > 0) {
-      const numPrice = Number(rawPrice);
-      const priceFormatted = numPrice % 1 === 0 ? numPrice.toFixed(0) : numPrice.toFixed(1);
-      badgeText = `Bs ${priceFormatted}`;
-      badgeCustomStyle = 'border-radius:8px; min-width:28px; width:auto; padding:0 3px; height:17px; font-size:8.5px; font-weight:900;';
-    }
+    // Sin badge de precio: el avatar solo lleva iniciales y color.
+    const badgeText = initials;
+    const badgeCustomStyle = 'border-radius:50%; width:18px; height:18px; font-size:9.5px;';
 
     const crownAvatarHtml = isPremium
       ? `<span style="position:absolute; top:-10px; left:2px; font-size:13px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.8)); z-index:3;">👑</span>`
@@ -780,7 +770,7 @@
   window.actualizarFaviconCamion = actualizarFaviconCamion;
 
   function restaurarFaviconDefault() {
-    const defaultHref = "icons/camion_reciclaje.svg?v=142";
+    const defaultHref = "icons/camion_reciclaje.svg?v=143";
     const favEl = document.getElementById('dynamicFavicon') || document.querySelector("link[rel*='icon']");
     if (favEl) {
       favEl.type = "image/svg+xml";

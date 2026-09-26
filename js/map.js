@@ -53,25 +53,26 @@ GEO_BO_MUNICIPIOS.forEach(c => {
 window.GEO_BO_MUNICIPIOS = GEO_BO_MUNICIPIOS;
 
 
-// El icono oficial rojo se mantiene igual; el estado se comunica con un indicador de color.
-const garrafaSvgMarkerHtml = `
+// Marcadores de estado (pendiente / visto / entregado). El icono ya no es el
+// balón de gas: es el camión de reciclaje, coherente con la identidad actual.
+const camionPendingMarkerHtml = `
   <div class="radar-marker-wrapper notigas-order-marker notigas-order-marker--pending">
     <div class="radar-pulse-ring"></div>
-    <img src="icons/garrafa_red_clean.svg" class="notigas-order-icon-img" alt="Pedido NOTIGAS pendiente">
+    <img src="icons/camion_reciclaje.svg" class="notigas-order-icon-img" alt="Pedido NOTIGAS pendiente">
     <span class="notigas-order-state-dot" aria-hidden="true"></span>
   </div>
 `;
 
-const garrafaYellowSvgMarkerHtml = `
+const camionSeenMarkerHtml = `
   <div class="notigas-order-marker notigas-order-marker--seen">
-    <img src="icons/garrafa_red_clean.svg" class="notigas-order-icon-img" alt="Pedido NOTIGAS visto">
+    <img src="icons/camion_reciclaje.svg" class="notigas-order-icon-img" alt="Pedido NOTIGAS visto">
     <span class="notigas-order-state-dot" aria-hidden="true"></span>
   </div>
 `;
 
-const garrafaGreenSvgMarkerHtml = `
+const camionDeliveredMarkerHtml = `
   <div class="notigas-order-marker notigas-order-marker--delivered">
-    <img src="icons/garrafa_red_clean.svg" class="notigas-order-icon-img" alt="Pedido NOTIGAS entregado">
+    <img src="icons/camion_reciclaje.svg" class="notigas-order-icon-img" alt="Pedido NOTIGAS entregado">
     <span class="notigas-order-state-dot" aria-hidden="true"></span>
   </div>
 `;
@@ -215,9 +216,9 @@ window.driverDemandMapState = window.driverDemandMapState || {
 // Variables para instancias de Iconos Leaflet
 let userLocationIcon = null;
 let deliveryPinIcon = null;
-let garrafaIcon = null;
-let garrafaYellowIcon = null;
-let garrafaGreenIcon = null;
+let camionPendingIcon = null;
+let camionSeenIcon = null;
+let camionDeliveredIcon = null;
 let truckIcon = null;
 let truckRadarBlueIcon = null;
 let reportedTruckIcon = null;
@@ -280,18 +281,39 @@ function formatearDistanciaTriangulada(distMetros) {
   return `${(distMetros / 1000).toFixed(1)} km de distancia`;
 }
 
+/* Normaliza cualquier etiqueta de categoría a un código del catálogo.
+   Refleja public.normalize_delivery_category() del servidor. Antes esta
+   función mapeaba "botellas" a "agua" y sus sinónimos de gas/carbon a un
+   catálogo que ya no los tiene. */
 window.normalizeCategoryCode = function(cat) {
   const c = String(cat || '').toLowerCase().trim();
-  if (c.includes('gas') || c.includes('glp') || c.includes('garrafa') || c.includes('balon') || c.includes('balón')) return 'gas';
-  if (c.includes('deterg') || c.includes('limpieza')) return 'detergentes';
-  if (c.includes('chatarra')) return 'chatarra';
+  const bo = window.NOTIGAS_BO;
+  const catalogo = (bo && bo.CATEGORIAS) ? bo.CATEGORIAS : [];
+
+  // 1. Código exacto.
+  if (bo && bo.CATEGORIAS_POR_CODIGO && bo.CATEGORIAS_POR_CODIGO[c]) return c;
+
+  // 2. Coincidencia por nombre visible, antes que los sinónimos.
+  for (const item of catalogo) {
+    const etiqueta = item.etiqueta.toLowerCase();
+    if (c && (etiqueta.includes(c) || c.includes(item.codigo))) return item.codigo;
+  }
+
+  // 3. Sinónimos heredados.
+  if (c.includes('chatarra') || c.includes('metal')) return 'chatarra';
   if (c.includes('papel') || c.includes('carton') || c.includes('cartón')) return 'papel';
-  if ((c.includes('botell') || c.includes('plastic') || c.includes('plástic') || c.includes('vidrio'))
-      && !c.includes('botellon') && !c.includes('botellón') && !c.includes('agua')) return 'botellas';
-  if (c.includes('agua') || c.includes('botell')) return 'agua';
-  if (c.includes('carbon') || c.includes('carbón') || c.includes('lena') || c.includes('leña')) return 'carbon';
+  if (c.includes('organico') || c.includes('orgánico')) return 'organico';
+  if (c.includes('botellon') || c.includes('botellón') || c.includes('agua')) return 'agua';
+  if (c.includes('botell') || c.includes('plastico') || c.includes('plástic') || c.includes('vidrio')) return 'botellas';
   if (c.includes('fruta') || c.includes('verdur')) return 'frutas';
-  return c || 'gas';
+  if (c.includes('deterg') || c.includes('limpieza')) return 'detergentes';
+  if (c === 'sal' || c.includes(' sal')) return 'sal';
+  if (c.includes('afilado') || c.includes('cuchillo')) return 'afilado';
+  // Gas, carbón y leña ya no son categorías: caen en la compra genérica.
+  if (c.includes('gas') || c.includes('glp') || c.includes('garrafa') || c.includes('balon') || c.includes('balón')
+      || c.includes('carbon') || c.includes('carbón') || c.includes('lena') || c.includes('leña')) return 'detergentes';
+
+  return catalogo.length ? catalogo[0].codigo : 'plastico';
 };
 
 window.isOrderCategoryMatchingDriver = function(orderCategory, driverCatInput) {
@@ -384,64 +406,51 @@ function getReportedTruckIcon(tipo) {
   });
 }
 
-function obtenerIconoCategoriaMapa(catNombre) {
+/* Pin del mapa por categoría. El color, el icono y la palabra clave salen
+   del catálogo canónico (NOTIGAS_BO.CATEGORIAS_POR_CODIGO) para que el pin
+   nunca vuelva a quedar pegado a un producto que ya no existe.
+
+   La diferencia clave para el repartidor: "RECOGER" es material que la casa
+   ofrece y hay que ir a buscar; "PEDIDO" es un producto que hay que llevar. */
+const ICONOS_FONTAWESOME_POR_CATEGORIA = {
+  plastico:    'fa-recycle',
+  papel:       'fa-newspaper',
+  chatarra:    'fa-gears',
+  botellas:    'fa-bottle-dispenser',
+  organico:    'fa-seedling',
+  frutas:      'fa-apple-whole',
+  detergentes: 'fa-pump-soap',
+  sal:         'fa-mortar-pestle',
+  afilado:     'fa-scissors',
+  agua:        'fa-bottle-water',
+  otros:       'fa-box'
+};
+
+function obtenerIconoCategoriaMapa(catNombre, tipoSolicitud) {
   if (typeof L === 'undefined') return null;
-  const c = (catNombre || '').toLowerCase();
+  const c = (catNombre || '').toLowerCase().trim();
 
-  let iconContent = '';
-  let badgeLabel = 'Gas GLP';
-  let badgeColor = '#FF1744';
+  // Código exacto del catálogo.
+  const bo = window.NOTIGAS_BO;
+  let cat = (bo && bo.CATEGORIAS_POR_CODIGO) ? bo.CATEGORIAS_POR_CODIGO[c] : null;
 
-  if (c.includes('agua')) {
-    badgeLabel = '💧 Agua';
-    badgeColor = '#00B0FF';
-    iconContent = `<div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #00B0FF);"><i class="fa-solid fa-bottle-water" style="font-size: 36px; color: #00B0FF; animation: pulseGlow 1.2s infinite alternate;"></i></div>`;
-  } else if (c.includes('chatarra')) {
-    badgeLabel = '♻️ Chatarra';
-    badgeColor = '#00E676';
-    iconContent = `<div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #00E676);"><i class="fa-solid fa-recycle" style="font-size: 36px; color: #00E676; animation: pulseGlow 1.2s infinite alternate;"></i></div>`;
-  } else if (c.includes('papel') || c.includes('cartón') || c.includes('carton')) {
-    badgeLabel = '📄 Papel';
-    badgeColor = '#FFB300';
-    iconContent = `<div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #FFB300);"><i class="fa-solid fa-box-open" style="font-size: 34px; color: #FFB300;"></i></div>`;
-  } else if ((c.includes('botell') || c.includes('plástic') || c.includes('plastico') || c.includes('vidrio'))
-             && !c.includes('botellon') && !c.includes('botellón') && !c.includes('agua')) {
-    badgeLabel = '🥤 Botellas';
-    badgeColor = '#00E5FF';
-    iconContent = `<div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #00E5FF);"><i class="fa-solid fa-bottle-dispenser" style="font-size: 34px; color: #00E5FF;"></i></div>`;
-  } else if (c.includes('fruta') || c.includes('verdura')) {
-    badgeLabel = '🍎 Frutas';
-    badgeColor = '#FF5252';
-    iconContent = `<div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #FF5252);"><i class="fa-solid fa-apple-whole" style="font-size: 34px; color: #FF5252;"></i></div>`;
-  } else if (c.includes('detergente') || c.includes('limpieza')) {
-    badgeLabel = '🧼 Detergente';
-    badgeColor = '#E040FB';
-    iconContent = `<div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #E040FB);"><i class="fa-solid fa-pump-soap" style="font-size: 34px; color: #E040FB;"></i></div>`;
-  } else if (c.includes('carbón') || c.includes('carbon') || c.includes('leña') || c.includes('lena')) {
-    badgeLabel = '🪵 Carbón';
-    badgeColor = '#FF6D00';
-    iconContent = `<div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #FF6D00);"><i class="fa-solid fa-fire" style="font-size: 34px; color: #FF6D00;"></i></div>`;
-  } else if (!c.includes('gas')) {
-    badgeLabel = '📦 Otros';
-    badgeColor = '#94A3B8';
-    iconContent = `<div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px #94A3B8);"><i class="fa-solid fa-box" style="font-size: 34px; color: #94A3B8;"></i></div>`;
-  } else {
-    // ESTÉTICA NOTIGAS ORDER (GAS - ICONO ROJO OFICIAL)
-    return L.divIcon({
-      className: 'notigas-order-icon',
-      html: `
-        <div class="order-marker" style="display: flex; flex-direction: column; align-items: center;">
-          <img src="icons/garrafa_red_clean.svg" style="width: 44px; height: 50px; filter: drop-shadow(0 4px 10px rgba(229, 57, 53, 0.75)); display: block;" alt="Balón de Gas NOTIGAS">
-          <div class="order-label" style="margin-top: 2px; background: #0F172A; color: #FFFFFF; border: 1.5px solid #FF1744; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 900; letter-spacing: 0.5px; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.5); text-shadow: 0 1px 3px rgba(0,0,0,0.9); -webkit-font-smoothing: antialiased;">
-            PEDIDO
-          </div>
-        </div>
-      `,
-      iconSize: [90, 82],
-      iconAnchor: [45, 58],
-      popupAnchor: [0, -55]
-    });
+  // Sin coincidencia exacta: se busca por nombre visible. Antes el orden de
+  // los if hacía que "Botellas Plástico" cayese en la rama de "plástico".
+  if (!cat) {
+    for (const item of (bo && bo.CATEGORIAS ? bo.CATEGORIAS : [])) {
+      const etiqueta = item.etiqueta.toLowerCase();
+      if (c && (etiqueta.includes(c) || c.includes(item.codigo))) { cat = item; break; }
+    }
   }
+
+  const esRecogida = (tipoSolicitud === 'recogida')
+    || (!tipoSolicitud && cat ? cat.tipo_solicitud === 'recogida' : false);
+
+  const badgeColor = cat ? cat.color : '#94A3B8';
+  const faIcon = ICONOS_FONTAWESOME_POR_CATEGORIA[cat ? cat.codigo : ''] || 'fa-box';
+  const badgeLabel = `${cat ? cat.icono : '📦'} ${esRecogida ? 'RECOGER' : 'PEDIDO'}`;
+
+  const iconContent = `<div style="position: relative; width: 44px; height: 50px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 12px ${badgeColor});"><i class="fa-solid ${faIcon}" style="font-size: 34px; color: ${badgeColor}; animation: pulseGlow 1.2s infinite alternate;"></i></div>`;
 
   const markerHtml = `
     <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; user-select: none;">
@@ -468,7 +477,7 @@ async function obtenerFichaChoferEnMemoria(userId, userData) {
       nombre_completo: userData.nombre || userData.full_name || 'Repartidor GLP',
       telefono_whatsapp: userData.whatsapp || userData.telefono || '',
       placa: userData.placa || 'Camión',
-      categoria: userData.categoria || 'Gas GLP',
+      categoria: userData.categoria || 'plastico',
       ciudad: userData.ciudad || (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba')
     };
   }
@@ -602,7 +611,7 @@ function renderOrderRadarsOnMap(orders) {
     const lat = Number(order.latitude ?? order.lat);
     const lng = Number(order.longitude ?? order.lng);
     const orderUnits = parseInt(order.cantidad, 10) || 1;
-    const orderCat = order.categoria || 'Gas GLP';
+    const orderCat = order.categoria || 'plastico';
     const orderBarrio = order.barrio_otb || order.direccion || '';
 
     let matchedCluster = null;
@@ -878,7 +887,7 @@ function renderReportedTrucksBuffer() {
   const isDriverUser = (u.role === 'repartidor') || ((typeof AppState !== 'undefined') && AppState.get('appMode') === 'driver');
 
   if (isDriverUser && typeof isOrderCategoryMatchingDriver === 'function') {
-    validTrucks = validTrucks.filter(t => isOrderCategoryMatchingDriver(t.cat || 'Gas GLP'));
+    validTrucks = validTrucks.filter(t => isOrderCategoryMatchingDriver(t.cat || 'plastico'));
   }
 
   validTrucks.forEach(t => {
@@ -896,14 +905,14 @@ function renderReportedTrucksBuffer() {
         <strong style="color:#EF4444; font-size:13px;"><i class="fa-solid fa-hand"></i> ¡VECINO SOLICITA ESPERA!</strong><br>
         <span style="font-size:11px; color:#CBD5E1;">🛑 Alerta "ESPÉRAME" emitida por: <strong>${typeof escapeHtmlStr === 'function' ? escapeHtmlStr(t.reporter || 'Un vecino') : 'Un vecino'}</strong></span><br>
         <span style="font-size:10px; color:#F87171; font-weight:700;">⏱️ ${timeText}</span><br>
-        <button style="margin-top:6px; background:linear-gradient(135deg, #FF6D00, #E65100); color:white; border:none; padding:5px 10px; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer;" data-action="abrirSubmenuPedidos">🛒 Pedir Balón de Gas / Servicio Aquí</button>
+        <button style="margin-top:6px; background:linear-gradient(135deg, #FF6D00, #E65100); color:white; border:none; padding:5px 10px; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer;" data-action="abrirSubmenuPedidos">🛒 Publicar Material / Pedir Aquí</button>
       </div>
     ` : `
       <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
         <strong style="color:#FF6D00; font-size:13px;"><i class="fa-solid fa-truck-fast"></i> Camión Oído / Visto en la Zona</strong><br>
         <span style="font-size:11px; color:#CBD5E1;">📢 Reportado por: <strong>${typeof escapeHtmlStr === 'function' ? escapeHtmlStr(t.reporter || 'Un vecino') : 'Un vecino'}</strong></span><br>
         <span style="font-size:10px; color:#00E676; font-weight:700;">⏱️ ${timeText}</span><br>
-        <button style="margin-top:6px; background:linear-gradient(135deg, #FF6D00, #E65100); color:white; border:none; padding:5px 10px; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer;" data-action="abrirSubmenuPedidos">🛒 Pedir Balón de Gas / Servicio Aquí</button>
+        <button style="margin-top:6px; background:linear-gradient(135deg, #FF6D00, #E65100); color:white; border:none; padding:5px 10px; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer;" data-action="abrirSubmenuPedidos">🛒 Publicar Material / Pedir Aquí</button>
       </div>
     `;
 
@@ -944,7 +953,7 @@ function renderActiveOrdersMap() {
         map.removeLayer(userMarker);
       }
 
-      const categoryIcon = obtenerIconoCategoriaMapa(order.categoria);
+      const categoryIcon = obtenerIconoCategoriaMapa(order.categoria, order.tipo_solicitud);
       if (!categoryIcon) return;
 
       const orderMarker = L.marker([lat, lng], {
@@ -1053,18 +1062,14 @@ function actualizarRepartidorEnMapa(data) {
   }
 
   // 2. Filtrar por categoría si el observador es un chofer (repartidores solo ven camiones de su rubro)
-  const driverCategoria = u.categoria || 'gas';
+  const driverCategoria = u.categoria || 'plastico';
   if (userRole === 'repartidor' && typeof isOrderCategoryMatchingDriver === 'function' && !isOrderCategoryMatchingDriver(data.categoria, driverCategoria)) {
      return;
   }
 
   // Sin ventaja de visibilidad por plan: todos los camiones activos se muestran inmediatamente.
 
-  let priceHtml = '';
-  if (rawPrice10kg && !isNaN(Number(rawPrice10kg)) && Number(rawPrice10kg) > 0) {
-    const numPrice = Number(rawPrice10kg);
-    priceHtml = `<div style="margin:4px 0; background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.4); border-radius:8px; padding:3px 8px; display:inline-block;"><span style="color:#A7F3D0; font-size:10.5px; font-weight:700;">🔥 Balón 10 Kg:</span> <strong style="color:#22C55E; font-size:12.5px; font-weight:900;">Bs ${numPrice.toFixed(2)}</strong></div><br>`;
-  }
+  // El popup no muestra precios: NOTIGAS no intermedia fondos ni precios.
 
   const premiumBannerHtml = isDriverPremium
     ? `<div style="display:inline-block; background:linear-gradient(135deg, #F59E0B, #D97706); color:#FFFFFF; font-size:10px; font-weight:900; letter-spacing:0.5px; padding:2px 8px; border-radius:10px; margin-bottom:4px; box-shadow:0 2px 6px rgba(245,158,11,0.5);">👑 REPARTIDOR VIP PREMIUM</div><br>`
@@ -1079,7 +1084,6 @@ function actualizarRepartidorEnMapa(data) {
       </div><br>
       <span style="font-size:13px; color:#FFFFFF; font-weight:800;">${safeNombre}</span><br>
       <span style="font-size:11px; color:#94A3B8;">${safeCategoria}</span><br>
-      ${priceHtml}
       ${safeTelefono ? `<a href="tel:${safeTelefono}" style="display:inline-block; margin-top:6px; font-size:11px; color:#1E293B; background:#FFD54F; padding:4px 10px; border-radius:12px; text-decoration:none; font-weight:bold;">📞 Llama: ${safeTelefono}</a>` : ''}
     </div>
   `;
@@ -1197,14 +1201,14 @@ function agregarPedidoVecinoEnMapa(order) {
   // Asignar el icono dependiendo del estado y categoría
   let currentIcon = null;
   if (order.estado === 'entregado') {
-     currentIcon = garrafaGreenIcon;
+     currentIcon = camionDeliveredIcon;
   } else if (order.visto === true || order.estado === 'visto') {
-     currentIcon = garrafaYellowIcon;
+     currentIcon = camionSeenIcon;
   } else if (typeof obtenerIconoCategoriaMapa === 'function') {
-     currentIcon = obtenerIconoCategoriaMapa(order.categoria);
+     currentIcon = obtenerIconoCategoriaMapa(order.categoria, order.tipo_solicitud);
   }
   if (!currentIcon) {
-     currentIcon = garrafaIcon;
+     currentIcon = camionPendingIcon;
   }
 
   // Si el usuario actual es REPARTIDOR, solo ver pedidos de SU MISMA CATEGORÍA
@@ -1259,7 +1263,7 @@ function agregarPedidoVecinoEnMapa(order) {
           </button>
           ${order.telefono ? `
           <button type="button" class="btn-quick-action btn-quick-whatsapp" 
-            data-action="abrirWhatsappDirecto" data-tel="${escapeFn(order.telefono)}" data-address="${escapeFn(order.direccion || order.barrio_otb || '')}" data-categoria="${escapeFn(order.categoria || 'gas')}" title="Chat directo por WhatsApp">
+            data-action="abrirWhatsappDirecto" data-tel="${escapeFn(order.telefono)}" data-address="${escapeFn(order.direccion || order.barrio_otb || '')}" data-categoria="${escapeFn(order.categoria || 'plastico')}" title="Chat directo por WhatsApp">
             <i class="fa-brands fa-whatsapp"></i> WhatsApp
           </button>
           ` : ''}
@@ -1280,7 +1284,7 @@ function agregarPedidoVecinoEnMapa(order) {
   } else {
     orderAction = `
       <button type="button" data-action="abrirSubmenuPedidos" class="btn-action" style="margin-top:6px; background:linear-gradient(135deg, #FF6D00, #E65100); color:white; border:none; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; width:100%;">
-        🛒 Pedir Balón de Gas / Servicio Aquí
+        🛒 Publicar Material / Pedir Aquí
       </button>`;
   }
 
@@ -1289,7 +1293,7 @@ function agregarPedidoVecinoEnMapa(order) {
       <strong style="color:#FF6D00; font-size:13px;">📦 Pedido ${isAssignedToDriver ? 'Asignado' : (isDriverView ? 'Disponible' : 'Vecinal')}</strong><br>
       ${nombreStr}
       ${emailStr}
-      <span class="order-popup-category">🏷️ ${escapeFn(order.categoria || 'Gas')} · ${escapeFn(order.cantidad || '1')} unidad(es)</span><br>
+      <span class="order-popup-category">🏷️ ${escapeFn(order.categoria || 'plastico')} · ${escapeFn(order.cantidad || '1')} unidad(es)</span><br>
       ${dirStr}
       ${telStr}
       ${orderAction}
@@ -1306,7 +1310,7 @@ function agregarPedidoVecinoEnMapa(order) {
             if (!error) {
               order.visto = true;
               if (neighborOrderMarkers[order.id]) {
-                neighborOrderMarkers[order.id].setIcon(garrafaYellowIcon);
+                neighborOrderMarkers[order.id].setIcon(camionSeenIcon);
               }
             }
           }).catch(e => console.warn(e));
@@ -1390,7 +1394,7 @@ window.actualizarPedidoEnMapa = function(order, eventType = 'UPDATE') {
     if (existingRadar) {
       existingRadar.setLatLng([lat, lng]);
     } else {
-      const safeCategory = typeof escapeHtmlStr === 'function' ? escapeHtmlStr(order.categoria || 'Gas') : 'Gas';
+      const safeCategory = typeof escapeHtmlStr === 'function' ? escapeHtmlStr(order.categoria || 'plastico') : 'plastico';
       const icon = L.divIcon({
         className: 'demand-order-radar-icon',
         html: `<div class="demand-radar" title="Pedido Activo de ${safeCategory} (Haz clic para ver)"><span></span><span></span><span></span><i></i></div>`,
@@ -1946,7 +1950,7 @@ async function transmitirUbicacionRepartidorServidorDB(lat, lng) {
             {
               user_id: localUserId,
               distribuidor_nombre: driver.nombre_completo || 'Repartidor GLP',
-              categoria: driver.categoria || 'Gas GLP',
+              categoria: driver.categoria || 'plastico',
               titulo: driver.placa || 'Camión',
               ciudad: driver.ciudad || (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba'),
               latitude: lat,
@@ -2011,7 +2015,7 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
       const tenMinsAgo = new Date(Date.now() - 10 * 60000).toISOString();
 
       // Proyección explícita de columnas necesarias incluyendo visto y subestado
-      const ORDER_COLUMNS = 'id, user_id, categoria, titulo, cantidad, direccion, telefono, estado, driver_id, ciudad, latitude, longitude, visto, subestado, created_at, updated_at';
+      const ORDER_COLUMNS = 'id, user_id, categoria, tipo_solicitud, titulo, cantidad, direccion, telefono, estado, driver_id, ciudad, latitude, longitude, visto, subestado, created_at, updated_at';
       const TRUCK_COLUMNS = 'id, user_id, distribuidor_nombre, categoria, titulo, ciudad, latitude, longitude, garrafas_agotadas, last_active, telefono, placa, productos, color_camion, precio_balon_10kg, es_premium, route_created_at, tipo_plan';
 
       // Obtener Bounding Box del viewport visible con margen de 25% para pre-carga suave
@@ -2227,23 +2231,23 @@ function initNotigasMap() {
     iconAnchor: [18, 48]
   });
 
-  garrafaIcon = L.divIcon({
-    className: 'garrafa-flashing-marker',
-    html: garrafaSvgMarkerHtml,
+  camionPendingIcon = L.divIcon({
+    className: 'camion-flashing-marker',
+    html: camionPendingMarkerHtml,
     iconSize: [44, 54],
     iconAnchor: [22, 54]
   });
 
-  garrafaYellowIcon = L.divIcon({
-    className: 'garrafa-flashing-marker-yellow',
-    html: garrafaYellowSvgMarkerHtml,
+  camionSeenIcon = L.divIcon({
+    className: 'camion-flashing-marker-seen',
+    html: camionSeenMarkerHtml,
     iconSize: [44, 54],
     iconAnchor: [22, 54]
   });
 
-  garrafaGreenIcon = L.divIcon({
-    className: 'garrafa-flashing-marker-green',
-    html: garrafaGreenSvgMarkerHtml,
+  camionDeliveredIcon = L.divIcon({
+    className: 'camion-flashing-marker-delivered',
+    html: camionDeliveredMarkerHtml,
     iconSize: [44, 54],
     iconAnchor: [22, 54]
   });

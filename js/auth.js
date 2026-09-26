@@ -725,10 +725,9 @@ async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
     color_camion: repartidorObj.color_camion || '',
     tipo_plan: repartidorObj.tipo_plan || 'gratuito'
   };
-  if (repartidorObj.precio_balon_10kg !== undefined && repartidorObj.precio_balon_10kg !== null && repartidorObj.precio_balon_10kg !== '') {
-    const pNum = parseFloat(repartidorObj.precio_balon_10kg);
-    if (!isNaN(pNum)) payload.precio_balon_10kg = pNum;
-  }
+  // precio_balon_10kg queda obsoleto: el precio se acuerda directo entre las
+  // partes, asi que el cliente nunca lo escribe. La columna sigue existiendo
+  // en la BD por compatibilidad, pero siempre en NULL.
 
   const { data, error } = await window.supabaseClient.from('choferes_habilitados').upsert([payload], { onConflict: 'user_id' })
     .select('estado_verificacion')
@@ -797,13 +796,13 @@ async function guardarRegistroUnico() {
   if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
 
   if (currentSelectedRole === 'driver') {
-    const nombreNegocio = (document.getElementById('regNombreNegocio')?.value || '').trim() || 'Repartidor Gas GLP';
+    const nombreNegocio = (document.getElementById('regNombreNegocio')?.value || '').trim() || 'Recolector NOTIGAS';
     const whatsapp = (document.getElementById('regWhatsapp')?.value || '').trim();
     const placa = (document.getElementById('regPlaca')?.value || '').trim();
-    const categoria = (document.getElementById('regCategoriaNegocio')?.value || 'gas').trim();
+    const categoria = (document.getElementById('regCategoriaNegocio')?.value || 'plastico').trim();
 
     let productos = 'Varios';
-    if (categoria === 'gas') productos = 'Balones de Gas GLP 10kg';
+    if (categoria === 'plastico') productos = 'Recolección de material reciclable';
     else if (categoria === 'detergentes') productos = 'Detergentes y Productos de Limpieza';
     else if (categoria === 'chatarra') productos = 'Compra de Chatarra y Metales';
     else if (categoria === 'papel') productos = 'Papel, Cartón y Reciclaje';
@@ -910,13 +909,12 @@ async function iniciarSesionRepartidor() {
   const whatsapp = (document.getElementById('inputDriverTelRef')?.value || '').trim();
   const plate = (document.getElementById('inputDriverPlate')?.value || '').trim().toUpperCase();
   const dni = (document.getElementById('inputDriverDni')?.value || '').trim().replace(/[^0-9]/g, '');
-  const categoria = (document.getElementById('inputDriverCat')?.value || 'gas').trim();
+  const categoria = (document.getElementById('inputDriverCat')?.value || 'plastico').trim();
   const productosRaw = (document.getElementById('inputDriverProductos')?.value || '').trim();
   const servicios = leerServiciosRepartidor();
   const productos = fusionarServiciosEnProductos(productosRaw, servicios);
   const schedule = (document.getElementById('inputDriverSchedule')?.value || '').trim();
   const colorCamion = (document.getElementById('inputDriverTruckColor')?.value || '').trim();
-  const precio10kgRaw = (document.getElementById('inputDriverPrecioBalon10kg')?.value || '').trim();
 
   if (!nombreNegocio || !whatsapp || !plate || (!productosRaw && !servicios.length)) {
     if (typeof showToast === 'function') showToast('⚠️ Campos Requeridos', 'Por favor completa todos los campos requeridos.', 'warning', 2000);
@@ -1035,7 +1033,6 @@ async function iniciarSesionRepartidor() {
     schedule: schedule,
     ciudad: ciudad,
     color_camion: colorCamion,
-    precio_balon_10kg: precio10kgRaw !== '' ? parseFloat(precio10kgRaw) : null,
     user_id: existingUserId,
     tipo_plan: 'sin_comision',
     es_premium: false
@@ -1616,7 +1613,7 @@ async function migrarDatosAntiguosARepartidor() {
             nombre: driverRow.nombre_completo || current.nombre || 'Repartidor',
             whatsapp: driverRow.telefono_whatsapp || '',
             placa: driverRow.placa || '',
-            categoria: driverRow.categoria || 'gas',
+            categoria: driverRow.categoria || 'plastico',
             productos: driverRow.productos || '',
             zonas: driverRow.zonas || '',
             schedule: driverRow.schedule || '',
@@ -1648,11 +1645,11 @@ async function migrarDatosAntiguosARepartidor() {
 
     const repartidorData = {
       role: 'repartidor',
-      nombre: driverProfile.nombre || driverProfile.name || 'Repartidor Gas GLP',
+      nombre: driverProfile.nombre || driverProfile.name || 'Recolector NOTIGAS',
       whatsapp: driverProfile.whatsapp || '',
       placa: driverProfile.placa || driverProfile.plate || '',
-      categoria: driverProfile.categoria || driverProfile.category || 'gas',
-      productos: driverProfile.productos || driverProfile.products || 'Balones de Gas GLP 10kg',
+      categoria: driverProfile.categoria || driverProfile.category || 'plastico',
+      productos: driverProfile.productos || driverProfile.products || 'Recolección de material reciclable',
       zonas: driverProfile.zonas || driverProfile.zones || 'Calles y zonas de cobertura vecinal',
       schedule: driverProfile.schedule || 'Lunes a Sábado: 07:00 a 18:00',
       ciudad: driverProfile.ciudad || AppState.get('city') || 'cochabamba',
@@ -2483,7 +2480,7 @@ async function cargarPerfilChoferEnModal() {
 
     const { data: driverRow, error } = await window.supabaseClient
       .from('choferes_habilitados')
-      .select('id, user_id, nombre_completo, telefono_whatsapp, placa, dni, categoria, productos, schedule, ciudad, color_camion, precio_balon_10kg, estado_servicio')
+      .select('id, user_id, nombre_completo, telefono_whatsapp, placa, dni, categoria, productos, schedule, ciudad, color_camion, estado_servicio')
       .eq('user_id', userId)
       .maybeSingle();
 
@@ -2496,7 +2493,6 @@ async function cargarPerfilChoferEnModal() {
     const inputCat = document.getElementById('inputDriverCat');
     const inputProd = document.getElementById('inputDriverProductos');
     const inputCiudad = document.getElementById('inputDriverCiudad');
-    const inputPrecio10kg = document.getElementById('inputDriverPrecioBalon10kg');
 
     if (inputNombre && driverRow.nombre_completo) inputNombre.value = driverRow.nombre_completo;
     if (inputTel && driverRow.telefono_whatsapp) inputTel.value = driverRow.telefono_whatsapp;
@@ -2512,9 +2508,6 @@ async function cargarPerfilChoferEnModal() {
       aplicarServiciosEnFormulario(driverRow.productos);
     }
     if (inputCiudad && driverRow.ciudad) inputCiudad.value = driverRow.ciudad;
-    if (inputPrecio10kg && driverRow.precio_balon_10kg != null) {
-      inputPrecio10kg.value = driverRow.precio_balon_10kg;
-    }
 
     if (driverRow.color_camion && typeof seleccionarColorCamionModal === 'function') {
       seleccionarColorCamionModal(driverRow.color_camion);

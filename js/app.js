@@ -10,7 +10,7 @@ window.cambiarModoRolUsuario = function(targetMode) {
     userData.role = 'repartidor';
     if (!userData.nombre) userData.nombre = 'Repartidor de Pruebas';
     if (!userData.telefono) userData.telefono = '70123456';
-    if (!userData.categoria) userData.categoria = 'Gas GLP';
+    if (!userData.categoria) userData.categoria = 'plastico';
     if (!userData.placa) userData.placa = 'TEST-01';
     if (!userData.ciudad) userData.ciudad = (AppState.get('city') || 'cochabamba');
     userData.hasDriverProfile = true;
@@ -28,7 +28,7 @@ window.cambiarModoRolUsuario = function(targetMode) {
     if (typeof setAppMode === 'function') setAppMode('buyer', true);
 
     if (typeof showToast === 'function') {
-      showToast('🛍️ Modo Comprador Activado', 'Ahora puedes pedir balones de gas, ver el mapa y los repartidores cercanos.', 'info', 4000);
+      showToast('♻️ Modo Comprador Activado', 'Publica material para recoger y ve quién lo busca cerca de ti.', 'info', 4000);
     }
   }
 
@@ -414,26 +414,34 @@ window.pausarRecorridoRepartidor = async function(options = {}) {
   return true;
 };
 
+/* Icono HTML de la categoría. Usa el mismo catálogo que el mapa para que un
+   pedido muestre el mismo color e icono en la tarjeta, en la notificación y
+   en el pin. */
+const CATEGORIA_ICONO_FONTAWESOME = {
+  plastico:    'fa-recycle',
+  papel:       'fa-newspaper',
+  chatarra:    'fa-gears',
+  botellas:    'fa-bottle-dispenser',
+  organico:    'fa-seedling',
+  frutas:      'fa-apple-whole',
+  detergentes: 'fa-pump-soap',
+  sal:         'fa-mortar-pestle',
+  afilado:     'fa-scissors',
+  agua:        'fa-bottle-water',
+  otros:       'fa-box'
+};
+
 function obtenerIconoHtmlPorCategoria(catNombre) {
-  const c = (catNombre || '').toLowerCase();
-  if (c.includes('agua')) {
-    return `<i class="fa-solid fa-bottle-water" style="color:#00B0FF; font-size:22px; vertical-align:middle; margin-right:6px;"></i>`;
-  } else if (c.includes('chatarra')) {
-    return `<i class="fa-solid fa-recycle" style="color:#00E676; font-size:22px; vertical-align:middle; margin-right:6px;"></i>`;
-  } else if (c.includes('papel') || c.includes('cartón') || c.includes('carton')) {
-    return `<i class="fa-solid fa-box-open" style="color:#FFB300; font-size:22px; vertical-align:middle; margin-right:6px;"></i>`;
-  } else if (c.includes('botella') || c.includes('plástico') || c.includes('plastico') || c.includes('vidrio')) {
-    return `<i class="fa-solid fa-bottle-dispenser" style="color:#00E5FF; font-size:22px; vertical-align:middle; margin-right:6px;"></i>`;
-  } else if (c.includes('fruta') || c.includes('verdura')) {
-    return `<i class="fa-solid fa-apple-whole" style="color:#FF5252; font-size:22px; vertical-align:middle; margin-right:6px;"></i>`;
-  } else if (c.includes('detergente') || c.includes('limpieza')) {
-    return `<i class="fa-solid fa-pump-soap" style="color:#E040FB; font-size:22px; vertical-align:middle; margin-right:6px;"></i>`;
-  } else if (c.includes('carbón') || c.includes('carbon') || c.includes('leña') || c.includes('lena')) {
-    return `<i class="fa-solid fa-fire" style="color:#FF6D00; font-size:22px; vertical-align:middle; margin-right:6px;"></i>`;
-  } else if (!c.includes('gas')) {
-    return `<i class="fa-solid fa-box" style="color:#94A3B8; font-size:22px; vertical-align:middle; margin-right:6px;"></i>`;
-  }
-  return `<img src="icons/garrafa_red_clean.svg" style="width:24px; height:24px; vertical-align:middle; margin-right:6px; filter:drop-shadow(0 0 4px rgba(255, 23, 68, 0.7));" alt="Gas GLP NOTIGAS">`;
+  const c = String(catNombre || '').toLowerCase().trim();
+  const bo = window.NOTIGAS_BO;
+  const codigo = (typeof window.normalizeCategoryCode === 'function')
+    ? window.normalizeCategoryCode(catNombre)
+    : c;
+  const color = (bo && bo.CATEGORIAS_POR_CODIGO && bo.CATEGORIAS_POR_CODIGO[codigo])
+    ? bo.CATEGORIAS_POR_CODIGO[codigo].color
+    : '#94A3B8';
+  const faIcon = CATEGORIA_ICONO_FONTAWESOME[codigo] || 'fa-box';
+  return `<i class="fa-solid ${faIcon}" style="color:${color}; font-size:22px; vertical-align:middle; margin-right:6px;"></i>`;
 }
 
 /* PURGA AUTOMÁTICA DE BASE DE DATOS LOCAL Y MEMORIA PARA EVITAR COLAPSO */
@@ -457,14 +465,14 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
           color: uData.color_camion
         });
       } else {
-        favEl.href = "favicon.svg?v=142";
+        favEl.href = "favicon.svg?v=143";
       }
       document.title = "🚛 DISTRIBUIDOR OFICIAL - NOTIGAS en Vivo";
     } else {
       if (typeof window.restaurarFaviconDefault === 'function') {
         window.restaurarFaviconDefault();
       } else {
-        favEl.href = "icons/camion_reciclaje.svg?v=142";
+        favEl.href = "icons/camion_reciclaje.svg?v=143";
       }
       document.title = "NOTIGAS: Noticias de Generadores de residuos seleccionados";
     }
@@ -472,46 +480,52 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
   }
 
   if (estado === 'asignado') {
-    favEl.href = "icons/camion_3d_rojo.svg?v=142";
+    favEl.href = "icons/camion_3d_rojo.svg?v=143";
     document.title = "🚚 Pedido en Camino: Repartidor Asignado - NOTIGAS";
     return;
   }
 
-  const cat = (categoria || '').toLowerCase();
   const getSvgUrl = (svgContent) => "data:image/svg+xml;utf8," + encodeURIComponent(svgContent);
 
   let color = "#FF1744"; // pendiente = rojo
   if (estado === 'visto') color = "#FFC107"; // visto = amarillo
   else if (estado === 'cancelado' || estado === 'entregado') color = "#00E676"; // final = verde
 
-  if (cat.includes('gas')) {
-    favEl.href = "icons/garrafa_red-192.png?v=142";
-    document.title = "🔥 Pedido Activo: Garrafa de Gas GLP - NOTIGAS";
-  } else if (cat.includes('detergente') || cat.includes('limpieza')) {
-    favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="${color}"/><path d="M40 10h20v15H40V10zm25 25H35v60h30V35zm-15 15c5 0 9 4 9 9s-4 9-9 9-9-4-9-9 4-9 9-9z" fill="#FFF"/></svg>`);
-    document.title = "🧼 Pedido Activo: Detergentes - NOTIGAS";
-  } else if (cat.includes('agua')) {
-    favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="${color}"/><path d="M50 15 C30 45, 20 60, 20 70 A30 30 0 0 0 80 70 C80 60, 70 45, 50 15 Z" fill="#FFF"/></svg>`);
-    document.title = "💧 Pedido Activo: Agua 20L - NOTIGAS";
-  } else if (cat.includes('chatarra')) {
-    favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="${color}"/><path d="M50 15 L65 40 H35 Z M20 50 L35 75 H5 Z M80 50 L95 75 H65 Z" fill="#FFF"/></svg>`);
-    document.title = "♻️ Pedido Activo: Chatarra - NOTIGAS";
-  } else if (cat.includes('papel')) {
-    favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="${color}"/><rect x="25" y="20" width="50" height="60" rx="4" fill="#FFF"/><line x1="35" y1="35" x2="65" y2="35" stroke="#0288D1" stroke-width="4"/><line x1="35" y1="50" x2="65" y2="50" stroke="#0288D1" stroke-width="4"/><line x1="35" y1="65" x2="55" y2="65" stroke="#0288D1" stroke-width="4"/></svg>`);
-    document.title = "📄 Pedido Activo: Papel / Cartón - NOTIGAS";
-  } else if (cat.includes('botellas') || cat.includes('botella') || cat.includes('plástico') || cat.includes('plastico') || cat.includes('vidrio')) {
-    favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="${color}"/><path d="M40 10h20v12H40z" fill="#FFF"/><path d="M38 22h24l-4 12v42a6 6 0 0 1-6 6H48a6 6 0 0 1-6-6V34z" fill="#FFF"/></svg>`);
-    document.title = "🥤 Pedido Activo: Botellas Plástico / Vidrio - NOTIGAS";
-  } else if (cat.includes('frutas') || cat.includes('verduras')) {
-    favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="${color}"/><path d="M50 30 C30 30, 20 50, 20 65 C20 80, 35 90, 50 90 C65 90, 80 80, 80 65 C80 50, 70 30, 50 30 Z" fill="#FFF"/><path d="M50 15 Q60 10 65 25" stroke="#4CAF50" stroke-width="6" fill="none"/></svg>`);
-    document.title = "🍎 Pedido Activo: Frutas / Verduras - NOTIGAS";
-  } else if (cat.includes('carbón') || cat.includes('carbon') || cat.includes('leña') || cat.includes('lena')) {
-    favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="${color}"/><path d="M50 15 C30 45, 60 55, 35 85 C65 85, 80 60, 50 15 Z" fill="#FFF"/></svg>`);
-    document.title = "🪵 Pedido Activo: Carbón / Leña - NOTIGAS";
-  } else {
-    favEl.href = getSvgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="${color}"/><rect x="20" y="35" width="60" height="45" fill="#FFF"/><path d="M15 35 L50 15 L85 35 Z" fill="#FFF"/></svg>`);
-    document.title = "📦 Pedido Activo - NOTIGAS";
-  }
+  const bo = window.NOTIGAS_BO;
+  const codigo = (typeof window.normalizeCategoryCode === 'function')
+    ? window.normalizeCategoryCode(categoria)
+    : String(categoria || '').toLowerCase().trim();
+  const cat = (bo && bo.CATEGORIAS_POR_CODIGO && bo.CATEGORIAS_POR_CODIGO[codigo]) || null;
+
+  const etiqueta = cat ? cat.etiqueta : 'Otros';
+  const emoji = cat ? cat.icono : '📦';
+  const esRecogida = cat ? cat.tipo_solicitud === 'recogida' : false;
+  const colorCat = cat ? cat.color : color;
+  const verbo = esRecogida ? 'Recogida' : 'Pedido';
+
+  // Glifos blancos por categoría; el círculo toma el color del catálogo.
+  const GLIFOS = {
+    plastico:    '<path d="M50 18 L64 40 H36 Z M22 50 L36 74 H8 Z M78 50 L92 74 H64 Z" fill="#FFF"/>',
+    papel:       '<rect x="26" y="20" width="48" height="60" rx="4" fill="#FFF"/><line x1="35" y1="36" x2="65" y2="36" stroke="#00000030" stroke-width="4"/><line x1="35" y1="50" x2="65" y2="50" stroke="#00000030" stroke-width="4"/><line x1="35" y1="64" x2="55" y2="64" stroke="#00000030" stroke-width="4"/>',
+    chatarra:    '<path d="M50 15 L65 40 H35 Z M20 50 L35 75 H5 Z M80 50 L95 75 H65 Z" fill="#FFF"/>',
+    botellas:    '<path d="M40 12h20v10H40z" fill="#FFF"/><path d="M38 22h24l-4 12v40a6 6 0 0 1-6 6H48a6 6 0 0 1-6-6V34z" fill="#FFF"/>',
+    organico:    '<path d="M50 82 V44" stroke="#FFF" stroke-width="7" stroke-linecap="round"/><path d="M50 50 C30 50 22 36 24 22 C40 22 50 32 50 50 Z" fill="#FFF"/><path d="M50 58 C70 58 78 44 76 30 C60 30 50 40 50 58 Z" fill="#FFF"/>',
+    frutas:      '<path d="M50 32 C32 32 22 50 22 64 C22 78 36 88 50 88 C64 88 78 78 78 64 C78 50 68 32 50 32 Z" fill="#FFF"/><path d="M50 18 Q60 12 66 28" stroke="#FFF" stroke-width="6" fill="none" stroke-linecap="round"/>',
+    detergentes: '<path d="M40 12h20v14H40z" fill="#FFF"/><path d="M36 26h28v56H36z" fill="#FFF"/><circle cx="50" cy="54" r="9" fill="#00000030"/>',
+    sal:         '<path d="M28 78 L40 40 h20 l12 38 Z" fill="#FFF"/><circle cx="50" cy="32" r="7" fill="#FFF"/>',
+    afilado:     '<circle cx="32" cy="68" r="12" fill="none" stroke="#FFF" stroke-width="7"/><circle cx="68" cy="68" r="12" fill="none" stroke="#FFF" stroke-width="7"/><line x1="39" y1="61" x2="63" y2="29" stroke="#FFF" stroke-width="8" stroke-linecap="round"/>',
+    agua:        '<path d="M50 15 C30 45, 20 60, 20 70 A30 30 0 0 0 80 70 C80 60, 70 45, 50 15 Z" fill="#FFF"/>',
+    otros:       '<rect x="20" y="36" width="60" height="44" fill="#FFF"/><path d="M14 36 L50 16 L86 36 Z" fill="#FFF"/>'
+  };
+
+  favEl.href = getSvgUrl(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">` +
+    `<circle cx="50" cy="50" r="48" fill="${color}"/>` +
+    `<circle cx="50" cy="50" r="44" fill="${colorCat}"/>` +
+    (GLIFOS[codigo] || GLIFOS.otros) +
+    `</svg>`
+  );
+  document.title = `${emoji} ${verbo} Activo: ${etiqueta} - NOTIGAS`;
 }
 
 async function switchTab(index) {
@@ -603,7 +617,7 @@ window.getActiveUserLocation = getActiveUserLocation;
 // 1. Registro del Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    const swVer = window.NOTIGAS?.CACHE_VERSION || '122';
+    const swVer = window.NOTIGAS?.CACHE_VERSION || '143';
     navigator.serviceWorker.register(`./sw.js?v=${swVer}`)
       .then((reg) => console.log('✅ Service Worker registrado', reg.scope))
       .catch((err) => console.error('❌ Error Service Worker:', err));

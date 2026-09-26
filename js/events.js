@@ -207,32 +207,38 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_auto_event_12 = document.getElementById('auto-event-12');
     if (el_auto_event_12) el_auto_event_12.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'TODOS', e.currentTarget); });
 
-    const el_auto_event_15 = document.getElementById('auto-event-15');
-    if (el_auto_event_15) el_auto_event_15.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'Chatarra', e.currentTarget); });
+    const el_auto_event_90 = document.getElementById('auto-event-90');
+    if (el_auto_event_90) el_auto_event_90.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'plastico', e.currentTarget); });
 
     const el_auto_event_16 = document.getElementById('auto-event-16');
-    if (el_auto_event_16) el_auto_event_16.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'Papel', e.currentTarget); });
+    if (el_auto_event_16) el_auto_event_16.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'papel', e.currentTarget); });
+
+    const el_auto_event_15 = document.getElementById('auto-event-15');
+    if (el_auto_event_15) el_auto_event_15.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'chatarra', e.currentTarget); });
 
     const el_auto_event_72 = document.getElementById('auto-event-72');
-    if (el_auto_event_72) el_auto_event_72.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'Botellas', e.currentTarget); });
+    if (el_auto_event_72) el_auto_event_72.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'botellas', e.currentTarget); });
 
-    const el_auto_event_13 = document.getElementById('auto-event-13');
-    if (el_auto_event_13) el_auto_event_13.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'Gas GLP', e.currentTarget); });
-
-    const el_auto_event_19 = document.getElementById('auto-event-19');
-    if (el_auto_event_19) el_auto_event_19.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'Carbón', e.currentTarget); });
-
-    const el_auto_event_14 = document.getElementById('auto-event-14');
-    if (el_auto_event_14) el_auto_event_14.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'Agua 20L', e.currentTarget); });
-
-    const el_auto_event_18 = document.getElementById('auto-event-18');
-    if (el_auto_event_18) el_auto_event_18.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'Detergentes', e.currentTarget); });
+    const el_auto_event_91 = document.getElementById('auto-event-91');
+    if (el_auto_event_91) el_auto_event_91.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'organico', e.currentTarget); });
 
     const el_auto_event_17 = document.getElementById('auto-event-17');
-    if (el_auto_event_17) el_auto_event_17.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'Frutas', e.currentTarget); });
+    if (el_auto_event_17) el_auto_event_17.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'frutas', e.currentTarget); });
+
+    const el_auto_event_18 = document.getElementById('auto-event-18');
+    if (el_auto_event_18) el_auto_event_18.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'detergentes', e.currentTarget); });
+
+    const el_auto_event_92 = document.getElementById('auto-event-92');
+    if (el_auto_event_92) el_auto_event_92.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'sal', e.currentTarget); });
+
+    const el_auto_event_93 = document.getElementById('auto-event-93');
+    if (el_auto_event_93) el_auto_event_93.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'afilado', e.currentTarget); });
+
+    const el_auto_event_14 = document.getElementById('auto-event-14');
+    if (el_auto_event_14) el_auto_event_14.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'agua', e.currentTarget); });
 
     const el_auto_event_20 = document.getElementById('auto-event-20');
-    if (el_auto_event_20) el_auto_event_20.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'Otros', e.currentTarget); });
+    if (el_auto_event_20) el_auto_event_20.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'otros', e.currentTarget); });
 
     const el_auto_event_21 = document.getElementById('auto-event-21');
     if (el_auto_event_21) el_auto_event_21.addEventListener('click', () => { safeCall('abrirModalNuevoPost'); });
@@ -407,29 +413,35 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_auto_event_38 = document.getElementById('auto-event-38');
     if (el_auto_event_38) el_auto_event_38.addEventListener('click', () => { safeCall('closeSubmenuModal'); });
 
-    const el_auto_event_39 = document.getElementById('auto-event-39');
-    if (el_auto_event_39) el_auto_event_39.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'gas'); });
-
-    const el_auto_event_40 = document.getElementById('auto-event-40');
-    if (el_auto_event_40) el_auto_event_40.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'agua'); });
-
-    const el_auto_event_41 = document.getElementById('auto-event-41');
-    if (el_auto_event_41) el_auto_event_41.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'chatarra'); });
+    const el_auto_event_94 = document.getElementById('auto-event-94');
+    if (el_auto_event_94) el_auto_event_94.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'plastico'); });
 
     const el_auto_event_42 = document.getElementById('auto-event-42');
     if (el_auto_event_42) el_auto_event_42.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'papel'); });
 
+    const el_auto_event_41 = document.getElementById('auto-event-41');
+    if (el_auto_event_41) el_auto_event_41.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'chatarra'); });
+
     const el_auto_event_73 = document.getElementById('auto-event-73');
     if (el_auto_event_73) el_auto_event_73.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'botellas'); });
 
-    const el_auto_event_45 = document.getElementById('auto-event-45');
-    if (el_auto_event_45) el_auto_event_45.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'carbon'); });
+    const el_auto_event_95 = document.getElementById('auto-event-95');
+    if (el_auto_event_95) el_auto_event_95.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'organico'); });
 
     const el_auto_event_43 = document.getElementById('auto-event-43');
     if (el_auto_event_43) el_auto_event_43.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'frutas'); });
 
     const el_auto_event_44 = document.getElementById('auto-event-44');
     if (el_auto_event_44) el_auto_event_44.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'detergentes'); });
+
+    const el_auto_event_96 = document.getElementById('auto-event-96');
+    if (el_auto_event_96) el_auto_event_96.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'sal'); });
+
+    const el_auto_event_97 = document.getElementById('auto-event-97');
+    if (el_auto_event_97) el_auto_event_97.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'afilado'); });
+
+    const el_auto_event_40 = document.getElementById('auto-event-40');
+    if (el_auto_event_40) el_auto_event_40.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'agua'); });
 
     const el_auto_event_46 = document.getElementById('auto-event-46');
     if (el_auto_event_46) el_auto_event_46.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'otros'); });
@@ -444,6 +456,18 @@ document.addEventListener('DOMContentLoaded', () => {
         groupOtros.style.display = (event.target.value === 'otros') ? 'block' : 'none';
       }
     });
+
+    // Selector de tipo de solicitud: "recogida" (la casa ofrece material)
+    // frente a "compra" (el comprador pide producto). Delegacion por evento
+    // porque los botones se generan antes de que exista el listener.
+    const el_tipoToggle = document.getElementById('tipoSolicitudToggle');
+    if (el_tipoToggle) {
+      el_tipoToggle.addEventListener('click', (event) => {
+        const btn = event.target.closest('button[data-tipo]');
+        if (btn) safeCall('setTipoSolicitud', btn.dataset.tipo);
+      });
+      safeCall('setTipoSolicitud', 'recogida');
+    }
 
     const el_auto_event_48 = document.getElementById('auto-event-48');
     if (el_auto_event_48) el_auto_event_48.addEventListener('click', () => { safeCall('confirmarPedido'); });

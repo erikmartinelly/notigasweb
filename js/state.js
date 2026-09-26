@@ -33,7 +33,7 @@ window.NOTIGAS.GPS_TIMEOUT_MS        = 12000;                  // 12 segundos (t
 window.NOTIGAS.MIN_MOVEMENT_METERS   = 15;                     // 15 metros (movimiento mínimo GPS)
 window.NOTIGAS.IDLE_THRESHOLD_MS     = 3 * 60 * 1000;         // 3 minutos (repartidor inactivo)
 window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño máximo imagen)
-window.NOTIGAS.CACHE_VERSION = '138';
+window.NOTIGAS.CACHE_VERSION = '143';
 
 // Contrato de datos: la publicidad y los avisos comunitarios son módulos distintos.
 window.NOTIGAS.AD_TABLE = 'anuncios_globales';
@@ -299,7 +299,7 @@ window.loadAdsModule = async function () {
               nombre: profileData?.nombre || driverData.nombre_completo || meta.full_name || user.email.split('@')[0],
               whatsapp: driverData.telefono_whatsapp || '',
               placa: driverData.placa || '',
-              categoria: driverData.categoria || 'gas',
+              categoria: driverData.categoria || 'plastico',
               productos: driverData.productos || '',
               schedule: driverData.schedule || '',
               ciudad: driverData.ciudad || _state['city'],

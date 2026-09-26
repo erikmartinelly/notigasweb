@@ -129,7 +129,7 @@ const mockElement = {
   querySelectorAll: () => [mockElement],
   setAttribute: () => {},
   removeAttribute: () => {},
-  getAttribute: (attr) => (attr === 'data-category' ? 'gas' : null),
+  getAttribute: (attr) => (attr === 'data-category' ? 'plastico' : null),
   getBoundingClientRect: () => ({ top: 0, left: 0, width: 100, height: 100, bottom: 100, right: 100 }),
   scrollIntoView: () => {},
   focus: () => {},
@@ -424,7 +424,7 @@ try {
   context.actualizarPedidoEnMapa({
     id: 'test-order-99',
     user_id: 'other-user',
-    categoria: 'Gas GLP',
+    categoria: 'plastico',
     latitude: -17.3890,
     longitude: -66.1560,
     estado: 'pendiente'

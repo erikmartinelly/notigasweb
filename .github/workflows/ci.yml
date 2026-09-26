@@ -130,6 +130,12 @@ jobs:
       - name: Verify Driver Services Contract
         run: python3 scripts/check_driver_services_contract.py
 
+      - name: Verify Bolivia Recycling Catalog
+        run: python3 scripts/check_bolivia_reciclaje_catalogo.py
+
+      - name: Verify HTML / Manifest / CSS Structure
+        run: python3 scripts/check_estructura_html.py
+
       - name: Verify Live Supabase Public Boundary
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

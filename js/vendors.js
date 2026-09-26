@@ -55,12 +55,11 @@ function renderLiveDriverFallback(vendors) {
   const cards = list.map(vendor => {
     const driverId = safe(String(vendor.driverProfileId || String(vendor.id || '').replace(/^driver_/, '')));
     const name = safe(vendor.name || 'Distribuidor registrado');
-    const category = safe(vendor.category || 'Gas GLP');
+    const category = safe(vendor.category || 'plastico');
     const products = safe(vendor.products || 'Servicios de reparto a domicilio');
     const zones = safe(vendor.zones || 'Zona local');
-    const price = Number(vendor.precio_balon_10kg);
-    const priceHtml = Number.isFinite(price) && price > 0 ? `<div style="margin:5px 0;padding:5px 8px;border-radius:8px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);color:#A7F3D0;font-weight:800;">🔥 Balón 10 Kg: <span style="color:#22C55E;">Bs ${price.toFixed(2)}</span></div>` : '';
-    return `<article style="background:#1E293B;border:1px solid #334155;border-radius:12px;padding:11px;margin-top:8px;"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;"><div><strong style="color:#F8FAFC;font-size:13px;">${name}</strong><div style="color:#94A3B8;font-size:11px;margin-top:2px;">${category}</div></div><span style="font-size:10px;color:#86EFAC;font-weight:800;">REGISTRADO</span></div>${priceHtml}<div style="color:#CBD5E1;font-size:11px;margin-top:6px;">📦 ${products}</div><div style="color:#CBD5E1;font-size:11px;margin-top:3px;">🗺️ ${zones}</div><button type="button" class="btn-vendor-order" style="width:100%;margin-top:9px;" data-action="seleccionarYPedirDirecto" data-cat="${encodeURIComponent(vendor.category || 'Gas GLP')}" data-driver-id="${driverId}" data-driver-name="${name}"><i class="fa-solid fa-cart-plus"></i> Solicitar Pedido</button></article>`;
+    // Sin precio en la tarjeta: NOTIGAS no intermedia fondos ni precios.
+    return `<article style="background:#1E293B;border:1px solid #334155;border-radius:12px;padding:11px;margin-top:8px;"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;"><div><strong style="color:#F8FAFC;font-size:13px;">${name}</strong><div style="color:#94A3B8;font-size:11px;margin-top:2px;">${category}</div></div><span style="font-size:10px;color:#86EFAC;font-weight:800;">REGISTRADO</span></div><div style="color:#CBD5E1;font-size:11px;margin-top:6px;">📦 ${products}</div><div style="color:#CBD5E1;font-size:11px;margin-top:3px;">🗺️ ${zones}</div><button type="button" class="btn-vendor-order" style="width:100%;margin-top:9px;" data-action="seleccionarYPedirDirecto" data-cat="${encodeURIComponent(vendor.category || 'plastico')}" data-driver-id="${driverId}" data-driver-name="${name}"><i class="fa-solid fa-cart-plus"></i> Solicitar Pedido</button></article>`;
   }).join('');
 
   container.innerHTML = `<div style="text-align:center;"><div style="font-size:25px;margin-bottom:5px;">🚚</div><strong style="display:block;color:#F8FAFC;font-size:14px;">No hay repartidores en vivo en tu zona en este momento.</strong><p style="margin:6px 0 10px;color:#CBD5E1;font-size:12px;line-height:1.45;">Pero puedes dejar tu pedido a estos distribuidores registrados y te contactarán en breve.</p></div><div>${cards || '<div style="text-align:center;color:#94A3B8;font-size:12px;padding:10px 0;">No hay distribuidores registrados disponibles en esta zona.</div>'}</div>`;
@@ -130,7 +129,7 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
     } else if (data && data.length > 0) {
       const list = data.filter(d => !d.estado_verificacion || d.estado_verificacion === 'aprobado').map(d => ({
         id: `driver_${d.id}`, driverProfileId: d.id, name: d.nombre_completo,
-        category: d.categoria || 'Gas GLP',
+        category: d.categoria || 'plastico',
         icon: typeof getIconForCategory === 'function' ? getIconForCategory(d.categoria) : '🚛',
         plate: d.placa || 'Placa registrada', products: d.productos || 'Servicios de reparto a domicilio',
         zones: d.zonas || 'zona local', schedule: d.schedule || 'Lunes a Sábado',
@@ -176,10 +175,9 @@ function renderVendorCards(filterCat) {
   filtered.forEach((vendor, index) => {
     const safeVendorId = escapeHtmlStr(vendor.id || '');
     const safeProfileId = escapeHtmlStr(String(vendor.driverProfileId || String(vendor.id || '').replace(/^driver_/, '')));
-    const safeVendorIcon = typeof window.crearAvatarCamionChoferHtml === 'function' ? window.crearAvatarCamionChoferHtml(vendor.name, {category: vendor.category, color: vendor.color_camion, price: vendor.precio_balon_10kg, es_premium: false}) : escapeHtmlStr(vendor.icon || getIconForCategory(vendor.category));
-    let price10kgHtml = '';
-    if (vendor.precio_balon_10kg && !isNaN(Number(vendor.precio_balon_10kg)) && Number(vendor.precio_balon_10kg) > 0) price10kgHtml = `<div class="vendor-field vendor-field-price" style="background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.35);padding:6px 10px;border-radius:8px;margin:2px 0;"><strong style="color:#A7F3D0;font-size:12px;">🔥 Balón 10 Kg:</strong><span class="vendor-price-highlight" style="color:#22C55E;font-size:14.5px;font-weight:900;margin-left:auto;">Bs ${Number(vendor.precio_balon_10kg).toFixed(2)}</span></div>`;
-    html += `<div class="vendor-fb-card"><div class="vendor-fb-header"><div class="vendor-profile"><div class="vendor-avatar" style="background:transparent;border:none;width:auto;height:auto;padding:0;overflow:visible;">${safeVendorIcon}</div><div class="vendor-meta"><span class="vendor-name">${escapeHtmlStr(vendor.name)}</span><span class="vendor-badge-cat"><i class="fa-solid fa-circle-check"></i> ${escapeHtmlStr(vendor.category)}</span></div></div><div style="display:flex;align-items:center;gap:6px;">${isAdmin ? `<button data-action="eliminarFichaAdmin" data-id="${safeVendorId}" style="background:#D32F2F;color:white;border:none;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;" title="Borrar como Admin"><i class="fa-solid fa-trash"></i> Borrar (Admin)</button>` : `<span class="promo-badge" style="background:rgba(0,230,118,.15);color:#00E676;border-color:rgba(0,230,118,.4);">REPARTIDOR ACTIVO</span>`}</div></div><div class="vendor-fb-body">${price10kgHtml}<div class="vendor-field"><strong>⭐ Calificación:</strong> Sin calificaciones todavía</div><div class="vendor-field"><strong>📦 Productos:</strong> ${escapeHtmlStr(vendor.products)}</div><div class="vendor-field"><strong>🗺️ Zona de cobertura:</strong> ${escapeHtmlStr(vendor.zones)}</div></div><div class="vendor-fb-footer"><button class="btn-vendor-order" data-action="seleccionarYPedirDirecto" data-cat="${encodeURIComponent(vendor.category)}" data-driver-id="${safeProfileId}" data-driver-name="${escapeHtmlStr(vendor.name || 'el distribuidor seleccionado')}"><i class="fa-solid fa-cart-plus"></i> Solicitar Pedido</button></div></div>`;
+    const safeVendorIcon = typeof window.crearAvatarCamionChoferHtml === 'function' ? window.crearAvatarCamionChoferHtml(vendor.name, {category: vendor.category, color: vendor.color_camion, es_premium: false}) : escapeHtmlStr(vendor.icon || getIconForCategory(vendor.category));
+    // La ficha no muestra precios: el acuerdo es directo entre las partes.
+    html += `<div class="vendor-fb-card"><div class="vendor-fb-header"><div class="vendor-profile"><div class="vendor-avatar" style="background:transparent;border:none;width:auto;height:auto;padding:0;overflow:visible;">${safeVendorIcon}</div><div class="vendor-meta"><span class="vendor-name">${escapeHtmlStr(vendor.name)}</span><span class="vendor-badge-cat"><i class="fa-solid fa-circle-check"></i> ${escapeHtmlStr(vendor.category)}</span></div></div><div style="display:flex;align-items:center;gap:6px;">${isAdmin ? `<button data-action="eliminarFichaAdmin" data-id="${safeVendorId}" style="background:#D32F2F;color:white;border:none;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;" title="Borrar como Admin"><i class="fa-solid fa-trash"></i> Borrar (Admin)</button>` : `<span class="promo-badge" style="background:rgba(0,230,118,.15);color:#00E676;border-color:rgba(0,230,118,.4);">REPARTIDOR ACTIVO</span>`}</div></div><div class="vendor-fb-body"><div class="vendor-field"><strong>⭐ Calificación:</strong> Sin calificaciones todavía</div><div class="vendor-field"><strong>📦 Productos:</strong> ${escapeHtmlStr(vendor.products)}</div><div class="vendor-field"><strong>🗺️ Zona de cobertura:</strong> ${escapeHtmlStr(vendor.zones)}</div></div><div class="vendor-fb-footer"><button class="btn-vendor-order" data-action="seleccionarYPedirDirecto" data-cat="${encodeURIComponent(vendor.category)}" data-driver-id="${safeProfileId}" data-driver-name="${escapeHtmlStr(vendor.name || 'el distribuidor seleccionado')}"><i class="fa-solid fa-cart-plus"></i> Solicitar Pedido</button></div></div>`;
     if (index === adInsertAfterIndex && typeof window.getAdSenseFeedMarkup === 'function') html += window.getAdSenseFeedMarkup('vendors');
   });
   container.innerHTML = html; if (typeof window.activateAdSenseIn === 'function') window.activateAdSenseIn(container);
@@ -193,13 +191,27 @@ async function eliminarFichaAdmin(vendorId) {
   if (error || !data?.user_id) { console.error('No se pudo resolver la cuenta del repartidor:', error); if (typeof showToast === 'function') showToast('❌ Error', 'No se encontró la cuenta real del repartidor.', 'error', 4500); return; }
   if (typeof window.borrarRepartidorPermanente === 'function') await window.borrarRepartidorPermanente(vendorId, data.user_id, data.nombre_completo || 'Repartidor');
 }
+/* Icono de la categoria. Resuelve contra el catalogo canonico cuando esta
+   disponible y solo entonces cae a los textos heredados. */
 function getIconForCategory(cat) {
-  if (!cat) return '📦'; const c = cat.toLowerCase();
-  if (c.includes('chatarra') || c.includes('metal')) return '♻️'; if (c.includes('papel') || c.includes('carton') || c.includes('cartón')) return '📄';
-  if (c.includes('botella') || c.includes('plastico') || c.includes('plástico') || c.includes('vidrio')) return '🥤';
-  if (c.includes('gas')) return '🔥'; if (c.includes('agua')) return '💧';
-  if (c.includes('frutas') || c.includes('verduras')) return '🍎'; if (c.includes('detergente') || c.includes('limpieza')) return '🧼';
-  if (c.includes('carbón') || c.includes('carbon') || c.includes('leña') || c.includes('lena')) return '🪵'; return '📦';
+  if (!cat) return '📦';
+  const c = String(cat).toLowerCase().trim();
+  const bo = window.NOTIGAS_BO;
+  if (bo && typeof bo.categoriaPorCodigo === 'function') {
+    const found = bo.CATEGORIAS_POR_CODIGO[c];
+    if (found) return found.icono;
+  }
+  if (c.includes('chatarra') || c.includes('metal')) return '⚙️';
+  if (c.includes('papel') || c.includes('carton') || c.includes('cartón')) return '📄';
+  if (c.includes('botella') || c.includes('vidrio')) return '🥤';
+  if (c.includes('organico') || c.includes('orgánico')) return '🌿';
+  if (c.includes('plastico') || c.includes('plástico')) return '♻️';
+  if (c.includes('agua')) return '💧';
+  if (c.includes('fruta') || c.includes('verdura')) return '🍎';
+  if (c.includes('detergente') || c.includes('limpieza')) return '🧽';
+  if (c === 'sal') return '🧂';
+  if (c.includes('afilado') || c.includes('cuchillo')) return '🔪';
+  return '📦';
 }
 
 let _directDistributorTarget = null;
@@ -229,8 +241,10 @@ function instalarFlujoSolicitudDistribuidor() {
     const inputCantidad = document.getElementById('inputCantidad');
     const inputCalle = document.getElementById('inputCallePrincipal');
     const inputTel = document.getElementById('inputTelefonoComprador') || document.getElementById('inputTelefono');
-    const categoria = selectCategoria ? selectCategoria.value : target.category || 'gas';
-    const cantidad = inputCantidad ? inputCantidad.value : '1';
+    const categoria = (selectCategoria && selectCategoria.value)
+      ? selectCategoria.value
+      : ((target.category && String(target.category).toLowerCase()) || 'plastico');
+    const cantidad = inputCantidad ? inputCantidad.value.trim() : '1 unidad';
     const calle = inputCalle ? inputCalle.value.trim() : '';
     const telefono = inputTel ? inputTel.value.trim() : '';
     const activePos = typeof window.getActiveUserLocation === 'function' ? window.getActiveUserLocation() : (typeof AppState !== 'undefined' ? AppState.get('userLocation') : null);

@@ -99,7 +99,7 @@ async function renderDriverOrdersList() {
     driverCity = (rawCity && rawCity !== 'todos' && rawCity !== 'all') ? String(rawCity).toLowerCase().trim() : null;
   }
 
-  const driverCategoria = (userData && userData.categoria) ? userData.categoria : 'gas';
+  const driverCategoria = (userData && userData.categoria) ? userData.categoria : 'plastico';
   const normDriverCat = (typeof window.normalizeCategoryCode === 'function')
     ? window.normalizeCategoryCode(driverCategoria)
     : String(driverCategoria).toLowerCase().trim();
@@ -110,7 +110,7 @@ async function renderDriverOrdersList() {
   // 1. Pedidos disponibles desde la vista pública (filtrado estricto por ciudad y categoría del chofer)
   let pubQuery = window.supabaseClient
     .from('pedidos_publicos')
-    .select('id, user_id, categoria, titulo, cantidad, direccion, telefono, descripcion, barrio_otb, latitude, longitude, created_at, estado, driver_id, ciudad, subestado')
+    .select('id, user_id, categoria, tipo_solicitud, titulo, cantidad, direccion, telefono, descripcion, barrio_otb, latitude, longitude, created_at, estado, driver_id, ciudad, subestado')
     .in('estado', ['pendiente', 'visto'])
     .is('driver_id', null)
     .gte('created_at', activeWindow)
@@ -121,15 +121,13 @@ async function renderDriverOrdersList() {
     pubQuery = pubQuery.in('ciudad', cityKeys);
   }
 
-  // Filtrado a nivel de base de datos para categoría
+  // Filtrado a nivel de base de datos por categoría.
+  // pedidos.categoria está forzada a un código canónico por el CHECK
+  // pedidos_categoria_catalogo_chk, y normalizeCategoryCode ya devuelve un
+  // código del catálogo, así que alcanza con igualdad exacta. Antes se comparaba
+  // contra listas de variantes de gas/agua que ya no pueden existir.
   if (normDriverCat && normDriverCat !== 'todos' && normDriverCat !== 'otros') {
-    if (normDriverCat === 'gas') {
-      pubQuery = pubQuery.in('categoria', ['gas', 'Gas', 'GAS', 'Gas GLP', 'gas glp', 'garrafa', 'Garrafa', 'GLP', 'balon', 'Balon', 'balón', 'Balón', 'balon de gas', 'balón de gas']);
-    } else if (normDriverCat === 'agua') {
-      pubQuery = pubQuery.in('categoria', ['agua', 'Agua', 'AGUA', 'Agua Potable', 'agua potable', 'botellon', 'Botellón', 'botellón']);
-    } else {
-      pubQuery = pubQuery.eq('categoria', driverCategoria);
-    }
+    pubQuery = pubQuery.eq('categoria', normDriverCat);
   }
 
   // 2. Pedidos ya asignados a este repartidor desde la tabla pedidos
@@ -137,7 +135,7 @@ async function renderDriverOrdersList() {
   if (localUserId) {
     let assignedQuery = window.supabaseClient
       .from('pedidos')
-      .select('id, user_id, categoria, titulo, cantidad, direccion, telefono, descripcion, barrio_otb, latitude, longitude, created_at, estado, driver_id, ciudad, subestado')
+        .select('id, user_id, categoria, tipo_solicitud, titulo, cantidad, direccion, telefono, descripcion, barrio_otb, latitude, longitude, created_at, estado, driver_id, ciudad, subestado')
       .eq('driver_id', localUserId)
       .eq('estado', 'asignado')
       .gte('created_at', activeWindow)
@@ -252,7 +250,7 @@ async function renderDriverOrdersList() {
   // Agrupar pedidos por categoría y zona
   const groups = {};
   orders.forEach(o => {
-    const cat = o.categoria || 'Gas GLP';
+    const cat = o.categoria || 'plastico';
     const zone = (o.barrio_otb || 'Sin Zona').trim();
     const groupKey = `${cat}|${zone}`;
     if (!groups[groupKey]) {
@@ -311,7 +309,7 @@ async function renderDriverOrdersList() {
               </button>
               ${tel ? `
               <button type="button" class="btn-quick-action btn-quick-whatsapp" 
-                data-action="abrirWhatsappDirecto" data-tel="${tel}" data-address="${street}" data-categoria="${escapeHtmlStr(o.categoria || 'gas')}" title="Chat directo por WhatsApp">
+                data-action="abrirWhatsappDirecto" data-tel="${tel}" data-address="${street}" data-categoria="${escapeHtmlStr(o.categoria || 'plastico')}" title="Chat directo por WhatsApp">
                 <i class="fa-brands fa-whatsapp"></i> WhatsApp
               </button>
               ` : ''}
@@ -701,7 +699,7 @@ function abrirWhatsappDirecto(rawTel, direccion, categoria) {
     cleanTel = '51' + cleanTel;
   }
 
-  const catName = categoria || 'balón de gas';
+  const catName = categoria || 'plastico';
   const dirText = direccion ? ` para entrega en *${direccion}*` : '';
   const msg = encodeURIComponent(`Hola! 👋 Te escribo desde NOTIGAS sobre tu pedido de *${catName}*${dirText}. Estoy coordinando tu entrega.`);
   const waUrl = `https://wa.me/${cleanTel}?text=${msg}`;
@@ -1066,16 +1064,32 @@ async function seleccionarYPedirDirecto(catNombre) {
 
   closeSubmenuModal();
 
+  // El modo se deduce de la categoria: el reciclaje es "recogida" y el
+  // resto "compra". Antes de fijar la categoria hay que haber puesto el modo,
+  // porque setTipoSolicitud repuebla el <select>.
+  const boCat = (window.NOTIGAS_BO && typeof window.NOTIGAS_BO.categoriaPorCodigo === 'function')
+    ? window.NOTIGAS_BO.categoriaPorCodigo(catNombre) : null;
+  if (boCat) {
+    window.setTipoSolicitud(boCat.tipo_solicitud);
+  }
+
   const sel = document.getElementById('selectCategoria');
   if (sel && catNombre) {
+    // Coincidencia exacta por codigo; la busqueda difusa se mantiene como
+    // respaldo para las categorias heredadas.
     let foundIdx = -1;
-    const cleanSearch = catNombre.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-
     for (let i = 0; i < sel.options.length; i++) {
-      const cleanVal = sel.options[i].value.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-      if (cleanVal && (cleanVal.includes(cleanSearch) || cleanSearch.includes(cleanVal))) {
-        foundIdx = i;
-        break;
+      if (sel.options[i].value === catNombre) { foundIdx = i; break; }
+    }
+
+    if (foundIdx === -1) {
+      const cleanSearch = catNombre.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+      for (let i = 0; i < sel.options.length; i++) {
+        const cleanVal = sel.options[i].value.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        if (cleanVal && (cleanVal.includes(cleanSearch) || cleanSearch.includes(cleanVal))) {
+          foundIdx = i;
+          break;
+        }
       }
     }
 
@@ -1102,6 +1116,76 @@ function closePedidoModal() {
   if (modalPedido) modalPedido.style.display = 'none';
 }
 
+/* Tipo de solicitud activa.
+   'recogida' -> la casa publica el material que tiene y el repartidor va a
+                 buscarlo. Es el foco del producto.
+   'compra'   -> el comprador pide que le lleven el producto.
+   El servidor lo re-deriva desde la categoria, asi que este estado solo
+   gobierna que categorias se ofrecen y que textos se muestran. */
+let tipoSolicitudActual = 'recogida';
+
+function categoriasDisponibles(tipo) {
+  const bo = window.NOTIGAS_BO;
+  if (bo && typeof bo.categoriasPorTipo === 'function') return bo.categoriasPorTipo(tipo);
+  return [];
+}
+
+function setTipoSolicitud(tipo) {
+  tipo = (tipo === 'compra') ? 'compra' : 'recogida';
+  tipoSolicitudActual = tipo;
+  const esRecogida = (tipo === 'recogida');
+
+  document.querySelectorAll('#tipoSolicitudToggle button[data-tipo]').forEach((b) => {
+    const on = (b.dataset.tipo === tipo);
+    b.style.borderColor = on ? (esRecogida ? '#22C55E' : '#0288D1') : '#1E293B';
+    b.style.background  = on ? (esRecogida ? 'rgba(34,197,94,0.18)' : 'rgba(2,136,209,0.20)') : 'rgba(30,41,59,0.6)';
+    b.style.color       = on ? (esRecogida ? '#BBF7D0' : '#BAE6FD') : '#94A3B8';
+  });
+
+  // El catalogo del servidor es la fuente de verdad. Sin NOTIGAS_BO se
+  // respeta la lista estatica del HTML.
+  const sel = document.getElementById('selectCategoria');
+  const lista = categoriasDisponibles(tipo);
+  if (sel && lista.length) {
+    const previo = sel.value;
+    sel.innerHTML = lista
+      .map((c) => '<option value="' + c.codigo + '">' + c.etiqueta + '</option>')
+      .join('');
+    if (lista.some((c) => c.codigo === previo)) sel.value = previo;
+  }
+
+  const ayuda = document.getElementById('tipoSolicitudAyuda');
+  const labelCat = document.getElementById('labelCategoria');
+  const labelCant = document.getElementById('labelCantidad');
+  const btnTxt = document.getElementById('btnPedidoTexto');
+  const title = document.getElementById('modalPedidoTitle');
+
+  if (ayuda) {
+    if (esRecogida) {
+      ayuda.textContent = 'Publica el material que tienes en casa. Los repartidores cercanos verán tu punto en el mapa y nullptrán a recogerlo. NOTIGAS no cobra por la recogida.';
+      ayuda.style.background = 'rgba(34,197,94,0.12)';
+      ayuda.style.borderLeftColor = '#22C55E';
+      ayuda.style.color = '#BBF7D0';
+    } else {
+      ayuda.textContent = 'Pide el producto que necesitas y los repartidores cercanos te lo llevan. El pago se acuerda directo por QR local; NOTIGAS no cobra comisión.';
+      ayuda.style.background = 'rgba(2,136,209,0.12)';
+      ayuda.style.borderLeftColor = '#0288D1';
+      ayuda.style.color = '#BAE6FD';
+    }
+  }
+  if (labelCat) labelCat.textContent = esRecogida ? 'Material que tienes disponible:' : 'Producto / Servicio que necesitas:';
+  if (labelCant) labelCant.textContent = esRecogida
+    ? '¿Cuánto material tienes? (Ej: 3 bolsas, 1 quintillo):'
+    : '¿Cuánto necesitas? (Ej: 2 unidades, 1 quintillo):';
+  if (btnTxt) btnTxt.textContent = esRecogida ? 'Publicar Recogida' : 'Confirmar y Solicitar en Mapa Vivo';
+  if (title) title.textContent = esRecogida ? '♻️ Solicitar Recogida de Material' : '🛒 Ficha de Compra';
+
+  const groupOtros = document.getElementById('groupOrderOtros');
+  if (groupOtros && sel) groupOtros.style.display = (sel.value === 'otros') ? 'block' : 'none';
+}
+window.setTipoSolicitud = setTipoSolicitud;
+window.tipoSolicitudActual = () => tipoSolicitudActual;
+
 function confirmarPedido() {
   if (typeof window.verificarPermisoOperarEnCiudad === 'function' && !window.verificarPermisoOperarEnCiudad('crear un pedido')) {
     return;
@@ -1110,11 +1194,33 @@ function confirmarPedido() {
   const inputCantidad = document.getElementById('inputCantidad');
   const inputCalle = document.getElementById('inputCallePrincipal');
   const inputTel = document.getElementById('inputTelefonoComprador') || document.getElementById('inputTelefono');
+  const inputDesc = document.getElementById('inputOrderDescripcion');
+  const inputOtros = document.getElementById('inputOrderOtrosDetalle');
 
-  const categoria = selectCategoria ? selectCategoria.value : 'gas';
-  const cantidad = inputCantidad ? inputCantidad.value : '1';
+  // 'plastico' es la categoria por defecto: es la primera del catalogo de
+  // reciclaje. Antes caia en 'gas', que ya no existe.
+  const categoria = selectCategoria && selectCategoria.value ? selectCategoria.value : 'plastico';
+  const boCat = (window.NOTIGAS_BO && typeof window.NOTIGAS_BO.categoriaPorCodigo === 'function')
+    ? window.NOTIGAS_BO.categoriaPorCodigo(categoria) : null;
+  const tipoSolicitud = boCat ? boCat.tipo_solicitud : (tipoSolicitudActual || 'compra');
+  const cantidad = inputCantidad ? inputCantidad.value.trim() : '';
   const calle = inputCalle ? inputCalle.value.trim() : '';
   const telefono = inputTel ? inputTel.value.trim() : '';
+  const descripcion = (categoria === 'otros' && inputOtros ? inputOtros.value.trim() : (inputDesc ? inputDesc.value.trim() : ''));
+
+  if (!cantidad) {
+    if (typeof showToast === 'function') {
+      showToast(
+        tipoSolicitud === 'recogida' ? '📦 Indica cuánto material tienes' : '📦 Indica cuánto necesitas',
+        tipoSolicitud === 'recogida'
+          ? 'Por ejemplo "3 bolsas" o "1 quintillo". Así el repartidor sabe qué llevar.'
+          : 'Por ejemplo "2 unidades" o "1 quintillo".',
+        'warning', 5000
+      );
+    }
+    if (inputCantidad) inputCantidad.focus();
+    return;
+  }
 
   // La ubicación se determina por GPS en el mapa de forma obligatoria y real (sin coordenadas inventadas)
   const activePos = (typeof window.getActiveUserLocation === 'function') ? window.getActiveUserLocation() : ((typeof AppState !== 'undefined') ? AppState.get('userLocation') : null);
@@ -1135,7 +1241,9 @@ function confirmarPedido() {
 
   const orderData = {
     categoria,
-    cantidad: cantidad ? `${cantidad} un` : '1 un',
+    tipoSolicitud,
+    cantidad,
+    descripcion,
     direccion: calle || 'Ubicación GPS indicada en el mapa',
     callePrincipal: calle || 'Ubicación GPS indicada en el mapa',
     telefono: telefono || '',
@@ -1149,7 +1257,7 @@ function confirmarPedido() {
   };
 
   if (window.supabaseClient) {
-    showLoadingOverlay('Registrando tu pedido...');
+    showLoadingOverlay(tipoSolicitud === 'recogida' ? 'Publicando tu material...' : 'Registrando tu pedido...');
 
     getAuthenticatedUserId().then(async (userId) => {
       if (!userId) {
@@ -1158,8 +1266,8 @@ function confirmarPedido() {
         return;
       }
 
-      const catName = orderData.categoria ? (orderData.categoria.charAt(0).toUpperCase() + orderData.categoria.slice(1)) : 'Gas';
-      const orderTitle = `Pedido de ${catName}`;
+      const catName = boCat ? boCat.chip : (orderData.categoria || 'Plastico');
+      const orderTitle = tipoSolicitud === 'recogida' ? `Recogida de ${catName}` : `Pedido de ${catName}`;
 
       const { data, error } = await window.supabaseClient
         .from('pedidos')
@@ -1168,6 +1276,7 @@ function confirmarPedido() {
           titulo: orderTitle,
           categoria: orderData.categoria,
           cantidad: orderData.cantidad,
+          descripcion: orderData.descripcion,
           direccion: orderData.direccion,
           telefono: orderData.telefono,
           latitude: orderData.latitude,
@@ -1192,7 +1301,13 @@ function confirmarPedido() {
       orderData.user_id = userId;
       AppState.set('activeOrder', orderData);
       closePedidoModal();
-      showToast('¡Pedido Publicado!', 'Tu pedido ya está visible para los repartidores en el mapa.', 'success', 5000);
+      showToast(
+        tipoSolicitud === 'recogida' ? '♻️ ¡Recogida Publicada!' : '🛒 ¡Pedido Publicado!',
+        tipoSolicitud === 'recogida'
+          ? 'Los repartidores cercanos verán tu material en el mapa y nullptrán a recogerlo.'
+          : 'Tu pedido ya está visible para los repartidores en el mapa.',
+        'success', 5000
+      );
       checkActiveOrderStatus();
 
       if (typeof cargarPedidosVecinalesEnVivo === 'function') {
@@ -1571,8 +1686,8 @@ async function lanzarEspecialEsperame() {
 
   const payload = {
     tipo: 'esperame',
-    titulo: '¡Vecino saliendo con balón de gas!',
-    mensaje: 'Un vecino cercano está saliendo con su balón de gas. Por favor espérale unos minutos.',
+    titulo: '¡Vecino publicando material!' ,
+    mensaje: 'Un vecino cercano publicó material para recoger. Por favor espérale unos minutos.',
     lat: Number(pos.lat || pos.latitude),
     lng: Number(pos.lng || pos.longitude),
     timestamp: Date.now()
@@ -1640,7 +1755,7 @@ window.recibirAlertaVecinalBroadcast = function(payload) {
     }
   } else if (payload.tipo === 'esperame') {
     if (typeof mostrarPopupAlertaRepartidor === 'function') {
-      mostrarPopupAlertaRepartidor('⏳ ¡Vecino Saliendo!', payload.mensaje || 'Un vecino cercano está saliendo con su balón de gas.');
+      mostrarPopupAlertaRepartidor('⏳ ¡Vecino Saliendo!', payload.mensaje || 'Un vecino cercano publicó material para recoger.');
     } else if (typeof showToast === 'function') {
       showToast('⏳ ¡Vecino Saliendo!', payload.mensaje || 'Un vecino cercano está saliendo.', 'warning', 5000);
     }

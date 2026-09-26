@@ -94,7 +94,7 @@ async function main() {
 
   await test('is_current_enabled_driver no es RPC anónimo', async () => {
     assertDenied(await request('rpc/is_current_enabled_driver', {
-      method: 'POST', body: JSON.stringify({ p_ciudad: 'cochabamba', p_categoria: 'gas' })
+      method: 'POST', body: JSON.stringify({ p_ciudad: 'cochabamba', p_categoria: 'plastico' })
     }), 'is_current_enabled_driver');
   });
 
@@ -117,7 +117,7 @@ async function main() {
 
   for (const fn of ['trg_estado_pago_ocr_automatico', 'rpc_purge_old_records', 'normalize_delivery_category']) {
     await test(`${fn} no es RPC anónimo`, async () => {
-      const body = fn === 'normalize_delivery_category' ? JSON.stringify({ p_value: 'gas' }) : '{}';
+      const body = fn === 'normalize_delivery_category' ? JSON.stringify({ p_value: 'plastico' }) : '{}';
       assertDenied(await request(`rpc/${fn}`, { method: 'POST', body }), fn);
     });
   }
@@ -154,7 +154,7 @@ async function main() {
 
   await test('RPC antiguo de pedidos libres permanece revocado', async () => {
     assertDenied(await request('rpc/rpc_get_driver_available_orders', {
-      method: 'POST', body: JSON.stringify({ p_ciudad: 'cochabamba', p_categoria: 'gas' })
+      method: 'POST', body: JSON.stringify({ p_ciudad: 'cochabamba', p_categoria: 'plastico' })
     }), 'rpc_get_driver_available_orders');
   });
 

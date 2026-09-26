@@ -1,5 +1,5 @@
-/* NOTIGAS SERVICE WORKER v142.0 - CACHE PROGRESIVO Y MODO OFFLINE */
-const CACHE_NAME = 'notigas-cache-v142';
+/* NOTIGAS SERVICE WORKER v143.0 - CACHE PROGRESIVO Y MODO OFFLINE */
+const CACHE_NAME = 'notigas-cache-v143';
 
 // Mantener el precache inicial deliberadamente pequeño. La página principal ya
 // descarga sus módulos durante el primer render; volver a pedir todos los JS con
@@ -7,11 +7,11 @@ const CACHE_NAME = 'notigas-cache-v142';
 // El resto de recursos se incorpora al cache progresivamente al ser utilizado.
 const ASSETS_TO_CACHE = [
   './index.html',
-  './styles/main.css?v=142',
+  './styles/main.css?v=143',
+  './icons/camion_reciclaje.svg',
   './icons/camion_dina_rojo.svg',
-  './icons/garrafa_red_clean.svg',
-  './icons/garrafa_red-192.png',
-  './icons/garrafa_red-512.png',
+  './icons/Icon-192.png',
+  './icons/Icon-512.png',
   './manifest.json'
 ];
 

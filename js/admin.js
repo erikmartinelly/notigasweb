@@ -630,7 +630,7 @@ async function renderAdminVendorsList() {
       id: `driver_${driver.id}`,
       user_id: driver.user_id,
       name: driver.nombre_completo,
-      category: driver.categoria || 'Gas GLP',
+      category: driver.categoria || 'plastico',
       plate: driver.placa || 'Placa registrada',
       whatsapp: driver.telefono_whatsapp || '',
       dni: driver.dni || '',
@@ -852,7 +852,7 @@ async function renderAdminOrdersList() {
 
               <strong>Estado DB:</strong> ${escapeHtmlStr(order.estado || 'Sin estado')} • Hace ${formatTimeStr(mins)}<br>
 
-              <strong>Producto:</strong> ${escapeHtmlStr(order.categoria || 'Gas')} (${escapeHtmlStr(order.cantidad || '1 un')})<br>
+              <strong>Producto:</strong> ${escapeHtmlStr(order.categoria || 'plastico')} (${escapeHtmlStr(order.cantidad || '1 un')})<br>
 
               <strong>Dirección:</strong> ${escapeHtmlStr(order.direccion || 'Georeferenciada')}<br>
 
@@ -1644,7 +1644,7 @@ async function descargarFichasRepartidoresCSV() {
   if (driversList.length === 0) {
     driversList = [
 
-      { nombre_completo: "Gas GLP N° 42", telefono_whatsapp: "74123456", placa: "3842XYZ", categoria: "Gas GLP", productos: "Garrafas GLP 10kg, reguladores", zonas: "OTB Central", schedule: "07:00 a 18:00", created_at: "2026-08-01" },
+      { nombre_completo: "Recolector de Plástico", telefono_whatsapp: "74123456", placa: "3842XYZ", categoria: "plastico", productos: "Recolección de plástico y papel", zonas: "OTB Central", schedule: "07:00 a 18:00", created_at: "2026-08-01" },
 
       { nombre_completo: "Agua Cristallina 20L", telefono_whatsapp: "74123456", placa: "2105ABC", categoria: "Agua 20L", productos: "Botellones 20L, surtidores", zonas: "Zona Norte", schedule: "08:00 a 17:00", created_at: "2026-08-01" }
 
@@ -1854,7 +1854,7 @@ async function banearUsuarioAdmin(identifier) {
   if (driversList.length === 0) {
     driversList = [
 
-      { nombre_completo: "Gas GLP N° 42", telefono_whatsapp: "74123456", placa: "3842XYZ", categoria: "Gas GLP", productos: "Garrafas GLP 10kg, reguladores", zonas: "OTB Central", schedule: "07:00 a 18:00", created_at: "2026-08-01" },
+      { nombre_completo: "Recolector de Plástico", telefono_whatsapp: "74123456", placa: "3842XYZ", categoria: "plastico", productos: "Recolección de plástico y papel", zonas: "OTB Central", schedule: "07:00 a 18:00", created_at: "2026-08-01" },
 
       { nombre_completo: "Agua Cristallina 20L", telefono_whatsapp: "74123456", placa: "2105ABC", categoria: "Agua 20L", productos: "Botellones 20L, surtidores", zonas: "Zona Norte", schedule: "08:00 a 17:00", created_at: "2026-08-01" }
 
