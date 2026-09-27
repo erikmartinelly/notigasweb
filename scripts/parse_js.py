@@ -19,6 +19,7 @@ Salida: 0 si todo parsea, 1 si hay errores de sintaxis reales.
 import pathlib
 import re
 import sys
+from typing import Tuple
 
 try:
     import esprima
@@ -29,7 +30,7 @@ except ImportError:
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
 
 
-def normalizar_es2020(src: str) -> tuple[str, int]:
+def normalizar_es2020(src: str) -> Tuple[str, int]:
     """Convierte sintaxis ES2020 a una forma equivalente que esprima parsea.
 
     Tres casos, en este orden:

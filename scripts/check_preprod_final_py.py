@@ -12,9 +12,10 @@ reporta exactamente el mismo texto que reportaria CI.
 import pathlib
 import re
 import sys
+from typing import List
 
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
-FALLOS: list[str] = []
+FALLOS: List[str] = []
 OK = 0
 
 

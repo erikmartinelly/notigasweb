@@ -13,9 +13,10 @@ from __future__ import annotations
 import re
 import sys
 from pathlib import Path
+from typing import List, Tuple
 
 RAIZ = Path(__file__).resolve().parent.parent
-FALLO: list[str] = []
+FALLO: List[str] = []
 OK = 0
 
 # Orden canonico acordado. El indice importa: es el orden de la UI.
@@ -58,12 +59,12 @@ def leer(rel: str) -> str:
     return (RAIZ / rel).read_text(encoding="utf-8", errors="replace")
 
 
-def bloque_categorias(texto: str) -> list[tuple[str, str]]:
+def bloque_categorias(texto: str) -> List[Tuple[str, str]]:
     """Extrae (codigo, tipo_solicitud) del array CATEGORIAS, en orden."""
     m = re.search(r"const\s+CATEGORIAS\s*=\s*\[(.*?)\];", texto, re.S)
     if not m:
         return []
-    out: list[tuple[str, str]] = []
+    out: List[Tuple[str, str]] = []
     for linea in m.group(1).splitlines():
         cod = re.search(r"codigo:\s*'([a-z]+)'", linea)
         tipo = re.search(r"tipo_solicitud:\s*'(recogida|compra)'", linea)
@@ -72,7 +73,7 @@ def bloque_categorias(texto: str) -> list[tuple[str, str]]:
     return out
 
 
-def bloque_sql_catalogo(texto: str) -> list[tuple[str, str]]:
+def bloque_sql_catalogo(texto: str) -> List[Tuple[str, str]]:
     """Extrae (codigo, tipo) de la funcion SQL del catalogo."""
     m = re.search(
         r"notigas_catalogo_categorias\(\).*?RETURNS TABLE\((.*?)\)\s*AS\s*\$\$",

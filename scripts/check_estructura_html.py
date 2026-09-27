@@ -11,9 +11,10 @@ import pathlib
 import re
 import sys
 from html.parser import HTMLParser
+from typing import List, Optional, Tuple
 
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
-FALLO: list[str] = []
+FALLO: List[str] = []
 OK = 0
 
 VOID = {
@@ -34,9 +35,9 @@ class Rastreador(HTMLParser):
 
     def __init__(self):
         super().__init__(convert_charrefs=True)
-        self.pila: list[tuple[str, int]] = []
-        self.problemas: list[str] = []
-        self.en_blanco: str | None = None   # 'script' | 'style' | None
+        self.pila: List[Tuple[str, int]] = []
+        self.problemas: List[str] = []
+        self.en_blanco: Optional[str] = None   # 'script' | 'style' | None
 
     def handle_starttag(self, tag, attrs):
         if self.en_blanco:
