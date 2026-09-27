@@ -5,11 +5,12 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node scripts/check_syntax.js && node scripts/check_runtime.js && node scripts/test_rls_security.js && python3 scripts/check_audit_hardening.py && python3 scripts/check_no_legacy_plan_ui.py && python3 scripts/check_bolivia_no_cobros_contract.py && node scripts/check_order_privacy.js && node scripts/check_preprod_final.js && python3 scripts/check_preprod_final_py.py && python3 scripts/check_driver_services_contract.py && python3 scripts/check_bolivia_reciclaje_catalogo.py && python3 scripts/check_estructura_html.py && node scripts/test_db_integration.js",
+    "build": "node -e \"console.log('NOTIGAS no tiene paso de build: es JS y CSS planos servidos por Express')\"",
+    "test": "node scripts/check_syntax.js && node scripts/check_runtime.js && node scripts/test_rls_security.js && python3 scripts/check_audit_hardening.py && python3 scripts/check_no_legacy_plan_ui.py && python3 scripts/check_bolivia_no_cobros_contract.py && node scripts/check_order_privacy.js && node scripts/check_preprod_final.js && python3 scripts/check_preprod_final.py && python3 scripts/check_driver_services_contract.py && python3 scripts/check_bolivia_reciclaje_catalogo.py && python3 scripts/check_estructura_html.py && node scripts/test_db_integration.js",
     "test:integration": "node scripts/test_db_integration.js",
     "test:catalogo": "python3 scripts/check_bolivia_reciclaje_catalogo.py",
     "test:estructura": "python3 scripts/check_estructura_html.py",
-    "build": "node scripts/check_syntax.js && node scripts/check_runtime.js && node scripts/test_rls_security.js && python3 scripts/check_audit_hardening.py && python3 scripts/check_no_legacy_plan_ui.py && python3 scripts/check_bolivia_no_cobros_contract.py && node scripts/check_order_privacy.js && node scripts/check_preprod_final.js && python3 scripts/check_preprod_final_py.py && python3 scripts/check_driver_services_contract.py && python3 scripts/check_bolivia_reciclaje_catalogo.py && python3 scripts/check_estructura_html.py"
+    "test:preprod": "python3 scripts/check_preprod_final.py"
   },
   "keywords": [
     "notigas",

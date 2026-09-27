@@ -128,7 +128,7 @@ jobs:
         run: node scripts/check_preprod_final.js
 
       - name: Verify Final Preproduction Guardrails (python port)
-        run: python3 scripts/check_preprod_final_py.py
+        run: python3 scripts/check_preprod_final.py
 
       - name: Verify Driver Services Contract
         run: python3 scripts/check_driver_services_contract.py
