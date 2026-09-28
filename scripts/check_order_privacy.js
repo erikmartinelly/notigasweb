@@ -30,18 +30,18 @@ assert(/radius_m integer not null default 50 check \(radius_m = 50\)/i.test(migr
 assert(/15\.0 \+ random\(\)\*20\.0/i.test(migration), 'El centro aproximado usa desplazamiento aleatorio servidor-side');
 assert(!/md5\(p_id::text\s*\|\|\s*'dist_seed'/i.test(migration), 'No se usa blur reversible basado en UUID');
 assert(/revoke all on function public\.rpc_get_driver_available_orders\(text,text\) from public, anon, authenticated/i.test(migration), 'El RPC antiguo que filtraba datos privados está revocado');
-assert(/create policy pedidos_select_strict[\s\S]*user_id=.*auth\.uid[\s\S]*driver_id=.*auth\.uid/i.test(migration), 'La tabla pedidos solo expone propietario, repartidor asignado o admin');
+assert(/create policy pedidos_select_strict[\s\S]*user_id=.*auth\.uid[\s\S]*driver_id=.*auth\.uid/i.test(migration), 'La tabla pedidos solo expone propietario, recolector asignado o admin');
 assert(/security_invoker=true/i.test(migration), 'Las vistas públicas usan SECURITY INVOKER');
 assert(/grant select on public\.rutas_repartidores_publicas to anon, authenticated/i.test(truckVisibilityMigration), 'Visitantes y compradores leen camiones públicos');
-assert(/grant select on public\.choferes_publicos to anon, authenticated/i.test(truckVisibilityMigration), 'Visitantes y compradores leen fichas públicas de repartidor');
-assert(!/precio_balon_10kg/i.test(read('js/vendors.js')), 'El directorio de repartidores no pide el precio del balón peruano');
+assert(/grant select on public\.choferes_publicos to anon, authenticated/i.test(truckVisibilityMigration), 'Visitantes y compradores leen fichas públicas de recolector');
+assert(!/precio_balon_10kg/i.test(read('js/vendors.js')), 'El directorio de recolectores no pide el precio del balón peruano');
 assert(!/precio_balon_10kg/i.test(read('js/map.js')), 'El mapa no lee ni escribe el precio del balón peruano');
 assert(/revoke all on public\.order_public_radar from anon/i.test(truckVisibilityMigration), 'Visitantes no leen el radar de pedidos');
 assert(/revoke all on public\.pedidos_publicos from anon/i.test(truckVisibilityMigration), 'Visitantes no leen pedidos');
 assert(/grant usage on schema private to authenticated/i.test(grantMigration), 'La policy puede resolver el helper del schema privado');
 assert(/grant execute on function private\.can_view_order_radar\(uuid\) to authenticated/i.test(grantMigration), 'Authenticated puede evaluar el helper privado desde RLS');
 assert(/if not found\s+or p\.user_id = v_uid[\s\S]*or p\.driver_id is not null/i.test(roleMigration), 'Radar excluye propietarios y pedidos ya tomados');
-assert(/estado_verificacion[\s\S]*aprobado[\s\S]*estado_servicio[\s\S]*activo/i.test(roleMigration), 'Radar exige repartidor aprobado y activo');
+assert(/estado_verificacion[\s\S]*aprobado[\s\S]*estado_servicio[\s\S]*activo/i.test(roleMigration), 'Radar exige recolector aprobado y activo');
 assert(/delete from public\.order_public_radar radar[\s\S]*p\.driver_id is not null/i.test(roleMigration), 'Pedidos tomados se purgan del radar');
 
 assert(/from\('order_public_radar'\)/.test(privacy), 'Frontend consume exclusivamente el radar sanitizado para pedidos libres');
@@ -56,7 +56,7 @@ assert(/create or replace function public\.rpc_admin_list_assigned_orders[\s\S]*
 assert(/if not public\.is_admin_email\(\)[\s\S]*raise exception/i.test(adminRpcMigration), 'RPC admin de asignados valida la sesión dentro del servidor');
 assert(/grant execute on function public\.rpc_admin_list_assigned_orders\(\) to authenticated/i.test(adminRpcMigration), 'RPC admin de asignados queda fuera del alcance anónimo');
 assert(/Los datos del pedido se habilitan únicamente si lo tomas/.test(privacy), 'La interfaz explica la regla de privacidad');
-assert(/if \(!isDriverMode\(\)\) \{[\s\S]*clearRadarLayers\(\);[\s\S]*return;/i.test(privacy), 'Frontend no consulta radar desde interfaz de comprador');
+assert(/if \(!isRecolectorMode\(\)\) \{[\s\S]*clearRadarLayers\(\);[\s\S]*return;/i.test(privacy), 'Frontend no consulta radar desde interfaz de comprador');
 
 // La version de assets se deriva de state.js y se compara en todas partes.
 // Asi el guard no se rompe en cada bump de version, que es como sobreviven tres

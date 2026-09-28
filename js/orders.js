@@ -34,10 +34,10 @@ function formatearAntiguedadPedido(value) {
 }
 window.formatearAntiguedadPedido = formatearAntiguedadPedido;
 
-function abrirModalDriverOrders() {
-  const modal = document.getElementById('modalDriverOrders');
+function abrirModalRecolectorOrders() {
+  const modal = document.getElementById('modalRecolectorOrders');
   if (modal) {
-    const selCity = document.getElementById('selectDriverModalCity');
+    const selCity = document.getElementById('selectRecolectorModalCity');
     const curCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || 'cochabamba') : 'cochabamba';
     if (selCity) {
       if (typeof sincronizarSelectCiudadesBoliviaEnModal === 'function') {
@@ -46,36 +46,36 @@ function abrirModalDriverOrders() {
       selCity.value = curCity;
     }
     modal.style.display = 'flex';
-    if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
+    if (typeof renderRecolectorOrdersList === 'function') renderRecolectorOrdersList();
   }
 }
-window.abrirModalDriverOrders = abrirModalDriverOrders;
+window.abrirModalRecolectorOrders = abrirModalRecolectorOrders;
 
-function closeDriverOrdersModal() {
-  const modal = document.getElementById('modalDriverOrders');
+function closeRecolectorOrdersModal() {
+  const modal = document.getElementById('modalRecolectorOrders');
   if (modal) {
     modal.style.display = 'none';
   }
 }
-window.closeDriverOrdersModal = closeDriverOrdersModal;
+window.closeRecolectorOrdersModal = closeRecolectorOrdersModal;
 
-async function renderDriverOrdersList() {
+async function renderRecolectorOrdersList() {
   // La lista legacy nunca debe consultar pedidos libres completos. Primero carga
   // y delega a la capa de privacidad, que consume order_public_radar.
-  if (typeof window.secureRenderDriverOrdersList === 'function') {
-    return window.secureRenderDriverOrdersList();
+  if (typeof window.secureRenderRecolectorOrdersList === 'function') {
+    return window.secureRenderRecolectorOrdersList();
   }
-  if (typeof window.loadDriverPaymentsModule === 'function') {
+  if (typeof window.loadRecolectorPaymentsModule === 'function') {
     try {
-      await window.loadDriverPaymentsModule();
-      if (typeof window.secureRenderDriverOrdersList === 'function') {
-        return window.secureRenderDriverOrdersList();
+      await window.loadRecolectorPaymentsModule();
+      if (typeof window.secureRenderRecolectorOrdersList === 'function') {
+        return window.secureRenderRecolectorOrdersList();
       }
     } catch (err) {
       console.warn('[Orders] No se pudo cargar la capa segura de pedidos:', err);
     }
   }
-  const container = document.getElementById('driverOrdersContainer') || document.getElementById('driverOrdersList');
+  const container = document.getElementById('recolectorOrdersContainer') || document.getElementById('recolectorOrdersList');
   if (!container) return;
 
   if (!window.supabaseClient) {
@@ -88,20 +88,20 @@ async function renderDriverOrdersList() {
     ? await getAuthenticatedUserId()
     : ((typeof getCurrentUserId === 'function') ? getCurrentUserId() : null);
 
-  // Regla estricta: un repartidor SOLO ve y toma pedidos de la ciudad donde se registró
-  let driverCity = null;
+  // Regla estricta: un recolector SOLO ve y toma pedidos de la ciudad donde se registró
+  let recolectorCity = null;
   if (userData && userData.ciudad && userData.ciudad !== 'todos' && userData.ciudad !== 'all') {
-    driverCity = String(userData.ciudad).toLowerCase().trim();
+    recolectorCity = String(userData.ciudad).toLowerCase().trim();
   } else {
     // Si no está registrado en una ciudad, usar la ciudad del GPS (o la seleccionada) para restringir
     const rawCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || '') : '';
-    driverCity = (rawCity && rawCity !== 'todos' && rawCity !== 'all') ? String(rawCity).toLowerCase().trim() : null;
+    recolectorCity = (rawCity && rawCity !== 'todos' && rawCity !== 'all') ? String(rawCity).toLowerCase().trim() : null;
   }
 
-  const driverCategoria = (userData && userData.categoria) ? userData.categoria : 'plastico';
-  const normDriverCat = (typeof window.normalizeCategoryCode === 'function')
-    ? window.normalizeCategoryCode(driverCategoria)
-    : String(driverCategoria).toLowerCase().trim();
+  const recolectorCategoria = (userData && userData.categoria) ? userData.categoria : 'plastico';
+  const normRecolectorCat = (typeof window.normalizeCategoryCode === 'function')
+    ? window.normalizeCategoryCode(recolectorCategoria)
+    : String(recolectorCategoria).toLowerCase().trim();
 
   const expirationMs = (window.NOTIGAS && window.NOTIGAS.ORDER_EXPIRATION_MS) ? window.NOTIGAS.ORDER_EXPIRATION_MS : 48 * 60 * 60 * 1000;
   const activeWindow = new Date(Date.now() - expirationMs).toISOString();
@@ -115,8 +115,8 @@ async function renderDriverOrdersList() {
     .gte('created_at', activeWindow)
     .order('created_at', { ascending: false });
 
-  if (driverCity) {
-    const cityKeys = typeof window.getCityMetroKeys === 'function' ? window.getCityMetroKeys(driverCity) : [driverCity];
+  if (recolectorCity) {
+    const cityKeys = typeof window.getCityMetroKeys === 'function' ? window.getCityMetroKeys(recolectorCity) : [recolectorCity];
     pubQuery = pubQuery.in('ciudad', cityKeys);
   }
 
@@ -125,11 +125,11 @@ async function renderDriverOrdersList() {
   // pedidos_categoria_catalogo_chk, y normalizeCategoryCode ya devuelve un
   // código del catálogo, así que alcanza con igualdad exacta. Antes se comparaba
   // contra listas de variantes de gas/agua que ya no pueden existir.
-  if (normDriverCat && normDriverCat !== 'todos' && normDriverCat !== 'otros') {
-    pubQuery = pubQuery.eq('categoria', normDriverCat);
+  if (normRecolectorCat && normRecolectorCat !== 'todos' && normRecolectorCat !== 'otros') {
+    pubQuery = pubQuery.eq('categoria', normRecolectorCat);
   }
 
-  // 2. Pedidos ya asignados a este repartidor desde la tabla pedidos
+  // 2. Pedidos ya asignados a este recolector desde la tabla pedidos
   let assignedPromise = Promise.resolve({ data: [], error: null });
   if (localUserId) {
     let assignedQuery = window.supabaseClient
@@ -139,39 +139,39 @@ async function renderDriverOrdersList() {
       .eq('estado', 'asignado')
       .gte('created_at', activeWindow)
       .order('created_at', { ascending: false });
-    if (driverCity) {
-      const cityKeys = typeof window.getCityMetroKeys === 'function' ? window.getCityMetroKeys(driverCity) : [driverCity];
+    if (recolectorCity) {
+      const cityKeys = typeof window.getCityMetroKeys === 'function' ? window.getCityMetroKeys(recolectorCity) : [recolectorCity];
       assignedQuery = assignedQuery.in('ciudad', cityKeys);
     }
     assignedPromise = assignedQuery;
   }
 
-  // 3. Estado operativo del repartidor. NOTIGAS no cobra comisión ni saldo:
+  // 3. Estado operativo del recolector. NOTIGAS no cobra comisión ni saldo:
   // la suspensión solo puede ser una sanción administrativa.
-  let driverFinancePromise = Promise.resolve({ data: null, error: null });
+  let recolectorFinancePromise = Promise.resolve({ data: null, error: null });
   if (localUserId) {
-    driverFinancePromise = window.supabaseClient
+    recolectorFinancePromise = window.supabaseClient
       .from('choferes_habilitados')
       .select('estado_servicio, bloqueado, motivo_bloqueo')
       .eq('user_id', localUserId)
       .maybeSingle();
   }
 
-  const [pubRes, assignedRes, finRes] = await Promise.all([pubQuery, assignedPromise, driverFinancePromise]);
-  if (pubRes.error) console.error('Error cargando lista de pedidos repartidor (públicos):', pubRes.error);
-  if (assignedRes.error) console.error('Error cargando pedidos asignados repartidor:', assignedRes.error);
+  const [pubRes, assignedRes, finRes] = await Promise.all([pubQuery, assignedPromise, recolectorFinancePromise]);
+  if (pubRes.error) console.error('Error cargando lista de pedidos recolector (públicos):', pubRes.error);
+  if (assignedRes.error) console.error('Error cargando pedidos asignados recolector:', assignedRes.error);
 
   const financeRow = finRes?.data || {};
-  const driverFinances = {
+  const recolectorFinances = {
     estado_servicio: financeRow.estado_servicio || userData?.estado_servicio || 'activo',
     bloqueado: Boolean(financeRow.bloqueado || userData?.bloqueado),
     motivo_bloqueo: financeRow.motivo_bloqueo || userData?.motivo_bloqueo || ''
   };
   // Solo sankciones administrativas suspenden: no hay suspension por mora ni por pago.
-  driverFinances.isSuspended = Boolean(
-    driverFinances.bloqueado ||
-    driverFinances.estado_servicio === 'suspendido' ||
-    driverFinances.estado_servicio === 'baneado'
+  recolectorFinances.isSuspended = Boolean(
+    recolectorFinances.bloqueado ||
+    recolectorFinances.estado_servicio === 'suspendido' ||
+    recolectorFinances.estado_servicio === 'baneado'
   );
 
   if (typeof AppState !== 'undefined') {
@@ -179,13 +179,13 @@ async function renderDriverOrdersList() {
     AppState.set('userData', { ...curU, ...financeRow });
   }
 
-  const barColor = driverFinances.isSuspended ? '#EF4444' : '#10B981';
+  const barColor = recolectorFinances.isSuspended ? '#EF4444' : '#10B981';
 
   let financialWidgetHtml = `
-    <div class="driver-financial-card" style="background:linear-gradient(135deg,#1E293B 0%,#0F172A 100%);border:1.5px solid ${driverFinances.isSuspended ? '#EF4444' : '#334155'};border-radius:10px;padding:10px 12px;margin-bottom:12px;">
+    <div class="recolector-financial-card" style="background:linear-gradient(135deg,#1E293B 0%,#0F172A 100%);border:1.5px solid ${recolectorFinances.isSuspended ? '#EF4444' : '#334155'};border-radius:10px;padding:10px 12px;margin-bottom:12px;">
       <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:6px;">
         <span style="font-size:11px;font-weight:800;color:#E2E8F0;">🇧🇴 Acceso gratuito</span>
-        <span style="font-size:11px;font-weight:900;color:${barColor};">${driverFinances.isSuspended ? 'Suspendido' : 'Sin cobros'}</span>
+        <span style="font-size:11px;font-weight:900;color:${barColor};">${recolectorFinances.isSuspended ? 'Suspendido' : 'Sin cobros'}</span>
       </div>
       <div style="background:#0F172A;border-radius:6px;height:8px;width:100%;overflow:hidden;border:1px solid #334155;"><div style="background:${barColor};height:100%;width:100%;"></div></div>
       <div style="display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:9.5px;color:#94A3B8;">
@@ -194,18 +194,18 @@ async function renderDriverOrdersList() {
       </div>
     </div>`;
 
-  if (driverFinances.isSuspended) {
-    const motivo = driverFinances.motivo_bloqueo || 'Cuenta suspendida por una sanción administrativa.';
-    financialWidgetHtml += `<div class="driver-lockout-banner" style="background:rgba(239,68,68,.15);border:2px solid #EF4444;border-radius:10px;padding:12px;margin-bottom:12px;color:#FECACA;"><strong>⛔ CUENTA SUSPENDIDA</strong><div style="margin-top:5px;font-size:11px;line-height:1.45;">${typeof escapeHtmlStr === 'function' ? escapeHtmlStr(motivo) : motivo}</div></div>`;
+  if (recolectorFinances.isSuspended) {
+    const motivo = recolectorFinances.motivo_bloqueo || 'Cuenta suspendida por una sanción administrativa.';
+    financialWidgetHtml += `<div class="recolector-lockout-banner" style="background:rgba(239,68,68,.15);border:2px solid #EF4444;border-radius:10px;padding:12px;margin-bottom:12px;color:#FECACA;"><strong>⛔ CUENTA SUSPENDIDA</strong><div style="margin-top:5px;font-size:11px;line-height:1.45;">${typeof escapeHtmlStr === 'function' ? escapeHtmlStr(motivo) : motivo}</div></div>`;
   }
 
   const pubOrders = pubRes.data || [];
   const assignedOrders = assignedRes.data || [];
 
-  // Todos los repartidores habilitados reciben los pedidos en tiempo real, sin ventajas artificiales.
+  // Todos los recolectores habilitados reciben los pedidos en tiempo real, sin ventajas artificiales.
   const visiblePubOrders = pubOrders.filter(o =>
-    (typeof window.isOrderCategoryMatchingDriver !== 'function') ||
-    window.isOrderCategoryMatchingDriver(o.categoria, driverCategoria)
+    (typeof window.isOrderCategoryMatchingRecolector !== 'function') ||
+    window.isOrderCategoryMatchingRecolector(o.categoria, recolectorCategoria)
   );
   const allOrders = [...assignedOrders, ...visiblePubOrders];
 
@@ -218,7 +218,7 @@ async function renderDriverOrdersList() {
   });
 
   const planBannerHtml = `
-    <div class="driver-plan-banner" style="background:linear-gradient(135deg,rgba(16,185,129,.14),#0F172A);border:1.5px solid #10B981;border-radius:10px;padding:10px 12px;margin-bottom:12px;color:#D1FAE5;font-size:11.5px;line-height:1.45;">
+    <div class="recolector-plan-banner" style="background:linear-gradient(135deg,rgba(16,185,129,.14),#0F172A);border:1.5px solid #10B981;border-radius:10px;padding:10px 12px;margin-bottom:12px;color:#D1FAE5;font-size:11.5px;line-height:1.45;">
       <strong style="color:#FFFFFF;">🇧🇴 Bolivia · Acceso gratuito sin comisión</strong> · NOTIGAS no cobra por pedido ni por generar o escanear un QR local. El pago se acuerda directo con el comprador en bolivianos.
     </div>`;
 
@@ -295,9 +295,9 @@ async function renderDriverOrdersList() {
             ${desc ? `<div style="margin-top:3px; font-size:10.5px; color:#94A3B8; font-style:italic;">📝 ${desc}</div>` : ''}
           </div>
 
-          <div class="driver-quick-actions-container" style="margin-top:8px;">
-            <div class="driver-quick-actions-title">⚡ Estado con Cliente:</div>
-            <div class="driver-quick-actions-grid">
+          <div class="recolector-quick-actions-container" style="margin-top:8px;">
+            <div class="recolector-quick-actions-title">⚡ Estado con Cliente:</div>
+            <div class="recolector-quick-actions-grid">
               <button type="button" class="btn-quick-action btn-quick-camino ${o.subestado === 'en_camino' ? 'active' : ''}" 
                 data-action="cambiarEstadoRapidoPedido" data-id="${o.id}" data-status="en_camino" title="Avisar al cliente que vas en camino">
                 <i class="fa-solid fa-truck-fast"></i> En camino
@@ -313,7 +313,7 @@ async function renderDriverOrdersList() {
               </button>
               ` : ''}
               <button type="button" class="btn-quick-action btn-quick-cancel" 
-                data-action="liberarPedidoRepartidor" data-id="${o.id}" title="Liberar pedido para que otro repartidor lo tome">
+                data-action="liberarPedidoRecolector" data-id="${o.id}" title="Liberar pedido para que otro recolector lo tome">
                 <i class="fa-solid fa-arrow-rotate-left"></i> No podré
               </button>
             </div>
@@ -391,12 +391,12 @@ async function renderDriverOrdersList() {
                   <button type="button" style="background:#0284C7; color:#F8FAFC; border:none; padding:5px 9px; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;" data-action="centrarPedidoEnMapa" data-lat="${lat}" data-lng="${lng}" data-order-id="${o.id}" title="Ver en el mapa">
                     <i class="fa-solid fa-map-location-dot"></i> VER EN EL MAPA
                   </button>
-                  ${driverFinances.isSuspended ? `
+                  ${recolectorFinances.isSuspended ? `
                     <button type="button" style="background:#475569; color:#94A3B8; border:none; padding:5px 12px; border-radius:6px; font-size:10px; font-weight:800; cursor:not-allowed; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;" onclick="alert('⛔ Cuenta bloqueada por una sanción administrativa. Contacta a soporte de NOTIGAS para conocer el motivo.');" title="Cuenta bloqueada por sanción administrativa">
                       <i class="fa-solid fa-ban"></i> Bloqueado
                     </button>
                   ` : `
-                    <button type="button" style="background:#FF6D00; color:white; border:none; padding:5px 12px; border-radius:6px; font-size:10px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;" data-action="aceptarPedidoRepartidor" data-id="${o.id}" data-lat="${lat}" data-lng="${lng}" data-address="${escapeHtmlStr(o.direccion || '')}">
+                    <button type="button" style="background:#FF6D00; color:white; border:none; padding:5px 12px; border-radius:6px; font-size:10px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;" data-action="aceptarPedidoRecolector" data-id="${o.id}" data-lat="${lat}" data-lng="${lng}" data-address="${escapeHtmlStr(o.direccion || '')}">
                       <i class="fa-solid fa-truck"></i> Tomar
                     </button>
                   `}
@@ -413,7 +413,7 @@ async function renderDriverOrdersList() {
 }
 
 window.centrarPedidoEnMapa = function(lat, lng, id) {
-  if (typeof closeDriverOrdersModal === 'function') closeDriverOrdersModal();
+  if (typeof closeRecolectorOrdersModal === 'function') closeRecolectorOrdersModal();
   const modalPan = document.getElementById('modalPanoramicaPedidos');
   if (modalPan) modalPan.style.display = 'none';
 
@@ -438,7 +438,7 @@ window.centrarPedidoEnMapa = function(lat, lng, id) {
   }
 };
 
-window.aceptarPedidoRepartidor = function(orderId, lat, lng, address) {
+window.aceptarPedidoRecolector = function(orderId, lat, lng, address) {
   if (!window.supabaseClient) {
     if (typeof showToast === 'function') showToast('Error', 'Sin conexión a la base de datos.', 'error');
     else alert('❌ Error: Sin conexión a la base de datos.');
@@ -469,19 +469,19 @@ window.aceptarPedidoRepartidor = function(orderId, lat, lng, address) {
     if (error) {
       console.error('Error asignando pedido:', error);
       if (typeof showToast === 'function') {
-        showToast('Pedido no disponible', error.message || 'Otro repartidor pudo tomarlo antes.', 'error', 4000);
+        showToast('Pedido no disponible', error.message || 'Otro recolector pudo tomarlo antes.', 'error', 4000);
       } else {
         alert('❌ ' + (error.message || 'No se pudo asignar el pedido.'));
       }
       return;
     }
 
-    if (typeof closeDriverOrdersModal === 'function') closeDriverOrdersModal();
+    if (typeof closeRecolectorOrdersModal === 'function') closeRecolectorOrdersModal();
     if (typeof showToast === 'function') {
       showToast('Pedido Asignado', 'Abriendo la ruta en Google Maps.', 'success');
     }
     if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
-    if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
+    if (typeof renderRecolectorOrdersList === 'function') renderRecolectorOrdersList();
     window.abrirRutaGoogleMaps(lat, lng, orderId, address || '');
   });
 };
@@ -509,8 +509,8 @@ window.abrirRutaGoogleMaps = function (a, b, c, d) {
     address = d || '';
   }
 
-  if (typeof closeDriverOrdersModal === 'function') {
-    closeDriverOrdersModal();
+  if (typeof closeRecolectorOrdersModal === 'function') {
+    closeRecolectorOrdersModal();
   }
 
   let destination = '';
@@ -566,7 +566,7 @@ async function confirmarEntregaPedido(id) {
         console.error("Error confirmando entrega:", error);
         showToast('Error', error.message || 'No se pudo confirmar la entrega.', 'error', 4000);
       } else {
-        closeDriverOrdersModal();
+        closeRecolectorOrdersModal();
         const res = data || {};
         const accounting = res.accounting || res;
         const isSuspended = Boolean(accounting.suspendido ?? res.suspendido ?? false);
@@ -577,7 +577,7 @@ async function confirmarEntregaPedido(id) {
           showToast('¡Entrega confirmada! 🎉', 'Entrega registrada. Sin comisión y sin saldo pendiente: el pago se coordina directo con el comprador (QR local Simple o Banesco QR).', 'success', 5000);
         }
 
-        if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
+        if (typeof renderRecolectorOrdersList === 'function') renderRecolectorOrdersList();
         if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
       }
     } catch(e) {
@@ -626,7 +626,7 @@ async function cambiarEstadoRapidoPedido(orderId, quickStatus) {
       );
     }
 
-    if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
+    if (typeof renderRecolectorOrdersList === 'function') renderRecolectorOrdersList();
     if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
   } catch (e) {
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
@@ -638,10 +638,10 @@ async function cambiarEstadoRapidoPedido(orderId, quickStatus) {
 }
 window.cambiarEstadoRapidoPedido = cambiarEstadoRapidoPedido;
 
-async function liberarPedidoRepartidor(orderId) {
+async function liberarPedidoRecolector(orderId) {
   if (!window.supabaseClient || !orderId) return;
 
-  const msg = '¿Seguro que no podrás entregar este pedido? Volverá a la lista disponible para que otro repartidor de la ciudad pueda atenderlo de inmediato.';
+  const msg = '¿Seguro que no podrás entregar este pedido? Volverá a la lista disponible para que otro recolector de la ciudad pueda atenderlo de inmediato.';
   showConfirmModal('⚠️', '¿No podrás llegar?', msg, 'Sí, liberar pedido', async () => {
     if (typeof showLoadingOverlay === 'function') {
       showLoadingOverlay('Liberando pedido...');
@@ -650,7 +650,7 @@ async function liberarPedidoRepartidor(orderId) {
     try {
       const { data, error } = await window.supabaseClient.rpc('rpc_driver_release_order', {
         p_order_id: orderId,
-        p_motivo: 'Repartidor canceló por imprevisto'
+        p_motivo: 'Recolector canceló por imprevisto'
       });
 
       if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
@@ -664,24 +664,24 @@ async function liberarPedidoRepartidor(orderId) {
       }
 
       if (typeof showToast === 'function') {
-        showToast('Pedido liberado', 'El pedido volvió a estar disponible para otros repartidores.', 'info', 4500);
+        showToast('Pedido liberado', 'El pedido volvió a estar disponible para otros recolectores.', 'info', 4500);
       }
 
-      if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
+      if (typeof renderRecolectorOrdersList === 'function') renderRecolectorOrdersList();
       if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
       if (typeof map !== 'undefined' && map && map.closePopup) {
         map.closePopup();
       }
     } catch (e) {
       if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-      console.error('Error inesperado en liberarPedidoRepartidor:', e);
+      console.error('Error inesperado en liberarPedidoRecolector:', e);
       if (typeof showToast === 'function') {
         showToast('Error', 'Error inesperado al liberar el pedido.', 'error', 4000);
       }
     }
   }, 'Mantener pedido');
 }
-window.liberarPedidoRepartidor = liberarPedidoRepartidor;
+window.liberarPedidoRecolector = liberarPedidoRecolector;
 
 function abrirWhatsappDirecto(rawTel, direccion, categoria) {
   if (!rawTel) {
@@ -731,11 +731,11 @@ const ACTIVE_ORDER_STATUS_REFRESH_MS = 15000;
 
 const ORDER_STATUS_PRESENTATION = {
   pendiente: {
-    title: 'Esperando repartidor',
+    title: 'Esperando recolector',
     label: 'PENDIENTE',
     owner: 'DEMANDA VECINAL',
-    info: 'Tu pedido está registrado y visible para los repartidores de tu zona.',
-    detail: 'Se asignará cuando un repartidor elija tu pedido.',
+    info: 'Tu pedido está registrado y visible para los recolectores de tu zona.',
+    detail: 'Se asignará cuando un recolector elija tu pedido.',
     color: '#FF6D00',
     shadow: 'rgba(255, 109, 0, 0.18)'
   },
@@ -743,16 +743,16 @@ const ORDER_STATUS_PRESENTATION = {
     title: 'Pedido revisado',
     label: 'VISTO',
     owner: 'SIGUE DISPONIBLE',
-    info: 'Un repartidor vio tu pedido y continúa disponible.',
-    detail: 'Esperando que un repartidor lo elija.',
+    info: 'Un recolector vio tu pedido y continúa disponible.',
+    detail: 'Esperando que un recolector lo elija.',
     color: '#FF8F00',
     shadow: 'rgba(255, 143, 0, 0.18)'
   },
   asignado: {
     title: '¡En camino!',
     label: 'EN CAMINO',
-    owner: 'REPARTIDOR EN RUTA',
-    info: 'Un repartidor tomó tu pedido y se dirige a tu ubicación.',
+    owner: 'RECOLECTOR EN RUTA',
+    info: 'Un recolector tomó tu pedido y se dirige a tu ubicación.',
     detail: 'Mantente atento a tu timbre o teléfono.',
     color: '#00E676',
     shadow: 'rgba(0, 230, 118, 0.22)'
@@ -792,24 +792,24 @@ function renderActiveOrderNotice(order) {
   }
   let view = ORDER_STATUS_PRESENTATION[effectiveState] || ORDER_STATUS_PRESENTATION.pendiente;
 
-  // Personalización cuando el repartidor emite estado rápido
+  // Personalización cuando el recolector emite estado rápido
   if (effectiveState === 'asignado' && order.subestado) {
     if (order.subestado === 'en_puerta') {
       view = {
-        title: '¡Repartidor en tu Puerta! 🚪',
+        title: '¡Recolector en tu Puerta! 🚪',
         label: 'EN TU PUERTA',
-        owner: 'REPARTIDOR LLEGÓ',
-        info: 'El repartidor ya está en la puerta de tu domicilio.',
+        owner: 'RECOLECTOR LLEGÓ',
+        info: 'El recolector ya está en la puerta de tu domicilio.',
         detail: '¡Por favor acércate a la puerta para recibir tu balón!',
         color: '#10B981',
         shadow: 'rgba(16, 185, 129, 0.45)'
       };
     } else if (order.subestado === 'en_camino') {
       view = {
-        title: '¡Repartidor en Camino! 🚚',
+        title: '¡Recolector en Camino! 🚚',
         label: 'EN CAMINO',
-        owner: 'REPARTIDOR EN RUTA',
-        info: 'El repartidor tomó tu pedido y va hacia tu dirección.',
+        owner: 'RECOLECTOR EN RUTA',
+        info: 'El recolector tomó tu pedido y va hacia tu dirección.',
         detail: 'Mantente atento a tu timbre o teléfono celular.',
         color: '#0284C7',
         shadow: 'rgba(2, 132, 199, 0.45)'
@@ -828,7 +828,7 @@ function renderActiveOrderNotice(order) {
   const title = document.getElementById('notigasTripTitle');
   const info = document.getElementById('notigasTripInfo');
   const statusText = document.getElementById('notigasTripStatusText');
-  const driverName = document.getElementById('notigasTripDriverName');
+  const recolectorName = document.getElementById('notigasTripRecolectorName');
   const timeEst = document.getElementById('notigasTripTimeEst');
   const statusIndicator = document.getElementById('notigasTripStatusIndicator');
   const tripBtnReceived = document.getElementById('tripBtnReceived');
@@ -840,7 +840,7 @@ function renderActiveOrderNotice(order) {
     statusText.textContent = view.label;
     statusText.style.color = view.color;
   }
-  if (driverName) driverName.textContent = view.owner;
+  if (recolectorName) recolectorName.textContent = view.owner;
   if (timeEst) timeEst.textContent = view.detail;
   if (statusIndicator) {
     statusIndicator.style.background = view.color;
@@ -1025,12 +1025,11 @@ async function abrirSubmenuPedidos() {
 }
 window.abrirSubmenuPedidos = abrirSubmenuPedidos;
 
-/* Acceso directo por tipo de producto. Es la entrada de los botones
-   "PEDIR RECICLADOR" y "PEDIR COMPRAS" de la vista principal: fija el tipo
-   ANTES de abrir la ficha para que el <select> de categorias ofrezca solo las
-   de ese tipo, y evita el submenu que las mezclaba todas. El tipo real lo
-   re-deriva el servidor desde la categoria elegida. */
-async function iniciarPedidoPorTipo(tipo) {
+/* Entrada del boton "PEDIR RECOJO RECICLABLES" de la vista principal.
+   Como el servicio es solo reciclaje, no hay tipo que elegir: la funcion se
+   conserva sin argumento porque el resto del flujo la sigue invocando.
+   El tipo real lo re-deriva el servidor desde la categoria elegida. */
+async function iniciarPedidoPorTipo() {
   const userId = (typeof getAuthenticatedUserId === 'function') ? await getAuthenticatedUserId() : null;
   const userData = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
   const isLoggedIn = Boolean(userId || userData?.user_id || userData?.gmail);
@@ -1043,7 +1042,7 @@ async function iniciarPedidoPorTipo(tipo) {
   }
 
   if (typeof window.setTipoSolicitud === 'function') {
-    window.setTipoSolicitud(tipo === 'compra' ? 'compra' : 'recogida');
+    window.setTipoSolicitud();
   }
 
   /* Autocompletar el teléfono registrado, igual que al entrar por una categoría. */
@@ -1096,13 +1095,10 @@ async function seleccionarYPedirDirecto(catNombre) {
 
   closeSubmenuModal();
 
-  // El modo se deduce de la categoria: el reciclaje es "recogida" y el
-  // resto "compra". Antes de fijar la categoria hay que haber puesto el modo,
-  // porque setTipoSolicitud repuebla el <select>.
-  const boCat = (window.NOTIGAS_BO && typeof window.NOTIGAS_BO.categoriaPorCodigo === 'function')
-    ? window.NOTIGAS_BO.categoriaPorCodigo(catNombre) : null;
-  if (boCat) {
-    window.setTipoSolicitud(boCat.tipo_solicitud);
+  // El servicio es solo reciclaje, asi que no hay modo que deducir: se fija el
+  // tipo antes de la categoria porque setTipoSolicitud repuebla el <select>.
+  if (typeof window.setTipoSolicitud === 'function') {
+    window.setTipoSolicitud();
   }
 
   const sel = document.getElementById('selectCategoria');
@@ -1149,35 +1145,25 @@ function closePedidoModal() {
 }
 
 /* Tipo de solicitud activa.
-   'recogida' -> la casa publica el material que tiene y el repartidor va a
-                 buscarlo. Es el foco del producto.
-   'compra'   -> el comprador pide que le lleven el producto.
-   El servidor lo re-deriva desde la categoria, asi que este estado solo
-   gobierna que categorias se ofrecen y que textos se muestran. */
+   NOTIGAS solo recoge material: la venta y la entrega de productos se
+   retiraron del servicio, asi que no hay eleccion de tipo. La funcion se
+   conserva porque el resto del flujo sigue llamandola, y siempre fija
+   'recogida'. El servidor lo re-deriva desde la categoria de todos modos. */
 let tipoSolicitudActual = 'recogida';
 
-function categoriasDisponibles(tipo) {
+function categoriasDisponibles() {
   const bo = window.NOTIGAS_BO;
-  if (bo && typeof bo.categoriasPorTipo === 'function') return bo.categoriasPorTipo(tipo);
+  if (bo && typeof bo.categoriasPorTipo === 'function') return bo.categoriasPorTipo();
   return [];
 }
 
-function setTipoSolicitud(tipo) {
-  tipo = (tipo === 'compra') ? 'compra' : 'recogida';
-  tipoSolicitudActual = tipo;
-  const esRecogida = (tipo === 'recogida');
-
-  document.querySelectorAll('#tipoSolicitudToggle button[data-tipo]').forEach((b) => {
-    const on = (b.dataset.tipo === tipo);
-    b.style.borderColor = on ? (esRecogida ? '#22C55E' : '#0288D1') : '#1E293B';
-    b.style.background  = on ? (esRecogida ? 'rgba(34,197,94,0.18)' : 'rgba(2,136,209,0.20)') : 'rgba(30,41,59,0.6)';
-    b.style.color       = on ? (esRecogida ? '#BBF7D0' : '#BAE6FD') : '#94A3B8';
-  });
+function setTipoSolicitud() {
+  tipoSolicitudActual = 'recogida';
 
   // El catalogo del servidor es la fuente de verdad. Sin NOTIGAS_BO se
   // respeta la lista estatica del HTML.
   const sel = document.getElementById('selectCategoria');
-  const lista = categoriasDisponibles(tipo);
+  const lista = categoriasDisponibles();
   if (sel && lista.length) {
     const previo = sel.value;
     sel.innerHTML = lista
@@ -1186,37 +1172,19 @@ function setTipoSolicitud(tipo) {
     if (lista.some((c) => c.codigo === previo)) sel.value = previo;
   }
 
-  const ayuda = document.getElementById('tipoSolicitudAyuda');
   const labelCat = document.getElementById('labelCategoria');
   const labelCant = document.getElementById('labelCantidad');
   const btnTxt = document.getElementById('btnPedidoTexto');
   const title = document.getElementById('modalPedidoTitle');
 
-  if (ayuda) {
-    if (esRecogida) {
-      ayuda.textContent = 'Publica el material que tienes en casa. Los repartidores cercanos verán tu punto en el mapa y lo recogerán. NOTIGAS no cobra por la recogida.';
-      ayuda.style.background = 'rgba(34,197,94,0.12)';
-      ayuda.style.borderLeftColor = '#22C55E';
-      ayuda.style.color = '#BBF7D0';
-    } else {
-      ayuda.textContent = 'Pide el producto que necesitas y los repartidores cercanos te lo llevan. El pago se acuerda directo por QR local; NOTIGAS no cobra comisión.';
-      ayuda.style.background = 'rgba(2,136,209,0.12)';
-      ayuda.style.borderLeftColor = '#0288D1';
-      ayuda.style.color = '#BAE6FD';
-    }
-  }
-  if (labelCat) labelCat.textContent = esRecogida ? 'Material que tienes disponible:' : 'Producto / Servicio que necesitas:';
-  if (labelCant) labelCant.textContent = esRecogida
-    ? '¿Cuánto material tienes? (Ej: 3 bolsas, 1 quintillo):'
-    : '¿Cuánto necesitas? (Ej: 2 unidades, 1 quintillo):';
-  if (btnTxt) btnTxt.textContent = esRecogida ? 'Publicar Recogida' : 'Confirmar y Solicitar en Mapa Vivo';
-  if (title) title.textContent = esRecogida ? '♻️ Solicitar Recogida de Material' : '🛒 Ficha de Compra';
-
-  const groupOtros = document.getElementById('groupOrderOtros');
-  if (groupOtros && sel) groupOtros.style.display = (sel.value === 'otros') ? 'block' : 'none';
+  if (labelCat) labelCat.textContent = 'Material que tienes disponible:';
+  if (labelCant) labelCant.textContent = '¿Cuánto material tienes? (Ej: 3 bolsas, 1 quintillo):';
+  if (btnTxt) btnTxt.textContent = 'Publicar Recogida';
+  if (title) title.textContent = '♻️ Publicar material para recoger';
 }
 window.setTipoSolicitud = setTipoSolicitud;
 window.tipoSolicitudActual = () => tipoSolicitudActual;
+
 
 function confirmarPedido() {
   if (typeof window.verificarPermisoOperarEnCiudad === 'function' && !window.verificarPermisoOperarEnCiudad('crear un pedido')) {
@@ -1227,26 +1195,25 @@ function confirmarPedido() {
   const inputCalle = document.getElementById('inputCallePrincipal');
   const inputTel = document.getElementById('inputTelefonoComprador') || document.getElementById('inputTelefono');
   const inputDesc = document.getElementById('inputOrderDescripcion');
-  const inputOtros = document.getElementById('inputOrderOtrosDetalle');
 
   // 'plastico' es la categoria por defecto: es la primera del catalogo de
   // reciclaje. Antes caia en 'gas', que ya no existe.
   const categoria = selectCategoria && selectCategoria.value ? selectCategoria.value : 'plastico';
   const boCat = (window.NOTIGAS_BO && typeof window.NOTIGAS_BO.categoriaPorCodigo === 'function')
     ? window.NOTIGAS_BO.categoriaPorCodigo(categoria) : null;
-  const tipoSolicitud = boCat ? boCat.tipo_solicitud : (tipoSolicitudActual || 'compra');
+  // Todo pedido es una recogida: el servidor lo re-deriva igual desde la
+  // categoria, asi que aqui solo se manda la constante.
+  const tipoSolicitud = 'recogida';
   const cantidad = inputCantidad ? inputCantidad.value.trim() : '';
   const calle = inputCalle ? inputCalle.value.trim() : '';
   const telefono = inputTel ? inputTel.value.trim() : '';
-  const descripcion = (categoria === 'otros' && inputOtros ? inputOtros.value.trim() : (inputDesc ? inputDesc.value.trim() : ''));
+  const descripcion = inputDesc ? inputDesc.value.trim() : '';
 
   if (!cantidad) {
     if (typeof showToast === 'function') {
       showToast(
-        tipoSolicitud === 'recogida' ? '📦 Indica cuánto material tienes' : '📦 Indica cuánto necesitas',
-        tipoSolicitud === 'recogida'
-          ? 'Por ejemplo "3 bolsas" o "1 quintillo". Así el repartidor sabe qué llevar.'
-          : 'Por ejemplo "2 unidades" o "1 quintillo".',
+        '📦 Indica cuánto material tienes',
+        'Por ejemplo "3 bolsas" o "1 quintillo". Así el recolector sabe qué llevar.',
         'warning', 5000
       );
     }
@@ -1289,7 +1256,7 @@ function confirmarPedido() {
   };
 
   if (window.supabaseClient) {
-    showLoadingOverlay(tipoSolicitud === 'recogida' ? 'Publicando tu material...' : 'Registrando tu pedido...');
+    showLoadingOverlay('Publicando tu material...');
 
     getAuthenticatedUserId().then(async (userId) => {
       if (!userId) {
@@ -1299,7 +1266,7 @@ function confirmarPedido() {
       }
 
       const catName = boCat ? boCat.chip : (orderData.categoria || 'Plastico');
-      const orderTitle = tipoSolicitud === 'recogida' ? `Recogida de ${catName}` : `Pedido de ${catName}`;
+      const orderTitle = `Recogida de ${catName}`;
 
       const { data, error } = await window.supabaseClient
         .from('pedidos')
@@ -1334,10 +1301,8 @@ function confirmarPedido() {
       AppState.set('activeOrder', orderData);
       closePedidoModal();
       showToast(
-        tipoSolicitud === 'recogida' ? '♻️ ¡Recogida Publicada!' : '🛒 ¡Pedido Publicado!',
-        tipoSolicitud === 'recogida'
-          ? 'Los repartidores cercanos verán tu material en el mapa y lo recogerán.'
-          : 'Tu pedido ya está visible para los repartidores en el mapa.',
+        '♻️ ¡Recogida Publicada!',
+        'Los recolectores cercanos verán tu material en el mapa y lo recogerán.',
         'success', 5000
       );
       checkActiveOrderStatus();
@@ -1349,8 +1314,8 @@ function confirmarPedido() {
       if (typeof renderActiveOrdersMap === 'function') {
         renderActiveOrdersMap();
       }
-      if (typeof renderDriverDemandByZoom === 'function') {
-        renderDriverDemandByZoom();
+      if (typeof renderRecolectorDemandByZoom === 'function') {
+        renderRecolectorDemandByZoom();
       }
     }).catch(e => {
       hideLoadingOverlay();
@@ -1372,7 +1337,7 @@ function cancelarPedidoActivo() {
   showConfirmModal(
     '❌',
     '¿Cancelar tu pedido?',
-    'Tu pedido activo dejará de aparecer en el mapa y los repartidores ya no lo verán.',
+    'Tu pedido activo dejará de aparecer en el mapa y los recolectores ya no lo verán.',
     'Sí, cancelar',
     async () => {
       if (!window.supabaseClient) {
@@ -1437,7 +1402,7 @@ async function confirmarRecepcionComprador() {
   showConfirmModal(
     '🏁',
     '¿Ya recibiste tu pedido?',
-    'Al confirmar, el requerimiento dejará de aparecer en el mapa y ya no estará disponible para nuevos repartidores.',
+    'Al confirmar, el requerimiento dejará de aparecer en el mapa y ya no estará disponible para nuevos recolectores.',
     'Sí, ya lo recibí',
     async () => {
       if (!window.supabaseClient) {
@@ -1498,7 +1463,7 @@ async function reportarIncumplimientoPrecio() {
     showToast('Queja no disponible', 'Solo puedes reportar el precio de un pedido asignado.', 'warning', 3500);
     return;
   }
-  const rawPrice = window.prompt('¿Qué precio te cobró el repartidor? Ingresa el monto en bolivianos, por ejemplo: 45.00');
+  const rawPrice = window.prompt('¿Qué precio te cobró el recolector? Ingresa el monto en bolivianos, por ejemplo: 45.00');
   if (rawPrice === null) return;
   const chargedPrice = Number(String(rawPrice).trim().replace(',', '.'));
   if (!Number.isFinite(chargedPrice) || chargedPrice < 0 || chargedPrice > 1000) {
@@ -1712,7 +1677,7 @@ async function lanzarEspecialEsperame() {
 
   const pos = (typeof window.getActiveUserLocation === 'function') ? window.getActiveUserLocation() : ((typeof AppState !== 'undefined') ? AppState.get('userLocation') : null);
   if (!coordenadasValidasAlerta(pos)) {
-    if (typeof showToast === 'function') showToast('GPS Requerido', 'Activa tu ubicación GPS para pedir al repartidor que te espere.', 'warning', 3500);
+    if (typeof showToast === 'function') showToast('GPS Requerido', 'Activa tu ubicación GPS para pedir al recolector que te espere.', 'warning', 3500);
     return;
   }
 
@@ -1725,7 +1690,7 @@ async function lanzarEspecialEsperame() {
     timestamp: Date.now()
   };
 
-  showLoadingOverlay('Avisando al repartidor...');
+  showLoadingOverlay('Avisando al recolector...');
   try {
     const sent = await transmitirAlertaVecinal(payload);
     let saved = false;
@@ -1740,7 +1705,7 @@ async function lanzarEspecialEsperame() {
     }
     hideLoadingOverlay();
     if (saved || sent) {
-      if (typeof showToast === 'function') showToast('¡Aviso Enviado!', 'Se ha alertado a los repartidores que estás saliendo.', 'success', 4000);
+      if (typeof showToast === 'function') showToast('¡Aviso Enviado!', 'Se ha alertado a los recolectores que estás saliendo.', 'success', 4000);
     } else {
       if (typeof showToast === 'function') showToast('Aviso Registrado', 'Tu alerta está activa en el mapa vecinal.', 'info', 3500);
     }
@@ -1780,14 +1745,14 @@ window.recibirAlertaVecinalBroadcast = function(payload) {
   }
 
   if (payload.tipo === 'escuche_camion') {
-    if (typeof mostrarPopupAlertaRepartidor === 'function') {
-      mostrarPopupAlertaRepartidor('🎵 ¡Camión de Gas Cerca!', payload.mensaje || 'Un vecino reporta haber escuchado la música del camión cerca de tu zona.');
+    if (typeof mostrarPopupAlertaRecolector === 'function') {
+      mostrarPopupAlertaRecolector('🎵 ¡Camión de Gas Cerca!', payload.mensaje || 'Un vecino reporta haber escuchado la música del camión cerca de tu zona.');
     } else if (typeof showToast === 'function') {
       showToast('🎵 ¡Camión de Gas Cerca!', payload.mensaje || 'Un vecino reporta el camión cerca.', 'info', 5000);
     }
   } else if (payload.tipo === 'esperame') {
-    if (typeof mostrarPopupAlertaRepartidor === 'function') {
-      mostrarPopupAlertaRepartidor('⏳ ¡Vecino Saliendo!', payload.mensaje || 'Un vecino cercano publicó material para recoger.');
+    if (typeof mostrarPopupAlertaRecolector === 'function') {
+      mostrarPopupAlertaRecolector('⏳ ¡Vecino Saliendo!', payload.mensaje || 'Un vecino cercano publicó material para recoger.');
     } else if (typeof showToast === 'function') {
       showToast('⏳ ¡Vecino Saliendo!', payload.mensaje || 'Un vecino cercano está saliendo.', 'warning', 5000);
     }

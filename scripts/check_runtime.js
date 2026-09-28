@@ -363,8 +363,8 @@ const allModules = [
   'js/admin.js',
   'js/admin_payments.js',
   'js/admin_payment_config.js',
-  'js/driver_payments.js',
-  'js/driver_order_rules.js',
+  'js/recolector_payments.js',
+  'js/recolector_order_rules.js',
   'js/admin_users.js'
 ];
 
@@ -400,7 +400,7 @@ try {
 
   if (mapListeners['zoomend']) {
     mapListeners['zoomend'].forEach(fn => fn());
-    console.log('  ✅ Evento zoomend (renderDriverDemandByZoom) disparado con éxito');
+    console.log('  ✅ Evento zoomend (renderRecolectorDemandByZoom) disparado con éxito');
   }
 
   if (mapListeners['moveend']) {
@@ -418,8 +418,8 @@ try {
   context.applyGpsPosition(-17.3895, -66.1568, 'Test GPS', true, true);
   console.log('  ✅ applyGpsPosition() OK');
 
-  context.actualizarIconoMarcadorUsuario('driver');
-  console.log('  ✅ actualizarIconoMarcadorUsuario("driver") OK');
+  context.actualizarIconoMarcadorUsuario('recolector');
+  console.log('  ✅ actualizarIconoMarcadorUsuario("recolector") OK');
 
   context.actualizarPedidoEnMapa({
     id: 'test-order-99',
@@ -439,9 +439,9 @@ try {
 
   // 6. Verificar integridad de constantes, estados canónicos y exports
   console.log('\n🔒 Verificando constantes críticas, máquina de estados y exports...');
-  const radarZoom = context.window.DRIVER_RADAR_MAX_ZOOM ?? context.DRIVER_RADAR_MAX_ZOOM;
+  const radarZoom = context.window.RECOLECTOR_RADAR_MAX_ZOOM ?? context.RECOLECTOR_RADAR_MAX_ZOOM;
   if (radarZoom !== 14) {
-    throw new Error(`DRIVER_RADAR_MAX_ZOOM esperado 14 pero obtenido: ${radarZoom}`);
+    throw new Error(`RECOLECTOR_RADAR_MAX_ZOOM esperado 14 pero obtenido: ${radarZoom}`);
   }
   if (!context.window.BOLIVIA_CITIES || !context.window.BOLIVIA_CITIES.cochabamba) {
     throw new Error('window.BOLIVIA_CITIES no está inicializado.');

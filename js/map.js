@@ -1,10 +1,10 @@
 
-function getCustomDriverTruckIcon(data, isZoomOut) {
+function getCustomRecolectorTruckIcon(data, isZoomOut) {
   if (isZoomOut && truckRadarBlueIcon) return truckRadarBlueIcon;
-  if (typeof window.crearMarcadorCamionRepartidorHtml === 'function') {
-    const html = window.crearMarcadorCamionRepartidorHtml(data);
+  if (typeof window.crearMarcadorCamionRecolectorHtml === 'function') {
+    const html = window.crearMarcadorCamionRecolectorHtml(data);
     return L.divIcon({
-      className: 'notigas-driver-marker',
+      className: 'notigas-recolector-marker',
       html: html,
       iconSize: [96, 74],
       iconAnchor: [48, 23]
@@ -12,11 +12,11 @@ function getCustomDriverTruckIcon(data, isZoomOut) {
   }
   return truckIcon;
 }
-window.getCustomDriverTruckIcon = getCustomDriverTruckIcon;
+window.getCustomRecolectorTruckIcon = getCustomRecolectorTruckIcon;
 
 /* ==========================================================================
    NOTIGAS - MÓDULO DE MAPA EN VIVO, POSICIONAMIENTO GPS OBLIGATORIO,
-   ANIMACIONES Y MAPA DE CALOR DE PEDIDOS PARA MODO REPARTIDOR
+   ANIMACIONES Y MAPA DE CALOR DE PEDIDOS PARA MODO RECOLECTOR
    ==========================================================================
    OPTIMIZACIÓN DE TRANSMISIÓN GPS PARA NO SATURAR LA BASE DE DATOS:
    - Frecuencia de emisión a la Base de Datos: Cada 30 Segundos (30,000 ms).
@@ -30,8 +30,8 @@ window.getCustomDriverTruckIcon = getCustomDriverTruckIcon;
 // ==========================================================================
 
 const TRUCK_ANIM_INTERVAL_MS = 80;
-const DRIVER_RADAR_MAX_ZOOM = 14;
-window.DRIVER_RADAR_MAX_ZOOM = DRIVER_RADAR_MAX_ZOOM;
+const RECOLECTOR_RADAR_MAX_ZOOM = 14;
+window.RECOLECTOR_RADAR_MAX_ZOOM = RECOLECTOR_RADAR_MAX_ZOOM;
 
 // COORDENADAS OFICIALES DE CIUDADES CAPITALES DE BOLIVIA
 const GEO_BO_MUNICIPIOS = [
@@ -77,12 +77,12 @@ const camionDeliveredMarkerHtml = `
   </div>
 `;
 
-// Marcador único de repartidor: Camión 3D Rojo Moderno + insignia R Oficial
+// Marcador único de recolector: Camión 3D Rojo Moderno + insignia R Oficial
 const truckSvgMarkerHtml = `
-  <div class="driver-map-marker" title="Repartidor Oficial NOTIGAS en Vivo">
-    <img src="icons/camion_dina_rojo.svg" class="driver-3d-truck-img" alt="Camión Repartidor">
-    <span class="driver-marker-badge" aria-hidden="true">R</span>
-    <span class="driver-marker-online" title="GPS en Tiempo Real"></span>
+  <div class="recolector-map-marker" title="Recolector Oficial NOTIGAS en Vivo">
+    <img src="icons/camion_dina_rojo.svg" class="recolector-3d-truck-img" alt="Camión Recolector">
+    <span class="recolector-marker-badge" aria-hidden="true">R</span>
+    <span class="recolector-marker-online" title="GPS en Tiempo Real"></span>
   </div>
 `;
 
@@ -137,9 +137,9 @@ const deliveryPinSvgHtml = `
   </div>
 `;
 
-// ONDAS DE RADAR AZUL PARA CAMIONES REPARTIDORES AL HACER ZOOM OUT
+// ONDAS DE RADAR AZUL PARA CAMIONES RECOLECTORES AL HACER ZOOM OUT
 const truckRadarBlueSvgHtml = `
-  <div class="truck-radar-blue" title="Camión Repartidor en Vivo (Haz clic para ver)">
+  <div class="truck-radar-blue" title="Camión Recolector en Vivo (Haz clic para ver)">
     <span></span>
     <span></span>
     <span></span>
@@ -203,12 +203,12 @@ let _lastCargarPedidosTime = 0;
 // Estado de transmisión GPS de chofer
 let lastBroadcastLat = null;
 let lastBroadcastLng = null;
-let _cachedDriverProfile = null;
-let _cachedDriverUserId = null;
+let _cachedRecolectorProfile = null;
+let _cachedRecolectorUserId = null;
 
-// Marcadores de radar y estado de demanda por repartidor
+// Marcadores de radar y estado de demanda por recolector
 window.orderRadarMarkers = window.orderRadarMarkers || {};
-window.driverDemandMapState = window.driverDemandMapState || {
+window.recolectorDemandMapState = window.recolectorDemandMapState || {
   availableOrders: [],
   assignedOrders: []
 };
@@ -316,22 +316,22 @@ window.normalizeCategoryCode = function(cat) {
   return catalogo.length ? catalogo[0].codigo : 'plastico';
 };
 
-window.isOrderCategoryMatchingDriver = function(orderCategory, driverCatInput) {
-  let driverCat = driverCatInput;
-  if (!driverCat) {
+window.isOrderCategoryMatchingRecolector = function(orderCategory, recolectorCatInput) {
+  let recolectorCat = recolectorCatInput;
+  if (!recolectorCat) {
     const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
-    if (u.categoria) driverCat = u.categoria;
+    if (u.categoria) recolectorCat = u.categoria;
   }
-  if (!driverCat) return false;
+  if (!recolectorCat) return false;
 
-  const normDriver = window.normalizeCategoryCode(driverCat);
+  const normRecolector = window.normalizeCategoryCode(recolectorCat);
   const normOrder = window.normalizeCategoryCode(orderCategory);
 
-  return normDriver === normOrder;
+  return normRecolector === normOrder;
 };
 
-function isOrderCategoryMatchingDriver(orderCategory, driverCatInput) {
-  return window.isOrderCategoryMatchingDriver(orderCategory, driverCatInput);
+function isOrderCategoryMatchingRecolector(orderCategory, recolectorCatInput) {
+  return window.isOrderCategoryMatchingRecolector(orderCategory, recolectorCatInput);
 }
 
 window.matchCityByNameOrRegion = function(cityName, regionName) {
@@ -410,7 +410,7 @@ function getReportedTruckIcon(tipo) {
    del catálogo canónico (NOTIGAS_BO.CATEGORIAS_POR_CODIGO) para que el pin
    nunca vuelva a quedar pegado a un producto que ya no existe.
 
-   La diferencia clave para el repartidor: "RECOGER" es material que la casa
+   La diferencia clave para el recolector: "RECOGER" es material que la casa
    ofrece y hay que ir a buscar; "PEDIDO" es un producto que hay que llevar. */
 const ICONOS_FONTAWESOME_POR_CATEGORIA = {
   plastico:    'fa-recycle',
@@ -474,7 +474,7 @@ async function obtenerFichaChoferEnMemoria(userId, userData) {
   // 1. Usar datos ya cargados en AppState si están disponibles
   if (userData && (userData.nombre || userData.placa || userData.whatsapp)) {
     return {
-      nombre_completo: userData.nombre || userData.full_name || 'Repartidor GLP',
+      nombre_completo: userData.nombre || userData.full_name || 'Recolector GLP',
       telefono_whatsapp: userData.whatsapp || userData.telefono || '',
       placa: userData.placa || 'Camión',
       categoria: userData.categoria || 'plastico',
@@ -483,23 +483,23 @@ async function obtenerFichaChoferEnMemoria(userId, userData) {
   }
 
   // 2. Si ya está en caché local de memoria y coincide el user_id
-  if (_cachedDriverProfile && _cachedDriverUserId === userId) {
-    return _cachedDriverProfile;
+  if (_cachedRecolectorProfile && _cachedRecolectorUserId === userId) {
+    return _cachedRecolectorProfile;
   }
 
   // 3. Consulta única inicial a Supabase si no está en memoria
   if (window.supabaseClient && userId) {
     try {
-      const { data: driver } = await window.supabaseClient
+      const { data: recolector } = await window.supabaseClient
         .from('choferes_habilitados')
         .select('nombre_completo, telefono_whatsapp, placa, categoria, ciudad')
         .eq('user_id', userId)
         .maybeSingle();
 
-      if (driver) {
-        _cachedDriverProfile = driver;
-        _cachedDriverUserId = userId;
-        return driver;
+      if (recolector) {
+        _cachedRecolectorProfile = recolector;
+        _cachedRecolectorUserId = userId;
+        return recolector;
       }
     } catch (_) {}
   }
@@ -513,20 +513,20 @@ async function obtenerFichaChoferEnMemoria(userId, userData) {
 
 function actualizarIconoMarcadorUsuario(forcedMode) {
   if (!userMarker || !truckIcon || !userLocationIcon || !deliveryPinIcon) return;
-  const isDriver = (forcedMode === 'driver') || 
-                   (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver') || 
-                   (typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver') ||
+  const isRecolector = (forcedMode === 'recolector') ||
+                   (typeof currentAppMode !== 'undefined' && currentAppMode === 'recolector') ||
+                   (typeof AppState !== 'undefined' && AppState.get('appMode') === 'recolector') ||
                    (typeof AppState !== 'undefined' && AppState.get('userData') && AppState.get('userData').role === 'repartidor');
-  if (isDriver) {
-    const isZoomOut = map && (map.getZoom() <= DRIVER_RADAR_MAX_ZOOM);
+  if (isRecolector) {
+    const isZoomOut = map && (map.getZoom() <= RECOLECTOR_RADAR_MAX_ZOOM);
     const uData = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
-    const driverSelfIcon = getCustomDriverTruckIcon({
+    const recolectorSelfIcon = getCustomRecolectorTruckIcon({
       distribuidor_nombre: uData.nombre || 'Mi Camión',
       categoria: uData.categoria || 'Distribuidor',
       user_id: uData.user_id || uData.id,
       color_camion: uData.color_camion
     }, isZoomOut);
-    userMarker.setIcon(driverSelfIcon);
+    userMarker.setIcon(recolectorSelfIcon);
   } else {
     userMarker.setIcon(userLocationIcon);
   }
@@ -555,9 +555,9 @@ function clearOrderRadarMarkers() {
   });
 }
 
-function actualizarIconosRepartidoresPorZoom() {
+function actualizarIconosRecolectoresPorZoom() {
   if (!map || typeof L === 'undefined' || !truckRadarBlueIcon || !truckIcon) return;
-  const isZoomOut = (map.getZoom() <= DRIVER_RADAR_MAX_ZOOM);
+  const isZoomOut = (map.getZoom() <= RECOLECTOR_RADAR_MAX_ZOOM);
   const targetIcon = isZoomOut ? truckRadarBlueIcon : truckIcon;
 
   Object.keys(activeTruckMarkers).forEach(truckId => {
@@ -568,10 +568,10 @@ function actualizarIconosRepartidoresPorZoom() {
   });
 
   if (userMarker && userMarker.setIcon) {
-    const isDriver = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver') || 
-                     (typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver') ||
+    const esRecolectorActual = (typeof currentAppMode !== 'undefined' && currentAppMode === 'recolector') ||
+                     (typeof AppState !== 'undefined' && AppState.get('appMode') === 'recolector') ||
                      (typeof AppState !== 'undefined' && AppState.get('userData') && AppState.get('userData').role === 'repartidor');
-    if (isDriver && userMarker.options?.icon !== targetIcon) {
+    if (esRecolectorActual && userMarker.options?.icon !== targetIcon) {
       userMarker.setIcon(targetIcon);
     }
   }
@@ -580,7 +580,7 @@ function actualizarIconosRepartidoresPorZoom() {
 // Algoritmo de Clustering Espacial y Radar de Concentración de Demanda
 function renderOrderRadarsOnMap(orders) {
   if (!map || typeof L === 'undefined') return;
-  if (map.getZoom() > DRIVER_RADAR_MAX_ZOOM) {
+  if (map.getZoom() > RECOLECTOR_RADAR_MAX_ZOOM) {
     clearOrderRadarMarkers();
     return;
   }
@@ -759,9 +759,9 @@ function renderNeighborOrdersDetailed(orders) {
   if (!map || typeof L === 'undefined') return;
 
   const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
-  const isDriver = (u.role === 'repartidor') || ((typeof AppState !== 'undefined') && AppState.get('appMode') === 'driver');
+  const isRecolector = (u.role === 'repartidor') || ((typeof AppState !== 'undefined') && AppState.get('appMode') === 'recolector');
 
-  const currentActiveOrderId = (!isDriver) ? (() => {
+  const currentActiveOrderId = (!isRecolector) ? (() => {
     try {
       const raw = (typeof AppState !== 'undefined') ? AppState.get('activeOrder') : null;
       if (!raw) return null;
@@ -809,9 +809,9 @@ function renderNeighborOrdersDetailed(orders) {
   });
 }
 
-function renderDriverDemandByZoom() {
+function renderRecolectorDemandByZoom() {
   if (!map || typeof L === 'undefined') return;
-  const state = window.driverDemandMapState || {};
+  const state = window.recolectorDemandMapState || {};
   const ordersById = new Map();
 
   // 1. Indexar todos los pedidos individuales (disponibles y asignados)
@@ -833,10 +833,10 @@ function renderDriverDemandByZoom() {
 
   const allOrders = Array.from(ordersById.values());
 
-  // Actualizar también la apariencia de los camiones repartidores (icono azul radar si zoom out)
-  actualizarIconosRepartidoresPorZoom();
+  // Actualizar también la apariencia de los camiones recolectores (icono azul radar si zoom out)
+  actualizarIconosRecolectoresPorZoom();
 
-  const isZoomOut = (map.getZoom() <= DRIVER_RADAR_MAX_ZOOM);
+  const isZoomOut = (map.getZoom() <= RECOLECTOR_RADAR_MAX_ZOOM);
 
   // VISTA LEJANA (zoom <= 14): RECONCILIACIÓN DE RADARES INDIVIDUALES
   if (isZoomOut) {
@@ -882,12 +882,12 @@ function renderReportedTrucksBuffer() {
   let validTrucks = buffer.filter(t => (now - t.timestamp) < (30 * 60 * 1000));
   localStorage.setItem('notigas_reported_trucks_buffer', JSON.stringify(validTrucks));
 
-  // Si el usuario actual es REPARTIDOR, filtrar camiones reportados por su categoría específica
+  // Si el usuario actual es RECOLECTOR, filtrar camiones reportados por su categoría específica
   const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
-  const isDriverUser = (u.role === 'repartidor') || ((typeof AppState !== 'undefined') && AppState.get('appMode') === 'driver');
+  const isRecolectorUser = (u.role === 'repartidor') || ((typeof AppState !== 'undefined') && AppState.get('appMode') === 'recolector');
 
-  if (isDriverUser && typeof isOrderCategoryMatchingDriver === 'function') {
-    validTrucks = validTrucks.filter(t => isOrderCategoryMatchingDriver(t.cat || 'plastico'));
+  if (isRecolectorUser && typeof isOrderCategoryMatchingRecolector === 'function') {
+    validTrucks = validTrucks.filter(t => isOrderCategoryMatchingRecolector(t.cat || 'plastico'));
   }
 
   validTrucks.forEach(t => {
@@ -940,9 +940,9 @@ function renderActiveOrdersMap() {
     const order = (typeof rawOrder === 'string') ? JSON.parse(rawOrder) : rawOrder;
 
     const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
-    const isDriverUser = (u.role === 'repartidor') || ((typeof AppState !== 'undefined') && AppState.get('appMode') === 'driver');
+    const isRecolectorUser = (u.role === 'repartidor') || ((typeof AppState !== 'undefined') && AppState.get('appMode') === 'recolector');
 
-    if (isDriverUser && typeof isOrderCategoryMatchingDriver === 'function' && !isOrderCategoryMatchingDriver(order.categoria, u.categoria)) {
+    if (isRecolectorUser && typeof isOrderCategoryMatchingRecolector === 'function' && !isOrderCategoryMatchingRecolector(order.categoria, u.categoria)) {
       return;
     }
 
@@ -981,8 +981,8 @@ function renderActiveOrdersMap() {
         }
       });
 
-      const btnAccion = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver')
-        ? '' // El repartidor gestiona los pedidos desde su panel.
+      const btnAccion = (typeof currentAppMode !== 'undefined' && currentAppMode === 'recolector')
+        ? '' // El recolector gestiona los pedidos desde su panel.
         : `
           <div style="display:flex; gap:6px; margin-top:8px;">
             <button type="button" style="flex:1; background:linear-gradient(135deg, #10B981, #059669); color:white; border:none; padding:6px 8px; border-radius:6px; font-size:10.5px; font-weight:800; cursor:pointer;" data-action="confirmarRecepcionComprador" title="Confirmar que recibiste tu pedido">
@@ -1013,7 +1013,7 @@ function renderActiveOrdersMap() {
   } catch(e){}
 }
 
-function verificarYMostrarRepartidorGPS() {
+function verificarYMostrarRecolectorGPS() {
   if (!map) return;
 
   if (typeof window.actualizarIconoMarcadorUsuario === 'function') {
@@ -1024,11 +1024,11 @@ function verificarYMostrarRepartidorGPS() {
   renderActiveOrdersMap();
 
   // FIX: Ya no dibujamos el camión propio leyendo de localStorage.
-  // El GPS del repartidor viaja a Supabase y Supabase lo devuelve por Realtime
-  // para que TODOS (incluso el propio repartidor) vean el mismo estado en la nube.
+  // El GPS del recolector viaja a Supabase y Supabase lo devuelve por Realtime
+  // para que TODOS (incluso el propio recolector) vean el mismo estado en la nube.
 }
 
-function actualizarRepartidorEnMapa(data) {
+function actualizarRecolectorEnMapa(data) {
   if (!map || !data) return;
 
   const lat = parseFloat(data.latitude || data.lat);
@@ -1040,8 +1040,8 @@ function actualizarRepartidorEnMapa(data) {
   const currentAuthId = (typeof window._tempAuthUser !== 'undefined' && window._tempAuthUser?.id) 
     ? window._tempAuthUser.id 
     : ((typeof getCurrentUserId === 'function') ? getCurrentUserId() : null);
-  const userRole = u.role || ((typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver') ? 'repartidor' : 'vecino');
-  const isSelfDriver = (userRole === 'repartidor') && (
+  const userRole = u.role || ((typeof AppState !== 'undefined' && AppState.get('appMode') === 'recolector') ? 'repartidor' : 'vecino');
+  const isSelfRecolector = (userRole === 'repartidor') && (
     (data.user_id && currentAuthId && String(data.user_id) === String(currentAuthId)) ||
     (data.user_id && u.user_id && String(data.user_id) === String(u.user_id)) ||
     (data.user_id && u.id && String(data.user_id) === String(u.id)) ||
@@ -1049,7 +1049,7 @@ function actualizarRepartidorEnMapa(data) {
   );
 
   // Si es el propio chofer en su propio dispositivo, su posición ya la dibuja userMarker (GPS en vivo)
-  if (isSelfDriver) {
+  if (isSelfRecolector) {
     // Limpiar cualquier marcador residual en activeTruckMarkers que coincida con este chofer
     Object.keys(activeTruckMarkers).forEach(key => {
       const m = activeTruckMarkers[key];
@@ -1061,9 +1061,9 @@ function actualizarRepartidorEnMapa(data) {
     return;
   }
 
-  // 2. Filtrar por categoría si el observador es un chofer (repartidores solo ven camiones de su rubro)
-  const driverCategoria = u.categoria || 'plastico';
-  if (userRole === 'repartidor' && typeof isOrderCategoryMatchingDriver === 'function' && !isOrderCategoryMatchingDriver(data.categoria, driverCategoria)) {
+  // 2. Filtrar por categoría si el observador es un chofer (recolectores solo ven camiones de su rubro)
+  const recolectorCategoria = u.categoria || 'plastico';
+  if (userRole === 'repartidor' && typeof isOrderCategoryMatchingRecolector === 'function' && !isOrderCategoryMatchingRecolector(data.categoria, recolectorCategoria)) {
      return;
   }
 
@@ -1071,15 +1071,15 @@ function actualizarRepartidorEnMapa(data) {
 
   // El popup no muestra precios: NOTIGAS no intermedia fondos ni precios.
 
-  const premiumBannerHtml = isDriverPremium
-    ? `<div style="display:inline-block; background:linear-gradient(135deg, #F59E0B, #D97706); color:#FFFFFF; font-size:10px; font-weight:900; letter-spacing:0.5px; padding:2px 8px; border-radius:10px; margin-bottom:4px; box-shadow:0 2px 6px rgba(245,158,11,0.5);">👑 REPARTIDOR VIP PREMIUM</div><br>`
+  const premiumBannerHtml = isRecolectorPremium
+    ? `<div style="display:inline-block; background:linear-gradient(135deg, #F59E0B, #D97706); color:#FFFFFF; font-size:10px; font-weight:900; letter-spacing:0.5px; padding:2px 8px; border-radius:10px; margin-bottom:4px; box-shadow:0 2px 6px rgba(245,158,11,0.5);">👑 RECOLECTOR VIP PREMIUM</div><br>`
     : '';
 
   const popupHtml = `
     <div style="font-family:'Roboto',sans-serif; text-align:center; padding:6px; min-width:160px;">
       ${premiumBannerHtml}
       <div style="display:inline-flex; align-items:center; justify-content:center; margin-bottom:4px; gap:6px;">
-        <span style="background:${badgeBg}; color:white; border:1.5px solid ${badgeBorder}; border-radius:50%; width:22px; height:22px; font-size:10px; font-weight:900; display:inline-flex; align-items:center; justify-content:center;">${driverInitials}</span>
+        <span style="background:${badgeBg}; color:white; border:1.5px solid ${badgeBorder}; border-radius:50%; width:22px; height:22px; font-size:10px; font-weight:900; display:inline-flex; align-items:center; justify-content:center;">${recolectorInitials}</span>
         <strong style="color:#00E676; font-size:12.5px;">🚛 Camión en Vivo</strong>
       </div><br>
       <span style="font-size:13px; color:#FFFFFF; font-weight:800;">${safeNombre}</span><br>
@@ -1089,10 +1089,10 @@ function actualizarRepartidorEnMapa(data) {
   `;
 
   // Clave canónica unificada para el mapa
-  const canonicalKey = routeId || userId || driverName;
+  const canonicalKey = routeId || userId || recolectorName;
   if (!canonicalKey) return;
 
-  const truckZIndex = isDriverPremium ? 9500 : 9000;
+  const truckZIndex = isRecolectorPremium ? 9500 : 9000;
 
   if (existingMarker) {
     let newAngle = existingMarker._notigasHeading || 0;
@@ -1109,7 +1109,7 @@ function actualizarRepartidorEnMapa(data) {
     existingMarker.setLatLng([lat, lng]);
     existingMarker._notigasRouteId = routeId || existingMarker._notigasRouteId;
     existingMarker._notigasUserId = userId || existingMarker._notigasUserId;
-    existingMarker._notigasDriverName = driverName || existingMarker._notigasDriverName;
+    existingMarker._notigasRecolectorName = recolectorName || existingMarker._notigasRecolectorName;
     if (existingMarker.setIcon) existingMarker.setIcon(iconToUse);
     if (existingMarker.setZIndexOffset) existingMarker.setZIndexOffset(truckZIndex);
     if (existingMarker.getPopup()) {
@@ -1124,7 +1124,7 @@ function actualizarRepartidorEnMapa(data) {
     // Limpiar posibles residuos antes de instanciar uno nuevo
     Object.keys(activeTruckMarkers).forEach(key => {
       const m = activeTruckMarkers[key];
-      if (m && ((routeId && m._notigasRouteId === routeId) || (userId && m._notigasUserId === userId) || (driverName && m._notigasDriverName === driverName))) {
+      if (m && ((routeId && m._notigasRouteId === routeId) || (userId && m._notigasUserId === userId) || (recolectorName && m._notigasRecolectorName === recolectorName))) {
         if (map) map.removeLayer(m);
         delete activeTruckMarkers[key];
       }
@@ -1133,11 +1133,11 @@ function actualizarRepartidorEnMapa(data) {
     const marker = L.marker([lat, lng], { icon: iconToUse, zIndexOffset: truckZIndex }).addTo(map);
     marker._notigasRouteId = routeId;
     marker._notigasUserId = userId;
-    marker._notigasDriverName = driverName;
+    marker._notigasRecolectorName = recolectorName;
     marker._notigasHeading = 0;
     marker.bindPopup(popupHtml);
     marker.on('click', () => {
-      if (map && map.getZoom() <= DRIVER_RADAR_MAX_ZOOM) {
+      if (map && map.getZoom() <= RECOLECTOR_RADAR_MAX_ZOOM) {
         map.flyTo([lat, lng], 16, { duration: 0.8 });
       }
     });
@@ -1150,7 +1150,7 @@ function actualizarRepartidorEnMapa(data) {
     setTimeout(() => {
       const el = theMarker.getElement();
       if (el) {
-        const img = el.querySelector('.driver-3d-truck-img');
+        const img = el.querySelector('.recolector-3d-truck-img');
         if (img) {
           // Normalizar ángulo para saber si va a la izquierda o derecha
           const ang = ((currentAngle % 360) + 360) % 360;
@@ -1178,11 +1178,11 @@ function actualizarRepartidorEnMapa(data) {
 function agregarPedidoVecinoEnMapa(order) {
   if (!map || !order) return;
   const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
-  let userRole = u.role || ((typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver') ? 'repartidor' : 'vecino');
-  const isDriverView = (userRole === 'repartidor');
+  let userRole = u.role || ((typeof AppState !== 'undefined' && AppState.get('appMode') === 'recolector') ? 'repartidor' : 'vecino');
+  const isRecolectorView = (userRole === 'repartidor');
   const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
 
-  if (!isDriverView && order.user_id && order.user_id === localUserId) return; // Skip own orders only in buyer view
+  if (!isRecolectorView && order.user_id && order.user_id === localUserId) return; // Skip own orders only in buyer view
 
   const orderId = order.id;
   if (neighborOrderMarkers[orderId]) {
@@ -1190,7 +1190,7 @@ function agregarPedidoVecinoEnMapa(order) {
   }
 
   // Si el pedido está cancelado o si ya fue tomado por otro chofer, lo quitamos del mapa visualmente
-  if (order.estado === 'cancelado' || (isDriverView && order.estado === 'asignado' && order.driver_id && String(order.driver_id) !== String(localUserId))) {
+  if (order.estado === 'cancelado' || (isRecolectorView && order.estado === 'asignado' && order.driver_id && String(order.driver_id) !== String(localUserId))) {
     if (neighborOrderMarkers[orderId]) {
       map.removeLayer(neighborOrderMarkers[orderId]);
       delete neighborOrderMarkers[orderId];
@@ -1211,10 +1211,10 @@ function agregarPedidoVecinoEnMapa(order) {
      currentIcon = camionPendingIcon;
   }
 
-  // Si el usuario actual es REPARTIDOR, solo ver pedidos de SU MISMA CATEGORÍA
-  const driverCategoria = u.categoria || 'todos';
+  // Si el usuario actual es RECOLECTOR, solo ver pedidos de SU MISMA CATEGORÍA
+  const recolectorCategoria = u.categoria || 'todos';
 
-  if (isDriverView && typeof isOrderCategoryMatchingDriver === 'function' && !isOrderCategoryMatchingDriver(order.categoria, driverCategoria)) {
+  if (isRecolectorView && typeof isOrderCategoryMatchingRecolector === 'function' && !isOrderCategoryMatchingRecolector(order.categoria, recolectorCategoria)) {
      return; // Ignore orders outside of their category
   }
 
@@ -1229,30 +1229,30 @@ function agregarPedidoVecinoEnMapa(order) {
     bubblingMouseEvents: false,
     keyboard: true
   }).addTo(map);
-  const isAssignedToDriver = userRole === 'repartidor' &&
+  const isAssignedToRecolector = userRole === 'repartidor' &&
     order.estado === 'asignado' && order.driver_id === localUserId;
 
   const escapeFn = typeof escapeHtmlStr === 'function' ? escapeHtmlStr : (s => s || '');
-  const nombreStr = isDriverView
+  const nombreStr = isRecolectorView
     ? `<span class="order-popup-name">👤 <strong>Comprador:</strong> ${escapeFn(order.buyer_name || order.titulo || 'Vecino')}</span><br>`
     : `<span class="order-popup-name">📦 <strong>Pedido Vecinal</strong></span><br>`;
-  const emailStr = (isDriverView && order.buyer_email) ? `<span class="order-popup-email" style="font-size:11px; color:#0288D1;">✉️ <strong>Correo:</strong> ${escapeFn(order.buyer_email)}</span><br>` : '';
-  const dirStr = isDriverView
+  const emailStr = (isRecolectorView && order.buyer_email) ? `<span class="order-popup-email" style="font-size:11px; color:#0288D1;">✉️ <strong>Correo:</strong> ${escapeFn(order.buyer_email)}</span><br>` : '';
+  const dirStr = isRecolectorView
     ? `<span class="order-popup-address">📍 <strong>Dirección:</strong> ${escapeFn(order.direccion || 'Ubicación fijada en mapa GPS (opcional)')}</span><br>`
     : `<span class="order-popup-address">📍 <strong>Zona:</strong> ${escapeFn(order.barrio_otb || order.direccion || 'Ubicación fijada en mapa')}</span><br>`;
-  const telStr = isDriverView
+  const telStr = isRecolectorView
     ? `<span class="order-popup-contact">📞 <strong>Teléfono:</strong> ${order.telefono ? `<a href="tel:${escapeFn(order.telefono)}" style="color:#38BDF8; font-weight:700; text-decoration:underline;">${escapeFn(order.telefono)}</a>` : 'Opcional / No indicado'}</span><br>`
     : '';
   const mapsNavUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${lat},${lng}`)}`;
   let orderAction = '';
-  if (isAssignedToDriver) {
+  if (isAssignedToRecolector) {
     orderAction = `
-      <a href="${mapsNavUrl}" target="_blank" rel="noopener noreferrer" data-action="abrirRutaGoogleMaps" data-lat="${lat}" data-lng="${lng}" data-id="${escapeFn(order.id)}" data-address="${escapeFn(order.direccion || '')}" class="btn-driver-route order-popup-action">
+      <a href="${mapsNavUrl}" target="_blank" rel="noopener noreferrer" data-action="abrirRutaGoogleMaps" data-lat="${lat}" data-lng="${lng}" data-id="${escapeFn(order.id)}" data-address="${escapeFn(order.direccion || '')}" class="btn-recolector-route order-popup-action">
         <i class="fa-solid fa-diamond-turn-right"></i> IR CON GOOGLE MAPS
       </a>
-      <div class="driver-quick-actions-container" style="margin-top:8px;">
-        <div class="driver-quick-actions-title">⚡ Estado con Cliente:</div>
-        <div class="driver-quick-actions-grid">
+      <div class="recolector-quick-actions-container" style="margin-top:8px;">
+        <div class="recolector-quick-actions-title">⚡ Estado con Cliente:</div>
+        <div class="recolector-quick-actions-grid">
           <button type="button" class="btn-quick-action btn-quick-camino ${order.subestado === 'en_camino' ? 'active' : ''}" 
             data-action="cambiarEstadoRapidoPedido" data-id="${escapeFn(order.id)}" data-status="en_camino" title="Avisar al cliente que vas en camino">
             <i class="fa-solid fa-truck-fast"></i> En camino
@@ -1268,7 +1268,7 @@ function agregarPedidoVecinoEnMapa(order) {
           </button>
           ` : ''}
           <button type="button" class="btn-quick-action btn-quick-cancel" 
-            data-action="liberarPedidoRepartidor" data-id="${escapeFn(order.id)}" title="Liberar pedido para que otro repartidor lo tome">
+            data-action="liberarPedidoRecolector" data-id="${escapeFn(order.id)}" title="Liberar pedido para que otro recolector lo tome">
             <i class="fa-solid fa-arrow-rotate-left"></i> No podré
           </button>
         </div>
@@ -1278,7 +1278,7 @@ function agregarPedidoVecinoEnMapa(order) {
       </button>`;
   } else if (userRole === 'repartidor') {
     orderAction = `
-      <button type="button" data-action="aceptarPedidoRepartidor" data-lat="${lat}" data-lng="${lng}" data-id="${escapeFn(order.id)}" data-address="${escapeFn(order.direccion || '')}" class="btn-driver-accept order-popup-action">
+      <button type="button" data-action="aceptarPedidoRecolector" data-lat="${lat}" data-lng="${lng}" data-id="${escapeFn(order.id)}" data-address="${escapeFn(order.direccion || '')}" class="btn-recolector-accept order-popup-action">
         <i class="fa-solid fa-diamond-turn-right"></i> ELEGIR Y NAVEGAR (GOOGLE MAPS)
       </button>`;
   } else {
@@ -1290,7 +1290,7 @@ function agregarPedidoVecinoEnMapa(order) {
 
   const popupHtml = `
     <div class="notigas-order-popup" style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
-      <strong style="color:#FF6D00; font-size:13px;">📦 Pedido ${isAssignedToDriver ? 'Asignado' : (isDriverView ? 'Disponible' : 'Vecinal')}</strong><br>
+      <strong style="color:#FF6D00; font-size:13px;">📦 Pedido ${isAssignedToRecolector ? 'Asignado' : (isRecolectorView ? 'Disponible' : 'Vecinal')}</strong><br>
       ${nombreStr}
       ${emailStr}
       <span class="order-popup-category">🏷️ ${escapeFn(order.categoria || 'plastico')} · ${escapeFn(order.cantidad || '1')} unidad(es)</span><br>
@@ -1302,7 +1302,7 @@ function agregarPedidoVecinoEnMapa(order) {
 
   marker.bindPopup(popupHtml);
 
-  if (isDriverView) {
+  if (isRecolectorView) {
     marker.on('popupopen', () => {
       try {
         if (order.estado === 'pendiente' && !order.visto && window.supabaseClient && order.id) {
@@ -1333,20 +1333,20 @@ function agregarPedidoVecinoEnMapa(order) {
 // ACTUALIZACIÓN GRANULAR INCREMENTAL DE 1 PEDIDO (0 CONSULTAS DE RED)
 window.actualizarPedidoEnMapa = function(order, eventType = 'UPDATE') {
   if (!map || !order || !order.id) return;
-  const state = window.driverDemandMapState = window.driverDemandMapState || { availableOrders: [], assignedOrders: [] };
+  const state = window.recolectorDemandMapState = window.recolectorDemandMapState || { availableOrders: [], assignedOrders: [] };
   const orderId = String(order.id);
   const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
-  const isDriverUser = (u.role === 'repartidor') || ((typeof AppState !== 'undefined') && (AppState.get('appMode') === 'driver' || AppState.get('userRole') === 'repartidor'));
-  const driverCategoria = u.categoria || 'todos';
+  const isRecolectorUser = (u.role === 'repartidor') || ((typeof AppState !== 'undefined') && (AppState.get('appMode') === 'recolector' || AppState.get('userRole') === 'repartidor'));
+  const recolectorCategoria = u.categoria || 'todos';
 
   // 1. Si el pedido fue cancelado o entregado, removerlo del mapa y alertar al chofer si estaba asignado
   if (eventType === 'DELETE' || order.estado === 'cancelado' || order.estado === 'entregado') {
     const wasAssignedToMe = (state.assignedOrders || []).some(o => String(o.id) === orderId) || (order.driver_id && String(order.driver_id) === String(localUserId));
     
-    if (order.estado === 'cancelado' && wasAssignedToMe && isDriverUser) {
+    if (order.estado === 'cancelado' && wasAssignedToMe && isRecolectorUser) {
       const locStr = order.direccion || order.barrio_otb || 'la ubicación indicada';
-      if (typeof mostrarPopupAlertaRepartidor === 'function') {
-        mostrarPopupAlertaRepartidor('⛔ PEDIDO CANCELADO POR EL VECINO', `El comprador ha cancelado su pedido en ${locStr}. Se retiró de tus rutas asignadas.`, 9000);
+      if (typeof mostrarPopupAlertaRecolector === 'function') {
+        mostrarPopupAlertaRecolector('⛔ PEDIDO CANCELADO POR EL VECINO', `El comprador ha cancelado su pedido en ${locStr}. Se retiró de tus rutas asignadas.`, 9000);
       }
       if (typeof showToast === 'function') {
         showToast('⛔ Pedido Cancelado', `El pedido que tenías asignado en ${locStr} fue cancelado por el comprador.`, 'warning', 8000);
@@ -1357,13 +1357,13 @@ window.actualizarPedidoEnMapa = function(order, eventType = 'UPDATE') {
     }
 
     window.removerPedidoDeMapa(orderId);
-    if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
+    if (typeof renderRecolectorOrdersList === 'function') renderRecolectorOrdersList();
     return;
   }
 
   if (order.estado === 'asignado') {
     state.availableOrders = (state.availableOrders || []).filter(o => String(o.id) !== orderId);
-    if (isDriverUser && order.driver_id === localUserId) {
+    if (isRecolectorUser && order.driver_id === localUserId) {
       const idx = (state.assignedOrders || []).findIndex(o => String(o.id) === orderId);
       if (idx >= 0) state.assignedOrders[idx] = order;
       else state.assignedOrders.push(order);
@@ -1373,7 +1373,7 @@ window.actualizarPedidoEnMapa = function(order, eventType = 'UPDATE') {
     }
   } else {
     // Pendiente o Visto
-    if (isDriverUser && typeof window.isOrderCategoryMatchingDriver === 'function' && !window.isOrderCategoryMatchingDriver(order.categoria, driverCategoria)) {
+    if (isRecolectorUser && typeof window.isOrderCategoryMatchingRecolector === 'function' && !window.isOrderCategoryMatchingRecolector(order.categoria, recolectorCategoria)) {
       window.removerPedidoDeMapa(orderId);
       return;
     }
@@ -1387,7 +1387,7 @@ window.actualizarPedidoEnMapa = function(order, eventType = 'UPDATE') {
   const lng = parseFloat(order.longitude || order.lng);
   if (isNaN(lat) || isNaN(lng)) return;
 
-  const isZoomOut = (map.getZoom() <= DRIVER_RADAR_MAX_ZOOM);
+  const isZoomOut = (map.getZoom() <= RECOLECTOR_RADAR_MAX_ZOOM);
 
   if (isZoomOut) {
     const existingRadar = window.orderRadarMarkers[orderId];
@@ -1434,7 +1434,7 @@ window.actualizarPedidoEnMapa = function(order, eventType = 'UPDATE') {
 window.removerPedidoDeMapa = function(orderId) {
   if (!orderId) return;
   const key = String(orderId);
-  const state = window.driverDemandMapState = window.driverDemandMapState || { availableOrders: [], assignedOrders: [] };
+  const state = window.recolectorDemandMapState = window.recolectorDemandMapState || { availableOrders: [], assignedOrders: [] };
   state.availableOrders = (state.availableOrders || []).filter(o => String(o.id) !== key);
   state.assignedOrders = (state.assignedOrders || []).filter(o => String(o.id) !== key);
 
@@ -1607,13 +1607,13 @@ function moverMarcadorUbicacionManual(lat, lng) {
     AppState.set('gpsLng', lng);
   }
 
-  const isDriver = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver') || (typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver');
+  const isRecolector = (typeof currentAppMode !== 'undefined' && currentAppMode === 'recolector') || (typeof AppState !== 'undefined' && AppState.get('appMode') === 'recolector');
 
   if (!userMarker && map) {
     applyGpsPosition(lat, lng, "Ajuste Manual", false, false);
   } else if (userMarker) {
     userMarker.setLatLng([lat, lng]);
-    if (!isDriver && userLocationIcon) {
+    if (!isRecolector && userLocationIcon) {
       userMarker.setIcon(userLocationIcon);
     }
     if (userMarker.dragging && !userMarker.dragging.enabled()) {
@@ -1634,7 +1634,7 @@ function programarSincronizacionUbicacionManual(lat, lng) {
     } else if (typeof actualizarCoordenadasPedidoActivo === 'function') {
       actualizarCoordenadasPedidoActivo(lat, lng);
     }
-    verificarYMostrarRepartidorGPS();
+    verificarYMostrarRecolectorGPS();
     manualLocationSyncTimer = null;
   }, 80);
 }
@@ -1673,7 +1673,7 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
           if (sel) sel.value = inferred;
 
           if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
-          if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
+          if (typeof renderRecolectorOrdersList === 'function') renderRecolectorOrdersList();
       }
   }
 
@@ -1689,9 +1689,9 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
     }
   }
 
-  const isDriver = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver') || (typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver') || (typeof AppState !== 'undefined' && AppState.get('userData')?.role === 'repartidor');
-  const isZoomOut = map && (map.getZoom() <= DRIVER_RADAR_MAX_ZOOM);
-  const activeIcon = isDriver ? (isZoomOut && truckRadarBlueIcon ? truckRadarBlueIcon : truckIcon) : userLocationIcon;
+  const esModoRecolector = (typeof currentAppMode !== 'undefined' && currentAppMode === 'recolector') || (typeof AppState !== 'undefined' && AppState.get('appMode') === 'recolector') || (typeof AppState !== 'undefined' && AppState.get('userData')?.role === 'repartidor');
+  const isZoomOut = map && (map.getZoom() <= RECOLECTOR_RADAR_MAX_ZOOM);
+  const activeIcon = esModoRecolector ? (isZoomOut && truckRadarBlueIcon ? truckRadarBlueIcon : truckIcon) : userLocationIcon;
 
   if (!userMarker && map && activeIcon) {
     userMarker = L.marker([activeLat, activeLng], {
@@ -1722,7 +1722,7 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
 
     userMarker.on('dragstart', function() {
       isUserMarkerDraggedManually = true;
-      if (!isDriver && userLocationIcon) {
+      if (!esModoRecolector && userLocationIcon) {
         userMarker.setIcon(userLocationIcon);
       }
     });
@@ -1740,7 +1740,7 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
         AppState.set('gpsLng', newPos.lng);
       }
 
-      if (!isDriver && userLocationIcon) {
+      if (!esModoRecolector && userLocationIcon) {
         userMarker.setIcon(userLocationIcon);
       }
       programarSincronizacionUbicacionManual(newPos.lat, newPos.lng);
@@ -1748,7 +1748,7 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
   } else if (userMarker) {
     let newAngle = userMarker._notigasHeading || 0;
     const oldLatLng = userMarker.getLatLng();
-    if (oldLatLng && isDriver) {
+    if (oldLatLng && esModoRecolector) {
       const dist = calcularDistanciaMetros(oldLatLng.lat, oldLatLng.lng, activeLat, activeLng);
       if (dist > 8) {
         const rawAngle = calcularAnguloMovimiento(oldLatLng.lat, oldLatLng.lng, activeLat, activeLng);
@@ -1764,12 +1764,12 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
     }
   }
 
-  if (isDriver && userMarker && !isZoomOut) {
+  if (esModoRecolector && userMarker && !isZoomOut) {
     const currentAngle = userMarker._notigasHeading || 0;
     setTimeout(() => {
       const el = userMarker.getElement();
       if (el) {
-        const img = el.querySelector('.driver-3d-truck-img');
+        const img = el.querySelector('.recolector-3d-truck-img');
         if (img) {
           // Normalizar ángulo para saber si va a la izquierda o derecha
           const ang = ((currentAngle % 360) + 360) % 360;
@@ -1795,17 +1795,17 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
 
   if (forceReset) {
     renderActiveOrdersMap();
-    verificarYMostrarRepartidorGPS();
+    verificarYMostrarRecolectorGPS();
   }
 
-  // Emitir posición GPS a base de datos solo si explícitamente es repartidor
+  // Emitir posición GPS a base de datos solo si explícitamente es recolector
   const user = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
-  const isRepartidor = (user.role === 'repartidor') || ((typeof AppState !== 'undefined') && AppState.get('appMode') === 'driver');
+  const esRecolectorPorPerfil = (user.role === 'repartidor') || ((typeof AppState !== 'undefined') && AppState.get('appMode') === 'recolector');
 
-  if (isRepartidor) {
+  if (esRecolectorPorPerfil) {
       const _lat = isUserMarkerDraggedManually ? currentGpsLat : lat;
       const _lng = isUserMarkerDraggedManually ? currentGpsLng : lng;
-      transmitirUbicacionRepartidorServidorDB(_lat, _lng);
+      transmitirUbicacionRecolectorServidorDB(_lat, _lng);
   }
 }
 
@@ -1855,23 +1855,23 @@ async function cambiarCiudadCapital(cityKey) {
   // Actualizar selectores visibles de ciudad
   const select = document.getElementById('selectCiudadCapital');
   if (select) select.value = mun.key;
-  const selectDriverModal = document.getElementById('selectDriverModalCity');
-  if (selectDriverModal) selectDriverModal.value = mun.key;
+  const selectRecolectorModal = document.getElementById('selectRecolectorModalCity');
+  if (selectRecolectorModal) selectRecolectorModal.value = mun.key;
 
   if (typeof renderActiveOrdersMap === 'function') renderActiveOrdersMap();
 
-  // Si es repartidor, refrescar lista de pedidos para la nueva ciudad
+  // Si es recolector, refrescar lista de pedidos para la nueva ciudad
   if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
-  const modalDriverOrders = document.getElementById('modalDriverOrders');
-  if (modalDriverOrders && modalDriverOrders.style.display !== 'none' && typeof renderDriverOrdersList === 'function') {
-    renderDriverOrdersList();
+  const modalRecolectorOrders = document.getElementById('modalRecolectorOrders');
+  if (modalRecolectorOrders && modalRecolectorOrders.style.display !== 'none' && typeof renderRecolectorOrdersList === 'function') {
+    renderRecolectorOrdersList();
   }
 
   const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
-  const isDriver = (u.role === 'repartidor') || ((typeof AppState !== 'undefined') && AppState.get('appMode') === 'driver');
-  const driverCity = (u.ciudad) ? String(u.ciudad).toLowerCase().trim() : null;
+  const esRecolectorDeCiudad = (u.role === 'repartidor') || ((typeof AppState !== 'undefined') && AppState.get('appMode') === 'recolector');
+  const recolectorCity = (u.ciudad) ? String(u.ciudad).toLowerCase().trim() : null;
 
-  if (isDriver && driverCity && mun.key !== driverCity) {
+  if (esRecolectorDeCiudad && recolectorCity && mun.key !== recolectorCity) {
     if (typeof showToast === 'function') {
       showToast('📍 Explorando Mapa', `Visualizando ${mun.nombre || mun.key}. Tus pedidos y radar de entrega operan en tu ciudad registrada (${u.ciudad}).`, 'warning', 4000);
     }
@@ -1905,12 +1905,12 @@ function procesarResultadoBusqueda(item, queryOriginal) {
   applyGpsPosition(lat, lon, '', false);
 }
 
-let _driverGpsConsecutiveErrors = 0;
+let _recolectorGpsConsecutiveErrors = 0;
 
 /* ESTRATEGIA ADAPTATIVA INTELIGENTE DE TRANSMISIÓN GPS (1 sola operación UPSERT por tick con verificación de red) */
-async function transmitirUbicacionRepartidorServidorDB(lat, lng) {
-  const driverGpsLive = (typeof AppState !== 'undefined') ? AppState.get('driverGpsLive') : null;
-  if (driverGpsLive !== 'on') return;
+async function transmitirUbicacionRecolectorServidorDB(lat, lng) {
+  const recolectorGpsLive = (typeof AppState !== 'undefined') ? AppState.get('recolectorGpsLive') : null;
+  if (recolectorGpsLive !== 'on') return;
 
   const now = Date.now();
 
@@ -1937,9 +1937,9 @@ async function transmitirUbicacionRepartidorServidorDB(lat, lng) {
     if (u.role === 'repartidor') {
       if (window.supabaseClient) {
         const localUserId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'anonimo_id';
-        const driver = await obtenerFichaChoferEnMemoria(localUserId, u);
+        const recolector = await obtenerFichaChoferEnMemoria(localUserId, u);
 
-        if (!driver) {
+        if (!recolector) {
           return;
         }
 
@@ -1949,14 +1949,14 @@ async function transmitirUbicacionRepartidorServidorDB(lat, lng) {
           .upsert(
             {
               user_id: localUserId,
-              distribuidor_nombre: driver.nombre_completo || 'Repartidor GLP',
-              categoria: driver.categoria || 'plastico',
-              titulo: driver.placa || 'Camión',
-              ciudad: driver.ciudad || (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba'),
+              distribuidor_nombre: recolector.nombre_completo || 'Recolector GLP',
+              categoria: recolector.categoria || 'plastico',
+              titulo: recolector.placa || 'Camión',
+              ciudad: recolector.ciudad || (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba'),
               latitude: lat,
               longitude: lng,
-              telefono: driver.telefono_whatsapp || '',
-              es_premium: Boolean(driver.es_premium),
+              telefono: recolector.telefono_whatsapp || '',
+              es_premium: Boolean(recolector.es_premium),
               last_active: new Date().toISOString()
             },
             {
@@ -1965,23 +1965,23 @@ async function transmitirUbicacionRepartidorServidorDB(lat, lng) {
           );
 
         if (upsertErr) {
-          _driverGpsConsecutiveErrors++;
-          console.warn(`⚠️ Error al sincronizar GPS del repartidor con Supabase (Fallo #${_driverGpsConsecutiveErrors}):`, upsertErr.message);
-          if (_driverGpsConsecutiveErrors === 3 && typeof showToast === 'function') {
+          _recolectorGpsConsecutiveErrors++;
+          console.warn(`⚠️ Error al sincronizar GPS del recolector con Supabase (Fallo #${_recolectorGpsConsecutiveErrors}):`, upsertErr.message);
+          if (_recolectorGpsConsecutiveErrors === 3 && typeof showToast === 'function') {
             showToast('⚠️ Tu señal GPS no se está sincronizando con la nube. Revisa tu conexión a internet.', 'warning');
           }
           return; // No actualizar timestamp para reintentar en el siguiente ciclo
         }
 
         // Éxito confirmado
-        _driverGpsConsecutiveErrors = 0;
+        _recolectorGpsConsecutiveErrors = 0;
         lastBroadcastLat = lat;
         lastBroadcastLng = lng;
         lastGpsBroadcastTime = now;
       }
     }
   } catch(e){
-    _driverGpsConsecutiveErrors++;
+    _recolectorGpsConsecutiveErrors++;
     console.error("Error transmitiendo GPS:", e);
   }
 }
@@ -2008,8 +2008,8 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
 
       const activeCity = (typeof AppState !== 'undefined') ? AppState.get('city') : null;
       const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
-      const isDriverUser = (u.role === 'repartidor') || ((typeof AppState !== 'undefined') && (AppState.get('appMode') === 'driver' || AppState.get('userRole') === 'repartidor'));
-      const driverCategoria = u.categoria || 'todos';
+      const isRecolectorUser = (u.role === 'repartidor') || ((typeof AppState !== 'undefined') && (AppState.get('appMode') === 'recolector' || AppState.get('userRole') === 'repartidor'));
+      const recolectorCategoria = u.categoria || 'todos';
       const normCity = String(activeCity || '').toLowerCase().trim();
       const tenMinsAgo = new Date(Date.now() - 10 * 60000).toISOString();
 
@@ -2060,11 +2060,11 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
           .lte('longitude', bbox.maxLng);
       }
 
-      // 2. Un repartidor jamás consulta pedidos por la vista genérica: las
+      // 2. Un recolector jamás consulta pedidos por la vista genérica: las
       // únicas zonas disponibles proceden de order_public_radar con RLS.
       // Un comprador solo puede recibir sus propios pedidos por pedidos_publicos.
       let pubQuery = null;
-      if (!isDriverUser) {
+      if (!isRecolectorUser) {
         pubQuery = window.supabaseClient
           .from('pedidos_publicos')
           .select(ORDER_COLUMNS)
@@ -2083,9 +2083,9 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
           .lte('longitude', bbox.maxLng);
       }
 
-      // 3. Consulta de Pedidos Asignados (sólo para repartidor autenticado)
+      // 3. Consulta de Pedidos Asignados (sólo para recolector autenticado)
       let assignedPromise = Promise.resolve({ data: [], error: null });
-      if (isDriverUser) {
+      if (isRecolectorUser) {
         const currentUserId = (typeof getAuthenticatedUserId === 'function')
           ? await getAuthenticatedUserId()
           : (u.id || (typeof AppState !== 'undefined' ? AppState.get('userData')?.id : null) || window._tempAuthUser?.id);
@@ -2116,37 +2116,37 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
       if (assignedRes.error) console.error("❌ Error de Supabase al cargar pedidos asignados:", assignedRes.error.message);
       if (trucksRes.error) console.error("❌ Error de Supabase al cargar camiones:", trucksRes.error.message);
 
-      if (isDriverUser) {
+      if (isRecolectorUser) {
         clearNeighborOrderMarkers();
         let availableOrders = [];
 
 
         if (Array.isArray(pubRes.data)) {
           availableOrders = pubRes.data.filter(order => {
-            const matchesCat = (typeof window.isOrderCategoryMatchingDriver !== 'function') ||
-              window.isOrderCategoryMatchingDriver(order.categoria, driverCategoria);
+            const matchesCat = (typeof window.isOrderCategoryMatchingRecolector !== 'function') ||
+              window.isOrderCategoryMatchingRecolector(order.categoria, recolectorCategoria);
             if (!matchesCat) return false;
 
             return true;
           });
         }
         const assignedOrders = assignedRes.data || [];
-        window.driverDemandMapState = { availableOrders, assignedOrders };
-        renderDriverDemandByZoom();
+        window.recolectorDemandMapState = { availableOrders, assignedOrders };
+        renderRecolectorDemandByZoom();
       } else {
         const availableOrders = pubRes.data || [];
-        window.driverDemandMapState = {
+        window.recolectorDemandMapState = {
           availableOrders,
           assignedOrders: []
         };
-        renderDriverDemandByZoom();
+        renderRecolectorDemandByZoom();
       }
 
       // Renderizado y reconciliación de camiones activos en vivo
       if (Array.isArray(trucksRes.data)) {
         const liveTruckIds = new Set();
         trucksRes.data.forEach(truck => {
-          actualizarRepartidorEnMapa(truck);
+          actualizarRecolectorEnMapa(truck);
           if (truck.id) liveTruckIds.add(String(truck.id));
           if (truck.user_id) liveTruckIds.add(String(truck.user_id));
           if (truck.distribuidor_nombre) liveTruckIds.add(String(truck.distribuidor_nombre).trim());
@@ -2158,7 +2158,7 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
           const isAlive = liveTruckIds.has(key) ||
             (m?._notigasRouteId && liveTruckIds.has(m._notigasRouteId)) ||
             (m?._notigasUserId && liveTruckIds.has(m._notigasUserId)) ||
-            (m?._notigasDriverName && liveTruckIds.has(m._notigasDriverName));
+            (m?._notigasRecolectorName && liveTruckIds.has(m._notigasRecolectorName));
 
           if (!isAlive) {
             if (map && m) map.removeLayer(m);
@@ -2252,14 +2252,14 @@ function initNotigasMap() {
   });
 
   truckIcon = L.divIcon({
-    className: 'notigas-driver-marker',
+    className: 'notigas-recolector-marker',
     html: truckSvgMarkerHtml,
     iconSize: [40, 72],
     iconAnchor: [20, 36]
   });
 
   truckRadarBlueIcon = L.divIcon({
-    className: 'driver-truck-radar-container',
+    className: 'recolector-truck-radar-container',
     html: truckRadarBlueSvgHtml,
     iconSize: [80, 80],
     iconAnchor: [40, 40]
@@ -2357,10 +2357,10 @@ function initNotigasMap() {
     if (typeof desactivarSeguirme === 'function') desactivarSeguirme();
   });
   map.on('zoom', () => {
-    actualizarIconosRepartidoresPorZoom();
+    actualizarIconosRecolectoresPorZoom();
   });
   map.on('zoomend', () => {
-    renderDriverDemandByZoom();
+    renderRecolectorDemandByZoom();
   });
   map.on('moveend', () => {
     if (typeof cargarPedidosVecinalesEnVivo === 'function') {
@@ -2401,20 +2401,20 @@ window.applyGpsPosition = applyGpsPosition;
 window.cambiarCiudadCapital = cambiarCiudadCapital;
 window.moverMarcadorUbicacionManual = moverMarcadorUbicacionManual;
 window.verPedidosEnMapa = verPedidosEnMapa;
-window.actualizarRepartidorEnMapa = actualizarRepartidorEnMapa;
+window.actualizarRecolectorEnMapa = actualizarRecolectorEnMapa;
 window.removerPublicacionDeMapa = removerPublicacionDeMapa;
 window.renderActiveOrdersMap = renderActiveOrdersMap;
 window.renderReportedTrucksBuffer = renderReportedTrucksBuffer;
-window.verificarYMostrarRepartidorGPS = verificarYMostrarRepartidorGPS;
-window.transmitirUbicacionRepartidorServidorDB = transmitirUbicacionRepartidorServidorDB;
+window.verificarYMostrarRecolectorGPS = verificarYMostrarRecolectorGPS;
+window.transmitirUbicacionRecolectorServidorDB = transmitirUbicacionRecolectorServidorDB;
 window.calcularDistanciaMetros = calcularDistanciaMetros;
 window.formatearDistanciaTriangulada = formatearDistanciaTriangulada;
 window.cargarPedidosVecinalesEnVivo = cargarPedidosVecinalesEnVivo;
 window.agregarPedidoVecinoEnMapa = agregarPedidoVecinoEnMapa;
 window.procesarResultadoBusqueda = procesarResultadoBusqueda;
 window.renderOrderRadarsOnMap = renderOrderRadarsOnMap;
-window.renderDriverDemandByZoom = renderDriverDemandByZoom;
-window.actualizarIconosRepartidoresPorZoom = actualizarIconosRepartidoresPorZoom;
+window.renderRecolectorDemandByZoom = renderRecolectorDemandByZoom;
+window.actualizarIconosRecolectoresPorZoom = actualizarIconosRecolectoresPorZoom;
 window.clearOrderRadarMarkers = clearOrderRadarMarkers;
 window.initNotigasMap = initNotigasMap;
 

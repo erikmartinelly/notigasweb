@@ -316,7 +316,7 @@ header {
 
 }
 
-.btn-badge, .btn-driver { 
+.btn-badge, .btn-recolector {
 
   background: linear-gradient(135deg, #FF6D00 0%, #FF3D00 100%); 
 
@@ -346,7 +346,7 @@ header {
 
 }
 
-.btn-badge:hover, .btn-driver:hover { 
+.btn-badge:hover, .btn-recolector:hover {
 
   transform: translateY(-2px) scale(1.03);
 
@@ -354,7 +354,7 @@ header {
 
 }
 
-.btn-badge:active, .btn-driver:active {
+.btn-badge:active, .btn-recolector:active {
 
   transform: translateY(0) scale(0.98);
 
@@ -948,6 +948,104 @@ main {
 
 .btn-order-tipo i { font-size: 18px; line-height: 1; }
 
+/* Los dos accesos directos del comprador se anclan al borde inferior, a ancho
+   completo, en vez de flotar sobre el mapa. Antes vivian en la columna derecha
+   a media altura: eso los dejaba bajo el grupo de controles de zoom y, al ser
+   opacos, tapaban las etiquetas de ciudad de las teselas. Anclarlos abajo
+   deja libre toda la superficie del mapa y no depende de la altura de la
+   pantalla para saber si se cruzan con otro control. Recogida primero porque
+   es la accion mas frecuente; la recarga queda debajo, mas discreta. */
+#orderTypeActions {
+
+  position: absolute;
+
+  bottom: 14px;
+
+  top: auto;
+
+  right: 12px;
+
+  left: 12px;
+
+  width: auto;
+
+  z-index: 1900;
+
+  flex-direction: column;
+
+  gap: 8px;
+
+  pointer-events: none;
+
+}
+
+#orderTypeActions .btn-order-tipo {
+
+  pointer-events: auto;
+
+  width: 100%;
+
+  flex: 0 0 auto;
+
+  backdrop-filter: blur(6px);
+
+}
+
+#orderTypeActions .btn-order-tipo--reciclaje {
+
+  font-size: 14px;
+
+  padding: 14px 10px;
+
+}
+
+/* La suscripcion a recargas es la accion secundaria: una sola linea, para que
+   el boton de recogida conserve el protagonismo y el par no crezca en alto. */
+#orderTypeActions .btn-order-tipo--recarga {
+
+  flex-direction: row;
+
+  gap: 8px;
+
+  font-size: 12.5px;
+
+  padding: 9px 10px;
+
+  background: linear-gradient(135deg, #0EA5E9 0%, #0369A1 100%);
+
+  border-color: #0EA5E9;
+
+  color: #E0F2FE;
+
+}
+
+#orderTypeActions .btn-order-tipo--recarga:hover {
+
+  background: linear-gradient(135deg, #38BDF8 0%, #0284C7 100%);
+
+}
+
+@media (max-width: 480px) {
+
+  /* En movil el mapa es estrecho: los botones se pegan al borde inferior a
+     ancho completo. Se mantiene el anclaje inferior en vez de reintroducir un
+     top fijo, que volvia a dejarlos sobre el mapa y sobre el zoom. */
+  #orderTypeActions {
+
+    bottom: 10px;
+
+    top: auto;
+
+    right: 8px;
+
+    left: 8px;
+
+    width: auto;
+
+  }
+
+}
+
 .btn-order-tipo--reciclaje {
 
   background: linear-gradient(135deg, #22C55E 0%, #15803D 100%);
@@ -955,16 +1053,6 @@ main {
   border-color: #4ADE80;
 
   box-shadow: 0 4px 18px rgba(34, 197, 94, 0.45);
-
-}
-
-.btn-order-tipo--compra {
-
-  background: linear-gradient(135deg, #0284C7 0%, #075985 100%);
-
-  border-color: #38BDF8;
-
-  box-shadow: 0 4px 18px rgba(2, 136, 209, 0.45);
 
 }
 
@@ -980,9 +1068,9 @@ main {
 
 .btn-order-tipo--reciclaje:focus-visible { box-shadow: 0 8px 24px rgba(34, 197, 94, 0.6); }
 
-.btn-order-tipo--compra:hover,
+.btn-order-tipo--recarga:hover,
 
-.btn-order-tipo--compra:focus-visible { box-shadow: 0 8px 24px rgba(2, 136, 209, 0.6); }
+.btn-order-tipo--recarga:focus-visible { box-shadow: 0 8px 24px rgba(2, 136, 209, 0.6); }
 
 .btn-order-tipo:active { transform: translateY(0); }
 
@@ -1301,6 +1389,61 @@ main {
   color: white;
 
   border-color: #FF6D00;
+
+}
+
+/* La barra de categorías agrupa los chips en dos: los recolectores de
+   reciclaje y los recolectores de pedidos. Cada grupo lleva su rótulo para que
+   no se mezclen las dos clases de servicio al elegir un filtro. */
+.cat-group {
+
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  padding: 3px 11px 3px 9px;
+
+  border: 1px solid rgba(255,255,255,0.10);
+
+  border-radius: 20px;
+
+  background: rgba(15,23,42,0.55);
+
+}
+
+.cat-group__label {
+
+  font-size: 10.5px;
+
+  font-weight: 800;
+
+  letter-spacing: 0.3px;
+
+  text-transform: uppercase;
+
+  white-space: nowrap;
+
+  color: #94A3B8;
+
+}
+
+/* Un solo grupo: todo NOTIGAS es reciclaje. */
+#catGroupReciclaje { border-color: rgba(34,197,94,0.35); }
+#catGroupReciclaje .cat-group__label { color: #86EFAC; }
+
+@media (max-width: 480px) {
+
+  .cat-group {
+
+    display: flex;
+
+    padding: 3px 8px;
+
+  }
+
+  .cat-group__label { font-size: 9.5px; }
 
 }
 
@@ -2492,24 +2635,24 @@ footer.promo-banner-container {
 
 .form-group { margin-bottom: 12px; }
 
-/* Registro de repartidor: menos bloques, misma información y controles. */
-.driver-registration-modal { max-width: 470px; }
-.driver-registration-subtitle { margin: 4px 0 12px; color: #94A3B8; font-size: 12px; }
-.driver-trial-summary { margin: 0 0 14px; }
-.driver-trial-card { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; border:1px solid rgba(16,185,129,.42); border-radius:9px; background:rgba(16,185,129,.08); }
-.driver-trial-heading { display:flex; align-items:center; gap:8px; }
-.driver-trial-heading strong { color:#A7F3D0; font-size:13px; }
-.driver-trial-heading span { color:#6EE7B7; font-size:10px; font-weight:800; text-transform:uppercase; }
-.driver-trial-card p { margin:0; color:#CBD5E1; font-size:11px; text-align:right; }
-.driver-registration-grid { display:grid; grid-template-columns:1fr 1fr; gap:0 10px; }
-.driver-identity-field, .driver-price-field { padding:10px 11px; border:1px solid #334155; border-radius:9px; background:#0F172A; }
-.driver-identity-field label, .driver-price-field label { display:flex; justify-content:space-between; gap:8px; }
-.driver-identity-field label span:last-child, .driver-price-field label span:last-child { color:#94A3B8; font-size:10px; font-weight:700; }
-.driver-identity-field small, .driver-price-field small { color:#94A3B8; font-size:10px; display:block; margin-top:4px; }
-.driver-color-field #driverTruckColorPicker { max-height:54px; overflow-y:auto; margin:5px 0 2px; }
-.driver-terms-compact { padding:9px 10px; margin:8px 0 12px; border:1px solid #334155; border-radius:8px; font-size:10.5px; color:#CBD5E1; line-height:1.35; }
-.driver-terms-compact a { color:#FDE68A; font-weight:800; text-decoration:underline; }
-@media (max-width: 440px) { .driver-registration-grid { grid-template-columns:1fr; } .driver-trial-card { display:block; } .driver-trial-card p { margin-top:4px; text-align:left; } }
+/* Registro de recolector: menos bloques, misma información y controles. */
+.recolector-registration-modal { max-width: 470px; }
+.recolector-registration-subtitle { margin: 4px 0 12px; color: #94A3B8; font-size: 12px; }
+.recolector-trial-summary { margin: 0 0 14px; }
+.recolector-trial-card { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; border:1px solid rgba(16,185,129,.42); border-radius:9px; background:rgba(16,185,129,.08); }
+.recolector-trial-heading { display:flex; align-items:center; gap:8px; }
+.recolector-trial-heading strong { color:#A7F3D0; font-size:13px; }
+.recolector-trial-heading span { color:#6EE7B7; font-size:10px; font-weight:800; text-transform:uppercase; }
+.recolector-trial-card p { margin:0; color:#CBD5E1; font-size:11px; text-align:right; }
+.recolector-registration-grid { display:grid; grid-template-columns:1fr 1fr; gap:0 10px; }
+.recolector-identity-field, .recolector-price-field { padding:10px 11px; border:1px solid #334155; border-radius:9px; background:#0F172A; }
+.recolector-identity-field label, .recolector-price-field label { display:flex; justify-content:space-between; gap:8px; }
+.recolector-identity-field label span:last-child, .recolector-price-field label span:last-child { color:#94A3B8; font-size:10px; font-weight:700; }
+.recolector-identity-field small, .recolector-price-field small { color:#94A3B8; font-size:10px; display:block; margin-top:4px; }
+.recolector-color-field #recolectorTruckColorPicker { max-height:54px; overflow-y:auto; margin:5px 0 2px; }
+.recolector-terms-compact { padding:9px 10px; margin:8px 0 12px; border:1px solid #334155; border-radius:8px; font-size:10.5px; color:#CBD5E1; line-height:1.35; }
+.recolector-terms-compact a { color:#FDE68A; font-weight:800; text-decoration:underline; }
+@media (max-width: 440px) { .recolector-registration-grid { grid-template-columns:1fr; } .recolector-trial-card { display:block; } .recolector-trial-card p { margin-top:4px; text-align:left; } }
 
 .form-group label { 
 
@@ -2965,7 +3108,7 @@ footer.promo-banner-container {
 
 }
 
-button, .tab-btn, .cat-chip, .btn-submit, .btn-driver, .btn-badge {
+button, .tab-btn, .cat-chip, .btn-submit, .btn-recolector, .btn-badge {
 
   transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 
@@ -3015,7 +3158,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.btn-badge:hover, .btn-driver:hover {
+.btn-badge:hover, .btn-recolector:hover {
 
   transform: translateY(-1px);
 
@@ -3023,7 +3166,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.driver-mode-header-banner {
+.recolector-mode-header-banner {
 
   background: linear-gradient(90deg, rgba(255, 109, 0, 0.3) 0%, rgba(245, 158, 11, 0.3) 50%, rgba(217, 119, 6, 0.3) 100%);
 
@@ -3053,7 +3196,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.driver-actions-panel {
+.recolector-actions-panel {
 
   background: rgba(15, 23, 42, 0.95) !important;
 
@@ -3073,7 +3216,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.btn-driver-gps-toggle {
+.btn-recolector-gps-toggle {
 
   width: 100%;
 
@@ -3111,7 +3254,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.btn-driver-gps-toggle:hover {
+.btn-recolector-gps-toggle:hover {
 
   transform: translateY(-2px);
 
@@ -3121,7 +3264,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.btn-driver-heatmap {
+.btn-recolector-heatmap {
 
   flex: 1;
 
@@ -3159,7 +3302,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.btn-driver-heatmap:hover {
+.btn-recolector-heatmap:hover {
 
   transform: translateY(-2px);
 
@@ -3169,7 +3312,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.btn-driver-orders-list {
+.btn-recolector-orders-list {
 
   flex: 1;
 
@@ -3207,7 +3350,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.btn-driver-orders-list:hover {
+.btn-recolector-orders-list:hover {
 
   transform: translateY(-2px);
 
@@ -3219,7 +3362,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.btn-driver-follow-me {
+.btn-recolector-follow-me {
 
   flex: 1;
 
@@ -3257,7 +3400,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.btn-driver-follow-me:hover {
+.btn-recolector-follow-me:hover {
 
   transform: translateY(-2px);
 
@@ -3267,9 +3410,9 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.btn-driver-follow-me.is-running,
+.btn-recolector-follow-me.is-running,
 
-.btn-driver-follow-me.is-running:hover {
+.btn-recolector-follow-me.is-running:hover {
 
   background: linear-gradient(135deg, #16A34A 0%, #15803D 100%) !important;
 
@@ -3281,7 +3424,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.btn-driver-pause {
+.btn-recolector-pause {
 
   flex: 1;
 
@@ -3319,7 +3462,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.btn-driver-pause:hover {
+.btn-recolector-pause:hover {
 
   transform: translateY(-2px);
 
@@ -3331,7 +3474,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.btn-driver-my-location {
+.btn-recolector-my-location {
 
   flex: 1;
 
@@ -3369,7 +3512,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.btn-driver-my-location:hover {
+.btn-recolector-my-location:hover {
 
   transform: translateY(-2px);
 
@@ -3381,7 +3524,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.btn-driver-route {
+.btn-recolector-route {
 
   width: 100%;
 
@@ -3419,7 +3562,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.btn-driver-route:hover {
+.btn-recolector-route:hover {
 
   transform: translateY(-2px);
 
@@ -3431,7 +3574,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.driver-order-card {
+.recolector-order-card {
 
   background: rgba(30, 41, 59, 0.85);
 
@@ -3455,7 +3598,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.driver-order-header {
+.recolector-order-header {
 
   display: flex;
 
@@ -3465,7 +3608,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.driver-order-title {
+.recolector-order-title {
 
   font-weight: 800;
 
@@ -3475,7 +3618,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.driver-order-dist {
+.recolector-order-dist {
 
   font-size: 10.5px;
 
@@ -3491,7 +3634,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.driver-order-actions {
+.recolector-order-actions {
 
   display: flex;
 
@@ -3501,7 +3644,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.btn-driver-accept {
+.btn-recolector-accept {
 
   flex: 1;
 
@@ -3527,7 +3670,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.btn-driver-accept:hover {
+.btn-recolector-accept:hover {
 
   transform: translateY(-1px);
 
@@ -3535,7 +3678,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.btn-driver-chat-vecino {
+.btn-recolector-chat-vecino {
 
   flex: 1;
 
@@ -3559,7 +3702,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.btn-driver-chat-vecino:hover {
+.btn-recolector-chat-vecino:hover {
 
   background: rgba(255, 109, 0, 0.35);
 
@@ -3573,7 +3716,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.driver-actions-panel {
+.recolector-actions-panel {
 
   display: flex;
 
@@ -4045,7 +4188,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.role-select-btn.active#btnRoleDriver {
+.role-select-btn.active#btnRoleRecolector {
 
   background: linear-gradient(135deg, #FF6D00, #E65100) !important;
 
@@ -4113,7 +4256,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.btn-premium-driver {
+.btn-premium-recolector {
 
   display: inline-flex;
 
@@ -4151,7 +4294,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.btn-premium-driver:hover {
+.btn-premium-recolector:hover {
 
   transform: translateY(-3px);
 
@@ -4161,7 +4304,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.btn-premium-driver:active {
+.btn-premium-recolector:active {
 
   transform: translateY(1px);
 
@@ -4957,7 +5100,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.driver-alert-popup {
+.recolector-alert-popup {
 
   position: fixed;
 
@@ -5751,7 +5894,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.driver-map-marker {
+.recolector-map-marker {
   position: relative;
   width: 96px;
   display: flex;
@@ -5765,12 +5908,12 @@ button:active, .tab-btn:active, .cat-chip:active {
   pointer-events: auto;
 }
 
-.driver-map-marker:hover {
+.recolector-map-marker:hover {
   transform: scale(1.12) translateY(-2px);
   z-index: 10002;
 }
 
-.driver-marker-truck-wrap {
+.recolector-marker-truck-wrap {
   position: relative;
   width: 72px;
   height: 46px;
@@ -5779,7 +5922,7 @@ button:active, .tab-btn:active, .cat-chip:active {
   justify-content: center;
 }
 
-.driver-3d-truck-img {
+.recolector-3d-truck-img {
   width: 72px;
   height: 46px;
   display: flex;
@@ -5790,7 +5933,7 @@ button:active, .tab-btn:active, .cat-chip:active {
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
 }
 
-.driver-marker-label {
+.recolector-marker-label {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -5809,7 +5952,7 @@ button:active, .tab-btn:active, .cat-chip:active {
   user-select: none;
 }
 
-.driver-marker-label-brand {
+.recolector-marker-label-brand {
   font-size: 8px;
   font-weight: 900;
   color: #FCD34D;
@@ -5822,7 +5965,7 @@ button:active, .tab-btn:active, .cat-chip:active {
   white-space: nowrap;
 }
 
-.driver-marker-label-name {
+.recolector-marker-label-name {
   font-size: 9.5px;
   font-weight: 800;
   color: #FFFFFF;
@@ -5833,7 +5976,7 @@ button:active, .tab-btn:active, .cat-chip:active {
   white-space: nowrap;
 }
 
-.driver-marker-badge {
+.recolector-marker-badge {
 
   position: absolute;
 
@@ -5861,7 +6004,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.driver-marker-online {
+.recolector-marker-online {
 
   position: absolute;
 
@@ -5887,9 +6030,9 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.notigas-driver-marker { position: relative; transition: transform 0.6s linear; }
+.notigas-recolector-marker { position: relative; transition: transform 0.6s linear; }
 
-.driver-dot {
+.recolector-dot {
 
   position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; transform: translate(-50%, -50%);
 
@@ -5899,7 +6042,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.driver-pulse {
+.recolector-pulse {
 
   position: absolute; left: 50%; top: 50%; width: 32px; height: 32px; transform: translate(-50%, -50%);
 
@@ -5952,12 +6095,14 @@ button:active, .tab-btn:active, .cat-chip:active {
 /* LETRERO CENTRAL DEL MAPA ---------------------------------------------------
    Es lo primero que ve la persona al abrir la app: dice qué es cada pin.
    Los chips se pintan con el color real de la categoría, así que la leyenda
-   y los pines no pueden desincronizarse. */
+   y los pines no pueden desincronizarse.
+   Va debajo de los dos botones de pedido, que ocupan la parte alta de la
+   columna derecha junto al boton de MI UBICACION. */
 .mapa-letrero {
 
   position: absolute;
 
-  top: 205px;
+  top: 340px;
 
   right: 12px;
 
@@ -6127,7 +6272,9 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 @media (max-width: 480px) {
 
-  .mapa-letrero { top: 200px; right: 8px; left: 8px; width: auto; max-width: none; }
+  /* En movil el letrero baja bajo los botones de pedido, que ocupan el ancho
+     completo y quedan pegados a MI UBICACION. */
+  .mapa-letrero { top: 336px; right: 8px; left: 8px; width: auto; max-width: none; }
 
   .mapa-letrero__texto { font-size: 10.5px; }
 
@@ -6527,7 +6674,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.btn-driver-complete {
+.btn-recolector-complete {
 
   flex: 1;
 
@@ -6551,7 +6698,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.btn-driver-view-order {
+.btn-recolector-view-order {
 
   flex: 1 0 100% !important;
 
@@ -6565,7 +6712,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.btn-driver-report {
+.btn-recolector-report {
 
   color: #0F172A !important;
 
@@ -6585,7 +6732,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.driver-demand-empty {
+.recolector-demand-empty {
 
   padding: 14px 10px;
 
@@ -6675,7 +6822,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.driver-actions-panel {
+.recolector-actions-panel {
 
   background: rgba(15, 23, 42, 0.96) !important;
 
@@ -6685,7 +6832,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.driver-actions-panel button,
+.recolector-actions-panel button,
 
 .demand-card-actions button,
 
@@ -6705,11 +6852,11 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.btn-driver-follow-me,
+.btn-recolector-follow-me,
 
-.btn-driver-accept,
+.btn-recolector-accept,
 
-.btn-driver-route {
+.btn-recolector-route {
 
   color: #ffffff !important;
 
@@ -6719,11 +6866,11 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.btn-driver-orders-list,
+.btn-recolector-orders-list,
 
-.btn-driver-my-location,
+.btn-recolector-my-location,
 
-.btn-driver-view-order {
+.btn-recolector-view-order {
 
   color: #ffffff !important;
 
@@ -6733,7 +6880,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.btn-driver-pause {
+.btn-recolector-pause {
 
   color: #0f172a !important;
 
@@ -6810,7 +6957,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.btn-driver-complete {
+.btn-recolector-complete {
 
   color: #ffffff !important;
 
@@ -6820,21 +6967,21 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.btn-driver-follow-me:hover,
+.btn-recolector-follow-me:hover,
 
-.btn-driver-accept:hover,
+.btn-recolector-accept:hover,
 
-.btn-driver-route:hover {
+.btn-recolector-route:hover {
 
   background: linear-gradient(135deg, #ff8f00 0%, #ff6d00 100%) !important;
 
 }
 
-.btn-driver-orders-list:hover,
+.btn-recolector-orders-list:hover,
 
-.btn-driver-my-location:hover,
+.btn-recolector-my-location:hover,
 
-.btn-driver-view-order:hover {
+.btn-recolector-view-order:hover {
 
   background: linear-gradient(135deg, #039be5 0%, #0277bd 100%) !important;
 
@@ -7172,7 +7319,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.driver-truck-radar-container {
+.recolector-truck-radar-container {
 
   background: transparent !important;
 
@@ -7633,13 +7780,13 @@ button:active, .tab-btn:active, .cat-chip:active {
 .ng-inline-218 { width:100%; text-align:left; background: linear-gradient(135deg, #2563EB, #1D4ED8); margin-bottom: 8px; }
 .ng-inline-219 { width:100%; background:none; border:1px solid rgba(255,255,255,0.15); color:#94A3B8; padding:8px; border-radius:8px; margin-top:14px; cursor:pointer; font-size:11px; }
 /* OVERRIDES PARA CAMIÓN TOYOTA DINA */
-.driver-map-marker {
+.recolector-map-marker {
   width: auto !important;
   min-width: 80px !important;
   height: auto !important;
 }
 
-.driver-marker-badge {
+.recolector-marker-badge {
   min-width: 20px !important;
   width: auto !important;
   padding: 0 5px !important;
@@ -7648,7 +7795,7 @@ button:active, .tab-btn:active, .cat-chip:active {
   white-space: nowrap !important;
 }
 
-.driver-marker-crown {
+.recolector-marker-crown {
   position: absolute;
   top: -15px;
   left: 50%;
@@ -7665,11 +7812,11 @@ button:active, .tab-btn:active, .cat-chip:active {
   50% { transform: translateX(-50%) scale(1.15) translateY(-2px); }
 }
 
-.driver-map-marker-vip .driver-marker-truck-wrap {
+.recolector-map-marker-vip .recolector-marker-truck-wrap {
   filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.75));
 }
 
-.driver-marker-vip-tag {
+.recolector-marker-vip-tag {
   font-size: 8px;
   font-weight: 900;
   color: #F59E0B;
@@ -7688,20 +7835,20 @@ button:active, .tab-btn:active, .cat-chip:active {
   background: linear-gradient(180deg, rgba(30, 27, 75, 0.35) 0%, rgba(15, 23, 42, 0.95) 100%) !important;
 }
 
-.driver-3d-truck-img {
+.recolector-3d-truck-img {
   width: 72px !important;
   height: 46px !important;
   transform-origin: center center !important;
 }
 
-.notigas-driver-marker {
+.notigas-recolector-marker {
   transition: transform 0.6s linear !important;
 }
 
 /* ==========================================================================
-   BOTONES DE ESTADO RÁPIDO PARA REPARTIDORES (EN CAMINO / EN PUERTA / LIBERAR)
+   BOTONES DE ESTADO RÁPIDO PARA RECOLECTORES (EN CAMINO / EN PUERTA / LIBERAR)
    ========================================================================== */
-.driver-quick-actions-container {
+.recolector-quick-actions-container {
   margin-top: 8px;
   padding: 8px;
   background: rgba(15, 23, 42, 0.65);
@@ -7709,7 +7856,7 @@ button:active, .tab-btn:active, .cat-chip:active {
   border-radius: 8px;
 }
 
-.driver-quick-actions-title {
+.recolector-quick-actions-title {
   font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
@@ -7721,7 +7868,7 @@ button:active, .tab-btn:active, .cat-chip:active {
   margin-bottom: 6px;
 }
 
-.driver-quick-actions-grid {
+.recolector-quick-actions-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 6px;

@@ -68,14 +68,14 @@ function createNotigasSupabaseClient() {
   }
 })();
 
-// Variable global para ID del recorrido activo del repartidor actual
-window.currentDriverPublicationId = null;
-window.driverLocationInterval = null;
+// Variable global para ID del recorrido activo del recolector actual
+window.currentRecolectorPublicationId = null;
+window.recolectorLocationInterval = null;
 
-window.stopDriverLocationBroadcast = async function() {
-    if (window.driverLocationInterval) {
-        clearInterval(window.driverLocationInterval);
-        window.driverLocationInterval = null;
+window.stopRecolectorLocationBroadcast = async function() {
+    if (window.recolectorLocationInterval) {
+        clearInterval(window.recolectorLocationInterval);
+        window.recolectorLocationInterval = null;
     }
     if (window.supabaseClient) {
         try {
@@ -84,12 +84,12 @@ window.stopDriverLocationBroadcast = async function() {
               await window.supabaseClient.from('rutas_repartidores')
                   .delete()
                   .eq('user_id', localUserId);
-              console.log("Ruta de repartidor eliminada de Supabase.");
+              console.log("Ruta de recolector eliminada de Supabase.");
             }
         } catch (error) {
             console.error("Error al eliminar ruta:", error);
         } finally {
-            window.currentDriverPublicationId = null;
+            window.currentRecolectorPublicationId = null;
         }
     }
 };
@@ -154,9 +154,9 @@ window.iniciarSuscripcionesRealtime = async function() {
         clearTimeout(_debounceOrdersTimer);
         _debounceOrdersTimer = setTimeout(() => {
             if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
-            const modal = document.getElementById('modalDriverOrders');
-            if (modal && modal.style.display !== 'none' && typeof renderDriverOrdersList === 'function') {
-                renderDriverOrdersList();
+            const modal = document.getElementById('modalRecolectorOrders');
+            if (modal && modal.style.display !== 'none' && typeof renderRecolectorOrdersList === 'function') {
+                renderRecolectorOrdersList();
             }
         }, 300);
     };
@@ -195,7 +195,7 @@ window.iniciarSuscripcionesRealtime = async function() {
                 ? getCurrentUserId()
                 : ((typeof AppState !== 'undefined' ? AppState.get('userData')?.id : null) || window._tempAuthUser?.id);
             const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
-            const isDriver = (u.role === 'repartidor') || ((typeof AppState !== 'undefined') && (AppState.get('appMode') === 'driver' || AppState.get('userRole') === 'repartidor'));
+            const isRecolector = (u.role === 'repartidor') || ((typeof AppState !== 'undefined') && (AppState.get('appMode') === 'recolector' || AppState.get('userRole') === 'repartidor'));
 
             // 1. Si el pedido pertenecía al comprador actual
             if (activeOrder?.id && changedOrder?.id === activeOrder.id) {
@@ -206,15 +206,15 @@ window.iniciarSuscripcionesRealtime = async function() {
                 }
             }
 
-            // 2. Si el usuario actual es repartidor y se canceló un pedido asignado a él
-            if (isDriver && changedOrder) {
+            // 2. Si el usuario actual es recolector y se canceló un pedido asignado a él
+            if (isRecolector && changedOrder) {
                 const wasAssigned = (changedOrder.driver_id && String(changedOrder.driver_id) === String(localUserId)) ||
-                    (window.driverDemandMapState?.assignedOrders?.some(o => String(o.id) === String(changedOrder.id)));
+                    (window.recolectorDemandMapState?.assignedOrders?.some(o => String(o.id) === String(changedOrder.id)));
 
                 if (changedOrder.estado === 'cancelado' && wasAssigned) {
                     const loc = changedOrder.direccion || changedOrder.barrio_otb || 'la ubicación indicada';
-                    if (typeof mostrarPopupAlertaRepartidor === 'function') {
-                        mostrarPopupAlertaRepartidor('⛔ PEDIDO CANCELADO POR EL VECINO', `El comprador ha cancelado su pedido en ${loc}. Se retiró de tus rutas asignadas.`, 9000);
+                    if (typeof mostrarPopupAlertaRecolector === 'function') {
+                        mostrarPopupAlertaRecolector('⛔ PEDIDO CANCELADO POR EL VECINO', `El comprador ha cancelado su pedido en ${loc}. Se retiró de tus rutas asignadas.`, 9000);
                     }
                     if (typeof showToast === 'function') {
                         showToast('⛔ Pedido Cancelado', `El pedido asignado en ${loc} fue cancelado por el comprador.`, 'warning', 8000);
@@ -237,15 +237,15 @@ window.iniciarSuscripcionesRealtime = async function() {
             }
 
             // Si el modal de lista de pedidos del chofer está abierto, refrescar únicamente la lista visual
-            const modal = document.getElementById('modalDriverOrders');
-            if (modal && modal.style.display !== 'none' && typeof renderDriverOrdersList === 'function') {
-                renderDriverOrdersList();
+            const modal = document.getElementById('modalRecolectorOrders');
+            if (modal && modal.style.display !== 'none' && typeof renderRecolectorOrdersList === 'function') {
+                renderRecolectorOrdersList();
             }
         })
         .on('postgres_changes', rutasOpts, payload => {
             const data = payload.new;
             if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-                if (typeof actualizarRepartidorEnMapa === 'function') actualizarRepartidorEnMapa(data);
+                if (typeof actualizarRecolectorEnMapa === 'function') actualizarRecolectorEnMapa(data);
             } else if (payload.eventType === 'DELETE') {
                 if (typeof removerPublicacionDeMapa === 'function') removerPublicacionDeMapa(payload.old?.id);
             }
@@ -254,8 +254,8 @@ window.iniciarSuscripcionesRealtime = async function() {
             const aviso = payload.new;
             if (aviso && aviso.activo && (aviso.tipo === 'oficial' || aviso.tipo === 'alerta_oficial')) {
                 const mensaje = aviso.mensaje || aviso.descripcion || aviso.titulo || 'Comunicado oficial';
-                if (typeof mostrarPopupAlertaRepartidor === 'function') {
-                    mostrarPopupAlertaRepartidor('COMUNICADO OFICIAL DE ADMINISTRACIÓN', mensaje);
+                if (typeof mostrarPopupAlertaRecolector === 'function') {
+                    mostrarPopupAlertaRecolector('COMUNICADO OFICIAL DE ADMINISTRACIÓN', mensaje);
                 }
                 if (typeof showToast === 'function') {
                     showToast('📢 Comunicado Oficial', mensaje, 'info', 6000);
@@ -295,7 +295,7 @@ window.iniciarSuscripcionesRealtime = async function() {
                     try {
                         if (typeof cargarPedidosVecinalesEnVivo === 'function') await cargarPedidosVecinalesEnVivo();
                         if (typeof checkActiveOrderStatus === 'function') await checkActiveOrderStatus();
-                        if (typeof cargarRepartidoresEnMapa === 'function') await cargarRepartidoresEnMapa();
+                        if (typeof cargarRecolectoresEnMapa === 'function') await cargarRecolectoresEnMapa();
                         if (typeof renderActiveOrdersMap === 'function') renderActiveOrdersMap();
                     } catch (snapshotError) {
                         console.warn('Realtime reconectado; la reconciliación de snapshot falló:', snapshotError);

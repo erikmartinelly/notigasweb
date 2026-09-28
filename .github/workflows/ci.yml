@@ -38,11 +38,11 @@ jobs:
             if curl -fsS http://127.0.0.1:3000/health | grep -q '^OK$'; then
               curl -fsS http://127.0.0.1:3000/ > /tmp/notigas-index.html
               curl -fsS http://127.0.0.1:3000/js/app.js > /tmp/notigas-app.js
-              curl -fsS http://127.0.0.1:3000/js/driver_order_rules.js > /tmp/notigas-driver-rules.js
+              curl -fsS http://127.0.0.1:3000/js/recolector_order_rules.js > /tmp/notigas-recolector-rules.js
               curl -fsS http://127.0.0.1:3000/js/notigas_bo.js > /tmp/notigas-bo.js
               curl -fsS http://127.0.0.1:3000/runtime-config.js > /tmp/notigas-runtime-config.js
               grep -q '🌍 Todos' /tmp/notigas-index.html
-              grep -Eq '<script defer src="js/driver_icons\.js\?v=[0-9]+"></script>' /tmp/notigas-index.html
+              grep -Eq '<script defer src="js/recolector_icons\.js\?v=[0-9]+"></script>' /tmp/notigas-index.html
               grep -Eq '<script defer src="js/device_security\.js\?v=[0-9]+"></script>' /tmp/notigas-index.html
               grep -Eq '<script defer src="js/monitoring\.js\?v=[0-9]+"></script>' /tmp/notigas-index.html
               grep -q 'sentryDsn' /tmp/notigas-runtime-config.js
@@ -78,12 +78,12 @@ jobs:
                 echo 'La ficha de repartidor volvió a mostrar el selector de planes heredado'
                 exit 1
               fi
-              if grep -q 'El primer ciclo cobrable permite <strong>100 pedidos = S/ 20</strong>' /tmp/notigas-driver-rules.js; then
+              if grep -q 'El primer ciclo cobrable permite <strong>100 pedidos = S/ 20</strong>' /tmp/notigas-recolector-rules.js; then
                 echo 'El detalle de crédito todavía aparece en el formulario de registro de repartidores'
                 exit 1
               fi
-              if grep -Eq '<script src="js/driver_icons\.js\?v=[0-9]+"></script>' /tmp/notigas-index.html; then
-                echo 'driver_icons.js todavía bloquea el parser'
+              if grep -Eq '<script src="js/recolector_icons\.js\?v=[0-9]+"></script>' /tmp/notigas-index.html; then
+                echo 'recolector_icons.js todavía bloquea el parser'
                 exit 1
               fi
               if grep -Eq '<script src="js/device_security\.js\?v=[0-9]+"></script>' /tmp/notigas-index.html; then

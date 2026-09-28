@@ -2,14 +2,14 @@
    NOTIGAS - MÓDULO DE PROPAGANDA LOCAL (3 PESTAÑAS INDEPENDIENTES)
    Espacios Habilitados:
    1. Pestaña 1 (Mapa en Vivo): Banner Inferior Fijo (#localPromoContent)
-   2. Pestaña 2 (Repartidores): Tarjeta Patrocinador en Feed de Repartidores
+   2. Pestaña 2 (Recolectores): Tarjeta Patrocinador en Feed de Recolectores
    3. Pestaña 3 (Muro de Comentarios): Tarjeta Patrocinador en Feed de Muro de Comentarios
    ========================================================================== */
 
 const _ADS_AD_TABLE = window.NOTIGAS?.AD_TABLE || 'anuncios_globales';
 const _ADS_PLACEMENTS = window.NOTIGAS?.AD_PLACEMENTS || Object.freeze({
   MAPA: 'mapa',
-  REPARTIDORES: 'repartidores',
+  RECOLECTORES: 'recolectores',
   MURO_AVISOS: 'muro_avisos'
 });
 
@@ -22,7 +22,7 @@ function normalizeStoredAdPlacement(value) {
 window.ADS_CONFIG = {
   mode: 'adsense',
   publisher_id: 'ca-pub-2502415561017945',
-  slot_feed_repartidores: null,
+  slot_feed_recolectores: null,
   slot_feed_muro: null,
   slot_banner_inferior: null,
   adSenseLoaded: false
@@ -31,7 +31,7 @@ window.ADS_CONFIG = {
 window.adsSubscriptionChannel = null;
 window._localAds = {
   mapa: null,
-  repartidores: null,
+  recolectores: null,
   muro_avisos: null
 };
 window._currentLocalAdData = null; // Retrocompatibilidad
@@ -161,7 +161,7 @@ async function cargarAnunciosGuardados() {
     if (localPromoContent) localPromoContent.style.display = 'none';
     window._localAds = {
       mapa: { activo: false },
-      repartidores: { activo: false },
+      recolectores: { activo: false },
       muro_avisos: { activo: false }
     };
     window._currentLocalAdData = window._localAds.mapa;
@@ -171,7 +171,7 @@ async function cargarAnunciosGuardados() {
   if (!window.supabaseClient) {
     window._localAds = {
       mapa: { activo: false },
-      repartidores: { activo: false },
+      recolectores: { activo: false },
       muro_avisos: { activo: false }
     };
     window._currentLocalAdData = window._localAds.mapa;
@@ -206,14 +206,14 @@ async function cargarAnunciosGuardados() {
 
       window._localAds = {
         mapa: resolveAdForPos('mapa'),
-        repartidores: resolveAdForPos('repartidores'),
+        recolectores: resolveAdForPos('recolectores'),
         muro_avisos: resolveAdForPos(_ADS_PLACEMENTS.MURO_AVISOS)
       };
     } else {
       // Error o sin conexión a Supabase, ocultar todo
       window._localAds = {
         mapa: { activo: false, posicion: 'mapa' },
-        repartidores: { activo: false, posicion: 'repartidores' },
+        recolectores: { activo: false, posicion: 'recolectores' },
         muro_avisos: { activo: false, posicion: _ADS_PLACEMENTS.MURO_AVISOS }
       };
     }
@@ -299,7 +299,7 @@ window.abrirContactoPublicidad = function() {
   // Intenta sacar la url de Telegram guardada en algún anuncio activo localmente
   if (window._localAds) {
     if (window._localAds.mapa && window._localAds.mapa.url && window._localAds.mapa.url.includes('t.me')) url = window._localAds.mapa.url;
-    else if (window._localAds.repartidores && window._localAds.repartidores.url && window._localAds.repartidores.url.includes('t.me')) url = window._localAds.repartidores.url;
+    else if (window._localAds.recolectores && window._localAds.recolectores.url && window._localAds.recolectores.url.includes('t.me')) url = window._localAds.recolectores.url;
     else if (window._localAds.muro_avisos && window._localAds.muro_avisos.url && window._localAds.muro_avisos.url.includes('t.me')) url = window._localAds.muro_avisos.url;
   }
   // Fallback si no hay url t.me pero hay alguna url de anuncio
@@ -311,7 +311,7 @@ window.abrirContactoPublicidad = function() {
 };
 
 /**
- * Generador de tarjeta publicitaria para los feeds (Repartidores y Muro de Comentarios)
+ * Generador de tarjeta publicitaria para los feeds (Recolectores y Muro de Comentarios)
  */
 window.getAdSenseFeedMarkup = function(placement) {
   const mode = window.ADS_CONFIG.mode || 'adsense';
@@ -320,7 +320,7 @@ window.getAdSenseFeedMarkup = function(placement) {
   const pubId = window.ADS_CONFIG.publisher_id || 'ca-pub-2502415561017945';
   let slotId = '';
   if (placement === 'vendors') {
-    slotId = window.ADS_CONFIG.slot_feed_repartidores || '';
+    slotId = window.ADS_CONFIG.slot_feed_recolectores || '';
   } else if (placement === 'forum') {
     slotId = window.ADS_CONFIG.slot_feed_muro || '';
   }
@@ -345,8 +345,8 @@ window.getAdSenseFeedMarkup = function(placement) {
   let placementTitle = 'PROPAGANDA LOCAL';
 
   if (placement === 'vendors') {
-    ad = window._localAds?.repartidores;
-    placementTitle = 'PROPAGANDA LOCAL • REPARTIDORES';
+    ad = window._localAds?.recolectores;
+    placementTitle = 'PROPAGANDA LOCAL • RECOLECTORES';
   } else if (placement === 'forum') {
     ad = window._localAds?.muro_avisos;
     placementTitle = 'ANUNCIO PUBLICITARIO • MURO DE AVISOS';
@@ -418,7 +418,7 @@ async function cargarConfiguracionPublicidadGlobal() {
     if (data) {
       if (data.modo) window.ADS_CONFIG.mode = data.modo;
       if (data.publisher_id) window.ADS_CONFIG.publisher_id = data.publisher_id;
-      if (data.slot_repartidores) window.ADS_CONFIG.slot_feed_repartidores = data.slot_repartidores;
+      if (data.slot_repartidores) window.ADS_CONFIG.slot_feed_recolectores = data.slot_repartidores;
       if (data.slot_avisos) window.ADS_CONFIG.slot_feed_muro = data.slot_avisos;
     }
   } catch (error) {

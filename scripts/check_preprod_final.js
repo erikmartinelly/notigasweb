@@ -17,7 +17,7 @@ const privacy = read('js/order_privacy_layer.js');
 const readme = read('README.md');
 const snapshot = read('supabase/full_production_schema.sql');
 const migration = read('supabase/migrations/20260911205957_preprod_final_security_and_credit_messages.sql');
-const legacyDrivers = read('supabase/migrations/20260911210832_close_legacy_repartidores_public_read.sql');
+const legacyRecolectors = read('supabase/migrations/20260911210832_close_legacy_repartidores_public_read.sql');
 const legacyCleanup = read('supabase/migrations/20260910182449_legacy_cleanup_retention_and_privileges.sql');
 const hardening = read('supabase/migrations/20260913003000_security_surface_hardening.sql');
 const adminWrites = read('supabase/migrations/20260913004500_require_real_auth_for_administration_writes.sql');
@@ -43,14 +43,14 @@ must(orders.includes("estado_servicio === 'baneado'"), 'UI legacy reconoce banea
 must(orders.includes("estado_servicio === 'suspendido'"), 'UI legacy reconoce suspendido');
 must(orders.includes("estado_servicio === 'suspendido_mora'") === false, 'UI legacy no reintroduce suspendido_mora');
 must(orders.includes("estado_servicio === 'suspendido_pago'") === false, 'UI legacy no reintroduce suspendido_pago');
-must(orders.includes('secureRenderDriverOrdersList'), 'lista legacy delega al radar seguro');
+must(orders.includes('secureRenderRecolectorOrdersList'), 'lista legacy delega al radar seguro');
 // El radar si mantiene los estados heredados a proposito: cubre defensivamente
 // todo lo que admite el CHECK de la BD, sin depender de quien lo asigno.
 must(privacy.includes("'suspendido_mora'"), 'radar seguro reconoce suspendido_mora');
 must(privacy.includes("'suspendido_pago'"), 'radar seguro reconoce suspendido_pago');
 must(privacy.includes("'baneado'"), 'radar seguro reconoce baneado');
-must(/driverCanTakeOrders = !suspended && state === 'activo'/.test(privacy), 'radar solo habilita Tomar con estado activo');
-must(privacy.includes('driverCanTakeOrders'), 'radar controla permiso de tomar pedidos');
+must(/recolectorCanTakeOrders = !suspended && state === 'activo'/.test(privacy), 'radar solo habilita Tomar con estado activo');
+must(privacy.includes('recolectorCanTakeOrders'), 'radar controla permiso de tomar pedidos');
 must(/tomarPedidoDesdeZonaPrivada\s*=\s*async/.test(privacy), 'acción Tomar revalida estado en servidor');
 must(/if \(!access\.canTake\)/.test(privacy), 'acción Tomar se detiene para cuentas suspendidas');
 must(/Cuenta suspendida para nuevos pedidos/.test(privacy), 'lista segura informa suspensión sin ocultar pedidos asignados');
@@ -61,10 +61,10 @@ must(/intentionally deprecated/i.test(readme), 'README marca snapshot obsoleto')
 must(/RAISE EXCEPTION/i.test(snapshot) && /obsoleto/i.test(snapshot), 'snapshot obsoleto falla de forma segura');
 must(/is_admin_email\(\).*FROM PUBLIC, anon/is.test(migration), 'helper admin no es endpoint anónimo');
 must(/is_banned\(\).*FROM PUBLIC, anon/is.test(migration), 'helper de bloqueo no es endpoint anónimo');
-must(/is_current_enabled_driver\(text,text\).*FROM PUBLIC, anon/is.test(migration), 'helper de repartidor no es endpoint anónimo');
+must(/is_current_enabled_driver\(text,text\).*FROM PUBLIC, anon/is.test(migration), 'helper de recolector no es endpoint anónimo');
 must(/Alcanzaste tu límite de crédito: % pedidos cobrables \/ S\/ %/i.test(migration), 'mensaje de crédito es dinámico');
-must(/DROP POLICY IF EXISTS "Lectura publica repartidores"/i.test(legacyDrivers), 'tabla repartidores legacy ya no es pública');
-must(/REVOKE ALL ON public\.repartidores FROM PUBLIC, anon, authenticated/i.test(legacyDrivers), 'teléfono/placa legacy quedan cerrados');
+must(/DROP POLICY IF EXISTS "Lectura publica repartidores"/i.test(legacyRecolectors), 'tabla recolectores legacy ya no es pública');
+must(/REVOKE ALL ON public\.repartidores FROM PUBLIC, anon, authenticated/i.test(legacyRecolectors), 'teléfono/placa legacy quedan cerrados');
 
 must(/CREATE OR REPLACE FUNCTION public\.rpc_purge_old_records/i.test(legacyCleanup), 'migración histórica legacy_cleanup contiene el SQL remoto real');
 must(/CREATE OR REPLACE FUNCTION public\.delete_user_account/i.test(legacyCleanup), 'migración histórica conserva borrado de cuenta aplicado');

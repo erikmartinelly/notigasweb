@@ -2,7 +2,7 @@
    NOTIGAS - OCR LOCAL DE COMPROBANTES DE QR LOCAL (SIMPLE / BANESCO QR)
    - OCR gratuito con Tesseract.js en el navegador.
    - La imagen NO se persiste: solo se envían datos estructurados al servidor.
-   - El voucher acredita el pago acordado entre comprador y repartidor.
+   - El voucher acredita el pago acordado entre comprador y recolector.
      NOTIGAS no cobra comisión ni procesa fondos.
    ========================================================================== */
 (function () {

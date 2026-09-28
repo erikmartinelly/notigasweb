@@ -32,13 +32,13 @@ document.addEventListener('notigas_auth_ready', () => {
   }
 });
 
-// esRepartidorBaneado se define de forma única en auth.js (requerida por flujos
-// no-admin, como el registro de repartidores, antes de cargar este módulo).
+// esRecolectorBaneado se define de forma única en auth.js (requerida por flujos
+// no-admin, como el registro de recolectores, antes de cargar este módulo).
 
-async function banearRepartidorAdmin(vendorUserId, vendorName, plate = '', whatsapp = '') {
+async function banearRecolectorAdmin(vendorUserId, vendorName, plate = '', whatsapp = '') {
   // vendorUserId debe ser el auth.uid() real del chofer.
   if (!vendorUserId) {
-    console.error('banearRepartidorAdmin: falta vendorUserId (auth.uid real del chofer)');
+    console.error('banearRecolectorAdmin: falta vendorUserId (auth.uid real del chofer)');
     if (typeof showToast === 'function') {
       showToast('❌ Error', 'No se pudo suspender: falta el identificador real del usuario.', 'error', 5000);
     }
@@ -72,7 +72,7 @@ async function banearRepartidorAdmin(vendorUserId, vendorName, plate = '', whats
   if (typeof renderVendorCards === 'function') renderVendorCards('TODOS');
 
   if (typeof showToast === 'function') {
-    showToast('🚫 Repartidor suspendido', `Se suspendió a "${vendorName}" y se bloquearon los identificadores asociados.`, 'error', 6000);
+    showToast('🚫 Recolector suspendido', `Se suspendió a "${vendorName}" y se bloquearon los identificadores asociados.`, 'error', 6000);
   }
 }
 
@@ -116,24 +116,24 @@ async function ejecutarLimpiezaBaneos() {
   }
 }
 
-async function desbanearRepartidorAdmin(vendorUserId, vendorName) {
+async function desbanearRecolectorAdmin(vendorUserId, vendorName) {
   // vendorUserId debe ser el auth.uid() real.
   if (window.supabaseClient) {
     const { error } = await window.supabaseClient.from('usuarios_baneados').delete().eq('user_id', vendorUserId);
     if (error) {
-      console.error('Error al desbanear repartidor:', error);
+      console.error('Error al desbanear recolector:', error);
       if (typeof showToast === 'function') {
-        showToast('❌ Error', 'No se pudo desbanear al repartidor.', 'error', 5000);
+        showToast('❌ Error', 'No se pudo desbanear al recolector.', 'error', 5000);
       }
       return;
     }
 
     // Desbloquear y restaurar el estado operativo.
-    const { error: driverError } = await window.supabaseClient.from('choferes_habilitados')
+    const { error: recolectorError } = await window.supabaseClient.from('choferes_habilitados')
       .update({ bloqueado: false, motivo_bloqueo: null, estado_verificacion: 'aprobado', estado_servicio: 'activo' })
       .eq('user_id', vendorUserId);
-    if (driverError) {
-      console.error('Error restaurando estado del repartidor:', driverError);
+    if (recolectorError) {
+      console.error('Error restaurando estado del recolector:', recolectorError);
       if (typeof showToast === 'function') showToast('❌ Error', 'Se retiró el baneo, pero no se pudo restaurar el estado operativo.', 'error', 5000);
       return;
     }
@@ -146,13 +146,13 @@ async function desbanearRepartidorAdmin(vendorUserId, vendorName) {
   if (typeof renderVendorCards === 'function') renderVendorCards('TODOS');
 
   if (typeof showToast === 'function') {
-    showToast('🔓 Repartidor Desbaneado', `Se restauró la cuenta e ingreso de "${vendorName}".`, 'success', 4000);
+    showToast('🔓 Recolector Desbaneado', `Se restauró la cuenta e ingreso de "${vendorName}".`, 'success', 4000);
   }
 }
 
-window.borrarRepartidorPermanente = function(vendorId, vendorUserId, vendorName, vendorEmail = '') {
-  const safeName = vendorName || vendorEmail || 'este repartidor';
-  const cleanDriverId = String(vendorId || '').replace(/^driver_/, '');
+window.borrarRecolectorPermanente = function(vendorId, vendorUserId, vendorName, vendorEmail = '') {
+  const safeName = vendorName || vendorEmail || 'este recolector';
+  const cleanRecolectorId = String(vendorId || '').replace(/^recolector_/, '');
 
   const doDelete = async () => {
     if (!window.supabaseClient) {
@@ -160,7 +160,7 @@ window.borrarRepartidorPermanente = function(vendorId, vendorUserId, vendorName,
       return;
     }
 
-    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Eliminando repartidor...');
+    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Eliminando recolector...');
 
     let deleted = false;
     let lastError = null;
@@ -179,12 +179,12 @@ window.borrarRepartidorPermanente = function(vendorId, vendorUserId, vendorName,
     }
 
     // 2. Si no se pudo o no tenía vendorUserId, borrar por ID de chofer
-    if (!deleted && cleanDriverId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanDriverId)) {
-      const { error: rpcErr } = await window.supabaseClient.rpc('rpc_admin_delete_driver_by_id', { p_driver_id: cleanDriverId });
+    if (!deleted && cleanRecolectorId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanRecolectorId)) {
+      const { error: rpcErr } = await window.supabaseClient.rpc('rpc_admin_delete_driver_by_id', { p_driver_id: cleanRecolectorId });
       if (!rpcErr) {
         deleted = true;
       } else {
-        const { error: delErr } = await window.supabaseClient.from('choferes_habilitados').delete().eq('id', cleanDriverId);
+        const { error: delErr } = await window.supabaseClient.from('choferes_habilitados').delete().eq('id', cleanRecolectorId);
         if (!delErr) deleted = true;
         else lastError = delErr;
       }
@@ -196,7 +196,7 @@ window.borrarRepartidorPermanente = function(vendorId, vendorUserId, vendorName,
       // Limpiar caché local
       try {
         if (vendorId) {
-          const list = (AppState.get('notigas_vendors_directory') || []).filter(v => v.id !== vendorId && v.id !== cleanDriverId);
+          const list = (AppState.get('notigas_vendors_directory') || []).filter(v => v.id !== vendorId && v.id !== cleanRecolectorId);
           AppState.set('notigas_vendors_directory', list);
         }
       } catch(e){}
@@ -206,12 +206,12 @@ window.borrarRepartidorPermanente = function(vendorId, vendorUserId, vendorName,
       if (typeof renderAdminDashboardKPIs === 'function') renderAdminDashboardKPIs();
       if (typeof renderVendorCards === 'function') renderVendorCards('TODOS');
       if (typeof showToast === 'function') {
-        showToast('🗑️ Repartidor Eliminado', `La ficha y cuenta de "${safeName}" fue eliminada definitivamente.`, 'success', 5000);
+        showToast('🗑️ Recolector Eliminado', `La ficha y cuenta de "${safeName}" fue eliminada definitivamente.`, 'success', 5000);
       }
     } else {
-      console.error('Error al eliminar repartidor:', lastError);
+      console.error('Error al eliminar recolector:', lastError);
       if (typeof showToast === 'function') {
-        showToast('❌ Error al Eliminar', lastError?.message || 'No se pudo eliminar el repartidor.', 'error', 5000);
+        showToast('❌ Error al Eliminar', lastError?.message || 'No se pudo eliminar el recolector.', 'error', 5000);
       }
     }
   };
@@ -317,8 +317,8 @@ function verificarBloqueoAppUsuario() {
     const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
     if (!u.nombre && !u.gmail && !u.placa) return;
 
-    const isBanned = (typeof esRepartidorBaneado === 'function')
-      ? esRepartidorBaneado(u.nombre, u.placa, u.whatsapp, u.gmail)
+    const isBanned = (typeof esRecolectorBaneado === 'function')
+      ? esRecolectorBaneado(u.nombre, u.placa, u.whatsapp, u.gmail)
       : false;
 
     if (isBanned) {
@@ -333,14 +333,14 @@ function verificarBloqueoAppUsuario() {
 
 window.liquidarComisionesAdmin = async function(userId, name, currentSaldo) {
   if (typeof showToast === 'function') {
-    showToast('Notificación', 'NOTIGAS no cobra comisiones ni saldos a los repartidores. No hay nada que liquidar.', 'info', 5000);
+    showToast('Notificación', 'NOTIGAS no cobra comisiones ni saldos a los recolectores. No hay nada que liquidar.', 'info', 5000);
   } else {
-    alert('NOTIGAS no cobra comisiones ni saldos a los repartidores. No hay nada que liquidar.');
+    alert('NOTIGAS no cobra comisiones ni saldos a los recolectores. No hay nada que liquidar.');
   }
   return;
 };
 // Compatibilidad con botones heredados del HTML: el modelo financiero de NOTIGAS
-// no contempla comisiones, cortes, mora ni saldos para los repartidores.
+// no contempla comisiones, cortes, mora ni saldos para los recolectores.
 window.ejecutarCorteSemanalManualAdmin = function() {
   if (typeof showToast === 'function') {
     showToast('Proceso retirado', 'NOTIGAS no cobra comisiones ni aplica cortes por mora. No existe este proceso.', 'info', 5500);

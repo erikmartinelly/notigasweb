@@ -49,7 +49,7 @@
     try {
       localStorage.setItem(STORAGE_KEY_LOCK, JSON.stringify({
         bloqueado: true,
-        motivo: String(motivo || 'Cuenta de repartidor suspendida.'),
+        motivo: String(motivo || 'Cuenta de recolector suspendida.'),
         checked_at: new Date().toISOString()
       }));
     } catch (_) {}
@@ -200,15 +200,15 @@
   }
 
   function triggerLockout(motivo) {
-    const reason = String(motivo || 'Cuenta de repartidor suspendida hasta regularizar su situación.');
+    const reason = String(motivo || 'Cuenta de recolector suspendida hasta regularizar su situación.');
     isLockoutActive = true;
 
     if (typeof window.setAppMode === 'function') {
       try { window.setAppMode('buyer'); } catch (_) {}
     }
 
-    const driverModal = document.getElementById('modalDriver');
-    if (driverModal) driverModal.style.display = 'none';
+    const recolectorModal = document.getElementById('modalRecolector');
+    if (recolectorModal) recolectorModal.style.display = 'none';
 
     const lockoutModal = document.getElementById('modalDeviceLockout');
     const reasonEl = document.getElementById('deviceLockoutReasonText');
@@ -249,7 +249,7 @@
       }
 
       if (data && data.bloqueado === true) {
-        const motivo = data.motivo || 'Cuenta de repartidor suspendida por una sanción administrativa. Contacta a soporte de NOTIGAS para conocer el motivo.';
+        const motivo = data.motivo || 'Cuenta de recolector suspendida por una sanción administrativa. Contacta a soporte de NOTIGAS para conocer el motivo.';
         writeLocalLock(motivo);
         triggerLockout(motivo);
         return data;

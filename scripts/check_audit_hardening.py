@@ -87,12 +87,12 @@ sin_en("promo.js no conserva el fallback peruano +51",
 # --- 3. Sin prioridad PRO ni cortes semanales ----------------------------
 print("\n[3/7] Sin Ventaja PRO ni cortes por monto")
 sin_en("mapa sin prioridad PRO",
-        "js/map.js", r"PRO_ORDER_ADVANTAGE_MS|PRO_BUYER_ADVANTAGE_MS|isCurrentDriverVip",
+        "js/map.js", r"PRO_ORDER_ADVANTAGE_MS|PRO_BUYER_ADVANTAGE_MS|isCurrentRecolectorVip",
         "queda prioridad PRO")
 sin_en("directorio sin ordenamiento PRO",
-        "js/vendors.js", r"Prioridad para repartidores PRO", "queda prioridad PRO")
+        "js/vendors.js", r"Prioridad para recolectores PRO", "queda prioridad PRO")
 sin_en("auth sin promocion a PRO",
-        "js/auth.js", r"Puedes pasar a PRO|Repartidor PRO Activado|3 minutos de ventaja",
+        "js/auth.js", r"Puedes pasar a PRO|Recolector PRO Activado|3 minutos de ventaja",
         "queda promocion PRO")
 sin_en("registro sin contrato S/15 ni corte semanal",
         "index.html",
@@ -122,7 +122,7 @@ sin_en("voucher_ocr.js sin monto fijo S/20",
         "js/voucher_ocr.js", r"const\s+esperado\s*=\s*20", "monto fijo Peru")
 sin_en("voucher_ocr.js no persiste pagos ni Premium",
         "js/voucher_ocr.js",
-        r"\.rpc\(\s*['\"](?:rpc_registrar_ocr_pago|rpc_driver_submit_premium_payment)['\"]"
+        r"\.rpc\(\s*['\"](?:rpc_registrar_ocr_pago|rpc_recolector_submit_premium_payment)['\"]"
         r"|\.from\(\s*['\"]vouchers-premium['\"]",
         "persistencia de pagos")
 # El panel de pagos es informativo: no debe hacer aritmetica de moneda.
@@ -168,7 +168,7 @@ if versiones:
 
 runtime = leer("scripts/check_runtime.js")
 for mod in ["js/admin_payments.js", "js/admin_payment_config.js",
-            "js/driver_payments.js", "js/driver_order_rules.js"]:
+            "js/recolector_payments.js", "js/recolector_order_rules.js"]:
     revisar("check_runtime.js carga %s" % mod, "'%s'" % mod in runtime)
 
 # --- 7. Migraciones criticas presentes ----------------------------------

@@ -36,7 +36,7 @@ window.normalizarTelefonoBolivia = normalizarTelefonoBolivia;
 
 const GOOGLE_CLIENT_ID = "994996215118-d8vhi4qjtbosvak58mm1c6ritq65hnc9.apps.googleusercontent.com";
 
-let currentSelectedRole = 'buyer'; // 'buyer' o 'driver'
+let currentSelectedRole = 'buyer'; // 'buyer' o 'recolector'
 let currentSelectedMethod = 'google'; // 'google' o 'email'
 let emailAuthRequestInFlight = false;
 const AUTH_THROTTLE_WINDOW_MS = 10 * 60 * 1000;
@@ -226,7 +226,7 @@ window.esAdminSesion = function() {
 // (versión asíncrona que revalida el JWT contra admin_credentials). No duplicar aquí:
 // una versión síncrona basada en caché podía anular esa validación y romper el panel admin.
 
-window.esRepartidorBaneado = function(nombre, placa, whatsapp, gmail) {
+window.esRecolectorBaneado = function(nombre, placa, whatsapp, gmail) {
   if (!window.globalBannedList || window.globalBannedList.length === 0) return false;
   const n = nombre ? String(nombre).toLowerCase().trim() : '';
   const p = placa ? String(placa).toLowerCase().trim().replace(/[^a-z0-9]/g, '') : '';
@@ -427,9 +427,9 @@ async function solicitarYGuardarUbicacionHabitual(user) {
 async function selectAuthRole(role) {
   currentSelectedRole = role;
   const btnBuyer = document.getElementById('btnRoleBuyer');
-  const btnDriver = document.getElementById('btnRoleDriver');
+  const btnRecolector = document.getElementById('btnRoleRecolector');
   const authFieldsBuyer = document.getElementById('authFieldsBuyer');
-  const authFieldsDriver = document.getElementById('authFieldsDriver');
+  const authFieldsRecolector = document.getElementById('authFieldsRecolector');
 
   if (btnBuyer) {
     if (role === 'buyer') {
@@ -439,11 +439,11 @@ async function selectAuthRole(role) {
     }
   }
 
-  if (btnDriver) {
-    if (role === 'driver') {
-      btnDriver.classList.add('active');
+  if (btnRecolector) {
+    if (role === 'recolector') {
+      btnRecolector.classList.add('active');
     } else {
-      btnDriver.classList.remove('active');
+      btnRecolector.classList.remove('active');
     }
   }
 
@@ -472,19 +472,19 @@ async function selectAuthRole(role) {
     showAuthStep(2);
   }
 
-  // AL SELECCIONAR REPARTIDOR: Activar vista de campos y ajustar botón
-  if (role === 'driver') {
+  // AL SELECCIONAR RECOLECTOR: Activar vista de campos y ajustar botón
+  if (role === 'recolector') {
     selectAuthMethod('email');
-    if (authFieldsDriver) authFieldsDriver.style.display = 'block';
+    if (authFieldsRecolector) authFieldsRecolector.style.display = 'block';
     if (authFieldsBuyer) authFieldsBuyer.style.display = 'none';
 
     const submitBtn = document.querySelector('#authPaneEmail .btn-submit');
     if (submitBtn) {
-      submitBtn.innerHTML = '<i class="fa-solid fa-truck-fast"></i> 🚛 Ingresar como Repartidor';
+      submitBtn.innerHTML = '<i class="fa-solid fa-truck-fast"></i> 🚛 Ingresar como Recolector';
     }
   } else {
     if (authFieldsBuyer) authFieldsBuyer.style.display = 'block';
-    if (authFieldsDriver) authFieldsDriver.style.display = 'none';
+    if (authFieldsRecolector) authFieldsRecolector.style.display = 'none';
 
     const submitBtn = document.querySelector('#authPaneEmail .btn-submit');
     if (submitBtn) {
@@ -695,11 +695,11 @@ async function handleCredentialResponse(response) {
   }
 }
 
-async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
+async function guardarRecolectorEnBaseDeDatos(recolectorObj) {
   if (!window.supabaseClient) return false;
 
   if (typeof showLoadingOverlay === 'function') {
-    showLoadingOverlay('Registrando repartidor en la nube...');
+    showLoadingOverlay('Registrando recolector en la nube...');
   }
 
   // CORRECCIÓN: upsert por user_id en vez de insert puro. Antes cada edición
@@ -707,19 +707,19 @@ async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
   // el chofer ya existía. ci_carnet ya no se usa como llave de unicidad
   // porque el formulario nunca pide ese dato real.
   const payload = {
-    user_id: repartidorObj.user_id,
-    nombre_completo: repartidorObj.nombre,
-    telefono_whatsapp: repartidorObj.whatsapp,
-    placa: repartidorObj.placa,
-    dni: repartidorObj.dni || null,
-    device_id: repartidorObj.device_id || null,
-    device_fingerprint: repartidorObj.device_fingerprint || null,
-    categoria: repartidorObj.categoria,
-    productos: repartidorObj.productos,
-    schedule: repartidorObj.schedule,
-    ciudad: repartidorObj.ciudad || AppState.get('city') || null,
-    color_camion: repartidorObj.color_camion || '',
-    tipo_plan: repartidorObj.tipo_plan || 'gratuito'
+    user_id: recolectorObj.user_id,
+    nombre_completo: recolectorObj.nombre,
+    telefono_whatsapp: recolectorObj.whatsapp,
+    placa: recolectorObj.placa,
+    dni: recolectorObj.dni || null,
+    device_id: recolectorObj.device_id || null,
+    device_fingerprint: recolectorObj.device_fingerprint || null,
+    categoria: recolectorObj.categoria,
+    productos: recolectorObj.productos,
+    schedule: recolectorObj.schedule,
+    ciudad: recolectorObj.ciudad || AppState.get('city') || null,
+    color_camion: recolectorObj.color_camion || '',
+    tipo_plan: recolectorObj.tipo_plan || 'gratuito'
   };
   // El precio se acuerda directo entre las partes, asi que NOTIGAS no lo
   // almacena: la columna precio_balon_10kg se elimino de la base de datos y el
@@ -746,19 +746,19 @@ async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
     return { ok: false, status: 'error' };
   }
 
-  // Persistir el modo elegido. La ficha del repartidor se conserva aunque
+  // Persistir el modo elegido. La ficha del recolector se conserva aunque
   // después use temporalmente la aplicación como comprador.
   try {
     const { data: authData, error: authError } = await window.supabaseClient.auth.getUser();
     if (authError || !authData?.user?.id) throw authError || new Error('Sesión no disponible');
     await guardarPerfilSupabase(authData.user, {
       role: 'repartidor',
-      nombre: repartidorObj.nombre,
-      ciudad: repartidorObj.ciudad || AppState.get('city') || 'cochabamba',
-      dni: repartidorObj.dni || null
+      nombre: recolectorObj.nombre,
+      ciudad: recolectorObj.ciudad || AppState.get('city') || 'cochabamba',
+      dni: recolectorObj.dni || null
     });
   } catch (profileError) {
-    console.error('No se pudo guardar el modo repartidor en el perfil:', profileError);
+    console.error('No se pudo guardar el modo recolector en el perfil:', profileError);
     if (typeof showToast === 'function') {
       showToast('❌ Perfil incompleto', 'La ficha se guardó, pero no se pudo activar el rol. Intenta nuevamente.', 'error', 5000);
     }
@@ -791,7 +791,7 @@ async function guardarRegistroUnico() {
   const userId = session.user.id;
   if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
 
-  if (currentSelectedRole === 'driver') {
+  if (currentSelectedRole === 'recolector') {
     const nombreNegocio = (document.getElementById('regNombreNegocio')?.value || '').trim() || 'Recolector NOTIGAS';
     const whatsapp = (document.getElementById('regWhatsapp')?.value || '').trim();
     const placa = (document.getElementById('regPlaca')?.value || '').trim();
@@ -815,7 +815,7 @@ async function guardarRegistroUnico() {
       return;
     }
 
-    const repartidorData = {
+    const recolectorData = {
       role: 'repartidor',
       nombre: nombreNegocio,
       whatsapp: whatsapp,
@@ -827,23 +827,23 @@ async function guardarRegistroUnico() {
       user_id: userId // Usamos el ID seguro generado por Supabase
     };
 
-    const exito = await guardarRepartidorEnBaseDeDatos(repartidorData);
+    const exito = await guardarRecolectorEnBaseDeDatos(recolectorData);
     if (!exito?.ok) {
        // FIX: Si falla la inserción en la nube, no guardar localmente ni activar el modo
        return;
     }
 
     // El alta es automática. El administrador conserva las acciones de baneo y eliminación.
-    AppState.set('userData', repartidorData);
+    AppState.set('userData', recolectorData);
 
     const modalAuth = document.getElementById('modalWelcomeAuth');
     if (modalAuth) modalAuth.style.display = 'none';
 
     if (typeof setAppMode === 'function') {
-      setAppMode('driver');
+      setAppMode('recolector');
     }
 
-    if (typeof showToast === 'function') showToast('🟢 Bienvenido Repartidor', `¡Sesión activada para ${nombreNegocio}!`, 'success', 1000);
+    if (typeof showToast === 'function') showToast('🟢 Bienvenido Recolector', `¡Sesión activada para ${nombreNegocio}!`, 'success', 1000);
 
     if (typeof renderVendorCards === 'function') {
       renderVendorCards('TODOS');
@@ -874,13 +874,13 @@ async function guardarRegistroUnico() {
   }
 }
 
-function closeDriverModal() {
-  const modalDriver = document.getElementById('modalDriver');
-  if (modalDriver) modalDriver.style.display = 'none';
+function closeRecolectorModal() {
+  const modalRecolector = document.getElementById('modalRecolector');
+  if (modalRecolector) modalRecolector.style.display = 'none';
 }
 
-function leerServiciosRepartidor() {
-  const cbs = Array.from(document.querySelectorAll('input[name="driverServicio"]:checked'));
+function leerServiciosRecolector() {
+  const cbs = Array.from(document.querySelectorAll('input[name="recolectorServicio"]:checked'));
   return cbs.map(cb => cb.value).filter(Boolean);
 }
 
@@ -893,24 +893,24 @@ function fusionarServiciosEnProductos(productosBase, servicios) {
 
 function aplicarServiciosEnFormulario(productos) {
   const texto = (productos || '').toLowerCase();
-  document.querySelectorAll('input[name="driverServicio"]').forEach(cb => {
+  document.querySelectorAll('input[name="recolectorServicio"]').forEach(cb => {
     cb.checked = texto.includes((cb.value || '').toLowerCase());
   });
-  const hidden = document.getElementById('inputDriverServicios');
-  if (hidden) hidden.value = leerServiciosRepartidor().join(', ');
+  const hidden = document.getElementById('inputRecolectorServicios');
+  if (hidden) hidden.value = leerServiciosRecolector().join(', ');
 }
 
-async function iniciarSesionRepartidor() {
-  const nombreNegocio = (document.getElementById('inputDriverNombre')?.value || '').trim();
-  const whatsapp = (document.getElementById('inputDriverTelRef')?.value || '').trim();
-  const plate = (document.getElementById('inputDriverPlate')?.value || '').trim().toUpperCase();
-  const dni = (document.getElementById('inputDriverDni')?.value || '').trim().replace(/[^0-9]/g, '');
-  const categoria = (document.getElementById('inputDriverCat')?.value || 'plastico').trim();
-  const productosRaw = (document.getElementById('inputDriverProductos')?.value || '').trim();
-  const servicios = leerServiciosRepartidor();
+async function iniciarSesionRecolector() {
+  const nombreNegocio = (document.getElementById('inputRecolectorNombre')?.value || '').trim();
+  const whatsapp = (document.getElementById('inputRecolectorTelRef')?.value || '').trim();
+  const plate = (document.getElementById('inputRecolectorPlate')?.value || '').trim().toUpperCase();
+  const dni = (document.getElementById('inputRecolectorDni')?.value || '').trim().replace(/[^0-9]/g, '');
+  const categoria = (document.getElementById('inputRecolectorCat')?.value || 'plastico').trim();
+  const productosRaw = (document.getElementById('inputRecolectorProductos')?.value || '').trim();
+  const servicios = leerServiciosRecolector();
   const productos = fusionarServiciosEnProductos(productosRaw, servicios);
-  const schedule = (document.getElementById('inputDriverSchedule')?.value || '').trim();
-  const colorCamion = (document.getElementById('inputDriverTruckColor')?.value || '').trim();
+  const schedule = (document.getElementById('inputRecolectorSchedule')?.value || '').trim();
+  const colorCamion = (document.getElementById('inputRecolectorTruckColor')?.value || '').trim();
 
   if (!nombreNegocio || !whatsapp || !plate || (!productosRaw && !servicios.length)) {
     if (typeof showToast === 'function') showToast('⚠️ Campos Requeridos', 'Por favor completa todos los campos requeridos.', 'warning', 2000);
@@ -920,11 +920,11 @@ async function iniciarSesionRepartidor() {
   // VALIDACIÓN ESTRICTA DE CI / NIT (BOLIVIA)
   if (!dni || dni.length < 4 || dni.length > 13) {
     if (typeof showToast === 'function') {
-      showToast('🪪 CI o NIT Obligatorio', 'Debes ingresar un número de CI o NIT válido para registrarte como repartidor.', 'warning', 4000);
+      showToast('🪪 CI o NIT Obligatorio', 'Debes ingresar un número de CI o NIT válido para registrarte como recolector.', 'warning', 4000);
     } else {
-      alert('Debes ingresar un número de CI o NIT válido para registrarte como repartidor.');
+      alert('Debes ingresar un número de CI o NIT válido para registrarte como recolector.');
     }
-    const inputDniEl = document.getElementById('inputDriverDni');
+    const inputDniEl = document.getElementById('inputRecolectorDni');
     if (inputDniEl) inputDniEl.focus();
     return;
   }
@@ -936,18 +936,18 @@ async function iniciarSesionRepartidor() {
     } else {
       alert('Por favor ingresa la placa de tu vehículo o medio de transporte.');
     }
-    const inputPlateEl = document.getElementById('inputDriverPlate');
+    const inputPlateEl = document.getElementById('inputRecolectorPlate');
     if (inputPlateEl) inputPlateEl.focus();
     return;
   }
 
-  // VALIDACIÓN DE ACEPTACIÓN DE TÉRMINOS Y CONDICIONES PARA REPARTIDORES
+  // VALIDACIÓN DE ACEPTACIÓN DE TÉRMINOS Y CONDICIONES PARA RECOLECTORES
   const checkTerminos = document.getElementById('checkAceptoTerminosChofer');
   if (checkTerminos && !checkTerminos.checked) {
     if (typeof showToast === 'function') {
-      showToast('⚠️ Términos Requeridos', 'Debes aceptar los Términos y Condiciones para Repartidores de Notigas.com para continuar.', 'warning', 4000);
+      showToast('⚠️ Términos Requeridos', 'Debes aceptar los Términos y Condiciones para Recolectores de Notigas.com para continuar.', 'warning', 4000);
     } else {
-      alert('Debes aceptar los Términos y Condiciones para Repartidores de Notigas.com para continuar.');
+      alert('Debes aceptar los Términos y Condiciones para Recolectores de Notigas.com para continuar.');
     }
     checkTerminos.focus();
     return;
@@ -959,9 +959,9 @@ async function iniciarSesionRepartidor() {
   let existingUserId = cachedUser.user_id || null;
 
   // COMPROBACIÓN ESTRICTA DE BANEO POR LA ADMINISTRACIÓN (EN MEMORIA / LISTA NEGRA)
-  if (typeof esRepartidorBaneado === 'function' && esRepartidorBaneado(nombreNegocio, plate, whatsapp, existingGmail)) {
+  if (typeof esRecolectorBaneado === 'function' && esRecolectorBaneado(nombreNegocio, plate, whatsapp, existingGmail)) {
     if (typeof showToast === 'function') {
-      showToast('⛔ Acceso Suspendido', 'Tu cuenta de repartidor ha sido suspendida/baneada por la administración de NOTIGAS.', 'error', 2000);
+      showToast('⛔ Acceso Suspendido', 'Tu cuenta de recolector ha sido suspendida/baneada por la administración de NOTIGAS.', 'error', 2000);
     }
     return;
   }
@@ -1004,7 +1004,7 @@ async function iniciarSesionRepartidor() {
     existingUserId = session.user.id;
   }
 
-  let ciudad = (document.getElementById('inputDriverCiudad')?.value || '').trim() || cachedUser.ciudad || 'cochabamba';
+  let ciudad = (document.getElementById('inputRecolectorCiudad')?.value || '').trim() || cachedUser.ciudad || 'cochabamba';
 
   const validCities = window.BOLIVIA_CITIES
     ? Object.keys(window.BOLIVIA_CITIES)
@@ -1016,7 +1016,7 @@ async function iniciarSesionRepartidor() {
     return;
   }
 
-  const repartidorData = {
+  const recolectorData = {
     role: 'repartidor',
     nombre: nombreNegocio,
     whatsapp: whatsapp,
@@ -1034,9 +1034,9 @@ async function iniciarSesionRepartidor() {
     es_premium: false
   };
 
-  if (existingGmail) repartidorData.gmail = existingGmail;
+  if (existingGmail) recolectorData.gmail = existingGmail;
 
-  const exito = await guardarRepartidorEnBaseDeDatos(repartidorData);
+  const exito = await guardarRecolectorEnBaseDeDatos(recolectorData);
 
   if (!exito?.ok) {
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
@@ -1044,7 +1044,7 @@ async function iniciarSesionRepartidor() {
     return;
   }
 
-  AppState.set('userData', repartidorData);
+  AppState.set('userData', recolectorData);
 
   if (typeof window.cambiarCiudad === 'function') {
     try {
@@ -1059,14 +1059,14 @@ async function iniciarSesionRepartidor() {
   sessionStorage.removeItem('notigas_temp_gmail');
 
   if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
-  closeDriverModal();
+  closeRecolectorModal();
 
   if (typeof setAppMode === 'function') {
-    setAppMode('driver');
+    setAppMode('recolector');
   }
 
   if (typeof showToast === 'function') {
-    showToast('🎁 Cuenta de repartidor activada', `Ficha de ${nombreNegocio} registrada. Operas sin comisiones, sin saldos pendientes y sin cobros por NOTIGAS.`, 'success', 6000);
+    showToast('🎁 Cuenta de recolector activada', `Ficha de ${nombreNegocio} registrada. Operas sin comisiones, sin saldos pendientes y sin cobros por NOTIGAS.`, 'success', 6000);
   }
 
   if (typeof renderVendorCards === 'function') {
@@ -1163,7 +1163,7 @@ window.abrirModalRegistroPedido = function() {
   }
 };
 
-window.abrirRegistroRepartidores = async function() {
+window.abrirRegistroRecolectores = async function() {
   if (typeof closeUserSettingsModal === 'function') closeUserSettingsModal();
 
   // Comprobar bloqueo previo de hardware o dispositivo
@@ -1180,90 +1180,90 @@ window.abrirRegistroRepartidores = async function() {
   const isLoggedIn = Boolean(userId || userData?.user_id || userData?.gmail);
 
   if (isLoggedIn) {
-    let hasDriverProfile = Boolean(userData?.role === 'repartidor' || userData?.hasDriverProfile || userData?.placa);
+    let hasRecolectorProfile = Boolean(userData?.role === 'repartidor' || userData?.hasRecolectorProfile || userData?.placa);
 
-    if (!hasDriverProfile && window.supabaseClient && userId) {
+    if (!hasRecolectorProfile && window.supabaseClient && userId) {
       try {
-        const { data: driverRow } = await window.supabaseClient
+        const { data: recolectorRow } = await window.supabaseClient
           .from('choferes_habilitados')
           .select('id, nombre_completo, placa, dni, bloqueado, motivo_bloqueo, categoria, telefono_whatsapp, ciudad, schedule, productos, estado_servicio')
           .eq('user_id', userId)
           .maybeSingle();
 
-        if (driverRow) {
-          if (driverRow.bloqueado) {
+        if (recolectorRow) {
+          if (recolectorRow.bloqueado) {
             if (window.DeviceSecurity) {
-              window.DeviceSecurity.triggerLockout(driverRow.motivo_bloqueo || 'Dispositivo suspendido por comisiones pendientes.');
+              window.DeviceSecurity.triggerLockout(recolectorRow.motivo_bloqueo || 'Dispositivo suspendido por comisiones pendientes.');
             }
             return;
           }
-          hasDriverProfile = true;
+          hasRecolectorProfile = true;
           const u = AppState.get('userData') || {};
           AppState.set('userData', {
             ...u,
             role: 'repartidor',
-            hasDriverProfile: true,
-            nombre: driverRow.nombre_completo || u.nombre,
-            whatsapp: driverRow.telefono_whatsapp || u.whatsapp,
-            placa: driverRow.placa,
-            dni: driverRow.dni || u.dni,
-            categoria: driverRow.categoria,
-            productos: driverRow.productos,
-            schedule: driverRow.schedule,
-            ciudad: driverRow.ciudad,
-            estado_servicio: driverRow.estado_servicio || 'activo'
+            hasRecolectorProfile: true,
+            nombre: recolectorRow.nombre_completo || u.nombre,
+            whatsapp: recolectorRow.telefono_whatsapp || u.whatsapp,
+            placa: recolectorRow.placa,
+            dni: recolectorRow.dni || u.dni,
+            categoria: recolectorRow.categoria,
+            productos: recolectorRow.productos,
+            schedule: recolectorRow.schedule,
+            ciudad: recolectorRow.ciudad,
+            estado_servicio: recolectorRow.estado_servicio || 'activo'
           });
         }
       } catch (e) {
-        console.warn("Error verificando repartidor en BD:", e);
+        console.warn("Error verificando recolector en BD:", e);
       }
     }
 
-    if (hasDriverProfile) {
-      if (typeof setAppMode === 'function') setAppMode('driver');
+    if (hasRecolectorProfile) {
+      if (typeof setAppMode === 'function') setAppMode('recolector');
       if (typeof showToast === 'function') {
-        showToast('🟢 Modo Repartidor', '¡Sesión de repartidor activada!', 'success', 3000);
+        showToast('🟢 Modo Recolector', '¡Sesión de recolector activada!', 'success', 3000);
       }
     } else if (window.esAdminSesion && window.esAdminSesion()) {
-      // Admin sin ficha publicada: entra al modo repartidor para operar la vista libremente.
-      if (typeof setAppMode === 'function') setAppMode('driver');
+      // Admin sin ficha publicada: entra al modo recolector para operar la vista libremente.
+      if (typeof setAppMode === 'function') setAppMode('recolector');
       if (typeof showToast === 'function') {
-        showToast('🟢 Modo Repartidor', 'Modo repartidor activado como administrador (sin ficha pública).', 'success', 3000);
+        showToast('🟢 Modo Recolector', 'Modo recolector activado como administrador (sin ficha pública).', 'success', 3000);
       }
     } else {
-      const modalDriver = document.getElementById('modalDriver');
-      if (modalDriver) {
-        const inputDriverNombre = document.getElementById('inputDriverNombre');
-        if (inputDriverNombre && userData?.nombre) {
-          inputDriverNombre.value = `${userData.nombre} ${userData.apellido || ''}`.trim();
+      const modalRecolector = document.getElementById('modalRecolector');
+      if (modalRecolector) {
+        const inputRecolectorNombre = document.getElementById('inputRecolectorNombre');
+        if (inputRecolectorNombre && userData?.nombre) {
+          inputRecolectorNombre.value = `${userData.nombre} ${userData.apellido || ''}`.trim();
         }
-        const inputDriverCiudad = document.getElementById('inputDriverCiudad');
-        if (inputDriverCiudad && userData?.ciudad) {
-          inputDriverCiudad.value = userData.ciudad;
+        const inputRecolectorCiudad = document.getElementById('inputRecolectorCiudad');
+        if (inputRecolectorCiudad && userData?.ciudad) {
+          inputRecolectorCiudad.value = userData.ciudad;
         }
-        const inputDriverDni = document.getElementById('inputDriverDni');
-        if (inputDriverDni && userData?.dni) {
-          inputDriverDni.value = userData.dni;
+        const inputRecolectorDni = document.getElementById('inputRecolectorDni');
+        if (inputRecolectorDni && userData?.dni) {
+          inputRecolectorDni.value = userData.dni;
         }
-        const titleEl = document.getElementById('driverModalTitleText');
-        const subtitleEl = document.getElementById('driverModalSubtitle');
-        if (titleEl) titleEl.textContent = 'Registro de Repartidor';
-        if (subtitleEl) subtitleEl.textContent = 'Completa tu ficha de negocio. Aparecerá en la lista de repartidores de la zona.';
-        modalDriver.style.display = 'flex';
+        const titleEl = document.getElementById('recolectorModalTitleText');
+        const subtitleEl = document.getElementById('recolectorModalSubtitle');
+        if (titleEl) titleEl.textContent = 'Registro de Recolector';
+        if (subtitleEl) subtitleEl.textContent = 'Completa tu ficha de negocio. Aparecerá en la lista de recolectores de la zona.';
+        modalRecolector.style.display = 'flex';
       }
     }
     return;
   }
 
   // Si NO está autenticado:
-  window._targetAuthRole = 'driver';
-  currentSelectedRole = 'driver';
+  window._targetAuthRole = 'recolector';
+  currentSelectedRole = 'recolector';
 
   const modalAuth = document.getElementById('modalWelcomeAuth');
   if (modalAuth) {
     const titleEl = document.getElementById('welcomeAuthTitleText');
     if (titleEl) {
-      titleEl.textContent = '🚛 Registro de Repartidores';
+      titleEl.textContent = '🚛 Registro de Recolectores';
     }
     const descEl = document.getElementById('welcomeAuthDescText');
     if (descEl) {
@@ -1275,30 +1275,30 @@ window.abrirRegistroRepartidores = async function() {
     modalAuth.style.display = 'flex';
 
     if (typeof showToast === 'function') {
-      showToast('🚛 Registro de Repartidor', 'Inicia sesión o regístrate para activar tu ficha de repartidor.', 'info', 4500);
+      showToast('🚛 Registro de Recolector', 'Inicia sesión o regístrate para activar tu ficha de recolector.', 'info', 4500);
     }
   }
 };
 function guardarPrefUsuario() {
-  // Detectar si es repartidor
+  // Detectar si es recolector
   const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
-  const isDriver = (u.role === 'repartidor');
+  const isRecolector = (u.role === 'repartidor');
 
-  if (isDriver) {
+  if (isRecolector) {
     // Guardar GPS
-    const gpsSelect = document.getElementById('driverGpsLive');
+    const gpsSelect = document.getElementById('recolectorGpsLive');
     const gpsVal = gpsSelect ? gpsSelect.value : 'off';
-    AppState.set('driverGpsLive', gpsVal);
+    AppState.set('recolectorGpsLive', gpsVal);
 
-    // Guardar sonido repartidor
-    const soundSelect = document.getElementById('userPrefSoundDriver');
+    // Guardar sonido recolector
+    const soundSelect = document.getElementById('userPrefSoundRecolector');
     const soundVal = soundSelect ? soundSelect.value : 'enabled';
     AppState.set('prefSound', soundVal);
 
     if (gpsVal === 'on' && typeof window.activarSeguirme === 'function') {
       window.activarSeguirme();
-    } else if (gpsVal === 'off' && typeof window.pausarRecorridoRepartidor === 'function') {
-      window.pausarRecorridoRepartidor({ silent: true });
+    } else if (gpsVal === 'off' && typeof window.pausarRecorridoRecolector === 'function') {
+      window.pausarRecorridoRecolector({ silent: true });
     }
   } else {
     // Guardar opciones de comprador
@@ -1331,7 +1331,7 @@ function guardarPrefUsuario() {
 }
 window.guardarPrefUsuario = guardarPrefUsuario;
 
-async function cambiarRepartidorAComprador() {
+async function cambiarRecolectorAComprador() {
   let loadingVisible = false;
   try {
     if (!window.supabaseClient) throw new Error('No hay conexión con el servicio de cuentas.');
@@ -1350,42 +1350,42 @@ async function cambiarRepartidorAComprador() {
       ciudad: AppState.get('city') || 'cochabamba'
     });
 
-    if (typeof window.pausarRecorridoRepartidor === 'function') {
-      await window.pausarRecorridoRepartidor({ silent: true });
-    } else if (typeof window.stopDriverLocationBroadcast === 'function') {
-      await window.stopDriverLocationBroadcast();
+    if (typeof window.pausarRecorridoRecolector === 'function') {
+      await window.pausarRecorridoRecolector({ silent: true });
+    } else if (typeof window.stopRecolectorLocationBroadcast === 'function') {
+      await window.stopRecolectorLocationBroadcast();
     }
 
     const previous = AppState.get('userData') || {};
     AppState.set('userData', {
       ...previous,
       role: 'vecino',
-      hasDriverProfile: true,
+      hasRecolectorProfile: true,
       user_id: authData.user.id
     });
-    AppState.set('driverGpsLive', 'off');
-    AppState.set('isDriverLive', false);
+    AppState.set('recolectorGpsLive', 'off');
+    AppState.set('isRecolectorLive', false);
     currentSelectedRole = 'buyer';
 
     if (typeof setAppMode === 'function') setAppMode('buyer');
     closeUserSettingsModal();
-    if (typeof closeDriverOrdersModal === 'function') closeDriverOrdersModal();
+    if (typeof closeRecolectorOrdersModal === 'function') closeRecolectorOrdersModal();
     if (typeof switchTab === 'function') switchTab(0);
     if (typeof showToast === 'function') {
-      showToast('🛍️ Modo Comprador activo', 'Tu ficha de repartidor se conservó. Puedes volver a activarla desde el menú.', 'success', 4200);
+      showToast('🛍️ Modo Comprador activo', 'Tu ficha de recolector se conservó. Puedes volver a activarla desde el menú.', 'success', 4200);
     }
     return true;
   } catch (error) {
     console.error('No se pudo cambiar a modo comprador:', error);
     if (typeof showToast === 'function') {
-      showToast('❌ No se cambió el rol', error?.message || 'El modo Repartidor continúa activo.', 'error', 5000);
+      showToast('❌ No se cambió el rol', error?.message || 'El modo Recolector continúa activo.', 'error', 5000);
     }
     return false;
   } finally {
     if (loadingVisible && typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
   }
 }
-window.cambiarRepartidorAComprador = cambiarRepartidorAComprador;
+window.cambiarRecolectorAComprador = cambiarRecolectorAComprador;
 
 async function ejecutarCierreSesionUsuario() {
   let loadingVisible = false;
@@ -1398,8 +1398,8 @@ async function ejecutarCierreSesionUsuario() {
     if (typeof window.detenerGPSComprador === 'function') {
       window.detenerGPSComprador();
     }
-    if (typeof window.stopDriverLocationBroadcast === 'function') {
-      await window.stopDriverLocationBroadcast();
+    if (typeof window.stopRecolectorLocationBroadcast === 'function') {
+      await window.stopRecolectorLocationBroadcast();
     }
 
     if (window.supabaseClient?.auth) {
@@ -1408,8 +1408,8 @@ async function ejecutarCierreSesionUsuario() {
     }
 
     AppState.set('userData', null);
-    AppState.set('driverGpsLive', 'off');
-    AppState.set('isDriverLive', false);
+    AppState.set('recolectorGpsLive', 'off');
+    AppState.set('isRecolectorLive', false);
     AppState.set('activeOrder', null);
     AppState.set('isAdmin', false);
     AppState.set('userRole', 'vecino');
@@ -1420,7 +1420,7 @@ async function ejecutarCierreSesionUsuario() {
     if (btnAdmin) btnAdmin.style.display = 'none';
 
     closeUserSettingsModal();
-    if (typeof closeDriverModal === 'function') closeDriverModal();
+    if (typeof closeRecolectorModal === 'function') closeRecolectorModal();
     if (typeof setAppMode === 'function') setAppMode('buyer');
 
     const modalAuth = document.getElementById('modalWelcomeAuth');
@@ -1451,7 +1451,7 @@ async function ejecutarCierreSesionUsuario() {
 function cerrarSesionUsuario() {
   const confirmarCierre = () => { void ejecutarCierreSesionUsuario(); };
   if (typeof showConfirmModal === 'function') {
-    showConfirmModal('🚪', '¿Cerrar Sesión?', 'Se detendrá la ubicación en vivo y podrás volver a ingresar como Comprador o Repartidor.', 'Sí, cerrar sesión', confirmarCierre);
+    showConfirmModal('🚪', '¿Cerrar Sesión?', 'Se detendrá la ubicación en vivo y podrás volver a ingresar como Comprador o Recolector.', 'Sí, cerrar sesión', confirmarCierre);
   } else if (confirm('🚪 ¿Estás seguro de que deseas cerrar sesión en NOTIGAS?')) {
     confirmarCierre();
   }
@@ -1469,7 +1469,7 @@ function eliminarMiCuentaCompleta() {
     showConfirmModal(
       '🗑️',
       '¿Eliminar Cuenta Completa?',
-      'Esta acción borrará permanentemente tu acceso, pedidos, publicaciones, comentarios y datos de repartidor. No se puede deshacer.',
+      'Esta acción borrará permanentemente tu acceso, pedidos, publicaciones, comentarios y datos de recolector. No se puede deshacer.',
       'Sí, eliminar definitivamente',
       confirmarEliminacion
     );
@@ -1495,8 +1495,8 @@ function limpiarEstadoLocalTrasEliminarCuenta() {
   AppState.set('isAdmin', false);
   AppState.set('userRole', 'vecino');
   AppState.set('appMode', 'buyer');
-  AppState.set('isDriverLive', false);
-  AppState.set('driverGpsLive', 'off');
+  AppState.set('isRecolectorLive', false);
+  AppState.set('recolectorGpsLive', 'off');
 }
 
 async function ejecutarEliminacionTotalCuenta() {
@@ -1521,8 +1521,8 @@ async function ejecutarEliminacionTotalCuenta() {
     }
 
     // Detener temporizadores y telemetría antes de que desaparezca la sesión.
-    if (typeof window.stopDriverLocationBroadcast === 'function') {
-      await window.stopDriverLocationBroadcast();
+    if (typeof window.stopRecolectorLocationBroadcast === 'function') {
+      await window.stopRecolectorLocationBroadcast();
     }
 
     const { error: deleteError } = await window.supabaseClient.rpc('delete_user_account');
@@ -1537,7 +1537,7 @@ async function ejecutarEliminacionTotalCuenta() {
 
     limpiarEstadoLocalTrasEliminarCuenta();
     closeUserSettingsModal();
-    if (typeof closeDriverModal === 'function') closeDriverModal();
+    if (typeof closeRecolectorModal === 'function') closeRecolectorModal();
     if (typeof setAppMode === 'function') setAppMode('buyer');
 
     const modalAuth = document.getElementById('modalWelcomeAuth');
@@ -1568,67 +1568,67 @@ async function ejecutarEliminacionTotalCuenta() {
 window.eliminarMiCuentaCompleta = eliminarMiCuentaCompleta;
 window.ejecutarEliminacionTotalCuenta = ejecutarEliminacionTotalCuenta;
 
-async function migrarDatosAntiguosARepartidor() {
+async function migrarDatosAntiguosARecolector() {
   if (typeof closeUserSettingsModal === 'function') {
     closeUserSettingsModal();
   }
 
   const modalAuth = document.getElementById('modalWelcomeAuth');
 
-  // 1. Buscar si ya existe un perfil de repartidor en notigas_user_data
-  let driverProfile = null;
+  // 1. Buscar si ya existe un perfil de recolector en notigas_user_data
+  let recolectorProfile = null;
   try {
     const saved = JSON.stringify(AppState.get('userData') || {});
     if (saved) {
       const u = JSON.parse(saved);
       if (u.role === 'repartidor' && u.nombre) {
-        driverProfile = u;
+        recolectorProfile = u;
       }
     }
   } catch(e){}
 
   // Si la ficha existe en Supabase pero el usuario estaba usando modo
   // comprador, recuperarla sin pedir un registro nuevo ni duplicarla.
-  if (!driverProfile && window.supabaseClient) {
+  if (!recolectorProfile && window.supabaseClient) {
     try {
       const { data: authData } = await window.supabaseClient.auth.getUser();
       const user = authData?.user;
       if (user?.id) {
-        const { data: driverRow, error: driverError } = await window.supabaseClient
+        const { data: recolectorRow, error: recolectorError } = await window.supabaseClient
           .from('choferes_habilitados')
           .select('*')
           .eq('user_id', user.id)
           .maybeSingle();
-        if (driverError) throw driverError;
-        if (driverRow) {
+        if (recolectorError) throw recolectorError;
+        if (recolectorRow) {
           const current = AppState.get('userData') || {};
-          driverProfile = {
+          recolectorProfile = {
             ...current,
             role: 'repartidor',
-            hasDriverProfile: true,
-            nombre: driverRow.nombre_completo || current.nombre || 'Repartidor',
-            whatsapp: driverRow.telefono_whatsapp || '',
-            placa: driverRow.placa || '',
-            categoria: driverRow.categoria || 'plastico',
-            productos: driverRow.productos || '',
-            zonas: driverRow.zonas || '',
-            schedule: driverRow.schedule || '',
-            ciudad: driverRow.ciudad || AppState.get('city') || 'cochabamba',
+            hasRecolectorProfile: true,
+            nombre: recolectorRow.nombre_completo || current.nombre || 'Recolector',
+            whatsapp: recolectorRow.telefono_whatsapp || '',
+            placa: recolectorRow.placa || '',
+            categoria: recolectorRow.categoria || 'plastico',
+            productos: recolectorRow.productos || '',
+            zonas: recolectorRow.zonas || '',
+            schedule: recolectorRow.schedule || '',
+            ciudad: recolectorRow.ciudad || AppState.get('city') || 'cochabamba',
             user_id: user.id,
             gmail: user.email || current.gmail || ''
           };
         }
       }
-    } catch (driverLookupError) {
-      console.warn('No se pudo recuperar la ficha existente de repartidor:', driverLookupError);
+    } catch (recolectorLookupError) {
+      console.warn('No se pudo recuperar la ficha existente de recolector:', recolectorLookupError);
     }
   }
 
-  // 2. Si ya hay un perfil de repartidor, activar el modo repartidor inmediatamente
-  if (driverProfile) {
+  // 2. Si ya hay un perfil de recolector, activar el modo recolector inmediatamente
+  if (recolectorProfile) {
     if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Reactivando sesión...');
 
-    let existingUserId = driverProfile.user_id;
+    let existingUserId = recolectorProfile.user_id;
     if (!existingUserId) {
       if (window.supabaseClient) {
         const { data: sessionData } = await window.supabaseClient.auth.getSession();
@@ -1639,27 +1639,27 @@ async function migrarDatosAntiguosARepartidor() {
       }
     }
 
-    const repartidorData = {
+    const recolectorData = {
       role: 'repartidor',
-      nombre: driverProfile.nombre || driverProfile.name || 'Recolector NOTIGAS',
-      whatsapp: driverProfile.whatsapp || '',
-      placa: driverProfile.placa || driverProfile.plate || '',
-      categoria: driverProfile.categoria || driverProfile.category || 'plastico',
-      productos: driverProfile.productos || driverProfile.products || 'Recolección de material reciclable',
-      zonas: driverProfile.zonas || driverProfile.zones || 'Calles y zonas de cobertura vecinal',
-      schedule: driverProfile.schedule || 'Lunes a Sábado: 07:00 a 18:00',
-      ciudad: driverProfile.ciudad || AppState.get('city') || 'cochabamba',
+      nombre: recolectorProfile.nombre || recolectorProfile.name || 'Recolector NOTIGAS',
+      whatsapp: recolectorProfile.whatsapp || '',
+      placa: recolectorProfile.placa || recolectorProfile.plate || '',
+      categoria: recolectorProfile.categoria || recolectorProfile.category || 'plastico',
+      productos: recolectorProfile.productos || recolectorProfile.products || 'Recolección de material reciclable',
+      zonas: recolectorProfile.zonas || recolectorProfile.zones || 'Calles y zonas de cobertura vecinal',
+      schedule: recolectorProfile.schedule || 'Lunes a Sábado: 07:00 a 18:00',
+      ciudad: recolectorProfile.ciudad || AppState.get('city') || 'cochabamba',
       user_id: existingUserId
     };
 
-    AppState.set('userData', repartidorData);
+    AppState.set('userData', recolectorData);
     AppState.set('userRole', 'repartidor');
-    if (typeof guardarRepartidorEnBaseDeDatos === 'function') {
-      await guardarRepartidorEnBaseDeDatos(repartidorData);
+    if (typeof guardarRecolectorEnBaseDeDatos === 'function') {
+      await guardarRecolectorEnBaseDeDatos(recolectorData);
     }
 
     if (typeof setAppMode === 'function') {
-      setAppMode('driver');
+      setAppMode('recolector');
     }
 
     if (modalAuth) modalAuth.style.display = 'none';
@@ -1667,20 +1667,20 @@ async function migrarDatosAntiguosARepartidor() {
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
 
     if (typeof showToast === 'function') {
-      showToast('🟢 Modo Repartidor', `Sesión activa: ${repartidorData.nombre}`, 'success', 1000);
+      showToast('🟢 Modo Recolector', `Sesión activa: ${recolectorData.nombre}`, 'success', 1000);
     }
     return;
   }
 
-  // 3. Si no existe un perfil previo, desplegar la ventana de registro de Repartidor de inmediato
+  // 3. Si no existe un perfil previo, desplegar la ventana de registro de Recolector de inmediato
   if (modalAuth) {
     modalAuth.style.display = 'flex';
-    selectAuthRole('driver');
+    selectAuthRole('recolector');
   }
 }
-window.migrarDatosAntiguosARepartidor = migrarDatosAntiguosARepartidor;
+window.migrarDatosAntiguosARecolector = migrarDatosAntiguosARecolector;
 
-const iniciarSesionChofer = iniciarSesionRepartidor;
+const iniciarSesionChofer = iniciarSesionRecolector;
 
 async function iniciarSesionEmail() {
   if (!window.supabaseClient) {
@@ -1869,7 +1869,7 @@ async function procesarSesionExitosa(user, isInteractive = false) {
     if (!userNombre) userNombre = (gmail ? gmail.split('@')[0] : 'Usuario');
 
     // 1. CARGA UNIFICADA DE DATOS DE USUARIO (1 solo viaje de red)
-    let esRepartidorDB = false;
+    let esRecolectorDB = false;
     let choferData = null;
     let existingProfile = null;
 
@@ -1877,9 +1877,9 @@ async function procesarSesionExitosa(user, isInteractive = false) {
       try {
         const { data: bootData, error: bootErr } = await window.supabaseClient.rpc('rpc_get_user_bootstrap_data');
         if (!bootErr && bootData) {
-          if (bootData.driver) {
-            esRepartidorDB = true;
-            choferData = bootData.driver;
+          if (bootData.recolector) {
+            esRecolectorDB = true;
+            choferData = bootData.recolector;
           }
           if (bootData.profile) {
             existingProfile = bootData.profile;
@@ -1895,7 +1895,7 @@ async function procesarSesionExitosa(user, isInteractive = false) {
           }
         } else {
           // Fallback a consultas paralelas directas
-          const [driverRes, profileRes] = await Promise.all([
+          const [recolectorRes, profileRes] = await Promise.all([
             window.supabaseClient
               .from('choferes_habilitados')
               .select('ciudad, categoria, productos, schedule, estado_verificacion, bloqueado, motivo_bloqueo, dni, placa, estado_servicio')
@@ -1908,9 +1908,9 @@ async function procesarSesionExitosa(user, isInteractive = false) {
               .maybeSingle()
           ]);
 
-          if (driverRes?.data) {
-            esRepartidorDB = true;
-            choferData = driverRes.data;
+          if (recolectorRes?.data) {
+            esRecolectorDB = true;
+            choferData = recolectorRes.data;
             if (choferData.bloqueado || choferData.estado_verificacion === 'bloqueado') {
               if (window.DeviceSecurity) {
                 window.DeviceSecurity.triggerLockout(choferData.motivo_bloqueo || 'Dispositivo suspendido por falta de pago de comisiones.');
@@ -1936,12 +1936,12 @@ async function procesarSesionExitosa(user, isInteractive = false) {
         }
 
         if (!window._roleSelectedNow) {
-          if (window._targetAuthRole === 'driver') {
-            currentSelectedRole = 'driver';
+          if (window._targetAuthRole === 'recolector') {
+            currentSelectedRole = 'recolector';
           } else {
-            currentSelectedRole = esRepartidorDB && existingProfile?.role !== 'vecino'
-              ? 'driver'
-              : ((existingProfile?.role === 'repartidor') ? 'driver' : 'buyer');
+            currentSelectedRole = esRecolectorDB && existingProfile?.role !== 'vecino'
+              ? 'recolector'
+              : ((existingProfile?.role === 'repartidor') ? 'recolector' : 'buyer');
           }
         }
       } catch(e) {
@@ -1951,9 +1951,9 @@ async function procesarSesionExitosa(user, isInteractive = false) {
 
     // 2. Si es un usuario 100% NUEVO (no existe chofer ni perfil, y no ha seleccionado rol aún).
     //    El admin queda exento: entra como Comprador directo, sin modal de rol ni registro.
-    if (!esRepartidorDB && !existingProfile && !window._roleSelectedNow && !(window.esAdminSesion && window.esAdminSesion())) {
-      if (window._targetAuthRole === 'driver') {
-        currentSelectedRole = 'driver';
+    if (!esRecolectorDB && !existingProfile && !window._roleSelectedNow && !(window.esAdminSesion && window.esAdminSesion())) {
+      if (window._targetAuthRole === 'recolector') {
+        currentSelectedRole = 'recolector';
       } else {
         if (!isInteractive) {
           console.info("Sesión incompleta en segundo plano: permitiendo navegación libre");
@@ -1978,7 +1978,7 @@ async function procesarSesionExitosa(user, isInteractive = false) {
     const resolvedCity = (choferData?.ciudad || existingProfile?.ciudad || AppState.get('city') || 'cochabamba').toLowerCase().trim();
 
     const clienteData = {
-      role: currentSelectedRole === 'driver' ? 'repartidor' : 'vecino',
+      role: currentSelectedRole === 'recolector' ? 'repartidor' : 'vecino',
       gmail,
       nombre: (existingProfile?.nombre || userNombre),
       apellido: (existingProfile?.apellido || userApellido),
@@ -1987,10 +1987,10 @@ async function procesarSesionExitosa(user, isInteractive = false) {
       ciudad: resolvedCity,
       user_id: user.id
     };
-    if (esRepartidorDB) clienteData.hasDriverProfile = true;
+    if (esRecolectorDB) clienteData.hasRecolectorProfile = true;
 
-    if (currentSelectedRole === 'driver') {
-      if (esRepartidorDB && choferData) {
+    if (currentSelectedRole === 'recolector') {
+      if (esRecolectorDB && choferData) {
         clienteData.role = 'repartidor';
         if (choferData.ciudad) clienteData.ciudad = choferData.ciudad.toLowerCase().trim();
         if (choferData.categoria) clienteData.categoria = choferData.categoria;
@@ -2001,7 +2001,7 @@ async function procesarSesionExitosa(user, isInteractive = false) {
 
         AppState.set('city', clienteData.ciudad);
       } else {
-        // Driver NO EXISTE en la DB. Comprobar bloqueo previo del dispositivo
+        // Recolector NO EXISTE en la DB. Comprobar bloqueo previo del dispositivo
         if (window.DeviceSecurity && typeof window.DeviceSecurity.checkBlockedStatus === 'function') {
           const lockCheck = await window.DeviceSecurity.checkBlockedStatus(clienteData.dni);
           if (lockCheck && lockCheck.bloqueado) {
@@ -2017,24 +2017,24 @@ async function procesarSesionExitosa(user, isInteractive = false) {
           if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
           if (modalAuth) modalAuth.style.display = 'none';
 
-          const inputDriverNombre = document.getElementById('inputDriverNombre');
-          if (inputDriverNombre) inputDriverNombre.value = clienteData.nombre;
+          const inputRecolectorNombre = document.getElementById('inputRecolectorNombre');
+          if (inputRecolectorNombre) inputRecolectorNombre.value = clienteData.nombre;
 
-          const inputDriverDni = document.getElementById('inputDriverDni');
-          if (inputDriverDni && clienteData.dni) inputDriverDni.value = clienteData.dni;
+          const inputRecolectorDni = document.getElementById('inputRecolectorDni');
+          if (inputRecolectorDni && clienteData.dni) inputRecolectorDni.value = clienteData.dni;
 
-          const modalDriver = document.getElementById('modalDriver');
-          if (modalDriver) modalDriver.style.display = 'flex';
+          const modalRecolector = document.getElementById('modalRecolector');
+          if (modalRecolector) modalRecolector.style.display = 'flex';
 
-          const titleEl = document.getElementById('driverModalTitleText');
-          const subtitleEl = document.getElementById('driverModalSubtitle');
-          if (titleEl) titleEl.textContent = 'Registro de Repartidor';
-          if (subtitleEl) subtitleEl.textContent = 'Completa tu ficha de negocio. Aparecerá en la lista de repartidores de la zona.';
+          const titleEl = document.getElementById('recolectorModalTitleText');
+          const subtitleEl = document.getElementById('recolectorModalSubtitle');
+          if (titleEl) titleEl.textContent = 'Registro de Recolector';
+          if (subtitleEl) subtitleEl.textContent = 'Completa tu ficha de negocio. Aparecerá en la lista de recolectores de la zona.';
 
           sessionStorage.setItem('notigas_temp_gmail', gmail);
           return;
         }
-        // Admin: entra al modo repartidor sin ficha publicada
+        // Admin: entra al modo recolector sin ficha publicada
       }
     }
 
@@ -2044,13 +2044,13 @@ async function procesarSesionExitosa(user, isInteractive = false) {
 
     if (modalAuth) modalAuth.style.display = 'none';
 
-    if (currentSelectedRole === 'driver') {
-      if (typeof setAppMode === 'function') setAppMode('driver');
+    if (currentSelectedRole === 'recolector') {
+      if (typeof setAppMode === 'function') setAppMode('recolector');
       if (isInteractive && typeof showToast === 'function') {
         const welcomedKey = `notigas_welcomed_${user.id}`;
         if (!sessionStorage.getItem(welcomedKey)) {
           sessionStorage.setItem(welcomedKey, 'true');
-          showToast('✅ Sesión Segura', `Ingresaste como Repartidor (${gmail})`, 'success', 2000);
+          showToast('✅ Sesión Segura', `Ingresaste como Recolector (${gmail})`, 'success', 2000);
         }
       }
     } else {
@@ -2172,7 +2172,7 @@ window.finalizeRoleSelection = async function(role) {
   const modalRole = document.getElementById('modalRoleSelection');
   if (modalRole) modalRole.style.display = 'none';
 
-  currentSelectedRole = role === 'repartidor' ? 'driver' : 'buyer';
+  currentSelectedRole = role === 'repartidor' ? 'recolector' : 'buyer';
   window._roleSelectedNow = true;
 
   if (typeof window.cambiarCiudad === 'function') {
@@ -2194,15 +2194,15 @@ window.finalizeRoleSelection = async function(role) {
   AppState.set('userData', u);
 
   if (role === 'repartidor') {
-    const inputDriverCiudad = document.getElementById('inputDriverCiudad');
-    if (inputDriverCiudad) inputDriverCiudad.value = selectedCity;
-    const inputDriverNombre = document.getElementById('inputDriverNombre');
-    if (inputDriverNombre && !inputDriverNombre.value) {
-      inputDriverNombre.value = `${selectedName} ${selectedLastName}`.trim();
+    const inputRecolectorCiudad = document.getElementById('inputRecolectorCiudad');
+    if (inputRecolectorCiudad) inputRecolectorCiudad.value = selectedCity;
+    const inputRecolectorNombre = document.getElementById('inputRecolectorNombre');
+    if (inputRecolectorNombre && !inputRecolectorNombre.value) {
+      inputRecolectorNombre.value = `${selectedName} ${selectedLastName}`.trim();
     }
-    const inputDriverTel = document.getElementById('inputDriverTelRef');
-    if (inputDriverTel && selectedPhone) {
-      inputDriverTel.value = selectedPhone;
+    const inputRecolectorTel = document.getElementById('inputRecolectorTelRef');
+    if (inputRecolectorTel && selectedPhone) {
+      inputRecolectorTel.value = selectedPhone;
     }
   }
 
@@ -2357,10 +2357,10 @@ window.guardarFichaComprador = guardarFichaComprador;
 
 /* GESTIÓN VISUAL DEL COLOR PICKER DE CAMIÓN Y VISTA PREVIA */
 function inicializarColorPickerChofer() {
-  const container = document.getElementById('driverTruckColorPicker');
-  const inputColor = document.getElementById('inputDriverTruckColor');
-  const inputNombre = document.getElementById('inputDriverNombre');
-  const lblName = document.getElementById('lblDriverTruckColorName');
+  const container = document.getElementById('recolectorTruckColorPicker');
+  const inputColor = document.getElementById('inputRecolectorTruckColor');
+  const inputNombre = document.getElementById('inputRecolectorNombre');
+  const lblName = document.getElementById('lblRecolectorTruckColorName');
   if (!container || !window.NOTIGAS_TRUCK_PALETTE) return;
 
   const currentColor = (inputColor?.value || 'rojo').toLowerCase().trim();
@@ -2397,18 +2397,18 @@ function inicializarColorPickerChofer() {
 window.inicializarColorPickerChofer = inicializarColorPickerChofer;
 
 function seleccionarColorCamionModal(colorKey) {
-  const inputColor = document.getElementById('inputDriverTruckColor');
-  const lblName = document.getElementById('lblDriverTruckColorName');
+  const inputColor = document.getElementById('inputRecolectorTruckColor');
+  const lblName = document.getElementById('lblRecolectorTruckColorName');
   if (inputColor) inputColor.value = colorKey;
 
-  const theme = window.getDriverColorTheme ? window.getDriverColorTheme(null, colorKey) : null;
+  const theme = window.getRecolectorColorTheme ? window.getRecolectorColorTheme(null, colorKey) : null;
   if (lblName && theme) {
     lblName.textContent = theme.name;
     lblName.style.color = theme.primary;
   }
 
   // Actualizar estilos activos de los chips
-  const chips = document.querySelectorAll('#driverTruckColorPicker .color-swatch-chip');
+  const chips = document.querySelectorAll('#recolectorTruckColorPicker .color-swatch-chip');
   chips.forEach(c => {
     if (c.title === theme?.name) {
       c.style.border = '2.5px solid #FFFFFF';
@@ -2424,15 +2424,15 @@ function seleccionarColorCamionModal(colorKey) {
 window.seleccionarColorCamionModal = seleccionarColorCamionModal;
 
 function actualizarVistaPreviaCamionChofer() {
-  const container = document.getElementById('driverTruckPreviewContainer');
-  const nameInput = document.getElementById('inputDriverNombre');
-  const inputColor = document.getElementById('inputDriverTruckColor');
-  const previewName = document.getElementById('driverTruckPreviewName');
+  const container = document.getElementById('recolectorTruckPreviewContainer');
+  const nameInput = document.getElementById('inputRecolectorNombre');
+  const inputColor = document.getElementById('inputRecolectorTruckColor');
+  const previewName = document.getElementById('recolectorTruckPreviewName');
   if (!container || typeof window.generarSvgCamionDina !== 'function') return;
 
   const name = (nameInput?.value || 'Tu Camión').trim();
   const color = (inputColor?.value || 'rojo').trim();
-  const initials = (typeof window.getDriverInitials === 'function') ? window.getDriverInitials(name) : 'R';
+  const initials = (typeof window.getRecolectorInitials === 'function') ? window.getRecolectorInitials(name) : 'R';
 
   container.innerHTML = window.generarSvgCamionDina({
     name: name,
@@ -2450,21 +2450,21 @@ function actualizarVistaPreviaCamionChofer() {
 window.actualizarVistaPreviaCamionChofer = actualizarVistaPreviaCamionChofer;
 
 /**
- * Configura la modalidad única de crédito operativo del repartidor
+ * Configura la modalidad única de crédito operativo del recolector
  * en el modal de registro/edición de chofer.
  */
 function seleccionarPlanRegistroChofer() {
-  const inputTipo = document.getElementById('inputDriverPlanTipo');
+  const inputTipo = document.getElementById('inputRecolectorPlanTipo');
   if (inputTipo) inputTipo.value = 'sin_comision';
-  const btnText = document.getElementById('btnDriverSubmitText');
-  if (btnText) btnText.textContent = 'Guardar ficha de repartidor';
+  const btnText = document.getElementById('btnRecolectorSubmitText');
+  if (btnText) btnText.textContent = 'Guardar ficha de recolector';
 }
 window.seleccionarPlanRegistroChofer = seleccionarPlanRegistroChofer;
 
 
 /**
  * Carga los datos vigentes del chofer en el formulario de edición.
- * en los campos del modal de chofer (#modalDriver).
+ * en los campos del modal de chofer (#modalRecolector).
  */
 async function cargarPerfilChoferEnModal() {
   if (!window.supabaseClient) return;
@@ -2474,39 +2474,39 @@ async function cargarPerfilChoferEnModal() {
     const userId = authData?.user?.id;
     if (!userId) return;
 
-    const { data: driverRow, error } = await window.supabaseClient
+    const { data: recolectorRow, error } = await window.supabaseClient
       .from('choferes_habilitados')
       .select('id, user_id, nombre_completo, telefono_whatsapp, placa, dni, categoria, productos, schedule, ciudad, color_camion, estado_servicio')
       .eq('user_id', userId)
       .maybeSingle();
 
-    if (error || !driverRow) return;
+    if (error || !recolectorRow) return;
 
-    const inputNombre = document.getElementById('inputDriverNombre');
-    const inputTel = document.getElementById('inputDriverTelRef');
-    const inputPlaca = document.getElementById('inputDriverPlate');
-    const inputDni = document.getElementById('inputDriverDni');
-    const inputCat = document.getElementById('inputDriverCat');
-    const inputProd = document.getElementById('inputDriverProductos');
-    const inputCiudad = document.getElementById('inputDriverCiudad');
+    const inputNombre = document.getElementById('inputRecolectorNombre');
+    const inputTel = document.getElementById('inputRecolectorTelRef');
+    const inputPlaca = document.getElementById('inputRecolectorPlate');
+    const inputDni = document.getElementById('inputRecolectorDni');
+    const inputCat = document.getElementById('inputRecolectorCat');
+    const inputProd = document.getElementById('inputRecolectorProductos');
+    const inputCiudad = document.getElementById('inputRecolectorCiudad');
 
-    if (inputNombre && driverRow.nombre_completo) inputNombre.value = driverRow.nombre_completo;
-    if (inputTel && driverRow.telefono_whatsapp) inputTel.value = driverRow.telefono_whatsapp;
-    if (inputPlaca && driverRow.placa) inputPlaca.value = driverRow.placa;
-    if (inputDni && driverRow.dni) inputDni.value = driverRow.dni;
-    if (inputCat && driverRow.categoria) inputCat.value = driverRow.categoria;
-    if (inputProd && driverRow.productos) {
-      const conocidos = Array.from(document.querySelectorAll('input[name="driverServicio"]'))
+    if (inputNombre && recolectorRow.nombre_completo) inputNombre.value = recolectorRow.nombre_completo;
+    if (inputTel && recolectorRow.telefono_whatsapp) inputTel.value = recolectorRow.telefono_whatsapp;
+    if (inputPlaca && recolectorRow.placa) inputPlaca.value = recolectorRow.placa;
+    if (inputDni && recolectorRow.dni) inputDni.value = recolectorRow.dni;
+    if (inputCat && recolectorRow.categoria) inputCat.value = recolectorRow.categoria;
+    if (inputProd && recolectorRow.productos) {
+      const conocidos = Array.from(document.querySelectorAll('input[name="recolectorServicio"]'))
         .map(cb => (cb.value || '').trim().toLowerCase()).filter(Boolean);
-      const base = String(driverRow.productos).split(',').map(s => s.trim())
+      const base = String(recolectorRow.productos).split(',').map(s => s.trim())
         .filter(s => s && !conocidos.includes(s.toLowerCase())).join(', ');
       inputProd.value = base;
-      aplicarServiciosEnFormulario(driverRow.productos);
+      aplicarServiciosEnFormulario(recolectorRow.productos);
     }
-    if (inputCiudad && driverRow.ciudad) inputCiudad.value = driverRow.ciudad;
+    if (inputCiudad && recolectorRow.ciudad) inputCiudad.value = recolectorRow.ciudad;
 
-    if (driverRow.color_camion && typeof seleccionarColorCamionModal === 'function') {
-      seleccionarColorCamionModal(driverRow.color_camion);
+    if (recolectorRow.color_camion && typeof seleccionarColorCamionModal === 'function') {
+      seleccionarColorCamionModal(recolectorRow.color_camion);
     }
     seleccionarPlanRegistroChofer();
   } catch (err) {

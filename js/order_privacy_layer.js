@@ -1,8 +1,8 @@
 /* ==========================================================================
    NOTIGAS - CAPA DE PRIVACIDAD DE PEDIDOS
-   - Usuarios registrados ven repartidores activos mediante vistas sanitizadas.
+   - Usuarios registrados ven recolectores activos mediante vistas sanitizadas.
    - Pedidos libres: solo área aproximada de 50 m, sin datos del comprador/pedido.
-   - Pedido asignado al repartidor: dirección exacta + WhatsApp/datos necesarios.
+   - Pedido asignado al recolector: dirección exacta + WhatsApp/datos necesarios.
    - Una suspensión financiera/administrativa bloquea NUEVAS tomas, pero no
      oculta pedidos ya asignados ni impide completarlos/liberarlos.
    ========================================================================== */
@@ -22,8 +22,8 @@
   let radarChannel = null;
   let overrideTimer = null;
   let authListener = null;
-  let driverCanTakeOrders = false;
-  let driverSuspensionReason = '';
+  let recolectorCanTakeOrders = false;
+  let recolectorSuspensionReason = '';
 
   function getMapInstance() {
     try {
@@ -47,9 +47,9 @@
     return String(raw || 'cochabamba').toLowerCase().trim();
   }
 
-  function isDriverMode() {
+  function isRecolectorMode() {
     if (typeof AppState === 'undefined') return false;
-    return AppState.get('appMode') === 'driver' || AppState.get('userRole') === 'repartidor';
+    return AppState.get('appMode') === 'recolector' || AppState.get('userRole') === 'repartidor';
   }
 
   function esAdminActivo() {
@@ -65,15 +65,15 @@
     }
   }
 
-  async function refreshDriverAccessState() {
-    driverCanTakeOrders = false;
-    driverSuspensionReason = '';
+  async function refreshRecolectorAccessState() {
+    recolectorCanTakeOrders = false;
+    recolectorSuspensionReason = '';
 
     if (window.esAdminSesion && window.esAdminSesion()) {
       return { canTake: false, reason: '' };
     }
 
-    if (!isDriverMode() || !window.supabaseClient) {
+    if (!isRecolectorMode() || !window.supabaseClient) {
       return { canTake: false, reason: '' };
     }
 
@@ -81,8 +81,8 @@
       const { data: sessionData } = await window.supabaseClient.auth.getSession();
       const uid = sessionData?.session?.user?.id;
       if (!uid) {
-        driverSuspensionReason = 'Debes iniciar sesión como repartidor para tomar pedidos.';
-        return { canTake: false, reason: driverSuspensionReason };
+        recolectorSuspensionReason = 'Debes iniciar sesión como recolector para tomar pedidos.';
+        return { canTake: false, reason: recolectorSuspensionReason };
       }
 
       const { data, error } = await window.supabaseClient
@@ -92,24 +92,24 @@
         .maybeSingle();
 
       if (error || !data) {
-        driverSuspensionReason = 'No se pudo validar el estado operativo de tu cuenta.';
-        return { canTake: false, reason: driverSuspensionReason };
+        recolectorSuspensionReason = 'No se pudo validar el estado operativo de tu cuenta.';
+        return { canTake: false, reason: recolectorSuspensionReason };
       }
 
       const state = String(data.estado_servicio || 'activo').toLowerCase().trim();
       const verification = String(data.estado_verificacion || '').toLowerCase().trim();
       const suspended = Boolean(data.bloqueado) || SUSPENDED_STATES.has(state) || verification !== 'aprobado';
 
-      driverCanTakeOrders = !suspended && state === 'activo';
-      driverSuspensionReason = driverCanTakeOrders
+      recolectorCanTakeOrders = !suspended && state === 'activo';
+      recolectorSuspensionReason = recolectorCanTakeOrders
         ? ''
         : (data.motivo_bloqueo || 'Tu cuenta está suspendida. Regulariza el motivo pendiente para volver a tomar pedidos.');
 
-      return { canTake: driverCanTakeOrders, reason: driverSuspensionReason };
+      return { canTake: recolectorCanTakeOrders, reason: recolectorSuspensionReason };
     } catch (error) {
-      console.warn('[OrderPrivacy] No se pudo validar estado del repartidor:', error);
-      driverSuspensionReason = 'No se pudo validar el estado operativo de tu cuenta.';
-      return { canTake: false, reason: driverSuspensionReason };
+      console.warn('[OrderPrivacy] No se pudo validar estado del recolector:', error);
+      recolectorSuspensionReason = 'No se pudo validar el estado operativo de tu cuenta.';
+      return { canTake: false, reason: recolectorSuspensionReason };
     }
   }
 
@@ -124,10 +124,10 @@
   function buildAvailablePopup(row) {
     const radius = Number(row.radius_m || 50);
     let action = '';
-    if (isDriverMode()) {
+    if (isRecolectorMode()) {
       if (esAdminActivo()) {
-        action = `<div style="margin-top:8px;padding:7px 9px;border-radius:7px;font-size:11px;font-weight:800;">Vista administrador: puedes ver la zona. Tomar pedidos requiere una cuenta de repartidor habilitada.</div>`;
-      } else if (driverCanTakeOrders) {
+        action = `<div style="margin-top:8px;padding:7px 9px;border-radius:7px;font-size:11px;font-weight:800;">Vista administrador: puedes ver la zona. Tomar pedidos requiere una cuenta de recolector habilitada.</div>`;
+      } else if (recolectorCanTakeOrders) {
         action = `<button type="button" style="margin-top:8px;width:100%;padding:7px 10px;border:0;border-radius:7px;font-weight:800;cursor:pointer;" onclick="window.tomarPedidoDesdeZonaPrivada('${escapeHtml(row.order_id)}',${Number(row.latitude)},${Number(row.longitude)})">Tomar pedido</button>`;
       } else {
         action = `<div style="margin-top:8px;padding:7px 9px;border-radius:7px;font-size:11px;font-weight:800;">Cuenta suspendida: puedes ver la zona, pero no tomar nuevos pedidos.</div>`;
@@ -167,12 +167,12 @@
 
     // El radar no es un componente de compradores: el control en RLS también
     // lo exige, pero evitamos incluso hacer la consulta desde esa interfaz.
-    if (!isDriverMode()) {
+    if (!isRecolectorMode()) {
       clearRadarLayers();
       return;
     }
 
-    await refreshDriverAccessState();
+    await refreshRecolectorAccessState();
 
     let query = window.supabaseClient
       .from('order_public_radar')
@@ -197,20 +197,20 @@
   window.loadOrderPrivacyRadar = loadOrderRadar;
 
   window.tomarPedidoDesdeZonaPrivada = async function (orderId, lat, lng) {
-    if (!isDriverMode()) return;
-    const access = await refreshDriverAccessState();
+    if (!isRecolectorMode()) return;
+    const access = await refreshRecolectorAccessState();
     if (!access.canTake) {
       if (window.esAdminSesion && window.esAdminSesion()) {
         if (typeof window.showToast === 'function') {
-          window.showToast('Vista administrador', 'Para tomar pedidos inicia sesión con una cuenta de repartidor habilitada.', 'info', 4000);
+          window.showToast('Vista administrador', 'Para tomar pedidos inicia sesión con una cuenta de recolector habilitada.', 'info', 4000);
         }
       } else {
         showSuspendedMessage(access.reason);
       }
       return;
     }
-    if (typeof window.aceptarPedidoRepartidor === 'function') {
-      window.aceptarPedidoRepartidor(orderId, Number(lat), Number(lng), 'Zona aproximada de 50 m');
+    if (typeof window.aceptarPedidoRecolector === 'function') {
+      window.aceptarPedidoRecolector(orderId, Number(lat), Number(lng), 'Zona aproximada de 50 m');
     }
   };
 
@@ -239,12 +239,12 @@
     }
   }
 
-  async function secureRenderDriverOrdersList() {
-    const container = document.getElementById('driverOrdersContainer') || document.getElementById('driverOrdersList');
+  async function secureRenderRecolectorOrdersList() {
+    const container = document.getElementById('recolectorOrdersContainer') || document.getElementById('recolectorOrdersList');
     if (!container || !window.supabaseClient) return;
 
     container.innerHTML = '<div style="padding:16px;text-align:center;">Cargando pedidos...</div>';
-    const access = await refreshDriverAccessState();
+    const access = await refreshRecolectorAccessState();
 
     let radarQuery = window.supabaseClient
       .from('order_public_radar')
@@ -271,12 +271,12 @@
     let html = '<div style="padding:10px 0 6px;font-weight:900;">Pedidos</div>';
 
     if (!access.canTake && !esAdmin) {
-      html += `<div style="padding:10px;margin:8px 0 12px;border:1px solid rgba(239,68,68,.55);border-radius:8px;background:rgba(239,68,68,.10);font-size:11px;line-height:1.45;"><strong>Cuenta suspendida para nuevos pedidos.</strong><br>${escapeHtml(access.reason || driverSuspensionReason)}</div>`;
+      html += `<div style="padding:10px;margin:8px 0 12px;border:1px solid rgba(239,68,68,.55);border-radius:8px;background:rgba(239,68,68,.10);font-size:11px;line-height:1.45;"><strong>Cuenta suspendida para nuevos pedidos.</strong><br>${escapeHtml(access.reason || recolectorSuspensionReason)}</div>`;
     }
 
     if (assigned.length) {
       html += esAdmin
-        ? '<div style="font-size:11px;font-weight:800;margin:8px 0;">PEDIDOS ASIGNADOS · VISTA ADMIN (todos los repartidores)</div>'
+        ? '<div style="font-size:11px;font-weight:800;margin:8px 0;">PEDIDOS ASIGNADOS · VISTA ADMIN (todos los recolectores)</div>'
         : '<div style="font-size:11px;font-weight:800;margin:8px 0;">MIS PEDIDOS TOMADOS</div>';
       assigned.forEach((o) => {
         const lat = Number(o.latitude || 0);
@@ -290,7 +290,7 @@
           : `${wa ? `<a href="https://wa.me/${wa}" target="_blank" rel="noopener noreferrer" style="padding:6px 9px;border-radius:6px;text-decoration:none;font-weight:800;">WhatsApp</a>` : ''}
             <button type="button" onclick="window.centrarPedidoEnMapa?.(${lat},${lng},'${escapeHtml(o.id)}')" style="padding:6px 9px;border-radius:6px;border:0;font-weight:800;cursor:pointer;">Ver ubicación exacta</button>
             <button type="button" data-action="confirmarEntregaPedido" data-id="${escapeHtml(o.id)}" style="padding:6px 9px;border-radius:6px;border:0;font-weight:800;cursor:pointer;">Entregado</button>
-            <button type="button" data-action="liberarPedidoRepartidor" data-id="${escapeHtml(o.id)}" style="padding:6px 9px;border-radius:6px;border:0;font-weight:800;cursor:pointer;">No podré</button>`;
+            <button type="button" data-action="liberarPedidoRecolector" data-id="${escapeHtml(o.id)}" style="padding:6px 9px;border-radius:6px;border:0;font-weight:800;cursor:pointer;">No podré</button>`;
         html += `<div style="padding:10px;margin-bottom:9px;border:1px solid rgba(255,255,255,.14);border-radius:8px;">
           <div style="font-weight:800;">${esAdmin ? 'Pedido asignado' : 'Pedido en entrega'}${cityLabel}</div>
           <div style="margin-top:5px;">📍 ${escapeHtml(o.direccion || o.barrio_otb || 'Ubicación exacta en el mapa')}</div>
@@ -328,8 +328,8 @@
     if (typeof window.ensureNotDeliveredButtons === 'function') window.ensureNotDeliveredButtons(container);
   }
 
-  function installDriverListOverride() {
-    window.renderDriverOrdersList = secureRenderDriverOrdersList;
+  function installRecolectorListOverride() {
+    window.renderRecolectorOrdersList = secureRenderRecolectorOrdersList;
   }
 
   function subscribeRadar() {
@@ -342,15 +342,15 @@
       .channel(`order-radar-private-${Date.now()}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'order_public_radar' }, () => {
         loadOrderRadar();
-        if (isDriverMode() && typeof window.renderDriverOrdersList === 'function') window.renderDriverOrdersList();
+        if (isRecolectorMode() && typeof window.renderRecolectorOrdersList === 'function') window.renderRecolectorOrdersList();
       })
       .subscribe();
   }
 
   async function bootstrap() {
-    installDriverListOverride();
+    installRecolectorListOverride();
     if (overrideTimer) clearInterval(overrideTimer);
-    overrideTimer = setInterval(installDriverListOverride, 2500);
+    overrideTimer = setInterval(installRecolectorListOverride, 2500);
 
     await loadOrderRadar();
     subscribeRadar();
@@ -362,7 +362,7 @@
       });
       AppState.on('appMode', () => loadOrderRadar());
       AppState.on('userData', () => {
-        if (isDriverMode()) loadOrderRadar();
+        if (isRecolectorMode()) loadOrderRadar();
       });
     }
 
@@ -376,8 +376,8 @@
   }
 
   window.NOTIGAS_ORDER_PRIVACY_READY = true;
-  window.secureRenderDriverOrdersList = secureRenderDriverOrdersList;
-  window.refreshDriverOrderAccessState = refreshDriverAccessState;
+  window.secureRenderRecolectorOrdersList = secureRenderRecolectorOrdersList;
+  window.refreshRecolectorOrderAccessState = refreshRecolectorAccessState;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', bootstrap, { once: true });

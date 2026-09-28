@@ -2,10 +2,10 @@
    NOTIGAS - MÓDULO DE GPS Y GEOLOCALIZACIÓN
    ===================================================== */
 
-function esModoRepartidor() {
+function esModoRecolector() {
     try {
         return (
-            AppState?.get('appMode') === 'driver' ||
+            AppState?.get('appMode') === 'recolector' ||
             AppState?.get('userRole') === 'repartidor'
         );
     } catch (e) {
@@ -185,9 +185,9 @@ async function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
     return finalResult;
 }
 
-function iniciarWatchGPSRepartidor() {
+function iniciarWatchGPSRecolector() {
     if (
-        !esModoRepartidor() ||
+        !esModoRecolector() ||
         !('geolocation' in navigator)
     ) {
         return;
@@ -235,7 +235,7 @@ function iniciarWatchGPSRepartidor() {
                 applyGpsPosition(
                     lat,
                     lng,
-                    'GPS repartidor',
+                    'GPS recolector',
                     false,
                     true // isExact
                 );
@@ -247,8 +247,8 @@ function iniciarWatchGPSRepartidor() {
                     stationarySince = now;
                 }
 
-                if (typeof transmitirUbicacionRepartidorServidorDB === 'function') {
-                    transmitirUbicacionRepartidorServidorDB(
+                if (typeof transmitirUbicacionRecolectorServidorDB === 'function') {
+                    transmitirUbicacionRecolectorServidorDB(
                         lat,
                         lng
                     );
@@ -256,7 +256,7 @@ function iniciarWatchGPSRepartidor() {
             },
             error => {
                 console.warn(
-                    'GPS repartidor:',
+                    'GPS recolector:',
                     error.message
                 );
             },
@@ -270,7 +270,7 @@ function iniciarWatchGPSRepartidor() {
 }
 
 function conectarGPSAuto(forceReset = false) {
-    const isDriver = esModoRepartidor();
+    const isRecolector = esModoRecolector();
 
     // ADMIN: no se solicita GPS automáticamente; se posiciona directo al centro de Cochabamba, Bolivia.
     // El botón GPS (forceReset=true) sí puede activarlo si el admin lo desea.
@@ -287,15 +287,15 @@ function conectarGPSAuto(forceReset = false) {
     }
 
     // =====================================================
-    // REPARTIDOR
+    // RECOLECTOR
     // =====================================================
-    if (isDriver) {
+    if (isRecolector) {
         solicitarGeolocalizacionNativaNavegador(true, forceReset)
         .then(() => {
-            iniciarWatchGPSRepartidor();
+            iniciarWatchGPSRecolector();
         })
         .catch(error => {
-            console.warn('GPS nativo falló para repartidor. Intentando fallback por IP:', error);
+            console.warn('GPS nativo falló para recolector. Intentando fallback por IP:', error);
 
             // Intenta localizar por IP
             obtenerUbicacionIPFallbackDesktop(forceReset).then(coords => {
@@ -304,11 +304,11 @@ function conectarGPSAuto(forceReset = false) {
                 }
 
                 // Como la IP es estática, usamos setInterval para transmitirla periódicamente
-                // y mantener al repartidor "en vivo" en la base de datos sin simular movimiento.
+                // y mantener al recolector "en vivo" en la base de datos sin simular movimiento.
                 if (window.activeGpsIpInterval) clearInterval(window.activeGpsIpInterval);
                 window.activeGpsIpInterval = setInterval(() => {
-                    if (typeof transmitirUbicacionRepartidorServidorDB === 'function') {
-                        transmitirUbicacionRepartidorServidorDB(coords.lat, coords.lng);
+                    if (typeof transmitirUbicacionRecolectorServidorDB === 'function') {
+                        transmitirUbicacionRecolectorServidorDB(coords.lat, coords.lng);
                     }
                 }, 10000); // Transmitir cada 10 segundos
 
@@ -407,7 +407,7 @@ if (document.readyState === 'loading') {
 window.conectarGPSAuto = conectarGPSAuto;
 window.verificarGpsAndroidObligatorio = verificarGpsAndroidObligatorio;
 window.detenerGPSComprador = detenerGPSComprador;
-window.iniciarWatchGPSRepartidor = iniciarWatchGPSRepartidor;
+window.iniciarWatchGPSRecolector = iniciarWatchGPSRecolector;
 window.obtenerUbicacionIPFallbackDesktop = obtenerUbicacionIPFallbackDesktop;
 window.solicitarGeolocalizacionNativaNavegador = solicitarGeolocalizacionNativaNavegador;
-window.esModoRepartidor = esModoRepartidor;
+window.esModoRecolector = esModoRecolector;
