@@ -465,14 +465,14 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
           color: uData.color_camion
         });
       } else {
-        favEl.href = "favicon.svg?v=143";
+        favEl.href = "favicon.svg?v=144";
       }
       document.title = "🚛 DISTRIBUIDOR OFICIAL - NOTIGAS en Vivo";
     } else {
       if (typeof window.restaurarFaviconDefault === 'function') {
         window.restaurarFaviconDefault();
       } else {
-        favEl.href = "icons/camion_reciclaje.svg?v=143";
+        favEl.href = "icons/camion_reciclaje.svg?v=144";
       }
       document.title = "NOTIGAS: Noticias de Generadores de residuos seleccionados";
     }
@@ -480,7 +480,7 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
   }
 
   if (estado === 'asignado') {
-    favEl.href = "icons/camion_3d_rojo.svg?v=143";
+    favEl.href = "icons/camion_3d_rojo.svg?v=144";
     document.title = "🚚 Pedido en Camino: Repartidor Asignado - NOTIGAS";
     return;
   }
@@ -617,7 +617,7 @@ window.getActiveUserLocation = getActiveUserLocation;
 // 1. Registro del Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    const swVer = window.NOTIGAS?.CACHE_VERSION || '143';
+    const swVer = window.NOTIGAS?.CACHE_VERSION || '144';
     navigator.serviceWorker.register(`./sw.js?v=${swVer}`)
       .then((reg) => console.log('✅ Service Worker registrado', reg.scope))
       .catch((err) => console.error('❌ Error Service Worker:', err));

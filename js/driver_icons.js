@@ -638,7 +638,7 @@
    */
   function actualizarFaviconCamion(driverOpts = {}) {
     try {
-      const name = driverOpts.nombre || driverOpts.name || driverOpts.distribuidor_nombre || 'Distribuidor';
+      const name = driverOpts.nombre || driverOpts.name || driverOpts.distribuidor_nombre || 'Recolector';
       const company = driverOpts.empresa || driverOpts.categoria || 'NOTIGAS';
       const initials = driverOpts.initials || getDriverInitials(name || company);
       const colorKey = driverOpts.color || driverOpts.color_camion;
@@ -659,7 +659,7 @@
       const bgP = theme.badgeBg;
       const bgT = theme.badgeText;
       const bgB = theme.badgeBorder;
-      const initChar = (initials || 'D').slice(0, 2).toUpperCase();
+      const initChar = (initials || 'R').slice(0, 2).toUpperCase();
       const fontSize = initChar.length > 1 ? 26 : 34;
 
       const svgFavicon = `
@@ -697,7 +697,7 @@
   </defs>
 
   <rect width="512" height="512" rx="112" fill="url(#bg_${uid})"/>
-  <rect width="504" height="504" x="4" y="4" rx="108" fill="none" stroke="${theme.primary}" stroke-width="6" opacity="0.85"/>
+  <rect width="504" height="504" x="4" y="4" rx="108" fill="none" stroke="#FFFFFF" stroke-width="6"/>
   <ellipse cx="256" cy="385" rx="195" ry="22" fill="rgba(0,0,0,0.5)"/>
 
   <g filter="url(#sh_${uid})">
@@ -705,7 +705,12 @@
     <line x1="138" y1="148" x2="138" y2="328" stroke="#CBD5E1" stroke-width="2.5"/>
     <line x1="206" y1="148" x2="206" y2="328" stroke="#CBD5E1" stroke-width="2.5"/>
     <rect x="86" y="195" width="125" height="34" rx="6" fill="#0F172A" opacity="0.88"/>
-    <text x="148" y="218" font-family="'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="16" fill="#FFD200" text-anchor="middle" letter-spacing="2">NOTIGAS</text>
+    <!-- Simbolo de reciclaje: a 16px se lee mejor que un wordmark -->
+    <g transform="translate(148 212) scale(0.52)">
+      <path d="M-11 -46 L11 -46 L11 -20 L27 -20 L0 12 L-27 -20 L-11 -20 Z" fill="#4ADE80" transform="rotate(0)"/>
+      <path d="M-11 -46 L11 -46 L11 -20 L27 -20 L0 12 L-27 -20 L-11 -20 Z" fill="#22C55E" transform="rotate(120)"/>
+      <path d="M-11 -46 L11 -46 L11 -20 L27 -20 L0 12 L-27 -20 L-11 -20 Z" fill="#86EFAC" transform="rotate(240)"/>
+    </g>
 
     <path d="M 260 140 L 370 140 Q 405 142 418 175 L 442 245 Q 446 258 446 275 L 446 332 Q 446 338 440 338 L 260 338 Z" fill="url(#cab_${uid})" stroke="${d}" stroke-width="3"/>
 
@@ -770,7 +775,7 @@
   window.actualizarFaviconCamion = actualizarFaviconCamion;
 
   function restaurarFaviconDefault() {
-    const defaultHref = "icons/camion_reciclaje.svg?v=143";
+    const defaultHref = "icons/camion_reciclaje.svg?v=144";
     const favEl = document.getElementById('dynamicFavicon') || document.querySelector("link[rel*='icon']");
     if (favEl) {
       favEl.type = "image/svg+xml";

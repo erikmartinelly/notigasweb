@@ -19,8 +19,8 @@ Engineered with **Vanilla JavaScript**, **Supabase PostgreSQL with PostGIS**, an
 ## 🚀 Key Features
 
 * **Real-Time Interactive Map:** Live synchronized visualization for neighbors and drivers. Material posts generate geolocated map markers, while collection trucks transmit live GPS telemetry as they navigate neighborhood streets.
-* **Two Operation Types, One Map:** Every catalog entry is either `recogida` (a driver comes to you) or `compra` (a driver brings it to you), and the map badge shows which one applies.
-* **Map Signage:** A permanent map banner explains what the colored markers mean, so the map is readable without prior instruction.
+* **Two Operation Types, One Map:** Every catalog entry is either `recogida` (a driver comes to you) or `compra` (a driver brings it to you). Two entry buttons on the main view, `PEDIR RECICLADOR` and `PEDIR COMPRAS`, fix the type before the form opens, so the category list only ever offers the categories that belong to that flow.
+* **Map Signage:** A collapsible panel on the right, under the zoom control, opens with "¿Qué puedes hacer aquí?" and lists the colored markers split by `recogida` and `compra`, so the map is readable without prior instruction.
 * **Spatial Demand Radar:** When zoomed out on the map (`zoom <= 14`), requests and density clusters emit radiating sonar radar waves. When zoomed in, registered users see free requests only as 50 m uncertainty areas; exact coordinates are revealed only to the assigned driver.
 * **Instant WebSocket Sync (Supabase Realtime):** Sub-second updates for request statuses, markers, and active trucks without requiring page refreshes.
 * **Dual User Roles:**
@@ -125,7 +125,7 @@ cd notigasweb
 
 ### 2. Configure Database & Backend (Supabase)
 * Create a new project at [Supabase](https://supabase.com/).
-* **Canonical deployment:** apply every file in `supabase/migrations/` in ascending order using the project migration workflow. The remote migration history must match Git. The current recycling catalog lives in `supabase/migrations/20260926090000_bolivia_catalogo_reciclaje.sql`.
+* **Canonical deployment:** apply every file in `supabase/migrations/` in ascending order using the project migration workflow. The remote migration history must match Git. A migration file must never be deleted or moved once applied, because the CLI tracks state by version number; revert a schema change with a new migration instead. The current recycling catalog lives in `supabase/migrations/20260926090000_bolivia_catalogo_reciclaje.sql`.
 * `supabase/full_production_schema.sql` is intentionally deprecated and aborts if executed; it must never be used for production, staging, recovery, or a fresh install.
 * Configure `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` as environment variables in the hosting runtime. `server.js` builds `/runtime-config.js` from those variables on each request; the static `runtime-config.js` file in the repository is a security placeholder with no credentials and will fail explicitly if loaded by a pure Apache deployment. A publishable/anon key is intentionally public and remains constrained by RLS; never configure or commit `SUPABASE_SERVICE_ROLE_KEY` in this app.
 * Payment details do not belong in the platform. Do not commit any beneficiary, wallet, or bank data.
@@ -152,9 +152,12 @@ The product contracts are enforced by standalone Python guards, so they can run 
 pip install esprima
 python scripts/check_bolivia_reciclaje_catalogo.py   # canonical catalog and Bolivia contract
 python scripts/check_estructura_html.py               # HTML nesting, manifest, CSS, brand strings
-python scripts/parse_js.py                            # parse all 25 js/ modules for syntax errors
-python scripts/test_guard_estructura.py               # proves the structure guard really fails when it should
+python scripts/parse_js.py                            # parse all js/ modules for syntax errors
 ```
+
+`npm test` chains every guard. The final step, `scripts/test_db_integration.js`, needs real
+browser credentials in `SUPABASE_URL` / `SUPABASE_PUBLISHABLE_KEY`; without them it aborts by
+design, and CI skips it when the secrets are absent.
 
 ### 6. Production Deployment (Hostinger)
 1. Enable SSL/HTTPS on your custom domain in Hostinger.

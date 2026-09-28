@@ -111,11 +111,11 @@
 
   <link rel="manifest" href="manifest.json">
 
-  <link id="dynamicFavicon" rel="icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=143"/>
+  <link id="dynamicFavicon" rel="icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=144"/>
 
-  <link rel="icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=143"/>
+  <link rel="icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=144"/>
 
-  <link rel="shortcut icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=143"/>
+  <link rel="shortcut icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=144"/>
 
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
@@ -137,7 +137,7 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="styles/main.css?v=143">
+  <link rel="stylesheet" href="styles/main.css?v=144">
 
   <!-- SERVICIOS EXTERNOS -->
 
@@ -232,19 +232,21 @@
 
       <div id="map"></div>
 
-      <!-- LETRERO CENTRAL DEL MAPA: explica qué publica cada casa y qué lleva el camión -->
-      <section class="mapa-letrero" id="mapaLetrero" aria-label="Leyenda del mapa de reciclaje">
+      <!-- LETRERO CENTRAL DEL MAPA: colapsado por defecto. Explica qué publica
+           cada casa (reciclaje) y qué te llevan (compras). Vive a la derecha,
+           debajo del zoom, para no tapar el mapa. -->
+      <section class="mapa-letrero" id="mapaLetrero" data-abierto="false" aria-label="Qué puedes hacer en NOTIGAS">
         <button type="button" class="mapa-letrero__toggle" id="mapaLetreroToggle"
-                aria-expanded="true" aria-controls="mapaLetreroBody">
+                aria-expanded="false" aria-controls="mapaLetreroBody">
           <span class="mapa-letrero__punto" aria-hidden="true"></span>
-          <span class="mapa-letrero__titulo">♻️ Material cerca de ti</span>
+          <span class="mapa-letrero__titulo">¿Qué puedes hacer aquí?</span>
           <i class="fa-solid fa-chevron-up mapa-letrero__flecha" aria-hidden="true"></i>
         </button>
 
         <div class="mapa-letrero__body" id="mapaLetreroBody">
           <p class="mapa-letrero__texto">
-            Cada casa publica lo que tiene. <strong>RECOGER</strong> es material que
-            recogemos de tu domicilio; <strong>PEDIDO</strong> es un producto que te llevamos.
+            Elige <strong>PEDIR RECICLADOR</strong> si tienes material en casa y vienes a
+            buscarlo, o <strong>PEDIR COMPRAS</strong> si necesitas que te llevemos un producto.
           </p>
           <div class="mapa-letrero__grupo" id="mapaLetreroRecogida"></div>
           <div class="mapa-letrero__grupo" id="mapaLetreroCompra"></div>
@@ -381,17 +383,25 @@
 
         <button class="btn-cancel-order" id="btnCancelOrder" style="display: none;" ><i class="fa-solid fa-circle-xmark"></i> CANCELAR PEDIDO</button>
 
-        <button class="btn-main-order" id="btnMainOrder" >
+        <!-- DOS ACCESOS DIRECTOS: el producto separa-reciclaje del producto
+             compra. Cada boton abre la ficha con su tipo ya fijado, de modo que
+             el <select> de categorias solo ofrece las de ese tipo. -->
 
-          <span class="ng-inline-13">
+        <div class="action-row" id="orderTypeActions">
 
-            <img class="ng-inline-14" src="icons/camion_red.svg" alt="Camión NOTIGAS">
+          <button class="btn-order-tipo btn-order-tipo--reciclaje" id="btnPedirReciclador"
+                  title="Publicar material para que un recolector venga a buscarlo">
+            <i class="fa-solid fa-recycle" aria-hidden="true"></i>
+            <span>PEDIR RECICLADOR</span>
+          </button>
 
-          </span>
+          <button class="btn-order-tipo btn-order-tipo--compra" id="btnPedirCompras"
+                  title="Pedir un producto y que te lo lleven a casa">
+            <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
+            <span>PEDIR COMPRAS</span>
+          </button>
 
-          <span>🔥 HACER UN PEDIDO</span>
-
-        </button>
+        </div>
 
         <div class="action-row">
 
@@ -1782,7 +1792,7 @@
 
       <p id="tipoSolicitudAyuda"
          style="margin:0 0 12px; padding:9px 11px; border-radius:8px; background:rgba(34,197,94,0.12); border-left:3px solid #22C55E; color:#BBF7D0; font-size:12px; line-height:1.45;">
-        Publica el material que tienes en casa. Los repartidores cercanos verán tu punto en el mapa y nullptrán a recogerlo. NOTIGAS no cobra por la recogida.
+        Publica el material que tienes en casa. Los repartidores cercanos verán tu punto en el mapa y lo recogerán. NOTIGAS no cobra por la recogida.
       </p>
 
       <div class="form-group">
@@ -2890,34 +2900,34 @@
 
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3/dist/umd/supabase.min.js" integrity="sha384-l8ah+VgaWtk1mvOe9VC+OirC6qHFF4yH7l7mKRidV9MSti3E9F463bMp6ZVN4kuC" crossorigin="anonymous"></script>
 
-  <script defer src="js/notigas_bo.js?v=143"></script>
-  <script defer src="js/driver_icons.js?v=143"></script>
-  <script defer src="js/state.js?v=143"></script>
+  <script defer src="js/notigas_bo.js?v=144"></script>
+  <script defer src="js/driver_icons.js?v=144"></script>
+  <script defer src="js/state.js?v=144"></script>
 
-  <script defer src="js/ui.js?v=143"></script>
+  <script defer src="js/ui.js?v=144"></script>
 
-  <script defer src="/runtime-config.js?v=143"></script>
-  <script defer src="js/monitoring.js?v=143"></script>
-  <script defer src="js/supabase-config.js?v=143"></script>
+  <script defer src="/runtime-config.js?v=144"></script>
+  <script defer src="js/monitoring.js?v=144"></script>
+  <script defer src="js/supabase-config.js?v=144"></script>
 
-  <script defer src="js/device_security.js?v=143"></script>
-  <script defer src="js/voucher_ocr.js?v=143"></script>
+  <script defer src="js/device_security.js?v=144"></script>
+  <script defer src="js/voucher_ocr.js?v=144"></script>
 
-  <script defer src="js/auth.js?v=143"></script>
+  <script defer src="js/auth.js?v=144"></script>
 
-  <script defer src="js/vendors.js?v=143"></script>
+  <script defer src="js/vendors.js?v=144"></script>
 
-  <script defer src="js/map.js?v=143"></script>
+  <script defer src="js/map.js?v=144"></script>
 
-  <script defer src="js/map_search.js?v=143"></script>
+  <script defer src="js/map_search.js?v=144"></script>
 
-  <script defer src="js/map_gps.js?v=143"></script>
+  <script defer src="js/map_gps.js?v=144"></script>
 
-  <script defer src="js/orders.js?v=143"></script>
+  <script defer src="js/orders.js?v=144"></script>
 
-  <script defer src="js/app.js?v=143"></script>
+  <script defer src="js/app.js?v=144"></script>
 
-  <script defer src="js/events.js?v=143"></script>
+  <script defer src="js/events.js?v=144"></script>
 
 </body>
 

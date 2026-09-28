@@ -177,8 +177,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_btnCancelOrder = document.getElementById('btnCancelOrder');
     if (el_btnCancelOrder) el_btnCancelOrder.addEventListener('click', () => { safeCall('cancelarPedidoActivo'); });
 
-    const el_btnMainOrder = document.getElementById('btnMainOrder');
-    if (el_btnMainOrder) el_btnMainOrder.addEventListener('click', () => { safeCall('abrirSubmenuPedidos'); });
+    /* Los dos accesos directos por tipo de producto. Cada uno fija su tipo y
+       abre la ficha; el submenumixto queda solo para "OTRO PEDIDO". */
+    const el_btnPedirReciclador = document.getElementById('btnPedirReciclador');
+    if (el_btnPedirReciclador) el_btnPedirReciclador.addEventListener('click', () => { safeCall('iniciarPedidoPorTipo', 'recogida'); });
+
+    const el_btnPedirCompras = document.getElementById('btnPedirCompras');
+    if (el_btnPedirCompras) el_btnPedirCompras.addEventListener('click', () => { safeCall('iniciarPedidoPorTipo', 'compra'); });
 
     const el_auto_event_7 = document.getElementById('auto-event-7');
     if (el_auto_event_7) el_auto_event_7.addEventListener('click', () => { safeCall('abrirSubmenuPedidos'); });

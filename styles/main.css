@@ -910,6 +910,82 @@ main {
 
 }
 
+.btn-order-tipo {
+
+  flex: 1 1 0;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 4px;
+
+  padding: 12px 8px;
+
+  border-radius: 14px;
+
+  border: 2px solid transparent;
+
+  color: #FFFFFF;
+
+  font-size: 12.5px;
+
+  font-weight: 900;
+
+  letter-spacing: 0.4px;
+
+  text-align: center;
+
+  cursor: pointer;
+
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease;
+
+}
+
+.btn-order-tipo i { font-size: 18px; line-height: 1; }
+
+.btn-order-tipo--reciclaje {
+
+  background: linear-gradient(135deg, #22C55E 0%, #15803D 100%);
+
+  border-color: #4ADE80;
+
+  box-shadow: 0 4px 18px rgba(34, 197, 94, 0.45);
+
+}
+
+.btn-order-tipo--compra {
+
+  background: linear-gradient(135deg, #0284C7 0%, #075985 100%);
+
+  border-color: #38BDF8;
+
+  box-shadow: 0 4px 18px rgba(2, 136, 209, 0.45);
+
+}
+
+.btn-order-tipo:hover,
+
+.btn-order-tipo:focus-visible {
+
+  transform: translateY(-2px);
+
+}
+
+.btn-order-tipo--reciclaje:hover,
+
+.btn-order-tipo--reciclaje:focus-visible { box-shadow: 0 8px 24px rgba(34, 197, 94, 0.6); }
+
+.btn-order-tipo--compra:hover,
+
+.btn-order-tipo--compra:focus-visible { box-shadow: 0 8px 24px rgba(2, 136, 209, 0.6); }
+
+.btn-order-tipo:active { transform: translateY(0); }
+
 .btn-confirm-order-received {
 
   width: 100%;
@@ -5881,13 +5957,15 @@ button:active, .tab-btn:active, .cat-chip:active {
 
   position: absolute;
 
-  top: 12px;
+  top: 205px;
 
-  left: 12px;
+  right: 12px;
+
+  left: auto;
 
   z-index: 1900;
 
-  width: 300px;
+  width: 268px;
 
   max-width: calc(100% - 24px);
 
@@ -6049,7 +6127,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 @media (max-width: 480px) {
 
-  .mapa-letrero { top: 8px; left: 8px; width: calc(100% - 16px); }
+  .mapa-letrero { top: 200px; right: 8px; left: 8px; width: auto; max-width: none; }
 
   .mapa-letrero__texto { font-size: 10.5px; }
 
@@ -6061,7 +6139,9 @@ button:active, .tab-btn:active, .cat-chip:active {
 
   top: 112px;
 
-  right: 12px;
+  left: 12px;
+
+  right: auto;
 
   z-index: 1900;
 
@@ -6529,9 +6609,11 @@ button:active, .tab-btn:active, .cat-chip:active {
 
   .notigas-trip-card {
 
-    top: 106px;
+    top: 250px;
 
-    right: 8px;
+    left: 8px;
+
+    right: auto;
 
     width: 214px;
 

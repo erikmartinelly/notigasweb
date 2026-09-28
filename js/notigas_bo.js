@@ -196,12 +196,12 @@
       contRecogida.textContent = '';
       contCompra.textContent = '';
 
-      contRecogida.appendChild(encabezado('Recoger en tu casa'));
+      contRecogida.appendChild(encabezado('PEDIR RECICLADOR · te lo recogemos en casa'));
       CATEGORIAS
         .filter(c => c.tipo_solicitud === 'recogida')
         .forEach(c => contRecogida.appendChild(chip(c)));
 
-      contCompra.appendChild(encabezado('Te lo llevamos'));
+      contCompra.appendChild(encabezado('PEDIR COMPRAS · te lo llevamos'));
       CATEGORIAS
         .filter(c => c.tipo_solicitud === 'compra')
         .forEach(c => contCompra.appendChild(chip(c)));

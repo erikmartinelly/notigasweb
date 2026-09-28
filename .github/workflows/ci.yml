@@ -136,6 +136,9 @@ jobs:
       - name: Verify Bolivia Recycling Catalog
         run: python3 scripts/check_bolivia_reciclaje_catalogo.py
 
+      - name: Verify Migration History Integrity
+        run: python3 scripts/check_migration_history.py
+
       - name: Verify HTML / Manifest / CSS Structure
         run: python3 scripts/check_estructura_html.py
 

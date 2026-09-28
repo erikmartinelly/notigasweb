@@ -233,9 +233,26 @@ def main() -> int:
            "Icon-192.png ya no es la garrafa vieja")
 
     # -------------------------------------------------------------- coherencia
-    ok("CACHE_NAME = 'notigas-cache-v143'" in sw, "el service worker está en v143")
+    # La version de assets se deriva de CACHE_NAME en sw.js, que es la unica
+    # fuente de verdad. Antes el 143 estaba escrito a mano aqui, asi que cada
+    # subida de version obligaba a editar el guard y era facil que se quedara
+    # desfasado. Ahora se comprueba la coherencia entre los tres archivos.
+    m_cache = re.search(r"CACHE_NAME\s*=\s*'notigas-cache-v(\d+)'", sw)
+    if not m_cache:
+        ok(False, "sw.js declara CACHE_NAME con una versión legible")
+        return
+    version = m_cache.group(1)
+    ok(True, f"el service worker está en v{version}")
+
+    # El precache del service worker no debe apuntar a una versión anterior.
+    versiones_sw = set(re.findall(r"\?v=(\d+)", sw))
+    ok(versiones_sw <= {version},
+       f"sw.js no precachea assets de otra versión ({versiones_sw or 'sin ?v='})")
+
+    # index.html debe usar exactamente una versión, y la misma que el SW.
     versiones = set(re.findall(r"\?v=(\d+)", idx))
-    ok(versiones == {"143"}, f"index.html usa una sola versión de assets ({versiones})")
+    ok(versiones == {version},
+       f"index.html usa una sola versión de assets ({versiones}, esperada v{version})")
 
     print()
     print("=" * 70)

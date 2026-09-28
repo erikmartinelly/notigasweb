@@ -944,7 +944,7 @@ function checkActiveOrderStatus() {
 
   const btnCancel = document.getElementById('btnCancelOrder');
   const btnReceived = document.getElementById('btnConfirmOrderReceived');
-  const btnMain = document.getElementById('btnMainOrder');
+  const orderTypeActions = document.getElementById('orderTypeActions');
   const tripCard = document.getElementById('notigasTripCard');
   const buyerActions = document.getElementById('buyerFloatingActions');
 
@@ -959,8 +959,8 @@ function checkActiveOrderStatus() {
       if (estado === 'entregado' || estado === 'cancelado') {
         AppState.set('activeOrder', null);
       } else {
-        // MODO PEDIDO ACTIVO: Fijar firmemente "Cancelar Pedido" y tarjeta informativa
-        if (btnMain) btnMain.style.display = 'none';
+        // MODO PEDIDO ACTIVO: fijar firmemente "Cancelar Pedido" y tarjeta informativa
+        if (orderTypeActions) orderTypeActions.style.display = 'none';
         if (btnCancel) btnCancel.style.display = 'flex';
         if (buyerActions) buyerActions.style.display = 'flex';
 
@@ -992,7 +992,7 @@ function checkActiveOrderStatus() {
   // MODO NORMAL (Sin pedido activo)
   if (btnReceived) btnReceived.style.display = 'none';
   if (btnCancel) btnCancel.style.display = 'none';
-  if (btnMain && appMode === 'buyer') btnMain.style.display = 'flex';
+  if (orderTypeActions && appMode === 'buyer') orderTypeActions.style.display = 'flex';
 
   if (tripCard) tripCard.style.display = 'none';
   if (buyerActions && appMode === 'buyer') buyerActions.style.display = 'flex';
@@ -1024,6 +1024,39 @@ async function abrirSubmenuPedidos() {
   if (modalSubmenu) modalSubmenu.style.display = 'flex';
 }
 window.abrirSubmenuPedidos = abrirSubmenuPedidos;
+
+/* Acceso directo por tipo de producto. Es la entrada de los botones
+   "PEDIR RECICLADOR" y "PEDIR COMPRAS" de la vista principal: fija el tipo
+   ANTES de abrir la ficha para que el <select> de categorias ofrezca solo las
+   de ese tipo, y evita el submenu que las mezclaba todas. El tipo real lo
+   re-deriva el servidor desde la categoria elegida. */
+async function iniciarPedidoPorTipo(tipo) {
+  const userId = (typeof getAuthenticatedUserId === 'function') ? await getAuthenticatedUserId() : null;
+  const userData = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
+  const isLoggedIn = Boolean(userId || userData?.user_id || userData?.gmail);
+
+  if (!isLoggedIn) {
+    if (typeof window.abrirModalRegistroPedido === 'function') {
+      window.abrirModalRegistroPedido();
+    }
+    return;
+  }
+
+  if (typeof window.setTipoSolicitud === 'function') {
+    window.setTipoSolicitud(tipo === 'compra' ? 'compra' : 'recogida');
+  }
+
+  /* Autocompletar el teléfono registrado, igual que al entrar por una categoría. */
+  const inputTel = document.getElementById('inputTelefonoComprador');
+  if (inputTel && !inputTel.value) {
+    const curPhone = (userData && userData.telefono) ? userData.telefono : '';
+    if (curPhone) inputTel.value = curPhone;
+  }
+
+  const modalPedido = document.getElementById('modalPedido');
+  if (modalPedido) modalPedido.style.display = 'flex';
+}
+window.iniciarPedidoPorTipo = iniciarPedidoPorTipo;
 
 function closeSubmenuModal() {
   const modalSubmenu = document.getElementById('modalSubmenu');
@@ -1161,7 +1194,7 @@ function setTipoSolicitud(tipo) {
 
   if (ayuda) {
     if (esRecogida) {
-      ayuda.textContent = 'Publica el material que tienes en casa. Los repartidores cercanos verán tu punto en el mapa y nullptrán a recogerlo. NOTIGAS no cobra por la recogida.';
+      ayuda.textContent = 'Publica el material que tienes en casa. Los repartidores cercanos verán tu punto en el mapa y lo recogerán. NOTIGAS no cobra por la recogida.';
       ayuda.style.background = 'rgba(34,197,94,0.12)';
       ayuda.style.borderLeftColor = '#22C55E';
       ayuda.style.color = '#BBF7D0';
@@ -1303,7 +1336,7 @@ function confirmarPedido() {
       showToast(
         tipoSolicitud === 'recogida' ? '♻️ ¡Recogida Publicada!' : '🛒 ¡Pedido Publicado!',
         tipoSolicitud === 'recogida'
-          ? 'Los repartidores cercanos verán tu material en el mapa y nullptrán a recogerlo.'
+          ? 'Los repartidores cercanos verán tu material en el mapa y lo recogerán.'
           : 'Tu pedido ya está visible para los repartidores en el mapa.',
         'success', 5000
       );
