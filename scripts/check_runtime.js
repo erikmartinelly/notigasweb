@@ -109,12 +109,15 @@ class MockMap {
 }
 
 const mockElement = {
-  _leaflet_id: null,
-  style: {},
-  value: '',
-  innerHTML: '',
-  innerText: '',
-  textContent: '',
+      _leaflet_id: null,
+      style: {},
+      value: '',
+      innerHTML: '',
+      innerText: '',
+      textContent: '',
+      // notigas_bo.js marca los botones del letrero con dataset.wired al
+      // pintarse; sin esta propiedad el sandbox revienta al cargar el módulo.
+      dataset: {},
   classList: {
     add: () => {},
     remove: () => {},
@@ -127,8 +130,9 @@ const mockElement = {
   removeChild: () => {},
   querySelector: () => mockElement,
   querySelectorAll: () => [mockElement],
-  setAttribute: () => {},
-  removeAttribute: () => {},
+      setAttribute: () => {},
+      removeAttribute: () => {},
+      insertAdjacentHTML: () => {},
   getAttribute: (attr) => (attr === 'data-category' ? 'plastico' : null),
   getBoundingClientRect: () => ({ top: 0, left: 0, width: 100, height: 100, bottom: 100, right: 100 }),
   scrollIntoView: () => {},
@@ -136,36 +140,38 @@ const mockElement = {
   blur: () => {}
 };
 
-const createBuilder = () => {
-  const builder = {
-    select: () => builder,
-    insert: () => builder,
-    upsert: () => builder,
-    update: () => builder,
-    delete: () => builder,
-    gte: () => builder,
-    lte: () => builder,
-    gt: () => builder,
-    lt: () => builder,
-    eq: () => builder,
-    neq: () => builder,
-    in: () => builder,
-    is: () => builder,
-    ilike: () => builder,
-    like: () => builder,
-    order: () => builder,
-    range: () => builder,
-    limit: () => builder,
-    single: () => Promise.resolve({ data: {}, error: null }),
-    maybeSingle: () => Promise.resolve({ data: null, error: null }),
-    then: (resolve, reject) => Promise.resolve({ data: [], error: null }).then(resolve, reject),
-    catch: (reject) => Promise.resolve({ data: [], error: null }).catch(reject)
-  };
-  return builder;
-};
+const consultasMock = [];
 
-const mockSupabaseClient = {
-  from: (table) => createBuilder(),
+const createBuilder = (table) => {
+    const builder = {
+      select: () => builder,
+      insert: (payload) => { consultasMock.push({ tabla: table, payload }); return builder; },
+      upsert: () => builder,
+      update: () => builder,
+      delete: () => builder,
+      gte: () => builder,
+      lte: () => builder,
+      gt: () => builder,
+      lt: () => builder,
+      eq: () => builder,
+      ne: () => builder,
+      in: () => builder,
+      is: () => builder,
+      ilike: () => builder,
+      like: () => builder,
+      order: () => builder,
+      range: () => builder,
+      limit: () => builder,
+      single: () => Promise.resolve({ data: {}, error: null }),
+      maybeSingle: () => Promise.resolve({ data: null, error: null }),
+      then: (resolve, reject) => Promise.resolve({ data: [], error: null }).then(resolve, reject),
+      catch: (reject) => Promise.resolve({ data: [], error: null }).catch(reject)
+    };
+    return builder;
+  };
+  
+  const mockSupabaseClient = {
+    from: (table) => createBuilder(table),
   rpc: (fn, params) => Promise.resolve({ data: [], error: null }),
   channel: (name) => ({
     on: () => ({ subscribe: () => {} }),
@@ -347,6 +353,10 @@ const context = vm.createContext(sandbox);
 
 // 2. Cargar los 15 scripts en el orden exacto del frontend
 const allModules = [
+  // notigas_bo.js carga primero en index.html y define el catálogo que
+  // repuebla #selectCategoria; sin él el harness no refleja la página real.
+  'js/notigas_bo.js',
+  'js/driver_icons.js',
   'js/state.js',
   'js/ui.js',
   'js/supabase-config.js',
@@ -368,6 +378,9 @@ const allModules = [
   'js/admin_users.js'
 ];
 
+// El bloque va dentro de una IIFE asíncrona porque el flujo de "otra
+// solicitud" se verifica con await: confirmarPedido() devuelve una promesa.
+(async () => {
 try {
   console.log('📦 Evaluando y ejecutando módulos frontend:');
   for (const scriptRel of allModules) {
@@ -478,6 +491,126 @@ try {
   console.log('  ✅ Contrato anuncios_globales / avisos verificado');
   console.log('  ✅ ORDER_STATES verificado (5 estados canónicos estrictos)');
 
+  // ---------------------------------------------------------------------------
+  // "Otra solicitud": no es un pedido, es una petición para estadísticas.
+  //
+  // Se prueba el camino completo con el cliente simulado: la opción debe
+  // sobrevivir a setTipoSolicitud (que repuebla el select), el campo libre debe
+  // aparecer solo en recogida, y el envío debe acabar en solicitudes_otros con
+  // solo ciudad + detalle, sin tocar pedidos ni exigir GPS/cantidad.
+  console.log('\n💬 Verificando el flujo de "otra solicitud"...');
+
+  const win = context.window;
+  const doc = win.document;
+
+  const mkEl = (over = {}) => ({
+    value: '', textContent: '', innerHTML: '', style: {},
+    addEventListener() {}, removeEventListener() {}, focus() {},
+    insertAdjacentHTML(_pos, html) { this.innerHTML += html; },
+    querySelectorAll: () => [], querySelector: () => null,
+    getAttribute: () => null, setAttribute() {}, dataset: {},
+    classList: { add() {}, remove() {}, toggle() {}, contains: () => false },
+    ...over
+  });
+
+  const selectCategoria = mkEl();
+  const groupOtros = mkEl();
+  const inputOtros = mkEl();
+  const inputCantidad = mkEl();
+  const inputCalle = mkEl();
+  const inputDesc = mkEl();
+
+  const porId = {
+    selectCategoria,
+    groupOrderOtros: groupOtros,
+    inputOrderOtrosDetalle: inputOtros,
+    inputCantidad,
+    inputCallePrincipal: inputCalle,
+    inputOrderDescripcion: inputDesc,
+    tipoSolicitudAyuda: mkEl(),
+    labelCategoria: mkEl(),
+    labelCantidad: mkEl(),
+    btnPedidoTexto: mkEl(),
+    modalPedidoTitle: mkEl(),
+    tipoSolicitudToggle: mkEl({ querySelectorAll: () => [] })
+  };
+  const getElementByIdReal = doc.getElementById.bind(doc);
+  const queryAllReal = doc.querySelectorAll ? doc.querySelectorAll.bind(doc) : null;
+  const queryReal = doc.querySelector ? doc.querySelector.bind(doc) : null;
+  doc.getElementById = (id) => porId[id] || getElementByIdReal(id);
+  // setTipoSolicitud recorre los botones del toggle; en el DOM real existen, en
+  // el sandbox no, y sus stubs no traen dataset.
+  doc.querySelectorAll = () => [];
+  doc.querySelector = () => null;
+
+  const toasts = [];
+  const sobrescribir = (nombre, fn) => { const prev = win[nombre]; win[nombre] = fn; return () => { win[nombre] = prev; }; };
+  const restaurar = [
+    sobrescribir('showToast', (...a) => toasts.push(a[0])),
+    sobrescribir('showLoadingOverlay', () => {}),
+    sobrescribir('hideLoadingOverlay', () => {})
+  ];
+
+  win.setTipoSolicitud('recogida');
+  const opcionOtrosRecogida = /<option value="otros">/.test(selectCategoria.innerHTML);
+  console.log(`  ${opcionOtrosRecogida ? '✅' : '❌'} "otros" sigue disponible al publicar material`);
+  if (!opcionOtrosRecogida) throw new Error('setTipoSolicitud("recogida") eliminó la opción "otros".');
+
+  win.setTipoSolicitud('compra');
+  const opcionOtrosCompra = /<option value="otros">/.test(selectCategoria.innerHTML);
+  console.log(`  ${!opcionOtrosCompra ? '✅' : '❌'} "otros" no aparece al comprar`);
+  if (opcionOtrosCompra) throw new Error('"otros" no debería ofrecerse en el flujo de compra.');
+
+  win.setTipoSolicitud('recogida');
+  selectCategoria.value = 'otros';
+  win.sincronizarGrupoOtros(selectCategoria);
+  const campoVisible = groupOtros.style.display === 'block';
+  console.log(`  ${campoVisible ? '✅' : '❌'} el campo de texto libre aparece al elegir "otros"`);
+  if (!campoVisible) throw new Error('El campo de "otra solicitud" no se mostró.');
+
+  // Envío: sin cantidad, sin calle, sin descripción. Solo el texto libre.
+  inputOtros.value = '   Tapas de plastico   ';
+  inputCantidad.value = '';
+  inputCalle.value = '';
+  inputDesc.value = '';
+  consultasMock.length = 0;
+  await win.confirmarPedido();
+  await new Promise((r) => setTimeout(r, 60));
+
+  const pedido = consultasMock.find((c) => c.tabla === 'pedidos');
+  const peticion = consultasMock.find((c) => c.tabla === 'solicitudes_otros');
+  console.log(`  ${!pedido ? '✅' : '❌'} no se crea ningún pedido`);
+  if (pedido) throw new Error('"otros" llegó a crear un pedido.');
+
+  console.log(`  ${peticion ? '✅' : '❌'} la petición se guarda en solicitudes_otros`);
+  if (!peticion) throw new Error('La petición no llegó a solicitudes_otros.');
+
+  const fila = peticion.payload[0];
+  const campos = Object.keys(fila).sort().join(',');
+  console.log(`  ${campos === 'ciudad,detalle,user_id' ? '✅' : '❌'} solo guarda user_id, ciudad y detalle (${campos})`);
+  if (campos !== 'ciudad,detalle,user_id') {
+    throw new Error(`La petición guarda campos inesperados: ${campos}`);
+  }
+  console.log(`  ${fila.detalle === 'Tapas de plastico' ? '✅' : '❌'} el texto se envía recortado (${JSON.stringify(fila.detalle)})`);
+  if (fila.detalle !== 'Tapas de plastico') throw new Error('El detalle no se normalizó antes de enviarse.');
+  console.log(`  ${fila.user_id === 'test-user-id' ? '✅' : '❌'} la petición queda a nombre de quien la envía`);
+  if (fila.user_id !== 'test-user-id') throw new Error('user_id no corresponde al usuario autenticado.');
+
+  // Menos de 3 caracteres no debe tocar la base.
+  inputOtros.value = 'ab';
+  consultasMock.length = 0;
+  await win.confirmarPedido();
+  await new Promise((r) => setTimeout(r, 60));
+  const tocoLaBase = consultasMock.length > 0;
+  console.log(`  ${!tocoLaBase ? '✅' : '❌'} un texto demasiado corto no llega al servidor`);
+  if (tocoLaBase) throw new Error('Una petición inválida llegó a la base de datos.');
+
+  restaurar.forEach((fn) => fn());
+  doc.getElementById = getElementByIdReal;
+  if (queryAllReal) doc.querySelectorAll = queryAllReal;
+  if (queryReal) doc.querySelector = queryReal;
+  console.log('  ✅ Flujo de "otra solicitud" verificado (estadística, no pedido)');
+
   console.log('\n--------------------------------------------------');
   console.log(`✨ ÉXITO: Prueba de runtime completada sobre los ${allModules.length} módulos sin excepciones.\n`);
   process.exit(0);
@@ -489,3 +622,4 @@ try {
   }
   process.exit(1);
 }
+})();

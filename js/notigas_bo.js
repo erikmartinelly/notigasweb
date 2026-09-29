@@ -52,11 +52,7 @@
     { codigo: 'botellas',     etiqueta: '🥤 Botellas Plástico / Vidrio', chip: 'Botellas',  grupo: 'recolector',  icono: '🥤',  color: '#38BDF8', tipo_solicitud: 'recogida' },
     { codigo: 'organico',     etiqueta: '🌿 Orgánico Seleccionado',      chip: 'Orgánico',   grupo: 'recolector',  icono: '🌿',  color: '#84CC16', tipo_solicitud: 'recogida' },
     { codigo: 'frutas',       etiqueta: '🍎 Frutas & Verduras',         chip: 'Frutas',     grupo: 'recolector',  icono: '🍎',  color: '#EF4444', tipo_solicitud: 'recogida' },
-    { codigo: 'detergentes',  etiqueta: '🧽 Detergentes & Limpieza',     chip: 'Detergentes', grupo: 'compra',     icono: '🧽',  color: '#0EA5E9', tipo_solicitud: 'compra' },
-    { codigo: 'sal',          etiqueta: '🧂 Sal',                        chip: 'Sal',        grupo: 'compra',      icono: '🧂',  color: '#E2E8F0', tipo_solicitud: 'compra' },
-    { codigo: 'afilado',      etiqueta: '🔪 Afilado de Cuchillos',       chip: 'Afilado',    grupo: 'compra',      icono: '🔪',  color: '#A78BFA', tipo_solicitud: 'compra' },
-    { codigo: 'agua',         etiqueta: '💧 Agua Purificada 20L',        chip: 'Agua 20L',   grupo: 'distribucion', icono: '💧', color: '#60A5FA', tipo_solicitud: 'compra' },
-    { codigo: 'otros',        etiqueta: '📦 Otros Pedidos',              chip: 'Otros',      grupo: 'compra',      icono: '📦',  color: '#F472B6', tipo_solicitud: 'compra' }
+    { codigo: 'detergentes',  etiqueta: '🧽 Detergentes & Limpieza',     chip: 'Detergentes', grupo: 'compra',     icono: '🧽',  color: '#0EA5E9', tipo_solicitud: 'compra' }
   ];
 
   const CODIGOS_CATEGORIA = CATEGORIAS.map((c) => c.codigo);
@@ -64,8 +60,8 @@
   const CATEGORIAS_POR_CODIGO = CATEGORIAS.reduce((acc, c) => { acc[c.codigo] = c; return acc; }, {});
 
   /* Categorías que aparecen según el tipo de solicitud elegido. El grupo
-     "recolector" es el de las recogidas; "compra" y "distribucion" el de
-     las compras. */
+     "recolector" es el de las recogidas; "compra" agrupa los productos que
+     el recolector lleva al domicilio (hoy solo detergentes). */
   const categoriasPorTipo = (tipo) => CATEGORIAS.filter(
     (c) => (tipo === 'recogida' ? c.grupo === 'recolector' : c.grupo !== 'recolector')
   );
@@ -167,60 +163,7 @@
   window.boDateTime = formatDateTime;
     window.boWhatsappUrl = whatsappUrl;
 
-    /* LETRERO DEL MAPA ------------------------------------------------------
-       Se pinta desde CATEGORIAS para que la leyenda y los pines compartan una
-       sola fuente de verdad: si manana se agrega o cambia una categoria, el
-       letrero se actualiza solo. */
-    function pintarLetreroMapa() {
-      const panel = document.getElementById('mapaLetrero');
-      if (!panel) return;
-      const contRecogida = document.getElementById('mapaLetreroRecogida');
-      const contCompra = document.getElementById('mapaLetreroCompra');
-      if (!contRecogida || !contCompra) return;
-
-      const chip = (cat) => {
-        const el = document.createElement('span');
-        el.className = 'mapa-letrero__chip';
-        el.style.color = cat.color;
-        el.textContent = cat.icono + ' ' + cat.etiqueta;
-        return el;
-      };
-
-      const encabezado = (texto) => {
-        const h = document.createElement('p');
-        h.className = 'mapa-letrero__etiqueta-grupo';
-        h.textContent = texto;
-        return h;
-      };
-
-      contRecogida.textContent = '';
-      contCompra.textContent = '';
-
-      contRecogida.appendChild(encabezado('Recoger en tu casa'));
-      CATEGORIAS
-        .filter(c => c.tipo_solicitud === 'recogida')
-        .forEach(c => contRecogida.appendChild(chip(c)));
-
-      contCompra.appendChild(encabezado('Te lo llevamos'));
-      CATEGORIAS
-        .filter(c => c.tipo_solicitud === 'compra')
-        .forEach(c => contCompra.appendChild(chip(c)));
-
-      const btn = document.getElementById('mapaLetreroToggle');
-      if (btn && !btn.dataset.wired) {
-        btn.dataset.wired = '1';
-        btn.addEventListener('click', () => {
-          const abierto = panel.dataset.abierto !== 'false';
-          panel.dataset.abierto = abierto ? 'false' : 'true';
-          btn.setAttribute('aria-expanded', abierto ? 'false' : 'true');
-        });
-      }
-    }
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', pintarLetreroMapa, { once: true });
-    } else {
-      pintarLetreroMapa();
-    }
-    window.pintarLetreroMapa = pintarLetreroMapa;
+    /* Ya no hay letrero sobre el mapa: tapaba la vista y la lista de categorías
+       vive en el submenú de pedidos, junto al botón de pedir. Los pines siguen
+       usando CATEGORIAS para su icono, asi que la fuente de verdad no cambia. */
   })();

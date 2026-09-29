@@ -10,9 +10,9 @@
 
   <title>NOTIGAS: Noticias de Generadores de residuos seleccionados - NOTIGAS</title>
 
-  <meta name="description" content="NOTIGAS - Bolivia 🇧🇴 | 🗑️ Generadores de residuos | ♻️ Reciclaje | 🚛 Repartidores | 💧 Agua | 🧴 Detergentes | 🧂 Sal | 🔪 Afilado">
+  <meta name="description" content="NOTIGAS - Bolivia 🇧🇴 | 🗑️ Generadores de residuos | ♻️ Reciclaje | 🚛 Repartidores | 🧴 Detergentes">
 
-  <meta name="keywords" content="notigas, bolivia, recoger plastico, recoger papel carton, recoger chatarra, recoger botellas, recoger organico, reciclar cochabamba, camion de reciclaje, compra de agua, detergentes, sal, afilado de cuchillos, mapa repartidores, cochabamba, la paz, santa cruz">
+  <meta name="keywords" content="notigas, bolivia, recoger plastico, recoger papel carton, recoger chatarra, recoger botellas, recoger organico, reciclar cochabamba, camion de reciclaje, detergentes y productos de limpieza, mapa repartidores, cochabamba, la paz, santa cruz">
 
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
 
@@ -41,7 +41,7 @@
 
   <meta property="og:title" content="NOTIGAS: Noticias de Generadores de residuos seleccionados - NOTIGAS">
 
-  <meta property="og:description" content="NOTIGAS - Bolivia 🇧🇴 | 🗑️ Generadores de residuos | ♻️ Reciclaje | 🚛 Repartidores | 💧 Agua | 🧴 Detergentes | 🧂 Sal | 🔪 Afilado">
+  <meta property="og:description" content="NOTIGAS - Bolivia 🇧🇴 | 🗑️ Generadores de residuos | ♻️ Reciclaje | 🚛 Repartidores | 🧴 Detergentes">
 
   <meta property="og:image" content="https://www.notigas.com/icons/Icon-512.png">
 
@@ -49,7 +49,7 @@
 
   <meta property="twitter:title" content="NOTIGAS: Noticias de Generadores de residuos seleccionados - NOTIGAS">
 
-  <meta property="twitter:description" content="NOTIGAS - Bolivia 🇧🇴 | 🗑️ Generadores de residuos | ♻️ Reciclaje | 🚛 Repartidores | 💧 Agua | 🧴 Detergentes | 🧂 Sal | 🔪 Afilado">
+  <meta property="twitter:description" content="NOTIGAS - Bolivia 🇧🇴 | 🗑️ Generadores de residuos | ♻️ Reciclaje | 🚛 Repartidores | 🧴 Detergentes">
 
   <meta property="twitter:image" content="https://www.notigas.com/icons/Icon-512.png">
 
@@ -73,7 +73,7 @@
 
     "browserRequirements": "Requires JavaScript. Requires HTML5.",
 
-      "description": "Plataforma de geolocalización en tiempo real para conectar a vecinos que publican material reciclable con repartidores que lo recogen, y para pedir agua, detergentes, sal y afilado en Bolivia.",
+      "description": "Plataforma de geolocalización en tiempo real para conectar a vecinos que publican material reciclable con repartidores que lo recogen, y para pedir detergentes y productos de limpieza en Bolivia.",
 
     "areaServed": {
 
@@ -111,11 +111,11 @@
 
   <link rel="manifest" href="manifest.json">
 
-  <link id="dynamicFavicon" rel="icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=143"/>
+  <link id="dynamicFavicon" rel="icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=146"/>
 
-  <link rel="icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=143"/>
+  <link rel="icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=146"/>
 
-  <link rel="shortcut icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=143"/>
+  <link rel="shortcut icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=146"/>
 
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
@@ -137,7 +137,7 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="styles/main.css?v=143">
+  <link rel="stylesheet" href="styles/main.css?v=146">
 
   <!-- SERVICIOS EXTERNOS -->
 
@@ -231,25 +231,6 @@
     <div class="tab-content active" id="tab0">
 
       <div id="map"></div>
-
-      <!-- LETRERO CENTRAL DEL MAPA: explica qué publica cada casa y qué lleva el camión -->
-      <section class="mapa-letrero" id="mapaLetrero" aria-label="Leyenda del mapa de reciclaje">
-        <button type="button" class="mapa-letrero__toggle" id="mapaLetreroToggle"
-                aria-expanded="true" aria-controls="mapaLetreroBody">
-          <span class="mapa-letrero__punto" aria-hidden="true"></span>
-          <span class="mapa-letrero__titulo">♻️ Material cerca de ti</span>
-          <i class="fa-solid fa-chevron-up mapa-letrero__flecha" aria-hidden="true"></i>
-        </button>
-
-        <div class="mapa-letrero__body" id="mapaLetreroBody">
-          <p class="mapa-letrero__texto">
-            Cada casa publica lo que tiene. <strong>RECOGER</strong> es material que
-            recogemos de tu domicilio; <strong>PEDIDO</strong> es un producto que te llevamos.
-          </p>
-          <div class="mapa-letrero__grupo" id="mapaLetreroRecogida"></div>
-          <div class="mapa-letrero__grupo" id="mapaLetreroCompra"></div>
-        </div>
-      </section>
 
       <!-- Aviso lateral del pedido activo, sincronizado con Supabase -->
 
@@ -389,13 +370,13 @@
 
           </span>
 
-          <span>🔥 HACER UN PEDIDO</span>
+          <span>🔥 PEDIR RECOJO DE RECICLABLES</span>
 
         </button>
 
         <div class="action-row">
 
-          <button class="btn-panic" id="auto-event-7" title="Hacer otro pedido en otro rubro"><i class="fa-solid fa-cart-plus"></i> OTRO PEDIDO</button>
+          <button class="btn-panic" id="auto-event-7" title="Pedir detergentes y productos de limpieza"><i class="fa-solid fa-cart-plus"></i> PEDIR DETERGENTES</button>
 
           <button class="btn-gps-center" id="auto-event-9" title="Re-centrar mi ubicación en el mapa"><i class="fa-solid fa-crosshairs"></i> MI UBICACIÓN</button>
 
@@ -470,14 +451,6 @@
         <button class="cat-chip"  id="auto-event-17" >🍎 Frutas & Verduras</button>
 
         <button class="cat-chip"  id="auto-event-18" >🧽 Detergentes & Limpieza</button>
-
-        <button class="cat-chip"  id="auto-event-92" >🧂 Sal</button>
-
-        <button class="cat-chip"  id="auto-event-93" >🔪 Afilado de Cuchillos</button>
-
-        <button class="cat-chip"  id="auto-event-14" >💧 Agua Purificada 20L</button>
-
-        <button class="cat-chip"  id="auto-event-20" >📦 Otros Pedidos</button>
 
       </div>
 
@@ -912,14 +885,6 @@
           <option value="frutas">🍎 Frutas & Verduras</option>
 
           <option value="detergentes">🧽 Detergentes & Limpieza</option>
-
-          <option value="sal">🧂 Sal</option>
-
-          <option value="afilado">🔪 Afilado de Cuchillos</option>
-
-          <option value="agua">💧 Agua Purificada 20L</option>
-
-          <option value="otros">📦 Otros Pedidos</option>
 
         </select>
 
@@ -1702,38 +1667,6 @@
 
         </div>
 
-        <div class="submenu-card"  id="auto-event-96" >
-
-          <i class="fa-solid fa-mortar-pestle ng-inline-86"></i>
-
-          <span class="submenu-title">🧂 Sal</span>
-
-        </div>
-
-        <div class="submenu-card"  id="auto-event-97" >
-
-          <i class="fa-solid fa-scissors ng-inline-86"></i>
-
-          <span class="submenu-title">🔪 Afilado de Cuchillos</span>
-
-        </div>
-
-        <div class="submenu-card"  id="auto-event-40" >
-
-          <i class="fa-solid fa-bottle-water ng-inline-83"></i>
-
-          <span class="submenu-title">💧 Agua Purificada 20L</span>
-
-        </div>
-
-        <div class="submenu-card"  id="auto-event-46" >
-
-          <i class="fa-solid fa-box-open ng-inline-88"></i>
-
-          <span class="submenu-title">📦 Otros Encargos</span>
-
-        </div>
-
       </div>
 
     </div>
@@ -1805,13 +1738,7 @@
 
           <option value="detergentes">🧽 Detergentes & Limpieza</option>
 
-          <option value="sal">🧂 Sal</option>
-
-          <option value="afilado">🔪 Afilado de Cuchillos</option>
-
-          <option value="agua">💧 Agua Purificada 20L</option>
-
-          <option value="otros">📦 Otros Pedidos</option>
+          <option value="otros">💬 Otra solicitud (cuéntanos qué necesitas)</option>
 
         </select>
 
@@ -1819,9 +1746,11 @@
 
       <div class="form-group" id="groupOrderOtros" style="display: none;">
 
-        <label>¿Qué tipo de vendedor necesitas?:</label>
+        <label for="inputOrderOtrosDetalle">¿Qué te gustaría que recojamos o llevemos?</label>
 
-        <input type="text" id="inputOrderOtrosDetalle" placeholder="Ej: hielo, pan, abarrotes...">
+        <input type="text" id="inputOrderOtrosDetalle" maxlength="200" placeholder="Ej: tapas, carton, botellas rotas">
+
+        <p class="form-hint">Lo anotamos como petición para estudiar qué materiales necesita la comunidad. Esto no crea un pedido.</p>
 
       </div>
 
@@ -2890,34 +2819,34 @@
 
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3/dist/umd/supabase.min.js" integrity="sha384-l8ah+VgaWtk1mvOe9VC+OirC6qHFF4yH7l7mKRidV9MSti3E9F463bMp6ZVN4kuC" crossorigin="anonymous"></script>
 
-  <script defer src="js/notigas_bo.js?v=143"></script>
-  <script defer src="js/driver_icons.js?v=143"></script>
-  <script defer src="js/state.js?v=143"></script>
+  <script defer src="js/notigas_bo.js?v=146"></script>
+  <script defer src="js/driver_icons.js?v=146"></script>
+  <script defer src="js/state.js?v=146"></script>
 
-  <script defer src="js/ui.js?v=143"></script>
+  <script defer src="js/ui.js?v=146"></script>
 
-  <script defer src="/runtime-config.js?v=143"></script>
-  <script defer src="js/monitoring.js?v=143"></script>
-  <script defer src="js/supabase-config.js?v=143"></script>
+  <script defer src="/runtime-config.js?v=146"></script>
+  <script defer src="js/monitoring.js?v=146"></script>
+  <script defer src="js/supabase-config.js?v=146"></script>
 
-  <script defer src="js/device_security.js?v=143"></script>
-  <script defer src="js/voucher_ocr.js?v=143"></script>
+  <script defer src="js/device_security.js?v=146"></script>
+  <script defer src="js/voucher_ocr.js?v=146"></script>
 
-  <script defer src="js/auth.js?v=143"></script>
+  <script defer src="js/auth.js?v=146"></script>
 
-  <script defer src="js/vendors.js?v=143"></script>
+  <script defer src="js/vendors.js?v=146"></script>
 
-  <script defer src="js/map.js?v=143"></script>
+  <script defer src="js/map.js?v=146"></script>
 
-  <script defer src="js/map_search.js?v=143"></script>
+  <script defer src="js/map_search.js?v=146"></script>
 
-  <script defer src="js/map_gps.js?v=143"></script>
+  <script defer src="js/map_gps.js?v=146"></script>
 
-  <script defer src="js/orders.js?v=143"></script>
+  <script defer src="js/orders.js?v=146"></script>
 
-  <script defer src="js/app.js?v=143"></script>
+  <script defer src="js/app.js?v=146"></script>
 
-  <script defer src="js/events.js?v=143"></script>
+  <script defer src="js/events.js?v=146"></script>
 
 </body>
 

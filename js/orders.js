@@ -1150,7 +1150,16 @@ function setTipoSolicitud(tipo) {
     sel.innerHTML = lista
       .map((c) => '<option value="' + c.codigo + '">' + c.etiqueta + '</option>')
       .join('');
+    // "otros" no es una categoria: es la peticion libre que alimenta la
+    // estadistica de demanda. Como no esta en el catalogo, hay que reañadirla
+    // cada vez que se repuebla el select, y solo tiene sentido al publicar
+    // material (recogida), no al comprar.
+    if (esRecogida) {
+      sel.insertAdjacentHTML('beforeend',
+        '<option value="otros">💬 Otra solicitud (cuéntanos qué necesitas)</option>');
+    }
     if (lista.some((c) => c.codigo === previo)) sel.value = previo;
+    sincronizarGrupoOtros(sel);
   }
 
   const ayuda = document.getElementById('tipoSolicitudAyuda');
@@ -1161,7 +1170,7 @@ function setTipoSolicitud(tipo) {
 
   if (ayuda) {
     if (esRecogida) {
-      ayuda.textContent = 'Publica el material que tienes en casa. Los repartidores cercanos verán tu punto en el mapa y nullptrán a recogerlo. NOTIGAS no cobra por la recogida.';
+      ayuda.textContent = 'Publica el material que tienes en casa. Los repartidores cercanos verrán tu punto en el mapa y lo vendrán a recogerlo. NOTIGAS no cobra por la recogida.';
       ayuda.style.background = 'rgba(34,197,94,0.12)';
       ayuda.style.borderLeftColor = '#22C55E';
       ayuda.style.color = '#BBF7D0';
@@ -1179,11 +1188,26 @@ function setTipoSolicitud(tipo) {
   if (btnTxt) btnTxt.textContent = esRecogida ? 'Publicar Recogida' : 'Confirmar y Solicitar en Mapa Vivo';
   if (title) title.textContent = esRecogida ? '♻️ Solicitar Recogida de Material' : '🛒 Ficha de Compra';
 
-  const groupOtros = document.getElementById('groupOrderOtros');
-  if (groupOtros && sel) groupOtros.style.display = (sel.value === 'otros') ? 'block' : 'none';
+  sincronizarGrupoOtros(sel);
 }
 window.setTipoSolicitud = setTipoSolicitud;
 window.tipoSolicitudActual = () => tipoSolicitudActual;
+
+// Muestra u oculta el campo de texto libre segun la categoria elegida. Vive
+// aqui porque orders.js es quien repuebla el select; events.js lo llama
+// desde el listener de 'change' para que las dos rutas no se separen.
+function sincronizarGrupoOtros(sel) {
+  const select = sel || document.getElementById('selectCategoria');
+  const groupOtros = document.getElementById('groupOrderOtros');
+  if (!groupOtros) return;
+  const esOtros = !!select && select.value === 'otros';
+  groupOtros.style.display = esOtros ? 'block' : 'none';
+  if (!esOtros) {
+    const input = document.getElementById('inputOrderOtrosDetalle');
+    if (input) input.value = '';
+  }
+}
+window.sincronizarGrupoOtros = sincronizarGrupoOtros;
 
 function confirmarPedido() {
   if (typeof window.verificarPermisoOperarEnCiudad === 'function' && !window.verificarPermisoOperarEnCiudad('crear un pedido')) {
@@ -1206,6 +1230,67 @@ function confirmarPedido() {
   const calle = inputCalle ? inputCalle.value.trim() : '';
   const telefono = inputTel ? inputTel.value.trim() : '';
   const descripcion = (categoria === 'otros' && inputOtros ? inputOtros.value.trim() : (inputDesc ? inputDesc.value.trim() : ''));
+
+  /* "Otra solicitud" no es una categoria de pedido: no hay recolector que la
+     atienda todavia. Se registra como peticion para leer la statistica de que
+     pide la gente, asi que sale del flujo de pedidos y no exige GPS, cantidad
+     ni direccion. */
+  if (categoria === 'otros') {
+    if (descripcion.length < 3) {
+      showToast('💬 Cuéntanos qué necesitas', 'Escribe al menos 3 caracteres para que anotemos tu petición.', 'warning', 4000);
+      if (inputOtros) inputOtros.focus();
+      return;
+    }
+
+    if (!window.supabaseClient) {
+      showToast('Error', 'No hay conexión con el servidor.', 'error', 3000);
+      return;
+    }
+
+    showLoadingOverlay('Registrando tu petición...');
+
+    const ciudadActual = (typeof AppState !== 'undefined' && AppState.get('city')) ? AppState.get('city') : (window.selectedCity || 'cochabamba');
+
+    getAuthenticatedUserId().then(async (userId) => {
+      if (!userId) {
+        hideLoadingOverlay();
+        showToast('Error', 'Debes estar autenticado para enviar una petición.', 'error', 3000);
+        return;
+      }
+
+      /* Sin .select(): la tabla no concede lectura, asi que el servidor solo
+         confirma que la peticion entro. */
+      const { error } = await window.supabaseClient
+        .from('solicitudes_otros')
+        .insert([{
+          user_id: userId,
+          ciudad: ciudadActual,
+          detalle: descripcion
+        }]);
+
+      hideLoadingOverlay();
+
+      if (error) {
+        console.error('Error registrando la solicitud:', error);
+        showToast('Error', error.message || 'No se pudo registrar tu petición.', 'error', 4000);
+        return;
+      }
+
+      if (inputOtros) inputOtros.value = '';
+      closePedidoModal();
+      showToast(
+        '💬 ¡Petición anotada!',
+        'Gracias por contarnos. La guardamos para ver qué materiales pide la comunidad y sumarlos al catálogo.',
+        'success', 5000
+      );
+    }).catch((err) => {
+      hideLoadingOverlay();
+      console.error('Error inesperado en la solicitud:', err);
+      showToast('Error', 'No se pudo registrar tu petición.', 'error', 3000);
+    });
+
+    return;
+  }
 
   if (!cantidad) {
     if (typeof showToast === 'function') {
@@ -1303,7 +1388,7 @@ function confirmarPedido() {
       showToast(
         tipoSolicitud === 'recogida' ? '♻️ ¡Recogida Publicada!' : '🛒 ¡Pedido Publicado!',
         tipoSolicitud === 'recogida'
-          ? 'Los repartidores cercanos verán tu material en el mapa y nullptrán a recogerlo.'
+          ? 'Los repartidores cercanos verrán tu material en el mapa y lo vendrán a recogerlo.'
           : 'Tu pedido ya está visible para los repartidores en el mapa.',
         'success', 5000
       );

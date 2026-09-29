@@ -117,6 +117,8 @@ def main() -> int:
 
     # ------------------------------------------------------------------- HTML
     html = (RAIZ / "index.html").read_text(encoding="utf-8")
+    css = (RAIZ / "styles/main.css").read_text(encoding="utf-8")
+    bo = (RAIZ / "js/notigas_bo.js").read_text(encoding="utf-8")
     ok(len(html) > 10000, "index.html tiene contenido")
 
     # Anidamiento real, no una cuenta con regex.
@@ -182,11 +184,11 @@ def main() -> int:
     cierra = len(re.findall(r"</section>", html, re.I))
     ok(abre == cierra, f"los <section> balancean (abren {abre}, cierran {cierra})")
 
-    # el letrero del mapa debe estar dentro del mapa, no despues
-    i_letrero = html.find('id="mapaLetrero"')
-    i_trip = html.find('id="notigasTripCard"')
-    ok(0 < i_letrero < i_trip, "el letrero del mapa precede al panel de pedido")
-
+    # El letrero del mapa se elimino: tapaba la visualizacion y repetia la lista
+    # de categorias, que ya vive en el submenu de pedidos. No debe volver.
+    ok('id="mapaLetrero"' not in html, "el letrero del mapa ya no esta en la pagina")
+    ok('mapa-letrero' not in css, "no queda CSS huerfano del letrero del mapa")
+    ok('pintarLetreroMapa' not in bo, "no queda JS huerfano que pintara el letrero")
     # ------------------------------------------------------- cadenas obligatorias
     # El usuario fijo texto de marca. Si alguien lo reescribe (por ejemplo al
     # limpiar copy viejo) la pagina sigue funcionando pero pierde el texto
@@ -194,8 +196,7 @@ def main() -> int:
     TITULO = "NOTIGAS: Noticias de Generadores de residuos seleccionados - NOTIGAS"
     DESCRIPCION = (
         "NOTIGAS - Bolivia \U0001F1E7\U0001F1F4 | \U0001F5D1\uFE0F Generadores de residuos"
-        " | \u267B\uFE0F Reciclaje | \U0001F69B Repartidores | \U0001F4A7 Agua"
-        " | \U0001F9F4 Detergentes | \U0001F9C2 Sal | \U0001F52A Afilado"
+        " | \u267B\uFE0F Reciclaje | \U0001F69B Repartidores | \U0001F9F4 Detergentes"
     )
     m = re.search(r"<title>(.*?)</title>", html, re.S)
     ok(m is not None and m.group(1).strip() == TITULO,
@@ -241,11 +242,8 @@ def main() -> int:
            + (f" (queda {encontrado.group(0)!r})" if encontrado else ""))
 
     # -------------------------------------------------------------------- CSS
-    css = (RAIZ / "styles/main.css").read_text(encoding="utf-8")
     n = css.count("{") - css.count("}")
     ok(n == 0, f"main.css balancea las llaves (diferencia {n})")
-    ok(".mapa-letrero" in css, "main.css define el estilo del letrero")
-    ok(".mapa-letrero__chip" in css, "main.css define los chips del letrero")
 
     print()
     print("=" * 70)

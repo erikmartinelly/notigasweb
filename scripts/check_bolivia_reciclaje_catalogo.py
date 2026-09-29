@@ -20,6 +20,11 @@ FALLO: List[str] = []
 OK = 0
 
 # Orden canonico acordado. El indice importa: es el orden de la UI.
+#
+# NOTIGAS es un servicio de reciclaje. Del grupo de compras solo sobreviven los
+# detergentes: sal, afilado y agua se retiraron como categorias de pedido, y
+# "otros" ya no es un pedido sino una peticion que solo alimenta estadisticas
+# (public.solicitudes_otros), por eso no aparece en el catalogo.
 CATALOGO_ESPERADO = [
     ("plastico", "recogida"),
     ("papel", "recogida"),
@@ -28,11 +33,12 @@ CATALOGO_ESPERADO = [
     ("organico", "recogida"),
     ("frutas", "recogida"),
     ("detergentes", "compra"),
-    ("sal", "compra"),
-    ("afilado", "compra"),
-    ("agua", "compra"),
-    ("otros", "compra"),
 ]
+
+# Categorias de compra retiradas. Deben seguir ausentes del cliente y del
+# catalogo activo del servidor, aunque el historico las conserve para que los
+# pedidos ya publicados sigan siendo validos.
+COMPRAS_RETIRADAS = ("sal", "afilado", "agua", "otros")
 
 # Palabras que no deben aparecer como categoria viva en superficies de producto.
 LEGADO_PROHIBIDO = ("garrafa", "garrafas_agotadas", "gas glp", "carbon", "carbón", "leña", "lena")
@@ -122,13 +128,15 @@ def main() -> int:
     auth = leer("js/auth.js")
     admin = leer("js/admin.js")
     icons = leer("js/driver_icons.js")
+    ev = leer("js/events.js")
     sw = leer("sw.js")
     man = leer("manifest.json")
     css = leer("styles/main.css")
 
     # ---------------------------------------------------------------- catalogo
     cat = bloque_categorias(bo)
-    ok(len(cat) == 11, f"el catalogo tiene 11 categorias (tiene {len(cat)})")
+    ok(len(cat) == len(CATALOGO_ESPERADO),
+       f"el catalogo tiene {len(CATALOGO_ESPERADO)} categorias (tiene {len(cat)})")
     ok(cat == CATALOGO_ESPERADO, "el orden y tipo de cada categoria son los canónicos")
     if cat != CATALOGO_ESPERADO:
         print(f"          esperado: {CATALOGO_ESPERADO}")
@@ -137,7 +145,11 @@ def main() -> int:
     for cod, tipo in CATALOGO_ESPERADO:
         ok(cod in bo, f"el catalogo declara '{cod}'")
     ok(len([c for c, t in cat if t == "recogida"]) == 6, "seis categorias son recogida")
-    ok(len([c for c, t in cat if t == "compra"]) == 5, "cinco categorias son compra")
+    ok(len([c for c, t in cat if t == "compra"]) == 1, "solo los detergentes siguen siendo compra")
+
+    # Las compras retiradas no pueden reaparecer como categoria de pedido.
+    for cod in COMPRAS_RETIRADAS:
+        ok(cod not in [c for c, _ in cat], f"'{cod}' ya no es una categoria de pedido")
 
     # el servidor debe derivar el mismo tipo
     migs = sorted((RAIZ / "supabase/migrations").glob("*.sql"))
@@ -192,11 +204,21 @@ def main() -> int:
        "la columna real garrafas_agotadas no se renombro")
 
     # ----------------------------------------------------------------- letrero
-    ok('id="mapaLetrero"' in idx, "el mapa tiene letrero central")
-    ok('id="mapaLetreroRecogida"' in idx and 'id="mapaLetreroCompra"' in idx,
-       "el letrero separa recogida y compra")
-    ok("pintarLetreroMapa" in bo, "el letrero se pinta desde el catálogo canónico")
-    ok(".mapa-letrero" in css, "existe el estilo del letrero del mapa")
+    # El letrero flotante del mapa se elimino: tapaba el mapa y duplicaba la
+    # lista de categorias. El catalogo sigue siendo la fuente de verdad de los
+    # pines, pero ya no se pinta ningun panel encima del mapa.
+    ok('id="mapaLetrero"' not in idx, "el mapa ya no lleva el letrero encima")
+    ok("mapa-letrero" not in css, "no queda estilo del letrero del mapa")
+    ok("pintarLetreroMapa" not in bo, "no queda codigo que pintara el letrero")
+    ok("mapaLetrero" not in mapa, "el mapa no busca un letrero que ya no existe")
+
+    # ---------------------------------------------------------------------- SEO
+    # Agua, sal y afilado se retiraron del catalogo, asi que tampoco pueden
+    # ofrecerse en lo que Google y las redes leen de la pagina.
+    head = idx.split("</head>")[0]
+    for servicio in ("agua", "sal", "afilado"):
+        ok(servicio not in head.lower(),
+           f"el <head> no ofrece '{servicio}'")
 
     # ------------------------------------------------------------------- pines
     ok("ICONOS_FONTAWESOME_POR_CATEGORIA" in mapa,
@@ -233,9 +255,72 @@ def main() -> int:
            "Icon-192.png ya no es la garrafa vieja")
 
     # -------------------------------------------------------------- coherencia
-    ok("CACHE_NAME = 'notigas-cache-v143'" in sw, "el service worker está en v143")
+    # La version se lee del propio service worker, no se fija aqui: subirla a
+    # mano obliga a recordarla en dos ficheros y ya se ha olvidado una vez.
+    m_cache = re.search(r"CACHE_NAME\s*=\s*'notigas-cache-v(\d+)'", sw)
+    ok(bool(m_cache), "el service worker declara su cache con version")
+    version_sw = m_cache.group(1) if m_cache else None
     versiones = set(re.findall(r"\?v=(\d+)", idx))
-    ok(versiones == {"143"}, f"index.html usa una sola versión de assets ({versiones})")
+    ok(versiones == {version_sw},
+       f"index.html usa la misma versión de assets que el service worker "
+       f"(sw={version_sw}, html={versiones})")
+
+    # ------------------------------------------------- "otros" es estadistica
+    # "otros" se mostraba como categoria de pedido. Ahora es una peticion libre:
+    # el vecino escribe que necesita y se guarda en solicitudes_otros, sin
+    # generar pedido. Debe seguir siendo una opcion del formulario, pero jamas
+    # una categoria del catalogo.
+    sel_otros = re.search(r'<select id="selectCategoria".*?</select>', idx, re.S)
+    cuerpo_sel = sel_otros.group(0) if sel_otros else ""
+    ok(bool(cuerpo_sel), "existe el select de categoría del formulario")
+    ok('value="otros"' in cuerpo_sel, "el formulario ofrece la opción 'otros'")
+    ok('id="groupOrderOtros"' in idx, "hay campo para describir la petición")
+    ok('id="inputOrderOtrosDetalle"' in idx, "el campo de la petición tiene input")
+    ok("solicitudes_otros" in ordj,
+       "la petición se guarda en solicitudes_otros y no en pedidos")
+    ok(re.search(r"categoria\s*===\s*'otros'[\s\S]{0,4000}?solicitudes_otros", ordj) is not None,
+       "el envío de 'otros' se desvía a solicitudes_otros antes de crear el pedido")
+    ok("solicitudes_otros" in sql, "la tabla solicitudes_otros tiene migración")
+    ok(re.search(r"revoke all on public\.solicitudes_otros from anon, authenticated", sql) is not None,
+       "el texto libre no se puede leer desde el cliente")
+    ok(re.search(r"revoke all on public\.solicitudes_otros_stats from anon, authenticated", sql) is not None,
+       "la vista agregada tampoco se consulta directo desde el cliente")
+    ok(re.search(r"alter view public\.solicitudes_otros_stats set \(security_invoker = false\)", sql, re.I) is not None,
+       "la vista se fija como security definer (CREATE OR REPLACE no lo hace solo)")
+    ok(re.search(r"create policy[^;]*for insert[^;]*with check \(\s*user_id = \(auth\.uid\(\)\)::text\s*\)", sql, re.S) is not None,
+       "solo se puede insertar una petición propia")
+
+    # setTipoSolicitud() repuebla el select desde el catalogo, asi que la opcion
+    # "otros" se perderia en cuanto se cambia el tipo. Tiene que reañadirse, y
+    # solo cuando se publica material: comprar no admite peticiones.
+    reinserta = re.search(r"function setTipoSolicitud.*?\n\}", ordj, re.S)
+    cuerpo_ts = reinserta.group(0) if reinserta else ""
+    ok(bool(cuerpo_ts), "existe setTipoSolicitud")
+    ok("value=\\\"otros\\\"" in cuerpo_ts or "value=\"otros\"" in cuerpo_ts,
+       "setTipoSolicitud vuelve a añadir la opción 'otros'")
+    ok(re.search(r"if\s*\(\s*esRecogida\s*\)[^;]*insertAdjacentHTML", cuerpo_ts, re.S) is not None,
+       "la opción 'otros' solo aparece al publicar material")
+    ok("window.sincronizarGrupoOtros = sincronizarGrupoOtros" in ordj,
+       "la visibilidad del campo libre se expone para el listener de events.js")
+    ok("safeCall('sincronizarGrupoOtros'" in ev,
+       "events.js reutiliza el helper en vez de duplicar la lógica")
+    ok(ordj.count("groupOrderOtros") <= 3,
+       "el campo libre se controla desde un solo sitio")
+
+    # El panel corre con la clave publicable, o sea con el JWT del admin, asi que
+    # la RLS de la tabla le aplica igual. El conteo tiene que pasar por un RPC que
+    # valide el rol, o el panel veria la vista vacia.
+    ok("rpc_admin_solicitudes_otros_stats" in sql, "el panel tiene RPC para leer las estadísticas")
+    ok(re.search(r"function public\.rpc_admin_solicitudes_otros_stats.*?security definer", sql, re.S) is not None,
+       "el RPC de estadísticas es security definer")
+    ok(re.search(r"function public\.rpc_admin_solicitudes_otros_stats.*?if not public\.is_admin_email\(\) then", sql, re.S | re.I) is not None,
+       "el RPC de estadísticas exige rol de administrador")
+    ok(re.search(r"revoke all on function public\.rpc_admin_solicitudes_otros_stats\(integer\) from anon", sql, re.I) is not None,
+       "el RPC de estadísticas no se expone a visitantes")
+    ok(re.search(r"revoke all on (?!function )public\.rpc_admin_", sql, re.I) is None,
+       "el RPC se revoca como función, no como tabla")
+    ok("create_order" not in sql.split("solicitudes_otros")[-1].split("$$")[0],
+       "una petición no gasta la cuota de pedidos")
 
     print()
     print("=" * 70)

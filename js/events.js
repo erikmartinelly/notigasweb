@@ -228,18 +228,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_auto_event_18 = document.getElementById('auto-event-18');
     if (el_auto_event_18) el_auto_event_18.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'detergentes', e.currentTarget); });
 
-    const el_auto_event_92 = document.getElementById('auto-event-92');
-    if (el_auto_event_92) el_auto_event_92.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'sal', e.currentTarget); });
-
-    const el_auto_event_93 = document.getElementById('auto-event-93');
-    if (el_auto_event_93) el_auto_event_93.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'afilado', e.currentTarget); });
-
-    const el_auto_event_14 = document.getElementById('auto-event-14');
-    if (el_auto_event_14) el_auto_event_14.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'agua', e.currentTarget); });
-
-    const el_auto_event_20 = document.getElementById('auto-event-20');
-    if (el_auto_event_20) el_auto_event_20.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'otros', e.currentTarget); });
-
     const el_auto_event_21 = document.getElementById('auto-event-21');
     if (el_auto_event_21) el_auto_event_21.addEventListener('click', () => { safeCall('abrirModalNuevoPost'); });
 
@@ -434,27 +422,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_auto_event_44 = document.getElementById('auto-event-44');
     if (el_auto_event_44) el_auto_event_44.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'detergentes'); });
 
-    const el_auto_event_96 = document.getElementById('auto-event-96');
-    if (el_auto_event_96) el_auto_event_96.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'sal'); });
-
-    const el_auto_event_97 = document.getElementById('auto-event-97');
-    if (el_auto_event_97) el_auto_event_97.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'afilado'); });
-
-    const el_auto_event_40 = document.getElementById('auto-event-40');
-    if (el_auto_event_40) el_auto_event_40.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'agua'); });
-
-    const el_auto_event_46 = document.getElementById('auto-event-46');
-    if (el_auto_event_46) el_auto_event_46.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'otros'); });
-
     const el_auto_event_47 = document.getElementById('auto-event-47');
     if (el_auto_event_47) el_auto_event_47.addEventListener('click', () => { safeCall('closePedidoModal'); });
 
+    // Al elegir "otra solicitud" aparece el campo de texto libre. La logica
+    // vive en orders.js (sincronizarGrupoOtros) para no duplicarla.
     const el_selectCategoria = document.getElementById('selectCategoria');
     if (el_selectCategoria) el_selectCategoria.addEventListener('change', (event) => {
-      const groupOtros = document.getElementById('groupOrderOtros');
-      if (groupOtros) {
-        groupOtros.style.display = (event.target.value === 'otros') ? 'block' : 'none';
-      }
+      safeCall('sincronizarGrupoOtros', event.target);
     });
 
     // Selector de tipo de solicitud: "recogida" (la casa ofrece material)
