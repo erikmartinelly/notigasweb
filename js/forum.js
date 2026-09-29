@@ -26,7 +26,7 @@ async function renderForumFeed() {
     const userData = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
     const ciudadSelector = document.getElementById('selectCiudadCapital')?.value;
     
-    // Si es comprador o recolector registrado, mostrar estrictamente los avisos de su ciudad registrada
+    // Si es comprador o repartidor registrado, mostrar estrictamente los avisos de su ciudad registrada
     // Si es administrador o visitante, usar la ciudad seleccionada en la cabecera
     let rawCity = 'cochabamba';
     if (!isAdmin && userData && userData.ciudad) {
@@ -709,7 +709,7 @@ async function agregarComentarioPost() {
     } else {
       const u = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
       if (u) {
-        if (u.role === 'repartidor') authorName = u.nombre || 'Recolector de la zona';
+        if (u.role === 'repartidor') authorName = u.nombre || 'Repartidor de la zona';
         else {
           const nom = (u.nombre || '').trim();
           const ape = (u.apellido || '').trim();

@@ -2,8 +2,8 @@
 /**
  * NOTIGAS - Cross-Role RLS & View Visibility Test
  * Validates that:
- * 1. Buyer A creates an order -> Recolector B can view it in pedidos_publicos.
- * 2. Recolector B broadcasts GPS -> Buyer A can view the truck in rutas_repartidores_publicas.
+ * 1. Buyer A creates an order -> Driver B can view it in pedidos_publicos.
+ * 2. Driver B broadcasts GPS -> Buyer A can view the truck in rutas_repartidores_publicas.
  * 3. Buyer C querying pedidos_publicos receives privacy-masked coordinates and NULL contact info.
  * 4. rutas_repartidores_publicas returns all columns expected by map.js.
  */
@@ -11,9 +11,9 @@
 const fs = require('fs');
 const path = require('path');
 
-console.log('🧪 Iniciando prueba de seguridad RLS Multi-Rol (Comprador vs Recolector)...\n');
+console.log('🧪 Iniciando prueba de seguridad RLS Multi-Rol (Comprador vs Repartidor)...\n');
 
-// Simular clientes para Comprador A, Recolector B y Comprador C
+// Simular clientes para Comprador A, Repartidor B y Comprador C
 const mockOrdersDB = [
   {
     id: 'order-buyer-a',
@@ -37,8 +37,8 @@ const mockOrdersDB = [
 
 const mockTrucksDB = [
   {
-    id: 'truck-recolector-b',
-    user_id: 'user-recolector-b',
+    id: 'truck-driver-b',
+    user_id: 'user-driver-b',
     distribuidor_nombre: 'Distribuidora Cochabamba Gas',
     categoria: 'plastico',
     titulo: 'Camión #4',
@@ -54,7 +54,7 @@ const mockTrucksDB = [
 ];
 
 // 1. La vista de pedidos solo devuelve pedidos propios. Los pedidos disponibles
-// se entregan exclusivamente por order_public_radar a recolectores activos.
+// se entregan exclusivamente por order_public_radar a repartidores activos.
 function queryPedidosPublicos(callingUserId) {
   return mockOrdersDB
     .filter(p => (p.estado === 'pendiente' || p.estado === 'visto') && p.user_id === callingUserId)
@@ -82,14 +82,14 @@ function queryPedidosPublicos(callingUserId) {
 }
 
 // 2. Simulación de Vista rutas_repartidores_publicas (Security Definer logic)
-function queryRutasRecolectoresPublicas(callingUserId) {
+function queryRutasRepartidoresPublicas(callingUserId) {
   const tenMinsAgo = Date.now() - 10 * 60000;
   return mockTrucksDB
     .filter(r => new Date(r.last_active).getTime() >= tenMinsAgo)
     .map(r => ({
       id: r.id,
       user_id: r.user_id === callingUserId ? r.user_id : null,
-      distribuidor_nombre: r.distribuidor_nombre || 'Recolector NOTIGAS',
+      distribuidor_nombre: r.distribuidor_nombre || 'Repartidor NOTIGAS',
       categoria: r.categoria || 'plastico',
       titulo: r.titulo || 'En ruta de distribución',
       ciudad: r.ciudad,
@@ -105,15 +105,15 @@ function queryRutasRecolectoresPublicas(callingUserId) {
 
 // EJECUCIÓN DE PRUEBAS DE SEGURIDAD
 try {
-  console.log('1️⃣ Verificando que el recolector no lee pedidos ajenos por pedidos_publicos...');
-  const recolectorOrders = queryPedidosPublicos('user-recolector-b');
-  if (recolectorOrders.length !== 0) {
-    throw new Error('FALLO: Recolector recibió un pedido ajeno por la vista genérica.');
+  console.log('1️⃣ Verificando que el repartidor no lee pedidos ajenos por pedidos_publicos...');
+  const driverOrders = queryPedidosPublicos('user-driver-b');
+  if (driverOrders.length !== 0) {
+    throw new Error('FALLO: Repartidor recibió un pedido ajeno por la vista genérica.');
   }
-  console.log('   ✅ Recolector no recibe pedidos ajenos por pedidos_publicos; usa el radar seguro.');
+  console.log('   ✅ Repartidor no recibe pedidos ajenos por pedidos_publicos; usa el radar seguro.');
 
-  console.log('\n2️⃣ Verificando que Comprador A puede ver el camión transmitido por Recolector B...');
-  const buyerTrucks = queryRutasRecolectoresPublicas('user-buyer-a');
+  console.log('\n2️⃣ Verificando que Comprador A puede ver el camión transmitido por Repartidor B...');
+  const buyerTrucks = queryRutasRepartidoresPublicas('user-buyer-a');
   if (buyerTrucks.length === 0) {
     throw new Error('FALLO: Comprador A no pudo ver el camión en rutas_repartidores_publicas.');
   }

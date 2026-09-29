@@ -7,12 +7,12 @@
       <stop offset="100%" stop-color="#020617"/>
     </radialGradient>
 
-    <!-- Gradiente Verde Reciclaje: el camion de NOTIGAS es verde -->
+    <!-- Gradiente Rojo Toyota Dina -->
     <linearGradient id="dinaRed" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#4ADE80"/>
-      <stop offset="35%" stop-color="#22C55E"/>
-      <stop offset="70%" stop-color="#15803D"/>
-      <stop offset="100%" stop-color="#14532D"/>
+      <stop offset="0%" stop-color="#FF334B"/>
+      <stop offset="35%" stop-color="#E11D48"/>
+      <stop offset="70%" stop-color="#BE123C"/>
+      <stop offset="100%" stop-color="#881337"/>
     </linearGradient>
 
     <linearGradient id="cargoGrad" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -22,9 +22,9 @@
     </linearGradient>
 
     <linearGradient id="goldBadge" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ECFDF5"/>
-      <stop offset="50%" stop-color="#D1FAE5"/>
-      <stop offset="100%" stop-color="#A7F3D0"/>
+      <stop offset="0%" stop-color="#FDE047"/>
+      <stop offset="50%" stop-color="#EAB308"/>
+      <stop offset="100%" stop-color="#CA8A04"/>
     </linearGradient>
 
     <linearGradient id="windshieldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -41,10 +41,10 @@
 
   <!-- Fondo redondeado estilo App Icon moderno -->
   <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
-  <rect width="504" height="504" x="4" y="4" rx="108" fill="none" stroke="#FFFFFF" stroke-width="6"/>
+  <rect width="504" height="504" x="4" y="4" rx="108" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="6"/>
 
   <!-- Anillo exterior con brillo sutil -->
-  <circle cx="256" cy="245" r="215" fill="none" stroke="rgba(34,197,94,0.22)" stroke-width="2"/>
+  <circle cx="256" cy="245" r="215" fill="none" stroke="rgba(225,29,72,0.22)" stroke-width="2"/>
 
   <!-- SOMBRA INFERIOR DEL CAMION TOYOTA DINA -->
   <ellipse cx="256" cy="390" rx="195" ry="24" fill="rgba(0,0,0,0.55)"/>
@@ -58,13 +58,9 @@
     <line x1="206" y1="148" x2="206" y2="328" stroke="#CBD5E1" stroke-width="2.5"/>
     <rect x="78" y="153" width="189" height="12" rx="3" fill="#94A3B8" opacity="0.3"/>
 
-    <!-- SIMBOLO DE RECICLAJE en la carrocería: a 16px el logotipo se lee
-         mejor que cualquier wordmark -->
-    <g transform="translate(150 214) scale(1.15)">
-      <path d="M-11 -46 L11 -46 L11 -20 L27 -20 L0 12 L-27 -20 L-11 -20 Z" fill="#15803D" transform="rotate(0)"/>
-      <path d="M-11 -46 L11 -46 L11 -20 L27 -20 L0 12 L-27 -20 L-11 -20 Z" transform="rotate(120)"/>
-      <path d="M-11 -46 L11 -46 L11 -20 L27 -20 L0 12 L-27 -20 L-11 -20 Z" transform="rotate(240)"/>
-    </g>
+    <!-- LOGO O LETRERO LATERAL EN CARROCERÍA: NOTIGAS -->
+    <rect x="86" y="195" width="125" height="34" rx="6" fill="#0F172A" opacity="0.85"/>
+    <text x="148" y="218" font-family="'Segoe UI', Roboto, Montserrat, sans-serif" font-weight="900" font-size="16" fill="#FFD200" text-anchor="middle" letter-spacing="2">NOTIGAS</text>
 
     <!-- CABINA FRONTAL ROJA TIPO TOYOTA DINA (CHATO / CAB-OVER) -->
     <!-- Estructura principal de la cabina -->
@@ -76,7 +72,7 @@
              L 446 332 
              Q 446 338 440 338 
              L 260 338 Z" 
-          fill="url(#dinaRed)" stroke="#14532D" stroke-width="3"/>
+          fill="url(#dinaRed)" stroke="#991B1B" stroke-width="3"/>
 
     <!-- PARABRISAS INCLINADO AERODINÁMICO DEL TOYOTA DINA -->
     <path d="M 285 152 
@@ -101,14 +97,14 @@
     <line x1="416" y1="184" x2="424" y2="184" stroke="#0F172A" stroke-width="3"/>
 
     <!-- LÍNEA DE CARROCERÍA Y MANIJA DE PUERTA -->
-    <line x1="265" y1="248" x2="350" y2="248" stroke="#14532D" stroke-width="2"/>
+    <line x1="265" y1="248" x2="350" y2="248" stroke="#7F1D1D" stroke-width="2"/>
     <rect x="312" y="252" width="22" height="6" rx="2" fill="#F8FAFC" stroke="#0F172A" stroke-width="1"/>
 
-    <!-- INSIGNIA CON LA LETRA "R" DE RECOLECTOR EN LA PUERTA -->
+    <!-- INSIGNIA ORO CON LA LETRA INICIAL "D" DE DISTRIBUIDOR EN LA PUERTA -->
     <circle cx="340" cy="286" r="30" fill="url(#goldBadge)" stroke="#FFFFFF" stroke-width="3.5" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.4))"/>
-    <circle cx="340" cy="286" r="25" fill="none" stroke="#15803D" stroke-width="1.5" opacity="0.6"/>
-    <!-- LA "R" DE RECOLECTOR -->
-    <text x="340" y="299" font-family="'Impact', 'Arial Black', sans-serif" font-weight="900" font-size="34" fill="#14532D" text-anchor="middle">R</text>
+    <circle cx="340" cy="286" r="25" fill="none" stroke="#78350F" stroke-width="1.5" opacity="0.6"/>
+    <!-- LA "R" MODERNA Y PODEROSA -->
+    <text x="340" y="299" font-family="'Impact', 'Arial Black', sans-serif" font-weight="900" font-size="34" fill="#0F172A" text-anchor="middle">D</text>
 
     <!-- PARRILLA FRONTAL TOYOTA DINA -->
     <path d="M 426 270 L 444 270 L 444 316 L 426 316 Z" fill="#0F172A"/>
@@ -142,9 +138,9 @@
     </g>
   </g>
 
-  <!-- TEXTO INFERIOR ELEGANTE: RECOLECTOR -->
+  <!-- TEXTO INFERIOR ELEGANTE: REPARTIDOR -->
   <g filter="drop-shadow(0 4px 10px rgba(0,0,0,0.8))">
-    <rect x="60" y="420" width="392" height="52" rx="26" fill="rgba(22, 163, 74, 0.95)" stroke="#86EFAC" stroke-width="2.5"/>
-    <text x="256" y="455" font-family="'Segoe UI', Roboto, Montserrat, sans-serif" font-weight="900" font-size="22" fill="#FFFFFF" text-anchor="middle" letter-spacing="3">RECOLECTOR</text>
+    <rect x="60" y="420" width="392" height="52" rx="26" fill="rgba(225, 29, 72, 0.95)" stroke="#FDA4AF" stroke-width="2.5">
+    <text x="256" y="455" font-family="'Segoe UI', Roboto, Montserrat, sans-serif" font-weight="900" font-size="22" fill="#FFFFFF" text-anchor="middle" letter-spacing="3">DISTRIBUIDOR</text>
   </g>
 </svg>

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Contrato del recolector en NOTIGAS Bolivia: servicios (sal, afilado) y
+Contrato del repartidor en NOTIGAS Bolivia: servicios (sal, afilado) y
 suspension por estado de servicio. Sin planes, sin credito, sin prueba gratis.
 
-Reemplaza a scripts/test_recolector_plans.js, que era un test vacio: definia
+Reemplaza a scripts/test_driver_plans.js, que era un test vacio: definia
 constantes de la epoca Peru (100 pedidos gratis, S/0.20 por balon, ciclos de
 S/50) y luego assertaba esas constantes contra si mismo, sin leer nunca el
 codigo de la aplicacion. Siempre pasaba, y su mensaje de salida imprimia una
@@ -75,30 +75,30 @@ def citas(texto, patron, limite=3):
 
 
 print("=" * 68)
-print("CONTRATO DEL RECOLECTOR: servicios y suspension (Bolivia, sin cobros)")
+print("CONTRATO DEL REPARTIDOR: servicios y suspension (Bolivia, sin cobros)")
 print("=" * 68)
 
 index_html = leer("index.html")
 auth_js = leer("js/auth.js")
-reglas_js = leer("js/recolector_order_rules.js")
-pagos_js = leer("js/recolector_payments.js")
+reglas_js = leer("js/driver_order_rules.js")
+pagos_js = leer("js/driver_payments.js")
 
 # --- 1. Checkboxes de servicios -----------------------------------------
-print("\n[1/5] Servicios ofrecidos en el registro del recolector")
-cbs = re.findall(r'name="recolectorServicio"[^>]*value="([^"]+)"', index_html)
+print("\n[1/5] Servicios ofrecidos en el registro del repartidor")
+cbs = re.findall(r'name="driverServicio"[^>]*value="([^"]+)"', index_html)
 revisar("index.html declara checkboxes de servicios", len(cbs) >= 2, "encontrados: %s" % cbs)
 revisar("el servicio 'Compra de sal' esta disponible", "Compra de sal" in cbs)
 revisar("el servicio 'Afilado de cuchillos' esta disponible", "Afilado de cuchillos" in cbs)
 revisar(
-    "el checkbox oculto inputRecolectorServicios existe",
-    'id="inputRecolectorServicios"' in index_html,
+    "el checkbox oculto inputDriverServicios existe",
+    'id="inputDriverServicios"' in index_html,
 )
 
 # --- 2. El registro captura y propaga los servicios ----------------------
 print("\n[2/5] El registro captura y propaga los servicios")
 revisar(
     "auth.js lee los servicios marcados",
-    re.search(r"function\s+leerServiciosRecolector", auth_js),
+    re.search(r"function\s+leerServiciosRepartidor", auth_js),
 )
 revisar(
     "auth.js fusiona los servicios con los productos base",
@@ -109,19 +109,19 @@ revisar(
     re.search(r"function\s+aplicarServiciosEnFormulario", auth_js),
 )
 revisar(
-    "los servicios se guardan en el campo oculto inputRecolectorServicios",
-    re.search(r"inputRecolectorServicios[\s\S]{0,200}?\.(value|=)\s*", auth_js)
-    or re.search(r"getElementById\(['\"]inputRecolectorServicios['\"]\)", auth_js),
+    "los servicios se guardan en el campo oculto inputDriverServicios",
+    re.search(r"inputDriverServicios[\s\S]{0,200}?\.(value|=)\s*", auth_js)
+    or re.search(r"getElementById\(['\"]inputDriverServicios['\"]\)", auth_js),
 )
 
 # --- 3. Suspension por estado de servicio --------------------------------
-print("\n[3/5] Suspension y bloqueo del recolector")
+print("\n[3/5] Suspension y bloqueo del repartidor")
 revisar(
-    "las reglas leen estado_servicio del recolector",
+    "las reglas leen estado_servicio del repartidor",
     re.search(r"estado_servicio", reglas_js),
 )
 revisar(
-    "las reglas impiden operar a un recolector baneado",
+    "las reglas impiden operar a un repartidor baneado",
     re.search(r"bloqueado", reglas_js),
 )
 revisar(
@@ -155,10 +155,10 @@ revisar(
 # Positivo: el saneamiento de texto peruano heredado debe existir y apuntar
 # al texto Bolivia correcto. Esto es mas valioso que el grep negativo, porque
 # la app debe tolerar que la base de datos aun contenga copy de la era Peru.
-# Vive en js/recolector_order_rules.js -> normalizeLegacyFinancialCopy().
+# Vive en js/driver_order_rules.js -> normalizeLegacyFinancialCopy().
 print("\n[4b] Saneamiento de texto peruano heredado (BD vieja -> Bolivia)")
 revisar(
-    "recolector_order_rules.js define normalizeLegacyFinancialCopy",
+    "driver_order_rules.js define normalizeLegacyFinancialCopy",
     "normalizeLegacyFinancialCopy" in reglas_js,
 )
 for etiqueta, texto_esperado in [
@@ -181,7 +181,7 @@ revisar(
 )
 
 # --- 5. Los pagos no forman parte del precio -----------------------------
-print("\n[5/5] El pago del recolector no altera el contrato")
+print("\n[5/5] El pago del repartidor no altera el contrato")
 revisar(
     "el panel de pagos aclara que no hay comision",
     re.search(r"no hay comis", pagos_js, re.IGNORECASE),
@@ -229,6 +229,6 @@ if fallos:
     print("=" * 68)
     sys.exit(1)
 
-print("OK: %d verificaciones. Contrato del recolector intacto." % pasos)
+print("OK: %d verificaciones. Contrato del repartidor intacto." % pasos)
 print("=" * 68)
 sys.exit(0)

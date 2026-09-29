@@ -1,8 +1,8 @@
 /* ==========================================================================
-   NOTIGAS - REGLAS OPERATIVAS DEL RECOLECTOR (BOLIVIA)
+   NOTIGAS - REGLAS OPERATIVAS DEL REPARTIDOR (BOLIVIA)
    - Sin suscripción, VIP, ventajas temporales ni comisión alguna.
    - NOTIGAS no cobra, no procesa fondos y no aplica bloqueo por monto.
-   - Los pagos se acuerdan directo entre comprador y recolector,
+   - Los pagos se acuerdan directo entre comprador y repartidor,
      en bolivianos, por QR local (Simple / Banesco QR) u otro medio local.
    - Liberar un pedido no entregado no genera ningún cobro.
    - "No entregué" registra la declaración; si el comprador confirma recepción,
@@ -24,10 +24,10 @@
     }
   }
 
-  async function liberarPedidoRecolector(orderId) {
+  async function liberarPedidoRepartidor(orderId) {
     if (!window.supabaseClient || !orderId) return;
 
-    const msg = 'Este pedido ya fue tomado por ti. Si lo liberas volverá a quedar disponible para otros recolectores. Como no fue entregado, no genera ningún cobro.';
+    const msg = 'Este pedido ya fue tomado por ti. Si lo liberas volverá a quedar disponible para otros repartidores. Como no fue entregado, no genera ningún cobro.';
 
     const execute = async () => {
       if (typeof window.showLoadingOverlay === 'function') {
@@ -37,7 +37,7 @@
       try {
         const { data, error } = await window.supabaseClient.rpc('rpc_driver_release_order', {
           p_order_id: orderId,
-          p_motivo: 'Recolector liberó un pedido no entregado'
+          p_motivo: 'Repartidor liberó un pedido no entregado'
         });
 
         if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
@@ -55,7 +55,7 @@
           4500
         );
 
-        if (typeof window.renderRecolectorOrdersList === 'function') window.renderRecolectorOrdersList();
+        if (typeof window.renderDriverOrdersList === 'function') window.renderDriverOrdersList();
         if (typeof window.cargarPedidosVecinalesEnVivo === 'function') window.cargarPedidosVecinalesEnVivo();
         if (typeof window.map !== 'undefined' && window.map?.closePopup) window.map.closePopup();
       } catch (err) {
@@ -96,7 +96,7 @@
           return;
         }
         toast('Resultado registrado', data?.message || 'Se registró que no realizaste la entrega.', 'info', 5000);
-        if (typeof window.renderRecolectorOrdersList === 'function') window.renderRecolectorOrdersList();
+        if (typeof window.renderDriverOrdersList === 'function') window.renderDriverOrdersList();
         if (typeof window.cargarPedidosVecinalesEnVivo === 'function') window.cargarPedidosVecinalesEnVivo();
       } catch (err) {
         if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
@@ -125,7 +125,7 @@
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.setAttribute('data-not-delivered-for', orderId);
-      btn.className = 'btn-action btn-recolector-not-delivered';
+      btn.className = 'btn-action btn-driver-not-delivered';
       btn.style.cssText = 'background:#475569;color:#F8FAFC;border:1px solid #64748B;padding:6px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:5px;';
       btn.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> No entregué';
       btn.title = 'Registrar que finalmente no realizaste esta entrega';
@@ -187,15 +187,15 @@
   }
 
   function normalizeLegacyOrderBanners(root = document) {
-    const banners = root.querySelectorAll?.('.recolector-plan-banner') || [];
+    const banners = root.querySelectorAll?.('.driver-plan-banner') || [];
     banners.forEach((banner) => {
       banner.innerHTML = '<strong style="color:#FFFFFF;">🇧🇴 Bolivia · Acceso gratuito sin comisión</strong> · NOTIGAS no cobra por pedido ni por generar o escanear un QR local.';
     });
   }
 
-  async function syncRecolectorCreditCard() {
+  async function syncDriverCreditCard() {
     if (!window.supabaseClient) return;
-    const card = document.querySelector('.recolector-financial-card');
+    const card = document.querySelector('.driver-financial-card');
     if (!card) return;
 
     try {
@@ -203,14 +203,14 @@
       const uid = authData?.user?.id;
       if (!uid) return;
 
-      const { data: recolector, error } = await window.supabaseClient
+      const { data: driver, error } = await window.supabaseClient
         .from('choferes_habilitados')
         .select('estado_servicio,bloqueado')
         .eq('user_id', uid)
         .maybeSingle();
-      if (error || !recolector) return;
+      if (error || !driver) return;
 
-      const suspended = Boolean(recolector.bloqueado || recolector.estado_servicio === 'baneado');
+      const suspended = Boolean(driver.bloqueado || driver.estado_servicio === 'baneado');
 
       card.innerHTML = `
         <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:6px;">
@@ -223,7 +223,7 @@
           <span>NOTIGAS no procesa fondos</span>
         </div>`;
     } catch (err) {
-      console.warn('No se pudo sincronizar el estado del recolector:', err);
+      console.warn('No se pudo sincronizar el estado del repartidor:', err);
     }
   }
 
@@ -248,9 +248,9 @@
           toast('¡Entrega confirmada! 🎉', 'Entrega registrada. Sin comisión y sin saldo pendiente. El pago se coordina directo con el comprador (QR local Simple o Banesco QR).', 'success', 5000);
         }
 
-        if (typeof window.renderRecolectorOrdersList === 'function') await window.renderRecolectorOrdersList();
+        if (typeof window.renderDriverOrdersList === 'function') await window.renderDriverOrdersList();
         if (typeof window.cargarPedidosVecinalesEnVivo === 'function') window.cargarPedidosVecinalesEnVivo();
-        await syncRecolectorCreditCard();
+        await syncDriverCreditCard();
       } catch (err) {
         if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
         toast('Error', err.message || 'No se pudo confirmar la entrega.', 'error', 5000);
@@ -268,18 +268,18 @@
   function installOrderRuntimePatch() {
     window.confirmarEntregaPedido = confirmarEntregaPedidoActual;
 
-    const original = window.renderRecolectorOrdersList;
+    const original = window.renderDriverOrdersList;
     if (typeof original === 'function' && !original.__notigasCreditContractPatched) {
       const wrapped = async function (...args) {
         const result = await original.apply(this, args);
         normalizeLegacyFinancialCopy(document);
         normalizeLegacyOrderBanners(document);
-        await syncRecolectorCreditCard();
+        await syncDriverCreditCard();
         return result;
       };
       wrapped.__notigasCreditContractPatched = true;
       wrapped.__notigasOriginal = original;
-      window.renderRecolectorOrdersList = wrapped;
+      window.renderDriverOrdersList = wrapped;
     }
   }
 
@@ -307,7 +307,7 @@
     observer.observe(document.body, { childList: true, subtree: true });
   }
 
-  async function showUnreadRecolectorNotifications() {
+  async function showUnreadDriverNotifications() {
     if (!window.supabaseClient) return;
     try {
       const { data: authData } = await window.supabaseClient.auth.getUser();
@@ -342,25 +342,25 @@
           .eq('user_id', uid);
       }
     } catch (err) {
-      console.warn('No se pudieron cargar notificaciones del recolector:', err);
+      console.warn('No se pudieron cargar notificaciones del repartidor:', err);
     }
   }
 
   async function startNotifications() {
     if (!window.supabaseClient) return;
 
-    await showUnreadRecolectorNotifications();
+    await showUnreadDriverNotifications();
 
     try {
       const { data: authData } = await window.supabaseClient.auth.getUser();
       const uid = authData?.user?.id;
       if (uid && typeof window.supabaseClient.channel === 'function' && !notificationChannel) {
         notificationChannel = window.supabaseClient
-          .channel(`recolector-order-notifications-${uid}`)
+          .channel(`driver-order-notifications-${uid}`)
           .on(
             'postgres_changes',
             { event: 'INSERT', schema: 'public', table: 'notificaciones_repartidor', filter: `user_id=eq.${uid}` },
-            () => showUnreadRecolectorNotifications()
+            () => showUnreadDriverNotifications()
           )
           .subscribe();
       }
@@ -368,14 +368,14 @@
 
     if (!pollTimer) {
       pollTimer = window.setInterval(() => {
-        if (document.visibilityState === 'visible') showUnreadRecolectorNotifications();
+        if (document.visibilityState === 'visible') showUnreadDriverNotifications();
       }, 30000);
     }
 
     if (!visibilityListenerInstalled) {
       visibilityListenerInstalled = true;
       document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') showUnreadRecolectorNotifications();
+        if (document.visibilityState === 'visible') showUnreadDriverNotifications();
       });
     }
   }
@@ -396,14 +396,14 @@
       }
 
       if (/suscribirse.*Plan PRO|3 minutos.*pedidos|1 minuto.*clientes/i.test(text)) {
-        el.textContent = 'NOTIGAS no cobra suscripción ni comisión. Los recolectores operan sin costo, sin saldos pendientes y sin bloqueos por monto.';
+        el.textContent = 'NOTIGAS no cobra suscripción ni comisión. Los repartidores operan sin costo, sin saldos pendientes y sin bloqueos por monto.';
       }
     });
     normalizeLegacyFinancialCopy(document);
   }
 
-  function normalizeRecolectorRegistrationOffer() {
-    const inputTipo = document.getElementById('inputRecolectorPlanTipo');
+  function normalizeDriverRegistrationOffer() {
+    const inputTipo = document.getElementById('inputDriverPlanTipo');
     if (inputTipo) inputTipo.value = 'sin_comision';
 
     const originalSelector = window._notigasOriginalSeleccionarPlanRegistroChofer || window.seleccionarPlanRegistroChofer;
@@ -420,7 +420,7 @@
       }
     } catch (_) {}
 
-    const grid = document.getElementById('recolectorPlanCardsGrid');
+    const grid = document.getElementById('driverPlanCardsGrid');
     if (grid) {
       grid.style.gridTemplateColumns = '1fr';
       grid.innerHTML = `
@@ -435,35 +435,35 @@
         </div>`;
     }
 
-    for (const id of ['recolectorPremiumProContent', 'recolectorPremiumPaymentSection', 'recolectorPremiumStatusBadge', 'recolectorPremiumActiveAlert', 'recolectorPremiumPendingAlert', 'cardPlanRecolectorPro', 'btnCambiarAProDesdeGratuito']) {
+    for (const id of ['driverPremiumProContent', 'driverPremiumPaymentSection', 'driverPremiumStatusBadge', 'driverPremiumActiveAlert', 'driverPremiumPendingAlert', 'cardPlanDriverPro', 'btnCambiarAProDesdeGratuito']) {
       const node = document.getElementById(id);
       if (node) node.style.display = 'none';
     }
 
-    const creditContent = document.getElementById('recolectorPremiumGratuitoContent');
+    const creditContent = document.getElementById('driverPremiumGratuitoContent');
     if (creditContent) {
       creditContent.style.display = 'block';
       creditContent.innerHTML = '<p style="margin:0;font-size:11px;color:#CBD5E1;line-height:1.5;"><strong>Sin comisión:</strong> no pagas nada por usar NOTIGAS. El pago con el comprador se realiza en bolivianos, únicamente por QR local (Simple / Banesco QR).</p>';
     }
 
-    const btnText = document.getElementById('btnRecolectorSubmitText');
-    if (btnText) btnText.textContent = 'Registrar y activar mi cuenta de recolector';
+    const btnText = document.getElementById('btnDriverSubmitText');
+    if (btnText) btnText.textContent = 'Registrar y activar mi cuenta de repartidor';
 
     normalizeLegacyPlanCopy();
   }
 
   function install() {
-    window.liberarPedidoRecolector = liberarPedidoRecolector;
+    window.liberarPedidoRepartidor = liberarPedidoRepartidor;
     window.reportarNoEntregadoPedido = reportarNoEntregadoPedido;
     installOrderRuntimePatch();
-    normalizeRecolectorRegistrationOffer();
+    normalizeDriverRegistrationOffer();
     observeOrderButtons();
     startNotifications();
     window.setTimeout(() => {
       installOrderRuntimePatch();
       normalizeLegacyFinancialCopy(document);
       normalizeLegacyOrderBanners(document);
-      syncRecolectorCreditCard();
+      syncDriverCreditCard();
     }, 0);
   }
 

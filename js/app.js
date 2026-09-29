@@ -1,25 +1,25 @@
 
-/* FUNCIÓN GLOBAL: ALTERNAR ROL DE USUARIO (COMPRADOR ⇄ RECOLECTOR) PARA ADMINISTRADOR Y PRUEBAS */
+/* FUNCIÓN GLOBAL: ALTERNAR ROL DE USUARIO (COMPRADOR ⇄ REPARTIDOR) PARA ADMINISTRADOR Y PRUEBAS */
 window.cambiarModoRolUsuario = function(targetMode) {
   const currentMode = (typeof AppState !== 'undefined' ? AppState.get('appMode') : 'buyer') || 'buyer';
-  const newMode = targetMode || (currentMode === 'recolector' ? 'buyer' : 'recolector');
+  const newMode = targetMode || (currentMode === 'driver' ? 'buyer' : 'driver');
 
   const userData = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
 
-  if (newMode === 'recolector') {
+  if (newMode === 'driver') {
     userData.role = 'repartidor';
-    if (!userData.nombre) userData.nombre = 'Recolector de Pruebas';
+    if (!userData.nombre) userData.nombre = 'Repartidor de Pruebas';
     if (!userData.telefono) userData.telefono = '70123456';
     if (!userData.categoria) userData.categoria = 'plastico';
     if (!userData.placa) userData.placa = 'TEST-01';
     if (!userData.ciudad) userData.ciudad = (AppState.get('city') || 'cochabamba');
-    userData.hasRecolectorProfile = true;
+    userData.hasDriverProfile = true;
     AppState.set('userData', userData);
 
-    if (typeof setAppMode === 'function') setAppMode('recolector', true);
+    if (typeof setAppMode === 'function') setAppMode('driver', true);
 
     if (typeof showToast === 'function') {
-      showToast('🚛 Modo Recolector Activado', 'Ahora puedes ver y tomar pedidos, gestionar tu recorrido GPS y ver pedidos en tu zona.', 'success', 4000);
+      showToast('🚛 Modo Repartidor Activado', 'Ahora puedes ver y tomar pedidos, gestionar tu recorrido GPS y ver pedidos en tu zona.', 'success', 4000);
     }
   } else {
     userData.role = 'vecino';
@@ -58,8 +58,8 @@ window.verificarPermisoOperarEnCiudad = function(accionNombre) {
 
   // Si está explorando otra ciudad distinta a la suya, bloquear la operación y sugerir editar ficha
   const getCityLabel = (key) => (window.BOLIVIA_CITIES && (window.BOLIVIA_CITIES[key]?.nombre || window.BOLIVIA_CITIES[key]?.name)) || (key ? key.toUpperCase() : 'COCHABAMBA');
-  const esRecolector = (userRole === 'repartidor' || userData.hasRecolectorProfile);
-  const tipoFicha = esRecolector ? 'repartidor' : 'comprador';
+  const esDriver = (userRole === 'repartidor' || userData.hasDriverProfile);
+  const tipoFicha = esDriver ? 'repartidor' : 'comprador';
 
   if (typeof showToast === 'function') {
     showToast(
@@ -73,9 +73,9 @@ window.verificarPermisoOperarEnCiudad = function(accionNombre) {
   }
 
   // Abrir automáticamente la edición de ficha correspondiente
-  if (esRecolector) {
-    if (typeof window.abrirFichaRecolectorEdicion === 'function') {
-      window.abrirFichaRecolectorEdicion();
+  if (esDriver) {
+    if (typeof window.abrirFichaRepartidorEdicion === 'function') {
+      window.abrirFichaRepartidorEdicion();
     }
   } else {
     if (typeof window.abrirEdicionFichaComprador === 'function') {
@@ -88,14 +88,14 @@ window.verificarPermisoOperarEnCiudad = function(accionNombre) {
 
 /* ==========================================================================
    NOTIGAS - MÓDULO PRINCIPAL DE NAVEGACIÓN,
-   FAVICON DINÁMICO POR CATEGORÍA Y MODO RECOLECTOR EN RUTA
+   FAVICON DINÁMICO POR CATEGORÍA Y MODO REPARTIDOR EN RUTA
    ========================================================================== */
 
 // FIX W-07: ORDER_EXPIRATION_MS centralizada en state.js (window.NOTIGAS.ORDER_EXPIRATION_MS)
 // Se elimina la copia local para evitar inconsistencias futuras.
 
 let currentAppMode = 'buyer';
-let isRecolectorGpsLive = true;
+let isDriverGpsLive = true;
 window.isHeatmapActive = window.isHeatmapActive || false;
 
 /* =====================================================
@@ -127,11 +127,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Service Worker registrado al final del archivo para evitar duplicado
 
-  // AUTODETECTAR Y ACTIVAR MODO SEGÚN ROL REGISTRADO (COMPRADOR VS RECOLECTOR)
+  // AUTODETECTAR Y ACTIVAR MODO SEGÚN ROL REGISTRADO (COMPRADOR VS REPARTIDOR)
   try {
     const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
     if (u.role === 'repartidor') {
-      setAppMode('recolector', false);
+      setAppMode('driver', false);
     } else {
       setAppMode('buyer', false);
     }
@@ -143,49 +143,49 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ABRE EL MODAL DE CONFIGURACIÓN MOSTRANDO LA SECCIÓN DEL ROL ACTIVO */
 function abrirConfiguracionSegunRol() {
   const buyerSection = document.getElementById('settingsBuyerSection');
-  const recolectorSection = document.getElementById('settingsRecolectorSection');
+  const driverSection = document.getElementById('settingsDriverSection');
   const titleEl = document.getElementById('settingsModalTitle');
-  const recolectorNameLabel = document.getElementById('settingsRecolectorNameLabel');
-  const buyerToRecolectorContainer = document.getElementById('buyerToRecolectorBtnContainer');
+  const driverNameLabel = document.getElementById('settingsDriverNameLabel');
+  const buyerToDriverContainer = document.getElementById('buyerToDriverBtnContainer');
 
-  let isRecolector = false;
+  let isDriver = false;
   try {
     const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
-    isRecolector = (u.role === 'repartidor');
-    if (isRecolector && recolectorNameLabel && u.nombre) {
-      recolectorNameLabel.textContent = u.nombre;
+    isDriver = (u.role === 'repartidor');
+    if (isDriver && driverNameLabel && u.nombre) {
+      driverNameLabel.textContent = u.nombre;
     }
   } catch(e){}
 
-  if (isRecolector) {
+  if (isDriver) {
     if (buyerSection) buyerSection.style.display = 'none';
-    if (recolectorSection) recolectorSection.style.display = 'block';
-    if (titleEl) titleEl.textContent = '⚙️ MENÚ Recolector';
+    if (driverSection) driverSection.style.display = 'block';
+    if (titleEl) titleEl.textContent = '⚙️ MENÚ Repartidor';
 
     // Cargar estado GPS guardado
     try {
-      const gpsVal = AppState.get('recolectorGpsLive') === 'on' ? 'on' : 'off';
-      const gpsSelect = document.getElementById('recolectorGpsLive');
+      const gpsVal = AppState.get('driverGpsLive') === 'on' ? 'on' : 'off';
+      const gpsSelect = document.getElementById('driverGpsLive');
       if (gpsSelect) gpsSelect.value = gpsVal;
     } catch(e){}
   } else {
     if (buyerSection) buyerSection.style.display = 'block';
-    if (recolectorSection) recolectorSection.style.display = 'none';
+    if (driverSection) driverSection.style.display = 'none';
     if (titleEl) titleEl.textContent = '⚙️ MENÚ';
 
-    if (buyerToRecolectorContainer) {
+    if (buyerToDriverContainer) {
       const userData = AppState.get('userData') || {};
-      const yaTieneFicha = Boolean(userData.hasRecolectorProfile || userData.placa || userData.whatsapp);
-      buyerToRecolectorContainer.innerHTML = `
-        <button type="button" id="btnRegistroRecolectoresMenu" style="width:100%; background:linear-gradient(135deg,#FF6D00,#E65100); color:white; border:none; padding:12px; border-radius:10px; font-weight:800; cursor:pointer; font-size:13px; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 12px rgba(255,109,0,0.25);">
-          <i class="fa-solid fa-truck-fast"></i> ${yaTieneFicha ? 'Volver al modo Recolector' : 'Registro Recolectores'}
+      const yaTieneFicha = Boolean(userData.hasDriverProfile || userData.placa || userData.whatsapp);
+      buyerToDriverContainer.innerHTML = `
+        <button type="button" id="btnRegistroRepartidoresMenu" style="width:100%; background:linear-gradient(135deg,#FF6D00,#E65100); color:white; border:none; padding:12px; border-radius:10px; font-weight:800; cursor:pointer; font-size:13px; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 12px rgba(255,109,0,0.25);">
+          <i class="fa-solid fa-truck-fast"></i> ${yaTieneFicha ? 'Volver al modo Repartidor' : 'Registro Repartidores'}
         </button>`;
-      const activateButton = document.getElementById('btnRegistroRecolectoresMenu');
+      const activateButton = document.getElementById('btnRegistroRepartidoresMenu');
       if (activateButton) activateButton.addEventListener('click', () => {
-        if (typeof window.abrirRegistroRecolectores === 'function') {
-          window.abrirRegistroRecolectores();
-        } else if (typeof window.migrarDatosAntiguosARecolector === 'function') {
-          window.migrarDatosAntiguosARecolector();
+        if (typeof window.abrirRegistroRepartidores === 'function') {
+          window.abrirRegistroRepartidores();
+        } else if (typeof window.migrarDatosAntiguosARepartidor === 'function') {
+          window.migrarDatosAntiguosARepartidor();
         }
       });
     }
@@ -207,86 +207,80 @@ function abrirConfiguracionSegunRol() {
   if (modal) modal.style.display = 'flex';
 }
 
-/* ABRE LA FICHA DEL RECOLECTOR EN MODO EDICIÓN (DESDE EL MENÚ CONFIG, NO DEL HEADER) */
-function abrirFichaRecolectorEdicion() {
-  // Cargar datos existentes del recolector en el formulario
+/* ABRE LA FICHA DEL REPARTIDOR EN MODO EDICIÓN (DESDE EL MENÚ CONFIG, NO DEL HEADER) */
+function abrirFichaRepartidorEdicion() {
+  // Cargar datos existentes del repartidor en el formulario
   try {
     const u = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
     const setVal = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
-    setVal('inputRecolectorNombre', u.nombre);
-    setVal('inputRecolectorTelRef', u.whatsapp);
-    setVal('inputRecolectorPlate', u.placa);
-    setVal('inputRecolectorDni', u.dni);
-    setVal('inputRecolectorCat', u.categoria);
-    setVal('inputRecolectorProductos', u.productos);
-    setVal('inputRecolectorZonas', u.zonas);
-    setVal('inputRecolectorSchedule', u.schedule);
+    setVal('inputDriverNombre', u.nombre);
+    setVal('inputDriverTelRef', u.whatsapp);
+    setVal('inputDriverPlate', u.placa);
+    setVal('inputDriverDni', u.dni);
+    setVal('inputDriverCat', u.categoria);
+    setVal('inputDriverProductos', u.productos);
+    setVal('inputDriverZonas', u.zonas);
+    setVal('inputDriverSchedule', u.schedule);
   } catch(e){}
 
   // Cambiar título a modo edición
-  const titleEl = document.getElementById('recolectorModalTitleText');
-  const subtitleEl = document.getElementById('recolectorModalSubtitle');
-  if (titleEl) titleEl.textContent = 'Editar Mi Ficha de Recolector';
+  const titleEl = document.getElementById('driverModalTitleText');
+  const subtitleEl = document.getElementById('driverModalSubtitle');
+  if (titleEl) titleEl.textContent = 'Editar Mi Ficha de Repartidor';
   if (subtitleEl) subtitleEl.textContent = 'Actualiza los datos de tu negocio. Los cambios se aplican de inmediato.';
 
   if (typeof window.inicializarColorPickerChofer === 'function') {
     window.inicializarColorPickerChofer();
   }
 
-  const modal = document.getElementById('modalRecolector');
+  const modal = document.getElementById('modalDriver');
   if (modal) modal.style.display = 'flex';
 }
 
-const abrirEdicionFichaRecolector = abrirFichaRecolectorEdicion;
+const abrirEdicionFichaRepartidor = abrirFichaRepartidorEdicion;
 
 function setAppMode(mode, refreshData = true) {
-  const normalizedMode = (mode === 'recolector' || mode === 'repartidor') ? 'recolector' : 'buyer';
+  const normalizedMode = (mode === 'driver' || mode === 'repartidor') ? 'driver' : 'buyer';
   currentAppMode = normalizedMode;
   mode = normalizedMode;
   if (typeof AppState !== 'undefined') {
     AppState.set('appMode', mode);
-    AppState.set('userRole', mode === 'recolector' ? 'repartidor' : 'vecino');
+    AppState.set('userRole', mode === 'driver' ? 'repartidor' : 'vecino');
   }
   const buyerActions = document.getElementById('buyerFloatingActions');
-  const recolectorActions = document.getElementById('recolectorFloatingActions');
-  const orderTypeActions = document.getElementById('orderTypeActions');
+  const driverActions = document.getElementById('driverFloatingActions');
   const badgeContainer = document.getElementById('headerRoleBadge');
 
   if (typeof window.actualizarIconoMarcadorUsuario === 'function') {
     window.actualizarIconoMarcadorUsuario(mode);
   }
 
-  if (mode === 'recolector') {
+  if (mode === 'driver') {
     if (buyerActions) buyerActions.style.display = 'none';
-    if (recolectorActions) recolectorActions.style.display = 'flex';
-    // PEDIR RECOJO y SUSCRIBIRME A RECARGAS cuelgan del mapa, fuera del panel
-    // de acciones del comprador, asi que hay que ocultarlos explicitamente: si no,
-    // el recolector ve los botones del vecino sobre su propio mapa.
-    if (orderTypeActions) orderTypeActions.style.display = 'none';
+    if (driverActions) driverActions.style.display = 'flex';
 
     if (badgeContainer) {
       badgeContainer.innerHTML = `
-        <button type="button" id="btnHeaderRoleToggle" data-notigas-action="switch-role" data-role-target="buyer" class="btn-role-switch-header" title="Modo Recolector activo. Haz clic para cambiar a Comprador" style="background:rgba(255,109,0,0.22); color:#FF6D00; padding:4px 8px; border-radius:8px; font-weight:900; font-size:11px; border:1.5px solid #FF6D00; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 2px 6px rgba(255,109,0,0.3);">
-          <i class="fa-solid fa-truck-fast"></i> <span>RECOLECTOR</span> <i class="fa-solid fa-repeat" style="font-size:9px; opacity:0.85;"></i>
+        <button type="button" id="btnHeaderRoleToggle" data-notigas-action="switch-role" data-role-target="buyer" class="btn-role-switch-header" title="Modo Repartidor activo. Haz clic para cambiar a Comprador" style="background:rgba(255,109,0,0.22); color:#FF6D00; padding:4px 8px; border-radius:8px; font-weight:900; font-size:11px; border:1.5px solid #FF6D00; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 2px 6px rgba(255,109,0,0.3);">
+          <i class="fa-solid fa-truck-fast"></i> <span>REPARTIDOR</span> <i class="fa-solid fa-repeat" style="font-size:9px; opacity:0.85;"></i>
         </button>
       `;
     }
 
-    actualizarEstadoBotonesRecorrido(AppState.get('recolectorGpsLive') === 'on');
-    if (typeof verificarYMostrarRecolectorGPS === 'function') verificarYMostrarRecolectorGPS();
+    actualizarEstadoBotonesRecorrido(AppState.get('driverGpsLive') === 'on');
+    if (typeof verificarYMostrarRepartidorGPS === 'function') verificarYMostrarRepartidorGPS();
     if (refreshData && typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
-    if (typeof renderRecolectorOrdersList === 'function') renderRecolectorOrdersList();
+    if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
   } else {
-    if (AppState.get('recolectorGpsLive') === 'on' && typeof window.pausarRecorridoRecolector === 'function') {
-      window.pausarRecorridoRecolector({ silent: true });
+    if (AppState.get('driverGpsLive') === 'on' && typeof window.pausarRecorridoRepartidor === 'function') {
+      window.pausarRecorridoRepartidor({ silent: true });
     }
     if (buyerActions) buyerActions.style.display = 'flex';
-    if (recolectorActions) recolectorActions.style.display = 'none';
-    if (orderTypeActions) orderTypeActions.style.display = 'flex';
+    if (driverActions) driverActions.style.display = 'none';
 
     if (badgeContainer) {
       badgeContainer.innerHTML = `
-        <button type="button" id="btnHeaderRoleToggle" data-notigas-action="switch-role" data-role-target="recolector" class="btn-role-switch-header" title="Modo Comprador activo. Haz clic para cambiar a Recolector" style="background:rgba(2,136,209,0.22); color:#38BDF8; padding:4px 8px; border-radius:8px; font-weight:900; font-size:11px; border:1.5px solid #0288D1; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 2px 6px rgba(2,136,209,0.3);">
+        <button type="button" id="btnHeaderRoleToggle" data-notigas-action="switch-role" data-role-target="driver" class="btn-role-switch-header" title="Modo Comprador activo. Haz clic para cambiar a Repartidor" style="background:rgba(2,136,209,0.22); color:#38BDF8; padding:4px 8px; border-radius:8px; font-weight:900; font-size:11px; border:1.5px solid #0288D1; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 2px 6px rgba(2,136,209,0.3);">
           <i class="fa-solid fa-basket-shopping"></i> <span>COMPRADOR</span> <i class="fa-solid fa-repeat" style="font-size:9px; opacity:0.85;"></i>
         </button>
       `;
@@ -300,17 +294,17 @@ function setAppMode(mode, refreshData = true) {
 
   // Sincronizar botones en modal de configuración
   const btnB = document.getElementById('btnSwitchModeBuyer');
-  const btnD = document.getElementById('btnSwitchModeRecolector');
+  const btnD = document.getElementById('btnSwitchModeDriver');
   const lbl = document.getElementById('lblCurrentActiveRole');
   if (btnB && btnD) {
-    if (mode === 'recolector') {
+    if (mode === 'driver') {
       btnD.style.borderColor = '#FF6D00';
       btnD.style.background = 'rgba(255,109,0,0.25)';
       btnD.style.color = '#FF6D00';
       btnB.style.borderColor = '#475569';
       btnB.style.background = '#1E293B';
       btnB.style.color = '#94A3B8';
-      if (lbl) { lbl.textContent = 'Recolector'; lbl.style.color = '#FF6D00'; }
+      if (lbl) { lbl.textContent = 'Repartidor'; lbl.style.color = '#FF6D00'; }
     } else {
       btnB.style.borderColor = '#0288D1';
       btnB.style.background = 'rgba(2,136,209,0.25)';
@@ -324,7 +318,7 @@ function setAppMode(mode, refreshData = true) {
 }
 window.setAppMode = setAppMode;
 
-window.activarMiUbicacionRecolector = function() {
+window.activarMiUbicacionRepartidor = function() {
   if (typeof currentGpsLat !== 'undefined' && typeof currentGpsLng !== 'undefined' && map) {
     map.flyTo([currentGpsLat, currentGpsLng], 16, { duration: 1.0 });
     if (typeof showToast === 'function') showToast('📍 Ubicación Centrada', 'El mapa se ha enfocado en tu posición actual.', 'info', 2000);
@@ -337,9 +331,9 @@ window.activarMiUbicacionRecolector = function() {
 };
 
 function actualizarEstadoBotonesRecorrido(isActive) {
-  const btnFollow = document.getElementById('btnRecolectorFollowMe');
-  const btnPause = document.getElementById('btnRecolectorPause');
-  const gpsSelect = document.getElementById('recolectorGpsLive');
+  const btnFollow = document.getElementById('btnDriverFollowMe');
+  const btnPause = document.getElementById('btnDriverPause');
+  const gpsSelect = document.getElementById('driverGpsLive');
 
   if (btnFollow) {
     btnFollow.classList.toggle('is-running', isActive);
@@ -358,7 +352,7 @@ function actualizarEstadoBotonesRecorrido(isActive) {
 window.actualizarEstadoBotonesRecorrido = actualizarEstadoBotonesRecorrido;
 
 window.activarSeguirme = function() {
-  if (AppState.get('recolectorGpsLive') === 'on') {
+  if (AppState.get('driverGpsLive') === 'on') {
     actualizarEstadoBotonesRecorrido(true);
     if (typeof showToast === 'function') {
       showToast('Ubicación visible', 'Estamos avisando tu posición en el mapa a los clientes.', 'success', 2600);
@@ -366,9 +360,9 @@ window.activarSeguirme = function() {
     return true;
   }
 
-  isRecolectorGpsLive = true;
-  AppState.set('recolectorGpsLive', 'on');
-  AppState.set('isRecolectorLive', true);
+  isDriverGpsLive = true;
+  AppState.set('driverGpsLive', 'on');
+  AppState.set('isDriverLive', true);
   isMapInteractedByUser = false;
 
   actualizarEstadoBotonesRecorrido(true);
@@ -392,11 +386,11 @@ window.desactivarSeguirme = function() {
   isMapInteractedByUser = true;
 };
 
-window.pausarRecorridoRecolector = async function(options = {}) {
-  const wasActive = AppState.get('recolectorGpsLive') === 'on';
-  isRecolectorGpsLive = false;
-  AppState.set('recolectorGpsLive', 'off');
-  AppState.set('isRecolectorLive', false);
+window.pausarRecorridoRepartidor = async function(options = {}) {
+  const wasActive = AppState.get('driverGpsLive') === 'on';
+  isDriverGpsLive = false;
+  AppState.set('driverGpsLive', 'off');
+  AppState.set('isDriverLive', false);
   isMapInteractedByUser = true;
 
   actualizarEstadoBotonesRecorrido(false);
@@ -405,8 +399,8 @@ window.pausarRecorridoRecolector = async function(options = {}) {
     window.detenerGPSComprador();
   }
 
-  if (typeof window.stopRecolectorLocationBroadcast === 'function') {
-    await window.stopRecolectorLocationBroadcast();
+  if (typeof window.stopDriverLocationBroadcast === 'function') {
+    await window.stopDriverLocationBroadcast();
   }
 
   if (!options.silent && typeof showToast === 'function') {
@@ -458,11 +452,11 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
   if (!favEl) favEl = document.querySelector("link[rel*='icon']");
   if (!favEl) return;
 
-  const isRecolectorMode = (typeof currentAppMode !== 'undefined' && currentAppMode === 'recolector') ||
-                       (typeof AppState !== 'undefined' && AppState.get('appMode') === 'recolector');
+  const isDriverMode = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver') || 
+                       (typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver');
 
   if (!categoria && !estado) {
-    if (isRecolectorMode) {
+    if (isDriverMode) {
       if (typeof window.actualizarFaviconCamion === 'function') {
         const uData = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
         window.actualizarFaviconCamion({
@@ -471,14 +465,14 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
           color: uData.color_camion
         });
       } else {
-        favEl.href = "favicon.svg?v=145";
+        favEl.href = "favicon.svg?v=143";
       }
       document.title = "🚛 DISTRIBUIDOR OFICIAL - NOTIGAS en Vivo";
     } else {
       if (typeof window.restaurarFaviconDefault === 'function') {
         window.restaurarFaviconDefault();
       } else {
-        favEl.href = "icons/camion_reciclaje.svg?v=145";
+        favEl.href = "icons/camion_reciclaje.svg?v=143";
       }
       document.title = "NOTIGAS: Noticias de Generadores de residuos seleccionados";
     }
@@ -486,8 +480,8 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
   }
 
   if (estado === 'asignado') {
-    favEl.href = "icons/camion_3d_rojo.svg?v=145";
-    document.title = "🚚 Pedido en Camino: Recolector Asignado - NOTIGAS";
+    favEl.href = "icons/camion_3d_rojo.svg?v=143";
+    document.title = "🚚 Pedido en Camino: Repartidor Asignado - NOTIGAS";
     return;
   }
 
@@ -542,7 +536,7 @@ async function switchTab(index) {
     tab.classList.toggle('active', i === index);
   });
 
-  // Los anuncios pueden aparecer en mapa, recolectores y muro.
+  // Los anuncios pueden aparecer en mapa, repartidores y muro.
   if (typeof window.loadAdsModule === 'function') {
     await window.loadAdsModule();
   }
@@ -623,7 +617,7 @@ window.getActiveUserLocation = getActiveUserLocation;
 // 1. Registro del Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    const swVer = window.NOTIGAS?.CACHE_VERSION || '144';
+    const swVer = window.NOTIGAS?.CACHE_VERSION || '143';
     navigator.serviceWorker.register(`./sw.js?v=${swVer}`)
       .then((reg) => console.log('✅ Service Worker registrado', reg.scope))
       .catch((err) => console.error('❌ Error Service Worker:', err));

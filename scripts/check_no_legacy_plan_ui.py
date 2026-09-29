@@ -4,7 +4,7 @@
 Guardia de UI heredada: NOTIGAS Bolivia no tiene selector de planes ni prueba
 gratis. Solo lectura.
 
-Reemplaza a scripts/normalize_recolector_free_trial.js. Aquel script era un
+Reemplaza a scripts/normalize_driver_free_trial.js. Aquel script era un
 MUTADOR de la epoca Peru y hacia dos cosas incompatibles con el producto
 actual:
 
@@ -62,10 +62,10 @@ TOKEN_HEREDADOS = [
     "En mapa clientes con <strong>1 min de espera</strong>",
     "Ficha basica sin corona VIP",
     "Ficha b\u00e1sica sin corona VIP",
-    'id="cardPlanRecolectorPro"',
-    'id="cardPlanRecolectorGratuito"',
+    'id="cardPlanDriverPro"',
+    'id="cardPlanDriverGratuito"',
     'id="btnCambiarAProDesdeGratuito"',
-    'id="recolectorPremiumGratuitoContent"',
+    'id="driverPremiumGratuitoContent"',
     "legacy-plan-disabled",
 ]
 for token in TOKEN_HEREDADOS:
@@ -84,7 +84,7 @@ revisar(
 )
 revisar(
     "el campo de modalidad unica vale 'sin_comision'",
-    'id="inputRecolectorPlanTipo" value="sin_comision"' in index_html,
+    'id="inputDriverPlanTipo" value="sin_comision"' in index_html,
 )
 
 # --- 2. Copy comercial de la prueba gratis -------------------------------
@@ -102,11 +102,11 @@ for etiqueta, token in COPY_HEREDADO:
 
 # El texto de excepcion es la version corregida de un toast que si existia.
 revisar(
-    "el aviso de alta del recolector ya no promete pedidos gratuitos",
+    "el aviso de alta del repartidor ya no promete pedidos gratuitos",
     not re.search(r"100 pedidos[^.]{0,40}gratuit", auth_js, re.IGNORECASE),
 )
 revisar(
-    "el aviso de alta del recolector declara que opera sin cobros",
+    "el aviso de alta del repartidor declara que opera sin cobros",
     re.search(r"Operas sin comisiones, sin saldos pendientes y sin cobros", auth_js),
     "falta el texto Bolivia del aviso de alta",
 )
@@ -121,7 +121,7 @@ revisar(
     "seleccionarPlanRegistroChofer fija la modalidad Bolivia",
     re.search(
         r"function\s+seleccionarPlanRegistroChofer\s*\(\)\s*\{[\s\S]{0,400}?"
-        r"inputRecolectorPlanTipo[\s\S]{0,120}?value\s*=\s*'sin_comision'",
+        r"inputDriverPlanTipo[\s\S]{0,120}?value\s*=\s*'sin_comision'",
         auth_js,
     ),
     "no fija 'sin_comision' (queda 'credito', valor Peru heredado)",

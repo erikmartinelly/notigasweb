@@ -1,6 +1,6 @@
 /* ==========================================================================
    NOTIGAS - MOTOR DINÁMICO DE ÍCONOS DE CAMIONES TOYOTA DINA MULTICOLORES
-   Y PERSONALIZACIÓN DE INICIALES PARA RECOLECTORES
+   Y PERSONALIZACIÓN DE INICIALES PARA REPARTIDORES
    ========================================================================== */
 
 (function() {
@@ -57,13 +57,13 @@
   },
   {
     "key": "morado",
-    "name": "Blanco Niebla",
-    "primary": "#15803D",
-    "dark": "#14532D",
-    "light": "#FFFFFF",
-    "badgeBg": "#15803D",
+    "name": "Morado P\u00farpura",
+    "primary": "#9333EA",
+    "dark": "#7E22CE",
+    "light": "#C084FC",
+    "badgeBg": "#6B21A8",
     "badgeText": "#FFFFFF",
-    "badgeBorder": "#BBF7D0"
+    "badgeBorder": "#E9D5FF"
   },
   {
     "key": "cian",
@@ -107,13 +107,13 @@
   },
   {
     "key": "violeta",
-    "name": "Blanco Perla",
-    "primary": "#15803D",
-    "dark": "#14532D",
-    "light": "#FFFFFF",
-    "badgeBg": "#15803D",
+    "name": "Violeta Intenso",
+    "primary": "#7C3AED",
+    "dark": "#6D28D9",
+    "light": "#A78BFA",
+    "badgeBg": "#5B21B6",
     "badgeText": "#FFFFFF",
-    "badgeBorder": "#BBF7D0"
+    "badgeBorder": "#DDD6FE"
   },
   {
     "key": "turquesa",
@@ -287,13 +287,13 @@
   },
   {
     "key": "lavanda",
-    "name": "Blanco Lino",
-    "primary": "#15803D",
-    "dark": "#14532D",
-    "light": "#FFFFFF",
-    "badgeBg": "#15803D",
+    "name": "Lavanda Real",
+    "primary": "#8B5CF6",
+    "dark": "#6D28D9",
+    "light": "#C4B5FD",
+    "badgeBg": "#5B21B6",
     "badgeText": "#FFFFFF",
-    "badgeBorder": "#BBF7D0"
+    "badgeBorder": "#EDE9FE"
   },
   {
     "key": "aguamarina",
@@ -357,13 +357,13 @@
   },
   {
     "key": "purpura",
-    "name": "Blanco Algod\u00f3n",
-    "primary": "#15803D",
-    "dark": "#14532D",
-    "light": "#FFFFFF",
-    "badgeBg": "#15803D",
+    "name": "P\u00farpura Profundo",
+    "primary": "#581C87",
+    "dark": "#3B0764",
+    "light": "#7E22CE",
+    "badgeBg": "#2E0854",
     "badgeText": "#FFFFFF",
-    "badgeBorder": "#BBF7D0"
+    "badgeBorder": "#C084FC"
   }
 ];
 
@@ -375,13 +375,13 @@
   window.NOTIGAS_TRUCK_PALETTE = PALETTE;
 
   /**
-   * Extrae 1 o 2 iniciales limpias y legibles del nombre del recolector.
+   * Extrae 1 o 2 iniciales limpias y legibles del nombre del repartidor.
    * Ej: "Juan Pérez" -> "JP", "Carlos Mendoza Quispe" -> "CM", "Alberto" -> "AL"
    */
-  function getRecolectorInitials(name) {
+  function getDriverInitials(name) {
     if (!name || typeof name !== 'string') return 'D';
     let clean = name
-      .replace(/\b(recolector|chofer|distribuidora|gas|otb|don|sr|sra|empresa|comercial)\b/gi, '')
+      .replace(/\b(repartidor|chofer|distribuidora|gas|otb|don|sr|sra|empresa|comercial)\b/gi, '')
       .replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')
       .trim();
 
@@ -396,13 +396,13 @@
     }
     return (clean[0] || 'D').toUpperCase();
   }
-  window.getRecolectorInitials = getRecolectorInitials;
+  window.getDriverInitials = getDriverInitials;
 
   /**
-   * Obtiene de forma determinista el tema de color del recolector a partir de su ID o nombre,
+   * Obtiene de forma determinista el tema de color del repartidor a partir de su ID o nombre,
    * o utiliza su color preferido si fue configurado en su ficha.
    */
-  function getRecolectorColorTheme(keyOrName, preferredColorKey) {
+  function getDriverColorTheme(keyOrName, preferredColorKey) {
     if (preferredColorKey && PALETTE_MAP[preferredColorKey.toLowerCase().trim()]) {
       return PALETTE_MAP[preferredColorKey.toLowerCase().trim()];
     }
@@ -417,15 +417,15 @@
     const idx = Math.abs(hash) % PALETTE.length;
     return PALETTE[idx];
   }
-  window.getRecolectorColorTheme = getRecolectorColorTheme;
+  window.getDriverColorTheme = getDriverColorTheme;
 
   /**
    * Genera el código SVG vectorial del camión Toyota Dina personalizado con el color e iniciales.
    */
   function generarSvgCamionDina(opts = {}) {
-    const name = opts.name || opts.recolectorName || 'Recolector';
-    const initials = opts.initials || getRecolectorInitials(name);
-    const theme = (opts.color && PALETTE_MAP[opts.color]) ? PALETTE_MAP[opts.color] : getRecolectorColorTheme(opts.id || name, opts.color);
+    const name = opts.name || opts.driverName || 'Repartidor';
+    const initials = opts.initials || getDriverInitials(name);
+    const theme = (opts.color && PALETTE_MAP[opts.color]) ? PALETTE_MAP[opts.color] : getDriverColorTheme(opts.id || name, opts.color);
     const withBg = !!opts.withBg;
     const uid = 't_' + Math.random().toString(36).substr(2, 6);
 
@@ -533,12 +533,12 @@
   /**
    * Genera el HTML completo para el marcador de Leaflet de un chofer en vivo.
    */
-  function crearMarcadorCamionRecolectorHtml(data = {}) {
-    const recolectorName = data.distribuidor_nombre || data.nombre_completo || data.nombre || 'Distribuidor';
+  function crearMarcadorCamionRepartidorHtml(data = {}) {
+    const driverName = data.distribuidor_nombre || data.nombre_completo || data.nombre || 'Distribuidor';
     const categoria = data.categoria || data.empresa || '';
-    const initials = getRecolectorInitials(recolectorName || categoria);
-    const key = data.user_id || data.id || recolectorName;
-    const theme = getRecolectorColorTheme(key, data.color_camion);
+    const initials = getDriverInitials(driverName || categoria);
+    const key = data.user_id || data.id || driverName;
+    const theme = getDriverColorTheme(key, data.color_camion);
     const isPremium = false; // campo legado ignorado: no existe prioridad Premium
 
     // El avatar nunca muestra precios: NOTIGAS no intermedia fondos y el
@@ -547,7 +547,7 @@
 
 
     const truckSvg = generarSvgCamionDina({
-      name: recolectorName,
+      name: driverName,
       initials: initials,
       color: theme.key,
       withBg: false,
@@ -555,7 +555,7 @@
       height: 46
     });
 
-    const safeName = (typeof escapeHtmlStr === 'function') ? escapeHtmlStr(recolectorName) : recolectorName;
+    const safeName = (typeof escapeHtmlStr === 'function') ? escapeHtmlStr(driverName) : driverName;
     const safeCategoria = (typeof escapeHtmlStr === 'function') ? escapeHtmlStr(categoria) : categoria;
 
     // Detectar si categoria es una empresa específica (Solgas, Llamagas, Zeta Gas, Primax, etc.)
@@ -564,7 +564,7 @@
 
     let brandHtml = '';
     if (esEmpresaConocida && !nombreYaContieneEmpresa) {
-      brandHtml = `<span class="recolector-marker-label-brand" style="color:${theme.badgeBorder || '#FCD34D'};">${safeCategoria}</span>`;
+      brandHtml = `<span class="driver-marker-label-brand" style="color:${theme.badgeBorder || '#FCD34D'};">${safeCategoria}</span>`;
     }
 
     let displayName = safeName;
@@ -573,38 +573,38 @@
     }
 
     const crownHtml = isPremium
-      ? `<span class="recolector-marker-crown" title="Recolector VIP Premium">👑</span>`
+      ? `<span class="driver-marker-crown" title="Repartidor VIP Premium">👑</span>`
       : '';
     const vipTagHtml = isPremium
-      ? `<span class="recolector-marker-vip-tag">👑 VIP</span>`
+      ? `<span class="driver-marker-vip-tag">👑 VIP</span>`
       : '';
 
     return `
-      <div class="recolector-map-marker ${isPremium ? 'recolector-map-marker-vip' : ''}" data-recolector-color="${theme.key}" title="${safeName} (${safeCategoria || 'Distribuidor'})${isPremium ? ' - VIP Premium' : ''}">
-        <div class="recolector-marker-truck-wrap">
+      <div class="driver-map-marker ${isPremium ? 'driver-map-marker-vip' : ''}" data-driver-color="${theme.key}" title="${safeName} (${safeCategoria || 'Distribuidor'})${isPremium ? ' - VIP Premium' : ''}">
+        <div class="driver-marker-truck-wrap">
           ${crownHtml}
-          <div class="recolector-3d-truck-img">${truckSvg}</div>
-          <span class="recolector-marker-badge" style="background:${theme.badgeBg}; color:${theme.badgeText}; border-color:${theme.badgeBorder};" aria-hidden="true">${badgeContent}</span>
-          <span class="recolector-marker-online" title="GPS en Tiempo Real"></span>
+          <div class="driver-3d-truck-img">${truckSvg}</div>
+          <span class="driver-marker-badge" style="background:${theme.badgeBg}; color:${theme.badgeText}; border-color:${theme.badgeBorder};" aria-hidden="true">${badgeContent}</span>
+          <span class="driver-marker-online" title="GPS en Tiempo Real"></span>
         </div>
-        <div class="recolector-marker-label" style="border-color:${isPremium ? '#F59E0B' : (theme.light || theme.primary)};">
+        <div class="driver-marker-label" style="border-color:${isPremium ? '#F59E0B' : (theme.light || theme.primary)};">
           ${vipTagHtml}
           ${brandHtml}
-          <span class="recolector-marker-label-name">${displayName}</span>
+          <span class="driver-marker-label-name">${displayName}</span>
         </div>
       </div>
     `;
   }
-  window.crearMarcadorCamionRecolectorHtml = crearMarcadorCamionRecolectorHtml;
+  window.crearMarcadorCamionRepartidorHtml = crearMarcadorCamionRepartidorHtml;
 
   /**
-   * Genera el HTML de avatar para las tarjetas de negocio en la Lista de Recolectores.
+   * Genera el HTML de avatar para las tarjetas de negocio en la Lista de Repartidores.
    * En vez de sólo las iniciales, muestra el precio del balón de 10 Kg si está disponible.
    */
-  function crearAvatarCamionChoferHtml(recolectorName, options = {}) {
-    const name = recolectorName || 'Recolector';
-    const initials = getRecolectorInitials(name);
-    const theme = getRecolectorColorTheme(name, options.color);
+  function crearAvatarCamionChoferHtml(driverName, options = {}) {
+    const name = driverName || 'Repartidor';
+    const initials = getDriverInitials(name);
+    const theme = getDriverColorTheme(name, options.color);
     const isPremium = Boolean(options.es_premium);
 
     // Sin badge de precio: el avatar solo lleva iniciales y color.
@@ -616,7 +616,7 @@
       : '';
 
     return `
-      <div class="recolector-truck-avatar-wrap ${isPremium ? 'avatar-vip' : ''}" style="position:relative; width:54px; height:42px; display:inline-flex; align-items:center; justify-content:center;">
+      <div class="driver-truck-avatar-wrap ${isPremium ? 'avatar-vip' : ''}" style="position:relative; width:54px; height:42px; display:inline-flex; align-items:center; justify-content:center;">
         ${crownAvatarHtml}
         ${generarSvgCamionDina({
           name: name,
@@ -636,13 +636,13 @@
    * Actualiza dinámicamente el favicon del navegador con el camión Toyota Dina personalizado
    * con la letra inicial y nombre de la empresa del distribuidor.
    */
-  function actualizarFaviconCamion(recolectorOpts = {}) {
+  function actualizarFaviconCamion(driverOpts = {}) {
     try {
-      const name = recolectorOpts.nombre || recolectorOpts.name || recolectorOpts.distribuidor_nombre || 'Recolector';
-      const company = recolectorOpts.empresa || recolectorOpts.categoria || 'NOTIGAS';
-      const initials = recolectorOpts.initials || getRecolectorInitials(name || company);
-      const colorKey = recolectorOpts.color || recolectorOpts.color_camion;
-      const theme = (colorKey && PALETTE_MAP[colorKey]) ? PALETTE_MAP[colorKey] : getRecolectorColorTheme(name, colorKey);
+      const name = driverOpts.nombre || driverOpts.name || driverOpts.distribuidor_nombre || 'Distribuidor';
+      const company = driverOpts.empresa || driverOpts.categoria || 'NOTIGAS';
+      const initials = driverOpts.initials || getDriverInitials(name || company);
+      const colorKey = driverOpts.color || driverOpts.color_camion;
+      const theme = (colorKey && PALETTE_MAP[colorKey]) ? PALETTE_MAP[colorKey] : getDriverColorTheme(name, colorKey);
 
       let bottomLabel = company.toUpperCase();
       if (bottomLabel === 'GAS GLP' || bottomLabel === 'SERVICIO DE ENTREGA' || !bottomLabel) {
@@ -659,7 +659,7 @@
       const bgP = theme.badgeBg;
       const bgT = theme.badgeText;
       const bgB = theme.badgeBorder;
-      const initChar = (initials || 'R').slice(0, 2).toUpperCase();
+      const initChar = (initials || 'D').slice(0, 2).toUpperCase();
       const fontSize = initChar.length > 1 ? 26 : 34;
 
       const svgFavicon = `
@@ -697,7 +697,7 @@
   </defs>
 
   <rect width="512" height="512" rx="112" fill="url(#bg_${uid})"/>
-  <rect width="504" height="504" x="4" y="4" rx="108" fill="none" stroke="#FFFFFF" stroke-width="6"/>
+  <rect width="504" height="504" x="4" y="4" rx="108" fill="none" stroke="${theme.primary}" stroke-width="6" opacity="0.85"/>
   <ellipse cx="256" cy="385" rx="195" ry="22" fill="rgba(0,0,0,0.5)"/>
 
   <g filter="url(#sh_${uid})">
@@ -705,12 +705,7 @@
     <line x1="138" y1="148" x2="138" y2="328" stroke="#CBD5E1" stroke-width="2.5"/>
     <line x1="206" y1="148" x2="206" y2="328" stroke="#CBD5E1" stroke-width="2.5"/>
     <rect x="86" y="195" width="125" height="34" rx="6" fill="#0F172A" opacity="0.88"/>
-    <!-- Simbolo de reciclaje: a 16px se lee mejor que un wordmark -->
-    <g transform="translate(148 212) scale(0.52)">
-      <path d="M-11 -46 L11 -46 L11 -20 L27 -20 L0 12 L-27 -20 L-11 -20 Z" fill="#4ADE80" transform="rotate(0)"/>
-      <path d="M-11 -46 L11 -46 L11 -20 L27 -20 L0 12 L-27 -20 L-11 -20 Z" fill="#22C55E" transform="rotate(120)"/>
-      <path d="M-11 -46 L11 -46 L11 -20 L27 -20 L0 12 L-27 -20 L-11 -20 Z" fill="#86EFAC" transform="rotate(240)"/>
-    </g>
+    <text x="148" y="218" font-family="'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="16" fill="#FFD200" text-anchor="middle" letter-spacing="2">NOTIGAS</text>
 
     <path d="M 260 140 L 370 140 Q 405 142 418 175 L 442 245 Q 446 258 446 275 L 446 332 Q 446 338 440 338 L 260 338 Z" fill="url(#cab_${uid})" stroke="${d}" stroke-width="3"/>
 
@@ -775,7 +770,7 @@
   window.actualizarFaviconCamion = actualizarFaviconCamion;
 
   function restaurarFaviconDefault() {
-    const defaultHref = "icons/camion_reciclaje.svg?v=145";
+    const defaultHref = "icons/camion_reciclaje.svg?v=143";
     const favEl = document.getElementById('dynamicFavicon') || document.querySelector("link[rel*='icon']");
     if (favEl) {
       favEl.type = "image/svg+xml";

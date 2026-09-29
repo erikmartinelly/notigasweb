@@ -12,20 +12,20 @@ window.closeRulesModal = function() {
 };
 
 window.switchLegalTab = function(tab) {
-  const recolectorTab = document.getElementById('termsRecolectorContent');
+  const driverTab = document.getElementById('termsDriverContent');
   const generalTab = document.getElementById('termsGeneralContent');
-  const btnRecolector = document.getElementById('tabBtnRecolectorTerms');
+  const btnDriver = document.getElementById('tabBtnDriverTerms');
   const btnGeneral = document.getElementById('tabBtnGeneralTerms');
   const headerTitle = document.getElementById('privacyPolicyModalHeaderTitle');
 
-  if (tab === 'recolector') {
-    if (recolectorTab) recolectorTab.style.display = 'block';
+  if (tab === 'driver') {
+    if (driverTab) driverTab.style.display = 'block';
     if (generalTab) generalTab.style.display = 'none';
-    if (headerTitle) headerTitle.textContent = '📜 Términos y Condiciones para Recolectores';
-    if (btnRecolector) {
-      btnRecolector.style.border = '1.5px solid #F59E0B';
-      btnRecolector.style.background = 'rgba(245,158,11,0.2)';
-      btnRecolector.style.color = '#FDE68A';
+    if (headerTitle) headerTitle.textContent = '📜 Términos y Condiciones para Repartidores';
+    if (btnDriver) {
+      btnDriver.style.border = '1.5px solid #F59E0B';
+      btnDriver.style.background = 'rgba(245,158,11,0.2)';
+      btnDriver.style.color = '#FDE68A';
     }
     if (btnGeneral) {
       btnGeneral.style.border = '1px solid #334155';
@@ -33,7 +33,7 @@ window.switchLegalTab = function(tab) {
       btnGeneral.style.color = '#94A3B8';
     }
   } else {
-    if (recolectorTab) recolectorTab.style.display = 'none';
+    if (driverTab) driverTab.style.display = 'none';
     if (generalTab) generalTab.style.display = 'block';
     if (headerTitle) headerTitle.textContent = '⚖️ Política de Privacidad y Aviso Legal';
     if (btnGeneral) {
@@ -41,21 +41,21 @@ window.switchLegalTab = function(tab) {
       btnGeneral.style.background = 'rgba(56,189,248,0.2)';
       btnGeneral.style.color = '#38BDF8';
     }
-    if (btnRecolector) {
-      btnRecolector.style.border = '1px solid #334155';
-      btnRecolector.style.background = '#1E293B';
-      btnRecolector.style.color = '#94A3B8';
+    if (btnDriver) {
+      btnDriver.style.border = '1px solid #334155';
+      btnDriver.style.background = '#1E293B';
+      btnDriver.style.color = '#94A3B8';
     }
   }
 };
 
-window.abrirModalTerminosRecolectores = function() {
+window.abrirModalTerminosRepartidores = function() {
   const modalSettings = document.getElementById('modalUserSettings');
   if (modalSettings) modalSettings.style.display = 'none';
   const modal = document.getElementById('modalPrivacyPolicy');
   if (modal) {
     modal.style.display = 'flex';
-    window.switchLegalTab('recolector');
+    window.switchLegalTab('driver');
     const content = modal.querySelector('.modal-content');
     if (content) content.scrollTop = 0;
   }
@@ -67,8 +67,8 @@ window.abrirModalPoliticaPrivacidad = function() {
   const modal = document.getElementById('modalPrivacyPolicy');
   if (modal) {
     modal.style.display = 'flex';
-    const isRecolector = (typeof AppState !== 'undefined' && AppState.get('appMode') === 'recolector');
-    window.switchLegalTab(isRecolector ? 'recolector' : 'general');
+    const isDriver = (typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver');
+    window.switchLegalTab(isDriver ? 'driver' : 'general');
     const content = modal.querySelector('.modal-content');
     if (content) content.scrollTop = 0;
   }
@@ -101,15 +101,15 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Delegación: también cubre el selector de rol que app.js reconstruye
-    // dinámicamente al alternar entre comprador y recolector.
+    // dinámicamente al alternar entre comprador y repartidor.
     document.addEventListener('click', (event) => {
       const actionElement = event.target.closest('[data-notigas-action]');
       if (!actionElement) return;
 
       const action = actionElement.dataset.notigasAction;
-      if (action === 'open-recolector-terms') {
+      if (action === 'open-driver-terms') {
         event.preventDefault();
-        window.abrirModalTerminosRecolectores();
+        window.abrirModalTerminosRepartidores();
       } else if (action === 'switch-role') {
         const targetRole = actionElement.dataset.roleTarget;
         window.cambiarModoRolUsuario(targetRole || undefined);
@@ -166,8 +166,8 @@ document.addEventListener('DOMContentLoaded', () => {
       safeCall('cambiarCiudadCapital', event.target.value);
     });
 
-    const el_selectRecolectorModalCity = document.getElementById('selectRecolectorModalCity');
-    if (el_selectRecolectorModalCity) el_selectRecolectorModalCity.addEventListener('change', (event) => {
+    const el_selectDriverModalCity = document.getElementById('selectDriverModalCity');
+    if (el_selectDriverModalCity) el_selectDriverModalCity.addEventListener('change', (event) => {
       safeCall('cambiarCiudadCapital', event.target.value);
     });
 
@@ -177,28 +177,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_btnCancelOrder = document.getElementById('btnCancelOrder');
     if (el_btnCancelOrder) el_btnCancelOrder.addEventListener('click', () => { safeCall('cancelarPedidoActivo'); });
 
-    /* El acceso directo al mapa. fija el tipo y abre la ficha. No hay un
-       boton de compras: NOTIGAS es servicio de reciclaje y todo es recogida. */
-    const el_btnPedirReciclador = document.getElementById('btnPedirReciclador');
-    if (el_btnPedirReciclador) el_btnPedirReciclador.addEventListener('click', () => { safeCall('iniciarPedidoPorTipo', 'recogida'); });
+    const el_btnMainOrder = document.getElementById('btnMainOrder');
+    if (el_btnMainOrder) el_btnMainOrder.addEventListener('click', () => { safeCall('abrirSubmenuPedidos'); });
 
     const el_auto_event_7 = document.getElementById('auto-event-7');
     if (el_auto_event_7) el_auto_event_7.addEventListener('click', () => { safeCall('abrirSubmenuPedidos'); });
 
+    const el_auto_event_8 = document.getElementById('auto-event-8');
+    if (el_auto_event_8) el_auto_event_8.addEventListener('click', () => { safeCall('notificarEscucheCamion'); });
+
     const el_auto_event_9 = document.getElementById('auto-event-9');
     if (el_auto_event_9) el_auto_event_9.addEventListener('click', () => { safeCall('conectarGPSAuto', true); });
 
-    const el_btnRecolectorMyLocation = document.getElementById('btnRecolectorMyLocation');
-    if (el_btnRecolectorMyLocation) el_btnRecolectorMyLocation.addEventListener('click', () => { safeCall('activarMiUbicacionRecolector'); });
+    const el_btnDriverMyLocation = document.getElementById('btnDriverMyLocation');
+    if (el_btnDriverMyLocation) el_btnDriverMyLocation.addEventListener('click', () => { safeCall('activarMiUbicacionRepartidor'); });
 
-    const el_btnRecolectorFollowMe = document.getElementById('btnRecolectorFollowMe');
-    if (el_btnRecolectorFollowMe) el_btnRecolectorFollowMe.addEventListener('click', () => { safeCall('activarSeguirme'); });
+    const el_btnDriverFollowMe = document.getElementById('btnDriverFollowMe');
+    if (el_btnDriverFollowMe) el_btnDriverFollowMe.addEventListener('click', () => { safeCall('activarSeguirme'); });
 
-    const el_btnRecolectorPause = document.getElementById('btnRecolectorPause');
-    if (el_btnRecolectorPause) el_btnRecolectorPause.addEventListener('click', () => { safeCall('pausarRecorridoRecolector'); });
+    const el_btnDriverPause = document.getElementById('btnDriverPause');
+    if (el_btnDriverPause) el_btnDriverPause.addEventListener('click', () => { safeCall('pausarRecorridoRepartidor'); });
 
     const el_auto_event_10 = document.getElementById('auto-event-10');
-    if (el_auto_event_10) el_auto_event_10.addEventListener('click', () => { safeCall('abrirModalRecolectorOrders'); });
+    if (el_auto_event_10) el_auto_event_10.addEventListener('click', () => { safeCall('abrirModalDriverOrders'); });
 
     const el_btnContratarPublicidad = document.getElementById('btnContratarPublicidad');
     if (el_btnContratarPublicidad) el_btnContratarPublicidad.addEventListener('click', () => { safeCall('abrirContactoPublicidad'); });
@@ -220,6 +221,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const el_auto_event_91 = document.getElementById('auto-event-91');
     if (el_auto_event_91) el_auto_event_91.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'organico', e.currentTarget); });
+
+    const el_auto_event_17 = document.getElementById('auto-event-17');
+    if (el_auto_event_17) el_auto_event_17.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'frutas', e.currentTarget); });
+
+    const el_auto_event_18 = document.getElementById('auto-event-18');
+    if (el_auto_event_18) el_auto_event_18.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'detergentes', e.currentTarget); });
+
+    const el_auto_event_92 = document.getElementById('auto-event-92');
+    if (el_auto_event_92) el_auto_event_92.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'sal', e.currentTarget); });
+
+    const el_auto_event_93 = document.getElementById('auto-event-93');
+    if (el_auto_event_93) el_auto_event_93.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'afilado', e.currentTarget); });
+
+    const el_auto_event_14 = document.getElementById('auto-event-14');
+    if (el_auto_event_14) el_auto_event_14.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'agua', e.currentTarget); });
+
+    const el_auto_event_20 = document.getElementById('auto-event-20');
+    if (el_auto_event_20) el_auto_event_20.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'otros', e.currentTarget); });
 
     const el_auto_event_21 = document.getElementById('auto-event-21');
     if (el_auto_event_21) el_auto_event_21.addEventListener('click', () => { safeCall('abrirModalNuevoPost'); });
@@ -245,12 +264,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_auto_event_25 = document.getElementById('auto-event-25');
     if (el_auto_event_25) el_auto_event_25.addEventListener('click', () => {
       safeCall('closeUserSettingsModal');
-      safeCall('abrirFichaRecolectorEdicion');
+      safeCall('abrirFichaRepartidorEdicion');
     });
 
-    const el_btnRecolectorReportFakeOrderModal = document.getElementById('btnRecolectorReportFakeOrderModal');
-    if (el_btnRecolectorReportFakeOrderModal) {
-      el_btnRecolectorReportFakeOrderModal.addEventListener('click', () => {
+    const el_btnDriverReportFakeOrderModal = document.getElementById('btnDriverReportFakeOrderModal');
+    if (el_btnDriverReportFakeOrderModal) {
+      el_btnDriverReportFakeOrderModal.addEventListener('click', () => {
         safeCall('abrirModalDenunciaPedidoFalso');
       });
     }
@@ -305,18 +324,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_btnTopRegistrarse = document.getElementById('btnTopRegistrarse');
     if (el_btnTopRegistrarse) el_btnTopRegistrarse.addEventListener('click', () => { safeCall('abrirRegistroModal'); });
 
-    const el_btnRegistroRecolectoresMenu = document.getElementById('btnRegistroRecolectoresMenu');
-    if (el_btnRegistroRecolectoresMenu) el_btnRegistroRecolectoresMenu.addEventListener('click', () => {
-      safeCall('abrirRegistroRecolectores');
+    const el_btnRegistroRepartidoresMenu = document.getElementById('btnRegistroRepartidoresMenu');
+    if (el_btnRegistroRepartidoresMenu) el_btnRegistroRepartidoresMenu.addEventListener('click', () => {
+      safeCall('abrirRegistroRepartidores');
     });
 
     const el_auto_event_29 = document.getElementById('auto-event-29');
-    if (el_auto_event_29) el_auto_event_29.addEventListener('click', () => { safeCall('closeRecolectorModal'); });
+    if (el_auto_event_29) el_auto_event_29.addEventListener('click', () => { safeCall('closeDriverModal'); });
 
 
 
     const el_auto_event_30 = document.getElementById('auto-event-30');
-    if (el_auto_event_30) el_auto_event_30.addEventListener('click', () => { safeCall('iniciarSesionRecolector'); });
+    if (el_auto_event_30) el_auto_event_30.addEventListener('click', () => { safeCall('iniciarSesionRepartidor'); });
 
     const el_auto_event_31 = document.getElementById('auto-event-31');
     if (el_auto_event_31) el_auto_event_31.addEventListener('click', () => {
@@ -376,11 +395,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnPrivacyBuyer = document.getElementById('btnPrivacyPolicyBuyer');
     if (btnPrivacyBuyer) btnPrivacyBuyer.addEventListener('click', () => { safeCall('abrirModalPoliticaPrivacidad'); });
 
-    const btnPrivacyRecolector = document.getElementById('btnPrivacyPolicyRecolector');
-    if (btnPrivacyRecolector) btnPrivacyRecolector.addEventListener('click', () => { safeCall('abrirModalPoliticaPrivacidad'); });
+    const btnPrivacyDriver = document.getElementById('btnPrivacyPolicyDriver');
+    if (btnPrivacyDriver) btnPrivacyDriver.addEventListener('click', () => { safeCall('abrirModalPoliticaPrivacidad'); });
 
-    const btnRecolectorTerms = document.getElementById('btnRecolectorTermsMenu');
-    if (btnRecolectorTerms) btnRecolectorTerms.addEventListener('click', () => { safeCall('abrirModalTerminosRecolectores'); });
+    const btnDriverTerms = document.getElementById('btnDriverTermsMenu');
+    if (btnDriverTerms) btnDriverTerms.addEventListener('click', () => { safeCall('abrirModalTerminosRepartidores'); });
 
     const btnClosePrivacy = document.getElementById('btnClosePrivacyPolicy');
     if (btnClosePrivacy) btnClosePrivacy.addEventListener('click', () => { safeCall('cerrarModalPoliticaPrivacidad'); });
@@ -388,8 +407,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnEntendidoPrivacy = document.getElementById('btnEntendidoPrivacyPolicy');
     if (btnEntendidoPrivacy) btnEntendidoPrivacy.addEventListener('click', () => { safeCall('cerrarModalPoliticaPrivacidad'); });
 
-    const btnEntendidoRecolector = document.getElementById('btnEntendidoRecolectorTerms');
-    if (btnEntendidoRecolector) btnEntendidoRecolector.addEventListener('click', () => { safeCall('cerrarModalPoliticaPrivacidad'); });
+    const btnEntendidoDriver = document.getElementById('btnEntendidoDriverTerms');
+    if (btnEntendidoDriver) btnEntendidoDriver.addEventListener('click', () => { safeCall('cerrarModalPoliticaPrivacidad'); });
 
     const el_auto_event_38 = document.getElementById('auto-event-38');
     if (el_auto_event_38) el_auto_event_38.addEventListener('click', () => { safeCall('closeSubmenuModal'); });
@@ -409,18 +428,52 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_auto_event_95 = document.getElementById('auto-event-95');
     if (el_auto_event_95) el_auto_event_95.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'organico'); });
 
+    const el_auto_event_43 = document.getElementById('auto-event-43');
+    if (el_auto_event_43) el_auto_event_43.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'frutas'); });
+
+    const el_auto_event_44 = document.getElementById('auto-event-44');
+    if (el_auto_event_44) el_auto_event_44.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'detergentes'); });
+
+    const el_auto_event_96 = document.getElementById('auto-event-96');
+    if (el_auto_event_96) el_auto_event_96.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'sal'); });
+
+    const el_auto_event_97 = document.getElementById('auto-event-97');
+    if (el_auto_event_97) el_auto_event_97.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'afilado'); });
+
+    const el_auto_event_40 = document.getElementById('auto-event-40');
+    if (el_auto_event_40) el_auto_event_40.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'agua'); });
+
+    const el_auto_event_46 = document.getElementById('auto-event-46');
+    if (el_auto_event_46) el_auto_event_46.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'otros'); });
+
     const el_auto_event_47 = document.getElementById('auto-event-47');
     if (el_auto_event_47) el_auto_event_47.addEventListener('click', () => { safeCall('closePedidoModal'); });
 
-    /* Ya no hay selector de tipo: solo recogida. La ficha se repuebla con el
-       catalogo del servidor desde orders.js (setTipoSolicitud), que ademas fija
-       las etiquetas a "Publicar Recogida". */
+    const el_selectCategoria = document.getElementById('selectCategoria');
+    if (el_selectCategoria) el_selectCategoria.addEventListener('change', (event) => {
+      const groupOtros = document.getElementById('groupOrderOtros');
+      if (groupOtros) {
+        groupOtros.style.display = (event.target.value === 'otros') ? 'block' : 'none';
+      }
+    });
+
+    // Selector de tipo de solicitud: "recogida" (la casa ofrece material)
+    // frente a "compra" (el comprador pide producto). Delegacion por evento
+    // porque los botones se generan antes de que exista el listener.
+    const el_tipoToggle = document.getElementById('tipoSolicitudToggle');
+    if (el_tipoToggle) {
+      el_tipoToggle.addEventListener('click', (event) => {
+        const btn = event.target.closest('button[data-tipo]');
+        if (btn) safeCall('setTipoSolicitud', btn.dataset.tipo);
+      });
+      safeCall('setTipoSolicitud', 'recogida');
+    }
 
     const el_auto_event_48 = document.getElementById('auto-event-48');
     if (el_auto_event_48) el_auto_event_48.addEventListener('click', () => { safeCall('confirmarPedido'); });
 
     const el_auto_event_49 = document.getElementById('auto-event-49');
-    if (el_auto_event_49) el_auto_event_49.addEventListener('click', () => { safeCall('closeRecolectorOrdersModal'); });
+    if (el_auto_event_49) el_auto_event_49.addEventListener('click', () => { safeCall('closeDriverOrdersModal'); });
 
     const el_auto_event_50 = document.getElementById('auto-event-50');
     if (el_auto_event_50) el_auto_event_50.addEventListener('click', () => { safeCall('closeCommentsModal'); });
@@ -491,8 +544,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_inputAdImageFile_mapa = document.getElementById('inputAdImageFile_mapa');
     if (el_inputAdImageFile_mapa) el_inputAdImageFile_mapa.addEventListener('change', (event) => { safeCall('previewUploadAdImage', event, 'mapa'); });
 
-    const el_inputAdImageFile_recolectores = document.getElementById('inputAdImageFile_recolectores');
-    if (el_inputAdImageFile_recolectores) el_inputAdImageFile_recolectores.addEventListener('change', (event) => { safeCall('previewUploadAdImage', event, 'recolectores'); });
+    const el_inputAdImageFile_repartidores = document.getElementById('inputAdImageFile_repartidores');
+    if (el_inputAdImageFile_repartidores) el_inputAdImageFile_repartidores.addEventListener('change', (event) => { safeCall('previewUploadAdImage', event, 'repartidores'); });
 
     const el_inputAdImageFile_muroAvisos = document.getElementById('inputAdImageFile_muro_avisos');
     if (el_inputAdImageFile_muroAvisos) el_inputAdImageFile_muroAvisos.addEventListener('change', (event) => { safeCall('previewUploadAdImage', event, 'muro_avisos'); });
@@ -504,7 +557,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (el_auto_event_68) el_auto_event_68.addEventListener('click', () => { safeCall('descargarListaCorreosCSV'); });
 
     const el_auto_event_69 = document.getElementById('auto-event-69');
-    if (el_auto_event_69) el_auto_event_69.addEventListener('click', () => { safeCall('descargarFichasRecolectoresCSV'); });
+    if (el_auto_event_69) el_auto_event_69.addEventListener('click', () => { safeCall('descargarFichasRepartidoresCSV'); });
 
     const el_auto_event_70 = document.getElementById('auto-event-70');
     if (el_auto_event_70) el_auto_event_70.addEventListener('click', () => { safeCall('descargarEstadisticasGeneralesCSV'); });
@@ -550,10 +603,10 @@ document.addEventListener('click', async (e) => {
         window.cambiarEstadoRapidoPedido(id, status);
       }
     }
-    else if (action === 'liberarPedidoRecolector') {
+    else if (action === 'liberarPedidoRepartidor') {
       const id = btn.getAttribute('data-id');
-      if (typeof window.liberarPedidoRecolector === 'function') {
-        window.liberarPedidoRecolector(id);
+      if (typeof window.liberarPedidoRepartidor === 'function') {
+        window.liberarPedidoRepartidor(id);
       }
     }
     else if (action === 'abrirWhatsappDirecto') {
@@ -579,13 +632,13 @@ document.addEventListener('click', async (e) => {
     else if (action === 'cerrarPanoramicaPedidos') {
       if (typeof window.cerrarPanoramicaPedidos === 'function') window.cerrarPanoramicaPedidos();
     }
-    else if (action === 'aceptarPedidoRecolector') {
+    else if (action === 'aceptarPedidoRepartidor') {
       const id = btn.getAttribute('data-id');
       const lat = parseFloat(btn.getAttribute('data-lat'));
       const lng = parseFloat(btn.getAttribute('data-lng'));
       const address = btn.getAttribute('data-address') || '';
-      if (typeof window.aceptarPedidoRecolector === 'function') {
-        window.aceptarPedidoRecolector(id, lat, lng, address);
+      if (typeof window.aceptarPedidoRepartidor === 'function') {
+        window.aceptarPedidoRepartidor(id, lat, lng, address);
       }
     }
     else if (action === 'centrarPedidoEnMapa') {
@@ -694,8 +747,8 @@ document.addEventListener('click', async (e) => {
       if (typeof window.loadForumModule === 'function') await window.loadForumModule();
       if (typeof window.votarComentario === 'function') window.votarComentario(id, val);
     }
-    else if (action === 'abrirModalRecolector') {
-      const modal = document.getElementById('modalRecolector');
+    else if (action === 'abrirModalDriver') {
+      const modal = document.getElementById('modalDriver');
       if (modal) {
         modal.style.display = 'flex';
         if (typeof window.cargarPerfilChoferEnModal === 'function') {
@@ -752,25 +805,25 @@ document.addEventListener('click', async (e) => {
       const saldo = parseFloat(btn.getAttribute('data-saldo') || '0');
       if (typeof window.liquidarComisionesAdmin === 'function') window.liquidarComisionesAdmin(userId, name, saldo);
     }
-    else if (action === 'desbanearRecolectorAdmin') {
+    else if (action === 'desbanearRepartidorAdmin') {
       const userId = decodeURIComponent(btn.getAttribute('data-user-id') || '');
       const id = btn.getAttribute('data-id');
       const name = decodeURIComponent(btn.getAttribute('data-name') || '');
-      if (typeof window.desbanearRecolectorAdmin === 'function') window.desbanearRecolectorAdmin(userId || id, name);
+      if (typeof window.desbanearRepartidorAdmin === 'function') window.desbanearRepartidorAdmin(userId || id, name);
     }
-    else if (action === 'banearRecolectorAdmin') {
+    else if (action === 'banearRepartidorAdmin') {
       const userId = decodeURIComponent(btn.getAttribute('data-user-id') || '');
       const id = btn.getAttribute('data-id');
       const name = decodeURIComponent(btn.getAttribute('data-name') || '');
       const plate = decodeURIComponent(btn.getAttribute('data-plate') || '');
-      if (typeof window.banearRecolectorAdmin === 'function') window.banearRecolectorAdmin(userId || id, name, plate);
+      if (typeof window.banearRepartidorAdmin === 'function') window.banearRepartidorAdmin(userId || id, name, plate);
     }
-    else if (action === 'borrarRecolectorPermanente') {
+    else if (action === 'borrarRepartidorPermanente') {
       const id = btn.getAttribute('data-id');
       const userId = btn.getAttribute('data-user-id');
       const gmail = btn.getAttribute('data-gmail') || '';
       const name = decodeURIComponent(btn.getAttribute('data-name') || '');
-      if (typeof window.borrarRecolectorPermanente === 'function') window.borrarRecolectorPermanente(id, userId, name, gmail);
+      if (typeof window.borrarRepartidorPermanente === 'function') window.borrarRepartidorPermanente(id, userId, name, gmail);
     }
     else if (action === 'banearCompradorAdmin') {
       const userId = btn.getAttribute('data-id');
@@ -824,8 +877,8 @@ document.addEventListener('click', async (e) => {
     else if (action === 'abrirModalPoliticaPrivacidad') {
       if (typeof window.abrirModalPoliticaPrivacidad === 'function') window.abrirModalPoliticaPrivacidad();
     }
-    else if (action === 'abrirModalTerminosRecolectores') {
-      if (typeof window.abrirModalTerminosRecolectores === 'function') window.abrirModalTerminosRecolectores();
+    else if (action === 'abrirModalTerminosRepartidores') {
+      if (typeof window.abrirModalTerminosRepartidores === 'function') window.abrirModalTerminosRepartidores();
     }
     else if (action === 'cerrarModalPoliticaPrivacidad') {
       if (typeof window.cerrarModalPoliticaPrivacidad === 'function') window.cerrarModalPoliticaPrivacidad();

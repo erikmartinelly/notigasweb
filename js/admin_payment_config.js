@@ -39,7 +39,7 @@
         <div style="font-size:11px;color:#94A3B8;margin-bottom:10px;">
           NOTIGAS no cobra, no custodia fondos y no procesa pagos. No hay cuenta de cobro
           que registrar ni comisiones que liquidar. El pago se acuerda directamente entre
-          comprador y recolector por QR local (Simple / Banesco QR), destino ${esc(pais)}.
+          comprador y repartidor por QR local (Simple / Banesco QR), destino ${esc(pais)}.
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;">
           <label style="font-size:11px;color:#CBD5E1;">Método de pago
@@ -72,8 +72,8 @@
     window.aprobarSuscripcionPremiumAdmin = retired;
     window.rechazarSuscripcionPremiumAdmin = retired;
     window.revocarSuscripcionPremiumAdmin = retired;
-    window.banearRecolectorDesdePremium = retired;
-    window.banearRecolectorPorVoucherInvalidoAdmin = retired;
+    window.banearRepartidorDesdePremium = retired;
+    window.banearRepartidorPorVoucherInvalidoAdmin = retired;
     window.depurarVouchersCaducadosAdmin = retired;
   }
 

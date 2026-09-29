@@ -28,19 +28,19 @@ window.escapeHtmlStr = function(str) {
 window.NOTIGAS = window.NOTIGAS || {};
 window.NOTIGAS.ORDER_EXPIRATION_MS   = 24 * 60 * 60 * 1000;  // 24 horas
 window.NOTIGAS.TRUCK_EXPIRATION_MS   = 10 * 60 * 1000;        // 10 minutos (camiones fantasma)
-window.NOTIGAS.GPS_UPDATE_INTERVAL   = 5000;                   // 5 segundos (broadcast recolector)
+window.NOTIGAS.GPS_UPDATE_INTERVAL   = 5000;                   // 5 segundos (broadcast repartidor)
 window.NOTIGAS.GPS_TIMEOUT_MS        = 12000;                  // 12 segundos (timeout GPS)
 window.NOTIGAS.MIN_MOVEMENT_METERS   = 15;                     // 15 metros (movimiento mínimo GPS)
-window.NOTIGAS.IDLE_THRESHOLD_MS     = 3 * 60 * 1000;         // 3 minutos (recolector inactivo)
+window.NOTIGAS.IDLE_THRESHOLD_MS     = 3 * 60 * 1000;         // 3 minutos (repartidor inactivo)
 window.NOTIGAS.MAX_IMAGE_SIZE_BYTES  = 2 * 1024 * 1024;       // 2 MB (tamaño máximo imagen)
-  window.NOTIGAS.CACHE_VERSION = '145';
+window.NOTIGAS.CACHE_VERSION = '143';
 
 // Contrato de datos: la publicidad y los avisos comunitarios son módulos distintos.
 window.NOTIGAS.AD_TABLE = 'anuncios_globales';
 window.NOTIGAS.NOTICE_TABLE = 'avisos';
 window.NOTIGAS.AD_PLACEMENTS = Object.freeze({
   MAPA: 'mapa',
-  RECOLECTORES: 'recolectores',
+  REPARTIDORES: 'repartidores',
   MURO_AVISOS: 'muro_avisos'
 });
 
@@ -131,14 +131,14 @@ window.loadOrderPrivacyModule = async function() {
   }
 };
 
-window.loadRecolectorPaymentsModule = async function() {
-  if (typeof window.ensureRecolectorPaymentsMenu !== 'function') {
-    await window.loadScriptAsync('js/recolector_payments.js');
+window.loadDriverPaymentsModule = async function() {
+  if (typeof window.ensureDriverPaymentsMenu !== 'function') {
+    await window.loadScriptAsync('js/driver_payments.js');
   }
   // Reglas posteriores a orders.js: "No entregué" y notificaciones cuando
   // el comprador confirma recepción.
   if (typeof window.reportarNoEntregadoPedido !== 'function') {
-    await window.loadScriptAsync('js/recolector_order_rules.js');
+    await window.loadScriptAsync('js/driver_order_rules.js');
   }
   // La privacidad sí es transversal, pero se carga solo después de autenticar.
   await window.loadOrderPrivacyModule();
@@ -189,9 +189,9 @@ window.loadAdsModule = async function () {
     gpsReady: false,
     activeOrder: initialActiveOrder, // Pedido activo del usuario actual persistido
     realtimeConnected: false,  // Estado de conexión Supabase Realtime
-    appMode: 'buyer',          // 'buyer' | 'recolector'
-    isRecolectorLive: false,       // Si el recolector está transmitiendo en vivo
-    recolectorGpsLive: 'off',      // El recorrido solo inicia por acción explícita del recolector
+    appMode: 'buyer',          // 'buyer' | 'driver'
+    isDriverLive: false,       // Si el repartidor está transmitiendo en vivo
+    driverGpsLive: 'off',      // El recorrido solo inicia por acción explícita del repartidor
   };
 
   // Suscriptores por clave de estado
@@ -254,13 +254,13 @@ window.loadAdsModule = async function () {
           const user = data.session.user;
           const meta = user.user_metadata || {};
 
-          let recolectorData = null;
+          let driverData = null;
           let profileData = null;
 
           try {
             const { data: bootData, error: bootErr } = await window.supabaseClient.rpc('rpc_get_user_bootstrap_data');
             if (!bootErr && bootData) {
-              recolectorData = bootData.recolector || null;
+              driverData = bootData.driver || null;
               profileData = bootData.profile || null;
               const isAdm = Boolean(bootData.is_admin);
               _state['isAdmin'] = isAdm;
@@ -271,8 +271,8 @@ window.loadAdsModule = async function () {
             }
           } catch (_) {}
 
-          if (!recolectorData && !profileData) {
-            const [recolectorResult, profileResult] = await Promise.all([
+          if (!driverData && !profileData) {
+            const [driverResult, profileResult] = await Promise.all([
               window.supabaseClient
                 .from('choferes_habilitados')
                 .select('*')
@@ -284,32 +284,32 @@ window.loadAdsModule = async function () {
                 .eq('id', user.id)
                 .maybeSingle()
             ]);
-            recolectorData = recolectorResult?.data || null;
+            driverData = driverResult?.data || null;
             profileData = profileResult?.data || null;
           }
 
-          if (recolectorData) {
+          if (driverData) {
             const preferredRole = profileData?.role === 'vecino' ? 'vecino' : 'repartidor';
             _state['userRole'] = preferredRole;
-            _state['appMode'] = preferredRole === 'repartidor' ? 'recolector' : 'buyer';
-            if (recolectorData.ciudad) _state['city'] = recolectorData.ciudad.toLowerCase().trim();
+            _state['appMode'] = preferredRole === 'repartidor' ? 'driver' : 'buyer';
+            if (driverData.ciudad) _state['city'] = driverData.ciudad.toLowerCase().trim();
             _state['userData'] = {
               role: preferredRole,
-              hasRecolectorProfile: true,
-              nombre: profileData?.nombre || recolectorData.nombre_completo || meta.full_name || user.email.split('@')[0],
-              whatsapp: recolectorData.telefono_whatsapp || '',
-              placa: recolectorData.placa || '',
-              categoria: recolectorData.categoria || 'plastico',
-              productos: recolectorData.productos || '',
-              schedule: recolectorData.schedule || '',
-              ciudad: recolectorData.ciudad || _state['city'],
+              hasDriverProfile: true,
+              nombre: profileData?.nombre || driverData.nombre_completo || meta.full_name || user.email.split('@')[0],
+              whatsapp: driverData.telefono_whatsapp || '',
+              placa: driverData.placa || '',
+              categoria: driverData.categoria || 'plastico',
+              productos: driverData.productos || '',
+              schedule: driverData.schedule || '',
+              ciudad: driverData.ciudad || _state['city'],
               user_id: user.id,
               gmail: user.email
             };
           } else {
             if (profileData) {
               _state['userRole'] = profileData.role || 'vecino';
-              _state['appMode'] = profileData.role === 'repartidor' ? 'recolector' : 'buyer';
+              _state['appMode'] = profileData.role === 'repartidor' ? 'driver' : 'buyer';
               if (profileData.ciudad) _state['city'] = profileData.ciudad.toLowerCase().trim();
               _state['userData'] = {
                 role: profileData.role || 'vecino',
@@ -330,7 +330,7 @@ window.loadAdsModule = async function () {
               if (meta.ciudad || meta.city) {
                 _state['city'] = (meta.ciudad || meta.city).toLowerCase();
               }
-              _state['appMode'] = meta.role === 'repartidor' ? 'recolector' : 'buyer';
+              _state['appMode'] = meta.role === 'repartidor' ? 'driver' : 'buyer';
             }
           }
         }
@@ -381,9 +381,9 @@ window.loadAdsModule = async function () {
   window.AppState = AppState;
   console.log('✅ AppState inicializado.');
 
-  // No cargar pagos/reglas de recolector para visitantes y compradores. La capa
+  // No cargar pagos/reglas de repartidor para visitantes y compradores. La capa
   // de privacidad se activa al existir una sesión; los módulos exclusivos del
-  // recolector se cargan únicamente cuando la identidad tiene ficha/rol recolector.
+  // repartidor se cargan únicamente cuando la identidad tiene ficha/rol driver.
   const loadModulesForUser = (userData) => {
     if (!userData || !userData.user_id) return;
 
@@ -391,9 +391,9 @@ window.loadAdsModule = async function () {
       console.warn('No se pudo cargar la capa de privacidad de pedidos:', err);
     });
 
-    if (userData.role === 'repartidor' || userData.hasRecolectorProfile === true) {
-      window.loadRecolectorPaymentsModule?.().catch((err) => {
-        console.warn('No se pudo cargar el módulo de pagos/reglas del recolector:', err);
+    if (userData.role === 'repartidor' || userData.hasDriverProfile === true) {
+      window.loadDriverPaymentsModule?.().catch((err) => {
+        console.warn('No se pudo cargar el módulo de pagos/reglas del repartidor:', err);
       });
     }
   };

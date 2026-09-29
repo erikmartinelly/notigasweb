@@ -10,7 +10,7 @@ const _ADMIN_AD_TABLE = window.NOTIGAS?.AD_TABLE || 'anuncios_globales';
 const _ADMIN_NOTICE_TABLE = window.NOTIGAS?.NOTICE_TABLE || 'avisos';
 const _ADMIN_AD_PLACEMENTS = window.NOTIGAS?.AD_PLACEMENTS || Object.freeze({
   MAPA: 'mapa',
-  RECOLECTORES: 'recolectores',
+  REPARTIDORES: 'repartidores',
   MURO_AVISOS: 'muro_avisos'
 });
 
@@ -101,16 +101,16 @@ window.abrirModalAdminDashboard = async function() {
   }
 };
 
-function cerrarSesionRecolectorActivarComprador() {
+function cerrarSesionRepartidorActivarComprador() {
   if (typeof showConfirmModal === 'function') {
     showConfirmModal('🔄', '¿Cambiar a Modo Comprador?', 'Tu ficha de negocio se mantendrá guardada. Solo se cambiará tu modo de ingreso.', 'Sí, cambiar', () => {
       AppState.set('userData', null);
-      AppState.set('recolectorGpsLive', 'off');
+      AppState.set('driverGpsLive', 'off');
       if (typeof closeUserSettingsModal === 'function') closeUserSettingsModal();
       if (typeof setAppMode === 'function') setAppMode('buyer');
       const modalAuth = document.getElementById('modalWelcomeAuth');
       if (modalAuth) modalAuth.style.display = 'none';
-      if (typeof showToast === 'function') showToast('🛒 Modo Comprador', 'Modo Recolector cerrado. Navegando como Comprador.', 'info', 2000);
+      if (typeof showToast === 'function') showToast('🛒 Modo Comprador', 'Modo Repartidor cerrado. Navegando como Comprador.', 'info', 2000);
     });
   }
 }
@@ -140,7 +140,7 @@ function activarMapaCalorAdminLive() {
 
   if (typeof renderActiveOrdersMap === 'function') renderActiveOrdersMap();
 
-  const btn = document.getElementById('auto-event-64') || document.getElementById('btnRecolectorHeatmap');
+  const btn = document.getElementById('auto-event-64') || document.getElementById('btnDriverHeatmap');
 
   if (btn) {
     btn.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> ❌ SALIR MAPA DE CALOR';
@@ -157,7 +157,7 @@ function switchModalTab(target) {
   if (typeof target === 'string') {
     const stringMap = {
       'metricas': 0,
-      'recolectores': 1,
+      'repartidores': 1,
       'compradores': 2,
       // 'premium'/'vip' ya no aplican: NOTIGAS es de acceso gratuito.
       // Se conservan mapeados al indice 3 para no romper la navegacion; ese panel
@@ -195,16 +195,16 @@ function switchModalTab(target) {
 window.adminActivePromoTab = 'mapa';
 window.pendingUploadUrls = {
   mapa: null,
-  recolectores: null,
+  repartidores: null,
   muro_avisos: null
 };
 // Seguimiento de cambios locales sin persistir para no perder una imagen recién
 // subida/eliminada cuando otra recarga de configuración trae datos de Supabase.
-window._pendingAdChanges = { mapa: false, recolectores: false, muro_avisos: false };
+window._pendingAdChanges = { mapa: false, repartidores: false, muro_avisos: false };
 // URL persistida en Supabase por pestaña (para poder borrar el archivo real al eliminar).
-window._persistedAdImageUrl = { mapa: null, recolectores: null, muro_avisos: null };
+window._persistedAdImageUrl = { mapa: null, repartidores: null, muro_avisos: null };
 // Archivos recién subidos en esta sesión pendientes de confirmar/borrar.
-window._adUploadedThisSession = { mapa: [], recolectores: [], muro_avisos: [] };
+window._adUploadedThisSession = { mapa: [], repartidores: [], muro_avisos: [] };
 
 function adStorageFileName(url) {
   if (!url || url === '__REMOVE__') return null;
@@ -228,11 +228,11 @@ window.switchPromoSubTab = function(tabName) {
   window.adminActivePromoTab = normTab;
 
   const btnMapa = document.getElementById('btnPromoSubTabMapa');
-  const btnRecolectores = document.getElementById('btnPromoSubTabRecolectores');
+  const btnRepartidores = document.getElementById('btnPromoSubTabRepartidores');
   const btnMuroAvisos = document.getElementById('btnPromoSubTabMuroAvisos');
 
   const paneMapa = document.getElementById('promoSubPaneMapa');
-  const paneRecolectores = document.getElementById('promoSubPaneRecolectores');
+  const paneRepartidores = document.getElementById('promoSubPaneRepartidores');
   const paneMuroAvisos = document.getElementById('promoSubPaneMuroAvisos');
 
   if (btnMapa) {
@@ -240,10 +240,10 @@ window.switchPromoSubTab = function(tabName) {
     btnMapa.style.color = (normTab === 'mapa') ? 'white' : '#94A3B8';
     btnMapa.classList.toggle('active', normTab === 'mapa');
   }
-  if (btnRecolectores) {
-    btnRecolectores.style.background = (normTab === 'recolectores') ? '#00E676' : 'transparent';
-    btnRecolectores.style.color = (normTab === 'recolectores') ? '#0F172A' : '#94A3B8';
-    btnRecolectores.classList.toggle('active', normTab === 'recolectores');
+  if (btnRepartidores) {
+    btnRepartidores.style.background = (normTab === 'repartidores') ? '#00E676' : 'transparent';
+    btnRepartidores.style.color = (normTab === 'repartidores') ? '#0F172A' : '#94A3B8';
+    btnRepartidores.classList.toggle('active', normTab === 'repartidores');
   }
   if (btnMuroAvisos) {
     btnMuroAvisos.style.background = (normTab === 'muro_avisos') ? '#F59E0B' : 'transparent';
@@ -252,7 +252,7 @@ window.switchPromoSubTab = function(tabName) {
   }
 
   if (paneMapa) paneMapa.style.display = (normTab === 'mapa') ? 'block' : 'none';
-  if (paneRecolectores) paneRecolectores.style.display = (normTab === 'recolectores') ? 'block' : 'none';
+  if (paneRepartidores) paneRepartidores.style.display = (normTab === 'repartidores') ? 'block' : 'none';
   if (paneMuroAvisos) paneMuroAvisos.style.display = (normTab === 'muro_avisos') ? 'block' : 'none';
 };
 
@@ -370,8 +370,8 @@ async function renderAdminAdsAndPostsList() {
       let badgeBg = 'rgba(56,189,248,0.2)';
       let badgeColor = '#38BDF8';
 
-      if (pos === 'recolectores') {
-        posBadge = '🚚 2ª RECOLECTORES (Feed)';
+      if (pos === 'repartidores') {
+        posBadge = '🚚 2ª REPARTIDORES (Feed)';
         badgeBg = 'rgba(0,230,118,0.2)';
         badgeColor = '#00E676';
       } else if (pos === 'muro_avisos') {
@@ -596,7 +596,7 @@ async function renderAdminVendorsList() {
 
   if (!container) return;
 
-  container.innerHTML = '<div style="color:#94A3B8; text-align:center; padding:16px;">Cargando usuarios y recolectores...</div>';
+  container.innerHTML = '<div style="color:#94A3B8; text-align:center; padding:16px;">Cargando usuarios y repartidores...</div>';
 
   let deletedIds = [];
 
@@ -612,35 +612,35 @@ async function renderAdminVendorsList() {
     return;
   }
 
-  const [recolectorsResult, usersResult] = await Promise.all([
+  const [driversResult, usersResult] = await Promise.all([
     window.supabaseClient.from('choferes_habilitados')
       .select('id, user_id, nombre_completo, categoria, placa, telefono_whatsapp, dni, estado_servicio, bloqueado, motivo_bloqueo, created_at')
       .order('created_at', { ascending: false }).limit(100),
     window.supabaseClient.rpc('rpc_admin_list_users')
   ]);
 
-  if (recolectorsResult.error) console.error('Error cargando choferes_habilitados:', recolectorsResult.error);
+  if (driversResult.error) console.error('Error cargando choferes_habilitados:', driversResult.error);
   if (usersResult.error) console.error('Error cargando usuarios administrativos:', usersResult.error);
 
   const users = Array.isArray(usersResult.data) ? usersResult.data : [];
   const usersById = new Map(users.map(user => [String(user.user_id || ''), user]));
-  const defaultVendors = (recolectorsResult.data || []).map(recolector => {
-    const linkedUser = usersById.get(String(recolector.user_id || ''));
+  const defaultVendors = (driversResult.data || []).map(driver => {
+    const linkedUser = usersById.get(String(driver.user_id || ''));
     return {
-      id: `recolector_${recolector.id}`,
-      user_id: recolector.user_id,
-      name: recolector.nombre_completo,
-      category: recolector.categoria || 'plastico',
-      plate: recolector.placa || 'Placa registrada',
-      whatsapp: recolector.telefono_whatsapp || '',
-      dni: recolector.dni || '',
-      estado_servicio: recolector.estado_servicio || 'activo',
-      bloqueado: !!recolector.bloqueado,
-      is_banned: !!(linkedUser && linkedUser.is_banned) || !!recolector.bloqueado
+      id: `driver_${driver.id}`,
+      user_id: driver.user_id,
+      name: driver.nombre_completo,
+      category: driver.categoria || 'plastico',
+      plate: driver.placa || 'Placa registrada',
+      whatsapp: driver.telefono_whatsapp || '',
+      dni: driver.dni || '',
+      estado_servicio: driver.estado_servicio || 'activo',
+      bloqueado: !!driver.bloqueado,
+      is_banned: !!(linkedUser && linkedUser.is_banned) || !!driver.bloqueado
     };
   });
   const buyersList = users
-      .filter(user => !user.is_recolector)
+      .filter(user => !user.is_driver)
       .map(user => ({
         user_id: user.user_id,
         gmail: user.email || '',
@@ -661,10 +661,10 @@ function renderFinalVendors(defaultVendors, deletedIds, buyersList = [], usersLo
     const finalVendors = defaultVendors.filter(v => !deletedIds.includes(v.id));
     let html = '';
     if (finalVendors.length === 0) {
-      html += '<div style="color:#64748B; font-style:italic; font-size:10.5px; margin-bottom:8px;">No hay recolectores registrados.</div>';
+      html += '<div style="color:#64748B; font-style:italic; font-size:10.5px; margin-bottom:8px;">No hay repartidores registrados.</div>';
     }
     finalVendors.forEach((v) => {
-      const isBanned = v.is_banned || (typeof esRecolectorBaneado === 'function' ? esRecolectorBaneado(v.name, v.plate, v.whatsapp, v.user_id) : false);
+      const isBanned = v.is_banned || (typeof esRepartidorBaneado === 'function' ? esRepartidorBaneado(v.name, v.plate, v.whatsapp, v.user_id) : false);
       const isCreditLocked = false;  // NOTIGAS no aplica bloqueos por monto ni por ciclo de credito
       const safeName = encodeURIComponent(v.name || '').replace(/'/g, "%27");
       const safePlate = encodeURIComponent(v.plate || '').replace(/'/g, "%27");
@@ -687,11 +687,11 @@ function renderFinalVendors(defaultVendors, deletedIds, buyersList = [], usersLo
           </div>
           <div style="display:flex; gap:4px; align-items:center; flex-wrap:wrap;">
             ${isBanned ? `
-              <button data-action="desbanearRecolectorAdmin" data-id="${v.id}" data-user-id="${encodeURIComponent(v.user_id || '')}" data-name="${safeName}" style="background:#0288D1; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-lock-open"></i> Desbanear</button>
+              <button data-action="desbanearRepartidorAdmin" data-id="${v.id}" data-user-id="${encodeURIComponent(v.user_id || '')}" data-name="${safeName}" style="background:#0288D1; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-lock-open"></i> Desbanear</button>
             ` : `
-              <button data-action="banearRecolectorAdmin" data-id="${v.id}" data-user-id="${encodeURIComponent(v.user_id || '')}" data-name="${safeName}" data-plate="${safePlate}" style="background:#E65100; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-user-slash"></i> Banear</button>
+              <button data-action="banearRepartidorAdmin" data-id="${v.id}" data-user-id="${encodeURIComponent(v.user_id || '')}" data-name="${safeName}" data-plate="${safePlate}" style="background:#E65100; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-user-slash"></i> Banear</button>
             `}
-            <button data-action="borrarRecolectorPermanente" data-id="${v.id}" data-user-id="${escapeHtmlStr(v.user_id || '')}" data-gmail="${escapeHtmlStr(v.gmail || '')}" data-name="${safeName}" style="background:#D32F2F; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Eliminar</button>
+            <button data-action="borrarRepartidorPermanente" data-id="${v.id}" data-user-id="${escapeHtmlStr(v.user_id || '')}" data-gmail="${escapeHtmlStr(v.gmail || '')}" data-name="${safeName}" style="background:#D32F2F; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Eliminar</button>
           </div>
         </div>
       `;
@@ -718,7 +718,7 @@ function renderFinalVendors(defaultVendors, deletedIds, buyersList = [], usersLo
         buyersHtml += `<div style="font-weight:900; color:#CBD5E1; margin:16px 0 8px; font-size:11px; text-transform:uppercase; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:4px;">📍 ${escapeHtmlStr(ciudad)} <span style="color:#64748B; font-size:9px;">(${buyers.length})</span></div>`;
         
         buyers.forEach(b => {
-          const isBanned = b.is_banned || (typeof esRecolectorBaneado === 'function' ? esRecolectorBaneado(b.nombre || '', '', '', b.user_id || b.gmail) : false);
+          const isBanned = b.is_banned || (typeof esRepartidorBaneado === 'function' ? esRepartidorBaneado(b.nombre || '', '', '', b.user_id || b.gmail) : false);
           const safeBuyerName = encodeURIComponent(b.nombre || b.gmail || 'Usuario').replace(/'/g, '%27');
 
           buyersHtml += `
@@ -859,7 +859,7 @@ async function renderAdminOrdersList() {
               <strong>Teléfono:</strong> <span style="color:${borderColor}; font-weight:800;">${escapeHtmlStr(order.telefono || 'No especificado')}</span><br>
 
               <span style="font-size:10px; color:#64748B;">Coordenadas: Lat ${Number.isFinite(latitude) ? latitude.toFixed(5) : '-'}, Lng ${Number.isFinite(longitude) ? longitude.toFixed(5) : '-'}</span>
-              ${order.driver_id ? `<br><span style="font-size:10px; color:#64748B;">Recolector: ${escapeHtmlStr(String(order.driver_id).substring(0, 8))}...</span>` : ''}
+              ${order.driver_id ? `<br><span style="font-size:10px; color:#64748B;">Repartidor: ${escapeHtmlStr(String(order.driver_id).substring(0, 8))}...</span>` : ''}
 
             </div>
 
@@ -1059,7 +1059,7 @@ async function borrarPedidoFantasmaAdmin(tipo, param = null) {
 async function renovarPedidoAdmin(orderId) {
   if (!orderId || !window.supabaseClient) return;
   if (typeof showConfirmModal === 'function') {
-    showConfirmModal('🔄', 'Renovar Pedido', '¿Renovar este pedido? Volverá a estado pendiente, quedará sin recolector asignado y comenzará un nuevo plazo.', 'Renovar', async () => {
+    showConfirmModal('🔄', 'Renovar Pedido', '¿Renovar este pedido? Volverá a estado pendiente, quedará sin repartidor asignado y comenzará un nuevo plazo.', 'Renovar', async () => {
       const { error } = await window.supabaseClient.rpc('rpc_admin_renew_order', { p_order_id: orderId });
       if (error) {
         console.error('Error renovando pedido:', error);
@@ -1073,7 +1073,7 @@ async function renovarPedidoAdmin(orderId) {
       if (typeof renderActiveOrdersMap === 'function') renderActiveOrdersMap();
       if (typeof renderAdminDashboardKPIs === 'function') renderAdminDashboardKPIs();
       if (typeof showToast === 'function') {
-        showToast('🔄 Pedido renovado', 'El pedido volvió a estado pendiente y ya puede ser tomado por un recolector.', 'success', 4500);
+        showToast('🔄 Pedido renovado', 'El pedido volvió a estado pendiente y ya puede ser tomado por un repartidor.', 'success', 4500);
       }
     });
   }
@@ -1144,7 +1144,7 @@ async function guardarPropagandaTab(tabName, silent = false) {
     // Proporcionar título por defecto si el usuario lo dejó en blanco para permitir guardado múltiple
     const defaultTitles = {
       mapa: 'Promociona tu negocio o servicio profesional directamente en tu zona',
-      recolectores: 'Distribución mayorista, repuestos y accesorios autorizados',
+      repartidores: 'Distribución mayorista, repuestos y accesorios autorizados',
       muro_avisos: 'Promociona tu negocio o servicio en tu barrio'
     };
     inputAd = defaultTitles[pos] || 'Promociona tu negocio o servicio';
@@ -1179,7 +1179,7 @@ async function guardarPropagandaTab(tabName, silent = false) {
       // 1. Guardar a través de RPC atómico con p_admin_email y p_posicion
       try {
         const { data: rpcRes, error: rpcErr } = await window.supabaseClient.rpc('rpc_save_local_ad', {
-          p_titulo: inputAd || (pos === 'mapa' ? 'Promociona tu negocio o servicio profesional directamente en tu zona' : (pos === 'recolectores' ? 'Distribución mayorista, repuestos y accesorios autorizados' : 'Promociona tu negocio o servicio en tu barrio')),
+          p_titulo: inputAd || (pos === 'mapa' ? 'Promociona tu negocio o servicio profesional directamente en tu zona' : (pos === 'repartidores' ? 'Distribución mayorista, repuestos y accesorios autorizados' : 'Promociona tu negocio o servicio en tu barrio')),
           p_descripcion: `Propaganda Local - ${pos.toUpperCase()}`,
           p_url: safeUrl || rawUrl || '',
           p_image_url: imgUrl || '',
@@ -1190,9 +1190,9 @@ async function guardarPropagandaTab(tabName, silent = false) {
         });
 
         if (!rpcErr && rpcRes && rpcRes.success) {
-          if (!window._pendingAdChanges) window._pendingAdChanges = { mapa: false, recolectores: false, muro_avisos: false };
-          if (!window._adUploadedThisSession) window._adUploadedThisSession = { mapa: [], recolectores: [], muro_avisos: [] };
-          if (!window._persistedAdImageUrl) window._persistedAdImageUrl = { mapa: null, recolectores: null, muro_avisos: null };
+          if (!window._pendingAdChanges) window._pendingAdChanges = { mapa: false, repartidores: false, muro_avisos: false };
+          if (!window._adUploadedThisSession) window._adUploadedThisSession = { mapa: [], repartidores: [], muro_avisos: [] };
+          if (!window._persistedAdImageUrl) window._persistedAdImageUrl = { mapa: null, repartidores: null, muro_avisos: null };
 
           if (imgUrl === '__REMOVE__') {
             // Borrar el archivo persistido y los subidos en esta sesión solo DESPUÉS
@@ -1399,13 +1399,13 @@ window.previewUploadAdImage = async function(event, specificTab) {
         const publicUrl = publicUrlData?.publicUrl || '';
 
         if (!window.pendingUploadUrls) {
-          window.pendingUploadUrls = { mapa: null, recolectores: null, muro_avisos: null };
+          window.pendingUploadUrls = { mapa: null, repartidores: null, muro_avisos: null };
         }
         if (!window._pendingAdChanges) {
-          window._pendingAdChanges = { mapa: false, recolectores: false, muro_avisos: false };
+          window._pendingAdChanges = { mapa: false, repartidores: false, muro_avisos: false };
         }
         if (!window._adUploadedThisSession) {
-          window._adUploadedThisSession = { mapa: [], recolectores: [], muro_avisos: [] };
+          window._adUploadedThisSession = { mapa: [], repartidores: [], muro_avisos: [] };
         }
 
         // Si se reemplaza una imagen subida antes sin guardar, borrar la anterior.
@@ -1440,13 +1440,13 @@ window.eliminarImagenAnuncio = async function(specificTab) {
   const pos = normalizeAdPlacement(specificTab || window.adminActivePromoTab);
 
   if (!window.pendingUploadUrls) {
-    window.pendingUploadUrls = { mapa: null, recolectores: null, muro_avisos: null };
+    window.pendingUploadUrls = { mapa: null, repartidores: null, muro_avisos: null };
   }
   if (!window._pendingAdChanges) {
-    window._pendingAdChanges = { mapa: false, recolectores: false, muro_avisos: false };
+    window._pendingAdChanges = { mapa: false, repartidores: false, muro_avisos: false };
   }
   if (!window._adUploadedThisSession) {
-    window._adUploadedThisSession = { mapa: [], recolectores: [], muro_avisos: [] };
+    window._adUploadedThisSession = { mapa: [], repartidores: [], muro_avisos: [] };
   }
 
   // No se borra el archivo aquí: el usuario podría cancelar SIN guardar y dejaría
@@ -1564,7 +1564,7 @@ async function descargarListaCorreosCSV() {
     if (u.gmail) {
       emailsList.push({
         gmail: u.gmail,
-        role: u.role === 'repartidor' || u.role === 'chofer' ? 'Recolector' : 'Cliente',
+        role: u.role === 'repartidor' || u.role === 'chofer' ? 'Repartidor' : 'Cliente',
         fecha: new Date().toISOString().split('T')[0]
       });
     }
@@ -1617,9 +1617,9 @@ async function descargarListaCorreosCSV() {
   alert(`📥 DESCARGA COMPLETADA EN FORMATO .CSV\n\nSe exportaron ${finalEmails.length} correos electrónicos de usuarios para campañas de Email Marketing.`);
 }
 
-/* DESCARGA COMPLETA DE FICHAS DE RECOLECTORES REGISTRADOS (.CSV DE RECOLECTORES) */
+/* DESCARGA COMPLETA DE FICHAS DE REPARTIDORES REGISTRADOS (.CSV DE REPARTIDORES) */
 
-async function descargarFichasRecolectoresCSV() {
+async function descargarFichasRepartidoresCSV() {
   let currentAdmin = await getVerifiedAdminEmail();
 
   if (!currentAdmin) {
@@ -1631,18 +1631,18 @@ async function descargarFichasRecolectoresCSV() {
 
   }
 
-  let recolectorsList = [];
+  let driversList = [];
 
   if (window.supabaseClient) {
       const { data, error } = await window.supabaseClient.from('choferes_habilitados').select('*');
       if (error) { console.error('Error cargando choferes_habilitados:', error); return; }
 
-      if (data) recolectorsList = data;
+      if (data) driversList = data;
 
   }
 
-  if (recolectorsList.length === 0) {
-    recolectorsList = [
+  if (driversList.length === 0) {
+    driversList = [
 
       { nombre_completo: "Recolector de Plástico", telefono_whatsapp: "74123456", placa: "3842XYZ", categoria: "plastico", productos: "Recolección de plástico y papel", zonas: "OTB Central", schedule: "07:00 a 18:00", created_at: "2026-08-01" },
 
@@ -1652,9 +1652,9 @@ async function descargarFichasRecolectoresCSV() {
 
   }
 
-  let csvRows = ["Nombre Negocio/Recolector,WhatsApp,Placa,Categoria,Productos,Zonas Recorrido,Horarios,Fecha Registro"];
+  let csvRows = ["Nombre Negocio/Repartidor,WhatsApp,Placa,Categoria,Productos,Zonas Recorrido,Horarios,Fecha Registro"];
 
-  recolectorsList.forEach(d => {
+  driversList.forEach(d => {
     csvRows.push(`"${d.nombre_completo || ''}","${d.telefono_whatsapp || ''}","${d.placa || ''}","${d.categoria || ''}","${d.productos || ''}","${d.zonas || ''}","${d.schedule || ''}","${d.created_at || ''}"`);
 
   });
@@ -1669,7 +1669,7 @@ async function descargarFichasRecolectoresCSV() {
 
   link.setAttribute("href", url);
 
-  link.setAttribute("download", `fichas_recolectores_notigas_${new Date().toISOString().split('T')[0]}.csv`);
+  link.setAttribute("download", `fichas_repartidores_notigas_${new Date().toISOString().split('T')[0]}.csv`);
 
   document.body.appendChild(link);
 
@@ -1677,7 +1677,7 @@ async function descargarFichasRecolectoresCSV() {
 
   document.body.removeChild(link);
 
-  alert(`📥 DESCARGA COMPLETADA EN FORMATO .CSV\n\nSe exportaron ${recolectorsList.length} Fichas de Recolectores registradas para el panel de administración.`);
+  alert(`📥 DESCARGA COMPLETADA EN FORMATO .CSV\n\nSe exportaron ${driversList.length} Fichas de Repartidores registradas para el panel de administración.`);
 }
 
 /* DESCARGA COMPLETA DE ESTADÍSTICAS GENERALES (.CSV) */
@@ -1716,13 +1716,13 @@ async function descargarEstadisticasGeneralesCSV() {
 
   let csvRows = ["Metrica,Valor,Fecha"];
   csvRows.push(`"Usuarios Totales","${usersCount}","${fechaHoy}"`);
-  csvRows.push(`"Recolectores Habilitados","${vendorsCount}","${fechaHoy}"`);
+  csvRows.push(`"Repartidores Habilitados","${vendorsCount}","${fechaHoy}"`);
   csvRows.push(`"Pedidos Activos","${ordersCount}","${fechaHoy}"`);
   csvRows.push(`"Pedidos Entregados","${deliveredCount}","${fechaHoy}"`);
   csvRows.push(`"Pedidos Cancelados","${cancelledCount}","${fechaHoy}"`);
   csvRows.push(`"Avisos Publicados","${avisosCount}","${fechaHoy}"`);
   csvRows.push(`"Denuncias Totales","${reportsCount}","${fechaHoy}"`);
-  csvRows.push(`"Usuarios/Recolectores Denunciados","${reportedUsersCount}","${fechaHoy}"`);
+  csvRows.push(`"Usuarios/Repartidores Denunciados","${reportedUsersCount}","${fechaHoy}"`);
 
   const csvString = "\uFEFF" + csvRows.join("\n");
 
@@ -1851,8 +1851,8 @@ async function banearUsuarioAdmin(identifier) {
 
   const isEmail = target.includes('@');
 
-  if (recolectorsList.length === 0) {
-    recolectorsList = [
+  if (driversList.length === 0) {
+    driversList = [
 
       { nombre_completo: "Recolector de Plástico", telefono_whatsapp: "74123456", placa: "3842XYZ", categoria: "plastico", productos: "Recolección de plástico y papel", zonas: "OTB Central", schedule: "07:00 a 18:00", created_at: "2026-08-01" },
 
@@ -1862,9 +1862,9 @@ async function banearUsuarioAdmin(identifier) {
 
   }
 
-  let csvRows = ["Nombre Negocio/Recolector,WhatsApp,Placa,Categoria,Productos,Zonas Recorrido,Horarios,Fecha Registro"];
+  let csvRows = ["Nombre Negocio/Repartidor,WhatsApp,Placa,Categoria,Productos,Zonas Recorrido,Horarios,Fecha Registro"];
 
-  recolectorsList.forEach(d => {
+  driversList.forEach(d => {
     csvRows.push(`"${d.nombre_completo || ''}","${d.telefono_whatsapp || ''}","${d.placa || ''}","${d.categoria || ''}","${d.productos || ''}","${d.zonas || ''}","${d.schedule || ''}","${d.created_at || ''}"`);
 
   });
@@ -1879,7 +1879,7 @@ async function banearUsuarioAdmin(identifier) {
 
   link.setAttribute("href", url);
 
-  link.setAttribute("download", `fichas_recolectores_notigas_${new Date().toISOString().split('T')[0]}.csv`);
+  link.setAttribute("download", `fichas_repartidores_notigas_${new Date().toISOString().split('T')[0]}.csv`);
 
   document.body.appendChild(link);
 
@@ -1887,7 +1887,7 @@ async function banearUsuarioAdmin(identifier) {
 
   document.body.removeChild(link);
 
-  alert(`📥 DESCARGA COMPLETADA EN FORMATO .CSV\n\nSe exportaron ${recolectorsList.length} Fichas de Recolectores registradas para el panel de administración.`);
+  alert(`📥 DESCARGA COMPLETADA EN FORMATO .CSV\n\nSe exportaron ${driversList.length} Fichas de Repartidores registradas para el panel de administración.`);
 }
 
 
@@ -1951,11 +1951,11 @@ function abrirModalDenuncia(contextTitle, targetInfo, isFakeOrder = false, prefi
 window.abrirModalDenuncia = abrirModalDenuncia;
 
 window.abrirModalDenunciaPedidoFalso = function(prefillData = {}) {
-  const modalRecolector = document.getElementById('modalRecolector');
-  if (modalRecolector) modalRecolector.style.display = 'none';
+  const modalDriver = document.getElementById('modalDriver');
+  if (modalDriver) modalDriver.style.display = 'none';
   const modalSettings = document.getElementById('modalUserSettings');
   if (modalSettings) modalSettings.style.display = 'none';
-  abrirModalDenuncia('Pedido Falso', 'Reporte desde Cuenta de Recolector', true, prefillData);
+  abrirModalDenuncia('Pedido Falso', 'Reporte desde Cuenta de Repartidor', true, prefillData);
 };
 
 function closeReportModal() {
@@ -2206,8 +2206,8 @@ window.borrarDenunciaAdmin = (typeof borrarDenunciaAdmin !== 'undefined') ? borr
 window.limpiarTodosLosPedidosFantasmaAdmin = (typeof limpiarTodosLosPedidosFantasmaAdmin !== 'undefined') ? limpiarTodosLosPedidosFantasmaAdmin : undefined;
 window.borrarPedidoFantasmaAdmin = (typeof borrarPedidoFantasmaAdmin !== 'undefined') ? borrarPedidoFantasmaAdmin : undefined;
 window.renovarPedidoAdmin = (typeof renovarPedidoAdmin !== 'undefined') ? renovarPedidoAdmin : undefined;
-window.desbanearRecolectorAdmin = (typeof desbanearRecolectorAdmin !== 'undefined') ? desbanearRecolectorAdmin : (typeof window.desbanearRecolectorAdmin !== 'undefined' ? window.desbanearRecolectorAdmin : undefined);
-window.banearRecolectorAdmin = (typeof banearRecolectorAdmin !== 'undefined') ? banearRecolectorAdmin : (typeof window.banearRecolectorAdmin !== 'undefined' ? window.banearRecolectorAdmin : undefined);
+window.desbanearRepartidorAdmin = (typeof desbanearRepartidorAdmin !== 'undefined') ? desbanearRepartidorAdmin : (typeof window.desbanearRepartidorAdmin !== 'undefined' ? window.desbanearRepartidorAdmin : undefined);
+window.banearRepartidorAdmin = (typeof banearRepartidorAdmin !== 'undefined') ? banearRepartidorAdmin : (typeof window.banearRepartidorAdmin !== 'undefined' ? window.banearRepartidorAdmin : undefined);
 window.borrarPostForumAdmin = (typeof borrarPostForumAdmin !== 'undefined') ? borrarPostForumAdmin : undefined;
 window.abrirModalAdminDashboard = (typeof abrirModalAdminDashboard !== 'undefined') ? abrirModalAdminDashboard : undefined;
 window.closeAdminModal = (typeof closeAdminModal !== 'undefined') ? closeAdminModal : undefined;
@@ -2220,7 +2220,7 @@ window.renderAdminAdsAndPostsList = (typeof renderAdminAdsAndPostsList !== 'unde
 window.renderAdminReports = (typeof renderAdminReports !== 'undefined') ? renderAdminReports : undefined;
 window.cerrarSesionAdminControl = (typeof cerrarSesionAdminControl !== 'undefined') ? cerrarSesionAdminControl : undefined;
 window.descargarListaCorreosCSV = (typeof descargarListaCorreosCSV !== 'undefined') ? descargarListaCorreosCSV : undefined;
-window.descargarFichasRecolectoresCSV = (typeof descargarFichasRecolectoresCSV !== 'undefined') ? descargarFichasRecolectoresCSV : undefined;
+window.descargarFichasRepartidoresCSV = (typeof descargarFichasRepartidoresCSV !== 'undefined') ? descargarFichasRepartidoresCSV : undefined;
 window.switchPromoSubTab = (typeof switchPromoSubTab !== 'undefined') ? switchPromoSubTab : undefined;
 window.guardarPropagandaTab = (typeof guardarPropagandaTab !== 'undefined') ? guardarPropagandaTab : undefined;
 window.previewUploadAdImage = (typeof previewUploadAdImage !== 'undefined') ? previewUploadAdImage : undefined;
@@ -2236,15 +2236,15 @@ window.enviarDenuncia = (typeof enviarDenuncia !== 'undefined') ? enviarDenuncia
 // definiciones duplicadas no deterministas al cargar admin.js y admin_users.js en paralelo.
 
 /* ==========================================================================
-   GESTIÓN DE RECOLECTORES PREMIUM / COMPROBANTES QR  (RETIRADO)
+   GESTIÓN DE REPARTIDORES PREMIUM / COMPROBANTES QR  (RETIRADO)
    --------------------------------------------------------------------------
    NOTIGAS es de acceso gratuito en Bolivia: no hay plan Premium/VIP, ni cuota
    mensual, ni comisiones por pedido, ni ciclo de credito, ni mora. La única
    sanción es administrativa y manual (estado_servicio / bloqueado), y se
-   gestiona desde la pestaña de recolectores.
+   gestiona desde la pestaña de repartidores.
    ========================================================================== */
 
-window.renderAdminPremiumSubscriptions = function(){ const c=document.getElementById('adminPremiumSubscriptionsContainer'); if(c) c.innerHTML='<div style="color:#94A3B8;padding:18px;text-align:center;">NOTIGAS no tiene planes Premium ni cobros a recolectores. Acceso gratuito.</div>'; };
+window.renderAdminPremiumSubscriptions = function(){ const c=document.getElementById('adminPremiumSubscriptionsContainer'); if(c) c.innerHTML='<div style="color:#94A3B8;padding:18px;text-align:center;">NOTIGAS no tiene planes Premium ni cobros a repartidores. Acceso gratuito.</div>'; };
 
 function abrirLightboxVoucher(url) {
   const modal = document.getElementById('modalVoucherLightbox');

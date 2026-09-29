@@ -23,7 +23,7 @@
       const text = String(el.textContent || '').trim();
       if (/premium|vip|suscripci[oó]n|yape|comisi[oó]n|remesa/i.test(text)) {
         if (/^H[234]$/.test(el.tagName)) el.textContent = 'Medio de pago';
-        else el.textContent = 'NOTIGAS no cobra ni custodia fondos. No hay comisiones, vouchers ni cobros que revisar. El pago se acuerda directamente entre comprador y recolector por QR local (Simple / Banesco QR), destino Bolivia.';
+        else el.textContent = 'NOTIGAS no cobra ni custodia fondos. No hay comisiones, vouchers ni cobros que revisar. El pago se acuerda directamente entre comprador y repartidor por QR local (Simple / Banesco QR), destino Bolivia.';
       }
     });
   }
@@ -50,7 +50,7 @@
           <code>pagos_comisiones</code> y <code>registro_comisiones</code> y sus RPCs
           fueron eliminadas de la base de datos.
           <br><br>
-          El pago se acuerda directamente entre comprador y recolector por
+          El pago se acuerda directamente entre comprador y repartidor por
           <strong>QR local (Simple / Banesco QR)</strong>, destino Bolivia.
         </div>
       </div>`;

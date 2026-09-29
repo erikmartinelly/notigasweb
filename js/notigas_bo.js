@@ -38,38 +38,40 @@
      replica esta misma lista en notigas_catalogo_categorias() y la valida
      con el CHECK pedidos_categoria_catalogo_chk.
 
-     Orden de producto: el material que las casas ofrecen para que sea
-     recogido, del mas habitual (plastico) al mas selectivo (organico).
+     Orden de producto: primero el material que las casas ofrecen para que
+     sea recogido, después las compras y por último "Otros".
 
-     tipo_solicitud: siempre 'recogida'. NOTIGAS no vende ni entrega productos:
-     la venta y la entrega se retiraron del catalogo. La recarga de detergente
-     no vive aqui, es una suscripcion aparte (tabla suscripciones_recarga). */
+     tipo_solicitud:
+       'recogida' -> la casa publica el material y el repartidor va a buscarlo.
+       'compra'   -> el comprador pide que le lleven el producto.
+     El servidor lo re-deriva desde la categoría; aquí solo ordena la UI. */
   const CATEGORIAS = [
-    { codigo: 'plastico', etiqueta: '♻️  Plástico',               chip: 'Plástico',  grupo: 'recolector', icono: '♻️', color: '#22C55E', tipo_solicitud: 'recogida' },
-    { codigo: 'papel',    etiqueta: '📄 Papel / Cartón',         chip: 'Papel',     grupo: 'recolector', icono: '📄', color: '#F59E0B', tipo_solicitud: 'recogida' },
-    { codigo: 'chatarra', etiqueta: '⚙️  Chatarra',               chip: 'Chatarra',  grupo: 'recolector', icono: '⚙️', color: '#94A3B8', tipo_solicitud: 'recogida' },
-    { codigo: 'botellas', etiqueta: '🥤 Botellas Plástico / Vidrio', chip: 'Botellas', grupo: 'recolector', icono: '🥤', color: '#38BDF8', tipo_solicitud: 'recogida' },
-    { codigo: 'organico', etiqueta: '🌿 Orgánico Seleccionado',   chip: 'Orgánico',  grupo: 'recolector', icono: '🌿', color: '#84CC16', tipo_solicitud: 'recogida' }
+    { codigo: 'plastico',     etiqueta: '♻️  Plástico',                  chip: 'Plástico',   grupo: 'recolector',  icono: '♻️',  color: '#22C55E', tipo_solicitud: 'recogida' },
+    { codigo: 'papel',        etiqueta: '📄 Papel / Cartón',            chip: 'Papel',      grupo: 'recolector',  icono: '📄',  color: '#F59E0B', tipo_solicitud: 'recogida' },
+    { codigo: 'chatarra',     etiqueta: '⚙️  Chatarra',                  chip: 'Chatarra',   grupo: 'recolector',  icono: '⚙️',  color: '#94A3B8', tipo_solicitud: 'recogida' },
+    { codigo: 'botellas',     etiqueta: '🥤 Botellas Plástico / Vidrio', chip: 'Botellas',  grupo: 'recolector',  icono: '🥤',  color: '#38BDF8', tipo_solicitud: 'recogida' },
+    { codigo: 'organico',     etiqueta: '🌿 Orgánico Seleccionado',      chip: 'Orgánico',   grupo: 'recolector',  icono: '🌿',  color: '#84CC16', tipo_solicitud: 'recogida' },
+    { codigo: 'frutas',       etiqueta: '🍎 Frutas & Verduras',         chip: 'Frutas',     grupo: 'recolector',  icono: '🍎',  color: '#EF4444', tipo_solicitud: 'recogida' },
+    { codigo: 'detergentes',  etiqueta: '🧽 Detergentes & Limpieza',     chip: 'Detergentes', grupo: 'compra',     icono: '🧽',  color: '#0EA5E9', tipo_solicitud: 'compra' },
+    { codigo: 'sal',          etiqueta: '🧂 Sal',                        chip: 'Sal',        grupo: 'compra',      icono: '🧂',  color: '#E2E8F0', tipo_solicitud: 'compra' },
+    { codigo: 'afilado',      etiqueta: '🔪 Afilado de Cuchillos',       chip: 'Afilado',    grupo: 'compra',      icono: '🔪',  color: '#A78BFA', tipo_solicitud: 'compra' },
+    { codigo: 'agua',         etiqueta: '💧 Agua Purificada 20L',        chip: 'Agua 20L',   grupo: 'distribucion', icono: '💧', color: '#60A5FA', tipo_solicitud: 'compra' },
+    { codigo: 'otros',        etiqueta: '📦 Otros Pedidos',              chip: 'Otros',      grupo: 'compra',      icono: '📦',  color: '#F472B6', tipo_solicitud: 'compra' }
   ];
 
   const CODIGOS_CATEGORIA = CATEGORIAS.map((c) => c.codigo);
 
   const CATEGORIAS_POR_CODIGO = CATEGORIAS.reduce((acc, c) => { acc[c.codigo] = c; return acc; }, {});
 
-  /* Todas las categorías son de recogida, así que el tipo deja de discriminar.
-     Se conserva la firma porque el formulario sigue llamándola con 'recogida'. */
-  const categoriasPorTipo = () => CATEGORIAS.slice();
+  /* Categorías que aparecen según el tipo de solicitud elegido. El grupo
+     "recolector" es el de las recogidas; "compra" y "distribucion" el de
+     las compras. */
+  const categoriasPorTipo = (tipo) => CATEGORIAS.filter(
+    (c) => (tipo === 'recogida' ? c.grupo === 'recolector' : c.grupo !== 'recolector')
+  );
 
   const categoriaPorCodigo = (codigo) =>
     CATEGORIAS_POR_CODIGO[String(codigo || '').toLowerCase().trim()] || CATEGORIAS[0];
-
-  /* Categorías retiradas del servicio. Un pedido o un recolector guardado con
-     una de estas no debe romper la vista: se cae en la categoría por defecto.
-     La lista replica las que dejó el catálogo el 2026-09-27. */
-  const CATEGORIAS_RETIRADAS = ['frutas', 'detergentes', 'sal', 'afilado', 'agua', 'otros'];
-
-  const categoriaRetirada = (codigo) =>
-    CATEGORIAS_RETIRADAS.includes(String(codigo || '').toLowerCase().trim());
 
   const PAGO = {
     /* Sin cobro: NOTIGAS no retiene comisión por generar, escanear ni
@@ -148,8 +150,6 @@
     CATEGORIAS_POR_CODIGO: CATEGORIAS_POR_CODIGO,
     categoriasPorTipo,
     categoriaPorCodigo,
-    categoriaRetirada,
-    CATEGORIAS_RETIRADAS,
     PAGO,
     money,
     formatDateTime,
@@ -175,7 +175,8 @@
       const panel = document.getElementById('mapaLetrero');
       if (!panel) return;
       const contRecogida = document.getElementById('mapaLetreroRecogida');
-      if (!contRecogida) return;
+      const contCompra = document.getElementById('mapaLetreroCompra');
+      if (!contRecogida || !contCompra) return;
 
       const chip = (cat) => {
         const el = document.createElement('span');
@@ -193,9 +194,17 @@
       };
 
       contRecogida.textContent = '';
+      contCompra.textContent = '';
 
-      contRecogida.appendChild(encabezado('PEDIR RECOJO RECICLABLES · te lo recogemos en casa'));
-      CATEGORIAS.forEach(c => contRecogida.appendChild(chip(c)));
+      contRecogida.appendChild(encabezado('Recoger en tu casa'));
+      CATEGORIAS
+        .filter(c => c.tipo_solicitud === 'recogida')
+        .forEach(c => contRecogida.appendChild(chip(c)));
+
+      contCompra.appendChild(encabezado('Te lo llevamos'));
+      CATEGORIAS
+        .filter(c => c.tipo_solicitud === 'compra')
+        .forEach(c => contCompra.appendChild(chip(c)));
 
       const btn = document.getElementById('mapaLetreroToggle');
       if (btn && !btn.dataset.wired) {

@@ -71,7 +71,7 @@ print("=" * 68)
 codigo = {f: leer("js/" + f) for f in js_files()}
 index_html = leer("index.html")
 notigas_bo = leer("js/notigas_bo.js")
-recolector_pagos = leer("js/recolector_payments.js")
+driver_pagos = leer("js/driver_payments.js")
 mapa_js = leer("js/map.js")
 todo_js = "\n".join(codigo.values())
 
@@ -100,9 +100,9 @@ revisar(
 # --- 2. Yape fuera del flujo de pago ------------------------------------
 print("\n[2/9] Yape fuera del flujo de pago (solo QR local)")
 revisar(
-    "js/recolector_payments.js no menciona Yape",
-    not re.search(r"yape", recolector_pagos, re.IGNORECASE),
-    citas(recolector_pagos, r"yape"),
+    "js/driver_payments.js no menciona Yape",
+    not re.search(r"yape", driver_pagos, re.IGNORECASE),
+    citas(driver_pagos, r"yape"),
 )
 revisar(
     "js/voucher_ocr.js no menciona Yape",
@@ -110,12 +110,12 @@ revisar(
     citas(codigo.get("voucher_ocr.js", ""), r"yape"),
 )
 revisar(
-    "js/recolector_payments.js declara QR local Simple / Banesco",
-    "QR local" in recolector_pagos and "Simple" in recolector_pagos and "Banesco" in recolector_pagos,
+    "js/driver_payments.js declara QR local Simple / Banesco",
+    "QR local" in driver_pagos and "Simple" in driver_pagos and "Banesco" in driver_pagos,
 )
 revisar(
-    "js/recolector_payments.js aclara que no hay comision",
-    re.search(r"no hay comis", recolector_pagos, re.IGNORECASE),
+    "js/driver_payments.js aclara que no hay comision",
+    re.search(r"no hay comis", driver_pagos, re.IGNORECASE),
     "falta el texto de 'no hay comision'",
 )
 
@@ -129,7 +129,6 @@ ELIMINADOS = [
     "rpc_admin_list_commission_vouchers",
     "rpc_admin_review_commission_voucher",
     "rpc_suspender_repartidor_mora",
-    "rpc_suspender_recolector_mora",
 ]
 for rpc in ELIMINADOS:
     llamadas = [f for f, txt in codigo.items() if re.search(r"rpc\(\s*['\"]%s" % re.escape(rpc), txt)]
@@ -193,8 +192,8 @@ revisar(
     re.search(r"no hay cobros|saldo[s]? pendiente|limite[s]? de cr", index_html, re.IGNORECASE),
 )
 
-# --- 8. Servicios nuevos del recolector ----------------------------------
-print("\n[8/9] Servicios del recolector (sal y afilado)")
+# --- 8. Servicios nuevos del repartidor ----------------------------------
+print("\n[8/9] Servicios del repartidor (sal y afilado)")
 revisar(
     "index.html ofrece 'Compra de sal'",
     'value="Compra de sal"' in index_html,
@@ -238,7 +237,7 @@ if mig_ciudad:
 if mig_contacto:
     txt = leer("supabase/migrations/" + mig_contacto[0])
     revisar(
-        "la migracion de contacto crea la politica de recolectores",
+        "la migracion de contacto crea la politica de repartidores",
         re.search(r"pedidos_select_drivers_contacto", txt),
     )
 

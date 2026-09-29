@@ -51,7 +51,7 @@ def main() -> int:
     readme = read("README.md")
     snapshot = read("supabase/full_production_schema.sql")
     migration = read(M + "20260911205957_preprod_final_security_and_credit_messages.sql")
-    legacyRecolectors = read(M + "20260911210832_close_legacy_repartidores_public_read.sql")
+    legacyDrivers = read(M + "20260911210832_close_legacy_repartidores_public_read.sql")
     legacyCleanup = read(M + "20260910182449_legacy_cleanup_retention_and_privileges.sql")
     hardening = read(M + "20260913003000_security_surface_hardening.sql")
     adminWrites = read(M + "20260913004500_require_real_auth_for_administration_writes.sql")
@@ -83,13 +83,13 @@ def main() -> int:
          "UI legacy no reintroduce suspendido_mora")
     must(not tiene(orders, "estado_servicio === 'suspendido_pago'"),
          "UI legacy no reintroduce suspendido_pago")
-    must(tiene(orders, "secureRenderRecolectorOrdersList"), "lista legacy delega al radar seguro")
+    must(tiene(orders, "secureRenderDriverOrdersList"), "lista legacy delega al radar seguro")
     must(tiene(privacy, "'suspendido_mora'"), "radar seguro reconoce suspendido_mora")
     must(tiene(privacy, "'suspendido_pago'"), "radar seguro reconoce suspendido_pago")
     must(tiene(privacy, "'baneado'"), "radar seguro reconoce baneado")
-    must(rx(privacy, r"recolectorCanTakeOrders = !suspended && state === 'activo'"),
+    must(rx(privacy, r"driverCanTakeOrders = !suspended && state === 'activo'"),
          "radar solo habilita Tomar con estado activo")
-    must(tiene(privacy, "recolectorCanTakeOrders"), "radar controla permiso de tomar pedidos")
+    must(tiene(privacy, "driverCanTakeOrders"), "radar controla permiso de tomar pedidos")
     must(rx(privacy, r"tomarPedidoDesdeZonaPrivada\s*=\s*async"), "acción Tomar revalida estado en servidor")
     must(rx(privacy, r"if \(!access\.canTake\)"), "acción Tomar se detiene para cuentas suspendidas")
     must(rx(privacy, r"Cuenta suspendida para nuevos pedidos"), "lista segura informa suspensión sin ocultar pedidos asignados")
@@ -105,12 +105,12 @@ def main() -> int:
     must(rx(migration, r"is_admin_email\(\).*FROM PUBLIC, anon", re.S), "helper admin no es endpoint anónimo")
     must(rx(migration, r"is_banned\(\).*FROM PUBLIC, anon", re.S), "helper de bloqueo no es endpoint anónimo")
     must(rx(migration, r"is_current_enabled_driver\(text,text\).*FROM PUBLIC, anon", re.S),
-         "helper de recolector no es endpoint anónimo")
+         "helper de repartidor no es endpoint anónimo")
     must(rx(migration, r"Alcanzaste tu límite de crédito: % pedidos cobrables / S/ %", re.I),
          "mensaje de crédito es dinámico")
-    must(rx(legacyRecolectors, r"DROP POLICY IF EXISTS \"Lectura publica repartidores\"", re.I),
-         "tabla recolectores legacy ya no es pública")
-    must(rx(legacyRecolectors, r"REVOKE ALL ON public\.repartidores FROM PUBLIC, anon, authenticated", re.I),
+    must(rx(legacyDrivers, r"DROP POLICY IF EXISTS \"Lectura publica repartidores\"", re.I),
+         "tabla repartidores legacy ya no es pública")
+    must(rx(legacyDrivers, r"REVOKE ALL ON public\.repartidores FROM PUBLIC, anon, authenticated", re.I),
          "teléfono/placa legacy quedan cerrados")
 
     # --------------------------------------------- migraciones historicas

@@ -194,7 +194,7 @@ def main() -> int:
     TITULO = "NOTIGAS: Noticias de Generadores de residuos seleccionados - NOTIGAS"
     DESCRIPCION = (
         "NOTIGAS - Bolivia \U0001F1E7\U0001F1F4 | \U0001F5D1\uFE0F Generadores de residuos"
-        " | \u267B\uFE0F Reciclaje | \U0001F69B Recolectores | \U0001F4A7 Agua"
+        " | \u267B\uFE0F Reciclaje | \U0001F69B Repartidores | \U0001F4A7 Agua"
         " | \U0001F9F4 Detergentes | \U0001F9C2 Sal | \U0001F52A Afilado"
     )
     m = re.search(r"<title>(.*?)</title>", html, re.S)
@@ -213,7 +213,7 @@ def main() -> int:
     # ---------------------------------------------------------- carga de scripts
     # CI exige que estos tres carguen con defer y nunca como <script src> a pelo:
     # sin defer bloquean el parser y retrasan el primer render.
-    for modulo in ("recolector_icons", "device_security", "monitoring"):
+    for modulo in ("driver_icons", "device_security", "monitoring"):
         ok(re.search(r'<script defer src="js/%s\.js\?v=\d+"></script>' % modulo, html)
            is not None, f"js/{modulo}.js carga con defer y version")
         ok(re.search(r'<script src="js/%s\.js\?v=\d+"></script>' % modulo, html) is None,
@@ -223,10 +223,10 @@ def main() -> int:
     # NOTIGAS no intermedia fondos: ninguna superficie pintada puede mostrar un
     # precio. Se busca el patron del badge, no la mera palabra "precio".
     # Excepcion deliberada: reportarIncumplimientoPrecio() en orders.js pide al
-    # usuario el monto que le cobro el recolector para abrir una queja. Eso no
+    # usuario el monto que le cobro el repartidor para abrir una queja. Eso no
     # es mostrar un precio de plataforma, es denunciar un cobro.
     SUPERFICIES = [
-        "js/vendors.js", "js/recolector_icons.js", "js/app.js",
+        "js/vendors.js", "js/driver_icons.js", "js/app.js",
         "js/map.js", "js/auth.js", "index.html",
     ]
     BADIO = re.compile(
