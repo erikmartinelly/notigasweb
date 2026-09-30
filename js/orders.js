@@ -1184,6 +1184,16 @@ function setTipoSolicitud(tipo) {
     b.style.color       = on ? (esRecogida ? '#BBF7D0' : '#BAE6FD') : '#94A3B8';
   });
 
+  // La opcion de compra solo aplica a productos (hoy: Recarga de Detergentes).
+  // En el flujo de reciclaje (recogida) se oculta para que no aparezca
+  // "COMPRAR / PEDIR"; y al comprar se oculta "RECOGER MATERIAL". Se usa
+  // querySelector (no querySelectorAll) porque el sandbox de check_runtime.js
+  // devuelve null de forma segura.
+  const btnTipoCompra = document.querySelector('#tipoSolicitudToggle button[data-tipo="compra"]');
+  if (btnTipoCompra) btnTipoCompra.style.display = (tipo === 'compra') ? 'flex' : 'none';
+  const btnTipoRecogida = document.querySelector('#tipoSolicitudToggle button[data-tipo="recogida"]');
+  if (btnTipoRecogida) btnTipoRecogida.style.display = (tipo === 'recogida') ? 'flex' : 'none';
+
   // El catalogo del servidor es la fuente de verdad. Sin NOTIGAS_BO se
   // respeta la lista estatica del HTML.
   const sel = document.getElementById('selectCategoria');

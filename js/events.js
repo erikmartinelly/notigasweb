@@ -117,6 +117,13 @@ document.addEventListener('DOMContentLoaded', () => {
         window.switchLegalTab(actionElement.dataset.legalTab || 'general');
       } else if (action === 'close-privacy-policy') {
         window.cerrarModalPoliticaPrivacidad();
+      } else if (action === 'informar-problema') {
+        event.preventDefault();
+        if (typeof window.abrirContactoPublicidad === 'function') {
+          window.abrirContactoPublicidad();
+        } else {
+          window.open('https://t.me/NotiGas_Soporte', '_blank');
+        }
       }
     });
 
@@ -181,7 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (el_btnMainOrder) el_btnMainOrder.addEventListener('click', () => { safeCall('abrirSubmenuPedidos'); });
 
     const el_auto_event_7 = document.getElementById('auto-event-7');
-    if (el_auto_event_7) el_auto_event_7.addEventListener('click', () => { safeCall('abrirSubmenuPedidos'); });
+    if (el_auto_event_7) el_auto_event_7.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'detergentes'); });
 
     const el_auto_event_8 = document.getElementById('auto-event-8');
     if (el_auto_event_8) el_auto_event_8.addEventListener('click', () => { safeCall('notificarEscucheCamion'); });
@@ -269,13 +276,6 @@ document.addEventListener('DOMContentLoaded', () => {
       safeCall('closeUserSettingsModal');
       safeCall('abrirFichaRepartidorEdicion');
     });
-
-    const el_btnDriverReportFakeOrderModal = document.getElementById('btnDriverReportFakeOrderModal');
-    if (el_btnDriverReportFakeOrderModal) {
-      el_btnDriverReportFakeOrderModal.addEventListener('click', () => {
-        safeCall('abrirModalDenunciaPedidoFalso');
-      });
-    }
 
     const el_btnAdminAccessQuick = document.getElementById('btnAdminAccessQuick');
     if (el_btnAdminAccessQuick) el_btnAdminAccessQuick.addEventListener('click', () => { safeCall('abrirModalAdminDashboard'); });
