@@ -30,6 +30,7 @@
   var _voucherParsed = null;
   var _voucherFile = null;
   var _publicando = false;
+  var _eventosEnlazados = false;
 
   function $(id) { return document.getElementById(id); }
 
@@ -96,15 +97,40 @@
     return total;
   }
 
+  function operacionDisponible() {
+    var opEl = $('pubPagaOperacionManual');
+    var manual = opEl ? opEl.value.trim() : '';
+    if (manual.replace(/[^A-Za-z0-9]/g, '').length >= 5) return true;
+    return !!(_voucherParsed && _voucherParsed.operacion);
+  }
+
   function refrescarBotonPublicar() {
     var btn = $('pubPagaBtnPublicar');
     if (!btn) return;
     var total = Math.round(CFG.precio_por_dia * diasActuales() * 100) / 100;
     var ok = !!(_voucherParsed && _voucherParsed.esValido && _voucherFile) &&
       _voucherParsed.monto !== null && _voucherParsed.monto !== undefined &&
-      Math.abs(Number(_voucherParsed.monto) - total) <= 0.01;
+      Math.abs(Number(_voucherParsed.monto) - total) <= 0.01 &&
+      operacionDisponible();
     btn.disabled = !ok;
     btn.style.opacity = ok ? '1' : '.5';
+  }
+
+  function bindEventosModal() {
+    if (_eventosEnlazados) return;
+    var en = function (id, ev, fn) { var el = $(id); if (el) el.addEventListener(ev, fn); };
+    en('pubPagaBtnCerrar', 'click', function () { window.cerrarPublicidadPaga(); });
+    en('pubPagaDiasMenos', 'click', function () { window.publicidadPagaCambiarDias(-1); });
+    en('pubPagaDiasMas', 'click', function () { window.publicidadPagaCambiarDias(1); });
+    en('pubPagaDias', 'input', function () { if (_voucherParsed) limpiarVoucher(); actualizarTotal(); });
+    en('pubPagaDias', 'blur', function () { window.publicidadPagaCambiarDias(0); });
+    en('pubPagaBtnContinuar', 'click', function () { window.publicidadPagaIrAPago(); });
+    en('pubPagaVoucherFile', 'change', function () { window.publicidadPagaProcesarVoucher($('pubPagaVoucherFile')); });
+    en('pubPagaBtnPublicar', 'click', function () { window.publicidadPagaPublicar(); });
+    en('pubPagaBtnVolver', 'click', function () { window.publicidadPagaVolver(); });
+    en('pubPagaBtnActualizar', 'click', function () { window.publicidadPagaCargarMisAnuncios(); });
+    en('pubPagaOperacionManual', 'input', function () { refrescarBotonPublicar(); });
+    _eventosEnlazados = true;
   }
 
   function limpiarVoucher() {
@@ -224,6 +250,7 @@
   window.abrirPublicidadPaga = function () {
     var modal = $('modalPublicidadPaga');
     if (!modal) return;
+    bindEventosModal();
     llenarCiudades();
     precargarDatosUsuario();
     resetFormulario();

@@ -1907,7 +1907,7 @@
     <div class="modal-content" style="max-width: 580px;">
       <div class="modal-title">
         <span><i class="fa-solid fa-bullhorn"></i> Publicita tu Negocio</span>
-        <button class="btn-close" type="button" onclick="if(window.cerrarPublicidadPaga) window.cerrarPublicidadPaga();">&#215;</button>
+        <button class="btn-close" type="button" id="pubPagaBtnCerrar">&#215;</button>
       </div>
 
       <div id="pubPagaConfigNotice" style="font-size:12px;color:#CBD5E1;background:rgba(15,23,42,.6);border:1px solid #334155;border-radius:10px;padding:10px;margin-bottom:12px;">
@@ -1944,9 +1944,9 @@
         <div class="form-group">
           <label>D&#237;as publicado</label>
           <div style="display:flex;align-items:center;gap:10px;">
-            <button type="button" class="btn-submit" style="width:46px;padding:8px 0;" onclick="if(window.publicidadPagaCambiarDias) window.publicidadPagaCambiarDias(-1);">&#8722;</button>
-            <input type="number" id="pubPagaDias" min="1" max="30" value="1" style="width:84px;text-align:center;" oninput="if(window.publicidadPagaCambiarDias) window.publicidadPagaCambiarDias(0);">
-            <button type="button" class="btn-submit" style="width:46px;padding:8px 0;" onclick="if(window.publicidadPagaCambiarDias) window.publicidadPagaCambiarDias(1);">+</button>
+            <button type="button" class="btn-submit" style="width:46px;padding:8px 0;" id="pubPagaDiasMenos">&#8722;</button>
+            <input type="number" id="pubPagaDias" min="1" max="30" value="1" style="width:84px;text-align:center;">
+            <button type="button" class="btn-submit" style="width:46px;padding:8px 0;" id="pubPagaDiasMas">+</button>
           </div>
         </div>
         <div class="form-group">
@@ -1963,7 +1963,7 @@
           <span id="pubPagaTotalMonto" style="color:#34D399;font-size:18px;">Bs 9.00</span>
         </div>
 
-        <button class="btn-submit" type="button" onclick="if(window.publicidadPagaIrAPago) window.publicidadPagaIrAPago();">
+        <button class="btn-submit" type="button" id="pubPagaBtnContinuar">
           <i class="fa-solid fa-qrcode"></i> Continuar al pago
         </button>
       </div>
@@ -1978,17 +1978,17 @@
 
         <div class="form-group">
           <label>Foto del comprobante *</label>
-          <input type="file" id="pubPagaVoucherFile" accept="image/*" onchange="if(window.publicidadPagaProcesarVoucher) window.publicidadPagaProcesarVoucher(this);">
+          <input type="file" id="pubPagaVoucherFile" accept="image/*">
         </div>
 
         <div id="pubPagaOcrEstado" style="font-size:12px;color:#CBD5E1;background:rgba(15,23,42,.6);border:1px solid #334155;border-radius:10px;padding:10px;margin-bottom:12px;">
           Sube una foto legible del comprobante del pago por QR.
         </div>
 
-        <button class="btn-submit" type="button" id="pubPagaBtnPublicar" disabled style="opacity:.5;" onclick="if(window.publicidadPagaPublicar) window.publicidadPagaPublicar();">
+        <button class="btn-submit" type="button" id="pubPagaBtnPublicar" disabled style="opacity:.5;">
           <i class="fa-solid fa-bullhorn"></i> Publicar anuncio
         </button>
-        <button type="button" class="btn-submit" style="background:transparent;border:1px solid #475569;color:#CBD5E1;margin-top:8px;" onclick="if(window.publicidadPagaVolver) window.publicidadPagaVolver();">
+        <button type="button" class="btn-submit" style="background:transparent;border:1px solid #475569;color:#CBD5E1;margin-top:8px;" id="pubPagaBtnVolver">
           Volver
         </button>
       </div>
@@ -1996,7 +1996,7 @@
       <div style="margin-top:18px;border-top:1px solid #1E293B;padding-top:12px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
           <strong style="font-size:13px;color:#F1F5F9;">Mis anuncios</strong>
-          <button type="button" class="btn-submit" style="width:auto;padding:6px 10px;font-size:11px;" onclick="if(window.publicidadPagaCargarMisAnuncios) window.publicidadPagaCargarMisAnuncios();">
+          <button type="button" class="btn-submit" style="width:auto;padding:6px 10px;font-size:11px;" id="pubPagaBtnActualizar">
             <i class="fa-solid fa-rotate"></i> Actualizar
           </button>
         </div>
