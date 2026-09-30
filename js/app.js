@@ -470,7 +470,7 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
       } else {
         favEl.href = "icons/camion_reciclaje.svg?v=143";
       }
-      document.title = "NOTIGAS: Noticias de Generadores de residuos seleccionados";
+      document.title = "N= RECOJO RECICLABLES";
     }
     return;
   }

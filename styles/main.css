@@ -270,7 +270,7 @@ header {
 
   align-items: center; 
 
-  gap: 4px; 
+  gap: 10px; 
 
   font-size: 19px; 
 
@@ -292,9 +292,8 @@ header {
 
   object-fit: contain;
 
-  /* Borde blanco brillante. Antes era un drop-shadow rojo que sobre el
-     camion verde se leia como un halo rosado/lila. */
-  filter: drop-shadow(0 0 3px #FFFFFF) drop-shadow(0 0 7px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 12px rgba(255, 255, 255, 0.45));
+  /* Sin brillo / glow: icono nítido y limpio con separación adecuada */
+  filter: none;
 
   transition: transform 0.3s ease;
 
@@ -302,7 +301,7 @@ header {
 
 .brand-img:hover {
 
-  transform: scale(1.1) rotate(5deg);
+  transform: scale(1.05);
 
 }
 

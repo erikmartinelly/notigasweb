@@ -193,7 +193,7 @@ def main() -> int:
     # El usuario fijo texto de marca. Si alguien lo reescribe (por ejemplo al
     # limpiar copy viejo) la pagina sigue funcionando pero pierde el texto
     # acordado, asi que lo fijamos aqui.
-    TITULO = "NOTIGAS: Noticias de Generadores de residuos seleccionados - NOTIGAS"
+    TITULO = "N= RECOJO RECICLABLES"
     DESCRIPCION = (
         "NOTIGAS - Bolivia \U0001F1E7\U0001F1F4 | \U0001F5D1\uFE0F Generadores de residuos"
         " | \u267B\uFE0F Reciclaje | \U0001F69B Repartidores | \U0001F9F4 Detergentes"
