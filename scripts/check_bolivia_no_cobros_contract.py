@@ -104,10 +104,17 @@ revisar(
     not re.search(r"yape", driver_pagos, re.IGNORECASE),
     citas(driver_pagos, r"yape"),
 )
+# El reparto es gratuito (no se cobra comision). El OCR de comprobantes existe
+# SOLO para la publicidad pagada: lo que sigue prohibido es usarlo para cobrar.
 revisar(
-    "el modulo de OCR de vouchers se elimino (el servicio es gratuito)",
-    "voucher_ocr.js" not in codigo,
-    "voucher_ocr.js sigue en el arbol",
+    "el OCR de vouchers no se usa para cobrar el reparto",
+    "voucher_ocr" not in driver_pagos,
+    "driver_payments.js referencia voucher_ocr",
+)
+revisar(
+    "el OCR de vouchers, si existe, solo lo consume la publicidad pagada",
+    ("voucher_ocr.js" not in codigo) or ("publicidad_paga.js" in codigo),
+    "voucher_ocr.js sin un consumidor de publicidad pagada",
 )
 revisar(
     "js/driver_payments.js aclara que no hay comision",

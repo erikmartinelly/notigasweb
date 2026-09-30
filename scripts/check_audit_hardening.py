@@ -115,12 +115,17 @@ sin_en("admin_users.js sin el mensaje de falta de pago por comision",
         "js/admin_users.js", r"Falta de pago de comisi[oó]n", "modelo de deuda reintroducido")
 
 # --- 5. Pagos: sin persistencia financiera --------------------------------
-print("\n[5/7] Sin OCR de vouchers ni persistencia de pagos")
-# NOTIGAS es gratuito: no hay cobro que comprobar, asi que el modulo de OCR de
-# comprobantes QR se elimino de la app. El guard fija que no vuelva.
-revisar("el modulo de OCR de vouchers se elimino de la app",
-        not os.path.exists(os.path.join(RAIZ, "js", "voucher_ocr.js")),
-        "js/voucher_ocr.js sigue presente")
+print("\n[5/7] Sin cobros de reparto ni persistencia financiera")
+# El reparto es gratuito y no tiene comisiones. El OCR de comprobantes existe
+# SOLO para la publicidad pagada (rpc_publicar_anuncio_pagado); nunca para
+# cobrar el reparto.
+sin_en("el OCR de vouchers no se usa para cobrar el reparto",
+        "js/driver_payments.js", r"voucher_ocr",
+        "driver_payments.js usa OCR de vouchers para cobrar")
+revisar("el OCR de vouchers, si existe, solo lo consume la publicidad pagada",
+        (not os.path.exists(os.path.join(RAIZ, "js", "voucher_ocr.js")))
+        or os.path.exists(os.path.join(RAIZ, "js", "publicidad_paga.js")),
+        "js/voucher_ocr.js existe sin un modulo de publicidad pagada")
 sin_en("index.html no carga el OCR de vouchers",
         "index.html", r"voucher_ocr\.js", "se reimidio el OCR de comprobantes QR")
 # El panel de pagos es informativo: no debe hacer aritmetica de moneda.
