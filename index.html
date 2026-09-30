@@ -111,11 +111,11 @@
 
   <link rel="manifest" href="manifest.json">
 
-  <link id="dynamicFavicon" rel="icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=146"/>
+  <link id="dynamicFavicon" rel="icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=147"/>
 
-  <link rel="icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=146"/>
+  <link rel="icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=147"/>
 
-  <link rel="shortcut icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=146"/>
+  <link rel="shortcut icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=147"/>
 
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
@@ -137,7 +137,7 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="styles/main.css?v=146">
+  <link rel="stylesheet" href="styles/main.css?v=147">
 
   <!-- SERVICIOS EXTERNOS -->
 
@@ -1902,6 +1902,111 @@
 
   </div>
 
+  <!-- MODAL PUBLICIDAD PAGADA (AUTOSERVICIO POR DIA) -->
+  <div class="modal" id="modalPublicidadPaga">
+    <div class="modal-content" style="max-width: 580px;">
+      <div class="modal-title">
+        <span><i class="fa-solid fa-bullhorn"></i> Publicita tu Negocio</span>
+        <button class="btn-close" type="button" onclick="if(window.cerrarPublicidadPaga) window.cerrarPublicidadPaga();">&#215;</button>
+      </div>
+
+      <div id="pubPagaConfigNotice" style="font-size:12px;color:#CBD5E1;background:rgba(15,23,42,.6);border:1px solid #334155;border-radius:10px;padding:10px;margin-bottom:12px;">
+        Cargando tarifas...
+      </div>
+
+      <div id="pubPagaError" style="display:none;font-size:12px;color:#FECACA;background:rgba(127,29,29,.35);border:1px solid #B91C1C;border-radius:10px;padding:10px;margin-bottom:12px;"></div>
+
+      <div id="pubPagaPaso1">
+        <div class="form-group">
+          <label>T&#237;tulo del anuncio *</label>
+          <input type="text" id="pubPagaTitulo" maxlength="120" placeholder="Ej: Ferreter&#237;a El Tornillo">
+        </div>
+        <div class="form-group">
+          <label>Descripci&#243;n</label>
+          <textarea id="pubPagaDescripcion" rows="3" maxlength="800" placeholder="Qu&#233; ofreces, direcci&#243;n, horario..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Enlace o WhatsApp (opcional)</label>
+          <input type="url" id="pubPagaUrl" maxlength="500" placeholder="https://...">
+        </div>
+        <div class="form-group">
+          <label>Ciudad donde se muestra</label>
+          <select id="pubPagaCiudad"></select>
+        </div>
+        <div class="form-group">
+          <label>D&#243;nde aparece</label>
+          <select id="pubPagaPosicion">
+            <option value="mapa">Mapa (franja inferior)</option>
+            <option value="repartidores">Lista de recolectores</option>
+            <option value="muro_avisos">Muro de avisos</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>D&#237;as publicado</label>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <button type="button" class="btn-submit" style="width:46px;padding:8px 0;" onclick="if(window.publicidadPagaCambiarDias) window.publicidadPagaCambiarDias(-1);">&#8722;</button>
+            <input type="number" id="pubPagaDias" min="1" max="30" value="1" style="width:84px;text-align:center;" oninput="if(window.publicidadPagaCambiarDias) window.publicidadPagaCambiarDias(0);">
+            <button type="button" class="btn-submit" style="width:46px;padding:8px 0;" onclick="if(window.publicidadPagaCambiarDias) window.publicidadPagaCambiarDias(1);">+</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Nombre o negocio anunciante</label>
+          <input type="text" id="pubPagaNombre" maxlength="80" placeholder="Tu nombre o el de tu negocio">
+        </div>
+        <div class="form-group">
+          <label>Contacto (WhatsApp / celular)</label>
+          <input type="text" id="pubPagaContacto" maxlength="40" placeholder="Ej: 7XXXXXXX">
+        </div>
+
+        <div id="pubPagaTotalBox" style="display:flex;justify-content:space-between;align-items:center;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.4);border-radius:10px;padding:12px;margin:6px 0 12px;font-weight:800;">
+          <span style="font-size:13px;">Total a pagar</span>
+          <span id="pubPagaTotalMonto" style="color:#34D399;font-size:18px;">Bs 9.00</span>
+        </div>
+
+        <button class="btn-submit" type="button" onclick="if(window.publicidadPagaIrAPago) window.publicidadPagaIrAPago();">
+          <i class="fa-solid fa-qrcode"></i> Continuar al pago
+        </button>
+      </div>
+
+      <div id="pubPagaPaso2" style="display:none;">
+        <div id="pubPagaPagoInfo" style="font-size:12.5px;line-height:1.5;color:#E2E8F0;background:rgba(15,23,42,.7);border:1px solid #334155;border-radius:10px;padding:12px;margin-bottom:12px;"></div>
+
+        <div class="form-group">
+          <label>N&#250;mero de operaci&#243;n / referencia (si el OCR no lo lee)</label>
+          <input type="text" id="pubPagaOperacionManual" maxlength="40" placeholder="Ej: 0012345678">
+        </div>
+
+        <div class="form-group">
+          <label>Foto del comprobante *</label>
+          <input type="file" id="pubPagaVoucherFile" accept="image/*" onchange="if(window.publicidadPagaProcesarVoucher) window.publicidadPagaProcesarVoucher(this);">
+        </div>
+
+        <div id="pubPagaOcrEstado" style="font-size:12px;color:#CBD5E1;background:rgba(15,23,42,.6);border:1px solid #334155;border-radius:10px;padding:10px;margin-bottom:12px;">
+          Sube una foto legible del comprobante del pago por QR.
+        </div>
+
+        <button class="btn-submit" type="button" id="pubPagaBtnPublicar" disabled style="opacity:.5;" onclick="if(window.publicidadPagaPublicar) window.publicidadPagaPublicar();">
+          <i class="fa-solid fa-bullhorn"></i> Publicar anuncio
+        </button>
+        <button type="button" class="btn-submit" style="background:transparent;border:1px solid #475569;color:#CBD5E1;margin-top:8px;" onclick="if(window.publicidadPagaVolver) window.publicidadPagaVolver();">
+          Volver
+        </button>
+      </div>
+
+      <div style="margin-top:18px;border-top:1px solid #1E293B;padding-top:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <strong style="font-size:13px;color:#F1F5F9;">Mis anuncios</strong>
+          <button type="button" class="btn-submit" style="width:auto;padding:6px 10px;font-size:11px;" onclick="if(window.publicidadPagaCargarMisAnuncios) window.publicidadPagaCargarMisAnuncios();">
+            <i class="fa-solid fa-rotate"></i> Actualizar
+          </button>
+        </div>
+        <div id="pubPagaMisAnunciosList" style="display:flex;flex-direction:column;gap:8px;font-size:12px;color:#CBD5E1;">
+          <span style="opacity:.7;">Inicia sesi&#243;n para ver tus anuncios.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL NUEVO POST NOTICIAS VECINALES -->
 
   <div class="modal" id="modalNuevoPost">
@@ -2786,33 +2891,33 @@
 
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3/dist/umd/supabase.min.js" integrity="sha384-l8ah+VgaWtk1mvOe9VC+OirC6qHFF4yH7l7mKRidV9MSti3E9F463bMp6ZVN4kuC" crossorigin="anonymous"></script>
 
-  <script defer src="js/notigas_bo.js?v=146"></script>
-  <script defer src="js/driver_icons.js?v=146"></script>
-  <script defer src="js/state.js?v=146"></script>
+  <script defer src="js/notigas_bo.js?v=147"></script>
+  <script defer src="js/driver_icons.js?v=147"></script>
+  <script defer src="js/state.js?v=147"></script>
 
-  <script defer src="js/ui.js?v=146"></script>
+  <script defer src="js/ui.js?v=147"></script>
 
-  <script defer src="/runtime-config.js?v=146"></script>
-  <script defer src="js/monitoring.js?v=146"></script>
-  <script defer src="js/supabase-config.js?v=146"></script>
+  <script defer src="/runtime-config.js?v=147"></script>
+  <script defer src="js/monitoring.js?v=147"></script>
+  <script defer src="js/supabase-config.js?v=147"></script>
 
-  <script defer src="js/device_security.js?v=146"></script>
+  <script defer src="js/device_security.js?v=147"></script>
 
-  <script defer src="js/auth.js?v=146"></script>
+  <script defer src="js/auth.js?v=147"></script>
 
-  <script defer src="js/vendors.js?v=146"></script>
+  <script defer src="js/vendors.js?v=147"></script>
 
-  <script defer src="js/map.js?v=146"></script>
+  <script defer src="js/map.js?v=147"></script>
 
-  <script defer src="js/map_search.js?v=146"></script>
+  <script defer src="js/map_search.js?v=147"></script>
 
-  <script defer src="js/map_gps.js?v=146"></script>
+  <script defer src="js/map_gps.js?v=147"></script>
 
-  <script defer src="js/orders.js?v=146"></script>
+  <script defer src="js/orders.js?v=147"></script>
 
-  <script defer src="js/app.js?v=146"></script>
+  <script defer src="js/app.js?v=147"></script>
 
-  <script defer src="js/events.js?v=146"></script>
+  <script defer src="js/events.js?v=147"></script>
 
 </body>
 

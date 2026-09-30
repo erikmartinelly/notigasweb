@@ -209,7 +209,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if (el_auto_event_10) el_auto_event_10.addEventListener('click', () => { safeCall('abrirModalDriverOrders'); });
 
     const el_btnContratarPublicidad = document.getElementById('btnContratarPublicidad');
-    if (el_btnContratarPublicidad) el_btnContratarPublicidad.addEventListener('click', () => { safeCall('abrirContactoPublicidad'); });
+    if (el_btnContratarPublicidad) el_btnContratarPublicidad.addEventListener('click', async () => {
+      try {
+        if (typeof window.abrirPublicidadPaga !== 'function' && typeof window.loadScriptAsync === 'function') {
+          await window.loadScriptAsync('js/publicidad_paga.js');
+        }
+        if (typeof window.abrirPublicidadPaga === 'function') return window.abrirPublicidadPaga();
+        return safeCall('abrirContactoPublicidad');
+      } catch (e) {
+        console.warn('No se pudo abrir el módulo de publicidad pagada:', e);
+        return safeCall('abrirContactoPublicidad');
+      }
+    });
 
     const el_auto_event_12 = document.getElementById('auto-event-12');
     if (el_auto_event_12) el_auto_event_12.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'TODOS', e.currentTarget); });

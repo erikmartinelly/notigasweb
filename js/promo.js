@@ -149,6 +149,33 @@ function abrirAnuncioWhatsApp(posicion) {
 window.abrirAnuncioWhatsApp = abrirAnuncioWhatsApp;
 
 /**
+ * Cargar los anuncios PAGADOS vigentes (tabla anuncios_publicitarios).
+ * Se leen por RPC segura porque la tabla tiene RLS (solo el dueño ve sus filas).
+ * Los anuncios pagados tienen prioridad sobre los banners curados de la app.
+ */
+async function cargarAnunciosPagadosVivos(normCity) {
+  const result = { mapa: null, repartidores: null, muro_avisos: null };
+  if (!window.supabaseClient) return result;
+  try {
+    const { data, error } = await window.supabaseClient.rpc('rpc_anuncios_publicitarios_vivos', { p_limite: 50 });
+    if (error || !Array.isArray(data)) return result;
+    const ciudadDe = (a) => String(a.ciudad || '').toLowerCase().trim();
+    const pick = (pos) => {
+      const enCiudad = data.find(a => normalizeStoredAdPlacement(a.posicion) === pos && ciudadDe(a) === normCity);
+      if (enCiudad) return Object.assign({ activo: true }, enCiudad);
+      const global = data.find(a => normalizeStoredAdPlacement(a.posicion) === pos && ciudadDe(a) === 'global');
+      return global ? Object.assign({ activo: true }, global) : null;
+    };
+    result.mapa = pick('mapa');
+    result.repartidores = pick('repartidores');
+    result.muro_avisos = pick(_ADS_PLACEMENTS.MURO_AVISOS);
+  } catch (e) {
+    console.warn('No se pudieron cargar los anuncios pagados:', e);
+  }
+  return result;
+}
+
+/**
  * Cargar las 3 propagandas locales desde Supabase
  */
 async function cargarAnunciosGuardados() {
@@ -181,6 +208,8 @@ async function cargarAnunciosGuardados() {
 
   try {
     const citiesToQuery = (normCity && normCity !== 'global') ? [normCity, 'global'] : ['global'];
+    // Anuncios pagados vigentes (prioridad sobre los banners curados).
+    window._paidAds = await cargarAnunciosPagadosVivos(normCity);
       let { data, error } = await window.supabaseClient
       .from(_ADS_AD_TABLE)
       .select('id, titulo, descripcion, url, image_url, ciudad, posicion, activo, created_at')
@@ -193,6 +222,10 @@ async function cargarAnunciosGuardados() {
       const globalAds = data.filter(a => String(a.ciudad || '').toLowerCase().trim() === 'global');
 
       const resolveAdForPos = (pos) => {
+        // 0. Prioridad máxima: anuncio PAGADO vigente para esta posición
+        const paidAd = window._paidAds && window._paidAds[pos];
+        if (paidAd) return paidAd;
+
         // 1. Prioridad: Anuncio de la ciudad específica para esta posición
         const cityAd = cityAds.find(a => normalizeStoredAdPlacement(a.posicion) === pos);
         if (cityAd) return cityAd;
