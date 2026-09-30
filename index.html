@@ -384,45 +384,43 @@
 
       </div>
 
-      <!-- PANEL DE ACCIONES FLOTANTES EXCLUSIVO PARA REPARTIDOR (DRIVER / REPARTIDOR MODE) -->
+      <!-- PANEL DE ACCIONES FLOTANTES EXCLUSIVO PARA RECOLECTOR (DRIVER / REPARTIDOR MODE) -->
 
       <div class="floating-actions-container driver-actions-panel" id="driverFloatingActions" style="display: none;">
 
-        <!-- FILA 1: INICIAR / PAUSAR -->
+        <!-- BOTÓN PRINCIPAL: VER PEDIDOS DE RECOJO DE RECICLABLES -->
+
+        <button class="btn-main-order" id="auto-event-10" title="Ver pedidos de recojo de reciclables en tu zona">
+
+          <span class="ng-inline-13">
+
+            <i class="fa-solid fa-clipboard-list" style="font-size: 20px;"></i>
+
+          </span>
+
+          <span>♻️ VER PEDIDOS DE RECOJO DE RECICLABLES</span>
+
+        </button>
+
+        <!-- FILA DE ACCIONES SECUNDARIAS: UBICACIÓN -->
 
         <div class="action-row ng-inline-15">
 
-          <button class="btn-driver-follow-me" id="btnDriverFollowMe">
+          <button class="btn-driver-follow-me" id="btnDriverFollowMe" title="Avisar o pausar mi ubicación en el mapa">
 
             <i class="fa-solid fa-location-dot"></i> AVISAR DE MI UBICACIÓN
 
           </button>
 
-          <button class="btn-driver-pause" id="btnDriverPause">
-
-            <i class="fa-solid fa-location-crosshairs"></i> PAUSAR MI UBICACIÓN
-
-          </button>
-
-        </div>
-
-        <!-- FILA 2: PEDIDOS / UBICACIÓN -->
-
-        <div class="action-row ng-inline-16">
-
-          <button class="btn-driver-orders-list" id="auto-event-10">
-
-            <i class="fa-solid fa-clipboard-list"></i> VER PEDIDOS
-
-          </button>
-
-          <button class="btn-driver-my-location" id="btnDriverMyLocation">
+          <button class="btn-driver-my-location" id="btnDriverMyLocation" title="Centrar el mapa en mi ubicación">
 
             <i class="fa-solid fa-crosshairs"></i> VER MI UBICACIÓN
 
           </button>
 
         </div>
+
+        <button class="btn-driver-pause" id="btnDriverPause" style="display: none;" aria-hidden="true"></button>
 
       </div>
 

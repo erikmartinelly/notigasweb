@@ -339,7 +339,7 @@ function actualizarEstadoBotonesRecorrido(isActive) {
     btnFollow.classList.toggle('is-running', isActive);
     btnFollow.setAttribute('aria-pressed', isActive ? 'true' : 'false');
     btnFollow.innerHTML = isActive
-      ? '<i class="fa-solid fa-satellite-dish"></i> UBICACIÓN VISIBLE'
+      ? '<i class="fa-solid fa-pause"></i> PAUSAR MI UBICACIÓN'
       : '<i class="fa-solid fa-location-dot"></i> AVISAR DE MI UBICACIÓN';
   }
   if (btnPause) {

@@ -193,7 +193,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (el_btnDriverMyLocation) el_btnDriverMyLocation.addEventListener('click', () => { safeCall('activarMiUbicacionRepartidor'); });
 
     const el_btnDriverFollowMe = document.getElementById('btnDriverFollowMe');
-    if (el_btnDriverFollowMe) el_btnDriverFollowMe.addEventListener('click', () => { safeCall('activarSeguirme'); });
+    if (el_btnDriverFollowMe) el_btnDriverFollowMe.addEventListener('click', () => {
+      const isBroadcasting = (typeof AppState !== 'undefined' && AppState.get('driverGpsLive') === 'on');
+      if (isBroadcasting) {
+        safeCall('pausarRecorridoRepartidor');
+      } else {
+        safeCall('activarSeguirme');
+      }
+    });
 
     const el_btnDriverPause = document.getElementById('btnDriverPause');
     if (el_btnDriverPause) el_btnDriverPause.addEventListener('click', () => { safeCall('pausarRecorridoRepartidor'); });
