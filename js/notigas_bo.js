@@ -51,7 +51,7 @@
     { codigo: 'chatarra',     etiqueta: '⚙️  Chatarra',                  chip: 'Chatarra',   grupo: 'recolector',  icono: '⚙️',  color: '#94A3B8', tipo_solicitud: 'recogida' },
     { codigo: 'botellas',     etiqueta: '🥤 Botellas Plástico / Vidrio', chip: 'Botellas',  grupo: 'recolector',  icono: '🥤',  color: '#38BDF8', tipo_solicitud: 'recogida' },
     { codigo: 'organico',     etiqueta: '🌿 Orgánico Seleccionado',      chip: 'Orgánico',   grupo: 'recolector',  icono: '🌿',  color: '#84CC16', tipo_solicitud: 'recogida' },
-    { codigo: 'detergentes',  etiqueta: '🧽 Detergentes & Limpieza',     chip: 'Detergentes', grupo: 'compra',     icono: '🧽',  color: '#0EA5E9', tipo_solicitud: 'compra' }
+    { codigo: 'detergentes',  etiqueta: '🧴 Recarga de Detergentes',        chip: 'Recarga Deterg.', grupo: 'compra',     icono: '🧴',  color: '#0EA5E9', tipo_solicitud: 'compra' }
   ];
 
   const CODIGOS_CATEGORIA = CATEGORIAS.map((c) => c.codigo);
