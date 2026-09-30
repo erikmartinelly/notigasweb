@@ -127,15 +127,24 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
       console.error('Error descargando choferes desde choferes_publicos:', error);
       AppState.set('notigas_vendors_directory', []);
     } else if (data && data.length > 0) {
-      const list = data.filter(d => !d.estado_verificacion || d.estado_verificacion === 'aprobado').map(d => ({
-        id: `driver_${d.id}`, driverProfileId: d.id, name: d.nombre_completo,
-        category: d.categoria || 'plastico',
-        icon: typeof getIconForCategory === 'function' ? getIconForCategory(d.categoria) : '🚛',
-        plate: d.placa || 'Placa registrada', products: d.productos || 'Servicios de reparto a domicilio',
-        zones: d.zonas || 'zona local', schedule: d.schedule || 'Lunes a Sábado',
-        color_camion: d.color_camion || '',
-        active: true
-      }));
+      const list = data.filter(d => !d.estado_verificacion || d.estado_verificacion === 'aprobado').map(d => {
+        // La categoria puede traer varios materiales separados por coma. La
+        // tarjeta muestra el primero, y el filtro de abajo acepta cualquiera.
+        const catList = (typeof window.normalizeCategoryList === 'function')
+          ? window.normalizeCategoryList(d.categoria)
+          : [];
+        const catPrincipal = catList.length ? catList[0] : (d.categoria || 'plastico');
+        return {
+          id: `driver_${d.id}`, driverProfileId: d.id, name: d.nombre_completo,
+          category: catPrincipal,
+          categoryList: catList,
+          icon: typeof getIconForCategory === 'function' ? getIconForCategory(catPrincipal) : '🚛',
+          plate: d.placa || 'Placa registrada', products: d.productos || 'Materiales reciclables',
+          zones: d.zonas || 'zona local', schedule: d.schedule || 'Lunes a Sábado',
+          color_camion: d.color_camion || '',
+          active: true
+        };
+      });
       AppState.set('notigas_vendors_directory', list);
     } else AppState.set('notigas_vendors_directory', []);
   } catch (e) { console.error('Error fetching local drivers:', e); }
@@ -165,10 +174,18 @@ function renderVendorCards(filterCat) {
   const container = document.getElementById('vendorGridContainer'); if (!container) return;
   const isAdmin = typeof AppState !== 'undefined' && AppState.get('isAdmin') === true;
   const allVendors = getStoredVendors();
-  const filtered = filterCat === 'TODOS' ? allVendors : allVendors.filter(v => v.category.toLowerCase().includes(filterCat.toLowerCase()) || filterCat.toLowerCase().includes(v.category.toLowerCase()));
+  // El filtro debe considerar TODOS los materiales del recolector: si marca
+  // plastico y papel, aparece al filtrar por cualquiera de los dos.
+  const catFiltro = String(filterCat || '').toLowerCase().trim();
+  const filtered = (!catFiltro || catFiltro === 'todos')
+    ? allVendors
+    : allVendors.filter(v => {
+      const cats = (Array.isArray(v.categoryList) && v.categoryList.length) ? v.categoryList : [String(v.category || '').toLowerCase()];
+      return cats.some(c => String(c).toLowerCase() === catFiltro);
+    });
   let html = '';
   if (filtered.length === 0) {
-    container.innerHTML = `<div style="text-align:center;color:#94A3B8;padding:40px 14px;font-size:13px;background:#1E293B;border-radius:14px;border:1px dashed rgba(255,255,255,.15);margin-top:14px;"><i class="fa-solid fa-store-slash" style="font-size:32px;color:#FF6D00;margin-bottom:10px;"></i><br><strong>Aún no hay Fichas de Repartidores registradas en esta categoría.</strong><br><span style="font-size:11px;color:#64748B;">¿Eres repartidor? Registra tu ficha de negocio gratis y conéctate con los vecinos de tu zona.</span><br><br><button class="btn-driver" style="margin:0 auto;padding:10px 16px;font-size:12px;" data-action="abrirModalDriver">🚚 Publicar Mi Mini Página de Negocio</button></div>`;
+    container.innerHTML = `<div style="text-align:center;color:#94A3B8;padding:40px 14px;font-size:13px;background:#1E293B;border-radius:14px;border:1px dashed rgba(255,255,255,.15);margin-top:14px;"><i class="fa-solid fa-store-slash" style="font-size:32px;color:#FF6D00;margin-bottom:10px;"></i><br><strong>Aún no hay Fichas de Recolectores registradas en esta categoría.</strong><br><span style="font-size:11px;color:#64748B;">¿Eres recolector? Registra tu ficha de negocio gratis y conéctate con los vecinos de tu zona.</span><br><br><button class="btn-driver" style="margin:0 auto;padding:10px 16px;font-size:12px;" data-action="abrirModalDriver">🚚 Publicar Mi Mini Página de Negocio</button></div>`;
     const adMarkup = typeof window.getAdSenseFeedMarkup === 'function' ? window.getAdSenseFeedMarkup('vendors') : ''; if (adMarkup) container.insertAdjacentHTML('afterbegin', adMarkup); return;
   }
   const adInsertAfterIndex = Math.max(0, Math.ceil(filtered.length / 2) - 1);
@@ -177,7 +194,15 @@ function renderVendorCards(filterCat) {
     const safeProfileId = escapeHtmlStr(String(vendor.driverProfileId || String(vendor.id || '').replace(/^driver_/, '')));
     const safeVendorIcon = typeof window.crearAvatarCamionChoferHtml === 'function' ? window.crearAvatarCamionChoferHtml(vendor.name, {category: vendor.category, color: vendor.color_camion, es_premium: false}) : escapeHtmlStr(vendor.icon || getIconForCategory(vendor.category));
     // La ficha no muestra precios: el acuerdo es directo entre las partes.
-    html += `<div class="vendor-fb-card"><div class="vendor-fb-header"><div class="vendor-profile"><div class="vendor-avatar" style="background:transparent;border:none;width:auto;height:auto;padding:0;overflow:visible;">${safeVendorIcon}</div><div class="vendor-meta"><span class="vendor-name">${escapeHtmlStr(vendor.name)}</span><span class="vendor-badge-cat"><i class="fa-solid fa-circle-check"></i> ${escapeHtmlStr(vendor.category)}</span></div></div><div style="display:flex;align-items:center;gap:6px;">${isAdmin ? `<button data-action="eliminarFichaAdmin" data-id="${safeVendorId}" style="background:#D32F2F;color:white;border:none;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;" title="Borrar como Admin"><i class="fa-solid fa-trash"></i> Borrar (Admin)</button>` : `<span class="promo-badge" style="background:rgba(0,230,118,.15);color:#00E676;border-color:rgba(0,230,118,.4);">REPARTIDOR ACTIVO</span>`}</div></div><div class="vendor-fb-body"><div class="vendor-field"><strong>⭐ Calificación:</strong> Sin calificaciones todavía</div><div class="vendor-field"><strong>📦 Productos:</strong> ${escapeHtmlStr(vendor.products)}</div><div class="vendor-field"><strong>🗺️ Zona de cobertura:</strong> ${escapeHtmlStr(vendor.zones)}</div></div><div class="vendor-fb-footer"><button class="btn-vendor-order" data-action="seleccionarYPedirDirecto" data-cat="${encodeURIComponent(vendor.category)}" data-driver-id="${safeProfileId}" data-driver-name="${escapeHtmlStr(vendor.name || 'el distribuidor seleccionado')}"><i class="fa-solid fa-cart-plus"></i> Solicitar Pedido</button></div></div>`;
+    const etiquetaMateriales = (function () {
+      const cats = (Array.isArray(vendor.categoryList) && vendor.categoryList.length) ? vendor.categoryList : [vendor.category];
+      const bo = window.NOTIGAS_BO;
+      return cats.map((c) => {
+        const item = bo && typeof bo.categoriaPorCodigo === 'function' ? bo.categoriaPorCodigo(c) : null;
+        return (item && item.etiqueta) ? item.etiqueta : String(c || '');
+      }).filter(Boolean).join(' • ');
+    })();
+    html += `<div class="vendor-fb-card"><div class="vendor-fb-header"><div class="vendor-profile"><div class="vendor-avatar" style="background:transparent;border:none;width:auto;height:auto;padding:0;overflow:visible;">${safeVendorIcon}</div><div class="vendor-meta"><span class="vendor-name">${escapeHtmlStr(vendor.name)}</span><span class="vendor-badge-cat"><i class="fa-solid fa-circle-check"></i> ${escapeHtmlStr(etiquetaMateriales)}</span></div></div><div style="display:flex;align-items:center;gap:6px;">${isAdmin ? `<button data-action="eliminarFichaAdmin" data-id="${safeVendorId}" style="background:#D32F2F;color:white;border:none;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;" title="Borrar como Admin"><i class="fa-solid fa-trash"></i> Borrar (Admin)</button>` : `<span class="promo-badge" style="background:rgba(0,230,118,.15);color:#00E676;border-color:rgba(0,230,118,.4);">RECOLECTOR ACTIVO</span>`}</div></div><div class="vendor-fb-body"><div class="vendor-field"><strong>⭐ Calificación:</strong> Sin calificaciones todavía</div><div class="vendor-field"><strong>📦 Productos:</strong> ${escapeHtmlStr(vendor.products)}</div><div class="vendor-field"><strong>🗺️ Zona de cobertura:</strong> ${escapeHtmlStr(vendor.zones)}</div></div><div class="vendor-fb-footer"><button class="btn-vendor-order" data-action="seleccionarYPedirDirecto" data-cat="${encodeURIComponent(vendor.category)}" data-driver-id="${safeProfileId}" data-driver-name="${escapeHtmlStr(vendor.name || 'el recolector seleccionado')}"><i class="fa-solid fa-cart-plus"></i> Solicitar Pedido</button></div></div>`;
     if (index === adInsertAfterIndex && typeof window.getAdSenseFeedMarkup === 'function') html += window.getAdSenseFeedMarkup('vendors');
   });
   container.innerHTML = html; if (typeof window.activateAdSenseIn === 'function') window.activateAdSenseIn(container);
@@ -206,11 +231,9 @@ function getIconForCategory(cat) {
   if (c.includes('botella') || c.includes('vidrio')) return '🥤';
   if (c.includes('organico') || c.includes('orgánico')) return '🌿';
   if (c.includes('plastico') || c.includes('plástico')) return '♻️';
-  if (c.includes('agua')) return '💧';
-  if (c.includes('fruta') || c.includes('verdura')) return '🍎';
   if (c.includes('detergente') || c.includes('limpieza')) return '🧽';
-  if (c === 'sal') return '🧂';
-  if (c.includes('afilado') || c.includes('cuchillo')) return '🔪';
+  // Categorias retiradas (agua, frutas, sal, afilado, gas, carbon): sin icono
+  // propio, para no sugerir un material que NOTIGAS ya no maneja.
   return '📦';
 }
 

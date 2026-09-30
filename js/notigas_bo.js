@@ -5,8 +5,8 @@
    - Teléfono: +591 (8 dígitos, prefijo móvil 6 u 7)
    - Documento: CI (cédula de identidad) o NIT
    - Pagos: solo QR local (Simple / Banesco QR). Sin comisión por cobro.
-   - Categorías: primero los recolectores (chatarra, papel, botellas);
-     al final agua, detergentes, frutas/verduras y otros.
+   - Categorías: primero los recolectores (chatarra, papel, botellas,
+     plástico y orgánico); al final detergentes.
    ========================================================================== */
 (function () {
   'use strict';
@@ -51,7 +51,6 @@
     { codigo: 'chatarra',     etiqueta: '⚙️  Chatarra',                  chip: 'Chatarra',   grupo: 'recolector',  icono: '⚙️',  color: '#94A3B8', tipo_solicitud: 'recogida' },
     { codigo: 'botellas',     etiqueta: '🥤 Botellas Plástico / Vidrio', chip: 'Botellas',  grupo: 'recolector',  icono: '🥤',  color: '#38BDF8', tipo_solicitud: 'recogida' },
     { codigo: 'organico',     etiqueta: '🌿 Orgánico Seleccionado',      chip: 'Orgánico',   grupo: 'recolector',  icono: '🌿',  color: '#84CC16', tipo_solicitud: 'recogida' },
-    { codigo: 'frutas',       etiqueta: '🍎 Frutas & Verduras',         chip: 'Frutas',     grupo: 'recolector',  icono: '🍎',  color: '#EF4444', tipo_solicitud: 'recogida' },
     { codigo: 'detergentes',  etiqueta: '🧽 Detergentes & Limpieza',     chip: 'Detergentes', grupo: 'compra',     icono: '🧽',  color: '#0EA5E9', tipo_solicitud: 'compra' }
   ];
 
@@ -70,15 +69,16 @@
     CATEGORIAS_POR_CODIGO[String(codigo || '').toLowerCase().trim()] || CATEGORIAS[0];
 
   const PAGO = {
-    /* Sin cobro: NOTIGAS no retiene comisión por generar, escanear ni
-       procesar un pago con QR. El monto del ciclo queda por configurar. */
+    /* NOTIGAS es gratuito: no cobra cuota, ni suscripcion, ni comision, y no
+       intermedia fondos. El precio y el acuerdo entre el vecino y el recolector
+       se coordinan fuera de la plataforma. */
     comisionActiva: false,
     montoCiclo: null,
-    metodo: 'qr_local',
-    metodoEtiqueta: 'QR local (Simple / Banesco QR)',
-    metodosAceptados: ['Simple', 'Banesco QR'],
+    metodo: 'acuerdo_directo',
+    metodoEtiqueta: 'Acuerdo directo entre las partes',
+    metodosAceptados: [],
     pais: 'Bolivia',
-    requiereComprobante: true
+    requiereComprobante: false
   };
 
   const money = (value, opciones = {}) => {

@@ -1,7 +1,7 @@
 {
   "name": "notigas-web",
   "version": "1.0.0",
-  "description": "NOTIGAS Web App PWA",
+  "description": "NOTIGAS - Plataforma Comunitaria de Recojo de Reciclables y Geolocalización en Tiempo Real",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -16,7 +16,8 @@
     "notigas",
     "pwa",
     "geospatial",
-    "delivery"
+    "reciclaje",
+    "recoleccion"
   ],
   "author": "NOTIGAS",
   "license": "ISC",

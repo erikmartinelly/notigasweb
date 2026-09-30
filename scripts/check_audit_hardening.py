@@ -114,17 +114,15 @@ sin_en("admin_users.js no llama cortes ni baneos semanales",
 sin_en("admin_users.js sin el mensaje de falta de pago por comision",
         "js/admin_users.js", r"Falta de pago de comisi[oó]n", "modelo de deuda reintroducido")
 
-# --- 5. OCR y pagos: sin persistencia financiera -------------------------
-print("\n[5/7] OCR sin persistencia de pagos ni sesgos de monto")
-con_en("voucher_ocr.js usa el monto real del cobro",
-        "js/voucher_ocr.js", r"expectedAmount", "falta expectedAmount")
-sin_en("voucher_ocr.js sin monto fijo S/20",
-        "js/voucher_ocr.js", r"const\s+esperado\s*=\s*20", "monto fijo Peru")
-sin_en("voucher_ocr.js no persiste pagos ni Premium",
-        "js/voucher_ocr.js",
-        r"\.rpc\(\s*['\"](?:rpc_registrar_ocr_pago|rpc_driver_submit_premium_payment)['\"]"
-        r"|\.from\(\s*['\"]vouchers-premium['\"]",
-        "persistencia de pagos")
+# --- 5. Pagos: sin persistencia financiera --------------------------------
+print("\n[5/7] Sin OCR de vouchers ni persistencia de pagos")
+# NOTIGAS es gratuito: no hay cobro que comprobar, asi que el modulo de OCR de
+# comprobantes QR se elimino de la app. El guard fija que no vuelva.
+revisar("el modulo de OCR de vouchers se elimino de la app",
+        not os.path.exists(os.path.join(RAIZ, "js", "voucher_ocr.js")),
+        "js/voucher_ocr.js sigue presente")
+sin_en("index.html no carga el OCR de vouchers",
+        "index.html", r"voucher_ocr\.js", "se reimidio el OCR de comprobantes QR")
 # El panel de pagos es informativo: no debe hacer aritmetica de moneda.
 sin_en("admin_payments.js sin logica de moneda BOB",
         "js/admin_payments.js", r"\bBOB\b|monto_recibido_bob", "aritmetica de moneda")

@@ -98,20 +98,16 @@ revisar(
 )
 
 # --- 2. Yape fuera del flujo de pago ------------------------------------
-print("\n[2/9] Yape fuera del flujo de pago (solo QR local)")
+print("\n[2/9] Yape fuera del flujo de pago")
 revisar(
     "js/driver_payments.js no menciona Yape",
     not re.search(r"yape", driver_pagos, re.IGNORECASE),
     citas(driver_pagos, r"yape"),
 )
 revisar(
-    "js/voucher_ocr.js no menciona Yape",
-    not re.search(r"yape", codigo.get("voucher_ocr.js", ""), re.IGNORECASE),
-    citas(codigo.get("voucher_ocr.js", ""), r"yape"),
-)
-revisar(
-    "js/driver_payments.js declara QR local Simple / Banesco",
-    "QR local" in driver_pagos and "Simple" in driver_pagos and "Banesco" in driver_pagos,
+    "el modulo de OCR de vouchers se elimino (el servicio es gratuito)",
+    "voucher_ocr.js" not in codigo,
+    "voucher_ocr.js sigue en el arbol",
 )
 revisar(
     "js/driver_payments.js aclara que no hay comision",
@@ -192,15 +188,19 @@ revisar(
     re.search(r"no hay cobros|saldo[s]? pendiente|limite[s]? de cr", index_html, re.IGNORECASE),
 )
 
-# --- 8. Servicios nuevos del repartidor ----------------------------------
-print("\n[8/9] Servicios del repartidor (sal y afilado)")
+# --- 8. Materiales del recolector (multi-material de reciclaje) -----------
+print("\n[8/9] Materiales del recolector (multi-material de reciclaje)")
 revisar(
-    "index.html ofrece 'Compra de sal'",
-    'value="Compra de sal"' in index_html,
+    "index.html ofrece seleccion de materiales de reciclaje",
+    'id="driverMaterialesPicker"' in index_html,
 )
 revisar(
-    "index.html ofrece 'Afilado de cuchillos'",
-    'value="Afilado de cuchillos"' in index_html,
+    "index.html ya no ofrece 'Compra de sal'",
+    'value="Compra de sal"' not in index_html,
+)
+revisar(
+    "index.html ya no ofrece 'Afilado de cuchillos'",
+    'value="Afilado de cuchillos"' not in index_html,
 )
 
 # --- 9. Migraciones nuevas de Bolivia ------------------------------------

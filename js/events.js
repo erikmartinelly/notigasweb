@@ -21,7 +21,7 @@ window.switchLegalTab = function(tab) {
   if (tab === 'driver') {
     if (driverTab) driverTab.style.display = 'block';
     if (generalTab) generalTab.style.display = 'none';
-    if (headerTitle) headerTitle.textContent = '📜 Términos y Condiciones para Repartidores';
+    if (headerTitle) headerTitle.textContent = '📜 Términos y Condiciones para Recolectores';
     if (btnDriver) {
       btnDriver.style.border = '1.5px solid #F59E0B';
       btnDriver.style.background = 'rgba(245,158,11,0.2)';
@@ -222,9 +222,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_auto_event_91 = document.getElementById('auto-event-91');
     if (el_auto_event_91) el_auto_event_91.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'organico', e.currentTarget); });
 
-    const el_auto_event_17 = document.getElementById('auto-event-17');
-    if (el_auto_event_17) el_auto_event_17.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'frutas', e.currentTarget); });
-
     const el_auto_event_18 = document.getElementById('auto-event-18');
     if (el_auto_event_18) el_auto_event_18.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'detergentes', e.currentTarget); });
 
@@ -415,9 +412,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const el_auto_event_95 = document.getElementById('auto-event-95');
     if (el_auto_event_95) el_auto_event_95.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'organico'); });
-
-    const el_auto_event_43 = document.getElementById('auto-event-43');
-    if (el_auto_event_43) el_auto_event_43.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'frutas'); });
 
     const el_auto_event_44 = document.getElementById('auto-event-44');
     if (el_auto_event_44) el_auto_event_44.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'detergentes'); });
@@ -862,3 +856,15 @@ document.addEventListener('click', async (e) => {
     console.error('Error ejecutando acción de evento:', action, err);
   }
 });
+
+/* Cada tick de material actualiza el campo oculto que se guarda en la columna
+   categoria. Se delega en una sola función para no duplicar el formato. */
+document.addEventListener('change', (e) => {
+  const t = e.target;
+  if (t && t.name === 'driverMaterial' && typeof window.sincronizarMaterialesRecolector === 'function') {
+    window.sincronizarMaterialesRecolector();
+  }
+  if (t && t.name === 'userMaterial' && typeof window.sincronizarMaterialesUsuarioEnSelect === 'function') {
+    window.sincronizarMaterialesUsuarioEnSelect();
+  }
+}, true);

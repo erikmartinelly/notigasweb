@@ -150,7 +150,7 @@
 
   <div class="ng-inline-1" id="gpsMandatoryBanner">
 
-    <i class="fa-solid fa-triangle-exclamation"></i> 📍 GPS Obligatorio: Activa tu ubicación para ubicar el camión de gas y hacer pedidos a tu domicilio.
+    <i class="fa-solid fa-triangle-exclamation"></i> 📍 GPS Obligatorio: Activa tu ubicación para ubicar camiones recolectores en vivo y publicar materiales a tu domicilio.
 
     <button class="ng-inline-2" id="auto-event-1" aria-label="Activar GPS en vivo">Activar GPS</button>
 
@@ -168,7 +168,7 @@
 
     <div class="ng-inline-4" id="headerRoleBadge">
       <button type="button" id="btnHeaderRoleToggle" data-notigas-action="switch-role" class="btn-role-switch-header" title="Haz clic para alternar entre Comprador y Repartidor" style="background:rgba(2,136,209,0.22); color:#38BDF8; padding:5px 9px; border-radius:8px; font-weight:900; font-size:11px; border:1.5px solid #0288D1; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 2px 6px rgba(0,0,0,0.3);">
-        <i class="fa-solid fa-basket-shopping"></i> <span>COMPRADOR</span> <i class="fa-solid fa-repeat" style="font-size:9px; opacity:0.85;"></i>
+        <i class="fa-solid fa-basket-shopping"></i> <span>USUARIO</span> <i class="fa-solid fa-repeat" style="font-size:9px; opacity:0.85;"></i>
       </button>
     </div>
 
@@ -190,7 +190,7 @@
 
     <button class="tab-btn active"  id="auto-event-3" ><i class="fa-solid fa-map-location-dot"></i> 1ª MAPA EN VIVO</button>
 
-    <button class="tab-btn"  id="auto-event-4" ><i class="fa-solid fa-store"></i> LISTA DE REPARTIDORES</button>
+    <button class="tab-btn"  id="auto-event-4" ><i class="fa-solid fa-store"></i> LISTA DE RECOLECTORES</button>
 
     <button class="tab-btn"  id="auto-event-5" ><i class="fa-solid fa-bullhorn"></i> MURO DE COMENTARIOS</button>
 
@@ -448,8 +448,6 @@
 
         <button class="cat-chip"  id="auto-event-91" >🌿 Orgánico Seleccionado</button>
 
-        <button class="cat-chip"  id="auto-event-17" >🍎 Frutas & Verduras</button>
-
         <button class="cat-chip"  id="auto-event-18" >🧽 Detergentes & Limpieza</button>
 
       </div>
@@ -527,7 +525,7 @@
   <div class="modal" id="modalBuyerProfile" style="display: none;">
     <div class="modal-content ng-inline-43">
       <div class="modal-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-        <span>👤 Mi Ficha de Comprador (Vecino)</span>
+        <span>👤 Mi Ficha de Usuario (Vecino)</span>
         <button class="btn-close" id="btnCloseBuyerProfile" type="button" aria-label="Cerrar ventana">✖</button>
       </div>
       <p class="ng-inline-45">
@@ -568,7 +566,7 @@
         </select>
       </div>
       <button class="btn-submit" id="btnGuardarFichaComprador" style="margin-top: 16px; width: 100%;">
-        <i class="fa-solid fa-floppy-disk"></i> Guardar Ficha de Comprador
+        <i class="fa-solid fa-floppy-disk"></i> Guardar Ficha de Usuario
       </button>
     </div>
   </div>
@@ -591,18 +589,18 @@
       <div class="role-switch-menu-card" style="background:#0F172A; border:1.5px solid #334155; border-radius:12px; padding:12px; margin-bottom:14px;">
         <div style="font-size:11.5px; font-weight:800; color:#94A3B8; text-transform:uppercase; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
           <span><i class="fa-solid fa-arrows-rotate"></i> Modo de Uso Activo</span>
-          <span id="lblCurrentActiveRole" style="font-size:11.5px; color:#38BDF8; font-weight:900;">Comprador</span>
+          <span id="lblCurrentActiveRole" style="font-size:11.5px; color:#38BDF8; font-weight:900;">Usuario</span>
         </div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
           <button type="button" id="btnSwitchModeBuyer" data-notigas-action="switch-role" data-role-target="buyer" class="btn-role-choice" style="padding:10px; border-radius:8px; font-weight:800; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; border:1.5px solid #0288D1; background:rgba(2,136,209,0.25); color:#38BDF8;">
-            <i class="fa-solid fa-basket-shopping"></i> Comprador
+            <i class="fa-solid fa-basket-shopping"></i> Usuario
           </button>
           <button type="button" id="btnSwitchModeDriver" data-notigas-action="switch-role" data-role-target="driver" class="btn-role-choice" style="padding:10px; border-radius:8px; font-weight:800; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; border:1.5px solid #475569; background:#1E293B; color:#94A3B8;">
-            <i class="fa-solid fa-truck-fast"></i> Repartidor
+            <i class="fa-solid fa-truck-fast"></i> Recolector
           </button>
         </div>
         <p style="font-size:10.5px; color:#64748B; margin-top:8px; margin-bottom:0; text-align:center;">
-          Cambia al instante entre Comprador y Repartidor para probar pedidos, entregas y rutas en tiempo real.
+          Cambia al instante entre Usuario y Recolector para probar pedidos, entregas y rutas en tiempo real.
         </p>
       </div>
 
@@ -643,7 +641,7 @@
 
         <div class="ng-inline-25" id="buyerToDriverBtnContainer">
           <button type="button" id="btnRegistroRepartidoresMenu" class="btn-driver-register" style="width:100%; background:linear-gradient(135deg,#FF6D00,#E65100); color:white; border:none; padding:12px; border-radius:10px; font-weight:800; cursor:pointer; font-size:13px; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 12px rgba(255,109,0,0.25);">
-            <i class="fa-solid fa-truck-fast"></i> Registro Repartidores
+            <i class="fa-solid fa-truck-fast"></i> Registro Recolectores
           </button>
         </div>
 
@@ -662,7 +660,7 @@
 
         <div class="ng-inline-28">
 
-          <i class="fa-solid fa-truck-fast"></i> Repartidor en Ruta • <span class="ng-inline-29" id="settingsDriverNameLabel">Repartidor</span>
+          <i class="fa-solid fa-truck-fast"></i> Recolector en Ruta • <span class="ng-inline-29" id="settingsDriverNameLabel">Recolector</span>
 
         </div>
 
@@ -691,7 +689,7 @@
 
         <button class="ng-inline-30" id="auto-event-25">
 
-          <i class="fa-solid fa-id-card"></i> Ver / Editar Mi Ficha de Repartidor
+          <i class="fa-solid fa-id-card"></i> Ver / Editar Mi Ficha de Recolector
 
         </button>
 
@@ -809,7 +807,7 @@
 
       <div class="modal-title">
 
-        <span><i class="fa-solid fa-id-card"></i> <span id="driverModalTitleText">Registro de Repartidor</span></span>
+        <span><i class="fa-solid fa-id-card"></i> <span id="driverModalTitleText">Registro de Recolector</span></span>
 
         <button class="btn-close"  id="auto-event-29" >✖</button>
 
@@ -822,19 +820,19 @@
         <input type="hidden" id="inputDriverPlanTipo" value="sin_comision">
         <div id="driverFreeTrialCard" class="driver-trial-card">
           <div class="driver-trial-heading">
-            <strong>🇧🇴 SIN COMISIÓN</strong>
-            <span>Pagos con QR local</span>
+            <strong>🇧🇴 ACCESO GRATUITO</strong>
+            <span>Sin comisiones ni cuotas</span>
           </div>
-          <p id="driverFreeTrialCopy">Registrate gratis y sin suscripción. NOTIGAS no cobra comisión por pedido ni por generar, escanear o procesar un pago con QR. El cobro entre comprador y repartidor se realiza con <strong>QR local (Simple / Banesco QR)</strong> en bolivianos.</p>
+          <p id="driverFreeTrialCopy">Registrate gratis y sin suscripción. NOTIGAS no cobra comisión por pedido, ni cuota, ni nada. El acuerdo entre el vecino y el recolector se coordina directamente entre las dos partes.</p>
         </div>
       </div>
 
       <div class="driver-registration-grid">
       <div class="form-group">
 
-        <label>Nombre del Repartidor o Negocio:</label>
+        <label>Nombre del Recolector o Negocio:</label>
 
-        <input type="text" id="inputDriverNombre" placeholder="Ej: Repartidor Agua Cristallina">
+        <input type="text" id="inputDriverNombre" placeholder="Ej: Recolectora Noroeste">
 
       </div>
 
@@ -865,33 +863,49 @@
         <small>Se vincula a este dispositivo por seguridad.</small>
       </div>
 
-      <div class="driver-registration-grid">
-      <div class="form-group">
+      <!-- MATERIALES QUE RECOGE EL RECOLECTOR (SELECCIÓN MÚLTIPLE) -->
+      <div class="form-group driver-materials-field">
 
-        <label>Tipo de REPARTIDOR:</label>
+        <label>Materiales que recoges (puedes marcar varios):</label>
 
-        <select id="inputDriverCat" data-notigas-catalogo="todos">
+        <div id="driverMaterialesPicker" class="driver-material-grid" role="group" aria-label="Materiales que recoge el recolector">
+          <label class="driver-material-chip">
+            <input type="checkbox" name="driverMaterial" value="plastico" style="margin:0;">
+            <i class="fa-solid fa-recycle"></i> Plástico
+          </label>
+          <label class="driver-material-chip">
+            <input type="checkbox" name="driverMaterial" value="papel" style="margin:0;">
+            <i class="fa-solid fa-file-lines"></i> Papel / Cartón
+          </label>
+          <label class="driver-material-chip">
+            <input type="checkbox" name="driverMaterial" value="chatarra" style="margin:0;">
+            <i class="fa-solid fa-gears"></i> Chatarra
+          </label>
+          <label class="driver-material-chip">
+            <input type="checkbox" name="driverMaterial" value="botellas" style="margin:0;">
+            <i class="fa-solid fa-bottle-dispenser"></i> Botellas Plástico / Vidrio
+          </label>
+          <label class="driver-material-chip">
+            <input type="checkbox" name="driverMaterial" value="organico" style="margin:0;">
+            <i class="fa-solid fa-seedling"></i> Orgánico Seleccionado
+          </label>
+          <label class="driver-material-chip">
+            <input type="checkbox" name="driverMaterial" value="detergentes" style="margin:0;">
+            <i class="fa-solid fa-pump-soap"></i> Detergentes & Limpieza
+          </label>
+        </div>
 
-          <option value="plastico">♻️  Plástico</option>
+        <input type="hidden" id="inputDriverCat" value="">
 
-          <option value="papel">📄 Papel / Cartón</option>
-
-          <option value="chatarra">⚙️  Chatarra</option>
-
-          <option value="botellas">🥤 Botellas Plástico / Vidrio</option>
-
-          <option value="organico">🌿 Orgánico Seleccionado</option>
-
-          <option value="frutas">🍎 Frutas & Verduras</option>
-
-          <option value="detergentes">🧽 Detergentes & Limpieza</option>
-
-        </select>
+        <p style="margin:4px 0 0 0; font-size:11px; color:#94A3B8; line-height:1.5;">
+          Marca todo lo que realmente recoges o entregas. El vecino solo verá tus publicaciones de esos materiales.
+        </p>
 
       </div>
 
-      <!-- SELECTOR DE COLOR PERSONALIZADO DEL VEHÍCULO -->
+      <div class="driver-registration-grid">
       <div class="form-group">
+
         <label>Color Camión o camioneta
           <span id="lblDriverTruckColorName" style="display:none;">Rojo Pasión</span>
         </label>
@@ -907,29 +921,6 @@
         <label>¿Qué Recoge / Entrega?:</label>
 
         <input type="text" id="inputDriverProductos" placeholder="Ej: fundas, cajas, botellas PET, cartón, chatarra mixta">
-
-      </div>
-
-      <!-- SERVICIOS ADICIONALES QUE OFRECE EL REPARTIDOR -->
-      <div class="form-group driver-color-field">
-
-        <label>Servicios que también ofreces (opcional):</label>
-
-        <div id="driverServiciosPicker" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; margin-bottom:6px;">
-          <label class="driver-servicio-chip" style="display:inline-flex; align-items:center; gap:6px; background:#0F172A; border:1px solid #334155; border-radius:999px; padding:7px 12px; font-size:12px; font-weight:700; cursor:pointer;">
-            <input type="checkbox" name="driverServicio" value="Compra de sal" style="margin:0;">
-            <i class="fa-solid fa-mortar-pestle"></i> Compra de sal
-          </label>
-          <label class="driver-servicio-chip" style="display:inline-flex; align-items:center; gap:6px; background:#0F172A; border:1px solid #334155; border-radius:999px; padding:7px 12px; font-size:12px; font-weight:700; cursor:pointer;">
-            <input type="checkbox" name="driverServicio" value="Afilado de cuchillos" style="margin:0;">
-            <i class="fa-solid fa-sharpener"></i> Afilado de cuchillos
-          </label>
-        </div>
-        <input type="hidden" id="inputDriverServicios" value="">
-
-        <p style="margin:4px 0 0 0; font-size:11px; color:#94A3B8; line-height:1.5;">
-          Marca los servicios adicionales que realizas. Se guardan junto a tu ficha y el comprador los ve al elegirte.
-        </p>
 
       </div>
 
@@ -1391,21 +1382,21 @@
       <!-- SELECTOR DE PESTAÑAS LEGALES -->
       <div style="display:flex; gap:8px; margin:10px 0 14px 0; border-bottom:1px solid #334155; padding-bottom:8px;">
         <button type="button" id="tabBtnDriverTerms" data-notigas-action="switch-legal-tab" data-legal-tab="driver" style="flex:1; padding:9px 12px; border-radius:8px; border:1.5px solid #F59E0B; background:rgba(245,158,11,0.2); color:#FDE68A; font-weight:800; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s;">
-          <i class="fa-solid fa-motorcycle" style="color:#F59E0B;"></i> <span>Términos de Repartidores</span>
+          <i class="fa-solid fa-recycle" style="color:#F59E0B;"></i> <span>RECOLECTOR</span>
         </button>
         <button type="button" id="tabBtnGeneralTerms" data-notigas-action="switch-legal-tab" data-legal-tab="general" style="flex:1; padding:9px 12px; border-radius:8px; border:1px solid #334155; background:#1E293B; color:#94A3B8; font-weight:700; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s;">
-          <i class="fa-solid fa-scale-balanced" style="color:#38BDF8;"></i> <span>Aviso Legal y Compradores</span>
+          <i class="fa-solid fa-users" style="color:#38BDF8;"></i> <span>USUARIO</span>
         </button>
       </div>
 
-      <!-- PESTAÑA 1: TÉRMINOS Y CONDICIONES PARA REPARTIDORES – NOTIGAS.COM -->
+      <!-- PESTAÑA 1: TÉRMINOS Y CONDICIONES PARA RECOLECTORES – NOTIGAS.COM -->
       <div id="termsDriverContent" style="display:block; font-size: 12.5px; color: #CBD5E1; line-height: 1.6;">
         <div style="background: rgba(245, 158, 11, 0.1); border-left: 3.5px solid #F59E0B; padding: 10px 12px; border-radius: 0 8px 8px 0; margin-bottom: 14px;">
           <h3 style="color: #FDE68A; margin: 0 0 4px 0; font-size: 13.5px; font-weight: 900;">
-            TÉRMINOS Y CONDICIONES PARA REPARTIDORES – NOTIGAS.COM
+            TÉRMINOS Y CONDICIONES PARA RECOLECTORES – NOTIGAS.COM
           </h3>
           <div style="font-size: 11.5px; color: #E2E8F0; line-height: 1.45;">
-            Bienvenido a Notigas.com. Al registrarte y utilizar nuestra plataforma móvil como repartidor independiente, aceptas cumplir y quedar sujeto a los siguientes términos y condiciones de uso:
+            Bienvenido a Notigas.com. Al registrarte y utilizar nuestra plataforma móvil como recolector independiente, aceptas cumplir y quedar sujeto a los siguientes términos y condiciones de uso:
           </div>
         </div>
 
@@ -1415,7 +1406,7 @@
             1. Naturaleza del Servicio
           </strong>
           <p style="margin: 0; color: #CBD5E1; font-size: 12px; line-height: 1.5;">
-            Notigas.com es una plataforma tecnológica que conecta a repartidores independientes con clientes que requieren el servicio de entrega de balones de gas. El repartidor actúa de forma autónoma, utilizando sus propios medios de transporte, herramientas y equipos celulares.
+            Notigas.com es una plataforma tecnológica que conecta a recolectores independientes con vecinos que disponen de materiales reciclables. El recolector actúa de forma autónoma, utilizando sus propios medios de transporte, herramientas y equipos celulares.
           </p>
         </div>
 
@@ -1451,23 +1442,21 @@
           </ul>
         </div>
 
-        <!-- 4. Métodos de Pago con QR Local -->
+        <!-- 4. Servicio gratuito -->
         <div style="margin-bottom: 12px; background: rgba(59, 130, 246, 0.08); border-radius: 8px; padding: 12px; border: 1.5px solid rgba(59, 130, 246, 0.45);">
           <strong style="color: #93C5FD; display: block; margin-bottom: 6px; font-size: 13px;">
-            💳 4. Pagos con QR local y continuidad del servicio
+            🆓 4. El servicio es gratuito
           </strong>
           <p id="driverCreditProgressiveTerms" style="margin:0 0 9px 0;font-size:12px;color:#DBEAFE;line-height:1.55;">
-            El pago entre comprador y repartidor se realiza de forma directa y exclusiva entre las partes, en <strong>bolivianos (Bs)</strong>, por <strong>QR local (Simple / Banesco QR)</strong> o por los medios de pago locales que acuerden.
+            NOTIGAS es completamente gratuito. No hay cuota de registro, no hay mensualidad, no hay comisión por pedido ni por entrega, y no se pide ningún dato de pago para usar la plataforma.
           </p>
           <ul style="margin: 0 0 0 18px; padding: 0; font-size: 12px; color: #DBEAFE; line-height: 1.55;">
             <li style="margin-bottom: 6px;">
-              <strong>Sin intermediación de fondos:</strong> NOTIGAS no procesa, recauda ni custodia fondos. Solo se puede subir el comprobante (voucher) del pago acordado para dar fe de la entrega.</li>
+              <strong>Sin intermediación de fondos:</strong> NOTIGAS no procesa, recauda ni custodia fondos. El recolector y el vecino acuerdan lo que corresponda directamente entre ellos.</li>
             <li style="margin-bottom: 6px;">
-              <strong>Sin cobro por procesar pagos:</strong> Generar, compartir o escanear un QR no genera ningún cargo para el comprador ni para el repartidor.</li>
-            <li style="margin-bottom: 6px;">
-              <strong>Suspensión:</strong> La única suspensión posible es administrativa, por incumplimiento de los términos o por detección de fraude en el voucher. No existen suspensiones por saldo pendiente.</li>
+              <strong>Sin cobro por usar la app:</strong> Publicar, marcar un material, recibir solicitudes o completar un recojo no genera ningún cargo para el recolector ni para el vecino.</li>
             <li>
-              <strong>Comprobantes observados:</strong> Un voucher rechazado o aparentemente manipulado puede suspender temporalmente la cuenta. Si se verifica posteriormente la entrega efectiva, la suspensión se levanta y el repartidor vuelve a estar habilitado.</li>
+              <strong>Suspensión:</strong> La única suspensión posible es administrativa, por incumplimiento de los términos. No existen suspensiones por saldo pendiente ni por monto adeudado.</li>
           </ul>
         </div>
 
@@ -1482,26 +1471,26 @@
         </div>
 
         <button class="ng-inline-79" type="button" id="btnEntendidoDriverTerms" data-notigas-action="close-privacy-policy" style="width: 100%; background: linear-gradient(135deg, #F59E0B, #D97706); color: #0F172A; border: none; padding: 12px; border-radius: 8px; font-weight: 900; cursor: pointer; font-size: 13px; box-shadow: 0 2px 8px rgba(245,158,11,0.35);">
-          ✅ He leído y acepto los Términos y Condiciones de Repartidor
+          ✅ He leído y acepto los Términos y Condiciones de Recolector
         </button>
       </div>
 
-      <!-- PESTAÑA 2: AVISO LEGAL Y POLÍTICA GENERAL PARA COMPRADORES / ADSENSE -->
+      <!-- PESTAÑA 2: AVISO LEGAL Y POLÍTICA GENERAL PARA USUARIOS / ADSENSE -->
       <div id="termsGeneralContent" style="display:none; font-size: 12.5px; color: #CBD5E1; line-height: 1.6;">
 
         <div style="background: rgba(56, 189, 248, 0.08); border-left: 3px solid #38BDF8; padding: 10px 12px; border-radius: 0 8px 8px 0; margin-bottom: 14px;">
           <div style="font-size: 11.5px; color: #E2E8F0;">
-            NOTIGAS es una plataforma tecnológica comunitaria de enlace en tiempo real en Bolivia. El uso de esta plataforma por parte de compradores (vecinos) y repartidores independientes implica la aceptación total de este Aviso Legal, Términos de Intermediación y Política de Privacidad.
+            NOTIGAS es una plataforma tecnológica comunitaria de enlace en tiempo real en Bolivia. El uso de esta plataforma por parte de usuarios (vecinos) y recolectores independientes implica la aceptación total de este Aviso Legal, Términos de Intermediación y Política de Privacidad.
           </div>
         </div>
 
         <!-- 1. SERVICIO GRATUITO Y MODALIDAD PRO OPCIONAL -->
         <div class="ng-inline-68" style="margin-bottom: 14px;">
           <strong class="ng-inline-69" style="color: #38BDF8; display: block; margin-bottom: 4px; font-size: 13px;">
-            1. Acceso sin suscripción y promoción inicial para repartidores
+            1. Acceso sin suscripción y promoción inicial para recolectores
           </strong>
           <p class="ng-inline-70" style="margin: 0;">
-            NOTIGAS es una plataforma colaborativa de libre acceso para compradores y repartidores. No cobra comisión, suscripción ni cuota alguna: los repartidores se registran y operan sin costo, y los pagos se acuerdan directamente entre comprador y repartidor en bolivianos, por ejemplo con <strong>QR local (Simple / Banesco QR)</strong>. No existen saldos pendientes, ciclos de crédito ni bloqueos por monto adeudado.
+            NOTIGAS es una plataforma colaborativa de libre acceso para usuarios y recolectores. No cobra comisión, suscripción ni cuota alguna: los recolectores se registran y operan sin costo, y los acuerdos se coordinan directamente entre el usuario y el recolector en bolivianos, por ejemplo con <strong>QR local (Simple / Banesco QR)</strong>. No existen saldos pendientes, ciclos de crédito ni bloqueos por monto adeudado.
           </p>
         </div>
 
@@ -1511,10 +1500,10 @@
             2. Rol Exclusivo de Intermediación Tecnológica Neutral
           </strong>
           <p style="margin: 0 0 6px 0;">
-            NOTIGAS opera exclusivamente como un <strong>directorio digital, mapa interactivo con GPS en vivo y tablón comunitario</strong> que facilita el contacto voluntario y directo entre vecinos que publican material reciclable y repartidores que lo recogen, y entre quien necesita agua, detergentes, sal o afilado y quien se lo lleva.
+            NOTIGAS opera exclusivamente como un <strong>directorio digital, mapa interactivo con GPS en vivo y tablón comunitario</strong> que facilita el contacto voluntario y directo entre vecinos que publican material reciclable y recolectores que lo recogen, y entre quien necesita productos de limpieza y quien se los suministra.
           </p>
           <p style="margin: 0; color: #94A3B8; font-size: 12px;">
-            NOTIGAS <strong>NO es comercializadora de gas, NO es planta envasadora, NO posee vehículos de transporte ni mantiene relación laboral, de subordinación o de agencia</strong> con los repartidores. Los choferes y distribuidores prestan sus servicios de manera autónoma e independiente bajo su propia responsabilidad.
+            NOTIGAS <strong>NO es comercializadora de gas, NO es planta de reciclaje, NO posee vehículos de transporte ni mantiene relación laboral, de subordinación o de agencia</strong> con los recolectores. Los recolectores prestan sus servicios de manera autónoma e independiente bajo su propia responsabilidad.
           </p>
         </div>
 
@@ -1527,7 +1516,7 @@
             NOTIGAS es únicamente un intermediario tecnológico y <strong>NO SE HACE RESPONSABLE DE LOS ACUERDOS FINALES, CONTRATOS, TRATOS VERBALES O TRANSACCIONES COMERCIALES QUE SE CELEBREN ENTRE SUS USUARIOS</strong>.
           </p>
           <ul style="margin: 0 0 0 16px; padding: 0; font-size: 11.5px; color: #FECACA; line-height: 1.5;">
-            <li><strong>Precios y Pagos:</strong> El precio final pactado, el método de pago (efectivo, QR local como Simple o Banesco QR, transferencia o tarjeta) y la entrega de comprobantes de pago (factura o nota de venta) son acordados de forma directa y exclusiva entre el comprador y el repartidor. NOTIGAS no interviene, procesa, recauda ni custodia fondos.</li>
+            <li><strong>Precios y Pagos:</strong> El precio final, el método de pago (efectivo u otro medio local) y la entrega de comprobantes de pago (factura o nota de venta) son acordados de forma directa y exclusiva entre el vecino y el recolector. NOTIGAS no interviene, procesa, recauda ni custodia fondos.</li>
             <li><strong>Calidad, Contenido y Peso del Material:</strong> NOTIGAS no inspecciona físicamente el material publicado ni los productos entregados, ni garantiza su contenido neto, peso o estado. La responsabilidad civil, comercial y técnica corresponde exclusivamente a quien publica o entrega.</li>
             <li><strong>Despacho y Tiempos de Entrega:</strong> Los tiempos de llegada, demoras en ruta o cancelaciones son gestionados directamente entre las partes.</li>
             <li><strong>Discrepancias y Reclamaciones:</strong> Cualquier diferencia o reclamo derivado del servicio o producto debe ser canalizado directamente entre el comprador y el repartidor o distribuidor correspondiente.</li>
@@ -1543,7 +1532,7 @@
             Las personas repartidoras registradas son las únicas responsables de cumplir con las normativas legales y de seguridad vigentes en Bolivia: condiciones mecánicas del vehículo, peso y estiba adecuados al material transportado, elementos de seguridad requeridos y póliza SOAT vigente.
           </p>
           <p style="margin: 0; color: #94A3B8; font-size: 12px;">
-            Quien recoge material debe confirmarlo sellado y separado para evitar derrames o roturas, y quien transporta agua, detergentes, sal o servicios debe señalizar la carga. Se exhorta a las partes a acordar el precio de forma directa y clara antes de entregar el material o el producto, y a emitir su propio comprobante.
+            Quien recoge material debe confirmarlo sellado y separado para evitar derrames o roturas, y quien transporta detergentes u otros productos debe señalizar la carga. Se exhorta a las partes a acordar el precio de forma directa y clara antes de entregar el material o el producto, y a emitir su propio comprobante.
           </p>
         </div>
 
@@ -1643,22 +1632,6 @@
 
         </div>
 
-        <div class="submenu-card"  id="auto-event-95" >
-
-          <i class="fa-solid fa-seedling ng-inline-87"></i>
-
-          <span class="submenu-title">🌿 Orgánico Seleccionado</span>
-
-        </div>
-
-        <div class="submenu-card"  id="auto-event-43" >
-
-          <i class="fa-solid fa-apple-whole ng-inline-85"></i>
-
-          <span class="submenu-title">🍎 Frutas & Verduras</span>
-
-        </div>
-
         <div class="submenu-card"  id="auto-event-44" >
 
           <i class="fa-solid fa-pump-soap ng-inline-86"></i>
@@ -1715,14 +1688,33 @@
 
       <p id="tipoSolicitudAyuda"
          style="margin:0 0 12px; padding:9px 11px; border-radius:8px; background:rgba(34,197,94,0.12); border-left:3px solid #22C55E; color:#BBF7D0; font-size:12px; line-height:1.45;">
-        Publica el material que tienes en casa. Los repartidores cercanos verán tu punto en el mapa y nullptrán a recogerlo. NOTIGAS no cobra por la recogida.
+        Publica el material que tienes en casa. Los recolectores cercanos verán tu punto en el mapa y vendrán a recogerlo. NOTIGAS no cobra por la recogida.
       </p>
 
-      <div class="form-group">
+      <div class="form-group" id="groupCategoriaPedido">
 
-        <label id="labelCategoria">Material que tienes disponible:</label>
+        <label id="labelCategoria">Materiales que tienes para recoger (puedes marcar varios):</label>
 
-        <select id="selectCategoria" >
+        <div id="userMaterialesPicker" class="driver-material-grid" role="group" aria-label="Materiales a recolectar">
+          <label class="driver-material-chip">
+            <input type="checkbox" name="userMaterial" value="plastico" checked style="margin:0;">
+            <i class="fa-solid fa-recycle"></i> Plástico
+          </label>
+          <label class="driver-material-chip">
+            <input type="checkbox" name="userMaterial" value="papel" style="margin:0;">
+            <i class="fa-solid fa-file-lines"></i> Papel / Cartón
+          </label>
+          <label class="driver-material-chip">
+            <input type="checkbox" name="userMaterial" value="chatarra" style="margin:0;">
+            <i class="fa-solid fa-gears"></i> Chatarra
+          </label>
+          <label class="driver-material-chip">
+            <input type="checkbox" name="userMaterial" value="botellas" style="margin:0;">
+            <i class="fa-solid fa-bottle-dispenser"></i> Botellas Plástico / Vidrio
+          </label>
+        </div>
+
+        <select id="selectCategoria" style="display: none;">
 
           <option value="plastico">♻️  Plástico</option>
 
@@ -1733,8 +1725,6 @@
           <option value="botellas">🥤 Botellas Plástico / Vidrio</option>
 
           <option value="organico">🌿 Orgánico Seleccionado</option>
-
-          <option value="frutas">🍎 Frutas & Verduras</option>
 
           <option value="detergentes">🧽 Detergentes & Limpieza</option>
 
@@ -2160,9 +2150,9 @@
 
           <button class="modal-tab-btn active ng-inline-132" id="auto-event-55"><i class="fa-solid fa-chart-line ng-inline-133"></i> Métricas</button>
 
-          <button class="modal-tab-btn ng-inline-132" id="auto-event-56"><i class="fa-solid fa-store ng-inline-133"></i> Repartidores</button>
-          <button class="modal-tab-btn ng-inline-132" id="btnTabCompradores"><i class="fa-solid fa-users ng-inline-133"></i> Compradores</button>
-          <button class="modal-tab-btn ng-inline-132" id="btnTabPremium"><i class="fa-solid fa-qrcode ng-inline-133" style="color:#22C55E;"></i> QR local</button>
+          <button class="modal-tab-btn ng-inline-132" id="auto-event-56"><i class="fa-solid fa-store ng-inline-133"></i> Recolectores</button>
+          <button class="modal-tab-btn ng-inline-132" id="btnTabCompradores"><i class="fa-solid fa-users ng-inline-133"></i> Usuarios</button>
+          <button class="modal-tab-btn ng-inline-132" id="btnTabPremium"><i class="fa-solid fa-piggy-bank ng-inline-133" style="color:#22C55E;"></i> Servicio Gratis</button>
 
           <button class="modal-tab-btn ng-inline-132" id="auto-event-57"><i class="fa-solid fa-boxes-packing ng-inline-133"></i> Pedidos</button>
 
@@ -2196,7 +2186,7 @@
 
               <div class="ng-inline-140">
 
-                <div class="ng-inline-141">🚚 REPARTIDORES</div>
+                <div class="ng-inline-141">🚚 RECOLECTORES</div>
 
                 <div class="ng-inline-139" id="adminKpiVendors">0</div>
 
@@ -2287,56 +2277,44 @@
                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                   <div>
                     <strong style="color:#38BDF8; font-size:12.5px; display:flex; align-items:center; gap:6px;">
-                      <i class="fa-solid fa-qrcode"></i> Pagos con QR Local Notigas
+                      <i class="fa-solid fa-piggy-bank"></i> Servicio Gratuito
                     </strong>
                     <div style="font-size:10.5px; color:#94A3B8; margin-top:3px; line-height:1.4;">
-                      Método: <strong>QR local (Simple / Banesco QR)</strong> • Sin comisión • NOTIGAS no cobra ni procesa fondos
+                      Sin cuotas • Sin comisiones • NOTIGAS no cobra ni procesa fondos
                     </div>
                   </div>
                   <div style="display:flex; gap:6px; flex-wrap:wrap;">
                   </div>
                 </div>
               </div>
-              <p class="ng-inline-161">Listado de Repartidores Registrados, Vouchers de QR local y Fichas de Negocio:</p>
+              <p class="ng-inline-161">Listado de Recolectores Registrados y Fichas de Negocio:</p>
               <div class="ng-inline-162" id="adminVendorsListContainer">
                 <!-- Renderizado dinamico de repartidores -->
               </div>
             </div>
 
-            <!-- SUBMENU COMPRADORES -->
+            <!-- SUBMENU USUARIOS -->
             <div class="modal-tab-pane" id="modalPaneCompradores">
-              <p class="ng-inline-161">Listado de Compradores por Ciudad:</p>
+              <p class="ng-inline-161">Listado de Usuarios por Ciudad:</p>
               <div class="ng-inline-162" id="adminBuyersListContainer">
                 <!-- Renderizado dinamico de compradores -->
               </div>
             </div>
 
-            <!-- SUBMENÚ SUSCRIPCIONES VIP & COMPROBANTES QR -->
+            <!-- SUBMENÚ: SERVICIO GRATUITO -->
             <div class="modal-tab-pane" id="modalPanePremium">
               <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px; border-bottom:1px solid #334155; padding-bottom:10px;">
                 <div>
                   <h3 style="margin:0; color:#FDE68A; font-size:15px; display:flex; align-items:center; gap:8px;">
-                    <i class="fa-solid fa-qrcode" style="color:#F59E0B;"></i> Vouchers de QR local
+                    <i class="fa-solid fa-piggy-bank" style="color:#F59E0B;"></i> Servicio Gratuito
                   </h3>
-                  <p class="ng-inline-161" style="margin:3px 0 0 0;">Verificación de vouchers de QR local (Simple / Banesco QR) enviados por los repartidores. Sin comisiones ni saldos.</p>
+                  <p class="ng-inline-161" style="margin:3px 0 0 0;">NOTIGAS no cobra cuotas, ni suscripciones, ni comisiones. No hay pagos que verificar.</p>
                 </div>
               </div>
 
-              <!-- RESUMEN KPI RÁPIDO DE SUSCRIPCIONES -->
-              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:10px; margin-bottom:14px;">
-                <div style="background:#0F172A; border:1.5px solid #F59E0B; border-radius:10px; padding:10px 14px;">
-                  <div style="font-size:10px; color:#FEF08A; font-weight:bold; text-transform:uppercase;">⏳ Vouchers Pendientes</div>
-                  <div id="adminVouchersPendingCount" style="font-size:22px; font-weight:900; color:#F59E0B;">0</div>
-                </div>
-                <div style="background:#0F172A; border:1.5px solid #22C55E; border-radius:10px; padding:10px 14px;">
-                  <div style="font-size:10px; color:#A7F3D0; font-weight:bold; text-transform:uppercase;">👑 Repartidores VIP Activos</div>
-                  <div id="adminVouchersActiveCount" style="font-size:22px; font-weight:900; color:#22C55E;">0</div>
-                </div>
-              </div>
-
-              <!-- CONTENEDOR DINÁMICO DE SUSCRIPCIONES -->
+              <!-- CONTENEDOR DINÁMICO -->
               <div class="ng-inline-162" id="adminPremiumSubscriptionsContainer">
-                <div style="color:#94A3B8; text-align:center; padding:20px;">Cargando pagos de repartidores...</div>
+                <div style="color:#94A3B8; text-align:center; padding:20px;">Cargando información de servicio...</div>
               </div>
             </div>
 
@@ -2374,7 +2352,7 @@
 
               <p class="ng-inline-167">
 
-                Configura propaganda independiente para cada una de las <strong>3 pestañas</strong> de NOTIGAS: 1) Mapa en Vivo, 2) Lista de Repartidores, y 3) Muro de Comentarios. Cada una con su propia imagen, texto y enlace WhatsApp/Web.
+                Configura propaganda independiente para cada una de las <strong>3 pestañas</strong> de NOTIGAS: 1) Mapa en Vivo, 2) Lista de Recolectores, y 3) Muro de Comentarios. Cada una con su propia imagen, texto y enlace WhatsApp/Web.
 
               </p>
 
@@ -2432,7 +2410,7 @@
 
                 <button class="promo-subtab-btn ng-inline-174" type="button" id="btnPromoSubTabRepartidores" data-action="switchPromoSubTab" data-tab="repartidores">
 
-                  🚚 2ª Repartidores
+                  🚚 2ª Recolectores
 
                 </button>
 
@@ -2504,13 +2482,13 @@
 
               </div>
 
-              <!-- CONTENIDO OPCIÓN 2: PESTAÑA REPARTIDORES -->
+              <!-- CONTENIDO OPCIÓN 2: PESTAÑA RECOLECTORES -->
 
               <div class="promo-subtab-pane" id="promoSubPaneRepartidores" style="display: none;">
 
                 <div class="ng-inline-175">
 
-                  <strong class="ng-inline-186"><i class="fa-solid fa-store"></i> Propaganda en Pestaña 2: Repartidores</strong>
+                  <strong class="ng-inline-186"><i class="fa-solid fa-store"></i> Propaganda en Pestaña 2: Recolectores</strong>
 
                   <span class="ng-inline-187">Tarjeta en Feed</span>
 
@@ -2518,13 +2496,13 @@
 
                 <div class="form-group ng-inline-178">
 
-                  <label class="ng-inline-179">Estado en Lista de Repartidores:</label>
+                  <label class="ng-inline-179">Estado en Lista de Recolectores:</label>
 
                   <select class="ng-inline-180" id="selectPromoState_repartidores">
 
-                    <option value="activo">✅ Habilitada (Visible en Lista de Repartidores)</option>
+                    <option value="activo">✅ Habilitada (Visible en Lista de Recolectores)</option>
 
-                    <option value="inactivo">🚫 Desactivada (Oculta en Repartidores)</option>
+                    <option value="inactivo">🚫 Desactivada (Oculta en Recolectores)</option>
 
                   </select>
 
@@ -2774,15 +2752,6 @@
 
     </div>
 
-  <!-- MODAL LIGHTBOX PARA VER COMPROBANTE DE PAGO QR EN GRANDE -->
-  <div class="modal" id="modalVoucherLightbox" style="display:none; z-index:20000; background:rgba(0,0,0,0.88); align-items:center; justify-content:center;">
-    <div style="position:relative; max-width:92vw; max-height:92vh; background:#0F172A; border:2px solid #F59E0B; border-radius:12px; padding:14px; display:flex; flex-direction:column; align-items:center; box-shadow:0 8px 30px rgba(0,0,0,0.85);">
-      <button type="button" id="btnCloseVoucherLightbox" style="position:absolute; top:8px; right:10px; background:rgba(239,68,68,0.9); color:white; border:none; border-radius:50%; width:30px; height:30px; font-size:14px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center;">✖</button>
-      <h4 style="color:#FDE68A; margin:0 0 10px 0; font-size:14px; display:flex; align-items:center; gap:6px;"><i class="fa-solid fa-receipt"></i> Comprobante de pago</h4>
-      <img id="voucherLightboxImg" src="" alt="Comprobante de Pago" style="max-width:85vw; max-height:75vh; object-fit:contain; border-radius:8px; border:1px solid #334155;">
-    </div>
-  </div>
-
   <!-- MODAL DE BLOQUEO DE DISPOSITIVO (LE CIERRA LA PUERTA EN LA CARA) -->
   <div class="modal" id="modalDeviceLockout" style="display:none; z-index:999999; background:rgba(15, 23, 42, 0.96); backdrop-filter:blur(10px); align-items:center; justify-content:center; position:fixed; inset:0;">
     <div class="modal-content" style="max-width:480px; width:90%; background:#0F172A; border:2px solid #EF4444; border-radius:16px; padding:24px; text-align:center; box-shadow:0 0 35px rgba(239, 68, 68, 0.4); animation:none;">
@@ -2830,7 +2799,6 @@
   <script defer src="js/supabase-config.js?v=146"></script>
 
   <script defer src="js/device_security.js?v=146"></script>
-  <script defer src="js/voucher_ocr.js?v=146"></script>
 
   <script defer src="js/auth.js?v=146"></script>
 

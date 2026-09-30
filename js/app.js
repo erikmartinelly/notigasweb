@@ -19,7 +19,7 @@ window.cambiarModoRolUsuario = function(targetMode) {
     if (typeof setAppMode === 'function') setAppMode('driver', true);
 
     if (typeof showToast === 'function') {
-      showToast('🚛 Modo Repartidor Activado', 'Ahora puedes ver y tomar pedidos, gestionar tu recorrido GPS y ver pedidos en tu zona.', 'success', 4000);
+      showToast('🚛 Modo Recolector Activado', 'Ahora puedes ver y tomar pedidos, gestionar tu recorrido GPS y ver pedidos en tu zona.', 'success', 4000);
     }
   } else {
     userData.role = 'vecino';
@@ -28,7 +28,7 @@ window.cambiarModoRolUsuario = function(targetMode) {
     if (typeof setAppMode === 'function') setAppMode('buyer', true);
 
     if (typeof showToast === 'function') {
-      showToast('♻️ Modo Comprador Activado', 'Publica material para recoger y ve quién lo busca cerca de ti.', 'info', 4000);
+      showToast('♻️ Modo Usuario Activado', 'Publica material para recoger y ve quién lo busca cerca de ti.', 'info', 4000);
     }
   }
 
@@ -88,7 +88,7 @@ window.verificarPermisoOperarEnCiudad = function(accionNombre) {
 
 /* ==========================================================================
    NOTIGAS - MÓDULO PRINCIPAL DE NAVEGACIÓN,
-   FAVICON DINÁMICO POR CATEGORÍA Y MODO REPARTIDOR EN RUTA
+   FAVICON DINÁMICO POR CATEGORÍA Y MODO RECOLECTOR EN RUTA
    ========================================================================== */
 
 // FIX W-07: ORDER_EXPIRATION_MS centralizada en state.js (window.NOTIGAS.ORDER_EXPIRATION_MS)
@@ -178,7 +178,7 @@ function abrirConfiguracionSegunRol() {
       const yaTieneFicha = Boolean(userData.hasDriverProfile || userData.placa || userData.whatsapp);
       buyerToDriverContainer.innerHTML = `
         <button type="button" id="btnRegistroRepartidoresMenu" style="width:100%; background:linear-gradient(135deg,#FF6D00,#E65100); color:white; border:none; padding:12px; border-radius:10px; font-weight:800; cursor:pointer; font-size:13px; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 12px rgba(255,109,0,0.25);">
-          <i class="fa-solid fa-truck-fast"></i> ${yaTieneFicha ? 'Volver al modo Repartidor' : 'Registro Repartidores'}
+          <i class="fa-solid fa-truck-fast"></i> ${yaTieneFicha ? 'Volver al modo Recolector' : 'Registro Recolectores'}
         </button>`;
       const activateButton = document.getElementById('btnRegistroRepartidoresMenu');
       if (activateButton) activateButton.addEventListener('click', () => {
@@ -261,8 +261,8 @@ function setAppMode(mode, refreshData = true) {
 
     if (badgeContainer) {
       badgeContainer.innerHTML = `
-        <button type="button" id="btnHeaderRoleToggle" data-notigas-action="switch-role" data-role-target="buyer" class="btn-role-switch-header" title="Modo Repartidor activo. Haz clic para cambiar a Comprador" style="background:rgba(255,109,0,0.22); color:#FF6D00; padding:4px 8px; border-radius:8px; font-weight:900; font-size:11px; border:1.5px solid #FF6D00; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 2px 6px rgba(255,109,0,0.3);">
-          <i class="fa-solid fa-truck-fast"></i> <span>REPARTIDOR</span> <i class="fa-solid fa-repeat" style="font-size:9px; opacity:0.85;"></i>
+        <button type="button" id="btnHeaderRoleToggle" data-notigas-action="switch-role" data-role-target="buyer" class="btn-role-switch-header" title="Modo Recolector activo. Haz clic para cambiar a Usuario" style="background:rgba(255,109,0,0.22); color:#FF6D00; padding:4px 8px; border-radius:8px; font-weight:900; font-size:11px; border:1.5px solid #FF6D00; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 2px 6px rgba(255,109,0,0.3);">
+          <i class="fa-solid fa-truck-fast"></i> <span>RECOLECTOR</span> <i class="fa-solid fa-repeat" style="font-size:9px; opacity:0.85;"></i>
         </button>
       `;
     }
@@ -280,8 +280,8 @@ function setAppMode(mode, refreshData = true) {
 
     if (badgeContainer) {
       badgeContainer.innerHTML = `
-        <button type="button" id="btnHeaderRoleToggle" data-notigas-action="switch-role" data-role-target="driver" class="btn-role-switch-header" title="Modo Comprador activo. Haz clic para cambiar a Repartidor" style="background:rgba(2,136,209,0.22); color:#38BDF8; padding:4px 8px; border-radius:8px; font-weight:900; font-size:11px; border:1.5px solid #0288D1; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 2px 6px rgba(2,136,209,0.3);">
-          <i class="fa-solid fa-basket-shopping"></i> <span>COMPRADOR</span> <i class="fa-solid fa-repeat" style="font-size:9px; opacity:0.85;"></i>
+        <button type="button" id="btnHeaderRoleToggle" data-notigas-action="switch-role" data-role-target="driver" class="btn-role-switch-header" title="Modo Usuario activo. Haz clic para cambiar a Recolector" style="background:rgba(2,136,209,0.22); color:#38BDF8; padding:4px 8px; border-radius:8px; font-weight:900; font-size:11px; border:1.5px solid #0288D1; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 2px 6px rgba(2,136,209,0.3);">
+          <i class="fa-solid fa-basket-shopping"></i> <span>USUARIO</span> <i class="fa-solid fa-repeat" style="font-size:9px; opacity:0.85;"></i>
         </button>
       `;
     }
@@ -304,7 +304,7 @@ function setAppMode(mode, refreshData = true) {
       btnB.style.borderColor = '#475569';
       btnB.style.background = '#1E293B';
       btnB.style.color = '#94A3B8';
-      if (lbl) { lbl.textContent = 'Repartidor'; lbl.style.color = '#FF6D00'; }
+      if (lbl) { lbl.textContent = 'Recolector'; lbl.style.color = '#FF6D00'; }
     } else {
       btnB.style.borderColor = '#0288D1';
       btnB.style.background = 'rgba(2,136,209,0.25)';
@@ -312,7 +312,7 @@ function setAppMode(mode, refreshData = true) {
       btnD.style.borderColor = '#475569';
       btnD.style.background = '#1E293B';
       btnD.style.color = '#94A3B8';
-      if (lbl) { lbl.textContent = 'Comprador'; lbl.style.color = '#38BDF8'; }
+      if (lbl) { lbl.textContent = 'Usuario'; lbl.style.color = '#38BDF8'; }
     }
   }
 }
@@ -423,11 +423,7 @@ const CATEGORIA_ICONO_FONTAWESOME = {
   chatarra:    'fa-gears',
   botellas:    'fa-bottle-dispenser',
   organico:    'fa-seedling',
-  frutas:      'fa-apple-whole',
   detergentes: 'fa-pump-soap',
-  sal:         'fa-mortar-pestle',
-  afilado:     'fa-scissors',
-  agua:        'fa-bottle-water',
   otros:       'fa-box'
 };
 
@@ -510,11 +506,7 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
     chatarra:    '<path d="M50 15 L65 40 H35 Z M20 50 L35 75 H5 Z M80 50 L95 75 H65 Z" fill="#FFF"/>',
     botellas:    '<path d="M40 12h20v10H40z" fill="#FFF"/><path d="M38 22h24l-4 12v40a6 6 0 0 1-6 6H48a6 6 0 0 1-6-6V34z" fill="#FFF"/>',
     organico:    '<path d="M50 82 V44" stroke="#FFF" stroke-width="7" stroke-linecap="round"/><path d="M50 50 C30 50 22 36 24 22 C40 22 50 32 50 50 Z" fill="#FFF"/><path d="M50 58 C70 58 78 44 76 30 C60 30 50 40 50 58 Z" fill="#FFF"/>',
-    frutas:      '<path d="M50 32 C32 32 22 50 22 64 C22 78 36 88 50 88 C64 88 78 78 78 64 C78 50 68 32 50 32 Z" fill="#FFF"/><path d="M50 18 Q60 12 66 28" stroke="#FFF" stroke-width="6" fill="none" stroke-linecap="round"/>',
     detergentes: '<path d="M40 12h20v14H40z" fill="#FFF"/><path d="M36 26h28v56H36z" fill="#FFF"/><circle cx="50" cy="54" r="9" fill="#00000030"/>',
-    sal:         '<path d="M28 78 L40 40 h20 l12 38 Z" fill="#FFF"/><circle cx="50" cy="32" r="7" fill="#FFF"/>',
-    afilado:     '<circle cx="32" cy="68" r="12" fill="none" stroke="#FFF" stroke-width="7"/><circle cx="68" cy="68" r="12" fill="none" stroke="#FFF" stroke-width="7"/><line x1="39" y1="61" x2="63" y2="29" stroke="#FFF" stroke-width="8" stroke-linecap="round"/>',
-    agua:        '<path d="M50 15 C30 45, 20 60, 20 70 A30 30 0 0 0 80 70 C80 60, 70 45, 50 15 Z" fill="#FFF"/>',
     otros:       '<rect x="20" y="36" width="60" height="44" fill="#FFF"/><path d="M14 36 L50 16 L86 36 Z" fill="#FFF"/>'
   };
 

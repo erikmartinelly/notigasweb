@@ -83,35 +83,38 @@ auth_js = leer("js/auth.js")
 reglas_js = leer("js/driver_order_rules.js")
 pagos_js = leer("js/driver_payments.js")
 
-# --- 1. Checkboxes de servicios -----------------------------------------
-print("\n[1/5] Servicios ofrecidos en el registro del repartidor")
-cbs = re.findall(r'name="driverServicio"[^>]*value="([^"]+)"', index_html)
-revisar("index.html declara checkboxes de servicios", len(cbs) >= 2, "encontrados: %s" % cbs)
-revisar("el servicio 'Compra de sal' esta disponible", "Compra de sal" in cbs)
-revisar("el servicio 'Afilado de cuchillos' esta disponible", "Afilado de cuchillos" in cbs)
+# --- 1. Checkboxes de materiales del recolector ------------------------
+print("\n[1/5] Materiales ofrecidos en el registro del recolector")
+cbs = re.findall(r'name="driverMaterial"[^>]*value="([^"]+)"', index_html)
+revisar("index.html declara checkboxes de materiales", len(cbs) >= 5, "encontrados: %s" % cbs)
+revisar("el material 'plastico' esta disponible", "plastico" in cbs)
+revisar("el material 'papel' esta disponible", "papel" in cbs)
+revisar("el material 'chatarra' esta disponible", "chatarra" in cbs)
+revisar("el material 'botellas' esta disponible", "botellas" in cbs)
+revisar("el material 'organico' esta disponible", "organico" in cbs)
 revisar(
-    "el checkbox oculto inputDriverServicios existe",
-    'id="inputDriverServicios"' in index_html,
+    "el picker de materiales driverMaterialesPicker existe",
+    'id="driverMaterialesPicker"' in index_html,
 )
 
-# --- 2. El registro captura y propaga los servicios ----------------------
-print("\n[2/5] El registro captura y propaga los servicios")
+# --- 2. El registro captura y propaga los materiales ---------------------
+print("\n[2/5] El registro captura y propaga los materiales")
 revisar(
-    "auth.js lee los servicios marcados",
-    re.search(r"function\s+leerServiciosRepartidor", auth_js),
+    "auth.js lee los materiales marcados",
+    re.search(r"function\s+leerMaterialesRecolector", auth_js),
 )
 revisar(
-    "auth.js fusiona los servicios con los productos base",
-    re.search(r"function\s+fusionarServiciosEnProductos", auth_js),
+    "auth.js serializa los materiales marcados",
+    re.search(r"function\s+serializarMaterialesRecolector", auth_js),
 )
 revisar(
-    "auth.js re-selecciona los servicios al editar",
-    re.search(r"function\s+aplicarServiciosEnFormulario", auth_js),
+    "auth.js re-selecciona los materiales al editar",
+    re.search(r"function\s+aplicarMaterialesEnFormulario", auth_js),
 )
 revisar(
-    "los servicios se guardan en el campo oculto inputDriverServicios",
-    re.search(r"inputDriverServicios[\s\S]{0,200}?\.(value|=)\s*", auth_js)
-    or re.search(r"getElementById\(['\"]inputDriverServicios['\"]\)", auth_js),
+    "los materiales se sincronizan con inputDriverCat",
+    re.search(r"sincronizarMaterialesRecolector", auth_js)
+    or re.search(r"inputDriverCat", auth_js),
 )
 
 # --- 3. Suspension por estado de servicio --------------------------------

@@ -16,7 +16,7 @@ window.getCustomDriverTruckIcon = getCustomDriverTruckIcon;
 
 /* ==========================================================================
    NOTIGAS - MÓDULO DE MAPA EN VIVO, POSICIONAMIENTO GPS OBLIGATORIO,
-   ANIMACIONES Y MAPA DE CALOR DE PEDIDOS PARA MODO REPARTIDOR
+   ANIMACIONES Y MAPA DE CALOR DE PEDIDOS PARA MODO RECOLECTOR
    ==========================================================================
    OPTIMIZACIÓN DE TRANSMISIÓN GPS PARA NO SATURAR LA BASE DE DATOS:
    - Frecuencia de emisión a la Base de Datos: Cada 30 Segundos (30,000 ms).
@@ -281,14 +281,22 @@ function formatearDistanciaTriangulada(distMetros) {
   return `${(distMetros / 1000).toFixed(1)} km de distancia`;
 }
 
+/* Marcador para categorías que ya NO existen en el catálogo (frutas, gas, sal,
+   afilado, agua, carbón, leña). No es un material: sirve para que un registro
+   legacy no coincida con ningún pedido activo ni se pinte como plástico. */
+window.CATEGORIA_RETIRADA = '__retirada__';
+
 /* Normaliza cualquier etiqueta de categoría a un código del catálogo.
-   Refleja public.normalize_delivery_category() del servidor. Antes esta
-   función mapeaba "botellas" a "agua" y sus sinónimos de gas/carbon a un
-   catálogo que ya no los tiene. */
+   Refleja public.normalize_delivery_category() del servidor. Las categorías
+   retiradas devuelven CATEGORIA_RETIRADA en vez de caer en otro material. */
 window.normalizeCategoryCode = function(cat) {
   const c = String(cat || '').toLowerCase().trim();
   const bo = window.NOTIGAS_BO;
   const catalogo = (bo && bo.CATEGORIAS) ? bo.CATEGORIAS : [];
+
+  // 0. Comodín. Solo tiene sentido en la categoría del recolector; la de un
+  // pedido es siempre un material único.
+  if (c === 'todos' || c === 'all') return 'todos';
 
   // 1. Código exacto.
   if (bo && bo.CATEGORIAS_POR_CODIGO && bo.CATEGORIAS_POR_CODIGO[c]) return c;
@@ -299,21 +307,44 @@ window.normalizeCategoryCode = function(cat) {
     if (c && (etiqueta.includes(c) || c.includes(item.codigo))) return item.codigo;
   }
 
-  // 3. Sinónimos heredados.
+  // 3. Sinónimos heredados. Cada uno apunta SOLO a su material real: nunca a
+  // otro material activo, porque un alias equivocado hace que un recolector
+  // vea pedidos de un material que no recoge.
   if (c.includes('chatarra') || c.includes('metal')) return 'chatarra';
   if (c.includes('papel') || c.includes('carton') || c.includes('cartón')) return 'papel';
   if (c.includes('organico') || c.includes('orgánico')) return 'organico';
-  if (c.includes('botellon') || c.includes('botellón') || c.includes('agua')) return 'agua';
-  if (c.includes('botell') || c.includes('plastico') || c.includes('plástic') || c.includes('vidrio')) return 'botellas';
-  if (c.includes('fruta') || c.includes('verdur')) return 'frutas';
+  if (c.includes('botell') || c.includes('vidrio')) return 'botellas';
+  if (c.includes('plastico') || c.includes('plástic') || c.includes('plast')) return 'plastico';
   if (c.includes('deterg') || c.includes('limpieza')) return 'detergentes';
-  if (c === 'sal' || c.includes(' sal')) return 'sal';
-  if (c.includes('afilado') || c.includes('cuchillo')) return 'afilado';
-  // Gas, carbón y leña ya no son categorías: caen en la compra genérica.
-  if (c.includes('gas') || c.includes('glp') || c.includes('garrafa') || c.includes('balon') || c.includes('balón')
-      || c.includes('carbon') || c.includes('carbón') || c.includes('lena') || c.includes('leña')) return 'detergentes';
 
-  return catalogo.length ? catalogo[0].codigo : 'plastico';
+  // 4. Categorías RETIRADAS del catálogo (frutas, gas, sal, afilado, agua,
+  // carbón, leña). Se devuelven como marcador de "no es un material actual":
+  // así un registro legacy NO coincide con ningún material y no se muestra
+  // como plástico por accidente. Los llamadores de icono ya traen su propio
+  // fallback neutro para este caso.
+  return window.CATEGORIA_RETIRADA;
+};
+
+/* Un recolector puede marcar varios materiales, y la columna categoria los
+   guarda separados por coma. Esta funcion devuelve la lista de codigos
+   normalizados para poder compararla con el material de cada pedido. */
+window.normalizeCategoryList = function(cat) {
+  const bo = window.NOTIGAS_BO;
+  const catalogo = (bo && bo.CATEGORIAS) ? bo.CATEGORIAS : [];
+  const partes = String(cat || '')
+    .split(',')
+    .map((p) => p.trim())
+    .filter(Boolean);
+  if (!partes.length) return [];
+  if (partes.some((p) => p.toLowerCase() === 'todos' || p.toLowerCase() === 'all')) return ['todos'];
+  const vistos = [];
+  for (const parte of partes) {
+    const codigo = window.normalizeCategoryCode(parte);
+    if (codigo && !vistos.includes(codigo)) vistos.push(codigo);
+  }
+  // Si el valor no corresponde a ninguna categoria, no inventamos un match.
+  const validos = catalogo.map((c) => c.codigo);
+  return vistos.filter((c) => validos.includes(c) || c === 'todos');
 };
 
 window.isOrderCategoryMatchingDriver = function(orderCategory, driverCatInput) {
@@ -324,10 +355,15 @@ window.isOrderCategoryMatchingDriver = function(orderCategory, driverCatInput) {
   }
   if (!driverCat) return false;
 
-  const normDriver = window.normalizeCategoryCode(driverCat);
-  const normOrder = window.normalizeCategoryCode(orderCategory);
+  // Ambos lados pueden contener varios materiales: basta con que uno coincida.
+  const listaDriver = window.normalizeCategoryList(driverCat);
+  if (!listaDriver.length) return false;
+  if (listaDriver.includes('todos')) return true;
 
-  return normDriver === normOrder;
+  const listaOrder = window.normalizeCategoryList(orderCategory);
+  if (!listaOrder.length) return false;
+
+  return listaOrder.some(cat => listaDriver.includes(cat));
 };
 
 function isOrderCategoryMatchingDriver(orderCategory, driverCatInput) {
@@ -418,11 +454,7 @@ const ICONOS_FONTAWESOME_POR_CATEGORIA = {
   chatarra:    'fa-gears',
   botellas:    'fa-bottle-dispenser',
   organico:    'fa-seedling',
-  frutas:      'fa-apple-whole',
   detergentes: 'fa-pump-soap',
-  sal:         'fa-mortar-pestle',
-  afilado:     'fa-scissors',
-  agua:        'fa-bottle-water',
   otros:       'fa-box'
 };
 
@@ -474,7 +506,7 @@ async function obtenerFichaChoferEnMemoria(userId, userData) {
   // 1. Usar datos ya cargados en AppState si están disponibles
   if (userData && (userData.nombre || userData.placa || userData.whatsapp)) {
     return {
-      nombre_completo: userData.nombre || userData.full_name || 'Repartidor GLP',
+      nombre_completo: userData.nombre || userData.full_name || 'Recolector',
       telefono_whatsapp: userData.whatsapp || userData.telefono || '',
       placa: userData.placa || 'Camión',
       categoria: userData.categoria || 'plastico',
@@ -1949,7 +1981,7 @@ async function transmitirUbicacionRepartidorServidorDB(lat, lng) {
           .upsert(
             {
               user_id: localUserId,
-              distribuidor_nombre: driver.nombre_completo || 'Repartidor GLP',
+              distribuidor_nombre: driver.nombre_completo || 'Recolector',
               categoria: driver.categoria || 'plastico',
               titulo: driver.placa || 'Camión',
               ciudad: driver.ciudad || (typeof AppState !== 'undefined' ? AppState.get('city') : 'cochabamba'),

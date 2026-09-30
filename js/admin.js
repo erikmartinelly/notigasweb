@@ -103,14 +103,14 @@ window.abrirModalAdminDashboard = async function() {
 
 function cerrarSesionRepartidorActivarComprador() {
   if (typeof showConfirmModal === 'function') {
-    showConfirmModal('🔄', '¿Cambiar a Modo Comprador?', 'Tu ficha de negocio se mantendrá guardada. Solo se cambiará tu modo de ingreso.', 'Sí, cambiar', () => {
+    showConfirmModal('🔄', '¿Cambiar a Modo Usuario?', 'Tu ficha de negocio se mantendrá guardada. Solo se cambiará tu modo de ingreso.', 'Sí, cambiar', () => {
       AppState.set('userData', null);
       AppState.set('driverGpsLive', 'off');
       if (typeof closeUserSettingsModal === 'function') closeUserSettingsModal();
       if (typeof setAppMode === 'function') setAppMode('buyer');
       const modalAuth = document.getElementById('modalWelcomeAuth');
       if (modalAuth) modalAuth.style.display = 'none';
-      if (typeof showToast === 'function') showToast('🛒 Modo Comprador', 'Modo Repartidor cerrado. Navegando como Comprador.', 'info', 2000);
+      if (typeof showToast === 'function') showToast('🛒 Modo Comprador', 'Modo Recolector cerrado. Navegando como Usuario.', 'info', 2000);
     });
   }
 }

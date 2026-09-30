@@ -59,9 +59,7 @@ body {
 }
 
 .leaflet-div-icon,
-
-.garrafa-map-marker,
-
+.recolector-map-marker,
 .truck-map-marker,
 
 .reported-truck-marker,
@@ -294,7 +292,9 @@ header {
 
   object-fit: contain;
 
-  filter: drop-shadow(0 0 8px #FF1744);
+  /* Borde blanco brillante. Antes era un drop-shadow rojo que sobre el
+     camion verde se leia como un halo rosado/lila. */
+  filter: drop-shadow(0 0 3px #FFFFFF) drop-shadow(0 0 7px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 12px rgba(255, 255, 255, 0.45));
 
   transition: transform 0.3s ease;
 
@@ -1132,7 +1132,7 @@ main {
 
 }
 
-.garrafa-icon-svg { 
+.reciclaje-icon-svg { 
 
   width: 24px; 
 
@@ -2431,8 +2431,18 @@ footer.promo-banner-container {
 .driver-identity-field label span:last-child, .driver-price-field label span:last-child { color:#94A3B8; font-size:10px; font-weight:700; }
 .driver-identity-field small, .driver-price-field small { color:#94A3B8; font-size:10px; display:block; margin-top:4px; }
 .driver-color-field #driverTruckColorPicker { max-height:54px; overflow-y:auto; margin:5px 0 2px; }
-.driver-terms-compact { padding:9px 10px; margin:8px 0 12px; border:1px solid #334155; border-radius:8px; font-size:10.5px; color:#CBD5E1; line-height:1.35; }
-.driver-terms-compact a { color:#FDE68A; font-weight:800; text-decoration:underline; }
+    .driver-terms-compact { padding:9px 10px; margin:8px 0 12px; border:1px solid #334155; border-radius:8px; font-size:10.5px; color:#CBD5E1; line-height:1.35; }
+    .driver-terms-compact a { color:#FDE68A; font-weight:800; text-decoration:underline; }
+
+    /* Cuadro de materiales del registro: el recolector marca todos los
+       tipos que recoge, no solo uno. */
+    .driver-materials-field { padding:11px 12px; border:1px solid #334155; border-radius:9px; background:#0F172A; }
+    .driver-material-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:7px; margin-top:8px; }
+    .driver-material-chip { display:flex; align-items:center; gap:7px; background:#1E293B; border:1.5px solid #334155; border-radius:9px; padding:9px 11px; font-size:12px; font-weight:700; color:#E2E8F0; cursor:pointer; line-height:1.25; }
+    .driver-material-chip:hover { border-color:#FF6D00; }
+    .driver-material-chip:has(input:checked) { border-color:#22C55E; background:#052E1A; color:#FFFFFF; }
+    .driver-material-chip input { width:15px; height:15px; accent-color:#22C55E; flex:0 0 auto; cursor:pointer; }
+    @media (max-width: 440px) { .driver-material-grid { grid-template-columns:1fr; } }
 @media (max-width: 440px) { .driver-registration-grid { grid-template-columns:1fr; } .driver-trial-card { display:block; } .driver-trial-card p { margin-top:4px; text-align:left; } }
 
 .form-group label { 
@@ -2667,7 +2677,7 @@ footer.promo-banner-container {
 
 }
 
-.submenu-card .garrafa-icon-svg {
+.submenu-card .reciclaje-icon-svg {
 
   width: 34px;
 
@@ -5855,23 +5865,6 @@ button:active, .tab-btn:active, .cat-chip:active {
 
 }
 
-.gas-cylinder {
-
-  width: 11px; height: 19px; color: #ffffff; font-size: 0; background: #fff; border-radius: 3px; position: relative;
-
-}
-
-.gas-cylinder::before {
-
-  content: ""; position: absolute; width: 7px; height: 3px; left: 2px; top: -4px; background: #fff; border-radius: 2px;
-
-}
-
-.gas-cylinder::after {
-
-  content: ""; position: absolute; width: 15px; height: 3px; left: -2px; bottom: 3px; background: #ed570b;
-
-}
 
 .order-label {
 

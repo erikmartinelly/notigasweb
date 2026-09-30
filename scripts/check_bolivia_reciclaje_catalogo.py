@@ -31,14 +31,13 @@ CATALOGO_ESPERADO = [
     ("chatarra", "recogida"),
     ("botellas", "recogida"),
     ("organico", "recogida"),
-    ("frutas", "recogida"),
     ("detergentes", "compra"),
 ]
 
-# Categorias de compra retiradas. Deben seguir ausentes del cliente y del
+# Categorias de compra o retiradas. Deben seguir ausentes del cliente y del
 # catalogo activo del servidor, aunque el historico las conserve para que los
 # pedidos ya publicados sigan siendo validos.
-COMPRAS_RETIRADAS = ("sal", "afilado", "agua", "otros")
+COMPRAS_RETIRADAS = ("sal", "afilado", "agua", "otros", "frutas")
 
 # Palabras que no deben aparecer como categoria viva en superficies de producto.
 LEGADO_PROHIBIDO = ("garrafa", "garrafas_agotadas", "gas glp", "carbon", "carbón", "leña", "lena")
@@ -144,7 +143,7 @@ def main() -> int:
 
     for cod, tipo in CATALOGO_ESPERADO:
         ok(cod in bo, f"el catalogo declara '{cod}'")
-    ok(len([c for c, t in cat if t == "recogida"]) == 6, "seis categorias son recogida")
+    ok(len([c for c, t in cat if t == "recogida"]) == 5, "cinco categorias son recogida")
     ok(len([c for c, t in cat if t == "compra"]) == 1, "solo los detergentes siguen siendo compra")
 
     # Las compras retiradas no pueden reaparecer como categoria de pedido.
@@ -195,11 +194,9 @@ def main() -> int:
             ok("balón de gas" not in limpio and "balon de gas" not in limpio,
                f"{rel} no ofrece balones de gas")
 
-    # el alias defensivo debe seguir presente: sin el, las filas legacy no mapean
-    ok("includes('gas')" in mapa,
-       "normalizeCategoryCode conserva el sinonimo defensivo de gas")
-    ok("includes('carbon')" in mapa,
-       "normalizeCategoryCode conserva el sinonimo defensivo de carbon")
+    # el alias defensivo debe marcar las categorías retiradas
+    ok("CATEGORIA_RETIRADA" in mapa,
+       "normalizeCategoryCode declara CATEGORIA_RETIRADA para categorias retiradas")
     ok("garrafas_agotadas" in mapa,
        "la columna real garrafas_agotadas no se renombro")
 

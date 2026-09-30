@@ -39,7 +39,7 @@ Engineered with **Vanilla JavaScript**, **Supabase PostgreSQL with PostGIS**, an
 
 NOTIGAS operates in **Bolivia**, starting in **Cochabamba**, as a neighborhood recycling and services platform. The platform's single source of truth for the catalog is `window.NOTIGAS_BO.CATEGORIAS` in `js/notigas_bo.js`.
 
-There are exactly **11 categories**, and each one has a fixed operation type:
+There are exactly **6 active categories**, and each one has a fixed operation type:
 
 | # | Code | Label | Type | Meaning |
 | :-- | :--- | :--- | :--- | :--- |
@@ -48,14 +48,11 @@ There are exactly **11 categories**, and each one has a fixed operation type:
 | 3 | `chatarra` | Chatarra y metal | `recogida` | A driver comes to pick it up |
 | 4 | `botellas` | Botellas y vidrio | `recogida` | A driver comes to pick it up |
 | 5 | `organico` | Orgánico | `recogida` | A driver comes to pick it up |
-| 6 | `frutas` | Frutas y verduras | `recogida` | A driver comes to pick it up |
-| 7 | `detergentes` | Detergentes | `compra` | A driver brings it to you |
-| 8 | `sal` | Sal | `compra` | A driver brings it to you |
-| 9 | `afilado` | Afilado | `compra` | A driver brings it to you |
-| 10 | `agua` | Agua | `compra` | A driver brings it to you |
-| 11 | `otros` | Otros | `compra` | A driver brings it to you |
+| 6 | `detergentes` | Detergentes | `compra` | A driver brings it to you |
 
-**NOTIGAS does not charge.** There is no subscription, no commission, no credit cycle, and no price displayed anywhere in the interface. The economic agreement is made **directly between the two people**, settled locally by QR (Simple or Banesco). Drivers compete on availability, coverage, and service, never on a platform price.
+*Note: Free requests for other materials (`otros`) are routed to `solicitudes_otros` for demand intelligence and do not create public orders. Retired services (sal, afilado, agua, frutas) remain in historical logs to preserve legacy references.*
+
+**NOTIGAS does not charge.** There is no subscription, no commission, no credit cycle, and no price displayed anywhere in the interface. The agreement is made **directly between neighbor and collector**. Drivers compete on availability, coverage, and service, never on platform fees.
 
 The server is authoritative: `tipo_solicitud` is **derived from the category**, never trusted from the client, and `pedidos.categoria` is constrained by a database `CHECK` against the canonical catalog. That keeps the front end, the database, and the map from drifting apart.
 

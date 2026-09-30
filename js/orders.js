@@ -98,10 +98,13 @@ async function renderDriverOrdersList() {
     driverCity = (rawCity && rawCity !== 'todos' && rawCity !== 'all') ? String(rawCity).toLowerCase().trim() : null;
   }
 
+  // El recolector puede marcar varios materiales, asi que la columna categoria
+  // guarda una lista separada por coma. El pedido le sirve si CUALQUIERA de sus
+  // materiales coincide con los del recolector.
   const driverCategoria = (userData && userData.categoria) ? userData.categoria : 'plastico';
-  const normDriverCat = (typeof window.normalizeCategoryCode === 'function')
-    ? window.normalizeCategoryCode(driverCategoria)
-    : String(driverCategoria).toLowerCase().trim();
+  const driverCatList = (typeof window.normalizeCategoryList === 'function')
+    ? window.normalizeCategoryList(driverCategoria)
+    : [String(driverCategoria).toLowerCase().trim()];
 
   const expirationMs = (window.NOTIGAS && window.NOTIGAS.ORDER_EXPIRATION_MS) ? window.NOTIGAS.ORDER_EXPIRATION_MS : 48 * 60 * 60 * 1000;
   const activeWindow = new Date(Date.now() - expirationMs).toISOString();
@@ -122,11 +125,14 @@ async function renderDriverOrdersList() {
 
   // Filtrado a nivel de base de datos por categoría.
   // pedidos.categoria está forzada a un código canónico por el CHECK
-  // pedidos_categoria_catalogo_chk, y normalizeCategoryCode ya devuelve un
-  // código del catálogo, así que alcanza con igualdad exacta. Antes se comparaba
-  // contra listas de variantes de gas/agua que ya no pueden existir.
-  if (normDriverCat && normDriverCat !== 'todos' && normDriverCat !== 'otros') {
-    pubQuery = pubQuery.eq('categoria', normDriverCat);
+  // pedidos_categoria_catalogo_chk, asi que basta con comparar contra la lista
+  // de materiales del recolector. "todos" y "otros" no son materiales reales.
+  const filtrosCat = (driverCatList || [])
+    .filter(c => c && c !== 'todos' && c !== 'otros');
+  if (filtrosCat.length === 1) {
+    pubQuery = pubQuery.eq('categoria', filtrosCat[0]);
+  } else if (filtrosCat.length > 1) {
+    pubQuery = pubQuery.in('categoria', filtrosCat);
   }
 
   // 2. Pedidos ya asignados a este repartidor desde la tabla pedidos
@@ -796,20 +802,20 @@ function renderActiveOrderNotice(order) {
   if (effectiveState === 'asignado' && order.subestado) {
     if (order.subestado === 'en_puerta') {
       view = {
-        title: '¡Repartidor en tu Puerta! 🚪',
+        title: '¡Recolector en tu Puerta! 🚪',
         label: 'EN TU PUERTA',
-        owner: 'REPARTIDOR LLEGÓ',
-        info: 'El repartidor ya está en la puerta de tu domicilio.',
-        detail: '¡Por favor acércate a la puerta para recibir tu balón!',
+        owner: 'RECOLECTOR LLEGÓ',
+        info: 'El recolector ya está en la puerta de tu domicilio.',
+        detail: '¡Por favor acércate a la puerta con tu material reciclable!',
         color: '#10B981',
         shadow: 'rgba(16, 185, 129, 0.45)'
       };
     } else if (order.subestado === 'en_camino') {
       view = {
-        title: '¡Repartidor en Camino! 🚚',
+        title: '¡Recolector en Camino! 🚚',
         label: 'EN CAMINO',
-        owner: 'REPARTIDOR EN RUTA',
-        info: 'El repartidor tomó tu pedido y va hacia tu dirección.',
+        owner: 'RECOLECTOR EN RUTA',
+        info: 'El recolector aceptó tu solicitud y va hacia tu dirección.',
         detail: 'Mantente atento a tu timbre o teléfono celular.',
         color: '#0284C7',
         shadow: 'rgba(2, 132, 199, 0.45)'
@@ -1045,6 +1051,39 @@ window.centrarMapaEnMiPedido = function() {
   }
 };
 
+function leerMaterialesUsuario() {
+  const cbs = Array.from(document.querySelectorAll('input[name="userMaterial"]:checked'));
+  return cbs.map(cb => (cb.value || '').trim()).filter(Boolean);
+}
+
+function serializarMaterialesUsuario(materiales) {
+  return (materiales || []).filter(Boolean).join(', ');
+}
+
+function aplicarMaterialesEnPedidoUsuario(categoria) {
+  const marcados = new Set(String(categoria || '')
+    .split(',')
+    .map(p => p.trim().toLowerCase())
+    .filter(Boolean));
+  document.querySelectorAll('input[name="userMaterial"]').forEach(cb => {
+    cb.checked = marcados.has((cb.value || '').trim().toLowerCase());
+  });
+  sincronizarMaterialesUsuarioEnSelect();
+}
+
+function sincronizarMaterialesUsuarioEnSelect() {
+  const mats = leerMaterialesUsuario();
+  const sel = document.getElementById('selectCategoria');
+  if (sel && mats.length) {
+    sel.value = mats[0];
+  }
+}
+
+window.leerMaterialesUsuario = leerMaterialesUsuario;
+window.serializarMaterialesUsuario = serializarMaterialesUsuario;
+window.aplicarMaterialesEnPedidoUsuario = aplicarMaterialesEnPedidoUsuario;
+window.sincronizarMaterialesUsuarioEnSelect = sincronizarMaterialesUsuarioEnSelect;
+
 async function seleccionarYPedirDirecto(catNombre) {
   if (typeof window.verificarPermisoOperarEnCiudad === 'function' && !window.verificarPermisoOperarEnCiudad('crear un pedido')) {
     return;
@@ -1070,6 +1109,10 @@ async function seleccionarYPedirDirecto(catNombre) {
     ? window.NOTIGAS_BO.categoriaPorCodigo(catNombre) : null;
   if (boCat) {
     window.setTipoSolicitud(boCat.tipo_solicitud);
+  }
+
+  if (boCat && boCat.tipo_solicitud === 'recogida') {
+    aplicarMaterialesEnPedidoUsuario(catNombre);
   }
 
   const sel = document.getElementById('selectCategoria');
@@ -1162,6 +1205,14 @@ function setTipoSolicitud(tipo) {
     sincronizarGrupoOtros(sel);
   }
 
+  const userMatPicker = document.getElementById('userMaterialesPicker');
+  if (userMatPicker) {
+    userMatPicker.style.display = esRecogida ? 'grid' : 'none';
+  }
+  if (sel) {
+    sel.style.display = esRecogida ? 'none' : 'block';
+  }
+
   const ayuda = document.getElementById('tipoSolicitudAyuda');
   const labelCat = document.getElementById('labelCategoria');
   const labelCant = document.getElementById('labelCantidad');
@@ -1170,18 +1221,18 @@ function setTipoSolicitud(tipo) {
 
   if (ayuda) {
     if (esRecogida) {
-      ayuda.textContent = 'Publica el material que tienes en casa. Los repartidores cercanos verrán tu punto en el mapa y lo vendrán a recogerlo. NOTIGAS no cobra por la recogida.';
+      ayuda.textContent = 'Publica el material que tienes en casa. Los recolectores cercanos verán tu punto en el mapa y vendrán a recogerlo. NOTIGAS no cobra por la recogida.';
       ayuda.style.background = 'rgba(34,197,94,0.12)';
       ayuda.style.borderLeftColor = '#22C55E';
       ayuda.style.color = '#BBF7D0';
     } else {
-      ayuda.textContent = 'Pide el producto que necesitas y los repartidores cercanos te lo llevan. El pago se acuerda directo por QR local; NOTIGAS no cobra comisión.';
+      ayuda.textContent = 'Pide el producto que necesitas y los recolectores cercanos te lo llevan. El pago se acuerda directo por QR local; NOTIGAS no cobra comisión.';
       ayuda.style.background = 'rgba(2,136,209,0.12)';
       ayuda.style.borderLeftColor = '#0288D1';
       ayuda.style.color = '#BAE6FD';
     }
   }
-  if (labelCat) labelCat.textContent = esRecogida ? 'Material que tienes disponible:' : 'Producto / Servicio que necesitas:';
+  if (labelCat) labelCat.textContent = esRecogida ? 'Materiales que tienes para recoger (puedes marcar varios):' : 'Producto / Servicio que necesitas:';
   if (labelCant) labelCant.textContent = esRecogida
     ? '¿Cuánto material tienes? (Ej: 3 bolsas, 1 quintillo):'
     : '¿Cuánto necesitas? (Ej: 2 unidades, 1 quintillo):';
@@ -1220,11 +1271,30 @@ function confirmarPedido() {
   const inputDesc = document.getElementById('inputOrderDescripcion');
   const inputOtros = document.getElementById('inputOrderOtrosDetalle');
 
-  // 'plastico' es la categoria por defecto: es la primera del catalogo de
-  // reciclaje. Antes caia en 'gas', que ya no existe.
-  const categoria = selectCategoria && selectCategoria.value ? selectCategoria.value : 'plastico';
+  const esRecogida = (tipoSolicitudActual === 'recogida');
+  let categoria = 'plastico';
+
+  if (esRecogida) {
+    const matUsuario = (typeof leerMaterialesUsuario === 'function') ? leerMaterialesUsuario() : [];
+    if (selectCategoria && selectCategoria.value === 'otros') {
+      categoria = 'otros';
+    } else if (matUsuario.length > 0) {
+      categoria = serializarMaterialesUsuario(matUsuario);
+    } else {
+      if (typeof showToast === 'function') {
+        showToast('♻️ Marca al menos un material', 'Selecciona los tipos de material reciclable que tienes disponibles.', 'warning', 3500);
+      } else {
+        alert('Selecciona al menos un tipo de material que tienes disponible.');
+      }
+      return;
+    }
+  } else {
+    categoria = selectCategoria && selectCategoria.value ? selectCategoria.value : 'detergentes';
+  }
+
+  const primerCodigo = categoria.split(',')[0].trim();
   const boCat = (window.NOTIGAS_BO && typeof window.NOTIGAS_BO.categoriaPorCodigo === 'function')
-    ? window.NOTIGAS_BO.categoriaPorCodigo(categoria) : null;
+    ? window.NOTIGAS_BO.categoriaPorCodigo(primerCodigo) : null;
   const tipoSolicitud = boCat ? boCat.tipo_solicitud : (tipoSolicitudActual || 'compra');
   const cantidad = inputCantidad ? inputCantidad.value.trim() : '';
   const calle = inputCalle ? inputCalle.value.trim() : '';
@@ -1725,8 +1795,8 @@ async function notificarEscucheCamion() {
 
   const payload = {
     tipo: 'escuche_camion',
-    titulo: '¡Camión de Gas Escuchado!',
-    mensaje: 'Un vecino cercano reporta haber escuchado la música del camión de gas en esta zona.',
+    titulo: '¡Camión Recolector Escuchado!',
+    mensaje: 'Un vecino cercano reporta haber escuchado o visto el camión recolector en esta zona.',
     lat: Number(pos.lat || pos.latitude),
     lng: Number(pos.lng || pos.longitude),
     timestamp: Date.now()
@@ -1833,9 +1903,9 @@ window.recibirAlertaVecinalBroadcast = function(payload) {
 
   if (payload.tipo === 'escuche_camion') {
     if (typeof mostrarPopupAlertaRepartidor === 'function') {
-      mostrarPopupAlertaRepartidor('🎵 ¡Camión de Gas Cerca!', payload.mensaje || 'Un vecino reporta haber escuchado la música del camión cerca de tu zona.');
+      mostrarPopupAlertaRepartidor('🔔 ¡Camión Recolector Cerca!', payload.mensaje || 'Un vecino reporta haber visto o escuchado al camión recolector cerca de tu zona.');
     } else if (typeof showToast === 'function') {
-      showToast('🎵 ¡Camión de Gas Cerca!', payload.mensaje || 'Un vecino reporta el camión cerca.', 'info', 5000);
+      showToast('🔔 ¡Camión Recolector Cerca!', payload.mensaje || 'Un vecino reporta el camión recolector cerca.', 'info', 5000);
     }
   } else if (payload.tipo === 'esperame') {
     if (typeof mostrarPopupAlertaRepartidor === 'function') {

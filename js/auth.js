@@ -758,7 +758,7 @@ async function guardarRepartidorEnBaseDeDatos(repartidorObj) {
       dni: repartidorObj.dni || null
     });
   } catch (profileError) {
-    console.error('No se pudo guardar el modo repartidor en el perfil:', profileError);
+    console.error('No se pudo guardar el modo recolector en el perfil:', profileError);
     if (typeof showToast === 'function') {
       showToast('❌ Perfil incompleto', 'La ficha se guardó, pero no se pudo activar el rol. Intenta nuevamente.', 'error', 5000);
     }
@@ -803,8 +803,7 @@ async function guardarRegistroUnico() {
     else if (categoria === 'chatarra') productos = 'Compra de Chatarra y Metales';
     else if (categoria === 'papel') productos = 'Papel, Cartón y Reciclaje';
     else if (categoria === 'botellas') productos = 'Botellas Plástico y Vidrio';
-    else if (categoria === 'carbon') productos = 'Carbón y Leña';
-    else if (categoria === 'frutas') productos = 'Frutas, Verduras y Hortalizas';
+    else if (categoria === 'organico') productos = 'Orgánico Seleccionado';
     else productos = 'Varios';
 
     const schedule = (document.getElementById('regSchedule')?.value || '').trim() || 'Lunes a Sábado: 07:00 a 18:00';
@@ -879,41 +878,63 @@ function closeDriverModal() {
   if (modalDriver) modalDriver.style.display = 'none';
 }
 
-function leerServiciosRepartidor() {
-  const cbs = Array.from(document.querySelectorAll('input[name="driverServicio"]:checked'));
-  return cbs.map(cb => cb.value).filter(Boolean);
+/* El recolector marca todos los materiales que recoge o entrega. La columna
+   categoria guarda los codigos separados por coma, y el mapa hace match si
+   alguno coincide con el material del pedido. */
+function leerMaterialesRecolector() {
+  const cbs = Array.from(document.querySelectorAll('input[name="driverMaterial"]:checked'));
+  return cbs.map(cb => (cb.value || '').trim()).filter(Boolean);
 }
 
-function fusionarServiciosEnProductos(productosBase, servicios) {
-  const base = (productosBase || '').trim();
-  const extras = (servicios || []).filter(s => s && !base.toLowerCase().includes(s.toLowerCase()));
-  if (!extras.length) return base;
-  return [base.replace(/[,\s]+$/, ''), ...extras].filter(Boolean).join(', ');
+function serializarMaterialesRecolector(materiales) {
+  return (materiales || []).filter(Boolean).join(', ');
 }
 
-function aplicarServiciosEnFormulario(productos) {
-  const texto = (productos || '').toLowerCase();
-  document.querySelectorAll('input[name="driverServicio"]').forEach(cb => {
-    cb.checked = texto.includes((cb.value || '').toLowerCase());
+function sincronizarMaterialesRecolector() {
+  const hidden = document.getElementById('inputDriverCat');
+  if (hidden) hidden.value = serializarMaterialesRecolector(leerMaterialesRecolector());
+}
+
+function aplicarMaterialesEnFormulario(categoria) {
+  const marcados = new Set(String(categoria || '')
+    .split(',')
+    .map(p => p.trim().toLowerCase())
+    .filter(Boolean));
+  document.querySelectorAll('input[name="driverMaterial"]').forEach(cb => {
+    cb.checked = marcados.has((cb.value || '').trim().toLowerCase());
   });
-  const hidden = document.getElementById('inputDriverServicios');
-  if (hidden) hidden.value = leerServiciosRepartidor().join(', ');
+  sincronizarMaterialesRecolector();
 }
+
+window.leerMaterialesRecolector = leerMaterialesRecolector;
+window.serializarMaterialesRecolector = serializarMaterialesRecolector;
+window.sincronizarMaterialesRecolector = sincronizarMaterialesRecolector;
+window.aplicarMaterialesEnFormulario = aplicarMaterialesEnFormulario;
 
 async function iniciarSesionRepartidor() {
   const nombreNegocio = (document.getElementById('inputDriverNombre')?.value || '').trim();
   const whatsapp = (document.getElementById('inputDriverTelRef')?.value || '').trim();
   const plate = (document.getElementById('inputDriverPlate')?.value || '').trim().toUpperCase();
   const dni = (document.getElementById('inputDriverDni')?.value || '').trim().replace(/[^0-9]/g, '');
-  const categoria = (document.getElementById('inputDriverCat')?.value || 'plastico').trim();
   const productosRaw = (document.getElementById('inputDriverProductos')?.value || '').trim();
-  const servicios = leerServiciosRepartidor();
-  const productos = fusionarServiciosEnProductos(productosRaw, servicios);
+  const productos = productosRaw;
   const schedule = (document.getElementById('inputDriverSchedule')?.value || '').trim();
   const colorCamion = (document.getElementById('inputDriverTruckColor')?.value || '').trim();
+  const materiales = leerMaterialesRecolector();
+  const categoria = serializarMaterialesRecolector(materiales);
 
-  if (!nombreNegocio || !whatsapp || !plate || (!productosRaw && !servicios.length)) {
+  if (!nombreNegocio || !whatsapp || !plate || !productosRaw) {
     if (typeof showToast === 'function') showToast('⚠️ Campos Requeridos', 'Por favor completa todos los campos requeridos.', 'warning', 2000);
+    return;
+  }
+
+  // Al menos un material: sin esto el recolector no veria ningun pedido.
+  if (!materiales.length) {
+    if (typeof showToast === 'function') {
+      showToast('♻️ Marca al menos un material', 'Selecciona los tipos de material que recoges o entregas.', 'warning', 3500);
+    } else {
+      alert('Selecciona al menos un tipo de material que recoges o entregas.');
+    }
     return;
   }
 
@@ -1222,13 +1243,13 @@ window.abrirRegistroRepartidores = async function() {
     if (hasDriverProfile) {
       if (typeof setAppMode === 'function') setAppMode('driver');
       if (typeof showToast === 'function') {
-        showToast('🟢 Modo Repartidor', '¡Sesión de repartidor activada!', 'success', 3000);
+        showToast('🟢 Modo Recolector', '¡Sesión de repartidor activada!', 'success', 3000);
       }
     } else if (window.esAdminSesion && window.esAdminSesion()) {
-      // Admin sin ficha publicada: entra al modo repartidor para operar la vista libremente.
+      // Admin sin ficha publicada: entra al modo recolector para operar la vista libremente.
       if (typeof setAppMode === 'function') setAppMode('driver');
       if (typeof showToast === 'function') {
-        showToast('🟢 Modo Repartidor', 'Modo repartidor activado como administrador (sin ficha pública).', 'success', 3000);
+        showToast('🟢 Modo Recolector', 'Modo repartidor activado como administrador (sin ficha pública).', 'success', 3000);
       }
     } else {
       const modalDriver = document.getElementById('modalDriver');
@@ -1336,7 +1357,7 @@ async function cambiarRepartidorAComprador() {
   try {
     if (!window.supabaseClient) throw new Error('No hay conexión con el servicio de cuentas.');
     if (typeof showLoadingOverlay === 'function') {
-      showLoadingOverlay('Cambiando a modo Comprador...');
+      showLoadingOverlay('Cambiando a modo Usuario...');
       loadingVisible = true;
     }
 
@@ -1372,11 +1393,11 @@ async function cambiarRepartidorAComprador() {
     if (typeof closeDriverOrdersModal === 'function') closeDriverOrdersModal();
     if (typeof switchTab === 'function') switchTab(0);
     if (typeof showToast === 'function') {
-      showToast('🛍️ Modo Comprador activo', 'Tu ficha de repartidor se conservó. Puedes volver a activarla desde el menú.', 'success', 4200);
+      showToast('🛍️ Modo Usuario activo', 'Tu ficha de repartidor se conservó. Puedes volver a activarla desde el menú.', 'success', 4200);
     }
     return true;
   } catch (error) {
-    console.error('No se pudo cambiar a modo comprador:', error);
+    console.error('No se pudo cambiar a modo usuario:', error);
     if (typeof showToast === 'function') {
       showToast('❌ No se cambió el rol', error?.message || 'El modo Repartidor continúa activo.', 'error', 5000);
     }
@@ -1624,7 +1645,7 @@ async function migrarDatosAntiguosARepartidor() {
     }
   }
 
-  // 2. Si ya hay un perfil de repartidor, activar el modo repartidor inmediatamente
+  // 2. Si ya hay un perfil de repartidor, activar el modo recolector inmediatamente
   if (driverProfile) {
     if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Reactivando sesión...');
 
@@ -1667,7 +1688,7 @@ async function migrarDatosAntiguosARepartidor() {
     if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
 
     if (typeof showToast === 'function') {
-      showToast('🟢 Modo Repartidor', `Sesión activa: ${repartidorData.nombre}`, 'success', 1000);
+      showToast('🟢 Modo Recolector', `Sesión activa: ${repartidorData.nombre}`, 'success', 1000);
     }
     return;
   }
@@ -2034,7 +2055,7 @@ async function procesarSesionExitosa(user, isInteractive = false) {
           sessionStorage.setItem('notigas_temp_gmail', gmail);
           return;
         }
-        // Admin: entra al modo repartidor sin ficha publicada
+        // Admin: entra al modo recolector sin ficha publicada
       }
     }
 
@@ -2486,7 +2507,6 @@ async function cargarPerfilChoferEnModal() {
     const inputTel = document.getElementById('inputDriverTelRef');
     const inputPlaca = document.getElementById('inputDriverPlate');
     const inputDni = document.getElementById('inputDriverDni');
-    const inputCat = document.getElementById('inputDriverCat');
     const inputProd = document.getElementById('inputDriverProductos');
     const inputCiudad = document.getElementById('inputDriverCiudad');
 
@@ -2494,15 +2514,8 @@ async function cargarPerfilChoferEnModal() {
     if (inputTel && driverRow.telefono_whatsapp) inputTel.value = driverRow.telefono_whatsapp;
     if (inputPlaca && driverRow.placa) inputPlaca.value = driverRow.placa;
     if (inputDni && driverRow.dni) inputDni.value = driverRow.dni;
-    if (inputCat && driverRow.categoria) inputCat.value = driverRow.categoria;
-    if (inputProd && driverRow.productos) {
-      const conocidos = Array.from(document.querySelectorAll('input[name="driverServicio"]'))
-        .map(cb => (cb.value || '').trim().toLowerCase()).filter(Boolean);
-      const base = String(driverRow.productos).split(',').map(s => s.trim())
-        .filter(s => s && !conocidos.includes(s.toLowerCase())).join(', ');
-      inputProd.value = base;
-      aplicarServiciosEnFormulario(driverRow.productos);
-    }
+    aplicarMaterialesEnFormulario(driverRow.categoria);
+    if (inputProd && driverRow.productos) inputProd.value = driverRow.productos;
     if (inputCiudad && driverRow.ciudad) inputCiudad.value = driverRow.ciudad;
 
     if (driverRow.color_camion && typeof seleccionarColorCamionModal === 'function') {

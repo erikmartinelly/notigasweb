@@ -6,8 +6,7 @@
   "scope": "./",
   "display": "standalone",
   "background_color": "#047857",
-  "theme_color": "#047857",
-  "description": "NOTIGAS: Noticias de Generadores de residuos seleccionados. Mapa GPS en vivo, pedidos y repartidores de reciclaje en Bolivia.",
+  "description": "NOTIGAS: Noticias de Generadores de residuos seleccionados. Mapa GPS en vivo, recojo de reciclables y recolectores en Bolivia.",
   "orientation": "portrait-primary",
   "prefer_related_applications": false,
   "icons": [
