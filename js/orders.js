@@ -1296,8 +1296,8 @@ function setTipoSolicitud(tipo) {
   if (labelCant) labelCant.textContent = esRecogida
     ? '¿Cuánto material tienes? (Ej: 3 bolsas, 1 quintillo):'
     : '¿Cuánto necesitas? (Ej: 2 unidades, 1 quintillo):';
-  if (btnTxt) btnTxt.textContent = esRecogida ? 'Publicar Recogida' : 'Confirmar y Solicitar en Mapa Vivo';
-  if (title) title.textContent = esRecogida ? '♻️ Solicitar Recogida de Material' : '🛒 Ficha de Compra';
+  if (btnTxt) btnTxt.textContent = esRecogida ? 'Publicar Recogida' : 'Pedido Recolector';
+  if (title) title.textContent = esRecogida ? '♻️ Solicitar Recogida de Material' : '🛒 Pedido Recolector';
 
   sincronizarGrupoOtros(sel);
 }
