@@ -962,13 +962,13 @@ async function iniciarSesionRepartidor() {
     return;
   }
 
-  // VALIDACIÓN DE ACEPTACIÓN DE TÉRMINOS Y CONDICIONES PARA REPARTIDORES
+  // VALIDACIÓN DE ACEPTACIÓN DE TÉRMINOS Y CONDICIONES PARA RECOLECTORES
   const checkTerminos = document.getElementById('checkAceptoTerminosChofer');
   if (checkTerminos && !checkTerminos.checked) {
     if (typeof showToast === 'function') {
-      showToast('⚠️ Términos Requeridos', 'Debes aceptar los Términos y Condiciones para Repartidores de Notigas.com para continuar.', 'warning', 4000);
+      showToast('⚠️ Términos Requeridos', 'Debes aceptar los Términos y Condiciones para Recolectores de Notigas.com para continuar.', 'warning', 4000);
     } else {
-      alert('Debes aceptar los Términos y Condiciones para Repartidores de Notigas.com para continuar.');
+      alert('Debes aceptar los Términos y Condiciones para Recolectores de Notigas.com para continuar.');
     }
     checkTerminos.focus();
     return;
@@ -982,7 +982,7 @@ async function iniciarSesionRepartidor() {
   // COMPROBACIÓN ESTRICTA DE BANEO POR LA ADMINISTRACIÓN (EN MEMORIA / LISTA NEGRA)
   if (typeof esRepartidorBaneado === 'function' && esRepartidorBaneado(nombreNegocio, plate, whatsapp, existingGmail)) {
     if (typeof showToast === 'function') {
-      showToast('⛔ Acceso Suspendido', 'Tu cuenta de repartidor ha sido suspendida/baneada por la administración de NOTIGAS.', 'error', 2000);
+      showToast('⛔ Acceso Suspendido', 'Tu cuenta de recolector ha sido suspendida/baneada por la administración de NOTIGAS.', 'error', 2000);
     }
     return;
   }

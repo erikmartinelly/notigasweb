@@ -124,6 +124,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
           window.open('https://t.me/NotiGas_Soporte', '_blank');
         }
+      } else if (action === 'admin-refresh-otros-stats') {
+        event.preventDefault();
+        safeCall('renderAdminOtrosStats');
       }
     });
 

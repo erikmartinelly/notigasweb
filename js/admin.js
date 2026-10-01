@@ -495,6 +495,43 @@ async function renderAdminDashboardKPIs() {
   if (elAvisos) elAvisos.innerText = avisosCount;
   if (elReports) elReports.innerText = reportsCount;
   if (elReportedUsers) elReportedUsers.innerText = reportedEntitiesCount;
+
+  renderAdminOtrosStats();
+}
+
+async function renderAdminOtrosStats() {
+  const box = document.getElementById('adminOtrosStatsBox');
+  if (!box) return;
+
+  if (!window.supabaseClient) {
+    box.innerHTML = '<div style="color:#64748B; font-style:italic; font-size:11px; text-align:center; padding:12px;">No hay conexión con la base de datos.</div>';
+    return;
+  }
+
+  try {
+    const { data, error } = await window.supabaseClient.rpc('rpc_admin_solicitudes_otros_stats', { p_limite: 20 });
+    if (error) throw error;
+
+    const filas = Array.isArray(data) ? data : [];
+    if (filas.length === 0) {
+      box.innerHTML = '<div style="color:#64748B; font-style:italic; font-size:11px; text-align:center; padding:12px;">Todavía no hay solicitudes de materiales fuera del catálogo.</div>';
+      return;
+    }
+
+    const fmtFecha = (v) => v ? new Date(v).toLocaleDateString('es-BO') : 'N/A';
+
+    box.innerHTML = filas.map(f => `
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 0; border-bottom:1px solid rgba(51,65,85,0.6);">
+        <div style="min-width:0;">
+          <div style="font-size:12px; font-weight:800; color:#E2E8F0; word-break:break-word;">${escapeHtmlStr(f.material || 'Sin detalle')}</div>
+          <div style="font-size:10.5px; color:#64748B; margin-top:2px;">${f.veces_petido || 0} vez${(f.veces_petido || 0) === 1 ? '' : 'es'} pedido${(f.veces_petido || 0) === 1 ? '' : 's'} · ${f.ciudades || 0} ciudad${(f.ciudades || 0) === 1 ? '' : 'es'} · última: ${fmtFecha(f.ultima_peticion)}</div>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    console.error('Error cargando estadísticas de solicitudes otros:', e);
+    box.innerHTML = '<div style="color:#FCA5A5; font-style:italic; font-size:11px; text-align:center; padding:12px;">No se pudieron cargar los materiales más pedidos.</div>';
+  }
 }
 
 async function emitirAlertaOficialAdmin(mensaje) {

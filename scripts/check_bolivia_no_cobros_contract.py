@@ -195,6 +195,27 @@ revisar(
     re.search(r"no hay cobros|saldo[s]? pendiente|limite[s]? de cr", index_html, re.IGNORECASE),
 )
 
+# Los terminos de registro del recolector NO pueden prometer pagos por QR ni
+# cobros al vecino: el QR local es exclusivo de la publicidad pagada.
+m_terms = re.search(
+    r'id="checkAceptoTerminosChofer".*?</label>',
+    index_html,
+    re.DOTALL | re.IGNORECASE,
+)
+revisar("se localiza el bloque de terminos de registro del recolector", bool(m_terms))
+terms_recolector = m_terms.group(0) if m_terms else ""
+revisar(
+    "los terminos del recolector no ofrecen QR ni pagos por los recojos",
+    not re.search(r"\bqr\b|\bpagos?\b|\byape\b|\bcomprador\b", terms_recolector, re.IGNORECASE),
+    citas(terms_recolector, r"\bqr\b|\bpagos?\b|\byape\b|\bcomprador\b"),
+)
+revisar(
+    "los terminos del recolector dicen 'recolector' y no 'repartidor'",
+    "recolector" in terms_recolector.lower()
+    and not re.search(r"repartidor", terms_recolector, re.IGNORECASE),
+    citas(terms_recolector, r"repartidor"),
+)
+
 # --- 8. Materiales del recolector (multi-material de reciclaje) -----------
 print("\n[8/9] Materiales del recolector (multi-material de reciclaje)")
 revisar(
