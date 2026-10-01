@@ -662,12 +662,6 @@ document.addEventListener('click', async (e) => {
       if (typeof window.loadAdminModules === 'function') await window.loadAdminModules();
       if (typeof window.abrirModalDenuncia === 'function') window.abrirModalDenuncia('Aviso Noticias Vecinales', title);
     }
-    else if (action === 'abrirModalDenunciaPedidoFalsoMenu') {
-      if (typeof window.loadAdminModules === 'function') await window.loadAdminModules();
-      if (typeof window.abrirModalDenunciaPedidoFalso === 'function') {
-        window.abrirModalDenunciaPedidoFalso();
-      }
-    }
     else if (action === 'denunciarPedidoFalso') {
       const id = btn.getAttribute('data-id') || '';
       const buyer = decodeURIComponent(btn.getAttribute('data-buyer') || 'Vecino');
