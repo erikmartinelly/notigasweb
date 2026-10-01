@@ -1591,57 +1591,51 @@
 
       <div class="modal-title">
 
-        <span>📦 ¿Qué deseas pedir a domicilio?</span>
+        <span>📦 ¿Qué material deseas que recojamos?</span>
 
         <button class="btn-close"  id="auto-event-38" >✖</button>
 
       </div>
 
-      <p class="ng-inline-81">Selecciona el producto o servicio que necesitas en tu barrio:</p>
+      <p class="ng-inline-81">Marca los materiales que tienes disponibles. Puedes elegir varios en el mismo pedido:</p>
 
-      <div class="submenu-grid">
+      <div class="driver-material-grid" role="group" aria-label="Materiales a recolectar">
 
-        <div class="submenu-card"  id="auto-event-94" >
+        <label class="driver-material-chip">
 
-          <i class="fa-solid fa-recycle ng-inline-84"></i>
+          <input type="checkbox" name="submenuMaterial" value="plastico" checked style="margin:0;">
 
-          <span class="submenu-title">♻️  Plástico</span>
+          <i class="fa-solid fa-recycle"></i> Plástico
 
-        </div>
+        </label>
 
-        <div class="submenu-card"  id="auto-event-42" >
+        <label class="driver-material-chip">
 
-          <i class="fa-solid fa-newspaper ng-inline-85"></i>
+          <input type="checkbox" name="submenuMaterial" value="papel" style="margin:0;">
 
-          <span class="submenu-title">📄 Papel / Cartón</span>
+          <i class="fa-solid fa-file-lines"></i> Papel / Cartón
 
-        </div>
+        </label>
 
-        <div class="submenu-card"  id="auto-event-41" >
+        <label class="driver-material-chip">
 
-          <i class="fa-solid fa-gears ng-inline-84"></i>
+          <input type="checkbox" name="submenuMaterial" value="chatarra" style="margin:0;">
 
-          <span class="submenu-title">⚙️  Chatarra</span>
+          <i class="fa-solid fa-gears"></i> Chatarra
 
-        </div>
+        </label>
 
-        <div class="submenu-card"  id="auto-event-73" >
+        <label class="driver-material-chip">
 
-          <i class="fa-solid fa-bottle-dispenser ng-inline-83"></i>
+          <input type="checkbox" name="submenuMaterial" value="botellas" style="margin:0;">
 
-          <span class="submenu-title">🥤 Botellas Plástico / Vidrio</span>
+          <i class="fa-solid fa-bottle-dispenser"></i> Botellas Plástico / Vidrio
 
-        </div>
-
-        <div class="submenu-card"  id="auto-event-44" >
-
-          <i class="fa-solid fa-pump-soap ng-inline-86"></i>
-
-          <span class="submenu-title">🧴 Recarga de Detergentes</span>
-
-        </div>
+        </label>
 
       </div>
+
+      <button class="btn-submit" id="btnPedirRecogidaMultiple" style="margin-top:14px; width:100%;"><i class="fa-solid fa-truck-fast"></i> Continuar con el Pedido</button>
 
     </div>
 
@@ -1777,7 +1771,7 @@
 
       </div>
 
-      <button class="btn-submit"  id="auto-event-48" ><i class="fa-solid fa-truck-fast ng-inline-89"></i> <img class="ng-inline-90" src="icons/camion_reciclaje.svg" alt="Camión NOTIGAS" style="vertical-align:middle;"> <span id="btnPedidoTexto">Publicar Recogida</span></button>
+      <button class="btn-submit"  id="auto-event-48" ><i class="fa-solid fa-truck-fast"></i> <span id="btnPedidoTexto">Publicar Recogida</span></button>
 
     </div>
 

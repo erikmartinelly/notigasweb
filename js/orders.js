@@ -1153,6 +1153,56 @@ async function seleccionarYPedirDirecto(catNombre) {
 }
 window.seleccionarYPedirDirecto = seleccionarYPedirDirecto;
 
+/* El submenu de "PEDIR RECOJO DE RECICLABLES" deja Forzar una sola categoria por
+   pedido: sus tarjetas eran un atajo a seleccionarYPedirDirecto(codigo). Ahora el
+   usuario marca varios materiales y este los traslada al formulario de pedido,
+   que ya sabe serializarlos en una sola categoria ("plastico, papel").
+   La recarga de detergentes no aparece aqui porque tiene su propio boton. */
+async function abrirPedidoRecogidaMultiple() {
+  if (typeof window.verificarPermisoOperarEnCiudad === 'function' && !window.verificarPermisoOperarEnCiudad('crear un pedido')) {
+    return;
+  }
+
+  const userId = (typeof getAuthenticatedUserId === 'function') ? await getAuthenticatedUserId() : null;
+  const userData = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
+  const isLoggedIn = Boolean(userId || userData?.user_id || userData?.gmail);
+
+  if (!isLoggedIn) {
+    closeSubmenuModal();
+    if (typeof window.abrirModalRegistroPedido === 'function') {
+      window.abrirModalRegistroPedido();
+    }
+    return;
+  }
+
+  const marcados = Array.from(document.querySelectorAll('input[name="submenuMaterial"]:checked'))
+    .map(cb => (cb.value || '').trim())
+    .filter(Boolean);
+
+  if (marcados.length === 0) {
+    if (typeof showToast === 'function') {
+      showToast('♻️ Marca al menos un material', 'Selecciona los tipos de material reciclable que tienes disponibles.', 'warning', 3500);
+    } else {
+      alert('Selecciona al menos un tipo de material que tienes disponible.');
+    }
+    return;
+  }
+
+  closeSubmenuModal();
+  window.setTipoSolicitud('recogida');
+  aplicarMaterialesEnPedidoUsuario(marcados.join(', '));
+
+  const inputTel = document.getElementById('inputTelefonoComprador');
+  if (inputTel && !inputTel.value) {
+    const curPhone = (typeof AppState !== 'undefined') ? (AppState.get('userData')?.telefono || '') : '';
+    if (curPhone) inputTel.value = curPhone;
+  }
+
+  const modalPedido = document.getElementById('modalPedido');
+  if (modalPedido) modalPedido.style.display = 'flex';
+}
+window.abrirPedidoRecogidaMultiple = abrirPedidoRecogidaMultiple;
+
 function closePedidoModal() {
   const modalPedido = document.getElementById('modalPedido');
   if (modalPedido) modalPedido.style.display = 'none';

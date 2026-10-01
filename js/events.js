@@ -419,23 +419,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_auto_event_38 = document.getElementById('auto-event-38');
     if (el_auto_event_38) el_auto_event_38.addEventListener('click', () => { safeCall('closeSubmenuModal'); });
 
-    const el_auto_event_94 = document.getElementById('auto-event-94');
-    if (el_auto_event_94) el_auto_event_94.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'plastico'); });
-
-    const el_auto_event_42 = document.getElementById('auto-event-42');
-    if (el_auto_event_42) el_auto_event_42.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'papel'); });
-
-    const el_auto_event_41 = document.getElementById('auto-event-41');
-    if (el_auto_event_41) el_auto_event_41.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'chatarra'); });
-
-    const el_auto_event_73 = document.getElementById('auto-event-73');
-    if (el_auto_event_73) el_auto_event_73.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'botellas'); });
-
-    const el_auto_event_95 = document.getElementById('auto-event-95');
-    if (el_auto_event_95) el_auto_event_95.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'organico'); });
-
-    const el_auto_event_44 = document.getElementById('auto-event-44');
-    if (el_auto_event_44) el_auto_event_44.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'detergentes'); });
+    const el_btnPedirRecogidaMultiple = document.getElementById('btnPedirRecogidaMultiple');
+    if (el_btnPedirRecogidaMultiple) el_btnPedirRecogidaMultiple.addEventListener('click', () => { safeCall('abrirPedidoRecogidaMultiple'); });
 
     const el_auto_event_47 = document.getElementById('auto-event-47');
     if (el_auto_event_47) el_auto_event_47.addEventListener('click', () => { safeCall('closePedidoModal'); });
