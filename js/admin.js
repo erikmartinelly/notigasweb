@@ -708,7 +708,7 @@ function renderFinalVendors(defaultVendors, deletedIds, buyersList = [], usersLo
       
       let badgeEstado = '<span style="color:#00B0FF; font-weight:700;">ACTIVO</span>';
       if (isBanned) {
-        badgeEstado = '<span style="color:#EF4444; font-weight:700;">BANEADO (CI/NIT + HARDWARE)</span>';
+        badgeEstado = '<span style="color:#EF4444; font-weight:700;">BANEADO (CI + HARDWARE)</span>';
       }
 
       const commissionBadge = `<span style="color:#10B981; font-weight:700;">Acceso gratuito</span>`;

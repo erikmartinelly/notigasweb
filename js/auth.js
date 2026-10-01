@@ -938,13 +938,13 @@ async function iniciarSesionRepartidor() {
     return;
   }
 
-  // VALIDACIÓN ESTRICTA DE CI / NIT (BOLIVIA)
-  if (!dni || dni.length < 4 || dni.length > 13) {
-    if (typeof showToast === 'function') {
-      showToast('🪪 CI o NIT Obligatorio', 'Debes ingresar un número de CI o NIT válido para registrarte como repartidor.', 'warning', 4000);
-    } else {
-      alert('Debes ingresar un número de CI o NIT válido para registrarte como repartidor.');
-    }
+// VALIDACIÓN ESTRICTA DEL CARNET DE IDENTIDAD (CI) - BOLIVIA
+    if (!dni || dni.length < 4 || dni.length > 8) {
+      if (typeof showToast === 'function') {
+        showToast('⚠️ CI Obligatorio', 'Debes ingresar tu número de carnet de identidad (CI) de 4 a 8 dígitos para registrarte como recolector.', 'warning', 4000);
+      } else {
+        alert('Debes ingresar tu número de carnet de identidad (CI) de 4 a 8 dígitos para registrarte como recolector.');
+      }
     const inputDniEl = document.getElementById('inputDriverDni');
     if (inputDniEl) inputDniEl.focus();
     return;
@@ -987,7 +987,7 @@ async function iniciarSesionRepartidor() {
     return;
   }
 
-  // COMPROBACIÓN DE HARDWARE / DEVICE ID / CI-NIT / PLACA EN SUPABASE
+  // COMPROBACIÓN DE HARDWARE / DEVICE ID / CI / PLACA EN SUPABASE
   if (window.DeviceSecurity && typeof window.DeviceSecurity.checkBlockedStatus === 'function') {
     const lockCheck = await window.DeviceSecurity.checkBlockedStatus(dni, plate);
     if (lockCheck && lockCheck.bloqueado) {
@@ -1776,12 +1776,12 @@ async function registrarEmail() {
     return;
   }
 
-  if (!validarDocumentoBolivia(rawDni)) {
-    if (typeof showToast === 'function') {
-      showToast('🪪 CI o NIT Inválido', 'En Bolivia el CI consta de 4 a 13 dígitos numéricos y el NIT de 13 dígitos (Ej: 1234567).', 'warning', 5000);
-    } else {
-      alert('En Bolivia el CI o NIT debe tener entre 4 y 13 dígitos numéricos.');
-    }
+if (!validarDocumentoBolivia(rawDni)) {
+      if (typeof showToast === 'function') {
+        showToast('⚠️ CI o NIT Inválido', 'En Bolivia el CI consta de 4 a 13 dígitos numéricos y el NIT de 13 dígitos (Ej: 1234567).', 'warning', 5000);
+      } else {
+        alert('En Bolivia el CI o NIT debe tener entre 4 y 13 dígitos numéricos.');
+      }
     if (dniEl) dniEl.focus();
     return;
   }
@@ -2162,9 +2162,9 @@ window.finalizeRoleSelection = async function(role) {
       return;
     }
 
-    if (!validarDocumentoBolivia(rawDni)) {
+if (!validarDocumentoBolivia(rawDni)) {
       if (typeof showToast === 'function') {
-        showToast('🪪 CI o NIT Requerido', 'En Bolivia el CI o NIT debe tener entre 4 y 13 dígitos numéricos.', 'warning', 5000);
+        showToast('⚠️ CI o NIT Requerido', 'En Bolivia el CI o NIT debe tener entre 4 y 13 dígitos numéricos.', 'warning', 5000);
       } else {
         alert('En Bolivia el CI o NIT debe tener entre 4 y 13 dígitos numéricos.');
       }
