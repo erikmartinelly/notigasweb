@@ -79,8 +79,8 @@ revisar(
     re.search(r"SIN COMISI[O\u00D3]N", index_html),
 )
 revisar(
-    "el bloque de registro menciona los pagos con QR local",
-    re.search(r"QR local", index_html),
+    "el bloque de registro NO ofrece pagos con QR local (servicio gratuito)",
+    not re.search(r"QR local", index_html),
 )
 revisar(
     "el campo de modalidad unica vale 'sin_comision'",
