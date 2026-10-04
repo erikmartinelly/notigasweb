@@ -2155,7 +2155,7 @@ function filtrarYRenderizarAvisosAdmin(filtro = '') {
     const safeDesc = encodeURIComponent(p.descripcion || '').replace(/'/g, "%27");
     const safeCat = encodeURIComponent(p.categoria || '').replace(/'/g, "%27");
     const timeStr = p.created_at ? new Date(p.created_at).toLocaleString('es-BO') : 'N/A';
-    const isExpired = p.created_at ? ((Date.now() - new Date(p.created_at).getTime()) > 24 * 3600 * 1000) : false;
+    const isExpired = p.created_at ? ((Date.now() - new Date(p.created_at).getTime()) > 48 * 3600 * 1000) : false;
 
     html += `
       <div style="background:#1E293B; border-radius:8px; padding:10px 12px; border:1px solid rgba(255,255,255,0.08); display:flex; flex-direction:column; gap:6px;">
@@ -2203,8 +2203,8 @@ function filtrarYRenderizarAvisosAdmin(filtro = '') {
 async function purgarAvisosExpiradosAdmin() {
   if (!window.supabaseClient) return;
   if (typeof showConfirmModal === 'function') {
-    showConfirmModal('🧹', 'Purgar Avisos', '🧹 ¿Deseas purgar y eliminar todos los avisos comunitarios con más de 24 horas de antigüedad?', 'Purgar', async () => {
-      const dosDiasAtras = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+    showConfirmModal('🧹', 'Purgar Avisos', '🧹 ¿Deseas purgar y eliminar todos los avisos comunitarios con más de 48 horas de antigüedad?', 'Purgar', async () => {
+      const dosDiasAtras = new Date(Date.now() - 48 * 3600 * 1000).toISOString();
       try {
         const { error } = await window.supabaseClient
           .from(_ADMIN_NOTICE_TABLE)

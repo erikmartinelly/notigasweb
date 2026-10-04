@@ -21,7 +21,7 @@ async function renderForumFeed() {
 
     const isAdmin = typeof AppState !== 'undefined' && AppState.get('isAdmin') === true;
 
-    const dosDiasAtras = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+    const dosDiasAtras = new Date(Date.now() - 48 * 3600 * 1000).toISOString();
 
     const userData = (typeof AppState !== 'undefined') ? AppState.get('userData') : null;
     const ciudadSelector = document.getElementById('selectCiudadCapital')?.value;
@@ -62,7 +62,7 @@ async function renderForumFeed() {
           <i class="fa-solid fa-comments" style="font-size:32px; color:#FF6D00; margin-bottom:10px;"></i><br>
           <strong>El Muro de Comentarios está limpio en ${escapeHtmlStr(ciudadReal)}.</strong><br>
           <span style="font-size: 11px; color: #64748B;">Sé el primero en publicar un aviso, alerta u oferta para los vecinos de tu zona.</span><br><br>
-          <button class="btn-new-post" style="margin: 0 auto; padding: 10px 16px; font-size: 12px;" data-action="abrirModalNuevoPost">📝 Publicar Nuevo Aviso (24 Horas)</button>
+          <button class="btn-new-post" style="margin: 0 auto; padding: 10px 16px; font-size: 12px;" data-action="abrirModalNuevoPost">📝 Publicar Nuevo Aviso (48 Horas)</button>
         </div>
       `;
       const adMarkup = typeof window.getAdSenseFeedMarkup === 'function' ? window.getAdSenseFeedMarkup('forum') : '';
@@ -530,7 +530,7 @@ async function crearNuevoPost() {
     if (titleEl) titleEl.value = '';
     if (descEl) descEl.value = '';
 
-    if (typeof showToast === 'function') showToast('📌 ¡Aviso Publicado!', `Tu aviso ya está disponible en el tablón vecinal de ${ciudadReal.toUpperCase()} (duración: 24 horas).`, 'success', 4000);
+    if (typeof showToast === 'function') showToast('📌 ¡Aviso Publicado!', `Tu aviso ya está disponible en el tablón vecinal de ${ciudadReal.toUpperCase()} (duración: 48 horas).`, 'success', 4000);
 
     await renderForumFeed();
   } catch (err) {
@@ -724,6 +724,15 @@ async function agregarComentarioPost() {
   if (!window.supabaseClient) {
     if (typeof showToast === 'function') showToast('Notificación', 'Error: El servidor no está disponible. Intenta de nuevo en un momento.', 'info', 4000);
     else alert('Error: El servidor no está disponible. Intenta de nuevo en un momento.');
+    return;
+  }
+
+  if (!userId) {
+    if (typeof showToast === 'function') showToast('🔒 Inicia Sesión', 'Regístrate gratis para comentar en el muro de tu zona.', 'warning', 4000);
+    closeCommentsModal();
+    const modalAuth = document.getElementById('modalWelcomeAuth');
+    if (modalAuth) modalAuth.style.display = 'flex';
+    if (typeof setAuthAction === 'function') setAuthAction('register');
     return;
   }
 

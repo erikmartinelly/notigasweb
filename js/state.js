@@ -26,7 +26,7 @@ window.escapeHtmlStr = function(str) {
    FIX #18: CONSTANTES GLOBALES (eliminando magic numbers)
    ===================================================== */
 window.NOTIGAS = window.NOTIGAS || {};
-window.NOTIGAS.ORDER_EXPIRATION_MS   = 24 * 60 * 60 * 1000;  // 24 horas
+window.NOTIGAS.ORDER_EXPIRATION_MS   = 48 * 60 * 60 * 1000;  // 48 horas (retencion estandar)
 window.NOTIGAS.TRUCK_EXPIRATION_MS   = 10 * 60 * 1000;        // 10 minutos (camiones fantasma)
 window.NOTIGAS.GPS_UPDATE_INTERVAL   = 5000;                   // 5 segundos (broadcast repartidor)
 window.NOTIGAS.GPS_TIMEOUT_MS        = 12000;                  // 12 segundos (timeout GPS)
