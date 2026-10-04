@@ -1382,11 +1382,15 @@ function confirmarPedido() {
     const ciudadActual = (typeof AppState !== 'undefined' && AppState.get('city')) ? AppState.get('city') : (window.selectedCity || 'cochabamba');
 
     getAuthenticatedUserId().then(async (userId) => {
-      if (!userId) {
-        hideLoadingOverlay();
-        showToast('Error', 'Debes estar autenticado para enviar una petición.', 'error', 3000);
-        return;
-      }
+if (!userId) {
+          hideLoadingOverlay();
+          if (typeof window.abrirModalRegistroPedido === 'function') {
+            window.abrirModalRegistroPedido();
+          } else {
+            showToast('Error', 'Debes estar autenticado para enviar una petición.', 'error', 3000);
+          }
+          return;
+        }
 
       /* Sin .select(): la tabla no concede lectura, asi que el servidor solo
          confirma que la peticion entro. */
@@ -1474,11 +1478,15 @@ function confirmarPedido() {
     showLoadingOverlay(tipoSolicitud === 'recogida' ? 'Publicando tu material...' : 'Registrando tu pedido...');
 
     getAuthenticatedUserId().then(async (userId) => {
-      if (!userId) {
-        hideLoadingOverlay();
-        showToast('Error', 'Debes estar autenticado para crear un pedido.', 'error', 3000);
-        return;
-      }
+if (!userId) {
+          hideLoadingOverlay();
+          if (typeof window.abrirModalRegistroPedido === 'function') {
+            window.abrirModalRegistroPedido();
+          } else {
+            showToast('Error', 'Debes estar autenticado para crear un pedido.', 'error', 3000);
+          }
+          return;
+        }
 
       const catName = boCat ? boCat.chip : (orderData.categoria || 'Plastico');
       const orderTitle = tipoSolicitud === 'recogida' ? `Recogida de ${catName}` : `Pedido de ${catName}`;
