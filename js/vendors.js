@@ -121,8 +121,8 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
     const cityNormalized = city.trim().toLowerCase();
     const cityKeys = typeof window.getCityMetroKeys === 'function' ? window.getCityMetroKeys(cityNormalized) : [cityNormalized];
     const { data, error } = await window.supabaseClient.from('choferes_publicos')
-      .select('id, nombre_completo, categoria, ciudad, telefono, descripcion, foto_url, estado_verificacion, created_at, color_camion')
-      .in('ciudad', cityKeys);
+.select('id, nombre_completo, categoria, ciudad, telefono, descripcion, foto_url, estado_verificacion, created_at, color_camion, rating')
+        .in('ciudad', cityKeys);
     if (error) {
       console.error('Error descargando choferes desde choferes_publicos:', error);
       AppState.set('notigas_vendors_directory', []);
@@ -141,8 +141,9 @@ async function descargarChoferesYRenderizar(cat = 'TODOS') {
           icon: typeof getIconForCategory === 'function' ? getIconForCategory(catPrincipal) : '🚛',
           plate: d.placa || 'Placa registrada', products: d.productos || 'Materiales reciclables',
           zones: d.zonas || 'zona local', schedule: d.schedule || 'Lunes a Sábado',
-          color_camion: d.color_camion || '',
-          active: true
+color_camion: d.color_camion || '',
+            rating: Math.max(0, Math.min(5, Number(d.rating) || 5)),
+            active: true
         };
       });
       AppState.set('notigas_vendors_directory', list);
@@ -202,7 +203,24 @@ function renderVendorCards(filterCat) {
         return (item && item.etiqueta) ? item.etiqueta : String(c || '');
       }).filter(Boolean).join(' • ');
     })();
-    html += `<div class="vendor-fb-card"><div class="vendor-fb-header"><div class="vendor-profile"><div class="vendor-avatar" style="background:transparent;border:none;width:auto;height:auto;padding:0;overflow:visible;">${safeVendorIcon}</div><div class="vendor-meta"><span class="vendor-name">${escapeHtmlStr(vendor.name)}</span><span class="vendor-badge-cat"><i class="fa-solid fa-circle-check"></i> ${escapeHtmlStr(etiquetaMateriales)}</span></div></div><div style="display:flex;align-items:center;gap:6px;">${isAdmin ? `<button data-action="eliminarFichaAdmin" data-id="${safeVendorId}" style="background:#D32F2F;color:white;border:none;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;" title="Borrar como Admin"><i class="fa-solid fa-trash"></i> Borrar (Admin)</button>` : `<span class="promo-badge" style="background:rgba(0,230,118,.15);color:#00E676;border-color:rgba(0,230,118,.4);">RECOLECTOR ACTIVO</span>`}</div></div><div class="vendor-fb-body"><div class="vendor-field"><strong>⭐ Calificación:</strong> Sin calificaciones todavía</div><div class="vendor-field"><strong>📦 Productos:</strong> ${escapeHtmlStr(vendor.products)}</div><div class="vendor-field"><strong>🗺️ Zona de cobertura:</strong> ${escapeHtmlStr(vendor.zones)}</div></div><div class="vendor-fb-footer"><button class="btn-vendor-order" data-action="seleccionarYPedirDirecto" data-cat="${encodeURIComponent(vendor.category)}" data-driver-id="${safeProfileId}" data-driver-name="${escapeHtmlStr(vendor.name || 'el recolector seleccionado')}"><i class="fa-solid fa-cart-plus"></i> Solicitar Pedido</button></div></div>`;
+      // Calificacion de cumplimiento (0 a 5 estrellas) definida por el backend:
+      // arranca en 5 y pierde una estrella por cada recoleccion comprometida
+      // que no se confirmo en 24h.
+      const ratingVendor = Math.max(0, Math.min(5, Number(vendor.rating) || 5));
+      const estrellasVendor = (function () {
+        const llenas = Math.floor(ratingVendor);
+        const media = (ratingVendor - llenas) >= 0.5;
+        let out = '';
+        for (let i = 1; i <= 5; i++) {
+          out += i <= llenas
+            ? '<i class="fa-solid fa-star" style="color:#FBBF24;"></i>'
+            : (media && i === llenas + 1
+              ? '<i class="fa-solid fa-star-half-stroke" style="color:#FBBF24;"></i>'
+              : '<i class="fa-regular fa-star" style="color:#475569;"></i>');
+        }
+        return out;
+      })();
+    html += `<div class="vendor-fb-card"><div class="vendor-fb-header"><div class="vendor-profile"><div class="vendor-avatar" style="background:transparent;border:none;width:auto;height:auto;padding:0;overflow:visible;">${safeVendorIcon}</div><div class="vendor-meta"><span class="vendor-name">${escapeHtmlStr(vendor.name)}</span><span class="vendor-badge-cat"><i class="fa-solid fa-circle-check"></i> ${escapeHtmlStr(etiquetaMateriales)}</span></div></div><div style="display:flex;align-items:center;gap:6px;">${isAdmin ? `<button data-action="eliminarFichaAdmin" data-id="${safeVendorId}" style="background:#D32F2F;color:white;border:none;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;" title="Borrar como Admin"><i class="fa-solid fa-trash"></i> Borrar (Admin)</button>` : `<span class="promo-badge" style="background:rgba(0,230,118,.15);color:#00E676;border-color:rgba(0,230,118,.4);">RECOLECTOR ACTIVO</span>`}</div></div><div class="vendor-fb-body"><div class="vendor-field"><strong>⭐ Calificación:</strong> ${estrellasVendor} <span style="color:#94A3B8;">${ratingVendor.toFixed(2)}/5</span></div><div class="vendor-field"><strong>📦 Productos:</strong> ${escapeHtmlStr(vendor.products)}</div><div class="vendor-field"><strong>🗺️ Zona de cobertura:</strong> ${escapeHtmlStr(vendor.zones)}</div></div><div class="vendor-fb-footer"><button class="btn-vendor-order" data-action="seleccionarYPedirDirecto" data-cat="${encodeURIComponent(vendor.category)}" data-driver-id="${safeProfileId}" data-driver-name="${escapeHtmlStr(vendor.name || 'el recolector seleccionado')}"><i class="fa-solid fa-cart-plus"></i> Solicitar Pedido</button></div></div>`;
     if (index === adInsertAfterIndex && typeof window.getAdSenseFeedMarkup === 'function') html += window.getAdSenseFeedMarkup('vendors');
   });
   container.innerHTML = html; if (typeof window.activateAdSenseIn === 'function') window.activateAdSenseIn(container);
