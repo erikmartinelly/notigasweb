@@ -33,17 +33,21 @@ const TRUCK_ANIM_INTERVAL_MS = 80;
 const DRIVER_RADAR_MAX_ZOOM = 14;
 window.DRIVER_RADAR_MAX_ZOOM = DRIVER_RADAR_MAX_ZOOM;
 
-// COORDENADAS OFICIALES DE CIUDADES CAPITALES DE BOLIVIA
+// COORDENADAS OFICIALES DE LAS 9 CAPITALES DE BOLIVIA + EL ALTO
+// El Alto es ciudad propia: antes estaba escondido dentro de "La Paz / El Alto"
+// y getCityMetroKeys lo mezclaba con La Paz, asi que un recolector de El Alto
+// aparecia en la lista de La Paz. Cada capital filtra solo por su propia clave.
 const GEO_BO_MUNICIPIOS = [
   { key: "cochabamba", nombre: "Cochabamba", keywords: ["cochabamba", "cbi", "quillacollo", "sacaba", "tiquipaya", "villa llamas", "pajata", "capataz", "tataenda", "punkata", "quvorani"], lat: -17.3895, lon: -66.1568, querySuffix: "Cochabamba, Bolivia" },
-  { key: "lapaz", nombre: "La Paz", keywords: ["la paz", "lp", "el alto", "muela", "zona sur", "sanjuanino", "tembladeres", "calacoto", "chusispa", "achocalla"], lat: -16.4897, lon: -68.1193, querySuffix: "La Paz, Bolivia" },
+  { key: "lapaz", nombre: "La Paz", keywords: ["la paz", "lp", "muela", "zona sur", "sanjuanino", "tembladeres", "calacoto", "chusispa", "achocalla"], lat: -16.4897, lon: -68.1193, querySuffix: "La Paz, Bolivia" },
+  { key: "elalto", nombre: "El Alto", keywords: ["el alto", "elalto"], lat: -16.5000, lon: -68.1500, querySuffix: "El Alto, La Paz, Bolivia" },
   { key: "santacruz", nombre: "Santa Cruz de la Sierra", keywords: ["santa cruz", "santa cruz de la sierra", "sbc", "equipetrol", "sirito", "av. tolerancia", "mercado los pocitos", "plan tres"], lat: -17.7833, lon: -63.1821, querySuffix: "Santa Cruz de la Sierra, Bolivia" },
-  { key: "sucre", nombre: "Sucre", keywords: ["sucre", "azurduy", "san felipe", "yotala", "marcapata"], lat: -19.0196, lon: -65.2619, querySuffix: "Sucre, Bolivia" },
-  { key: "oruro", nombre: "Oruro", keywords: ["oruro", "centro", "norte", "sur", "san felipe"], lat: -17.9673, lon: -67.1148, querySuffix: "Oruro, Bolivia" },
-  { key: "potosi", nombre: "Potosí", keywords: ["potosi", "potosí", "tupiza", "santa barbara", "llallagua", "villazón", "colcha k"], lat: -19.5836, lon: -65.7531, querySuffix: "Potosí, Bolivia" },
-  { key: "tarija", nombre: "Tarija", keywords: ["tarija", "yacuiba", "tomatas", "bermejo"], lat: -21.5359, lon: -64.7292, querySuffix: "Tarija, Bolivia" },
-  { key: "trinidad", nombre: "Trinidad", keywords: ["trinidad", "beni", "san jose de chiquitos", "riberalta", "yucanes"], lat: -14.8333, lon: -64.9000, querySuffix: "Trinidad, Beni, Bolivia" },
-  { key: "cobija", nombre: "Cobija", keywords: ["cobija", "norte amazonico", "puerto suarez", "madre de dios"], lat: -11.0333, lon: -68.7667, querySuffix: "Cobija, Bolivia" }
+  { key: "sucre", nombre: "Sucre", keywords: ["sucre", "azurduy", "yotala", "marcapata"], lat: -19.0196, lon: -65.2619, querySuffix: "Sucre, Bolivia" },
+  { key: "oruro", nombre: "Oruro", keywords: ["oruro"], lat: -17.9673, lon: -67.1148, querySuffix: "Oruro, Bolivia" },
+  { key: "potosi", nombre: "Potosí", keywords: ["potosi", "potosí"], lat: -19.5836, lon: -65.7531, querySuffix: "Potosí, Bolivia" },
+  { key: "tarija", nombre: "Tarija", keywords: ["tarija"], lat: -21.5359, lon: -64.7292, querySuffix: "Tarija, Bolivia" },
+  { key: "trinidad", nombre: "Trinidad", keywords: ["trinidad"], lat: -14.8333, lon: -64.9000, querySuffix: "Trinidad, Bolivia" },
+  { key: "cobija", nombre: "Cobija", keywords: ["cobija"], lat: -11.0333, lon: -68.7667, querySuffix: "Cobija, Bolivia" }
 ];
 
 window.BOLIVIA_CITIES = {};
@@ -382,18 +386,15 @@ window.matchCityByNameOrRegion = function(cityName, regionName) {
   return null;
 };
 
+// Cada ciudad capital filtra exclusivamente por su propia clave. El Alto es
+// ciudad propia y NO se agrupa con La Paz: agrupar hacia que un recolector de
+// una apareciera en las listas de la otra. Solo se aceptan variantes de
+// escritura de la MISMA capital (espacios, mayusculas, abreviaturas).
 window.getCityMetroKeys = function(cityKey) {
   const norm = String(cityKey || '').toLowerCase().trim();
   if (!norm || norm === 'todos' || norm === 'all') return null;
-  if (norm === 'lapaz') {
-    return ['lapaz', 'elalto', 'el alto'];
-  }
-  if (norm === 'santacruz') {
-    return ['santacruz', 'santa cruz de la sierra', 'sbc'];
-  }
-  if (norm === 'trinidad') {
-    return ['trinidad', 'beni', 'riberalta'];
-  }
+  if (norm === 'el alto') return ['elalto', 'el alto'];
+  if (norm === 'santa cruz de la sierra') return ['santacruz', 'santa cruz de la sierra'];
   return [norm];
 };
 
