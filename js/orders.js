@@ -1455,7 +1455,23 @@ if (!userId) {
     return;
   }
 
-  const currentCity = (typeof AppState !== 'undefined' && AppState.get('city')) ? AppState.get('city') : (window.selectedCity || 'cochabamba');
+  // El pedido va siempre a la ciudad donde esta registrado el usuario, no a la
+  // ciudad que este mirando en el selector. El servidor vuelve a imponerlo en
+  // guard_optional_order_insert, asi que esto es solo para mostrar el texto
+  // correcto antes de enviar.
+  const registeredCity = (typeof AppState !== 'undefined' && AppState.get('userData') && AppState.get('userData').ciudad)
+    ? String(AppState.get('userData').ciudad).toLowerCase().trim()
+    : '';
+  const selectedCity = (typeof AppState !== 'undefined' && AppState.get('city')) ? AppState.get('city') : (window.selectedCity || 'cochabamba');
+  const currentCity = registeredCity || selectedCity;
+
+  if (registeredCity && selectedCity && registeredCity !== String(selectedCity).toLowerCase().trim()) {
+    const visibleName = (window.BOLIVIA_CITIES && window.BOLIVIA_CITIES[selectedCity] && window.BOLIVIA_CITIES[selectedCity].nombre) || selectedCity;
+    const registeredName = (window.BOLIVIA_CITIES && window.BOLIVIA_CITIES[registeredCity] && window.BOLIVIA_CITIES[registeredCity].nombre) || registeredCity;
+    if (typeof showToast === 'function') {
+      showToast('📍 Tu ciudad de registro', `Tu pedido se publica en ${registeredName}, no en ${visibleName}.`, 'info', 5000);
+    }
+  }
 
   const orderData = {
     categoria,
