@@ -61,8 +61,8 @@ async function renderForumFeed() {
         <div style="text-align:center; color:#94A3B8; padding:40px 14px; font-size:13px; background: #1E293B; border-radius: 14px; border: 1px dashed rgba(255,255,255,0.15);">
           <i class="fa-solid fa-comments" style="font-size:32px; color:#FF6D00; margin-bottom:10px;"></i><br>
           <strong>El Muro de Comentarios está limpio en ${escapeHtmlStr(ciudadReal)}.</strong><br>
-          <span style="font-size: 11px; color: #64748B;">Sé el primero en publicar un aviso, alerta u oferta para los vecinos de tu zona.</span><br><br>
-          <button class="btn-new-post" style="margin: 0 auto; padding: 10px 16px; font-size: 12px;" data-action="abrirModalNuevoPost">📝 Publicar Nuevo Aviso (48 Horas)</button>
+          <span style="font-size: 11px; color: #64748B;">Sé el primero en publicar un comentario o aviso para los vecinos de tu zona. Es gratis y dura 48 horas.</span><br><br>
+          <button class="btn-new-post" style="margin: 0 auto; padding: 10px 16px; font-size: 12px;" data-action="abrirModalNuevoPost">📝 Publicar Comentario o Aviso GRATIS (48 horas)</button>
         </div>
       `;
       const adMarkup = typeof window.getAdSenseFeedMarkup === 'function' ? window.getAdSenseFeedMarkup('forum') : '';
@@ -530,7 +530,7 @@ async function crearNuevoPost() {
     if (titleEl) titleEl.value = '';
     if (descEl) descEl.value = '';
 
-    if (typeof showToast === 'function') showToast('📌 ¡Aviso Publicado!', `Tu aviso ya está disponible en el tablón vecinal de ${ciudadReal.toUpperCase()} (duración: 48 horas).`, 'success', 4000);
+    if (typeof showToast === 'function') showToast('📌 ¡Publicado!', `Tu comentario o aviso ya está en el tablón vecinal de ${ciudadReal.toUpperCase()}. Gratis, con 48 horas de duración.`, 'success', 4000);
 
     await renderForumFeed();
   } catch (err) {
