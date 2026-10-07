@@ -52,6 +52,11 @@ temp_*_profile/
 .tmp_*
 .*_profile/
 
+# Logs locales de pruebas (smoke, servidor, errores)
+*.log
+smoke-out.log
+smoke-err.log
+
 # Archivos del Sistema Operativo
 .DS_Store
 Thumbs.db
