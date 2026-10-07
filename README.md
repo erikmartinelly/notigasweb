@@ -1,6 +1,6 @@
-# NOTIGAS - Live Neighborhood Recycling & Geospatial Platform
+# NOTIGAS - Noticias de generación de reciclables
 
-NOTIGAS is a dynamic, high-performance Progressive Web Application (PWA) for community-driven recycling and real-time geolocation. It connects neighbors who have recyclable material with local drivers who collect it, and neighbors who need everyday products with drivers who deliver them, all through a live interactive map. The browser receives web assets directly from hosting, while all dynamic real-time operations are powered by Supabase (Auth, PostgreSQL, PostGIS, and Realtime WebSockets).
+NOTIGAS es una Aplicación Web Progresiva (PWA) dinámica y de alto rendimiento para el reciclaje comunitario y la geolocalización en tiempo real en Bolivia. Conecta a vecinos que tienen materiales reciclables con recolectores locales, y a vecinos que necesitan productos de limpieza y víveres con quienes los suministran, todo a través de un mapa interactivo en vivo. Los archivos del navegador se sirven desde el hosting, mientras que todas las operaciones dinámicas y en tiempo real son impulsadas por Supabase (Auth, PostgreSQL, PostGIS y Realtime WebSockets).
 
 Engineered with **Vanilla JavaScript**, **Supabase PostgreSQL with PostGIS**, and Google developer technologies.
 
