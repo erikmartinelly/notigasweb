@@ -92,6 +92,7 @@ revisar("el material 'papel' esta disponible", "papel" in cbs)
 revisar("el material 'chatarra' esta disponible", "chatarra" in cbs)
 revisar("el material 'botellas' esta disponible", "botellas" in cbs)
 revisar("el material 'organico' esta disponible", "organico" in cbs)
+revisar("el material 'aceite' esta disponible", "aceite" in cbs)
 revisar(
     "el picker de materiales driverMaterialesPicker existe",
     'id="driverMaterialesPicker"' in index_html,

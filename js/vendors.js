@@ -248,6 +248,7 @@ function getIconForCategory(cat) {
   if (c.includes('papel') || c.includes('carton') || c.includes('cartón')) return '📄';
   if (c.includes('botella') || c.includes('vidrio')) return '🥤';
   if (c.includes('organico') || c.includes('orgánico')) return '🌿';
+  if (c.includes('aceit') || c.includes('grasa') || c.includes('oil')) return '🛢️';
   if (c.includes('plastico') || c.includes('plástico')) return '♻️';
   if (c.includes('detergente') || c.includes('limpieza')) return '🧽';
   // Categorias retiradas (agua, frutas, sal, afilado, gas, carbon): sin icono

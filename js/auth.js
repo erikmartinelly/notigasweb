@@ -923,7 +923,7 @@ async function iniciarSesionRepartidor() {
   const materiales = leerMaterialesRecolector();
   const categoria = serializarMaterialesRecolector(materiales);
 
-  if (!nombreNegocio || !whatsapp || !plate || !productosRaw) {
+  if (!nombreNegocio || !whatsapp || !plate) {
     if (typeof showToast === 'function') showToast('⚠️ Campos Requeridos', 'Por favor completa todos los campos requeridos.', 'warning', 2000);
     return;
   }

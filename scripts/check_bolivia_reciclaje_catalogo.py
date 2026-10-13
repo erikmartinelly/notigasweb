@@ -22,22 +22,26 @@ OK = 0
 # Orden canonico acordado. El indice importa: es el orden de la UI.
 #
 # NOTIGAS es un servicio de reciclaje. Del grupo de compras solo sobreviven los
-# detergentes: sal, afilado y agua se retiraron como categorias de pedido, y
-# "otros" ya no es un pedido sino una peticion que solo alimenta estadisticas
-# (public.solicitudes_otros), por eso no aparece en el catalogo.
+# detergentes: sal, afilado y agua se retiraron como categorias de pedido. Se
+# sumo "aceite" (aceite de cocina usado) como material de recogida, y "otros"
+# dejo de ser una peticion de estadistica para pasar a ser un pedido real de
+# recogida: el vecino describe que material tiene y se publica como pedido.
+# public.solicitudes_otros se conserva solo como historico.
 CATALOGO_ESPERADO = [
     ("plastico", "recogida"),
     ("papel", "recogida"),
     ("chatarra", "recogida"),
     ("botellas", "recogida"),
     ("organico", "recogida"),
+    ("aceite", "recogida"),
     ("detergentes", "compra"),
 ]
 
 # Categorias de compra o retiradas. Deben seguir ausentes del cliente y del
 # catalogo activo del servidor, aunque el historico las conserve para que los
-# pedidos ya publicados sigan siendo validos.
-COMPRAS_RETIRADAS = ("sal", "afilado", "agua", "otros", "frutas")
+# pedidos ya publicados sigan siendo validos. "otros" ya NO esta aqui: es una
+# categoria viva de recogida.
+COMPRAS_RETIRADAS = ("sal", "afilado", "agua", "frutas")
 
 # Palabras que no deben aparecer como categoria viva en superficies de producto.
 LEGADO_PROHIBIDO = ("garrafa", "garrafas_agotadas", "gas glp", "carbon", "carbón", "leña", "lena")
@@ -143,7 +147,7 @@ def main() -> int:
 
     for cod, tipo in CATALOGO_ESPERADO:
         ok(cod in bo, f"el catalogo declara '{cod}'")
-    ok(len([c for c, t in cat if t == "recogida"]) == 5, "cinco categorias son recogida")
+    ok(len([c for c, t in cat if t == "recogida"]) == 6, "seis categorias son recogida")
     ok(len([c for c, t in cat if t == "compra"]) == 1, "solo los detergentes siguen siendo compra")
 
     # Las compras retiradas no pueden reaparecer como categoria de pedido.
@@ -262,22 +266,24 @@ def main() -> int:
        f"index.html usa la misma versión de assets que el service worker "
        f"(sw={version_sw}, html={versiones})")
 
-    # ------------------------------------------------- "otros" es estadistica
-    # "otros" se mostraba como categoria de pedido. Ahora es una peticion libre:
-    # el vecino escribe que necesita y se guarda en solicitudes_otros, sin
-    # generar pedido. Debe seguir siendo una opcion del formulario, pero jamas
-    # una categoria del catalogo.
+    # ------------------------------- "otros" ahora es un pedido de recogida
+    # "otros" era una peticion libre que se guardaba en solicitudes_otros sin
+    # generar pedido. Ahora el vecino describe que material tiene y se publica
+    # como un pedido real de recogida en el mapa. La tabla y su panel siguen
+    # existiendo solo como historico, pero el cliente ya no escribe en ella.
     sel_otros = re.search(r'<select id="selectCategoria".*?</select>', idx, re.S)
     cuerpo_sel = sel_otros.group(0) if sel_otros else ""
     ok(bool(cuerpo_sel), "existe el select de categoría del formulario")
     ok('value="otros"' in cuerpo_sel, "el formulario ofrece la opción 'otros'")
     ok('id="groupOrderOtros"' in idx, "hay campo para describir la petición")
     ok('id="inputOrderOtrosDetalle"' in idx, "el campo de la petición tiene input")
-    ok("solicitudes_otros" in ordj,
-       "la petición se guarda en solicitudes_otros y no en pedidos")
-    ok(re.search(r"categoria\s*===\s*'otros'[\s\S]{0,4000}?solicitudes_otros", ordj) is not None,
-       "el envío de 'otros' se desvía a solicitudes_otros antes de crear el pedido")
-    ok("solicitudes_otros" in sql, "la tabla solicitudes_otros tiene migración")
+    ok("solicitudes_otros" not in ordj,
+       "orders.js ya no escribe en solicitudes_otros (otros es pedido)")
+    ok(re.search(r"from\(\s*'solicitudes_otros'\s*\)", ordj) is None,
+       "orders.js no inserta en solicitudes_otros")
+    ok(re.search(r"categoria\s*===\s*'otros'", ordj) is not None,
+       "orders.js trata 'otros' como categoría de pedido")
+    ok("solicitudes_otros" in sql, "la tabla solicitudes_otros sigue en migraciones (histórico)")
     ok(re.search(r"revoke all on public\.solicitudes_otros from anon, authenticated", sql) is not None,
        "el texto libre no se puede leer desde el cliente")
     ok(re.search(r"revoke all on public\.solicitudes_otros_stats from anon, authenticated", sql) is not None,

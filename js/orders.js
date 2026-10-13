@@ -1069,6 +1069,7 @@ function aplicarMaterialesEnPedidoUsuario(categoria) {
     cb.checked = marcados.has((cb.value || '').trim().toLowerCase());
   });
   sincronizarMaterialesUsuarioEnSelect();
+  if (typeof sincronizarGrupoOtros === 'function') sincronizarGrupoOtros();
 }
 
 function sincronizarMaterialesUsuarioEnSelect() {
@@ -1311,7 +1312,8 @@ function sincronizarGrupoOtros(sel) {
   const select = sel || document.getElementById('selectCategoria');
   const groupOtros = document.getElementById('groupOrderOtros');
   if (!groupOtros) return;
-  const esOtros = !!select && select.value === 'otros';
+  const checkOtros = document.querySelector('input[name="userMaterial"][value="otros"]');
+  const esOtros = (!!select && select.value === 'otros') || (!!checkOtros && checkOtros.checked);
   groupOtros.style.display = esOtros ? 'block' : 'none';
   if (!esOtros) {
     const input = document.getElementById('inputOrderOtrosDetalle');
@@ -1336,7 +1338,8 @@ function confirmarPedido() {
 
   if (esRecogida) {
     const matUsuario = (typeof leerMaterialesUsuario === 'function') ? leerMaterialesUsuario() : [];
-    if (selectCategoria && selectCategoria.value === 'otros') {
+    const usaOtros = (selectCategoria && selectCategoria.value === 'otros') || matUsuario.includes('otros');
+    if (usaOtros) {
       categoria = 'otros';
     } else if (matUsuario.length > 0) {
       categoria = serializarMaterialesUsuario(matUsuario);
@@ -1355,74 +1358,17 @@ function confirmarPedido() {
   const primerCodigo = categoria.split(',')[0].trim();
   const boCat = (window.NOTIGAS_BO && typeof window.NOTIGAS_BO.categoriaPorCodigo === 'function')
     ? window.NOTIGAS_BO.categoriaPorCodigo(primerCodigo) : null;
-  const tipoSolicitud = boCat ? boCat.tipo_solicitud : (tipoSolicitudActual || 'compra');
+  const tipoSolicitud = (categoria === 'otros') ? 'recogida' : (boCat ? boCat.tipo_solicitud : (tipoSolicitudActual || 'compra'));
   const cantidad = inputCantidad ? inputCantidad.value.trim() : '';
   const calle = inputCalle ? inputCalle.value.trim() : '';
   const telefono = inputTel ? inputTel.value.trim() : '';
   const descripcion = (categoria === 'otros' && inputOtros ? inputOtros.value.trim() : (inputDesc ? inputDesc.value.trim() : ''));
 
-  /* "Otra solicitud" no es una categoria de pedido: no hay recolector que la
-     atienda todavia. Se registra como peticion para leer la statistica de que
-     pide la gente, asi que sale del flujo de pedidos y no exige GPS, cantidad
-     ni direccion. */
-  if (categoria === 'otros') {
-    if (descripcion.length < 3) {
-      showToast('💬 Cuéntanos qué necesitas', 'Escribe al menos 3 caracteres para que anotemos tu petición.', 'warning', 4000);
-      if (inputOtros) inputOtros.focus();
-      return;
-    }
-
-    if (!window.supabaseClient) {
-      showToast('Error', 'No hay conexión con el servidor.', 'error', 3000);
-      return;
-    }
-
-    showLoadingOverlay('Registrando tu petición...');
-
-    const ciudadActual = (typeof AppState !== 'undefined' && AppState.get('city')) ? AppState.get('city') : (window.selectedCity || 'cochabamba');
-
-    getAuthenticatedUserId().then(async (userId) => {
-if (!userId) {
-          hideLoadingOverlay();
-          if (typeof window.abrirModalRegistroPedido === 'function') {
-            window.abrirModalRegistroPedido();
-          } else {
-            showToast('Error', 'Debes estar autenticado para enviar una petición.', 'error', 3000);
-          }
-          return;
-        }
-
-      /* Sin .select(): la tabla no concede lectura, asi que el servidor solo
-         confirma que la peticion entro. */
-      const { error } = await window.supabaseClient
-        .from('solicitudes_otros')
-        .insert([{
-          user_id: userId,
-          ciudad: ciudadActual,
-          detalle: descripcion
-        }]);
-
-      hideLoadingOverlay();
-
-      if (error) {
-        console.error('Error registrando la solicitud:', error);
-        showToast('Error', error.message || 'No se pudo registrar tu petición.', 'error', 4000);
-        return;
-      }
-
-      if (inputOtros) inputOtros.value = '';
-      closePedidoModal();
-      showToast(
-        '💬 ¡Petición anotada!',
-        'Gracias por contarnos. La guardamos para ver qué materiales pide la comunidad y sumarlos al catálogo.',
-        'success', 5000
-      );
-    }).catch((err) => {
-      hideLoadingOverlay();
-      console.error('Error inesperado en la solicitud:', err);
-      showToast('Error', 'No se pudo registrar tu petición.', 'error', 3000);
-    });
-
+  /* "otros" es un pedido real de recogida: el vecino describe que material
+     tiene y se publica como cualquier otra recogida (con GPS y cantidad). */
+  if (categoria === 'otros' && descripcion.length < 3) {
+    showToast('💬 Cuéntanos qué material tienes', 'Escribe al menos 3 caracteres para publicar tu recogida.', 'warning', 4000);
+    if (inputOtros) inputOtros.focus();
     return;
   }
 
@@ -1504,7 +1450,9 @@ if (!userId) {
           return;
         }
 
-      const catName = boCat ? boCat.chip : (orderData.categoria || 'Plastico');
+      const catName = (orderData.categoria === 'otros')
+        ? 'Otros (a especificar)'
+        : (boCat ? boCat.chip : (orderData.categoria || 'Plastico'));
       const orderTitle = tipoSolicitud === 'recogida' ? `Recogida de ${catName}` : `Pedido de ${catName}`;
 
       const { data, error } = await window.supabaseClient

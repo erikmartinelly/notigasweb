@@ -492,13 +492,13 @@ try {
   console.log('  ✅ ORDER_STATES verificado (5 estados canónicos estrictos)');
 
   // ---------------------------------------------------------------------------
-  // "Otra solicitud": no es un pedido, es una petición para estadísticas.
+  // "otros": ahora es un pedido real de recogida, no una petición de estadística.
   //
   // Se prueba el camino completo con el cliente simulado: la opción debe
   // sobrevivir a setTipoSolicitud (que repuebla el select), el campo libre debe
-  // aparecer solo en recogida, y el envío debe acabar en solicitudes_otros con
-  // solo ciudad + detalle, sin tocar pedidos ni exigir GPS/cantidad.
-  console.log('\n💬 Verificando el flujo de "otra solicitud"...');
+  // aparecer solo en recogida, y el envío debe acabar en pedidos con categoría
+  // 'otros' (exigiendo cantidad y GPS), sin tocar solicitudes_otros.
+  console.log('\n💬 Verificando que "otros" publica un pedido real...');
 
   const win = context.window;
   const doc = win.document;
@@ -568,9 +568,10 @@ try {
   console.log(`  ${campoVisible ? '✅' : '❌'} el campo de texto libre aparece al elegir "otros"`);
   if (!campoVisible) throw new Error('El campo de "otra solicitud" no se mostró.');
 
-  // Envío: sin cantidad, sin calle, sin descripción. Solo el texto libre.
+  // Envío válido: material descrito + cantidad. El GPS ya quedó fijado por
+  // applyGpsPosition() más arriba, así que ahora sí exige cantidad y ubicación.
   inputOtros.value = '   Tapas de plastico   ';
-  inputCantidad.value = '';
+  inputCantidad.value = '2 bolsas';
   inputCalle.value = '';
   inputDesc.value = '';
   consultasMock.length = 0;
@@ -579,37 +580,39 @@ try {
 
   const pedido = consultasMock.find((c) => c.tabla === 'pedidos');
   const peticion = consultasMock.find((c) => c.tabla === 'solicitudes_otros');
-  console.log(`  ${!pedido ? '✅' : '❌'} no se crea ningún pedido`);
-  if (pedido) throw new Error('"otros" llegó a crear un pedido.');
+  console.log(`  ${pedido ? '✅' : '❌'} "otros" crea un pedido`);
+  if (!pedido) throw new Error('"otros" no llegó a crear un pedido.');
 
-  console.log(`  ${peticion ? '✅' : '❌'} la petición se guarda en solicitudes_otros`);
-  if (!peticion) throw new Error('La petición no llegó a solicitudes_otros.');
+  console.log(`  ${!peticion ? '✅' : '❌'} "otros" ya no escribe en solicitudes_otros`);
+  if (peticion) throw new Error('"otros" todavía escribe en solicitudes_otros.');
 
-  const fila = peticion.payload[0];
-  const campos = Object.keys(fila).sort().join(',');
-  console.log(`  ${campos === 'ciudad,detalle,user_id' ? '✅' : '❌'} solo guarda user_id, ciudad y detalle (${campos})`);
-  if (campos !== 'ciudad,detalle,user_id') {
-    throw new Error(`La petición guarda campos inesperados: ${campos}`);
-  }
-  console.log(`  ${fila.detalle === 'Tapas de plastico' ? '✅' : '❌'} el texto se envía recortado (${JSON.stringify(fila.detalle)})`);
-  if (fila.detalle !== 'Tapas de plastico') throw new Error('El detalle no se normalizó antes de enviarse.');
-  console.log(`  ${fila.user_id === 'test-user-id' ? '✅' : '❌'} la petición queda a nombre de quien la envía`);
+  const fila = pedido.payload[0];
+  console.log(`  ${fila.categoria === 'otros' ? '✅' : '❌'} el pedido queda con categoría 'otros' (${fila.categoria})`);
+  if (fila.categoria !== 'otros') throw new Error(`El pedido no quedó como 'otros': ${fila.categoria}`);
+  console.log(`  ${fila.descripcion === 'Tapas de plastico' ? '✅' : '❌'} el texto se envía recortado (${JSON.stringify(fila.descripcion)})`);
+  if (fila.descripcion !== 'Tapas de plastico') throw new Error('La descripción no se normalizó antes de enviarse.');
+  console.log(`  ${fila.titulo === 'Recogida de Otros (a especificar)' ? '✅' : '❌'} el título describe la recogida (${JSON.stringify(fila.titulo)})`);
+  if (fila.titulo !== 'Recogida de Otros (a especificar)') throw new Error(`Título inesperado: ${fila.titulo}`);
+  console.log(`  ${fila.cantidad === '2 bolsas' ? '✅' : '❌'} la cantidad se conserva (${JSON.stringify(fila.cantidad)})`);
+  if (fila.cantidad !== '2 bolsas') throw new Error('La cantidad no llegó al pedido.');
+  console.log(`  ${fila.user_id === 'test-user-id' ? '✅' : '❌'} el pedido queda a nombre de quien lo envía`);
   if (fila.user_id !== 'test-user-id') throw new Error('user_id no corresponde al usuario autenticado.');
 
   // Menos de 3 caracteres no debe tocar la base.
+  inputCantidad.value = '2 bolsas';
   inputOtros.value = 'ab';
   consultasMock.length = 0;
   await win.confirmarPedido();
   await new Promise((r) => setTimeout(r, 60));
   const tocoLaBase = consultasMock.length > 0;
   console.log(`  ${!tocoLaBase ? '✅' : '❌'} un texto demasiado corto no llega al servidor`);
-  if (tocoLaBase) throw new Error('Una petición inválida llegó a la base de datos.');
+  if (tocoLaBase) throw new Error('Una recogida inválida llegó a la base de datos.');
 
   restaurar.forEach((fn) => fn());
   doc.getElementById = getElementByIdReal;
   if (queryAllReal) doc.querySelectorAll = queryAllReal;
   if (queryReal) doc.querySelector = queryReal;
-  console.log('  ✅ Flujo de "otra solicitud" verificado (estadística, no pedido)');
+  console.log('  ✅ "otros" verificado (pedido real de recogida)');
 
   console.log('\n--------------------------------------------------');
   console.log(`✨ ÉXITO: Prueba de runtime completada sobre los ${allModules.length} módulos sin excepciones.\n`);

@@ -867,4 +867,7 @@ document.addEventListener('change', (e) => {
   if (t && t.name === 'userMaterial' && typeof window.sincronizarMaterialesUsuarioEnSelect === 'function') {
     window.sincronizarMaterialesUsuarioEnSelect();
   }
+  if (t && (t.name === 'userMaterial' || t.name === 'submenuMaterial') && typeof window.sincronizarGrupoOtros === 'function') {
+    window.sincronizarGrupoOtros();
+  }
 }, true);

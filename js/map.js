@@ -317,6 +317,7 @@ window.normalizeCategoryCode = function(cat) {
   if (c.includes('chatarra') || c.includes('metal')) return 'chatarra';
   if (c.includes('papel') || c.includes('carton') || c.includes('cartón')) return 'papel';
   if (c.includes('organico') || c.includes('orgánico')) return 'organico';
+  if (c.includes('aceit') || c.includes('grasa') || c.includes('oil')) return 'aceite';
   if (c.includes('botell') || c.includes('vidrio')) return 'botellas';
   if (c.includes('plastico') || c.includes('plástic') || c.includes('plast')) return 'plastico';
   if (c.includes('deterg') || c.includes('limpieza')) return 'detergentes';
@@ -455,6 +456,7 @@ const ICONOS_FONTAWESOME_POR_CATEGORIA = {
   chatarra:    'fa-gears',
   botellas:    'fa-bottle-dispenser',
   organico:    'fa-seedling',
+  aceite:      'fa-oil-can',
   detergentes: 'fa-pump-soap',
   otros:       'fa-box'
 };
