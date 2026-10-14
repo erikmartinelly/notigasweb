@@ -462,14 +462,14 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
           color: uData.color_camion
         });
       } else {
-        favEl.href = "favicon.svg?v=143";
+        favEl.href = "icons/oil-bottle.svg?v=152";
       }
       document.title = "🚛 DISTRIBUIDOR OFICIAL - NOTIGAS en Vivo";
     } else {
       if (typeof window.restaurarFaviconDefault === 'function') {
         window.restaurarFaviconDefault();
       } else {
-        favEl.href = "icons/camion_reciclaje.svg?v=143";
+        favEl.href = "icons/oil-bottle.svg?v=152";
       }
       document.title = "N= RECOJO RECICLABLES";
     }
