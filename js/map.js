@@ -479,7 +479,7 @@ function obtenerIconoCategoriaMapa(catNombre, tipoSolicitud) {
   }
 
   const esRecogida = (tipoSolicitud === 'recogida')
-    || (!tipoSolicitud && cat ? cat.tipo_solicitud === 'recogida' : false);
+    || (!tipoSolicitud && (c === 'otros' || (cat && cat.tipo_solicitud === 'recogida')));
 
   const badgeColor = cat ? cat.color : '#94A3B8';
   const faIcon = ICONOS_FONTAWESOME_POR_CATEGORIA[cat ? cat.codigo : ''] || 'fa-box';
@@ -2048,8 +2048,11 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
       const normCity = String(activeCity || '').toLowerCase().trim();
       const tenMinsAgo = new Date(Date.now() - 10 * 60000).toISOString();
 
-      // Proyección explícita de columnas necesarias incluyendo visto y subestado
-      const ORDER_COLUMNS = 'id, user_id, categoria, tipo_solicitud, titulo, cantidad, direccion, telefono, estado, driver_id, ciudad, latitude, longitude, visto, subestado, created_at, updated_at';
+      // La vista pública no expone tipo_solicitud. Pedir esa columna aborta
+      // toda la consulta (42703); los pines públicos infieren el tipo del catálogo.
+      // La tabla de pedidos asignados sí incluye el tipo guardado por el servidor.
+      const PUBLIC_ORDER_COLUMNS = 'id, user_id, categoria, titulo, cantidad, direccion, telefono, estado, driver_id, ciudad, latitude, longitude, visto, subestado, created_at, updated_at';
+      const ORDER_COLUMNS = `${PUBLIC_ORDER_COLUMNS}, tipo_solicitud`;
       const TRUCK_COLUMNS = 'id, user_id, distribuidor_nombre, categoria, titulo, ciudad, latitude, longitude, garrafas_agotadas, last_active, telefono, placa, productos, color_camion, es_premium, route_created_at, tipo_plan';
 
       // Obtener Bounding Box del viewport visible con margen de 25% para pre-carga suave
@@ -2102,7 +2105,7 @@ async function cargarPedidosVecinalesEnVivo(force = false) {
       if (!isDriverUser) {
         pubQuery = window.supabaseClient
           .from('pedidos_publicos')
-          .select(ORDER_COLUMNS)
+          .select(PUBLIC_ORDER_COLUMNS)
           .gte('created_at', activeWindow)
           .in('estado', ['pendiente', 'visto'])
           .limit(50);

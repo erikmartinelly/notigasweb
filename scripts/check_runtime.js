@@ -141,10 +141,11 @@ const mockElement = {
 };
 
 const consultasMock = [];
+const selectsMock = [];
 
 const createBuilder = (table) => {
     const builder = {
-      select: () => builder,
+      select: (columns) => { selectsMock.push({ table, columns }); return builder; },
       insert: (payload) => { consultasMock.push({ tabla: table, payload }); return builder; },
       upsert: () => builder,
       update: () => builder,
@@ -402,6 +403,31 @@ try {
   } else {
     throw new Error('initNotigasMap no está expuesto en el contexto global.');
   }
+
+  // La simulación anterior aceptaba cualquier select, incluso columnas que no
+  // existen en pedidos_publicos. Comprobar la consulta real generada por map.js.
+  await context.cargarPedidosVecinalesEnVivo(true);
+  const publicMapReads = selectsMock.filter((query) => query.table === 'pedidos_publicos');
+  if (!publicMapReads.length) throw new Error('El mapa no consultó pedidos_publicos.');
+  const publicOrderColumns = new Set([
+    'id', 'user_id', 'categoria', 'titulo', 'descripcion', 'cantidad', 'direccion',
+    'telefono', 'estado', 'driver_id', 'ciudad', 'barrio_otb', 'latitude',
+    'longitude', 'visto', 'created_at', 'updated_at', 'subestado'
+  ]);
+  for (const query of publicMapReads) {
+    for (const column of query.columns.split(',').map((value) => value.trim())) {
+      if (!publicOrderColumns.has(column)) {
+        throw new Error(`El mapa consulta una columna inexistente en pedidos_publicos: ${column}`);
+      }
+    }
+  }
+  for (const [category, label] of [
+    ['plastico', 'RECOGER'], ['aceite', 'RECOGER'], ['otros', 'RECOGER'], ['detergentes', 'PEDIDO']
+  ]) {
+    const icon = context.obtenerIconoCategoriaMapa(category);
+    if (!icon.html.includes(label)) throw new Error(`Tipo incorrecto en pin público de ${category}`);
+  }
+  console.log('  ✅ Consultas del mapa y tipos de pines compatibles con la vista pública');
 
   // 4. Simular eventos de Leaflet en caliente
   console.log('\n⚡ Disparando eventos de Leaflet (zoom, zoomend, moveend, click)...');

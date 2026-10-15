@@ -107,7 +107,7 @@ jobs:
         run: node scripts/check_syntax.js
 
       - name: Verify Runtime & Map Initialization
-        run: node scripts/check_runtime.js
+        run: pnpm test:map
 
       - name: Verify Cross-Role View Contract
         run: node scripts/test_rls_security.js
@@ -140,6 +140,7 @@ jobs:
         run: python3 scripts/check_estructura_html.py
 
       - name: Apply Supabase migrations
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}

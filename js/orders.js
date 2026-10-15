@@ -112,7 +112,7 @@ async function renderDriverOrdersList() {
   // 1. Pedidos disponibles desde la vista pública (filtrado estricto por ciudad y categoría del chofer)
   let pubQuery = window.supabaseClient
     .from('pedidos_publicos')
-    .select('id, user_id, categoria, tipo_solicitud, titulo, cantidad, direccion, telefono, descripcion, barrio_otb, latitude, longitude, created_at, estado, driver_id, ciudad, subestado')
+    .select('id, user_id, categoria, titulo, cantidad, direccion, telefono, descripcion, barrio_otb, latitude, longitude, created_at, estado, driver_id, ciudad, subestado')
     .in('estado', ['pendiente', 'visto'])
     .is('driver_id', null)
     .gte('created_at', activeWindow)
