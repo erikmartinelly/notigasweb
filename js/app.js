@@ -471,7 +471,7 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
       } else {
         favEl.href = "icons/oil-bottle.svg?v=152";
       }
-      document.title = "N= RECOJO RECICLABLES";
+      document.title = "♻️ RECOJO RECICLABLES";
     }
     return;
   }
