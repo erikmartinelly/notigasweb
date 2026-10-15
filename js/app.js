@@ -452,7 +452,8 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
   const isDriverMode = (typeof currentAppMode !== 'undefined' && currentAppMode === 'driver') || 
                        (typeof AppState !== 'undefined' && AppState.get('appMode') === 'driver');
 
-  if (!categoria && !estado) {
+  const estadoNorm = String(estado || '').toLowerCase();
+  if (!categoria && (!estado || estadoNorm === 'pendiente' || estadoNorm === 'null')) {
     if (isDriverMode) {
       if (typeof window.actualizarFaviconCamion === 'function') {
         const uData = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
@@ -462,14 +463,14 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
           color: uData.color_camion
         });
       } else {
-        favEl.href = "icons/oil-bottle.svg?v=152";
+        favEl.href = "icons/oil-bottle.svg?v=154";
       }
       document.title = "🚛 DISTRIBUIDOR OFICIAL - NOTIGAS en Vivo";
     } else {
       if (typeof window.restaurarFaviconDefault === 'function') {
         window.restaurarFaviconDefault();
       } else {
-        favEl.href = "icons/oil-bottle.svg?v=152";
+        favEl.href = "icons/oil-bottle.svg?v=154";
       }
       document.title = "♻️ RECOJO RECICLABLES";
     }
