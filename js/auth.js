@@ -802,7 +802,7 @@ async function guardarRegistroUnico() {
     else if (categoria === 'detergentes') productos = 'Recarga de Detergentes';
     else if (categoria === 'chatarra') productos = 'Compra de Chatarra y Metales';
     else if (categoria === 'papel') productos = 'Papel, Cartón y Reciclaje';
-    else if (categoria === 'botellas') productos = 'Botellas Plástico y Vidrio';
+    else if (categoria === 'vidrio') productos = 'Recolección de Vidrio';
     else if (categoria === 'organico') productos = 'Orgánico Seleccionado';
     else productos = 'Varios';
 

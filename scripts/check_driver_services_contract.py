@@ -90,7 +90,7 @@ revisar("index.html declara checkboxes de materiales", len(cbs) >= 5, "encontrad
 revisar("el material 'plastico' esta disponible", "plastico" in cbs)
 revisar("el material 'papel' esta disponible", "papel" in cbs)
 revisar("el material 'chatarra' esta disponible", "chatarra" in cbs)
-revisar("el material 'botellas' esta disponible", "botellas" in cbs)
+revisar("el material 'vidrio' esta disponible", "vidrio" in cbs)
 revisar("el material 'organico' esta disponible", "organico" in cbs)
 revisar("el material 'aceite' esta disponible", "aceite" in cbs)
 revisar(

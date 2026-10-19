@@ -246,7 +246,8 @@ function getIconForCategory(cat) {
   }
   if (c.includes('chatarra') || c.includes('metal')) return '⚙️';
   if (c.includes('papel') || c.includes('carton') || c.includes('cartón')) return '📄';
-  if (c.includes('botella') || c.includes('vidrio')) return '🥤';
+  if (c.includes('vidrio')) return '🍾';
+  if (c.includes('botella')) return '♻️';
   if (c.includes('organico') || c.includes('orgánico')) return '🌿';
   if (c.includes('aceit') || c.includes('grasa') || c.includes('oil')) return '🛢️';
   if (c.includes('plastico') || c.includes('plástico')) return '♻️';

@@ -5,8 +5,8 @@
    - Teléfono: +591 (8 dígitos, prefijo móvil 6 u 7)
    - Documento: CI (cédula de identidad) o NIT
    - Pagos: solo QR local (Simple / Banesco QR). Sin comisión por cobro.
-   - Categorías: primero los recolectores (chatarra, papel, botellas,
-     plástico y orgánico); al final detergentes.
+   - Categorías: primero los recolectores (chatarra, papel, vidrio,
+      plástico y orgánico); al final detergentes.
    ========================================================================== */
 (function () {
   'use strict';
@@ -49,7 +49,7 @@
     { codigo: 'plastico',     etiqueta: '♻️  Plástico',                  chip: 'Plástico',   grupo: 'recolector',  icono: '♻️',  color: '#22C55E', tipo_solicitud: 'recogida' },
     { codigo: 'papel',        etiqueta: '📄 Papel / Cartón',            chip: 'Papel',      grupo: 'recolector',  icono: '📄',  color: '#F59E0B', tipo_solicitud: 'recogida' },
     { codigo: 'chatarra',     etiqueta: '⚙️  Chatarra',                  chip: 'Chatarra',   grupo: 'recolector',  icono: '⚙️',  color: '#94A3B8', tipo_solicitud: 'recogida' },
-    { codigo: 'botellas',     etiqueta: '🥤 Botellas Plástico / Vidrio', chip: 'Botellas',  grupo: 'recolector',  icono: '🥤',  color: '#38BDF8', tipo_solicitud: 'recogida' },
+    { codigo: 'vidrio',       etiqueta: '🍾 Vidrio',                      chip: 'Vidrio',     grupo: 'recolector',  icono: '🍾',  color: '#38BDF8', tipo_solicitud: 'recogida' },
     { codigo: 'organico',     etiqueta: '🌿 Orgánico Seleccionado',      chip: 'Orgánico',   grupo: 'recolector',  icono: '🌿',  color: '#84CC16', tipo_solicitud: 'recogida' },
     { codigo: 'aceite',       etiqueta: '🛢️ Aceite de cocina usado',     chip: 'Aceite usado', grupo: 'recolector', icono: '🛢️',  color: '#A16207', tipo_solicitud: 'recogida' },
     { codigo: 'detergentes',  etiqueta: '🧴 Recarga de Detergentes',        chip: 'Recarga Deterg.', grupo: 'compra',     icono: '🧴',  color: '#0EA5E9', tipo_solicitud: 'compra' }

@@ -318,7 +318,8 @@ window.normalizeCategoryCode = function(cat) {
   if (c.includes('papel') || c.includes('carton') || c.includes('cartón')) return 'papel';
   if (c.includes('organico') || c.includes('orgánico')) return 'organico';
   if (c.includes('aceit') || c.includes('grasa') || c.includes('oil')) return 'aceite';
-  if (c.includes('botell') || c.includes('vidrio')) return 'botellas';
+  if (c.includes('vidrio') || c.includes('glass')) return 'vidrio';
+  if (c.includes('botell')) return 'plastico';
   if (c.includes('plastico') || c.includes('plástic') || c.includes('plast')) return 'plastico';
   if (c.includes('deterg') || c.includes('limpieza')) return 'detergentes';
 
@@ -454,7 +455,7 @@ const ICONOS_FONTAWESOME_POR_CATEGORIA = {
   plastico:    'fa-recycle',
   papel:       'fa-newspaper',
   chatarra:    'fa-gears',
-  botellas:    'fa-bottle-dispenser',
+  vidrio:      'fa-wine-bottle',
   organico:    'fa-seedling',
   aceite:      'fa-oil-can',
   detergentes: 'fa-pump-soap',
@@ -470,7 +471,8 @@ function obtenerIconoCategoriaMapa(catNombre, tipoSolicitud) {
   let cat = (bo && bo.CATEGORIAS_POR_CODIGO) ? bo.CATEGORIAS_POR_CODIGO[c] : null;
 
   // Sin coincidencia exacta: se busca por nombre visible. Antes el orden de
-  // los if hacía que "Botellas Plástico" cayese en la rama de "plástico".
+  // los if hacía que "Botellas Plástico" cayese en la rama de "plástico"; ahora
+  // vidrio y plástico resuelven por su propio código.
   if (!cat) {
     for (const item of (bo && bo.CATEGORIAS ? bo.CATEGORIAS : [])) {
       const etiqueta = item.etiqueta.toLowerCase();
