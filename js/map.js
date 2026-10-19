@@ -490,7 +490,7 @@ function obtenerIconoCategoriaMapa(catNombre, tipoSolicitud) {
   const markerHtml = `
     <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; user-select: none;">
       ${iconContent}
-      <div style="margin-top: 2px; background: #0F172A; color: #ffffff; border: 1.5px solid ${badgeColor}; padding: 2px 7px; border-radius: 12px; font-size: 10px; font-weight: 900; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.5); pointer-events: none; -webkit-font-smoothing: antialiased; text-rendering: geometricPrecision; text-shadow: 0 1px 3px rgba(0,0,0,0.9); transform: translateZ(0);">
+      <div style="margin-top: 2px; background: #0F172A; color: #ffffff; border: 1.5px solid ${badgeColor}; padding: 2px 7px; border-radius: 12px; font-size:16px; font-weight: 900; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.5); pointer-events: none; -webkit-font-smoothing: antialiased; text-rendering: geometricPrecision; text-shadow: 0 1px 3px rgba(0,0,0,0.9); transform: translateZ(0);">
         ${badgeLabel}
       </div>
     </div>
@@ -766,7 +766,7 @@ function renderOrderRadarsOnMap(orders) {
       zIndexOffset: 12000 + (units * 10)
     }).addTo(map);
 
-    marker.bindTooltip(`<strong>🔥 ${units} un. (${count} pedidos)</strong><br><span style="font-size:10px;">${safeBarrio} · ${safeCat}</span>`, {
+    marker.bindTooltip(`<strong>🔥 ${units} un. (${count} pedidos)</strong><br><span style="font-size:16px;">${safeBarrio} · ${safeCat}</span>`, {
       direction: 'top',
       offset: [0, -20],
       className: 'notigas-cluster-tooltip'
@@ -937,17 +937,17 @@ function renderReportedTrucksBuffer() {
     
     const popupHtml = esEsperame ? `
       <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
-        <strong style="color:#EF4444; font-size:13px;"><i class="fa-solid fa-hand"></i> ¡VECINO SOLICITA ESPERA!</strong><br>
-        <span style="font-size:11px; color:#CBD5E1;">🛑 Alerta "ESPÉRAME" emitida por: <strong>${typeof escapeHtmlStr === 'function' ? escapeHtmlStr(t.reporter || 'Un vecino') : 'Un vecino'}</strong></span><br>
-        <span style="font-size:10px; color:#F87171; font-weight:700;">⏱️ ${timeText}</span><br>
-        <button style="margin-top:6px; background:linear-gradient(135deg, #FF6D00, #E65100); color:white; border:none; padding:5px 10px; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer;" data-action="abrirSubmenuPedidos">🛒 Publicar Material / Pedir Aquí</button>
+        <strong style="color:#EF4444; font-size:16px;"><i class="fa-solid fa-hand"></i> ¡VECINO SOLICITA ESPERA!</strong><br>
+        <span style="font-size:16px; color:#CBD5E1;">🛑 Alerta "ESPÉRAME" emitida por: <strong>${typeof escapeHtmlStr === 'function' ? escapeHtmlStr(t.reporter || 'Un vecino') : 'Un vecino'}</strong></span><br>
+        <span style="font-size:16px; color:#F87171; font-weight:700;">⏱️ ${timeText}</span><br>
+        <button style="margin-top:6px; background:linear-gradient(135deg, #FF6D00, #E65100); color:white; border:none; padding:5px 10px; border-radius:6px; font-size:16px; font-weight:700; cursor:pointer;" data-action="abrirSubmenuPedidos">🛒 Publicar Material / Pedir Aquí</button>
       </div>
     ` : `
       <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
-        <strong style="color:#FF6D00; font-size:13px;"><i class="fa-solid fa-truck-fast"></i> Camión Oído / Visto en la Zona</strong><br>
-        <span style="font-size:11px; color:#CBD5E1;">📢 Reportado por: <strong>${typeof escapeHtmlStr === 'function' ? escapeHtmlStr(t.reporter || 'Un vecino') : 'Un vecino'}</strong></span><br>
-        <span style="font-size:10px; color:#00E676; font-weight:700;">⏱️ ${timeText}</span><br>
-        <button style="margin-top:6px; background:linear-gradient(135deg, #FF6D00, #E65100); color:white; border:none; padding:5px 10px; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer;" data-action="abrirSubmenuPedidos">🛒 Publicar Material / Pedir Aquí</button>
+        <strong style="color:#FF6D00; font-size:16px;"><i class="fa-solid fa-truck-fast"></i> Camión Oído / Visto en la Zona</strong><br>
+        <span style="font-size:16px; color:#CBD5E1;">📢 Reportado por: <strong>${typeof escapeHtmlStr === 'function' ? escapeHtmlStr(t.reporter || 'Un vecino') : 'Un vecino'}</strong></span><br>
+        <span style="font-size:16px; color:#00E676; font-weight:700;">⏱️ ${timeText}</span><br>
+        <button style="margin-top:6px; background:linear-gradient(135deg, #FF6D00, #E65100); color:white; border:none; padding:5px 10px; border-radius:6px; font-size:16px; font-weight:700; cursor:pointer;" data-action="abrirSubmenuPedidos">🛒 Publicar Material / Pedir Aquí</button>
       </div>
     `;
 
@@ -1020,26 +1020,26 @@ function renderActiveOrdersMap() {
         ? '' // El repartidor gestiona los pedidos desde su panel.
         : `
           <div style="display:flex; gap:6px; margin-top:8px;">
-            <button type="button" style="flex:1; background:linear-gradient(135deg, #10B981, #059669); color:white; border:none; padding:6px 8px; border-radius:6px; font-size:10.5px; font-weight:800; cursor:pointer;" data-action="confirmarRecepcionComprador" title="Confirmar que recibiste tu pedido">
+            <button type="button" style="flex:1; background:linear-gradient(135deg, #10B981, #059669); color:white; border:none; padding:6px 8px; border-radius:6px; font-size:16px; font-weight:800; cursor:pointer;" data-action="confirmarRecepcionComprador" title="Confirmar que recibiste tu pedido">
               <i class="fa-solid fa-circle-check"></i> Ya recibí
             </button>
-            ${order.driver_id && order.estado === 'asignado' ? `<button type="button" style="flex:1; background:#F59E0B; color:#111827; border:none; padding:6px 8px; border-radius:6px; font-size:10.5px; font-weight:800; cursor:pointer;" data-action="reportarIncumplimientoPrecio" title="Reportar un precio distinto al publicado"><i class="fa-solid fa-flag"></i> Queja precio</button>` : ''}
-            <button type="button" style="flex:1; background:#ef4444; color:white; border:none; padding:6px 8px; border-radius:6px; font-size:10.5px; font-weight:800; cursor:pointer;" data-action="cancelarPedidoActivo" title="Cancelar este requerimiento">
+            ${order.driver_id && order.estado === 'asignado' ? `<button type="button" style="flex:1; background:#F59E0B; color:#111827; border:none; padding:6px 8px; border-radius:6px; font-size:16px; font-weight:800; cursor:pointer;" data-action="reportarIncumplimientoPrecio" title="Reportar un precio distinto al publicado"><i class="fa-solid fa-flag"></i> Queja precio</button>` : ''}
+            <button type="button" style="flex:1; background:#ef4444; color:white; border:none; padding:6px 8px; border-radius:6px; font-size:16px; font-weight:800; cursor:pointer;" data-action="cancelarPedidoActivo" title="Cancelar este requerimiento">
               <i class="fa-solid fa-ban"></i> Cancelar
             </button>
           </div>
         `;
 
-      const telInfo = order.telefono ? `<br><span style="font-size:10.5px; color:#00E676; font-weight:800;">📞 Tel: ${typeof escapeHtmlStr === 'function' ? escapeHtmlStr(order.telefono) : order.telefono}</span>` : '';
-      const addrInfo = order.callePrincipal ? `<br><span style="font-size:10.5px; color:#FFB300; font-weight:800;">🏠 ${typeof escapeHtmlStr === 'function' ? escapeHtmlStr(order.callePrincipal) : order.callePrincipal}</span>` : '';
+      const telInfo = order.telefono ? `<br><span style="font-size:16px; color:#00E676; font-weight:800;">📞 Tel: ${typeof escapeHtmlStr === 'function' ? escapeHtmlStr(order.telefono) : order.telefono}</span>` : '';
+      const addrInfo = order.callePrincipal ? `<br><span style="font-size:16px; color:#FFB300; font-weight:800;">🏠 ${typeof escapeHtmlStr === 'function' ? escapeHtmlStr(order.callePrincipal) : order.callePrincipal}</span>` : '';
 
       orderMarker.bindPopup(`
         <div style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
-          <strong style="color:#FF6D00; font-size:13px;">📦 Pedido Activo en Vivo</strong><br>
-          <span style="font-size:11px; color:#CBD5E1; font-weight:700;">${typeof escapeHtmlStr === 'function' ? escapeHtmlStr(order.categoria) : order.categoria} (${typeof escapeHtmlStr === 'function' ? escapeHtmlStr(order.cantidad || '1 un') : (order.cantidad || '1 un')})</span>
+          <strong style="color:#FF6D00; font-size:16px;">📦 Pedido Activo en Vivo</strong><br>
+          <span style="font-size:16px; color:#CBD5E1; font-weight:700;">${typeof escapeHtmlStr === 'function' ? escapeHtmlStr(order.categoria) : order.categoria} (${typeof escapeHtmlStr === 'function' ? escapeHtmlStr(order.cantidad || '1 un') : (order.cantidad || '1 un')})</span>
           ${addrInfo}
           ${telInfo}<br>
-          <span style="font-size:9.5px; color:#94A3B8;">📍 Arrastra este icono para mover tu ubicación</span><br>
+          <span style="font-size:16px; color:#94A3B8;">📍 Arrastra este icono para mover tu ubicación</span><br>
           ${btnAccion}
         </div>
       `);
@@ -1107,19 +1107,19 @@ function actualizarRepartidorEnMapa(data) {
   // El popup no muestra precios: NOTIGAS no intermedia fondos ni precios.
 
   const premiumBannerHtml = isDriverPremium
-    ? `<div style="display:inline-block; background:linear-gradient(135deg, #F59E0B, #D97706); color:#FFFFFF; font-size:10px; font-weight:900; letter-spacing:0.5px; padding:2px 8px; border-radius:10px; margin-bottom:4px; box-shadow:0 2px 6px rgba(245,158,11,0.5);">👑 REPARTIDOR VIP PREMIUM</div><br>`
+    ? `<div style="display:inline-block; background:linear-gradient(135deg, #F59E0B, #D97706); color:#FFFFFF; font-size:16px; font-weight:900; letter-spacing:0.5px; padding:2px 8px; border-radius:10px; margin-bottom:4px; box-shadow:0 2px 6px rgba(245,158,11,0.5);">👑 REPARTIDOR VIP PREMIUM</div><br>`
     : '';
 
   const popupHtml = `
     <div style="font-family:'Roboto',sans-serif; text-align:center; padding:6px; min-width:160px;">
       ${premiumBannerHtml}
       <div style="display:inline-flex; align-items:center; justify-content:center; margin-bottom:4px; gap:6px;">
-        <span style="background:${badgeBg}; color:white; border:1.5px solid ${badgeBorder}; border-radius:50%; width:22px; height:22px; font-size:10px; font-weight:900; display:inline-flex; align-items:center; justify-content:center;">${driverInitials}</span>
-        <strong style="color:#00E676; font-size:12.5px;">🚛 Camión en Vivo</strong>
+        <span style="background:${badgeBg}; color:white; border:1.5px solid ${badgeBorder}; border-radius:50%; width:22px; height:22px; font-size:16px; font-weight:900; display:inline-flex; align-items:center; justify-content:center;">${driverInitials}</span>
+        <strong style="color:#00E676; font-size:16px;">🚛 Camión en Vivo</strong>
       </div><br>
-      <span style="font-size:13px; color:#FFFFFF; font-weight:800;">${safeNombre}</span><br>
-      <span style="font-size:11px; color:#94A3B8;">${safeCategoria}</span><br>
-      ${safeTelefono ? `<a href="tel:${safeTelefono}" style="display:inline-block; margin-top:6px; font-size:11px; color:#1E293B; background:#FFD54F; padding:4px 10px; border-radius:12px; text-decoration:none; font-weight:bold;">📞 Llama: ${safeTelefono}</a>` : ''}
+      <span style="font-size:16px; color:#FFFFFF; font-weight:800;">${safeNombre}</span><br>
+      <span style="font-size:16px; color:#94A3B8;">${safeCategoria}</span><br>
+      ${safeTelefono ? `<a href="tel:${safeTelefono}" style="display:inline-block; margin-top:6px; font-size:16px; color:#1E293B; background:#FFD54F; padding:4px 10px; border-radius:12px; text-decoration:none; font-weight:bold;">📞 Llama: ${safeTelefono}</a>` : ''}
     </div>
   `;
 
@@ -1271,7 +1271,7 @@ function agregarPedidoVecinoEnMapa(order) {
   const nombreStr = isDriverView
     ? `<span class="order-popup-name">👤 <strong>Comprador:</strong> ${escapeFn(order.buyer_name || order.titulo || 'Vecino')}</span><br>`
     : `<span class="order-popup-name">📦 <strong>Pedido Vecinal</strong></span><br>`;
-  const emailStr = (isDriverView && order.buyer_email) ? `<span class="order-popup-email" style="font-size:11px; color:#0288D1;">✉️ <strong>Correo:</strong> ${escapeFn(order.buyer_email)}</span><br>` : '';
+  const emailStr = (isDriverView && order.buyer_email) ? `<span class="order-popup-email" style="font-size:16px; color:#0288D1;">✉️ <strong>Correo:</strong> ${escapeFn(order.buyer_email)}</span><br>` : '';
   const dirStr = isDriverView
     ? `<span class="order-popup-address">📍 <strong>Dirección:</strong> ${escapeFn(order.direccion || 'Ubicación fijada en mapa GPS (opcional)')}</span><br>`
     : `<span class="order-popup-address">📍 <strong>Zona:</strong> ${escapeFn(order.barrio_otb || order.direccion || 'Ubicación fijada en mapa')}</span><br>`;
@@ -1308,7 +1308,7 @@ function agregarPedidoVecinoEnMapa(order) {
           </button>
         </div>
       </div>
-      <button type="button" class="btn-action" style="margin-top:8px; background:#10B981; color:white; border:none; padding:7px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; width:100%; display:inline-flex; align-items:center; justify-content:center; gap:5px;" data-action="confirmarEntregaPedido" data-id="${escapeFn(order.id)}">
+      <button type="button" class="btn-action" style="margin-top:8px; background:#10B981; color:white; border:none; padding:7px 10px; border-radius:6px; font-size:16px; font-weight:700; cursor:pointer; width:100%; display:inline-flex; align-items:center; justify-content:center; gap:5px;" data-action="confirmarEntregaPedido" data-id="${escapeFn(order.id)}">
         <i class="fa-solid fa-circle-check"></i> Entregado
       </button>`;
   } else if (userRole === 'repartidor') {
@@ -1318,14 +1318,14 @@ function agregarPedidoVecinoEnMapa(order) {
       </button>`;
   } else {
     orderAction = `
-      <button type="button" data-action="abrirSubmenuPedidos" class="btn-action" style="margin-top:6px; background:linear-gradient(135deg, #FF6D00, #E65100); color:white; border:none; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; width:100%;">
+      <button type="button" data-action="abrirSubmenuPedidos" class="btn-action" style="margin-top:6px; background:linear-gradient(135deg, #FF6D00, #E65100); color:white; border:none; padding:6px 10px; border-radius:6px; font-size:16px; font-weight:700; cursor:pointer; width:100%;">
         🛒 Publicar Material / Pedir Aquí
       </button>`;
   }
 
   const popupHtml = `
     <div class="notigas-order-popup" style="font-family:'Roboto',sans-serif; text-align:center; padding:4px;">
-      <strong style="color:#FF6D00; font-size:13px;">📦 Pedido ${isAssignedToDriver ? 'Asignado' : (isDriverView ? 'Disponible' : 'Vecinal')}</strong><br>
+      <strong style="color:#FF6D00; font-size:16px;">📦 Pedido ${isAssignedToDriver ? 'Asignado' : (isDriverView ? 'Disponible' : 'Vecinal')}</strong><br>
       ${nombreStr}
       ${emailStr}
       <span class="order-popup-category">🏷️ ${escapeFn(order.categoria || 'plastico')} · ${escapeFn(order.cantidad || '1')} unidad(es)</span><br>
@@ -1743,8 +1743,8 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
 
     userMarker.bindPopup(`
       <div class="google-infowindow-content" style="text-align:center; padding:4px;">
-        <strong style="color:#0284C7; font-size:13px;">🏠 Mi Casa (Punto de Entrega)</strong><br>
-        <span style="font-size:11px; color:#5F6368;">Arrastra el marcador a la puerta exacta de tu casa</span>
+        <strong style="color:#0284C7; font-size:16px;">🏠 Mi Casa (Punto de Entrega)</strong><br>
+        <span style="font-size:16px; color:#5F6368;">Arrastra el marcador a la puerta exacta de tu casa</span>
       </div>
     `);
     const isMobileDevice = (typeof navigator !== 'undefined' && navigator.userAgent) ? /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) : false;

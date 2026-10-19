@@ -177,7 +177,7 @@ function abrirConfiguracionSegunRol() {
       const userData = AppState.get('userData') || {};
       const yaTieneFicha = Boolean(userData.hasDriverProfile || userData.placa || userData.whatsapp);
       buyerToDriverContainer.innerHTML = `
-        <button type="button" id="btnRegistroRepartidoresMenu" style="width:100%; background:linear-gradient(135deg,#FF6D00,#E65100); color:white; border:none; padding:12px; border-radius:10px; font-weight:800; cursor:pointer; font-size:13px; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 12px rgba(255,109,0,0.25);">
+        <button type="button" id="btnRegistroRepartidoresMenu" style="width:100%; background:linear-gradient(135deg,#FF6D00,#E65100); color:white; border:none; padding:12px; border-radius:10px; font-weight:800; cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 12px rgba(255,109,0,0.25);">
           <i class="fa-solid fa-truck-fast"></i> ${yaTieneFicha ? 'Volver al modo Recolector' : 'Registro Recolectores'}
         </button>`;
       const activateButton = document.getElementById('btnRegistroRepartidoresMenu');
@@ -261,8 +261,8 @@ function setAppMode(mode, refreshData = true) {
 
     if (badgeContainer) {
       badgeContainer.innerHTML = `
-        <button type="button" id="btnHeaderRoleToggle" data-notigas-action="switch-role" data-role-target="buyer" class="btn-role-switch-header" title="Modo Recolector activo. Haz clic para cambiar a Usuario" style="background:rgba(255,109,0,0.22); color:#FF6D00; padding:4px 8px; border-radius:8px; font-weight:900; font-size:11px; border:1.5px solid #FF6D00; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 2px 6px rgba(255,109,0,0.3);">
-          <i class="fa-solid fa-truck-fast"></i> <span>RECOLECTOR</span> <i class="fa-solid fa-repeat" style="font-size:9px; opacity:0.85;"></i>
+        <button type="button" id="btnHeaderRoleToggle" data-notigas-action="switch-role" data-role-target="buyer" class="btn-role-switch-header" title="Modo Recolector activo. Haz clic para cambiar a Usuario" style="background:rgba(255,109,0,0.22); color:#FF6D00; padding:4px 8px; border-radius:8px; font-weight:900; font-size:16px; border:1.5px solid #FF6D00; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 2px 6px rgba(255,109,0,0.3);">
+          <i class="fa-solid fa-truck-fast"></i> <span>RECOLECTOR</span> <i class="fa-solid fa-repeat" style="font-size:16px; opacity:0.85;"></i>
         </button>
       `;
     }
@@ -280,8 +280,8 @@ function setAppMode(mode, refreshData = true) {
 
     if (badgeContainer) {
       badgeContainer.innerHTML = `
-        <button type="button" id="btnHeaderRoleToggle" data-notigas-action="switch-role" data-role-target="driver" class="btn-role-switch-header" title="Modo Usuario activo. Haz clic para cambiar a Recolector" style="background:rgba(2,136,209,0.22); color:#38BDF8; padding:4px 8px; border-radius:8px; font-weight:900; font-size:11px; border:1.5px solid #0288D1; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 2px 6px rgba(2,136,209,0.3);">
-          <i class="fa-solid fa-basket-shopping"></i> <span>USUARIO</span> <i class="fa-solid fa-repeat" style="font-size:9px; opacity:0.85;"></i>
+        <button type="button" id="btnHeaderRoleToggle" data-notigas-action="switch-role" data-role-target="driver" class="btn-role-switch-header" title="Modo Usuario activo. Haz clic para cambiar a Recolector" style="background:rgba(2,136,209,0.22); color:#38BDF8; padding:4px 8px; border-radius:8px; font-weight:900; font-size:16px; border:1.5px solid #0288D1; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 2px 6px rgba(2,136,209,0.3);">
+          <i class="fa-solid fa-basket-shopping"></i> <span>USUARIO</span> <i class="fa-solid fa-repeat" style="font-size:16px; opacity:0.85;"></i>
         </button>
       `;
     }

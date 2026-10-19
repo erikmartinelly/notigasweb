@@ -171,6 +171,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_auto_event_6 = document.getElementById('auto-event-6');
     if (el_auto_event_6) el_auto_event_6.addEventListener('click', () => { safeCall('conectarGPSAuto', true); });
 
+    const el_btnCloseGpsFloating = document.getElementById('btnCloseGpsFloating');
+    if (el_btnCloseGpsFloating) el_btnCloseGpsFloating.addEventListener('click', () => {
+      const banner = document.getElementById('gpsFloatingBanner');
+      if (banner) banner.style.display = 'none';
+    });
+
     const el_selectCiudadCapital = document.getElementById('selectCiudadCapital');
     if (el_selectCiudadCapital) el_selectCiudadCapital.addEventListener('change', (event) => {
       safeCall('cambiarCiudadCapital', event.target.value);

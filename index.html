@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 
 <html lang="es">
 
@@ -111,11 +111,11 @@
 
   <link rel="manifest" href="manifest.json">
 
-  <link id="dynamicFavicon" rel="icon" type="image/svg+xml" href="icons/oil-bottle.svg?v=153"/>
+  <link id="dynamicFavicon" rel="icon" type="image/svg+xml" href="icons/oil-bottle.svg?v=154"/>
 
-  <link rel="icon" type="image/svg+xml" href="icons/oil-bottle.svg?v=153"/>
+  <link rel="icon" type="image/svg+xml" href="icons/oil-bottle.svg?v=154"/>
 
-  <link rel="shortcut icon" type="image/svg+xml" href="icons/oil-bottle.svg?v=153"/>
+  <link rel="shortcut icon" type="image/svg+xml" href="icons/oil-bottle.svg?v=154"/>
 
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
@@ -139,7 +139,7 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="styles/main.css?v=153">
+  <link rel="stylesheet" href="styles/main.css?v=154">
 
   <!-- SERVICIOS EXTERNOS -->
 
@@ -165,16 +165,16 @@
     <div class="brand">
 
       <img src="icons/camion_reciclaje.svg" class="brand-img" alt="Logo oficial de NOTIGAS: camión de reciclaje">
-      <div style="display:flex; flex-direction:column; line-height:1.05;">
-        <span>NOTIGAS</span>
-        <small style="font-size:10px; font-weight:600; letter-spacing:0.5px; opacity:0.92; margin-top:1px; white-space:nowrap;">Noticias de generación de reciclables</small>
+      <div class="brand-text">
+        <span class="brand-title">NOTIGAS</span>
+        <small class="brand-subtitle">Noticias de generación de reciclables</small>
       </div>
 
     </div>
 
     <div class="ng-inline-4" id="headerRoleBadge">
-      <button type="button" id="btnHeaderRoleToggle" data-notigas-action="switch-role" class="btn-role-switch-header" title="Haz clic para alternar entre Comprador y Repartidor" style="background:rgba(2,136,209,0.22); color:#38BDF8; padding:5px 9px; border-radius:8px; font-weight:900; font-size:11px; border:1.5px solid #0288D1; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 2px 6px rgba(0,0,0,0.3);">
-        <i class="fa-solid fa-basket-shopping"></i> <span>USUARIO</span> <i class="fa-solid fa-repeat" style="font-size:9px; opacity:0.85;"></i>
+      <button type="button" id="btnHeaderRoleToggle" data-notigas-action="switch-role" class="btn-role-switch-header" title="Haz clic para alternar entre Comprador y Repartidor" aria-label="Cambiar rol de usuario">
+        <i class="fa-solid fa-basket-shopping" aria-hidden="true"></i> <span>USUARIO</span> <i class="fa-solid fa-repeat" aria-hidden="true"></i>
       </button>
     </div>
 
@@ -194,19 +194,17 @@
 
   <nav>
 
-    <button class="tab-btn active"  id="auto-event-3" ><i class="fa-solid fa-map-location-dot"></i> 1ª MAPA EN VIVO</button>
+    <button class="tab-btn active"  id="auto-event-3" aria-label="Mapa en vivo"><i class="fa-solid fa-map-location-dot" aria-hidden="true"></i> Mapa</button>
 
-    <button class="tab-btn"  id="auto-event-4" ><i class="fa-solid fa-store"></i> LISTA DE RECOLECTORES</button>
+    <button class="tab-btn"  id="auto-event-4" aria-label="Lista de recolectores"><i class="fa-solid fa-store" aria-hidden="true"></i> Recolectores</button>
 
-    <button class="tab-btn"  id="auto-event-5" ><i class="fa-solid fa-bullhorn"></i> MURO DE COMENTARIOS</button>
-
-    <div class="ng-inline-5" style="font-size:9px; font-weight:700; text-align:center; letter-spacing:0.6px; opacity:0.88; margin-top:4px; text-transform:uppercase; color:#E2F1FF;">Noticias de generación de reciclables</div>
+    <button class="tab-btn"  id="auto-event-5" aria-label="Muro de comentarios"><i class="fa-solid fa-bullhorn" aria-hidden="true"></i> Muro</button>
 
   </nav>
 
   <!-- BARRA DE ACCESO PARA VISITANTES (DEBAJO DEL MENÚ) -->
 
-  <div id="topGuestAuthBanner" style="display:none; background:#0F172A; border-bottom:1px solid #1E293B; padding:6px 14px; align-items:center; justify-content:space-between; font-size:12px; z-index:800; position:relative;">
+  <div id="topGuestAuthBanner" style="display:none; background:#0F172A; border-bottom:1px solid #1E293B; padding:6px 14px; align-items:center; justify-content:space-between; font-size:16px; z-index:800; position:relative;">
 
     <div style="color:#94A3B8; font-weight:600; display:flex; align-items:center; gap:6px;">
 
@@ -216,13 +214,13 @@
 
     <div style="display:flex; gap:8px;">
 
-      <button type="button" id="btnTopIngresar" style="background:#0288D1; color:white; border:none; padding:5px 12px; border-radius:6px; font-weight:700; font-size:11.5px; cursor:pointer; display:flex; align-items:center; gap:4px;">
+      <button type="button" id="btnTopIngresar" style="background:#0288D1; color:white; border:none; padding:5px 12px; border-radius:6px; font-weight:700; font-size:16px; cursor:pointer; display:flex; align-items:center; gap:4px;">
 
         <i class="fa-solid fa-right-to-bracket"></i> Ingresar
 
       </button>
 
-      <button type="button" id="btnTopRegistrarse" style="background:#10B981; color:white; border:none; padding:5px 12px; border-radius:6px; font-weight:700; font-size:11.5px; cursor:pointer; display:flex; align-items:center; gap:4px;">
+      <button type="button" id="btnTopRegistrarse" style="background:#10B981; color:white; border:none; padding:5px 12px; border-radius:6px; font-weight:700; font-size:16px; cursor:pointer; display:flex; align-items:center; gap:4px;">
 
         <i class="fa-solid fa-user-plus"></i> Registrarse
 
@@ -290,11 +288,13 @@
 
       <!-- BANNER DE ACTIVACIÓN OBLIGATORIA DE GPS EN MÓVILES/ANDROID -->
 
-      <div class="ng-inline-5" id="gpsFloatingBanner">
+      <div class="gps-floating-banner" id="gpsFloatingBanner" role="alertdialog" aria-labelledby="gpsFloatingTitle">
+
+        <button type="button" class="gps-close" id="btnCloseGpsFloating" aria-label="Cerrar aviso de GPS">&times;</button>
 
         <div class="ng-inline-6">📍</div>
 
-        <div class="ng-inline-7">
+        <div class="ng-inline-7" id="gpsFloatingTitle">
 
           ACTIVACIÓN DE GPS REQUERIDA
 
@@ -599,19 +599,19 @@
 
       <!-- SELECTOR RÁPIDO DE MODO / ROL PARA ADMINISTRADOR Y PRUEBAS -->
       <div class="role-switch-menu-card" style="background:#0F172A; border:1.5px solid #334155; border-radius:12px; padding:12px; margin-bottom:14px;">
-        <div style="font-size:11.5px; font-weight:800; color:#94A3B8; text-transform:uppercase; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+        <div style="font-size:16px; font-weight:800; color:#94A3B8; text-transform:uppercase; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
           <span><i class="fa-solid fa-arrows-rotate"></i> Modo de Uso Activo</span>
-          <span id="lblCurrentActiveRole" style="font-size:11.5px; color:#38BDF8; font-weight:900;">Usuario</span>
+          <span id="lblCurrentActiveRole" style="font-size:16px; color:#38BDF8; font-weight:900;">Usuario</span>
         </div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-          <button type="button" id="btnSwitchModeBuyer" data-notigas-action="switch-role" data-role-target="buyer" class="btn-role-choice" style="padding:10px; border-radius:8px; font-weight:800; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; border:1.5px solid #0288D1; background:rgba(2,136,209,0.25); color:#38BDF8;">
+          <button type="button" id="btnSwitchModeBuyer" data-notigas-action="switch-role" data-role-target="buyer" class="btn-role-choice" style="padding:10px; border-radius:8px; font-weight:800; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; border:1.5px solid #0288D1; background:rgba(2,136,209,0.25); color:#38BDF8;">
             <i class="fa-solid fa-basket-shopping"></i> Usuario
           </button>
-          <button type="button" id="btnSwitchModeDriver" data-notigas-action="switch-role" data-role-target="driver" class="btn-role-choice" style="padding:10px; border-radius:8px; font-weight:800; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; border:1.5px solid #475569; background:#1E293B; color:#94A3B8;">
+          <button type="button" id="btnSwitchModeDriver" data-notigas-action="switch-role" data-role-target="driver" class="btn-role-choice" style="padding:10px; border-radius:8px; font-weight:800; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; border:1.5px solid #475569; background:#1E293B; color:#94A3B8;">
             <i class="fa-solid fa-truck-fast"></i> Recolector
           </button>
         </div>
-        <p style="font-size:10.5px; color:#64748B; margin-top:8px; margin-bottom:0; text-align:center;">
+        <p style="font-size:16px; color:#64748B; margin-top:8px; margin-bottom:0; text-align:center;">
           Cambia al instante entre Usuario y Recolector para probar pedidos, entregas y rutas en tiempo real.
         </p>
       </div>
@@ -644,7 +644,7 @@
 
         <button class="btn-submit"  id="auto-event-23" ><i class="fa-solid fa-floppy-disk"></i> Guardar Preferencias</button>
         <!-- BOTÓN VER / EDITAR FICHA DE COMPRADOR -->
-        <button type="button" class="btn-edit-buyer-card" id="btnEditarFichaComprador" style="width:100%; background:linear-gradient(135deg,#0288D1,#0277BD); color:white; border:none; padding:12px; border-radius:10px; font-weight:800; cursor:pointer; font-size:13px; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 12px rgba(2,136,209,0.3); margin-top: 12px; margin-bottom: 12px;">
+        <button type="button" class="btn-edit-buyer-card" id="btnEditarFichaComprador" style="width:100%; background:linear-gradient(135deg,#0288D1,#0277BD); color:white; border:none; padding:12px; border-radius:10px; font-weight:800; cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 12px rgba(2,136,209,0.3); margin-top: 12px; margin-bottom: 12px;">
           <i class="fa-solid fa-user-pen"></i> Ver / Editar Mi Ficha de Comprador
         </button>
 
@@ -652,13 +652,13 @@
         <!-- Botón de activar repartidor se inyecta por JS según si ya tiene ficha -->
 
         <div class="ng-inline-25" id="buyerToDriverBtnContainer">
-          <button type="button" id="btnRegistroRepartidoresMenu" class="btn-driver-register" style="width:100%; background:linear-gradient(135deg,#FF6D00,#E65100); color:white; border:none; padding:12px; border-radius:10px; font-weight:800; cursor:pointer; font-size:13px; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 12px rgba(255,109,0,0.25);">
+          <button type="button" id="btnRegistroRepartidoresMenu" class="btn-driver-register" style="width:100%; background:linear-gradient(135deg,#FF6D00,#E65100); color:white; border:none; padding:12px; border-radius:10px; font-weight:800; cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 12px rgba(255,109,0,0.25);">
             <i class="fa-solid fa-truck-fast"></i> Registro Recolectores
           </button>
         </div>
 
         <!-- POLÍTICA DE PRIVACIDAD Y AVISO LEGAL (MENÚ COMPRADOR) -->
-        <button type="button" class="btn-menu-legal" id="btnPrivacyPolicyBuyer" data-action="abrirModalPoliticaPrivacidad" style="width:100%; background:rgba(30,41,59,0.8); border:1.5px solid #475569; color:#CBD5E1; padding:11px 14px; border-radius:10px; font-weight:700; font-size:12.5px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 6px rgba(0,0,0,0.2); margin-top:10px;">
+        <button type="button" class="btn-menu-legal" id="btnPrivacyPolicyBuyer" data-action="abrirModalPoliticaPrivacidad" style="width:100%; background:rgba(30,41,59,0.8); border:1.5px solid #475569; color:#CBD5E1; padding:11px 14px; border-radius:10px; font-weight:700; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 6px rgba(0,0,0,0.2); margin-top:10px;">
           <i class="fa-solid fa-scale-balanced" style="color:#38BDF8;"></i> ⚖️ Política de Privacidad y Aviso Legal
         </button>
 
@@ -706,17 +706,17 @@
         </button>
 
         <!-- POLÍTICA DE PRIVACIDAD Y AVISO LEGAL (MENÚ RECOLECTOR) -->
-        <button type="button" class="btn-menu-legal" id="btnPrivacyPolicyDriver" data-action="abrirModalPoliticaPrivacidad" style="width:100%; background:rgba(30,41,59,0.8); border:1.5px solid #475569; color:#CBD5E1; padding:11px 14px; border-radius:10px; font-weight:700; font-size:12.5px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 6px rgba(0,0,0,0.2); margin-top:10px;">
+        <button type="button" class="btn-menu-legal" id="btnPrivacyPolicyDriver" data-action="abrirModalPoliticaPrivacidad" style="width:100%; background:rgba(30,41,59,0.8); border:1.5px solid #475569; color:#CBD5E1; padding:11px 14px; border-radius:10px; font-weight:700; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 6px rgba(0,0,0,0.2); margin-top:10px;">
           <i class="fa-solid fa-scale-balanced" style="color:#38BDF8;"></i> ⚖️ Política de Privacidad y Aviso Legal
         </button>
 
         <!-- TÉRMINOS Y CONDICIONES PARA RECOLECTORES (COMISIONES Y ANTIFRAUDE) -->
-        <button type="button" class="btn-menu-legal" id="btnDriverTermsMenu" data-action="abrirModalTerminosRepartidores" style="width:100%; background:rgba(245,158,11,0.12); border:1.5px solid #F59E0B; color:#FDE68A; padding:11px 14px; border-radius:10px; font-weight:800; font-size:12.5px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 6px rgba(0,0,0,0.2); margin-top:10px;">
+        <button type="button" class="btn-menu-legal" id="btnDriverTermsMenu" data-action="abrirModalTerminosRepartidores" style="width:100%; background:rgba(245,158,11,0.12); border:1.5px solid #F59E0B; color:#FDE68A; padding:11px 14px; border-radius:10px; font-weight:800; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 6px rgba(0,0,0,0.2); margin-top:10px;">
           <i class="fa-solid fa-file-contract" style="color:#F59E0B;"></i> 📜 Términos y Condiciones para Recolectores
         </button>
 
         <!-- INFORMAR UN PROBLEMA: contacto directo con el administrador por Telegram -->
-        <button type="button" class="btn-menu-legal" id="btnInformarProblemaMenu" data-notigas-action="informar-problema" style="width:100%; background:rgba(239,68,68,0.12); border:1.5px solid #EF4444; color:#FCA5A5; padding:11px 14px; border-radius:10px; font-weight:800; font-size:12.5px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 6px rgba(0,0,0,0.2); margin-top:10px;">
+        <button type="button" class="btn-menu-legal" id="btnInformarProblemaMenu" data-notigas-action="informar-problema" style="width:100%; background:rgba(239,68,68,0.12); border:1.5px solid #EF4444; color:#FCA5A5; padding:11px 14px; border-radius:10px; font-weight:800; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 6px rgba(0,0,0,0.2); margin-top:10px;">
           <i class="fa-solid fa-triangle-exclamation" style="color:#EF4444;"></i> 🚨 INFORMAR PROBLEMA
         </button>
 
@@ -746,7 +746,7 @@
 
       <div id="menuAuthGuestBlock" style="margin-top: 10px; padding: 12px; background: rgba(30, 41, 59, 0.7); border: 1px solid #334155; border-radius: 10px; text-align: center;">
 
-        <div style="font-size: 12px; color: #94A3B8; margin-bottom: 8px; font-weight: 600;">
+        <div style="font-size:16px; color: #94A3B8; margin-bottom: 8px; font-weight: 600;">
 
           Accede a tu cuenta de NOTIGAS:
 
@@ -754,13 +754,13 @@
 
         <div style="display: flex; gap: 8px;">
 
-          <button type="button" id="btnMenuIngresar" style="flex: 1; background: linear-gradient(135deg, #0288D1, #01579B); color: white; border: none; padding: 10px 12px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 12.5px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          <button type="button" id="btnMenuIngresar" style="flex: 1; background: linear-gradient(135deg, #0288D1, #01579B); color: white; border: none; padding: 10px 12px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size:16px; display: flex; align-items: center; justify-content: center; gap: 6px;">
 
             <i class="fa-solid fa-right-to-bracket"></i> Ingresar
 
           </button>
 
-          <button type="button" id="btnMenuRegistrarse" style="flex: 1; background: linear-gradient(135deg, #10B981, #059669); color: white; border: none; padding: 10px 12px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 12.5px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          <button type="button" id="btnMenuRegistrarse" style="flex: 1; background: linear-gradient(135deg, #10B981, #059669); color: white; border: none; padding: 10px 12px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size:16px; display: flex; align-items: center; justify-content: center; gap: 6px;">
 
             <i class="fa-solid fa-user-plus"></i> Registrarse
 
@@ -918,7 +918,7 @@
 
         <input type="hidden" id="inputDriverCat" value="">
 
-        <p style="margin:4px 0 0 0; font-size:11px; color:#94A3B8; line-height:1.5;">
+        <p style="margin:4px 0 0 0; font-size:16px; color:#94A3B8; line-height:1.5;">
           Marca todo lo que realmente recoges o entregas. El vecino solo verá tus publicaciones de esos materiales.
         </p>
 
@@ -1073,7 +1073,7 @@
           </p>
 
           <div class="ng-inline-52" id="g_id_onload_container"></div>
-          <button type="button" id="btnGoogleOAuthFallback" style="margin:12px auto 0;display:flex;align-items:center;justify-content:center;gap:7px;background:transparent;color:#BFDBFE;border:1px solid #3B82F6;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:800;cursor:pointer;">
+          <button type="button" id="btnGoogleOAuthFallback" style="margin:12px auto 0;display:flex;align-items:center;justify-content:center;gap:7px;background:transparent;color:#BFDBFE;border:1px solid #3B82F6;border-radius:8px;padding:8px 12px;font-size:16px;font-weight:800;cursor:pointer;">
             <i class="fa-brands fa-google"></i> Continuar con Google (acceso alternativo)
           </button>
 
@@ -1269,7 +1269,7 @@
 
         </label>
 
-        <input class="ng-inline-64" type="tel" id="inputReportPersonPhone" placeholder="Ej: 987654321..." style="width:100%; padding:9px 12px; background:#1E293B; border:1.5px solid #475569; border-radius:8px; color:#F8FAFC; font-size:13px; box-sizing:border-box;">
+        <input class="ng-inline-64" type="tel" id="inputReportPersonPhone" placeholder="Ej: 987654321..." style="width:100%; padding:9px 12px; background:#1E293B; border:1.5px solid #475569; border-radius:8px; color:#F8FAFC; font-size:16px; box-sizing:border-box;">
 
       </div>
 
@@ -1401,60 +1401,60 @@
 
       <!-- SELECTOR DE PESTAÑAS LEGALES -->
       <div style="display:flex; gap:8px; margin:10px 0 14px 0; border-bottom:1px solid #334155; padding-bottom:8px;">
-        <button type="button" id="tabBtnDriverTerms" data-notigas-action="switch-legal-tab" data-legal-tab="driver" style="flex:1; padding:9px 12px; border-radius:8px; border:1.5px solid #F59E0B; background:rgba(245,158,11,0.2); color:#FDE68A; font-weight:800; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s;">
+        <button type="button" id="tabBtnDriverTerms" data-notigas-action="switch-legal-tab" data-legal-tab="driver" style="flex:1; padding:9px 12px; border-radius:8px; border:1.5px solid #F59E0B; background:rgba(245,158,11,0.2); color:#FDE68A; font-weight:800; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s;">
           <i class="fa-solid fa-recycle" style="color:#F59E0B;"></i> <span>RECOLECTOR</span>
         </button>
-        <button type="button" id="tabBtnGeneralTerms" data-notigas-action="switch-legal-tab" data-legal-tab="general" style="flex:1; padding:9px 12px; border-radius:8px; border:1px solid #334155; background:#1E293B; color:#94A3B8; font-weight:700; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s;">
+        <button type="button" id="tabBtnGeneralTerms" data-notigas-action="switch-legal-tab" data-legal-tab="general" style="flex:1; padding:9px 12px; border-radius:8px; border:1px solid #334155; background:#1E293B; color:#94A3B8; font-weight:700; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s;">
           <i class="fa-solid fa-users" style="color:#38BDF8;"></i> <span>USUARIO</span>
         </button>
       </div>
 
       <!-- PESTAÑA 1: TÉRMINOS Y CONDICIONES PARA RECOLECTORES – NOTIGAS.COM -->
-      <div id="termsDriverContent" style="display:block; font-size: 12.5px; color: #CBD5E1; line-height: 1.6;">
+      <div id="termsDriverContent" style="display:block; font-size:16px; color: #CBD5E1; line-height: 1.6;">
         <div style="background: rgba(245, 158, 11, 0.1); border-left: 3.5px solid #F59E0B; padding: 10px 12px; border-radius: 0 8px 8px 0; margin-bottom: 14px;">
-          <h3 style="color: #FDE68A; margin: 0 0 4px 0; font-size: 13.5px; font-weight: 900;">
+          <h3 style="color: #FDE68A; margin: 0 0 4px 0; font-size:16px; font-weight: 900;">
             TÉRMINOS Y CONDICIONES PARA RECOLECTORES – NOTIGAS.COM
           </h3>
-          <div style="font-size: 11.5px; color: #E2E8F0; line-height: 1.45;">
+          <div style="font-size:16px; color: #E2E8F0; line-height: 1.45;">
             Bienvenido a Notigas.com. Al registrarte y utilizar nuestra plataforma móvil como recolector independiente, aceptas cumplir y quedar sujeto a los siguientes términos y condiciones de uso:
           </div>
         </div>
 
         <!-- 1. Naturaleza del Servicio -->
         <div style="margin-bottom: 12px; background: #1E293B; border-radius: 8px; padding: 12px; border: 1px solid #334155;">
-          <strong style="color: #38BDF8; display: block; margin-bottom: 4px; font-size: 13px;">
+          <strong style="color: #38BDF8; display: block; margin-bottom: 4px; font-size:16px;">
             1. Naturaleza del Servicio
           </strong>
-          <p style="margin: 0; color: #CBD5E1; font-size: 12px; line-height: 1.5;">
+          <p style="margin: 0; color: #CBD5E1; font-size:16px; line-height: 1.5;">
             Notigas.com es una plataforma tecnológica que conecta a recolectores independientes con vecinos que disponen de materiales reciclables. El recolector actúa de forma autónoma, utilizando sus propios medios de transporte, herramientas y equipos celulares.
           </p>
         </div>
 
         <!-- 2. Recopilación de Datos y Seguridad (Protección de Datos Personales) -->
         <div style="margin-bottom: 12px; background: #1E293B; border-radius: 8px; padding: 12px; border: 1px solid #334155;">
-          <strong style="color: #10B981; display: block; margin-bottom: 4px; font-size: 13px;">
+          <strong style="color: #10B981; display: block; margin-bottom: 4px; font-size:16px;">
             2. Recopilación de Datos y Seguridad (Protección de Datos Personales)
           </strong>
-          <p style="margin: 0 0 6px 0; color: #CBD5E1; font-size: 12px; line-height: 1.5;">
+          <p style="margin: 0 0 6px 0; color: #CBD5E1; font-size:16px; line-height: 1.5;">
             Para garantizar la seguridad de los vecinos, la plataforma y los propios recolectores, Notigas.com recopila y almacena obligatoriamente los siguientes datos al momento del registro:
           </p>
-          <ul style="margin: 0 0 8px 18px; padding: 0; font-size: 11.5px; color: #94A3B8; line-height: 1.55;">
+          <ul style="margin: 0 0 8px 18px; padding: 0; font-size:16px; color: #94A3B8; line-height: 1.55;">
             <li>Nombres, Apellidos y número de carnet de identidad (CI).</li>
             <li>Fotografía del documento de identidad y fotografía del rostro del usuario (Selfie de validación).</li>
             <li>Número de Placa de Rodaje del vehículo utilizado para el reparto.</li>
             <li>Identificador único del dispositivo móvil (Device ID / Android ID) desde el cual se ejecuta la aplicación.</li>
           </ul>
-          <p style="margin: 0; color: #A7F3D0; font-size: 11.5px; line-height: 1.45; background: rgba(16,185,129,0.1); padding: 6px 8px; border-radius: 6px;">
+          <p style="margin: 0; color: #A7F3D0; font-size:16px; line-height: 1.45; background: rgba(16,185,129,0.1); padding: 6px 8px; border-radius: 6px;">
             El usuario otorga su consentimiento expreso para el tratamiento de estos datos con fines de validación de identidad y prevención del fraude.
           </p>
         </div>
 
         <!-- 3. Modelo Sin Comisión -->
         <div style="margin-bottom: 12px; background: rgba(16, 185, 129, 0.08); border-radius: 8px; padding: 12px; border: 1.5px solid rgba(16, 185, 129, 0.4);">
-          <strong style="color: #A7F3D0; display: block; margin-bottom: 6px; font-size: 13px;">
+          <strong style="color: #A7F3D0; display: block; margin-bottom: 6px; font-size:16px;">
             3. Modelo Sin Comisión
           </strong>
-          <ul style="margin: 0 0 0 18px; padding: 0; font-size: 12px; color: #E2E8F0; line-height: 1.55;">
+          <ul style="margin: 0 0 0 18px; padding: 0; font-size:16px; color: #E2E8F0; line-height: 1.55;">
             <li style="margin-bottom: 6px;">
               <strong>Sin comisión ni suscripción:</strong> Notigas.com es de acceso gratuito para recolectores. No cobra comisión por pedido, por entrega, ni cuota mensual o anual.</li>
             <li>
@@ -1464,13 +1464,13 @@
 
         <!-- 4. Servicio gratuito -->
         <div style="margin-bottom: 12px; background: rgba(59, 130, 246, 0.08); border-radius: 8px; padding: 12px; border: 1.5px solid rgba(59, 130, 246, 0.45);">
-          <strong style="color: #93C5FD; display: block; margin-bottom: 6px; font-size: 13px;">
+          <strong style="color: #93C5FD; display: block; margin-bottom: 6px; font-size:16px;">
             🆓 4. El servicio es gratuito
           </strong>
-          <p id="driverCreditProgressiveTerms" style="margin:0 0 9px 0;font-size:12px;color:#DBEAFE;line-height:1.55;">
+          <p id="driverCreditProgressiveTerms" style="margin:0 0 9px 0;font-size:16px;color:#DBEAFE;line-height:1.55;">
             NOTIGAS es completamente gratuito. No hay cuota de registro, no hay mensualidad, no hay comisión por pedido ni por entrega, y no se pide ningún dato de pago para usar la plataforma.
           </p>
-          <ul style="margin: 0 0 0 18px; padding: 0; font-size: 12px; color: #DBEAFE; line-height: 1.55;">
+          <ul style="margin: 0 0 0 18px; padding: 0; font-size:16px; color: #DBEAFE; line-height: 1.55;">
             <li style="margin-bottom: 6px;">
               <strong>Sin intermediación de fondos:</strong> NOTIGAS no procesa, recauda ni custodia fondos. El recolector y el vecino acuerdan lo que corresponda directamente entre ellos.</li>
             <li style="margin-bottom: 6px;">
@@ -1482,31 +1482,31 @@
 
         <!-- 5. Modificaciones -->
         <div style="margin-bottom: 16px; background: #1E293B; border-radius: 8px; padding: 12px; border: 1px solid #334155;">
-          <strong style="color: #94A3B8; display: block; margin-bottom: 4px; font-size: 13px;">
+          <strong style="color: #94A3B8; display: block; margin-bottom: 4px; font-size:16px;">
             5. Modificaciones
           </strong>
-          <p style="margin: 0; color: #CBD5E1; font-size: 12px; line-height: 1.5;">
+          <p style="margin: 0; color: #CBD5E1; font-size:16px; line-height: 1.5;">
             Notigas.com se reserva el derecho de modificar las reglas operativas o los métodos de pago admitidos, notificando a los usuarios a través de la aplicación con anticipación.
           </p>
         </div>
 
-        <button class="ng-inline-79" type="button" id="btnEntendidoDriverTerms" data-notigas-action="close-privacy-policy" style="width: 100%; background: linear-gradient(135deg, #F59E0B, #D97706); color: #0F172A; border: none; padding: 12px; border-radius: 8px; font-weight: 900; cursor: pointer; font-size: 13px; box-shadow: 0 2px 8px rgba(245,158,11,0.35);">
+        <button class="ng-inline-79" type="button" id="btnEntendidoDriverTerms" data-notigas-action="close-privacy-policy" style="width: 100%; background: linear-gradient(135deg, #F59E0B, #D97706); color: #0F172A; border: none; padding: 12px; border-radius: 8px; font-weight: 900; cursor: pointer; font-size:16px; box-shadow: 0 2px 8px rgba(245,158,11,0.35);">
           ✅ He leído y acepto los Términos y Condiciones de Recolector
         </button>
       </div>
 
       <!-- PESTAÑA 2: AVISO LEGAL Y POLÍTICA GENERAL PARA USUARIOS / ADSENSE -->
-      <div id="termsGeneralContent" style="display:none; font-size: 12.5px; color: #CBD5E1; line-height: 1.6;">
+      <div id="termsGeneralContent" style="display:none; font-size:16px; color: #CBD5E1; line-height: 1.6;">
 
         <div style="background: rgba(56, 189, 248, 0.08); border-left: 3px solid #38BDF8; padding: 10px 12px; border-radius: 0 8px 8px 0; margin-bottom: 14px;">
-          <div style="font-size: 11.5px; color: #E2E8F0;">
+          <div style="font-size:16px; color: #E2E8F0;">
             NOTIGAS es una plataforma tecnológica comunitaria de enlace en tiempo real en Bolivia. El uso de esta plataforma por parte de usuarios (vecinos) y recolectores independientes implica la aceptación total de este Aviso Legal, Términos de Intermediación y Política de Privacidad.
           </div>
         </div>
 
         <!-- 1. SERVICIO GRATUITO Y MODALIDAD PRO OPCIONAL -->
         <div class="ng-inline-68" style="margin-bottom: 14px;">
-          <strong class="ng-inline-69" style="color: #38BDF8; display: block; margin-bottom: 4px; font-size: 13px;">
+          <strong class="ng-inline-69" style="color: #38BDF8; display: block; margin-bottom: 4px; font-size:16px;">
             1. UN SERVICIO GRATUITO PARA USUARIOS Y RECOLECTORES
           </strong>
           <p class="ng-inline-70" style="margin: 0;">
@@ -1516,26 +1516,26 @@
 
         <!-- 2. ROL EXCLUSIVO DE INTERMEDIARIO TECNOLÓGICO -->
         <div class="ng-inline-71" style="margin-bottom: 14px;">
-          <strong class="ng-inline-72" style="color: #F59E0B; display: block; margin-bottom: 4px; font-size: 13px;">
+          <strong class="ng-inline-72" style="color: #F59E0B; display: block; margin-bottom: 4px; font-size:16px;">
             2. Rol Exclusivo de Intermediación Tecnológica Neutral
           </strong>
           <p style="margin: 0 0 6px 0;">
             NOTIGAS opera exclusivamente como un <strong>directorio digital, mapa interactivo con GPS en vivo y tablón comunitario</strong> que facilita el contacto voluntario y directo entre vecinos que publican material reciclable y recolectores que lo recogen, y entre quien necesita productos de limpieza y quien se los suministra.
           </p>
-          <p style="margin: 0; color: #94A3B8; font-size: 12px;">
+          <p style="margin: 0; color: #94A3B8; font-size:16px;">
             NOTIGAS <strong>NO es comercializadora de gas, NO es planta de reciclaje, NO posee vehículos de transporte ni mantiene relación laboral, de subordinación o de agencia</strong> con los recolectores. Los recolectores prestan sus servicios de manera autónoma e independiente bajo su propia responsabilidad.
           </p>
         </div>
 
         <!-- 3. EXENCIÓN TOTAL DE RESPONSABILIDAD EN ACUERDOS FINALES -->
         <div style="margin-bottom: 14px; background: rgba(239, 68, 68, 0.08); border: 1.5px solid rgba(239, 68, 68, 0.35); border-radius: 10px; padding: 12px;">
-          <strong style="color: #FCA5A5; display: block; margin-bottom: 6px; font-size: 13px;">
+          <strong style="color: #FCA5A5; display: block; margin-bottom: 6px; font-size:16px;">
             ⚠️ 3. Exención Total de Responsabilidad sobre Acuerdos y Transacciones Finales
           </strong>
-          <p style="margin: 0 0 8px 0; font-size: 12px; color: #FEE2E2; line-height: 1.55;">
+          <p style="margin: 0 0 8px 0; font-size:16px; color: #FEE2E2; line-height: 1.55;">
             NOTIGAS es únicamente un intermediario tecnológico y <strong>NO SE HACE RESPONSABLE DE LOS ACUERDOS FINALES, CONTRATOS, TRATOS VERBALES O TRANSACCIONES COMERCIALES QUE SE CELEBREN ENTRE SUS USUARIOS</strong>.
           </p>
-          <ul style="margin: 0 0 0 16px; padding: 0; font-size: 11.5px; color: #FECACA; line-height: 1.5;">
+          <ul style="margin: 0 0 0 16px; padding: 0; font-size:16px; color: #FECACA; line-height: 1.5;">
             <li><strong>Acuerdos entre las partes:</strong> Lo que el vecino y el recolector acuerden entre sí, incluido el precio del material, es de responsabilidad exclusiva de ambos. NOTIGAS no interviene, procesa, recauda ni custodia fondos.</li>
             <li><strong>Calidad, Contenido y Peso del Material:</strong> NOTIGAS no inspecciona físicamente el material publicado ni los productos entregados, ni garantiza su contenido neto, peso o estado. La responsabilidad civil, comercial y técnica corresponde exclusivamente a quien publica o entrega.</li>
             <li><strong>Despacho y Tiempos de Entrega:</strong> Los tiempos de llegada, demoras en ruta o cancelaciones son gestionados directamente entre las partes.</li>
@@ -1545,52 +1545,52 @@
 
         <!-- 4. SEGURIDAD, MANIPULO Y TRANSITO -->
         <div style="margin-bottom: 14px;">
-          <strong style="color: #10B981; display: block; margin-bottom: 4px; font-size: 13px;">
+          <strong style="color: #10B981; display: block; margin-bottom: 4px; font-size:16px;">
             4. Seguridad, Manipulo y Tránsito
           </strong>
           <p style="margin: 0 0 6px 0;">
             Las personas repartidoras registradas son las únicas responsables de cumplir con las normativas legales y de seguridad vigentes en Bolivia: condiciones mecánicas del vehículo, peso y estiba adecuados al material transportado, elementos de seguridad requeridos y póliza SOAT vigente.
           </p>
-          <p style="margin: 0; color: #94A3B8; font-size: 12px;">
+          <p style="margin: 0; color: #94A3B8; font-size:16px;">
             Quien recoge material debe confirmarlo sellado y separado para evitar derrames o roturas, y quien transporta detergentes u otros productos debe señalizar la carga. Se exhorta a las partes a acordar el precio de forma directa y clara antes de entregar el material o el producto, y a emitir su propio comprobante.
           </p>
         </div>
 
         <!-- 5. TOLERANCIA CERO A FRAUDES Y NORMAS COMUNITARIAS -->
         <div style="margin-bottom: 14px;">
-          <strong style="color: #EAB308; display: block; margin-bottom: 4px; font-size: 13px;">
+          <strong style="color: #EAB308; display: block; margin-bottom: 4px; font-size:16px;">
             5. Normas Comunitarias, Denuncias y Moderación Antifraude
           </strong>
           <p style="margin: 0;">
             NOTIGAS aplica tolerancia cero ante pedidos falsos, suplantación de identidad, acoso a repartidores o vecinos y conductas fraudulentas. La plataforma dispone de mecanismos de denuncia comunitaria y se reserva el derecho de <strong>bloquear o expulsar de forma definitiva</strong> a cualquier número telefónico, usuario o placa vehicular infractora sin previo aviso ni compensación.
           </p>
-          <p style="margin: 6px 0 0 0; color: #94A3B8; font-size: 11.5px; line-height: 1.55;">
+          <p style="margin: 6px 0 0 0; color: #94A3B8; font-size:16px; line-height: 1.55;">
             NOTIGAS <strong>no intermedia ni resuelve</strong> los acuerdos entre vecino y recolector. Sin embargo, <strong>ambas partes pueden denunciar un mal servicio</strong> (incumplimiento de lo acordado, trato indebido, ausencia o fraude) desde los mecanismos de denuncia de la app, y la plataforma puede imponer sanciones administrativas por incumplimiento de estos términos.
           </p>
         </div>
 
         <!-- 6. POLÍTICA DE PRIVACIDAD Y PROTECCIÓN DE DATOS PERSONALES -->
         <div style="margin-bottom: 14px;">
-          <strong style="color: #A78BFA; display: block; margin-bottom: 4px; font-size: 13px;">
+          <strong style="color: #A78BFA; display: block; margin-bottom: 4px; font-size:16px;">
             6. Política de Privacidad y Protección de Datos Personales
           </strong>
           <p style="margin: 0 0 6px 0;">
             En conformidad con la normativa boliviana de protección de datos personales (Ley N° 2345 y sus decretos reglamentarios, y la autorización de la Authority for Personal Data Protection del Estado Plurinacional de Bolivia, AAPD-EPB), los datos facilitados por los usuarios (nombre, teléfono/WhatsApp, CI o NIT, ciudad, placa vehicular y geolocalización GPS voluntaria) se recopilan exclusivamente con el fin de coordinar las entregas y garantizar la seguridad del servicio.
           </p>
-          <p style="margin: 0; color: #94A3B8; font-size: 12px;">
+          <p style="margin: 0; color: #94A3B8; font-size:16px;">
             NOTIGAS <strong>no comercializa ni cede bases de datos personales a terceros</strong>. Cualquier usuario puede solicitar la edición o eliminación definitiva de su cuenta y datos personales mediante la opción correspondiente en el menú.
           </p>
         </div>
 
         <!-- 7. MONETIZACIÓN CON GOOGLE ADSENSE Y COOKIES DE TERCEROS -->
         <div style="margin-bottom: 16px;">
-          <strong style="color: #38BDF8; display: block; margin-bottom: 4px; font-size: 13px;">
+          <strong style="color: #38BDF8; display: block; margin-bottom: 4px; font-size:16px;">
             7. Publicidad y Cookies de Terceros (Google AdSense)
           </strong>
           <p style="margin: 0 0 6px 0;">
             NOTIGAS incorpora publicidad gestionada por <strong>Google AdSense</strong>:
           </p>
-          <ul style="margin: 4px 0 0 16px; padding: 0; font-size: 12px;">
+          <ul style="margin: 4px 0 0 16px; padding: 0; font-size:16px;">
             <li>Proveedores externos, incluido Google, utilizan cookies para publicar anuncios basados en visitas anteriores de los usuarios a este sitio web o a otros sitios de Internet.</li>
             <li>El uso de cookies de publicidad permite a Google y a sus socios publicar anuncios a los usuarios según sus visitas a este y otros sitios en la red.</li>
             <li>Los usuarios pueden inhabilitar la publicidad personalizada en cualquier momento consultando la <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer" style="color: #38BDF8; font-weight: bold; text-decoration: underline;">Configuración de Anuncios de Google</a> o visitando el portal <a href="https://www.aboutads.info/choices/" target="_blank" rel="noopener noreferrer" style="color: #38BDF8; font-weight: bold; text-decoration: underline;">aboutads.info</a>.</li>
@@ -1598,7 +1598,7 @@
           </ul>
         </div>
 
-        <button class="ng-inline-79" type="button" id="btnEntendidoPrivacyPolicy" data-notigas-action="close-privacy-policy" style="width: 100%; background: linear-gradient(135deg, #0284C7, #0369A1); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 13px;">
+        <button class="ng-inline-79" type="button" id="btnEntendidoPrivacyPolicy" data-notigas-action="close-privacy-policy" style="width: 100%; background: linear-gradient(135deg, #0284C7, #0369A1); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size:16px;">
           ✅ He leído y acepto la Política de Privacidad y Aviso Legal
         </button>
       </div>
@@ -1702,17 +1702,17 @@
         <div id="tipoSolicitudToggle" style="display:flex; gap:8px; margin-top:4px;">
 
           <button type="button" data-tipo="recogida"
-                  style="flex:1; padding:12px 8px; border-radius:10px; border:2px solid #22C55E; background:rgba(34,197,94,0.18); color:#BBF7D0; font-weight:900; font-size:12.5px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px;">
+                  style="flex:1; padding:12px 8px; border-radius:10px; border:2px solid #22C55E; background:rgba(34,197,94,0.18); color:#BBF7D0; font-weight:900; font-size:16px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px;">
             <span style="font-size:20px;">♻️</span>
             <span>RECOGER MATERIAL</span>
-            <span style="font-size:10px; font-weight:600; opacity:0.85;">Tienes material en casa</span>
+            <span style="font-size:16px; font-weight:600; opacity:0.85;">Tienes material en casa</span>
           </button>
 
           <button type="button" data-tipo="compra"
-                  style="flex:1; padding:12px 8px; border-radius:10px; border:2px solid #1E293B; background:rgba(30,41,59,0.6); color:#94A3B8; font-weight:900; font-size:12.5px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px;">
+                  style="flex:1; padding:12px 8px; border-radius:10px; border:2px solid #1E293B; background:rgba(30,41,59,0.6); color:#94A3B8; font-weight:900; font-size:16px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px;">
             <span style="font-size:20px;">🛒</span>
             <span>COMPRAR / PEDIR</span>
-            <span style="font-size:10px; font-weight:600; opacity:0.85;">Necesitas que te lo lleven</span>
+            <span style="font-size:16px; font-weight:600; opacity:0.85;">Necesitas que te lo lleven</span>
           </button>
 
         </div>
@@ -1720,7 +1720,7 @@
       </div>
 
       <p id="tipoSolicitudAyuda"
-         style="margin:0 0 12px; padding:9px 11px; border-radius:8px; background:rgba(34,197,94,0.12); border-left:3px solid #22C55E; color:#BBF7D0; font-size:12px; line-height:1.45;">
+         style="margin:0 0 12px; padding:9px 11px; border-radius:8px; background:rgba(34,197,94,0.12); border-left:3px solid #22C55E; color:#BBF7D0; font-size:16px; line-height:1.45;">
         Publica el material que tienes en casa. Los recolectores cercanos verán tu punto en el mapa y vendrán a recogerlo. NOTIGAS no cobra por la recogida.
       </p>
 
@@ -1951,11 +1951,11 @@
         <button class="btn-close" type="button" id="pubPagaBtnCerrar">&#215;</button>
       </div>
 
-      <div id="pubPagaConfigNotice" style="font-size:12px;color:#CBD5E1;background:rgba(15,23,42,.6);border:1px solid #334155;border-radius:10px;padding:10px;margin-bottom:12px;">
+      <div id="pubPagaConfigNotice" style="font-size:16px;color:#CBD5E1;background:rgba(15,23,42,.6);border:1px solid #334155;border-radius:10px;padding:10px;margin-bottom:12px;">
         Cargando tarifas...
       </div>
 
-      <div id="pubPagaError" style="display:none;font-size:12px;color:#FECACA;background:rgba(127,29,29,.35);border:1px solid #B91C1C;border-radius:10px;padding:10px;margin-bottom:12px;"></div>
+      <div id="pubPagaError" style="display:none;font-size:16px;color:#FECACA;background:rgba(127,29,29,.35);border:1px solid #B91C1C;border-radius:10px;padding:10px;margin-bottom:12px;"></div>
 
       <div id="pubPagaPaso1">
         <div class="form-group">
@@ -2000,7 +2000,7 @@
         </div>
 
         <div id="pubPagaTotalBox" style="display:flex;justify-content:space-between;align-items:center;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.4);border-radius:10px;padding:12px;margin:6px 0 12px;font-weight:800;">
-          <span style="font-size:13px;">Total a pagar</span>
+          <span style="font-size:16px;">Total a pagar</span>
           <span id="pubPagaTotalMonto" style="color:#34D399;font-size:18px;">Bs 9.00</span>
         </div>
 
@@ -2010,7 +2010,7 @@
       </div>
 
       <div id="pubPagaPaso2" style="display:none;">
-        <div id="pubPagaPagoInfo" style="font-size:12.5px;line-height:1.5;color:#E2E8F0;background:rgba(15,23,42,.7);border:1px solid #334155;border-radius:10px;padding:12px;margin-bottom:12px;"></div>
+        <div id="pubPagaPagoInfo" style="font-size:16px;line-height:1.5;color:#E2E8F0;background:rgba(15,23,42,.7);border:1px solid #334155;border-radius:10px;padding:12px;margin-bottom:12px;"></div>
 
         <div class="form-group">
           <label>N&#250;mero de operaci&#243;n / referencia (si el OCR no lo lee)</label>
@@ -2022,7 +2022,7 @@
           <input type="file" id="pubPagaVoucherFile" accept="image/*">
         </div>
 
-        <div id="pubPagaOcrEstado" style="font-size:12px;color:#CBD5E1;background:rgba(15,23,42,.6);border:1px solid #334155;border-radius:10px;padding:10px;margin-bottom:12px;">
+        <div id="pubPagaOcrEstado" style="font-size:16px;color:#CBD5E1;background:rgba(15,23,42,.6);border:1px solid #334155;border-radius:10px;padding:10px;margin-bottom:12px;">
           Sube una foto legible del comprobante del pago por QR.
         </div>
 
@@ -2036,12 +2036,12 @@
 
       <div style="margin-top:18px;border-top:1px solid #1E293B;padding-top:12px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <strong style="font-size:13px;color:#F1F5F9;">Mis anuncios</strong>
-          <button type="button" class="btn-submit" style="width:auto;padding:6px 10px;font-size:11px;" id="pubPagaBtnActualizar">
+          <strong style="font-size:16px;color:#F1F5F9;">Mis anuncios</strong>
+          <button type="button" class="btn-submit" style="width:auto;padding:6px 10px;font-size:16px;" id="pubPagaBtnActualizar">
             <i class="fa-solid fa-rotate"></i> Actualizar
           </button>
         </div>
-        <div id="pubPagaMisAnunciosList" style="display:flex;flex-direction:column;gap:8px;font-size:12px;color:#CBD5E1;">
+        <div id="pubPagaMisAnunciosList" style="display:flex;flex-direction:column;gap:8px;font-size:16px;color:#CBD5E1;">
           <span style="opacity:.7;">Inicia sesi&#243;n para ver tus anuncios.</span>
         </div>
       </div>
@@ -2390,13 +2390,13 @@
 
               <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px;">
 
-                <label style="font-size:12px; font-weight:800; color:#CBD5E1;"><i class="fa-solid fa-boxes-stacked" style="color:#38BDF8;"></i> MATERIALES MÁS PEDIDOS ("OTROS")</label>
+                <label style="font-size:16px; font-weight:800; color:#CBD5E1;"><i class="fa-solid fa-boxes-stacked" style="color:#38BDF8;"></i> MATERIALES MÁS PEDIDOS ("OTROS")</label>
 
-                <button type="button" data-notigas-action="admin-refresh-otros-stats" style="background:rgba(56,189,248,0.12); border:1px solid #38BDF8; color:#BAE6FD; padding:6px 10px; border-radius:8px; font-size:11px; font-weight:800; cursor:pointer;">Actualizar</button>
+                <button type="button" data-notigas-action="admin-refresh-otros-stats" style="background:rgba(56,189,248,0.12); border:1px solid #38BDF8; color:#BAE6FD; padding:6px 10px; border-radius:8px; font-size:16px; font-weight:800; cursor:pointer;">Actualizar</button>
 
               </div>
 
-              <div id="adminOtrosStatsBox"><div style="color:#94A3B8; text-align:center; padding:12px; font-size:11px;">Cargando materiales más pedidos...</div></div>
+              <div id="adminOtrosStatsBox"><div style="color:#94A3B8; text-align:center; padding:12px; font-size:16px;">Cargando materiales más pedidos...</div></div>
 
             </div>
 
@@ -2434,10 +2434,10 @@
               <div style="background:rgba(15,23,42,0.7); border:1px solid #334155; border-radius:10px; padding:12px; margin-bottom:12px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                   <div>
-                    <strong style="color:#38BDF8; font-size:12.5px; display:flex; align-items:center; gap:6px;">
+                    <strong style="color:#38BDF8; font-size:16px; display:flex; align-items:center; gap:6px;">
                       <i class="fa-solid fa-piggy-bank"></i> Servicio Gratuito
                     </strong>
-                    <div style="font-size:10.5px; color:#94A3B8; margin-top:3px; line-height:1.4;">
+                    <div style="font-size:16px; color:#94A3B8; margin-top:3px; line-height:1.4;">
                       Sin cuotas • Sin comisiones • NOTIGAS no cobra ni procesa fondos
                     </div>
                   </div>
@@ -2921,22 +2921,22 @@
       <h3 style="color:#EF4444; margin:0 0 8px 0; font-size:18px; font-weight:900; letter-spacing:0.5px;">
         🚪 ACCESO DENEGADO
       </h3>
-      <h4 style="color:#FCA5A5; margin:0 0 14px 0; font-size:13.5px; font-weight:800;">
+      <h4 style="color:#FCA5A5; margin:0 0 14px 0; font-size:16px; font-weight:800;">
         DISPOSITIVO SUSPENDIDO POR EL SISTEMA
       </h4>
-      <div style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:10px; padding:12px; margin-bottom:14px; text-align:left; font-size:11.5px; color:#CBD5E1; line-height:1.5;">
+      <div style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:10px; padding:12px; margin-bottom:14px; text-align:left; font-size:16px; color:#CBD5E1; line-height:1.5;">
         <div style="margin-bottom:6px;">
           <strong style="color:#FCA5A5;">Motivo de Bloqueo:</strong>
           <span id="deviceLockoutReasonText" style="color:#FFFFFF; display:block; margin-top:2px;">Sanción administrativa. NOTIGAS no cobra comisiones ni aplica bloqueos por monto pendiente.</span>
         </div>
-        <div style="margin-top:8px; padding-top:8px; border-top:1px dashed #334155; font-size:10.5px; color:#94A3B8;">
+        <div style="margin-top:8px; padding-top:8px; border-top:1px dashed #334155; font-size:16px; color:#94A3B8;">
           <strong>ID de Dispositivo Móvil:</strong> <code id="deviceLockoutIdText" style="color:#38BDF8;">DEV-LOCKED</code>
         </div>
       </div>
-      <div style="background:#1E293B; border-radius:8px; padding:10px; margin-bottom:18px; font-size:11px; color:#94A3B8; line-height:1.45; text-align:left;">
+      <div style="background:#1E293B; border-radius:8px; padding:10px; margin-bottom:18px; font-size:16px; color:#94A3B8; line-height:1.45; text-align:left;">
         ⚠️ <strong>Aviso de Seguridad Antifraude:</strong> Este teléfono celular ha sido vinculado permanentemente a través de su identificador de hardware. Intentar abrir una nueva cuenta con otro CI o NIT, nombre o chip telefónico en este mismo equipo mantendrá el acceso denegado.
       </div>
-      <a href="https://wa.me/59170123456?text=Hola%20Administraci%C3%B3n%20NOTIGAS,%20mi%20dispositivo%20ha%20sido%20bloqueado%20por%20una%20sanci%C3%B3n%20administrativa.%20Deseo%20saber%20el%20motivo." target="_blank" rel="noopener noreferrer" style="display:inline-flex; align-items:center; justify-content:center; gap:8px; width:100%; background:linear-gradient(135deg, #22C55E, #16A34A); color:white; font-weight:800; font-size:13px; text-decoration:none; padding:12px; border-radius:10px; box-shadow:0 3px 12px rgba(34,197,94,0.35);">
+      <a href="https://wa.me/59170123456?text=Hola%20Administraci%C3%B3n%20NOTIGAS,%20mi%20dispositivo%20ha%20sido%20bloqueado%20por%20una%20sanci%C3%B3n%20administrativa.%20Deseo%20saber%20el%20motivo." target="_blank" rel="noopener noreferrer" style="display:inline-flex; align-items:center; justify-content:center; gap:8px; width:100%; background:linear-gradient(135deg, #22C55E, #16A34A); color:white; font-weight:800; font-size:16px; text-decoration:none; padding:12px; border-radius:10px; box-shadow:0 3px 12px rgba(34,197,94,0.35);">
         <i class="fa-brands fa-whatsapp" style="font-size:18px;"></i> Contactar Administración por WhatsApp
       </a>
     </div>
@@ -2948,33 +2948,33 @@
 
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3/dist/umd/supabase.min.js" integrity="sha384-l8ah+VgaWtk1mvOe9VC+OirC6qHFF4yH7l7mKRidV9MSti3E9F463bMp6ZVN4kuC" crossorigin="anonymous"></script>
 
-  <script defer src="js/notigas_bo.js?v=153"></script>
-  <script defer src="js/driver_icons.js?v=153"></script>
-  <script defer src="js/state.js?v=153"></script>
+  <script defer src="js/notigas_bo.js?v=154"></script>
+  <script defer src="js/driver_icons.js?v=154"></script>
+  <script defer src="js/state.js?v=154"></script>
 
-  <script defer src="js/ui.js?v=153"></script>
+  <script defer src="js/ui.js?v=154"></script>
 
-  <script defer src="/runtime-config.js?v=153"></script>
-  <script defer src="js/monitoring.js?v=153"></script>
-  <script defer src="js/supabase-config.js?v=153"></script>
+  <script defer src="/runtime-config.js?v=154"></script>
+  <script defer src="js/monitoring.js?v=154"></script>
+  <script defer src="js/supabase-config.js?v=154"></script>
 
-  <script defer src="js/device_security.js?v=153"></script>
+  <script defer src="js/device_security.js?v=154"></script>
 
-  <script defer src="js/auth.js?v=153"></script>
+  <script defer src="js/auth.js?v=154"></script>
 
-  <script defer src="js/vendors.js?v=153"></script>
+  <script defer src="js/vendors.js?v=154"></script>
 
-  <script defer src="js/map.js?v=153"></script>
+  <script defer src="js/map.js?v=154"></script>
 
-  <script defer src="js/map_search.js?v=153"></script>
+  <script defer src="js/map_search.js?v=154"></script>
 
-  <script defer src="js/map_gps.js?v=153"></script>
+  <script defer src="js/map_gps.js?v=154"></script>
 
-  <script defer src="js/orders.js?v=153"></script>
+  <script defer src="js/orders.js?v=154"></script>
 
-  <script defer src="js/app.js?v=153"></script>
+  <script defer src="js/app.js?v=154"></script>
 
-  <script defer src="js/events.js?v=153"></script>
+  <script defer src="js/events.js?v=154"></script>
 
 </body>
 

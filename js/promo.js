@@ -362,7 +362,7 @@ window.getAdSenseFeedMarkup = function(placement) {
   if (mode === 'adsense' || mode === 'hybrid') {
     return `
       <div class="adsense-feed-unit-card" data-ad-placement="${placement}" style="margin: 12px 0; padding: 12px; background: rgba(15,23,42,0.85); border: 1px solid #334155; border-radius: 12px; text-align: center; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-        <div style="font-size: 10px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 4px; font-weight: 700;">
+        <div style="font-size:16px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 4px; font-weight: 700;">
           <i class="fa-solid fa-rectangle-ad"></i> Publicidad Patrocinada • Google AdSense
         </div>
         <ins class="adsbygoogle"

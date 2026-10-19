@@ -34,18 +34,18 @@
       panel.innerHTML = `
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;">
           <strong><i class="fa-solid fa-qrcode"></i> ${esc(metodo)}</strong>
-          <span style="font-size:11px;font-weight:800;color:#16A34A;">✓ SIN COBROS</span>
+          <span style="font-size:16px;font-weight:800;color:#16A34A;">✓ SIN COBROS</span>
         </div>
-        <div style="font-size:11px;color:#94A3B8;margin-bottom:10px;">
+        <div style="font-size:16px;color:#94A3B8;margin-bottom:10px;">
           NOTIGAS no cobra, no custodia fondos y no procesa pagos. No hay cuenta de cobro
           que registrar ni comisiones que liquidar. El pago se acuerda directamente entre
           comprador y repartidor por QR local (Simple / Banesco QR), destino ${esc(pais)}.
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;">
-          <label style="font-size:11px;color:#CBD5E1;">Método de pago
+          <label style="font-size:16px;color:#CBD5E1;">Método de pago
             <input value="${esc(metodo)}" readonly autocomplete="off" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:9px;border-radius:8px;border:1px solid #475569;background:#0B1220;color:#94A3B8;">
           </label>
-          <label style="font-size:11px;color:#CBD5E1;">País
+          <label style="font-size:16px;color:#CBD5E1;">País
             <input value="${esc(pais)}" readonly autocomplete="off" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:9px;border-radius:8px;border:1px solid #475569;background:#0B1220;color:#94A3B8;">
           </label>
         </div>`;

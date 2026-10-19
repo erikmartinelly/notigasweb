@@ -49,8 +49,8 @@ async function renderForumFeed() {
           <div style="text-align:center; color:#EF4444; padding:40px 14px; background: #1E293B; border-radius: 14px; border: 1px dashed rgba(239, 68, 68, 0.3);">
             <i class="fa-solid fa-triangle-exclamation" style="font-size:32px; margin-bottom:10px;"></i><br>
             <strong>Error de base de datos</strong><br>
-            <span style="font-size: 12px; color: #FCA5A5;">${escapeHtmlStr(error.message || 'Error de conexión.')}</span><br>
-            <span style="font-size: 10px; color: #94A3B8;">Código: ${escapeHtmlStr(error.code || 'N/A')}</span>
+            <span style="font-size:16px; color: #FCA5A5;">${escapeHtmlStr(error.message || 'Error de conexión.')}</span><br>
+            <span style="font-size:16px; color: #94A3B8;">Código: ${escapeHtmlStr(error.code || 'N/A')}</span>
           </div>
         `;
         return;
@@ -58,11 +58,11 @@ async function renderForumFeed() {
 
     if (!localPosts || localPosts.length === 0) {
       feed.innerHTML = `
-        <div style="text-align:center; color:#94A3B8; padding:40px 14px; font-size:13px; background: #1E293B; border-radius: 14px; border: 1px dashed rgba(255,255,255,0.15);">
+        <div style="text-align:center; color:#94A3B8; padding:40px 14px; font-size:16px; background: #1E293B; border-radius: 14px; border: 1px dashed rgba(255,255,255,0.15);">
           <i class="fa-solid fa-comments" style="font-size:32px; color:#FF6D00; margin-bottom:10px;"></i><br>
           <strong>El Muro de Comentarios está limpio en ${escapeHtmlStr(ciudadReal)}.</strong><br>
-          <span style="font-size: 11px; color: #64748B;">Sé el primero en publicar un comentario o aviso para los vecinos de tu zona. Es gratis y dura 48 horas.</span><br><br>
-          <button class="btn-new-post" style="margin: 0 auto; padding: 10px 16px; font-size: 12px;" data-action="abrirModalNuevoPost">📝 Publicar Comentario o Aviso GRATIS (48 horas)</button>
+          <span style="font-size:16px; color: #64748B;">Sé el primero en publicar un comentario o aviso para los vecinos de tu zona. Es gratis y dura 48 horas.</span><br><br>
+          <button class="btn-new-post" style="margin: 0 auto; padding: 10px 16px; font-size:16px;" data-action="abrirModalNuevoPost">📝 Publicar Comentario o Aviso GRATIS (48 horas)</button>
         </div>
       `;
       const adMarkup = typeof window.getAdSenseFeedMarkup === 'function' ? window.getAdSenseFeedMarkup('forum') : '';
@@ -114,20 +114,20 @@ async function renderForumFeed() {
           <div class="forum-body">
             <div class="forum-meta-header">
               <span class="forum-cat"><i class="fa-solid fa-comments"></i> ${escapeHtmlStr(post.categoria)}</span>
-              <span class="forum-author"><i class="fa-solid fa-user"></i> ${escapeHtmlStr(authorName)} ${isAuthor ? '<span style="font-size:10px; background:#0284C7; color:white; padding:2px 6px; border-radius:4px; margin-left:4px; font-weight:800;">TU AVISO</span>' : ''}</span>
+              <span class="forum-author"><i class="fa-solid fa-user"></i> ${escapeHtmlStr(authorName)} ${isAuthor ? '<span style="font-size:16px; background:#0284C7; color:white; padding:2px 6px; border-radius:4px; margin-left:4px; font-weight:800;">TU AVISO</span>' : ''}</span>
             </div>
             <div class="forum-title">${escapeHtmlStr(post.titulo)}</div>
             <div class="forum-desc">${escapeHtmlStr(post.descripcion)}</div>
             <div class="forum-footer" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-              <button data-action="abrirComentariosPost" data-id="${post.id}" data-title="${safeTitle}" data-desc="${safeDesc}" data-cat="${safeCat}" style="background: rgba(255,109,0,0.15); color: #FF6D00; border: 1px solid rgba(255,109,0,0.3); border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 800; cursor: pointer; display: flex; align-items:center; gap: 6px; transition: all 0.2s;">
+              <button data-action="abrirComentariosPost" data-id="${post.id}" data-title="${safeTitle}" data-desc="${safeDesc}" data-cat="${safeCat}" style="background: rgba(255,109,0,0.15); color: #FF6D00; border: 1px solid rgba(255,109,0,0.3); border-radius: 20px; padding: 6px 14px; font-size:16px; font-weight: 800; cursor: pointer; display: flex; align-items:center; gap: 6px; transition: all 0.2s;">
                 <i class="fa-regular fa-comment"></i> <span class="comment-count-num">${commentCount}</span> Comentar
               </button>
               <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
                 ${canManage ? `
-                  <button data-action="abrirModalEditarPost" data-id="${post.id}" data-title="${safeTitle}" data-desc="${safeDesc}" data-cat="${safeCat}" style="background: rgba(14,165,233,0.2); color: #38BDF8; border: 1.5px solid #0284C7; border-radius: 6px; padding: 5px 12px; font-size: 11.5px; font-weight: 800; cursor: pointer; display: inline-flex; align-items:center; gap: 5px; box-shadow:0 2px 6px rgba(2,132,199,0.2);" title="Editar tu aviso">
+                  <button data-action="abrirModalEditarPost" data-id="${post.id}" data-title="${safeTitle}" data-desc="${safeDesc}" data-cat="${safeCat}" style="background: rgba(14,165,233,0.2); color: #38BDF8; border: 1.5px solid #0284C7; border-radius: 6px; padding: 5px 12px; font-size:16px; font-weight: 800; cursor: pointer; display: inline-flex; align-items:center; gap: 5px; box-shadow:0 2px 6px rgba(2,132,199,0.2);" title="Editar tu aviso">
                     <i class="fa-solid fa-pen-to-square"></i> EDITAR
                   </button>
-                  <button data-action="borrarPostPropio" data-id="${post.id}" style="background: rgba(239,68,68,0.15); color: #EF4444; border: 1px solid rgba(239,68,68,0.3); border-radius: 6px; padding: 5px 8px; font-size: 11.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items:center; gap: 4px;" title="Eliminar este aviso">
+                  <button data-action="borrarPostPropio" data-id="${post.id}" style="background: rgba(239,68,68,0.15); color: #EF4444; border: 1px solid rgba(239,68,68,0.3); border-radius: 6px; padding: 5px 8px; font-size:16px; font-weight: 700; cursor: pointer; display: inline-flex; align-items:center; gap: 4px;" title="Eliminar este aviso">
                     <i class="fa-solid fa-trash"></i>
                   </button>
                 ` : `
@@ -565,7 +565,7 @@ async function abrirComentariosPost(postId, title, desc, cat, el) {
   if (modalVoteDown) modalVoteDown.setAttribute('data-id', String(postId));
 
   const box = document.getElementById('commentsList') || document.getElementById('commentsContainer');
-  if (box) box.innerHTML = '<div style="color:#94A3B8; font-size:11px; text-align:center;">Cargando comentarios...</div>';
+  if (box) box.innerHTML = '<div style="color:#94A3B8; font-size:16px; text-align:center;">Cargando comentarios...</div>';
 
   modal.style.display = 'flex';
 
@@ -577,7 +577,7 @@ async function abrirComentariosPost(postId, title, desc, cat, el) {
 
   if (error) {
     console.error('Error cargando comentarios:', error);
-    if (box) box.innerHTML = '<div style="color:#EF4444; font-size:11px; text-align:center;">Error al cargar comentarios.</div>';
+    if (box) box.innerHTML = '<div style="color:#EF4444; font-size:16px; text-align:center;">Error al cargar comentarios.</div>';
     return;
   }
 
@@ -589,7 +589,7 @@ function renderCommentsListUI(comments) {
     if (!box) return;
 
     if (!comments || comments.length === 0) {
-        box.innerHTML = '<div style="color:#64748B; font-size:11px; text-align:center; padding:10px;">Sé el primero en comentar este aviso vecinal.</div>';
+        box.innerHTML = '<div style="color:#64748B; font-size:16px; text-align:center; padding:10px;">Sé el primero en comentar este aviso vecinal.</div>';
         return;
     }
 
@@ -603,16 +603,16 @@ function renderCommentsListUI(comments) {
         html += `
         <div style="background:#0F172A; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.05); margin-bottom:6px; display:flex; gap:10px;">
             <div style="display:flex; flex-direction:column; align-items:center; justify-content:start; min-width:24px; gap:6px; padding-top:2px;">
-              <i class="fa-solid fa-arrow-up" style="color:#64748B; font-size:13px; cursor:pointer;" data-action="votarComentario" data-id="${cId}" data-val="1"></i>
-              <span style="color:#FF6D00; font-size:12px; font-weight:900;" id="c_votos_${cId}">${v}</span>
-              <i class="fa-solid fa-arrow-down" style="color:#64748B; font-size:13px; cursor:pointer;" data-action="votarComentario" data-id="${cId}" data-val="-1"></i>
+              <i class="fa-solid fa-arrow-up" style="color:#64748B; font-size:16px; cursor:pointer;" data-action="votarComentario" data-id="${cId}" data-val="1"></i>
+              <span style="color:#FF6D00; font-size:16px; font-weight:900;" id="c_votos_${cId}">${v}</span>
+              <i class="fa-solid fa-arrow-down" style="color:#64748B; font-size:16px; cursor:pointer;" data-action="votarComentario" data-id="${cId}" data-val="-1"></i>
             </div>
             <div style="flex:1;">
-              <div style="display:flex; justify-content:space-between; font-size:10.5px; font-weight:800; color:#38BDF8;">
+              <div style="display:flex; justify-content:space-between; font-size:16px; font-weight:800; color:#38BDF8;">
                 <span>${escapeHtmlStr(autor)}</span>
                 <span style="color:#64748B; font-weight:500;">${escapeHtmlStr(tiempo)}</span>
               </div>
-              <div style="font-size:12px; color:white; margin-top:4px; line-height:1.4;">${escapeHtmlStr(texto)}</div>
+              <div style="font-size:16px; color:white; margin-top:4px; line-height:1.4;">${escapeHtmlStr(texto)}</div>
             </div>
         </div>
         `;

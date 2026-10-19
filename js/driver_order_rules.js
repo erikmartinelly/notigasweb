@@ -126,7 +126,7 @@
       btn.type = 'button';
       btn.setAttribute('data-not-delivered-for', orderId);
       btn.className = 'btn-action btn-driver-not-delivered';
-      btn.style.cssText = 'background:#475569;color:#F8FAFC;border:1px solid #64748B;padding:6px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:5px;';
+      btn.style.cssText = 'background:#475569;color:#F8FAFC;border:1px solid #64748B;padding:6px 10px;border-radius:6px;font-size:16px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:5px;';
       btn.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> No entregué';
       btn.title = 'Registrar que finalmente no realizaste esta entrega';
       btn.addEventListener('click', (event) => {
@@ -214,11 +214,11 @@
 
       card.innerHTML = `
         <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:6px;">
-          <span style="font-size:11px;font-weight:800;color:#E2E8F0;">🇧🇴 Acceso gratuito</span>
-          <span style="font-size:11px;font-weight:900;color:${suspended ? '#EF4444' : '#10B981'};">${suspended ? 'Suspendido' : 'Sin cobros'}</span>
+          <span style="font-size:16px;font-weight:800;color:#E2E8F0;">🇧🇴 Acceso gratuito</span>
+          <span style="font-size:16px;font-weight:900;color:${suspended ? '#EF4444' : '#10B981'};">${suspended ? 'Suspendido' : 'Sin cobros'}</span>
         </div>
         <div style="background:#0F172A;border-radius:6px;height:8px;width:100%;overflow:hidden;border:1px solid #334155;"><div style="background:${suspended ? '#EF4444' : '#10B981'};height:100%;width:100%;"></div></div>
-        <div style="display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:9.5px;color:#94A3B8;">
+        <div style="display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:16px;color:#94A3B8;">
           <span>Comisión por pedido: Bs 0,00</span>
           <span>NOTIGAS no procesa fondos</span>
         </div>`;
@@ -426,10 +426,10 @@
       grid.innerHTML = `
         <div style="border:1.5px solid #10B981;background:linear-gradient(135deg,rgba(16,185,129,.14),rgba(15,23,42,.95));border-radius:12px;padding:14px;">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;">
-            <strong style="color:#FFFFFF;font-size:14px;">Acceso gratuito NOTIGAS Bolivia</strong>
-            <span style="background:#10B981;color:#052E16;border-radius:999px;padding:4px 9px;font-size:10px;font-weight:900;white-space:nowrap;">SIN COMISIÓN</span>
+            <strong style="color:#FFFFFF;font-size:16px;">Acceso gratuito NOTIGAS Bolivia</strong>
+            <span style="background:#10B981;color:#052E16;border-radius:999px;padding:4px 9px;font-size:16px;font-weight:900;white-space:nowrap;">SIN COMISIÓN</span>
           </div>
-          <div style="font-size:11.5px;color:#D1FAE5;line-height:1.55;">
+          <div style="font-size:16px;color:#D1FAE5;line-height:1.55;">
             Operas <strong>sin costo y sin comisión</strong>: no hay cuota mensual, ni saldo pendiente, ni ciclo de crédito, ni bloqueo por monto. El pago se acuerda directo con el comprador en <strong>bolivianos (Bs)</strong>, únicamente por <strong>QR local (Simple / Banesco QR)</strong>.
           </div>
         </div>`;
@@ -443,7 +443,7 @@
     const creditContent = document.getElementById('driverPremiumGratuitoContent');
     if (creditContent) {
       creditContent.style.display = 'block';
-      creditContent.innerHTML = '<p style="margin:0;font-size:11px;color:#CBD5E1;line-height:1.5;"><strong>Sin comisión:</strong> no pagas nada por usar NOTIGAS. El pago con el comprador se realiza en bolivianos, únicamente por QR local (Simple / Banesco QR).</p>';
+      creditContent.innerHTML = '<p style="margin:0;font-size:16px;color:#CBD5E1;line-height:1.5;"><strong>Sin comisión:</strong> no pagas nada por usar NOTIGAS. El pago con el comprador se realiza en bolivianos, únicamente por QR local (Simple / Banesco QR).</p>';
     }
 
     const btnText = document.getElementById('btnDriverSubmitText');

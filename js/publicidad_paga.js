@@ -219,7 +219,7 @@
     if (CFG.beneficiario_nombre) filas.push('<div>Beneficiario: <strong>' + esc(CFG.beneficiario_nombre) + '</strong>' + (CFG.beneficiario_documento ? ' (CI ' + esc(CFG.beneficiario_documento) + ')' : '') + '</div>');
     if (CFG.numero_cuenta) filas.push('<div>Cuenta / QR: <strong>' + esc(CFG.numero_cuenta) + '</strong></div>');
     if (CFG.instrucciones) filas.push('<div style="margin-top:6px;opacity:.9;">' + esc(CFG.instrucciones) + '</div>');
-    filas.push('<div style="margin-top:8px;font-size:11.5px;opacity:.75;">Al pagar, sube la foto n\u00edtida del comprobante. Debe pagarse desde Bolivia por QR local.</div>');
+    filas.push('<div style="margin-top:8px;font-size:16px;opacity:.75;">Al pagar, sube la foto n\u00edtida del comprobante. Debe pagarse desde Bolivia por QR local.</div>');
     el.innerHTML = filas.join('');
   }
 
@@ -512,10 +512,10 @@
   function renderAnuncio(a) {
     var vigente = a.vigente === true;
     var badge = vigente
-      ? '<span style="background:rgba(16,185,129,.18);color:#34D399;border:1px solid rgba(16,185,129,.5);border-radius:6px;padding:2px 6px;font-size:10px;font-weight:800;">VIGENTE</span>'
+      ? '<span style="background:rgba(16,185,129,.18);color:#34D399;border:1px solid rgba(16,185,129,.5);border-radius:6px;padding:2px 6px;font-size:16px;font-weight:800;">VIGENTE</span>'
       : (a.estado === 'retirado'
-        ? '<span style="background:rgba(239,68,68,.18);color:#FCA5A5;border:1px solid rgba(239,68,68,.5);border-radius:6px;padding:2px 6px;font-size:10px;font-weight:800;">RETIRADO</span>'
-        : '<span style="background:rgba(148,163,184,.18);color:#CBD5E1;border:1px solid rgba(148,163,184,.5);border-radius:6px;padding:2px 6px;font-size:10px;font-weight:800;">VENCIDO</span>');
+        ? '<span style="background:rgba(239,68,68,.18);color:#FCA5A5;border:1px solid rgba(239,68,68,.5);border-radius:6px;padding:2px 6px;font-size:16px;font-weight:800;">RETIRADO</span>'
+        : '<span style="background:rgba(148,163,184,.18);color:#CBD5E1;border:1px solid rgba(148,163,184,.5);border-radius:6px;padding:2px 6px;font-size:16px;font-weight:800;">VENCIDO</span>');
 
     var restante = '';
     if (vigente && typeof a.dias_restantes === 'number') {
@@ -525,7 +525,7 @@
 
     return '<div style="background:rgba(15,23,42,.6);border:1px solid #334155;border-radius:10px;padding:10px;">' +
       '<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;">' +
-        '<strong style="color:#F1F5F9;font-size:12.5px;">' + esc(a.titulo || '') + '</strong>' + badge +
+        '<strong style="color:#F1F5F9;font-size:16px;">' + esc(a.titulo || '') + '</strong>' + badge +
       '</div>' +
       '<div style="opacity:.85;margin-top:3px;">' + esc(String(a.posicion || '').toUpperCase()) + ' \u00b7 ' + esc(String(a.ciudad || '').toUpperCase()) + (exp ? ' \u00b7 hasta ' + esc(exp) : '') + '</div>' +
       restante +
