@@ -1,3 +1,17 @@
+:root {
+  --font-size-base: 1.125rem; /* 18 px */
+  --font-size-sm: 0.9375rem; /* 15 px */
+  --font-size-xs: 0.875rem; /* 14 px */
+  --font-size-lg: 1.25rem; /* 20 px */
+  --font-size-xl: 1.5rem; /* 24 px */
+  --font-size-btn: 1rem; /* 16 px */
+  --font-size-label: 1rem; /* 16 px */
+  --font-size-input: 1.125rem; /* 18 px */
+  --font-size-caption: 0.9375rem; /* 15-16 px */
+  --line-height-base: 1.5;
+  --line-height-content: 1.55;
+}
+
 * { 
 
   box-sizing: border-box; 
@@ -10,6 +24,10 @@
 
   -webkit-tap-highlight-color: transparent;
 
+}
+
+html {
+  font-size: 16px;
 }
 
 body { 
@@ -28,11 +46,12 @@ body {
 
   overflow: hidden; 
 
-  transform: translateZ(0);
-
   scrollbar-width: thin;
 
   scrollbar-color: #FF6D00 #1E293B;
+
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
 
 }
 
@@ -788,25 +807,21 @@ main {
 }
 
 .btn-search-trigger {
-
   background: #FF6D00;
-
   color: white;
-
   border: none;
-
-  padding: 4px 10px;
-
+  padding: 6px 12px;
   border-radius: 6px;
-
-  font-size: 10.5px;
-
+  font-size: var(--font-size-btn);
   font-weight: 800;
-
   cursor: pointer;
-
   transition: background-color 0.2s;
-
+  min-height: 48px;
+  min-width: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
 .btn-search-trigger:hover {
