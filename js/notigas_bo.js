@@ -48,7 +48,7 @@
   const CATEGORIAS = [
     { codigo: 'plastico',     etiqueta: '♻️  Plástico',                  chip: 'Plástico',   grupo: 'recolector',  icono: '♻️',  color: '#22C55E', tipo_solicitud: 'recogida' },
     { codigo: 'papel',        etiqueta: '📄 Papel / Cartón',            chip: 'Papel',      grupo: 'recolector',  icono: '📄',  color: '#F59E0B', tipo_solicitud: 'recogida' },
-    { codigo: 'chatarra',     etiqueta: '⚙️  Chatarra',                  chip: 'Chatarra',   grupo: 'recolector',  icono: '⚙️',  color: '#94A3B8', tipo_solicitud: 'recogida' },
+    { codigo: 'chatarra',     etiqueta: '⚙️  Metales - Chatarra',        chip: 'Metales - Chatarra', grupo: 'recolector',  icono: '⚙️',  color: '#94A3B8', tipo_solicitud: 'recogida' },
     { codigo: 'vidrio',       etiqueta: '🍾 Vidrio',                      chip: 'Vidrio',     grupo: 'recolector',  icono: '🍾',  color: '#38BDF8', tipo_solicitud: 'recogida' },
     { codigo: 'organico',     etiqueta: '🌿 Orgánico Seleccionado',      chip: 'Orgánico',   grupo: 'recolector',  icono: '🌿',  color: '#84CC16', tipo_solicitud: 'recogida' },
     { codigo: 'aceite',       etiqueta: '🛢️ Aceite de cocina usado',     chip: 'Aceite usado', grupo: 'recolector', icono: '🛢️',  color: '#A16207', tipo_solicitud: 'recogida' },
