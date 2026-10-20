@@ -1,5 +1,5 @@
 :root {
-  --font-size-base: 1.125rem; /* 18 px */
+  --font-size-base: 1.0625rem; /* 17 px en PC (un punto menos que en Android) */
   --font-size-sm: 0.9375rem; /* 15 px */
   --font-size-xs: 0.875rem; /* 14 px */
   --font-size-lg: 1.25rem; /* 20 px */
@@ -10,6 +10,12 @@
   --font-size-caption: 0.9375rem; /* 15-16 px */
   --line-height-base: 1.5;
   --line-height-content: 1.55;
+}
+
+@media (max-width: 768px) {
+  :root {
+    --font-size-base: 1.125rem; /* 18 px en Android: letra grande */
+  }
 }
 
 * { 
@@ -7826,4 +7832,19 @@ img, video, canvas { max-width: 100%; }
 .ng-inline-9, .ng-inline-30, .ng-inline-31, .ng-inline-34, .ng-inline-40,
 .ng-inline-41, .ng-inline-79 {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* 16) Banner inferior de anuncios (pie de pagina): letra mas grande y tactil */
+.promo-banner-content {
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+}
+.promo-banner-content .promo-badge,
+.promo-banner-content .ad-subtext {
+  font-size: var(--font-size-base);
+}
+.promo-banner-content .btn-promo-contact {
+  font-size: var(--font-size-btn);
+  min-height: 48px;
+  padding: 10px 14px;
 }

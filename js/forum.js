@@ -65,10 +65,6 @@ async function renderForumFeed() {
           <button class="btn-new-post" style="margin: 0 auto; padding: 10px 16px; font-size:16px;" data-action="abrirModalNuevoPost">📝 Publicar Comentario o Aviso GRATIS (48 horas)</button>
         </div>
       `;
-      const adMarkup = typeof window.getAdSenseFeedMarkup === 'function' ? window.getAdSenseFeedMarkup('forum') : '';
-      if (adMarkup) {
-        feed.insertAdjacentHTML('afterbegin', adMarkup);
-      }
       return;
     }
 
@@ -138,14 +134,9 @@ async function renderForumFeed() {
           </div>
         </div>
       `;
-
-      if (index === adInsertAfterIndex && typeof window.getAdSenseFeedMarkup === 'function') {
-        html += window.getAdSenseFeedMarkup('forum');
-      }
     });
 
     feed.innerHTML = html;
-    if (typeof window.activateAdSenseIn === 'function') window.activateAdSenseIn(feed);
   } catch (err) {
     console.error(err);
   }
