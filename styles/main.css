@@ -718,6 +718,10 @@ main {
 
   gap: 6px;
 
+  position: relative;
+
+  z-index: 1400;
+
   background-color: rgba(30, 41, 59, 0.95) !important;
 
   border: 1px solid rgba(255, 255, 255, 0.15) !important;
@@ -740,11 +744,11 @@ main {
 
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
 
-  padding: 4px 6px !important;
+  padding: 6px 10px !important;
 
   font-weight: 700 !important;
 
-  font-size: 11px !important;
+  font-size: 13px !important;
 
   border-radius: 6px !important;
 
@@ -755,6 +759,36 @@ main {
   width: 100% !important;
 
   transition: border-color 0.2s ease, background 0.2s ease !important;
+
+}
+
+@media (min-width: 1024px) {
+
+  /* PC: menú de ciudades y menú de navegación principales más legibles */
+
+  .city-selector-bar {
+
+    padding: 8px 12px !important;
+
+  }
+
+  .city-selector-bar select {
+
+    font-size: 16px !important;
+
+    padding: 8px 14px !important;
+
+  }
+
+  nav .tab-btn {
+
+    font-size: 16px !important;
+
+    padding: 14px 12px !important;
+
+    min-height: 56px !important;
+
+  }
 
 }
 
