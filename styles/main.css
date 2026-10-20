@@ -7672,12 +7672,12 @@ header .brand-text {
   min-width: 0;
 }
 .brand-title {
-  font-size: var(--font-size-xl);
+  font-size: calc(var(--font-size-xl) - 2px);
   font-weight: 900;
   letter-spacing: 0.5px;
 }
 .brand-subtitle {
-  font-size: var(--font-size-caption);
+  font-size: calc(var(--font-size-caption) - 1px);
   font-weight: 600;
   letter-spacing: 0.3px;
   opacity: 0.92;
@@ -7836,15 +7836,15 @@ img, video, canvas { max-width: 100%; }
 
 /* 16) Banner inferior de anuncios (pie de pagina): letra mas grande y tactil */
 .promo-banner-content {
-  font-size: var(--font-size-base);
+  font-size: calc(var(--font-size-base) - 1px);
   line-height: 1.5;
 }
 .promo-banner-content .promo-badge,
 .promo-banner-content .ad-subtext {
-  font-size: var(--font-size-base);
+  font-size: calc(var(--font-size-base) - 1px);
 }
 .promo-banner-content .btn-promo-contact {
-  font-size: var(--font-size-btn);
+  font-size: calc(var(--font-size-btn) - 1px);
   min-height: 48px;
   padding: 10px 14px;
 }
