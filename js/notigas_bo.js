@@ -32,7 +32,7 @@
     documentoCorto: 'CI/NIT'
   };
 
-  const CIUDAD_PREDETERMINADA = 'cochabamba';
+  const CIUDAD_PREDETERMINADA = 'santacruz';
 
   /* Catálogo canónico NOTIGAS Bolivia. Fuente única de verdad: el servidor
      replica esta misma lista en notigas_catalogo_categorias() y la valida

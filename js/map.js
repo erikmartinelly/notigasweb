@@ -401,9 +401,9 @@ window.getCityMetroKeys = function(cityKey) {
 };
 
 window.inferMainCityFromCoords = function(lat, lng) {
-  if (lat == null || lng == null || isNaN(lat) || isNaN(lng)) return 'cochabamba';
+  if (lat == null || lng == null || isNaN(lat) || isNaN(lng)) return 'santacruz';
   const cities = Object.values(window.BOLIVIA_CITIES || {});
-  let closest = 'cochabamba';
+  let closest = 'santacruz';
   let minDist = Infinity;
   for (const c of cities) {
     const d = (typeof calcularDistanciaMetros === 'function')

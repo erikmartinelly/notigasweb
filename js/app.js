@@ -43,7 +43,7 @@ window.verificarPermisoOperarEnCiudad = function(accionNombre) {
   const userData = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
   const userRole = userData.role || (typeof AppState !== 'undefined' ? AppState.get('userRole') : 'vecino');
   const ciudadUsuario = (userData.ciudad || '').toLowerCase().trim();
-  const ciudadActiva = (typeof AppState !== 'undefined' ? AppState.get('city') || 'cochabamba' : 'cochabamba').toLowerCase().trim();
+  const ciudadActiva = (typeof AppState !== 'undefined' ? AppState.get('city') || 'santacruz' : 'santacruz').toLowerCase().trim();
 
   // Si no está autenticado, permitir que el flujo estándar de login lo maneje
   const uid = userData.user_id || (typeof getCurrentUserId === 'function' ? getCurrentUserId() : null);
@@ -463,14 +463,14 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
           color: uData.color_camion
         });
       } else {
-        favEl.href = "icons/oil-bottle.svg?v=161";
+        favEl.href = "icons/oil-bottle.svg?v=162";
       }
       document.title = "🚛 DISTRIBUIDOR OFICIAL - NOTIGAS en Vivo";
     } else {
       if (typeof window.restaurarFaviconDefault === 'function') {
         window.restaurarFaviconDefault();
       } else {
-        favEl.href = "icons/oil-bottle.svg?v=161";
+        favEl.href = "icons/oil-bottle.svg?v=162";
       }
       document.title = "♻️ RECOJO RECICLABLES";
     }
