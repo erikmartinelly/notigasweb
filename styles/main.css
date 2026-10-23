@@ -7855,6 +7855,12 @@ img, video, canvas { max-width: 100%; }
   .ng-inline-135 { max-height: none; overflow-y: visible; padding-right: 0; }
 }
 
+/* Admin: ancho del 80% de la pantalla en web (PC y movil) */
+#modalAdmin .modal-content {
+  width: 80vw;
+  max-width: none;
+}
+
 /* 15) Contraste: botones naranjas con texto blanco legible (>= 4.5:1) */
 .btn-config-rect {
   background: linear-gradient(135deg, #E65100 0%, #BF360C 100%);
