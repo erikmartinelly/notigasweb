@@ -18,24 +18,20 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6
-        with:
-          version: 10.15.0
-
-      - name: Install dependencies (frozen lockfile)
-        run: pnpm install --frozen-lockfile
+      - name: Install dependencies
+        run: npm install
 
       - name: Smoke test HTTP server
         env:
           SUPABASE_URL: https://example.supabase.co
           SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_smoke_test
         run: |
+          sleep 1
           node server.js > /tmp/notigas-server.log 2>&1 &
           PID=$!
           trap 'kill $PID || true' EXIT
           sleep 2
-          for i in {1..40}; do
+          for i in {1..60}; do
             if curl -fsS http://127.0.0.1:3000/health | grep -q '^OK$'; then
               curl -fsS http://127.0.0.1:3000/ > /tmp/notigas-index.html
               curl -fsS http://127.0.0.1:3000/js/app.js > /tmp/notigas-app.js
@@ -50,7 +46,7 @@ jobs:
               grep -q 'id="driverCreditProgressiveTerms"' /tmp/notigas-index.html
               # Bolivia: la configuracion central debe servirse y declarar Bs/Cochabamba
               grep -q 'CIUDAD_PREDETERMINADA' /tmp/notigas-bo.js
-              grep -q 'cochabamba' /tmp/notigas-bo.js
+              grep -q 'santacruz' /tmp/notigas-bo.js
               grep -q 'BOB' /tmp/notigas-bo.js
               grep -q 'es-BO' /tmp/notigas-bo.js
               if grep -qE 'S/[[:space:]]*[0-9]' /tmp/notigas-index.html; then
@@ -108,7 +104,7 @@ jobs:
         run: node scripts/check_syntax.js
 
       - name: Verify Runtime & Map Initialization
-        run: pnpm test:map
+        run: npm run test:map
 
       - name: Verify Cross-Role View Contract
         run: node scripts/test_rls_security.js

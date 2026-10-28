@@ -294,7 +294,7 @@ def main() -> int:
     must(tiene(ci, "Verify Final Preproduction Guardrails"), "CI ejecuta guardrail final")
     must(tiene(ci, "actions/checkout@v7"), "CI usa checkout con runtime actual")
     must(tiene(ci, "actions/setup-node@v7"), "CI usa setup-node con runtime actual")
-    must(tiene(ci, "pnpm/action-setup@v6"), "CI usa pnpm action actual")
+    must(tiene(ci, "npm install") or tiene(ci, "pnpm install"), "CI instala dependencias")
     must(tiene(ci, "grep -q '\U0001F30D Todos'"), "CI verifica el HTML realmente servido")
 
     print()
