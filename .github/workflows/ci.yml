@@ -34,7 +34,8 @@ jobs:
           node server.js > /tmp/notigas-server.log 2>&1 &
           PID=$!
           trap 'kill $PID || true' EXIT
-          for i in {1..20}; do
+          sleep 2
+          for i in {1..40}; do
             if curl -fsS http://127.0.0.1:3000/health | grep -q '^OK$'; then
               curl -fsS http://127.0.0.1:3000/ > /tmp/notigas-index.html
               curl -fsS http://127.0.0.1:3000/js/app.js > /tmp/notigas-app.js

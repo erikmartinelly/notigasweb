@@ -463,14 +463,14 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
           color: uData.color_camion
         });
       } else {
-        favEl.href = "icons/oil-bottle.svg?v=168";
+        favEl.href = "icons/oil-bottle.svg?v=170";
       }
       document.title = "🚛 RECOLECTOR REGISTRADO";
     } else {
       if (typeof window.restaurarFaviconDefault === 'function') {
         window.restaurarFaviconDefault();
       } else {
-        favEl.href = "icons/oil-bottle.svg?v=168";
+        favEl.href = "icons/oil-bottle.svg?v=170";
       }
       document.title = "♻️ RECOJO RECICLABLES";
     }

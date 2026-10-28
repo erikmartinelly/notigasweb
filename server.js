@@ -212,6 +212,10 @@ app.use(express.static(__dirname, {
 
 app.get('*', sendIndex);
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ NOTIGAS iniciado exitosamente en puerto ${PORT}`);
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log('NOTIGAS iniciado exitosamente en puerto ' + PORT);
+});
+server.on('error', (err) => {
+  console.error('Error al iniciar el servidor:', err);
+  process.exit(1);
 });
