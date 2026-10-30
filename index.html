@@ -111,11 +111,11 @@
 
   <link rel="manifest" href="manifest.json">
 
-  <link id="dynamicFavicon" rel="icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=174"/>
+  <link id="dynamicFavicon" rel="icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=175"/>
 
-  <link rel="icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=174"/>
+  <link rel="icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=175"/>
 
-  <link rel="shortcut icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=174"/>
+  <link rel="shortcut icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=175"/>
 
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
@@ -139,7 +139,7 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="styles/main.css?v=174">
+  <link rel="stylesheet" href="styles/main.css?v=175">
 
   <!-- SERVICIOS EXTERNOS -->
 
@@ -905,6 +905,10 @@
             <i class="fa-solid fa-oil-can"></i> Aceite de cocina usado
           </label>
           <label class="driver-material-chip">
+            <input type="checkbox" name="driverMaterial" value="detergentes" style="margin:0;">
+            <i class="fa-solid fa-pump-soap"></i> Recarga de Detergentes
+          </label>
+          <label class="driver-material-chip">
             <input type="checkbox" name="driverMaterial" value="otros" style="margin:0;">
             <i class="fa-solid fa-box"></i> Otro material (especifica)
           </label>
@@ -1597,80 +1601,6 @@
         </button>
       </div>
     </div>
-  </div>
-
-  <!-- MODAL SUBMENÚ PEDIDOS MEJORADO -->
-
-  <div class="modal" id="modalSubmenu">
-
-    <div class="modal-content ng-inline-80">
-
-      <div class="modal-title">
-
-        <span>📦 ¿Qué material deseas que recojamos?</span>
-
-        <button class="btn-close"  id="auto-event-38" >✖</button>
-
-      </div>
-
-      <p class="ng-inline-81">Marca los materiales que tienes disponibles. Puedes elegir varios en el mismo pedido:</p>
-
-      <div class="driver-material-grid" role="group" aria-label="Materiales a recolectar">
-
-        <label class="driver-material-chip">
-
-          <input type="checkbox" name="submenuMaterial" value="plastico" checked style="margin:0;">
-
-          <i class="fa-solid fa-recycle"></i> Plástico
-
-        </label>
-
-        <label class="driver-material-chip">
-
-          <input type="checkbox" name="submenuMaterial" value="papel" style="margin:0;">
-
-          <i class="fa-solid fa-file-lines"></i> Papel / Cartón
-
-        </label>
-
-        <label class="driver-material-chip">
-
-          <input type="checkbox" name="submenuMaterial" value="chatarra" style="margin:0;">
-
-          <i class="fa-solid fa-gears"></i> Chatarra
-
-        </label>
-
-        <label class="driver-material-chip">
-
-          <input type="checkbox" name="submenuMaterial" value="vidrio" style="margin:0;">
-
-          <i class="fa-solid fa-wine-bottle"></i> Vidrio
-
-        </label>
-
-        <label class="driver-material-chip">
-
-          <input type="checkbox" name="submenuMaterial" value="aceite" style="margin:0;">
-
-          <i class="fa-solid fa-oil-can"></i> Aceite de cocina usado
-
-        </label>
-
-        <label class="driver-material-chip">
-
-          <input type="checkbox" name="submenuMaterial" value="otros" style="margin:0;">
-
-          <i class="fa-solid fa-box"></i> Otro material (especifica)
-
-        </label>
-
-      </div>
-
-          <button class="btn-submit" id="btnPedirRecogidaMultiple" style="margin-top:14px; width:100%;"><i class="fa-solid fa-recycle" style="color:#22C55E;"></i> Continuar con el Pedido</button>
-
-    </div>
-
   </div>
 
   <!-- MODAL FICHA DE PEDIDO -->
@@ -2942,33 +2872,33 @@
 
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3/dist/umd/supabase.min.js" integrity="sha384-l8ah+VgaWtk1mvOe9VC+OirC6qHFF4yH7l7mKRidV9MSti3E9F463bMp6ZVN4kuC" crossorigin="anonymous"></script>
 
-  <script defer src="js/notigas_bo.js?v=174"></script>
-  <script defer src="js/driver_icons.js?v=174"></script>
-  <script defer src="js/state.js?v=174"></script>
+  <script defer src="js/notigas_bo.js?v=175"></script>
+  <script defer src="js/driver_icons.js?v=175"></script>
+  <script defer src="js/state.js?v=175"></script>
 
-  <script defer src="js/ui.js?v=174"></script>
+  <script defer src="js/ui.js?v=175"></script>
 
-  <script defer src="/runtime-config.js?v=174"></script>
-  <script defer src="js/monitoring.js?v=174"></script>
-  <script defer src="js/supabase-config.js?v=174"></script>
+  <script defer src="/runtime-config.js?v=175"></script>
+  <script defer src="js/monitoring.js?v=175"></script>
+  <script defer src="js/supabase-config.js?v=175"></script>
 
-  <script defer src="js/device_security.js?v=174"></script>
+  <script defer src="js/device_security.js?v=175"></script>
 
-  <script defer src="js/auth.js?v=174"></script>
+  <script defer src="js/auth.js?v=175"></script>
 
-  <script defer src="js/vendors.js?v=174"></script>
+  <script defer src="js/vendors.js?v=175"></script>
 
-  <script defer src="js/map.js?v=174"></script>
+  <script defer src="js/map.js?v=175"></script>
 
-  <script defer src="js/map_search.js?v=174"></script>
+  <script defer src="js/map_search.js?v=175"></script>
 
-  <script defer src="js/map_gps.js?v=174"></script>
+  <script defer src="js/map_gps.js?v=175"></script>
 
-  <script defer src="js/orders.js?v=174"></script>
+  <script defer src="js/orders.js?v=175"></script>
 
-  <script defer src="js/app.js?v=174"></script>
+  <script defer src="js/app.js?v=175"></script>
 
-  <script defer src="js/events.js?v=174"></script>
+  <script defer src="js/events.js?v=175"></script>
 
 </body>
 

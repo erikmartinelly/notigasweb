@@ -425,11 +425,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnEntendidoDriver = document.getElementById('btnEntendidoDriverTerms');
     if (btnEntendidoDriver) btnEntendidoDriver.addEventListener('click', () => { safeCall('cerrarModalPoliticaPrivacidad'); });
 
-    const el_auto_event_38 = document.getElementById('auto-event-38');
-    if (el_auto_event_38) el_auto_event_38.addEventListener('click', () => { safeCall('closeSubmenuModal'); });
-
-    const el_btnPedirRecogidaMultiple = document.getElementById('btnPedirRecogidaMultiple');
-    if (el_btnPedirRecogidaMultiple) el_btnPedirRecogidaMultiple.addEventListener('click', () => { safeCall('abrirPedidoRecogidaMultiple'); });
+    // modalSubmenu eliminado: el submenu de pedidos abre directamente la ficha de pedido.
 
     const el_auto_event_47 = document.getElementById('auto-event-47');
     if (el_auto_event_47) el_auto_event_47.addEventListener('click', () => { safeCall('closePedidoModal'); });

@@ -1026,14 +1026,18 @@ async function abrirSubmenuPedidos() {
     return;
   }
 
-  const modalSubmenu = document.getElementById('modalSubmenu');
-  if (modalSubmenu) modalSubmenu.style.display = 'flex';
+  if (typeof window.setTipoSolicitud === 'function') {
+    window.setTipoSolicitud('recogida');
+  }
+
+  const modalPedido = document.getElementById('modalPedido');
+  if (modalPedido) modalPedido.style.display = 'flex';
 }
 window.abrirSubmenuPedidos = abrirSubmenuPedidos;
 
 function closeSubmenuModal() {
-  const modalSubmenu = document.getElementById('modalSubmenu');
-  if (modalSubmenu) modalSubmenu.style.display = 'none';
+  const modalPedido = document.getElementById('modalPedido');
+  if (modalPedido) modalPedido.style.display = 'none';
 }
 
 window.centrarMapaEnMiPedido = function() {
