@@ -1299,8 +1299,8 @@ function setTipoSolicitud(tipo) {
   }
   if (labelCat) labelCat.textContent = esRecogida ? 'Materiales que tienes para recoger (puedes marcar varios):' : 'Producto / Servicio que necesitas:';
   if (labelCant) labelCant.textContent = esRecogida
-    ? '¿Cuánto material tienes? (Ej: 3 bolsas, 1 quintillo):'
-    : '¿Cuánto necesitas? (Ej: 2 unidades, 1 quintillo):';
+    ? '¿Cuánto material tienes? (Ej: 3 bolsas, 1 quintal):'
+    : '¿Cuánto necesitas? (Ej: 2 unidades, 1 quintal):';
   if (btnTxt) btnTxt.textContent = esRecogida ? 'Publicar Recogida' : 'Pedido Recolector';
   if (title) title.textContent = esRecogida ? '♻️ Solicitar Recogida de Material' : '🛒 Pedido Recolector';
 
@@ -1381,8 +1381,8 @@ function confirmarPedido() {
       showToast(
         tipoSolicitud === 'recogida' ? '📦 Indica cuánto material tienes' : '📦 Indica cuánto necesitas',
         tipoSolicitud === 'recogida'
-          ? 'Por ejemplo "3 bolsas" o "1 quintillo". Así el repartidor sabe qué llevar.'
-          : 'Por ejemplo "2 unidades" o "1 quintillo".',
+          ? 'Por ejemplo "3 bolsas" o "1 quintal". Así el repartidor sabe qué llevar.'
+          : 'Por ejemplo "2 unidades" o "1 quintal".',
         'warning', 5000
       );
     }
