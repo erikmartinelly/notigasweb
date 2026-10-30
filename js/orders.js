@@ -190,11 +190,11 @@ async function renderDriverOrdersList() {
   let financialWidgetHtml = `
     <div class="driver-financial-card" style="background:linear-gradient(135deg,#1E293B 0%,#0F172A 100%);border:1.5px solid ${driverFinances.isSuspended ? '#EF4444' : '#334155'};border-radius:10px;padding:10px 12px;margin-bottom:12px;">
       <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:6px;">
-        <span style="font-size:11px;font-weight:800;color:#E2E8F0;">🇧🇴 Acceso gratuito</span>
-        <span style="font-size:11px;font-weight:900;color:${barColor};">${driverFinances.isSuspended ? 'Suspendido' : 'Sin cobros'}</span>
+        <span style="font-size:16px;font-weight:800;color:#E2E8F0;">🇧🇴 Acceso gratuito</span>
+        <span style="font-size:16px;font-weight:900;color:${barColor};">${driverFinances.isSuspended ? 'Suspendido' : 'Sin cobros'}</span>
       </div>
       <div style="background:#0F172A;border-radius:6px;height:8px;width:100%;overflow:hidden;border:1px solid #334155;"><div style="background:${barColor};height:100%;width:100%;"></div></div>
-      <div style="display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:9.5px;color:#94A3B8;">
+      <div style="display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:16px;color:#94A3B8;">
         <span>Comisión por pedido: Bs 0,00</span>
         <span>NOTIGAS no procesa fondos</span>
       </div>
@@ -202,7 +202,7 @@ async function renderDriverOrdersList() {
 
   if (driverFinances.isSuspended) {
     const motivo = driverFinances.motivo_bloqueo || 'Cuenta suspendida por una sanción administrativa.';
-    financialWidgetHtml += `<div class="driver-lockout-banner" style="background:rgba(239,68,68,.15);border:2px solid #EF4444;border-radius:10px;padding:12px;margin-bottom:12px;color:#FECACA;"><strong>⛔ CUENTA SUSPENDIDA</strong><div style="margin-top:5px;font-size:11px;line-height:1.45;">${typeof escapeHtmlStr === 'function' ? escapeHtmlStr(motivo) : motivo}</div></div>`;
+    financialWidgetHtml += `<div class="driver-lockout-banner" style="background:rgba(239,68,68,.15);border:2px solid #EF4444;border-radius:10px;padding:12px;margin-bottom:12px;color:#FECACA;"><strong>⛔ CUENTA SUSPENDIDA</strong><div style="margin-top:5px;font-size:16px;line-height:1.45;">${typeof escapeHtmlStr === 'function' ? escapeHtmlStr(motivo) : motivo}</div></div>`;
   }
 
   const pubOrders = pubRes.data || [];
@@ -224,7 +224,7 @@ async function renderDriverOrdersList() {
   });
 
   const planBannerHtml = `
-    <div class="driver-plan-banner" style="background:linear-gradient(135deg,rgba(16,185,129,.14),#0F172A);border:1.5px solid #10B981;border-radius:10px;padding:10px 12px;margin-bottom:12px;color:#D1FAE5;font-size:11.5px;line-height:1.45;">
+    <div class="driver-plan-banner" style="background:linear-gradient(135deg,rgba(16,185,129,.14),#0F172A);border:1.5px solid #10B981;border-radius:10px;padding:10px 12px;margin-bottom:12px;color:#D1FAE5;font-size:16px;line-height:1.45;">
       <strong style="color:#FFFFFF;">🇧🇴 Bolivia · Acceso gratuito sin comisión</strong> · NOTIGAS no cobra por pedido ni por generar o escanear un QR local. El pago se acuerda directo con el comprador en bolivianos.
     </div>`;
 
@@ -233,10 +233,10 @@ async function renderDriverOrdersList() {
       const errDetail = pubRes.error?.message || assignedRes.error?.message || 'Error de conexión o permisos';
       const safeErr = typeof escapeHtmlStr === 'function' ? escapeHtmlStr(errDetail) : errDetail;
       container.innerHTML = financialWidgetHtml + `
-        <div style="padding:22px; text-align:center; color:#F87171; font-size:12px; background:rgba(239, 68, 68, 0.08); border-radius:8px; border:1px solid rgba(239, 68, 68, 0.25);">
+        <div style="padding:22px; text-align:center; color:#F87171; font-size:16px; background:rgba(239, 68, 68, 0.08); border-radius:8px; border:1px solid rgba(239, 68, 68, 0.25);">
           <i class="fa-solid fa-triangle-exclamation" style="font-size:24px; margin-bottom:8px; display:block; color:#EF4444;"></i>
-          <strong style="display:block; margin-bottom:4px; font-size:13px;">Error cargando pedidos</strong>
-          <span style="font-size:11px; color:#FECACA; word-break:break-word;">${safeErr}</span>
+          <strong style="display:block; margin-bottom:4px; font-size:16px;">Error cargando pedidos</strong>
+          <span style="font-size:16px; color:#FECACA; word-break:break-word;">${safeErr}</span>
         </div>`;
       return;
     }
@@ -244,7 +244,7 @@ async function renderDriverOrdersList() {
     const vipLockedNotice = '';
 
     container.innerHTML = financialWidgetHtml + planBannerHtml + `
-      <div style="padding:25px; text-align:center; color:#94A3B8; font-size:12px;">
+      <div style="padding:25px; text-align:center; color:#94A3B8; font-size:16px;">
         <i class="fa-solid fa-clipboard-check" style="font-size:24px; margin-bottom:8px; display:block;"></i>
         No hay pedidos pendientes disponibles en este momento para tu categoría en esta ciudad.
         ${vipLockedNotice}
@@ -278,9 +278,9 @@ async function renderDriverOrdersList() {
       const tel = o.telefono ? escapeHtmlStr(o.telefono) : '';
       const desc = o.descripcion ? escapeHtmlStr(o.descripcion) : '';
       const subestadoBadge = o.subestado === 'en_puerta'
-        ? '<span style="font-size:9px; background:#D97706; color:white; padding:2px 6px; border-radius:4px; font-weight:800; margin-left:4px;">🚪 EN PUERTA</span>'
+        ? '<span style="font-size:16px; background:#D97706; color:white; padding:2px 6px; border-radius:4px; font-weight:800; margin-left:4px;">🚪 EN PUERTA</span>'
         : (o.subestado === 'en_camino'
-            ? '<span style="font-size:9px; background:#0284C7; color:white; padding:2px 6px; border-radius:4px; font-weight:800; margin-left:4px;">🚚 EN CAMINO</span>'
+            ? '<span style="font-size:16px; background:#0284C7; color:white; padding:2px 6px; border-radius:4px; font-weight:800; margin-left:4px;">🚚 EN CAMINO</span>'
             : '');
 
       html += `
@@ -288,17 +288,17 @@ async function renderDriverOrdersList() {
           <div class="demand-card-header" style="display:flex; justify-content:space-between; align-items:flex-start;">
             <div>
               <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
-                <span style="font-size:9px; background:#10B981; color:white; padding:2px 6px; border-radius:4px; font-weight:800;">EN ENTREGA</span>
+                <span style="font-size:16px; background:#10B981; color:white; padding:2px 6px; border-radius:4px; font-weight:800;">EN ENTREGA</span>
                 ${subestadoBadge}
               </div>
-              <div style="font-size:13px; font-weight:800; color:#F8FAFC; margin-top:2px;">${escapeHtmlStr(o.categoria || 'Pedido')} (${escapeHtmlStr(o.cantidad || '1 un')})</div>
+              <div style="font-size:16px; font-weight:800; color:#F8FAFC; margin-top:2px;">${escapeHtmlStr(o.categoria || 'Pedido')} (${escapeHtmlStr(o.cantidad || '1 un')})</div>
             </div>
-            <div style="font-size:10px; color:#94A3B8;">${antiguedad}</div>
+            <div style="font-size:16px; color:#94A3B8;">${antiguedad}</div>
           </div>
-          <div class="demand-card-meta" style="margin-top:6px; font-size:11px;">
+          <div class="demand-card-meta" style="margin-top:6px; font-size:16px;">
             <div style="color:#CBD5E1;">📍 <strong>Dirección:</strong> ${street}</div>
-            ${tel ? `<div style="margin-top:3px;">📞 <strong>Teléfono:</strong> <a href="tel:${tel}" style="color:#38BDF8; font-weight:700; text-decoration:underline;">${tel}</a></div>` : '<div style="color:#64748B; font-size:10px; margin-top:2px;">📞 Teléfono: No indicado</div>'}
-            ${desc ? `<div style="margin-top:3px; font-size:10.5px; color:#94A3B8; font-style:italic;">📝 ${desc}</div>` : ''}
+            ${tel ? `<div style="margin-top:3px;">📞 <strong>Teléfono:</strong> <a href="tel:${tel}" style="color:#38BDF8; font-weight:700; text-decoration:underline;">${tel}</a></div>` : '<div style="color:#64748B; font-size:16px; margin-top:2px;">📞 Teléfono: No indicado</div>'}
+            ${desc ? `<div style="margin-top:3px; font-size:16px; color:#94A3B8; font-style:italic;">📝 ${desc}</div>` : ''}
           </div>
 
           <div class="driver-quick-actions-container" style="margin-top:8px;">
@@ -326,13 +326,13 @@ async function renderDriverOrdersList() {
           </div>
 
           <div class="demand-card-actions" style="margin-top:8px; display:flex; gap:6px;">
-            <button type="button" class="btn-action" style="background:#0284C7; color:white; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:700; border:none; cursor:pointer; flex:1; display:inline-flex; align-items:center; justify-content:center; gap:5px;" data-action="centrarPedidoEnMapa" data-lat="${lat}" data-lng="${lng}" data-order-id="${o.id}">
+            <button type="button" class="btn-action" style="background:#0284C7; color:white; padding:6px 10px; border-radius:6px; font-size:16px; font-weight:700; border:none; cursor:pointer; flex:1; display:inline-flex; align-items:center; justify-content:center; gap:5px;" data-action="centrarPedidoEnMapa" data-lat="${lat}" data-lng="${lng}" data-order-id="${o.id}">
               <i class="fa-solid fa-map-location-dot"></i> VER EN EL MAPA
             </button>
-            <button type="button" class="btn-action" style="background:#10B981; color:white; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:700; border:none; cursor:pointer; flex:1; display:inline-flex; align-items:center; justify-content:center; gap:5px;" data-action="confirmarEntregaPedido" data-id="${o.id}">
+            <button type="button" class="btn-action" style="background:#10B981; color:white; padding:6px 10px; border-radius:6px; font-size:16px; font-weight:700; border:none; cursor:pointer; flex:1; display:inline-flex; align-items:center; justify-content:center; gap:5px;" data-action="confirmarEntregaPedido" data-id="${o.id}">
               <i class="fa-solid fa-circle-check"></i> Entregado
             </button>
-            <button type="button" class="btn-action" style="background:rgba(239,68,68,0.2); color:#FCA5A5; border:1px solid #EF4444; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:4px;" data-action="denunciarPedidoFalso" data-id="${o.id}" data-buyer="${encodeURIComponent(o.cliente_nombre || o.nombre || 'Comprador')}" data-tel="${encodeURIComponent(tel || '')}" title="Denunciar que este pedido es falso o fraude">
+            <button type="button" class="btn-action" style="background:rgba(239,68,68,0.2); color:#FCA5A5; border:1px solid #EF4444; padding:6px 10px; border-radius:6px; font-size:16px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:4px;" data-action="denunciarPedidoFalso" data-id="${o.id}" data-buyer="${encodeURIComponent(o.cliente_nombre || o.nombre || 'Comprador')}" data-tel="${encodeURIComponent(tel || '')}" title="Denunciar que este pedido es falso o fraude">
               <i class="fa-solid fa-triangle-exclamation"></i> Falso
             </button>
           </div>
@@ -355,10 +355,10 @@ async function renderDriverOrdersList() {
       <div class="demand-group-card" style="margin-bottom:10px;">
         <div class="demand-card-header">
           <div>
-            <div style="font-size:13px; font-weight:800; color:#F8FAFC;">${escapeHtmlStr(g.cat)} <span style="font-size:11px; color:#38BDF8; font-weight:700;">- ${escapeHtmlStr(g.zone)}</span></div>
-            <div style="font-size:10px; color:#94A3B8;">${list.length} ${list.length === 1 ? 'vecino esperando' : 'vecinos esperando'}</div>
+            <div style="font-size:16px; font-weight:800; color:#F8FAFC;">${escapeHtmlStr(g.cat)} <span style="font-size:16px; color:#38BDF8; font-weight:700;">- ${escapeHtmlStr(g.zone)}</span></div>
+            <div style="font-size:16px; color:#94A3B8;">${list.length} ${list.length === 1 ? 'vecino esperando' : 'vecinos esperando'}</div>
           </div>
-          <div class="demand-card-count">${totalBalones} <span style="font-size:10px; color:#94A3B8;">pedidos</span></div>
+          <div class="demand-card-count">${totalBalones} <span style="font-size:16px; color:#94A3B8;">pedidos</span></div>
         </div>
         <div class="demand-card-meta">
           <div>⏱️ Último pedido: ${antiguedad}</div>
@@ -372,37 +372,37 @@ async function renderDriverOrdersList() {
             const desc = o.descripcion ? escapeHtmlStr(o.descripcion) : '';
             const buyer = o.titulo || 'Pedido Vecinal';
             return `
-              <div style="padding:8px 0; border-bottom:1px dashed rgba(255,255,255,0.08); font-size:11px;">
+              <div style="padding:8px 0; border-bottom:1px dashed rgba(255,255,255,0.08); font-size:16px;">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:6px;">
                   <div style="flex:1; min-width:0;">
-                    <div style="font-size:12px; font-weight:800; color:#F8FAFC; margin-bottom:2px;">
+                    <div style="font-size:16px; font-weight:800; color:#F8FAFC; margin-bottom:2px;">
                       📦 ${escapeHtmlStr(o.categoria || g.cat)} <span style="color:#FF6D00;">(${escapeHtmlStr(o.cantidad || '1 un')})</span>
                     </div>
-                    <div style="color:#CBD5E1; font-size:11px; margin-top:2px;">
+                    <div style="color:#CBD5E1; font-size:16px; margin-top:2px;">
                       📍 <strong>Dirección:</strong> ${st}
                     </div>
                     ${tel ? `
-                      <div style="margin-top:3px; font-size:11px; color:#38BDF8;">
+                      <div style="margin-top:3px; font-size:16px; color:#38BDF8;">
                         📞 <strong>Teléfono:</strong> <a href="tel:${tel}" style="color:#38BDF8; font-weight:700; text-decoration:underline;">${tel}</a>
                       </div>
                     ` : ''}
                     ${desc ? `
-                      <div style="margin-top:3px; font-size:10.5px; color:#94A3B8; font-style:italic;">
+                      <div style="margin-top:3px; font-size:16px; color:#94A3B8; font-style:italic;">
                         📝 ${desc}
                       </div>
                     ` : ''}
                   </div>
                 </div>
                 <div style="display:flex; gap:6px; align-items:center; justify-content:flex-end;">
-                  <button type="button" style="background:#0284C7; color:#F8FAFC; border:none; padding:5px 9px; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;" data-action="centrarPedidoEnMapa" data-lat="${lat}" data-lng="${lng}" data-order-id="${o.id}" title="Ver en el mapa">
+                  <button type="button" style="background:#0284C7; color:#F8FAFC; border:none; padding:5px 9px; border-radius:6px; font-size:16px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;" data-action="centrarPedidoEnMapa" data-lat="${lat}" data-lng="${lng}" data-order-id="${o.id}" title="Ver en el mapa">
                     <i class="fa-solid fa-map-location-dot"></i> VER EN EL MAPA
                   </button>
                   ${driverFinances.isSuspended ? `
-                    <button type="button" style="background:#475569; color:#94A3B8; border:none; padding:5px 12px; border-radius:6px; font-size:10px; font-weight:800; cursor:not-allowed; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;" onclick="alert('⛔ Cuenta bloqueada por una sanción administrativa. Contacta a soporte de NOTIGAS para conocer el motivo.');" title="Cuenta bloqueada por sanción administrativa">
+                    <button type="button" style="background:#475569; color:#94A3B8; border:none; padding:5px 12px; border-radius:6px; font-size:16px; font-weight:800; cursor:not-allowed; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;" onclick="alert('⛔ Cuenta bloqueada por una sanción administrativa. Contacta a soporte de NOTIGAS para conocer el motivo.');" title="Cuenta bloqueada por sanción administrativa">
                       <i class="fa-solid fa-ban"></i> Bloqueado
                     </button>
                   ` : `
-                    <button type="button" style="background:#FF6D00; color:white; border:none; padding:5px 12px; border-radius:6px; font-size:10px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;" data-action="aceptarPedidoRepartidor" data-id="${o.id}" data-lat="${lat}" data-lng="${lng}" data-address="${escapeHtmlStr(o.direccion || '')}">
+                    <button type="button" style="background:#FF6D00; color:white; border:none; padding:5px 12px; border-radius:6px; font-size:16px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;" data-action="aceptarPedidoRepartidor" data-id="${o.id}" data-lat="${lat}" data-lng="${lng}" data-address="${escapeHtmlStr(o.direccion || '')}">
                       <i class="fa-solid fa-truck"></i> Tomar
                     </button>
                   `}
@@ -1682,21 +1682,21 @@ async function abrirPanoramicaPedidos() {
 
       contenido += `
         <div style="background: linear-gradient(135deg, rgba(255,109,0,0.15), rgba(0,230,118,0.08)); border: 1px solid #FF6D00; border-radius: 12px; padding: 12px; margin-bottom: 10px;">
-          <div style="font-weight: 900; font-size: 13px; color: #FF6D00; margin-bottom: 6px;"><i class="fa-solid fa-box"></i> Tu Pedido Activo</div>
-          <div style="font-size: 12px; color: #CBD5E1;"><strong>📦 Producto:</strong> ${escapeHtmlStr(o.categoria)}</div>
-          <div style="font-size: 12px; color: #CBD5E1;"><strong>🔢 Cantidad:</strong> ${escapeHtmlStr(String(o.cantidad))}</div>
-          <div style="font-size: 12px; color: #CBD5E1;"><strong>🚦 Calle:</strong> ${escapeHtmlStr(o.callePrincipal || 'En mapa')}</div>
-          <div style="font-size: 11px; color: #64748B; margin-top: 4px;">⏱️ Publicado hace ${antiguedad}</div>
+          <div style="font-weight: 900; font-size:16px; color: #FF6D00; margin-bottom: 6px;"><i class="fa-solid fa-box"></i> Tu Pedido Activo</div>
+          <div style="font-size:16px; color: #CBD5E1;"><strong>📦 Producto:</strong> ${escapeHtmlStr(o.categoria)}</div>
+          <div style="font-size:16px; color: #CBD5E1;"><strong>🔢 Cantidad:</strong> ${escapeHtmlStr(String(o.cantidad))}</div>
+          <div style="font-size:16px; color: #CBD5E1;"><strong>🚦 Calle:</strong> ${escapeHtmlStr(o.callePrincipal || 'En mapa')}</div>
+          <div style="font-size:16px; color: #64748B; margin-top: 4px;">⏱️ Publicado hace ${antiguedad}</div>
           <div style="display:flex; gap:6px; margin-top:10px;">
             ${isAsignado ? `
-              <button type="button" data-action="confirmarRecepcionComprador" style="flex:1; background:linear-gradient(135deg, #10B981, #059669); color:white; border:none; padding:7px 10px; border-radius:8px; font-size:11px; font-weight:800; cursor:pointer;">
+              <button type="button" data-action="confirmarRecepcionComprador" style="flex:1; background:linear-gradient(135deg, #10B981, #059669); color:white; border:none; padding:7px 10px; border-radius:8px; font-size:16px; font-weight:800; cursor:pointer;">
                 <i class="fa-solid fa-circle-check"></i> Ya recibí mi pedido
               </button>
-              <button type="button" data-action="reportarIncumplimientoPrecio" style="flex:1; background:#F59E0B; color:#111827; border:none; padding:7px 10px; border-radius:8px; font-size:11px; font-weight:800; cursor:pointer;">
+              <button type="button" data-action="reportarIncumplimientoPrecio" style="flex:1; background:#F59E0B; color:#111827; border:none; padding:7px 10px; border-radius:8px; font-size:16px; font-weight:800; cursor:pointer;">
                 <i class="fa-solid fa-flag"></i> Queja por precio
               </button>
             ` : ''}
-            <button type="button" data-action="cancelarPedidoActivo" style="flex:1; background:#ef4444; color:white; border:none; padding:7px 10px; border-radius:8px; font-size:11px; font-weight:800; cursor:pointer;">
+            <button type="button" data-action="cancelarPedidoActivo" style="flex:1; background:#ef4444; color:white; border:none; padding:7px 10px; border-radius:8px; font-size:16px; font-weight:800; cursor:pointer;">
               <i class="fa-solid fa-ban"></i> Cancelar
             </button>
           </div>
@@ -1734,11 +1734,11 @@ async function abrirPanoramicaPedidos() {
           otrosPedidosHtml += `
             <div style="background: #1E293B; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px; margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center;">
               <div style="flex:1;">
-                <div style="font-size:12px; font-weight:800; color:#F8FAFC;">${escapeHtmlStr(p.categoria)} (${p.cantidad})</div>
-                <div style="font-size:11px; color:#94A3B8;">📍 ${escapeHtmlStr(p.direccion || 'Ubicación GPS en Mapa')}</div>
-                <div style="font-size:10px; color:#64748B;">⏱️ ${antiguedad}</div>
+                <div style="font-size:16px; font-weight:800; color:#F8FAFC;">${escapeHtmlStr(p.categoria)} (${p.cantidad})</div>
+                <div style="font-size:16px; color:#94A3B8;">📍 ${escapeHtmlStr(p.direccion || 'Ubicación GPS en Mapa')}</div>
+                <div style="font-size:16px; color:#64748B;">⏱️ ${antiguedad}</div>
               </div>
-              <button type="button" data-action="centrarPedidoEnMapa" data-lat="${p.latitude}" data-lng="${p.longitude}" data-order-id="${p.id}" style="background:#0284C7; color:#F8FAFC; border:none; padding:6px 10px; border-radius:6px; font-size:10.5px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;">
+              <button type="button" data-action="centrarPedidoEnMapa" data-lat="${p.latitude}" data-lng="${p.longitude}" data-order-id="${p.id}" style="background:#0284C7; color:#F8FAFC; border:none; padding:6px 10px; border-radius:6px; font-size:16px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;">
                 <i class="fa-solid fa-map-location-dot"></i> VER EN EL MAPA
               </button>
             </div>
@@ -1750,13 +1750,13 @@ async function abrirPanoramicaPedidos() {
 
   if (otrosPedidosHtml) {
     contenido += `
-      <div style="font-weight: 800; font-size: 12px; color: #94A3B8; margin: 12px 0 6px;"><i class="fa-solid fa-users"></i> Otros Pedidos en tu Zona</div>
+      <div style="font-weight: 800; font-size:16px; color: #94A3B8; margin: 12px 0 6px;"><i class="fa-solid fa-users"></i> Otros Pedidos en tu Zona</div>
       ${otrosPedidosHtml}
     `;
   }
 
   if (!contenido) {
-    contenido = '<div style="text-align:center; padding:30px; color:#94A3B8; font-size:12px;"><i class="fa-solid fa-circle-info" style="font-size:24px; margin-bottom:8px; display:block;"></i>No hay pedidos activos registrados en este momento.</div>';
+    contenido = '<div style="text-align:center; padding:30px; color:#94A3B8; font-size:16px;"><i class="fa-solid fa-circle-info" style="font-size:24px; margin-bottom:8px; display:block;"></i>No hay pedidos activos registrados en este momento.</div>';
   }
 
   const modal = document.getElementById('modalPanoramicaPedidos');

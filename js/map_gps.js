@@ -146,21 +146,21 @@ async function obtenerUbicacionIPFallbackDesktop(forceReset = false) {
     } catch (_) {}
 
     if (!item) {
-        // Fallback seguro a Cochabamba por defecto
-        item = { lat: -17.3895, lng: -66.1568, city: 'Cochabamba', region: 'Cochabamba' };
+        // Fallback seguro a Santa Cruz por defecto
+        item = { lat: -17.7833, lng: -63.1821, city: 'Santa Cruz de la Sierra', region: 'Santa Cruz' };
     }
 
     const coords = { lat: item.lat, lng: item.lng, city: item.city, region: item.region, time: Date.now(), exact: false };
 
-    let detectedCity = 'cochabamba';
+    let detectedCity = 'santacruz';
     if (typeof window.inferMainCityFromCoords === 'function') {
         detectedCity = window.inferMainCityFromCoords(coords.lat, coords.lng);
     }
     if (!detectedCity || detectedCity === 'fuera_de_cobertura') {
         if (typeof window.matchCityByNameOrRegion === 'function') {
-            detectedCity = window.matchCityByNameOrRegion(coords.city, coords.region) || 'cochabamba';
+            detectedCity = window.matchCityByNameOrRegion(coords.city, coords.region) || 'santacruz';
         } else {
-            detectedCity = 'cochabamba';
+            detectedCity = 'santacruz';
         }
     }
 

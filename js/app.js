@@ -43,7 +43,7 @@ window.verificarPermisoOperarEnCiudad = function(accionNombre) {
   const userData = (typeof AppState !== 'undefined' ? AppState.get('userData') : null) || {};
   const userRole = userData.role || (typeof AppState !== 'undefined' ? AppState.get('userRole') : 'vecino');
   const ciudadUsuario = (userData.ciudad || '').toLowerCase().trim();
-  const ciudadActiva = (typeof AppState !== 'undefined' ? AppState.get('city') || 'cochabamba' : 'cochabamba').toLowerCase().trim();
+  const ciudadActiva = (typeof AppState !== 'undefined' ? AppState.get('city') || 'santacruz' : 'santacruz').toLowerCase().trim();
 
   // Si no está autenticado, permitir que el flujo estándar de login lo maneje
   const uid = userData.user_id || (typeof getCurrentUserId === 'function' ? getCurrentUserId() : null);
@@ -177,7 +177,7 @@ function abrirConfiguracionSegunRol() {
       const userData = AppState.get('userData') || {};
       const yaTieneFicha = Boolean(userData.hasDriverProfile || userData.placa || userData.whatsapp);
       buyerToDriverContainer.innerHTML = `
-        <button type="button" id="btnRegistroRepartidoresMenu" style="width:100%; background:linear-gradient(135deg,#FF6D00,#E65100); color:white; border:none; padding:12px; border-radius:10px; font-weight:800; cursor:pointer; font-size:13px; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 12px rgba(255,109,0,0.25);">
+        <button type="button" id="btnRegistroRepartidoresMenu" style="width:100%; background:linear-gradient(135deg,#FF6D00,#E65100); color:white; border:none; padding:12px; border-radius:10px; font-weight:800; cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 12px rgba(255,109,0,0.25);">
           <i class="fa-solid fa-truck-fast"></i> ${yaTieneFicha ? 'Volver al modo Recolector' : 'Registro Recolectores'}
         </button>`;
       const activateButton = document.getElementById('btnRegistroRepartidoresMenu');
@@ -261,8 +261,8 @@ function setAppMode(mode, refreshData = true) {
 
     if (badgeContainer) {
       badgeContainer.innerHTML = `
-        <button type="button" id="btnHeaderRoleToggle" data-notigas-action="switch-role" data-role-target="buyer" class="btn-role-switch-header" title="Modo Recolector activo. Haz clic para cambiar a Usuario" style="background:rgba(255,109,0,0.22); color:#FF6D00; padding:4px 8px; border-radius:8px; font-weight:900; font-size:11px; border:1.5px solid #FF6D00; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 2px 6px rgba(255,109,0,0.3);">
-          <i class="fa-solid fa-truck-fast"></i> <span>RECOLECTOR</span> <i class="fa-solid fa-repeat" style="font-size:9px; opacity:0.85;"></i>
+        <button type="button" id="btnHeaderRoleToggle" data-notigas-action="switch-role" data-role-target="buyer" class="btn-role-switch-header" title="Modo Recolector activo. Haz clic para cambiar a Usuario" style="background:rgba(255,109,0,0.22); color:#FF6D00; padding:4px 8px; border-radius:8px; font-weight:900; font-size:16px; border:1.5px solid #FF6D00; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 2px 6px rgba(255,109,0,0.3);">
+          <i class="fa-solid fa-truck-fast"></i> <span>RECOLECTOR</span> <i class="fa-solid fa-repeat" style="font-size:16px; opacity:0.85;"></i>
         </button>
       `;
     }
@@ -280,8 +280,8 @@ function setAppMode(mode, refreshData = true) {
 
     if (badgeContainer) {
       badgeContainer.innerHTML = `
-        <button type="button" id="btnHeaderRoleToggle" data-notigas-action="switch-role" data-role-target="driver" class="btn-role-switch-header" title="Modo Usuario activo. Haz clic para cambiar a Recolector" style="background:rgba(2,136,209,0.22); color:#38BDF8; padding:4px 8px; border-radius:8px; font-weight:900; font-size:11px; border:1.5px solid #0288D1; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 2px 6px rgba(2,136,209,0.3);">
-          <i class="fa-solid fa-basket-shopping"></i> <span>USUARIO</span> <i class="fa-solid fa-repeat" style="font-size:9px; opacity:0.85;"></i>
+        <button type="button" id="btnHeaderRoleToggle" data-notigas-action="switch-role" data-role-target="driver" class="btn-role-switch-header" title="Modo Usuario activo. Haz clic para cambiar a Recolector" style="background:rgba(2,136,209,0.22); color:#38BDF8; padding:4px 8px; border-radius:8px; font-weight:900; font-size:16px; border:1.5px solid #0288D1; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 2px 6px rgba(2,136,209,0.3);">
+          <i class="fa-solid fa-basket-shopping"></i> <span>USUARIO</span> <i class="fa-solid fa-repeat" style="font-size:16px; opacity:0.85;"></i>
         </button>
       `;
     }
@@ -421,7 +421,7 @@ const CATEGORIA_ICONO_FONTAWESOME = {
   plastico:    'fa-recycle',
   papel:       'fa-newspaper',
   chatarra:    'fa-gears',
-  botellas:    'fa-bottle-dispenser',
+  vidrio:      'fa-wine-bottle',
   organico:    'fa-seedling',
   aceite:      'fa-oil-can',
   detergentes: 'fa-pump-soap',
@@ -463,14 +463,14 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
           color: uData.color_camion
         });
       } else {
-        favEl.href = "icons/oil-bottle.svg?v=154";
+        favEl.href = "icons/oil-bottle.svg?v=171";
       }
-      document.title = "🚛 DISTRIBUIDOR OFICIAL - NOTIGAS en Vivo";
+      document.title = "🚛 RECOLECTOR REGISTRADO";
     } else {
       if (typeof window.restaurarFaviconDefault === 'function') {
         window.restaurarFaviconDefault();
       } else {
-        favEl.href = "icons/oil-bottle.svg?v=154";
+        favEl.href = "icons/oil-bottle.svg?v=171";
       }
       document.title = "♻️ RECOJO RECICLABLES";
     }
@@ -506,7 +506,7 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
     plastico:    '<path d="M50 18 L64 40 H36 Z M22 50 L36 74 H8 Z M78 50 L92 74 H64 Z" fill="#FFF"/>',
     papel:       '<rect x="26" y="20" width="48" height="60" rx="4" fill="#FFF"/><line x1="35" y1="36" x2="65" y2="36" stroke="#00000030" stroke-width="4"/><line x1="35" y1="50" x2="65" y2="50" stroke="#00000030" stroke-width="4"/><line x1="35" y1="64" x2="55" y2="64" stroke="#00000030" stroke-width="4"/>',
     chatarra:    '<path d="M50 15 L65 40 H35 Z M20 50 L35 75 H5 Z M80 50 L95 75 H65 Z" fill="#FFF"/>',
-    botellas:    '<path d="M40 12h20v10H40z" fill="#FFF"/><path d="M38 22h24l-4 12v40a6 6 0 0 1-6 6H48a6 6 0 0 1-6-6V34z" fill="#FFF"/>',
+    vidrio:      '<path d="M44 12h12v8H44z" fill="#FFF"/><path d="M43 20h14v56a8 8 0 0 1-8 8H51a8 8 0 0 1-8-8V20z" fill="#FFF"/>',
     organico:    '<path d="M50 82 V44" stroke="#FFF" stroke-width="7" stroke-linecap="round"/><path d="M50 50 C30 50 22 36 24 22 C40 22 50 32 50 50 Z" fill="#FFF"/><path d="M50 58 C70 58 78 44 76 30 C60 30 50 40 50 58 Z" fill="#FFF"/>',
     aceite:      '<path d="M34 34h32v46a6 6 0 0 1-6 6H40a6 6 0 0 1-6-6z" fill="#FFF"/><path d="M40 34l6-14h8l6 14z" fill="#FFF"/><rect x="46" y="12" width="8" height="6" rx="2" fill="#FFF"/>',
     detergentes: '<path d="M40 12h20v14H40z" fill="#FFF"/><path d="M36 26h28v56H36z" fill="#FFF"/><circle cx="50" cy="54" r="9" fill="#00000030"/>',

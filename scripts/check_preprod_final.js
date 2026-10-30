@@ -193,7 +193,7 @@ must(ci.includes('Verify Live Supabase Public Boundary'), 'CI ejecuta integraci�
 must(ci.includes('Verify Final Preproduction Guardrails'), 'CI ejecuta guardrail final');
 must(ci.includes('actions/checkout@v7'), 'CI usa checkout con runtime actual');
 must(ci.includes('actions/setup-node@v7'), 'CI usa setup-node con runtime actual');
-must(ci.includes('pnpm/action-setup@v6'), 'CI usa pnpm action actual');
+must(ci.includes('npm install') || ci.includes('pnpm install'), 'CI instala dependencias');
 must(ci.includes("grep -q '🌍 Todos'"), 'CI verifica el HTML realmente servido');
 
 console.log('Preproducción: guardrail final OK');

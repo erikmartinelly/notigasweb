@@ -609,10 +609,10 @@
 
     // Sin badge de precio: el avatar solo lleva iniciales y color.
     const badgeText = initials;
-    const badgeCustomStyle = 'border-radius:50%; width:18px; height:18px; font-size:9.5px;';
+    const badgeCustomStyle = 'border-radius:50%; width:18px; height:18px; font-size:16px;';
 
     const crownAvatarHtml = isPremium
-      ? `<span style="position:absolute; top:-10px; left:2px; font-size:13px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.8)); z-index:3;">👑</span>`
+      ? `<span style="position:absolute; top:-10px; left:2px; font-size:16px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.8)); z-index:3;">👑</span>`
       : '';
 
     return `

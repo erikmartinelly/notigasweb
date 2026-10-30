@@ -154,8 +154,8 @@ revisar(
     citas(index_html, r"""['\"]lima['\"]"""),
 )
 revisar(
-    "js/notigas_bo.js fija cochabamba como ciudad predeterminada",
-    re.search(r"CIUDAD_PREDETERMINADA\s*=\s*['\"]cochabamba['\"]", notigas_bo),
+    "js/notigas_bo.js fija santacruz como ciudad predeterminada",
+    re.search(r"CIUDAD_PREDETERMINADA\s*=\s*['\"]santacruz['\"]", notigas_bo),
 )
 
 # --- 5. Identidad de Bolivia ---------------------------------------------

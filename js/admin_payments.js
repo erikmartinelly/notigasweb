@@ -45,7 +45,7 @@
       <div style="padding:24px;text-align:center;color:#94A3B8;">
         <div style="font-size:40px;margin-bottom:10px;"><i class="fa-solid fa-qrcode"></i></div>
         <div style="font-size:15px;font-weight:800;color:#16A34A;margin-bottom:8px;">SIN COBROS · SIN COMISIONES</div>
-        <div style="max-width:520px;margin:0 auto;font-size:12px;line-height:1.7;">
+        <div style="max-width:520px;margin:0 auto;font-size:16px;line-height:1.7;">
           NOTIGAS no cobra, no liquida comisiones y no custodia fondos. Las tablas
           <code>pagos_comisiones</code> y <code>registro_comisiones</code> y sus RPCs
           fueron eliminadas de la base de datos.
@@ -69,31 +69,31 @@
     const cont = document.getElementById('adminPublicidadPagaContainer');
     if (!cont) return;
     if (!window.supabaseClient) {
-      cont.innerHTML = '<div style="padding:14px;text-align:center;color:#94A3B8;font-size:12px;">Sin conexión a Supabase.</div>';
+      cont.innerHTML = '<div style="padding:14px;text-align:center;color:#94A3B8;font-size:16px;">Sin conexión a Supabase.</div>';
       return;
     }
-    cont.innerHTML = '<div style="padding:14px;text-align:center;color:#94A3B8;font-size:12px;">Cargando anuncios pagados...</div>';
+    cont.innerHTML = '<div style="padding:14px;text-align:center;color:#94A3B8;font-size:16px;">Cargando anuncios pagados...</div>';
     try {
       const { data, error } = await window.supabaseClient.rpc('rpc_admin_anuncios_publicitarios', { p_limite: 100 });
       if (error) throw error;
       if (!data || data.ok !== true) {
         const esAdmin = data && data.codigo === 'no_admin';
-        cont.innerHTML = `<div style="padding:14px;text-align:center;color:#FCA5A5;font-size:12px;">${esc((data && data.mensaje) || 'No se pudieron cargar los anuncios.')}${esAdmin ? '' : ''}</div>`;
+        cont.innerHTML = `<div style="padding:14px;text-align:center;color:#FCA5A5;font-size:16px;">${esc((data && data.mensaje) || 'No se pudieron cargar los anuncios.')}${esAdmin ? '' : ''}</div>`;
         return;
       }
       const lista = Array.isArray(data.anuncios) ? data.anuncios : [];
       const pendientes = lista.filter(a => a.revision_pendiente).length;
       const header = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-          <strong style="font-size:13px;color:#F1F5F9;">Anuncios pagados (${lista.length})${pendientes ? ' · ' + pendientes + ' por revisar' : ''}</strong>
-          <button type="button" class="btn-submit" style="width:auto;padding:6px 10px;font-size:11px;" onclick="if(window.renderAdminPublicidadPaga) window.renderAdminPublicidadPaga();"><i class="fa-solid fa-rotate"></i> Actualizar</button>
+          <strong style="font-size:16px;color:#F1F5F9;">Anuncios pagados (${lista.length})${pendientes ? ' · ' + pendientes + ' por revisar' : ''}</strong>
+          <button type="button" class="btn-submit" style="width:auto;padding:6px 10px;font-size:16px;" onclick="if(window.renderAdminPublicidadPaga) window.renderAdminPublicidadPaga();"><i class="fa-solid fa-rotate"></i> Actualizar</button>
         </div>`;
       if (!lista.length) {
-        cont.innerHTML = header + '<div style="padding:14px;text-align:center;color:#94A3B8;font-size:12px;">Todavía no hay anuncios pagados.</div>';
+        cont.innerHTML = header + '<div style="padding:14px;text-align:center;color:#94A3B8;font-size:16px;">Todavía no hay anuncios pagados.</div>';
         return;
       }
       cont.innerHTML = header + lista.map(renderPubAdminCard).join('');
     } catch (e) {
-      cont.innerHTML = `<div style="padding:14px;text-align:center;color:#FCA5A5;font-size:12px;">Error al cargar: ${esc(e && e.message)}</div>`;
+      cont.innerHTML = `<div style="padding:14px;text-align:center;color:#FCA5A5;font-size:16px;">Error al cargar: ${esc(e && e.message)}</div>`;
     }
   }
   window.renderAdminPublicidadPaga = renderAdminPublicidadPaga;
@@ -103,21 +103,21 @@
     const estado = a.estado === 'retirado' ? 'RETIRADO' : (vigente ? 'ACTIVO' : 'VENCIDO');
     const colorEstado = a.estado === 'retirado' ? '#FCA5A5' : (vigente ? '#34D399' : '#CBD5E1');
     const flags = [];
-    if (a.sospechoso) flags.push('<span style="background:rgba(239,68,68,.18);color:#FCA5A5;border:1px solid rgba(239,68,68,.5);border-radius:6px;padding:2px 6px;font-size:10px;font-weight:800;">SOSPECHOSO</span>');
-    if (a.revision_pendiente) flags.push('<span style="background:rgba(251,191,36,.18);color:#FBBF24;border:1px solid rgba(251,191,36,.5);border-radius:6px;padding:2px 6px;font-size:10px;font-weight:800;">POR REVISAR</span>');
+    if (a.sospechoso) flags.push('<span style="background:rgba(239,68,68,.18);color:#FCA5A5;border:1px solid rgba(239,68,68,.5);border-radius:6px;padding:2px 6px;font-size:16px;font-weight:800;">SOSPECHOSO</span>');
+    if (a.revision_pendiente) flags.push('<span style="background:rgba(251,191,36,.18);color:#FBBF24;border:1px solid rgba(251,191,36,.5);border-radius:6px;padding:2px 6px;font-size:16px;font-weight:800;">POR REVISAR</span>');
     const exp = a.expira_en ? new Date(a.expira_en).toLocaleDateString('es-BO', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
     const voucherBtn = a.voucher_imagen_path
-      ? `<button type="button" class="btn-submit" style="width:auto;padding:6px 10px;font-size:11px;" onclick="if(window.verVoucherPublicidad) window.verVoucherPublicidad('${esc(a.voucher_imagen_path)}');"><i class="fa-solid fa-image"></i> Ver comprobante</button>`
-      : '<span style="opacity:.6;font-size:11px;">Sin imagen</span>';
+      ? `<button type="button" class="btn-submit" style="width:auto;padding:6px 10px;font-size:16px;" onclick="if(window.verVoucherPublicidad) window.verVoucherPublicidad('${esc(a.voucher_imagen_path)}');"><i class="fa-solid fa-image"></i> Ver comprobante</button>`
+      : '<span style="opacity:.6;font-size:16px;">Sin imagen</span>';
     const retirarBtn = a.estado !== 'retirado'
-      ? `<button type="button" class="btn-submit" style="width:auto;padding:6px 10px;font-size:11px;background:#7F1D1D;border:1px solid #B91C1C;" onclick="if(window.retirarAnuncioPublicidad) window.retirarAnuncioPublicidad('${esc(a.id)}');"><i class="fa-solid fa-ban"></i> Retirar</button>`
+      ? `<button type="button" class="btn-submit" style="width:auto;padding:6px 10px;font-size:16px;background:#7F1D1D;border:1px solid #B91C1C;" onclick="if(window.retirarAnuncioPublicidad) window.retirarAnuncioPublicidad('${esc(a.id)}');"><i class="fa-solid fa-ban"></i> Retirar</button>`
       : '';
     const motivo = a.motivo_retiro ? `<div style="opacity:.8;margin-top:3px;">Motivo: ${esc(a.motivo_retiro)}</div>` : '';
 
-    return `<div style="background:rgba(15,23,42,.6);border:1px solid #334155;border-radius:10px;padding:10px;margin-bottom:8px;font-size:12px;color:#CBD5E1;">
+    return `<div style="background:rgba(15,23,42,.6);border:1px solid #334155;border-radius:10px;padding:10px;margin-bottom:8px;font-size:16px;color:#CBD5E1;">
       <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap;">
-        <strong style="color:#F1F5F9;font-size:12.5px;">${esc(a.titulo || '')}</strong>
-        <span style="background:rgba(148,163,184,.12);color:${colorEstado};border:1px solid ${colorEstado}55;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:800;">${estado}</span>
+        <strong style="color:#F1F5F9;font-size:16px;">${esc(a.titulo || '')}</strong>
+        <span style="background:rgba(148,163,184,.12);color:${colorEstado};border:1px solid ${colorEstado}55;border-radius:6px;padding:2px 6px;font-size:16px;font-weight:800;">${estado}</span>
       </div>
       <div style="opacity:.85;margin-top:3px;">${esc(String(a.posicion || '').toUpperCase())} · ${esc(String(a.ciudad || '').toUpperCase())}${exp ? ' · hasta ' + esc(exp) : ''}</div>
       ${(flags.length ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">' + flags.join('') + '</div>' : '')}

@@ -1,3 +1,23 @@
+:root {
+  --font-size-base: 1.0625rem; /* 17 px en PC (un punto menos que en Android) */
+  --font-size-sm: 0.9375rem; /* 15 px */
+  --font-size-xs: 0.875rem; /* 14 px */
+  --font-size-lg: 1.25rem; /* 20 px */
+  --font-size-xl: 1.5rem; /* 24 px */
+  --font-size-btn: 1rem; /* 16 px */
+  --font-size-label: 1rem; /* 16 px */
+  --font-size-input: 1.125rem; /* 18 px */
+  --font-size-caption: 0.9375rem; /* 15-16 px */
+  --line-height-base: 1.5;
+  --line-height-content: 1.55;
+}
+
+@media (max-width: 768px) {
+  :root {
+    --font-size-base: 1.125rem; /* 18 px en Android: letra grande */
+  }
+}
+
 * { 
 
   box-sizing: border-box; 
@@ -10,6 +30,10 @@
 
   -webkit-tap-highlight-color: transparent;
 
+}
+
+html {
+  font-size: 16px;
 }
 
 body { 
@@ -28,11 +52,12 @@ body {
 
   overflow: hidden; 
 
-  transform: translateZ(0);
-
   scrollbar-width: thin;
 
   scrollbar-color: #FF6D00 #1E293B;
+
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
 
 }
 
@@ -693,6 +718,10 @@ main {
 
   gap: 6px;
 
+  position: relative;
+
+  z-index: 1400;
+
   background-color: rgba(30, 41, 59, 0.95) !important;
 
   border: 1px solid rgba(255, 255, 255, 0.15) !important;
@@ -715,11 +744,11 @@ main {
 
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
 
-  padding: 4px 6px !important;
+  padding: 6px 10px !important;
 
   font-weight: 700 !important;
 
-  font-size: 11px !important;
+  font-size: 13px !important;
 
   border-radius: 6px !important;
 
@@ -730,6 +759,36 @@ main {
   width: 100% !important;
 
   transition: border-color 0.2s ease, background 0.2s ease !important;
+
+}
+
+@media (min-width: 1024px) {
+
+  /* PC: menú de ciudades y menú de navegación principales más legibles */
+
+  .city-selector-bar {
+
+    padding: 8px 12px !important;
+
+  }
+
+  .city-selector-bar select {
+
+    font-size: 16px !important;
+
+    padding: 8px 14px !important;
+
+  }
+
+  nav .tab-btn {
+
+    font-size: 16px !important;
+
+    padding: 14px 12px !important;
+
+    min-height: 56px !important;
+
+  }
 
 }
 
@@ -788,25 +847,21 @@ main {
 }
 
 .btn-search-trigger {
-
   background: #FF6D00;
-
   color: white;
-
   border: none;
-
-  padding: 4px 10px;
-
+  padding: 6px 12px;
   border-radius: 6px;
-
-  font-size: 10.5px;
-
+  font-size: var(--font-size-btn);
   font-weight: 800;
-
   cursor: pointer;
-
   transition: background-color 0.2s;
-
+  min-height: 48px;
+  min-width: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
 .btn-search-trigger:hover {
@@ -7153,7 +7208,7 @@ button:active, .tab-btn:active, .cat-chip:active {
 }
 
 /* ESTILOS INLINE EXTRAIDOS AUTOMATICAMENTE */
-.ng-inline-1 { display:none; position:relative; background: linear-gradient(135deg, #D32F2F, #B71C1C); color: white; padding: 8px 30px 8px 12px; font-size: 11px; font-weight: 700; text-align: center; z-index: 2000; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+.ng-inline-1 { display:none; position:fixed; top:0; left:0; width:100%; z-index: var(--z-gps); background: linear-gradient(135deg, #D32F2F, #B71C1C); color: white; padding: 8px 30px 8px 12px; font-size: 11px; font-weight: 700; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
 .ng-inline-2 { background: white; color: #D32F2F; border: none; padding: 2px 8px; border-radius: 4px; font-weight: 900; margin-left: 6px; cursor: pointer; }
 .ng-inline-3 { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: white; font-size: 16px; font-weight: bold; cursor: pointer; }
 .ng-inline-4 { display:flex; align-items:center; gap:6px; }
@@ -7544,4 +7599,292 @@ button:active, .tab-btn:active, .cat-chip:active {
 }
 .color-swatch-chip:hover {
   transform: scale(1.2);
+}
+
+/* ==========================================================================
+   NOTIGAS - MEJORA INTEGRAL DE LEGIBILIDAD Y COMPOSICION MOVIL (v154)
+   Escala tipografica accesible, layout responsive y areas tactiles (48px).
+   Bloque final: sobreescribe utilidades generadas y corrige composicion.
+   ========================================================================== */
+
+/* 1) Escala tipografica base y ajuste de texto */
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+body {
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+}
+
+/* 2) Elevar el piso tipografico de las utilidades generadas "ng-inline-*" */
+[class^="ng-inline-"],
+[class*=" ng-inline-"] {
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-content);
+}
+
+/* Re-afirmar los tamanos intencionalmente grandes (iconos/titulos) */
+.ng-inline-3 { font-size: 1rem; }
+.ng-inline-6 { font-size: 2rem; }
+.ng-inline-27 { font-size: var(--font-size-lg); }
+.ng-inline-44 { font-size: var(--font-size-lg); }
+.ng-inline-121 { font-size: 3.25rem; }
+.ng-inline-122 { font-size: 1.375rem; }
+.ng-inline-126 { font-size: 2.25rem; }
+.ng-inline-139 { font-size: 1.375rem; }
+
+/* 3) Contenido y textos secundarios a tamano de lectura */
+p, li,
+.trip-info, .trip-meta, .trip-title,
+.ng-inline-8, .ng-inline-20, .ng-inline-42, .ng-inline-45, .ng-inline-51,
+.ng-inline-54, .ng-inline-67, .ng-inline-70, .ng-inline-73, .ng-inline-78,
+.ng-inline-138, .ng-inline-141, .ng-inline-143, .ng-inline-145,
+.ng-inline-147, .ng-inline-149 {
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-content);
+}
+
+/* 4) Formularios: evita el zoom automatico y garantiza area tactil */
+input, select, textarea {
+  font-size: var(--font-size-input);
+  min-height: 48px;
+}
+input[type="checkbox"], input[type="radio"] {
+  min-height: 0;
+  width: 24px;
+  height: 24px;
+  accent-color: #22C55E;
+  flex: 0 0 auto;
+}
+label, .form-group label, .ng-inline-57 {
+  font-size: var(--font-size-label);
+  line-height: 1.35;
+}
+.form-group input, .form-group select, .form-group textarea {
+  font-size: var(--font-size-input);
+}
+.ng-inline-58, .ng-inline-60, .ng-inline-64 {
+  font-size: var(--font-size-input);
+  min-height: 48px;
+}
+
+/* 5) Botones: texto legible y area tactil minima de 48px */
+button, .tab-btn, .btn-submit, .btn-driver, .btn-badge, .cat-chip,
+.modal-tab-btn, .ng-inline-2, .ng-inline-9, .ng-inline-26, .ng-inline-30,
+.ng-inline-31, .ng-inline-32, .ng-inline-33, .ng-inline-34, .ng-inline-39,
+.ng-inline-40, .ng-inline-41, .ng-inline-47, .ng-inline-49, .ng-inline-60,
+.ng-inline-64, .ng-inline-79 {
+  font-size: var(--font-size-btn);
+  min-height: 48px;
+}
+
+/* 6) Chips de materiales (recolectores): composicion alineada y pulsable */
+.driver-material-chip {
+  min-height: 48px;
+  width: 100%;
+  padding: 10px 12px;
+  gap: 10px;
+  font-size: var(--font-size-base);
+  cursor: pointer;
+}
+.driver-material-chip input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+  margin: 0;
+}
+.driver-material-grid { gap: 10px; }
+
+/* 7) Encabezado NOTIGAS: composicion movil en dos filas sin desbordes */
+header { flex-wrap: wrap; gap: 8px; row-gap: 6px; }
+header .brand { min-width: 0; flex: 1 1 auto; }
+header .brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.12;
+  min-width: 0;
+}
+.brand-title {
+  font-size: calc(var(--font-size-xl) - 2px);
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+.brand-subtitle {
+  font-size: calc(var(--font-size-caption) - 1px);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  opacity: 0.92;
+  margin-top: 2px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-transform: none;
+  color: #E2F1FF;
+}
+.header-actions { flex: 0 0 auto; }
+.btn-config-rect { min-height: 48px; font-size: var(--font-size-btn); }
+.btn-role-switch-header {
+  background: rgba(2, 136, 209, 0.22);
+  color: #38BDF8;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-weight: 900;
+  font-size: var(--font-size-btn);
+  border: 1.5px solid #0288D1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  min-height: 44px;
+}
+
+@media (max-width: 640px) {
+  header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "brand menu"
+      "role  role";
+    align-items: center;
+    padding: 8px 10px;
+  }
+  header .brand { grid-area: brand; }
+  header .header-actions { grid-area: menu; }
+  header .ng-inline-4 { grid-area: role; }
+  #btnHeaderRoleToggle { width: 100%; justify-content: center; }
+}
+
+/* 8) Navegacion principal: etiquetas cortas y areas tactiles */
+nav { overflow-x: auto; }
+.tab-btn {
+  min-height: 52px;
+  padding: 12px 8px;
+  font-size: var(--font-size-btn);
+  white-space: nowrap;
+}
+
+/* 9) Capas (z-index) coherentes: mapa < ventanas < GPS < modales */
+:root {
+  --z-map: 1;
+  --z-overlay: 900;
+  --z-window: 1500;
+  --z-gps: 9500;
+  --z-modal: 5000;
+  --z-modal-top: 6000;
+  --z-lockout: 999999;
+}
+
+/* 10) Evitar el desborde horizontal del documento */
+html, body { max-width: 100%; overflow-x: hidden; }
+img, video, canvas { max-width: 100%; }
+
+/* 11) Aviso GPS flotante: cerrable, no tapa ventanas, con safe-area */
+.gps-floating-banner {
+  display: none;
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  top: calc(env(safe-area-inset-top, 0px) + 88px);
+  z-index: var(--z-gps);
+  width: calc(100% - 24px);
+  max-width: 440px;
+  max-height: calc(100dvh - 140px);
+  overflow-y: auto;
+  background: linear-gradient(135deg, #1E293B, #0F172A);
+  border: 2px solid #FF6D00;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85);
+  text-align: center;
+  font-size: var(--font-size-base);
+}
+.gps-floating-banner .gps-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.12);
+  color: #E2E8F0;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+.gps-floating-banner .ng-inline-7 { font-size: var(--font-size-lg); }
+.gps-floating-banner .ng-inline-8 { font-size: var(--font-size-base); }
+.gps-floating-banner .ng-inline-9 { font-size: var(--font-size-btn); }
+
+/* 12) Ventanas / modales: centrado, scroll interno y altura con teclado */
+.modal-content {
+  width: min(94vw, 460px);
+  max-height: 88dvh;
+  overflow-y: auto;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+}
+.modal-title { font-size: var(--font-size-lg); }
+.btn-close { min-height: 44px; min-width: 44px; font-size: 1.375rem; }
+
+/* 13) Acciones flotantes y publicidad: respetan la safe-area */
+.floating-actions-container {
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);
+}
+
+/* 14) Panel admin en movil: barra lateral -> barra superior desplazable */
+@media (max-width: 768px) {
+  .ng-inline-130 { flex-direction: column; gap: 10px; }
+  .ng-inline-131 {
+    flex: 0 0 auto;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-right: 0;
+    padding-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .ng-inline-132 {
+    width: auto;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    min-height: 48px;
+  }
+  .ng-inline-135 { max-height: none; overflow-y: visible; padding-right: 0; }
+}
+
+/* Admin: ancho del 80% de la pantalla en web (PC y movil) */
+#modalAdmin .modal-content {
+  width: 80vw;
+  max-width: none;
+}
+
+/* 15) Contraste: botones naranjas con texto blanco legible (>= 4.5:1) */
+.btn-config-rect {
+  background: linear-gradient(135deg, #E65100 0%, #BF360C 100%);
+}
+.btn-main-order {
+  background: linear-gradient(135deg, #E65100 0%, #BF360C 100%);
+}
+.btn-config-rect, .btn-main-order, .btn-badge, .btn-driver,
+.ng-inline-9, .ng-inline-30, .ng-inline-31, .ng-inline-34, .ng-inline-40,
+.ng-inline-41, .ng-inline-79 {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* 16) Banner inferior de anuncios (pie de pagina): letra mas grande y tactil */
+.promo-banner-content {
+  font-size: calc(var(--font-size-base) - 1px);
+  line-height: 1.5;
+}
+.promo-banner-content .promo-badge,
+.promo-banner-content .ad-subtext {
+  font-size: calc(var(--font-size-base) - 1px);
+}
+.promo-banner-content .btn-promo-contact {
+  font-size: calc(var(--font-size-btn) - 1px);
+  min-height: 48px;
+  padding: 10px 14px;
 }

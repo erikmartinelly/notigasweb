@@ -31,7 +31,7 @@ CATALOGO_ESPERADO = [
     ("plastico", "recogida"),
     ("papel", "recogida"),
     ("chatarra", "recogida"),
-    ("botellas", "recogida"),
+    ("vidrio", "recogida"),
     ("organico", "recogida"),
     ("aceite", "recogida"),
     ("detergentes", "compra"),
@@ -238,7 +238,7 @@ def main() -> int:
         retornos = set(re.findall(r"return\s+'([a-z]+)';", cuerpo))
         ok("gas" not in retornos, "normalizeCategoryCode nunca devuelve 'gas'")
         ok("carbon" not in retornos, "normalizeCategoryCode nunca devuelve 'carbon'")
-        ok(bool(retornos & {"plastico", "papel", "chatarra", "botellas"}),
+        ok(bool(retornos & {"plastico", "papel", "chatarra", "vidrio"}),
            "normalizeCategoryCode devuelve códigos del catálogo")
 
     # ------------------------------------------------------------------ iconos

@@ -386,13 +386,13 @@ async function renderAdminAdsAndPostsList() {
         <div style="background:#1E293B; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.12); margin-bottom:8px;">
           <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
             <div style="display:flex; align-items:center; gap:6px;">
-              <span style="background:${badgeBg}; color:${badgeColor}; font-size:9.5px; font-weight:800; padding:2px 6px; border-radius:4px;">${posBadge}</span>
-              <strong style="color:white; font-size:11px;">📍 ${window.escapeHtmlStr(String(ad.ciudad || '').toUpperCase())}</strong>
-              <span style="font-size:9.5px; color:#94A3B8;">${estadoText}</span>
+              <span style="background:${badgeBg}; color:${badgeColor}; font-size:16px; font-weight:800; padding:2px 6px; border-radius:4px;">${posBadge}</span>
+              <strong style="color:white; font-size:16px;">📍 ${window.escapeHtmlStr(String(ad.ciudad || '').toUpperCase())}</strong>
+              <span style="font-size:16px; color:#94A3B8;">${estadoText}</span>
             </div>
-            <button data-action="borrarAnuncioLocalAdmin" data-id="${ad.id}" style="background:#D32F2F; color:white; border:none; padding:3px 8px; border-radius:4px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Eliminar</button>
+            <button data-action="borrarAnuncioLocalAdmin" data-id="${ad.id}" style="background:#D32F2F; color:white; border:none; padding:3px 8px; border-radius:4px; font-weight:800; font-size:16px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Eliminar</button>
           </div>
-          <div style="font-size:11px; color:#E2E8F0; margin-top:6px; line-height:1.35;">
+          <div style="font-size:16px; color:#E2E8F0; margin-top:6px; line-height:1.35;">
             <strong>Título:</strong> ${window.escapeHtmlStr(ad.titulo || '')}<br>
             ${ad.url ? `<strong>Enlace:</strong> <a href="${window.escapeHtmlStr(ad.url)}" target="_blank" rel="noopener noreferrer" style="color:#38BDF8; text-decoration:underline;">${window.escapeHtmlStr(ad.url)}</a><br>` : ''}
             ${ad.image_url ? `<strong>Imagen:</strong> <span style="color:#00E676;">Sí (Cargada)</span>` : ''}
@@ -403,7 +403,7 @@ async function renderAdminAdsAndPostsList() {
   }
 
   if (count === 0) {
-    container.innerHTML = '<div style="color:#64748B; font-style:italic; font-size:11px; text-align:center; padding:12px;">No hay anuncios registrados para esta ciudad.</div>';
+    container.innerHTML = '<div style="color:#64748B; font-style:italic; font-size:16px; text-align:center; padding:12px;">No hay anuncios registrados para esta ciudad.</div>';
     return;
   }
 
@@ -504,7 +504,7 @@ async function renderAdminOtrosStats() {
   if (!box) return;
 
   if (!window.supabaseClient) {
-    box.innerHTML = '<div style="color:#64748B; font-style:italic; font-size:11px; text-align:center; padding:12px;">No hay conexión con la base de datos.</div>';
+    box.innerHTML = '<div style="color:#64748B; font-style:italic; font-size:16px; text-align:center; padding:12px;">No hay conexión con la base de datos.</div>';
     return;
   }
 
@@ -514,7 +514,7 @@ async function renderAdminOtrosStats() {
 
     const filas = Array.isArray(data) ? data : [];
     if (filas.length === 0) {
-      box.innerHTML = '<div style="color:#64748B; font-style:italic; font-size:11px; text-align:center; padding:12px;">Todavía no hay solicitudes de materiales fuera del catálogo.</div>';
+      box.innerHTML = '<div style="color:#64748B; font-style:italic; font-size:16px; text-align:center; padding:12px;">Todavía no hay solicitudes de materiales fuera del catálogo.</div>';
       return;
     }
 
@@ -523,14 +523,14 @@ async function renderAdminOtrosStats() {
     box.innerHTML = filas.map(f => `
       <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 0; border-bottom:1px solid rgba(51,65,85,0.6);">
         <div style="min-width:0;">
-          <div style="font-size:12px; font-weight:800; color:#E2E8F0; word-break:break-word;">${escapeHtmlStr(f.material || 'Sin detalle')}</div>
-          <div style="font-size:10.5px; color:#64748B; margin-top:2px;">${f.veces_petido || 0} vez${(f.veces_petido || 0) === 1 ? '' : 'es'} pedido${(f.veces_petido || 0) === 1 ? '' : 's'} · ${f.ciudades || 0} ciudad${(f.ciudades || 0) === 1 ? '' : 'es'} · última: ${fmtFecha(f.ultima_peticion)}</div>
+          <div style="font-size:16px; font-weight:800; color:#E2E8F0; word-break:break-word;">${escapeHtmlStr(f.material || 'Sin detalle')}</div>
+          <div style="font-size:16px; color:#64748B; margin-top:2px;">${f.veces_petido || 0} vez${(f.veces_petido || 0) === 1 ? '' : 'es'} pedido${(f.veces_petido || 0) === 1 ? '' : 's'} · ${f.ciudades || 0} ciudad${(f.ciudades || 0) === 1 ? '' : 'es'} · última: ${fmtFecha(f.ultima_peticion)}</div>
         </div>
       </div>
     `).join('');
   } catch (e) {
     console.error('Error cargando estadísticas de solicitudes otros:', e);
-    box.innerHTML = '<div style="color:#FCA5A5; font-style:italic; font-size:11px; text-align:center; padding:12px;">No se pudieron cargar los materiales más pedidos.</div>';
+    box.innerHTML = '<div style="color:#FCA5A5; font-style:italic; font-size:16px; text-align:center; padding:12px;">No se pudieron cargar los materiales más pedidos.</div>';
   }
 }
 
@@ -698,7 +698,7 @@ function renderFinalVendors(defaultVendors, deletedIds, buyersList = [], usersLo
     const finalVendors = defaultVendors.filter(v => !deletedIds.includes(v.id));
     let html = '';
     if (finalVendors.length === 0) {
-      html += '<div style="color:#64748B; font-style:italic; font-size:10.5px; margin-bottom:8px;">No hay repartidores registrados.</div>';
+      html += '<div style="color:#64748B; font-style:italic; font-size:16px; margin-bottom:8px;">No hay repartidores registrados.</div>';
     }
     finalVendors.forEach((v) => {
       const isBanned = v.is_banned || (typeof esRepartidorBaneado === 'function' ? esRepartidorBaneado(v.name, v.plate, v.whatsapp, v.user_id) : false);
@@ -716,19 +716,19 @@ function renderFinalVendors(defaultVendors, deletedIds, buyersList = [], usersLo
       html += `
         <div style="background:#1E293B; padding:10px 12px; border-radius:10px; border:1px solid ${isBanned ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.08)'}; display:flex; justify-content:space-between; align-items:center; opacity: ${isBanned ? '0.75' : '1'}; margin-bottom:6px;">
           <div>
-            <strong style="color:${isBanned ? '#EF4444' : '#FF6D00'}; font-size:12px;">${isBanned ? '⛔ [BANEADO] ' : '🏍️ '}${escapeHtmlStr(v.name)}</strong>
-            <span style="font-size:10.5px; color:#CBD5E1;"> (${escapeHtmlStr(v.category)})</span>
-            <div style="font-size:10px; color:#94A3B8; margin-top:2px;">
+            <strong style="color:${isBanned ? '#EF4444' : '#FF6D00'}; font-size:16px;">${isBanned ? '⛔ [BANEADO] ' : '🏍️ '}${escapeHtmlStr(v.name)}</strong>
+            <span style="font-size:16px; color:#CBD5E1;"> (${escapeHtmlStr(v.category)})</span>
+            <div style="font-size:16px; color:#94A3B8; margin-top:2px;">
               DNI: ${escapeHtmlStr(v.dni || 'No reg.')} • Placa: ${escapeHtmlStr(v.plate)} • Tel: ${escapeHtmlStr(v.whatsapp || 'No reg.')} • Acceso: ${commissionBadge} • Estado: ${badgeEstado}
             </div>
           </div>
           <div style="display:flex; gap:4px; align-items:center; flex-wrap:wrap;">
             ${isBanned ? `
-              <button data-action="desbanearRepartidorAdmin" data-id="${v.id}" data-user-id="${encodeURIComponent(v.user_id || '')}" data-name="${safeName}" style="background:#0288D1; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-lock-open"></i> Desbanear</button>
+              <button data-action="desbanearRepartidorAdmin" data-id="${v.id}" data-user-id="${encodeURIComponent(v.user_id || '')}" data-name="${safeName}" style="background:#0288D1; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:16px; cursor:pointer;"><i class="fa-solid fa-lock-open"></i> Desbanear</button>
             ` : `
-              <button data-action="banearRepartidorAdmin" data-id="${v.id}" data-user-id="${encodeURIComponent(v.user_id || '')}" data-name="${safeName}" data-plate="${safePlate}" style="background:#E65100; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-user-slash"></i> Banear</button>
+              <button data-action="banearRepartidorAdmin" data-id="${v.id}" data-user-id="${encodeURIComponent(v.user_id || '')}" data-name="${safeName}" data-plate="${safePlate}" style="background:#E65100; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:16px; cursor:pointer;"><i class="fa-solid fa-user-slash"></i> Banear</button>
             `}
-            <button data-action="borrarRepartidorPermanente" data-id="${v.id}" data-user-id="${escapeHtmlStr(v.user_id || '')}" data-gmail="${escapeHtmlStr(v.gmail || '')}" data-name="${safeName}" style="background:#D32F2F; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:9.5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Eliminar</button>
+            <button data-action="borrarRepartidorPermanente" data-id="${v.id}" data-user-id="${escapeHtmlStr(v.user_id || '')}" data-gmail="${escapeHtmlStr(v.gmail || '')}" data-name="${safeName}" style="background:#D32F2F; color:white; border:none; padding:5px 8px; border-radius:6px; font-weight:800; font-size:16px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Eliminar</button>
           </div>
         </div>
       `;
@@ -739,9 +739,9 @@ function renderFinalVendors(defaultVendors, deletedIds, buyersList = [], usersLo
   if (buyersContainer) {
     let buyersHtml = '';
     if (usersLoadError) {
-      buyersHtml += '<div style="color:#FCA5A5; background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.3); border-radius:8px; padding:8px; font-size:10.5px;">Error al cargar.</div>';
+      buyersHtml += '<div style="color:#FCA5A5; background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.3); border-radius:8px; padding:8px; font-size:16px;">Error al cargar.</div>';
     } else if (buyersList.length === 0) {
-      buyersHtml += '<div style="color:#64748B; font-style:italic; font-size:10.5px;">No hay compradores registrados aún.</div>';
+      buyersHtml += '<div style="color:#64748B; font-style:italic; font-size:16px;">No hay compradores registrados aún.</div>';
     } else {
       const grouped = {};
       buyersList.forEach(b => {
@@ -752,7 +752,7 @@ function renderFinalVendors(defaultVendors, deletedIds, buyersList = [], usersLo
       });
 
       for (const [ciudad, buyers] of Object.entries(grouped).sort((a,b)=>a[0].localeCompare(b[0]))) {
-        buyersHtml += `<div style="font-weight:900; color:#CBD5E1; margin:16px 0 8px; font-size:11px; text-transform:uppercase; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:4px;">📍 ${escapeHtmlStr(ciudad)} <span style="color:#64748B; font-size:9px;">(${buyers.length})</span></div>`;
+        buyersHtml += `<div style="font-weight:900; color:#CBD5E1; margin:16px 0 8px; font-size:16px; text-transform:uppercase; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:4px;">📍 ${escapeHtmlStr(ciudad)} <span style="color:#64748B; font-size:16px;">(${buyers.length})</span></div>`;
         
         buyers.forEach(b => {
           const isBanned = b.is_banned || (typeof esRepartidorBaneado === 'function' ? esRepartidorBaneado(b.nombre || '', '', '', b.user_id || b.gmail) : false);
@@ -761,12 +761,12 @@ function renderFinalVendors(defaultVendors, deletedIds, buyersList = [], usersLo
           buyersHtml += `
             <div style="background:#1E293B; padding:8px 10px; border-radius:8px; border:1px solid ${isBanned ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.08)'}; display:flex; justify-content:space-between; align-items:center; opacity: ${isBanned ? '0.7' : '1'}; margin-bottom:4px;">
               <div>
-                <strong style="color:${isBanned ? '#EF4444' : '#38BDF8'}; font-size:11.5px;">${isBanned ? '⛔ [BLOQUEADO] ' : '👤 '}${escapeHtmlStr(b.nombre || b.gmail)}</strong>
-                <div style="font-size:9.5px; color:#94A3B8;">${escapeHtmlStr(b.gmail)} • ${isBanned ? '<span style="color:#EF4444; font-weight:700;">ACCESO BLOQUEADO</span>' : '<span style="color:#00B0FF;">Activo</span>'}</div>
+                <strong style="color:${isBanned ? '#EF4444' : '#38BDF8'}; font-size:16px;">${isBanned ? '⛔ [BLOQUEADO] ' : '👤 '}${escapeHtmlStr(b.nombre || b.gmail)}</strong>
+                <div style="font-size:16px; color:#94A3B8;">${escapeHtmlStr(b.gmail)} • ${isBanned ? '<span style="color:#EF4444; font-weight:700;">ACCESO BLOQUEADO</span>' : '<span style="color:#00B0FF;">Activo</span>'}</div>
               </div>
               <div style="display:flex; gap:4px;">
-                <button data-action="${isBanned ? 'desbanearUsuarioAdmin' : 'banearCompradorAdmin'}" data-gmail="${escapeHtmlStr(b.gmail)}" data-id="${escapeHtmlStr(b.user_id || '')}" data-name="${safeBuyerName}" style="background:${isBanned ? '#0288D1' : '#E65100'}; color:white; border:none; padding:4px 8px; border-radius:6px; font-weight:800; font-size:9px; cursor:pointer;">${isBanned ? '🔓 Desbanear' : '🚫 Banear'}</button>
-                <button data-action="borrarCompradorPermanente" data-user-id="${escapeHtmlStr(b.user_id || '')}" data-gmail="${escapeHtmlStr(b.gmail)}" data-name="${safeBuyerName}" style="background:#D32F2F; color:white; border:none; padding:4px 8px; border-radius:6px; font-weight:800; font-size:9px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Eliminar</button>
+                <button data-action="${isBanned ? 'desbanearUsuarioAdmin' : 'banearCompradorAdmin'}" data-gmail="${escapeHtmlStr(b.gmail)}" data-id="${escapeHtmlStr(b.user_id || '')}" data-name="${safeBuyerName}" style="background:${isBanned ? '#0288D1' : '#E65100'}; color:white; border:none; padding:4px 8px; border-radius:6px; font-weight:800; font-size:16px; cursor:pointer;">${isBanned ? '🔓 Desbanear' : '🚫 Banear'}</button>
+                <button data-action="borrarCompradorPermanente" data-user-id="${escapeHtmlStr(b.user_id || '')}" data-gmail="${escapeHtmlStr(b.gmail)}" data-name="${safeBuyerName}" style="background:#D32F2F; color:white; border:none; padding:4px 8px; border-radius:6px; font-weight:800; font-size:16px; cursor:pointer;"><i class="fa-solid fa-trash"></i> Eliminar</button>
               </div>
             </div>
           `;
@@ -815,9 +815,9 @@ async function renderAdminOrdersList() {
 
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
 
-      <span style="font-size:11px; color:#94A3B8;">Control total de pedidos: renovar, reabrir o eliminar:</span>
+      <span style="font-size:16px; color:#94A3B8;">Control total de pedidos: renovar, reabrir o eliminar:</span>
 
-      <button data-action="limpiarTodosLosPedidosFantasmaAdmin" style="background:#D32F2F; color:white; border:none; padding:5px 10px; border-radius:6px; font-weight:800; font-size:10px; cursor:pointer;"><i class="fa-solid fa-broom"></i> 🧹 Limpiar Pedidos de Prueba/Caché</button>
+      <button data-action="limpiarTodosLosPedidosFantasmaAdmin" style="background:#D32F2F; color:white; border:none; padding:5px 10px; border-radius:6px; font-weight:800; font-size:16px; cursor:pointer;"><i class="fa-solid fa-broom"></i> 🧹 Limpiar Pedidos de Prueba/Caché</button>
 
     </div>
 
@@ -849,7 +849,7 @@ async function renderAdminOrdersList() {
 
     if (error) {
       console.error('Error cargando pedidos para administración:', error);
-      html += '<div style="color:#B91C1C; background:#FEE2E2; border-radius:8px; padding:10px; margin-bottom:8px; font-size:11px;">No se pudo consultar la lista de pedidos.</div>';
+      html += '<div style="color:#B91C1C; background:#FEE2E2; border-radius:8px; padding:10px; margin-bottom:8px; font-size:16px;">No se pudo consultar la lista de pedidos.</div>';
     }
 
     if (pedidos && pedidos.length > 0) {
@@ -869,7 +869,7 @@ async function renderAdminOrdersList() {
         };
         const currentStatus = statusConfig[order.estado] || { label: escapeHtmlStr(order.estado || 'Sin estado'), color: '#64748B' };
         const borderColor = currentStatus.color;
-        const estadoBadge = `<span style="font-size:10px; background:${borderColor}; color:white; padding:3px 6px; border-radius:4px; font-weight:800;">${currentStatus.label}</span>`;
+        const estadoBadge = `<span style="font-size:16px; background:${borderColor}; color:white; padding:3px 6px; border-radius:4px; font-weight:800;">${currentStatus.label}</span>`;
         const latitude = Number(order.latitude);
         const longitude = Number(order.longitude);
 
@@ -879,13 +879,13 @@ async function renderAdminOrdersList() {
 
             <div style="display:flex; justify-content:space-between; align-items:center;">
 
-              <span style="font-size:12.5px; font-weight:900; color:${borderColor};"><i class="fa-solid fa-box"></i> Pedido Supabase</span>
+              <span style="font-size:16px; font-weight:900; color:${borderColor};"><i class="fa-solid fa-box"></i> Pedido Supabase</span>
 
               ${estadoBadge}
 
             </div>
 
-            <div style="font-size:11.5px; color:#2F3C45; margin-top:6px;">
+            <div style="font-size:16px; color:#2F3C45; margin-top:6px;">
 
               <strong>Estado DB:</strong> ${escapeHtmlStr(order.estado || 'Sin estado')} • Hace ${formatTimeStr(mins)}<br>
 
@@ -895,16 +895,16 @@ async function renderAdminOrdersList() {
 
               <strong>Teléfono:</strong> <span style="color:${borderColor}; font-weight:800;">${escapeHtmlStr(order.telefono || 'No especificado')}</span><br>
 
-              <span style="font-size:10px; color:#64748B;">Coordenadas: Lat ${Number.isFinite(latitude) ? latitude.toFixed(5) : '-'}, Lng ${Number.isFinite(longitude) ? longitude.toFixed(5) : '-'}</span>
-              ${order.driver_id ? `<br><span style="font-size:10px; color:#64748B;">Repartidor: ${escapeHtmlStr(String(order.driver_id).substring(0, 8))}...</span>` : ''}
+              <span style="font-size:16px; color:#64748B;">Coordenadas: Lat ${Number.isFinite(latitude) ? latitude.toFixed(5) : '-'}, Lng ${Number.isFinite(longitude) ? longitude.toFixed(5) : '-'}</span>
+              ${order.driver_id ? `<br><span style="font-size:16px; color:#64748B;">Repartidor: ${escapeHtmlStr(String(order.driver_id).substring(0, 8))}...</span>` : ''}
 
             </div>
 
             <div style="display:flex; gap:6px; margin-top:8px;">
-              <button data-action="renovarPedidoAdmin" data-id="${escapeHtmlStr(order.id)}" style="flex:1; background:#0288D1; color:white; border:none; padding:7px 10px; border-radius:8px; font-weight:800; font-size:10.5px; cursor:pointer;">
+              <button data-action="renovarPedidoAdmin" data-id="${escapeHtmlStr(order.id)}" style="flex:1; background:#0288D1; color:white; border:none; padding:7px 10px; border-radius:8px; font-weight:800; font-size:16px; cursor:pointer;">
                 <i class="fa-solid fa-rotate"></i> Renovar / Reabrir
               </button>
-              <button data-action="borrarPedidoFantasmaAdmin" data-type="supabase" data-id="${escapeHtmlStr(order.id)}" style="flex:1; background:linear-gradient(135deg, #D32F2F, #B71C1C); color:white; border:none; padding:7px 10px; border-radius:8px; font-weight:800; font-size:10.5px; cursor:pointer;">
+              <button data-action="borrarPedidoFantasmaAdmin" data-type="supabase" data-id="${escapeHtmlStr(order.id)}" style="flex:1; background:linear-gradient(135deg, #D32F2F, #B71C1C); color:white; border:none; padding:7px 10px; border-radius:8px; font-weight:800; font-size:16px; cursor:pointer;">
                 <i class="fa-solid fa-trash-can"></i> Eliminar
               </button>
             </div>
@@ -937,13 +937,13 @@ async function renderAdminOrdersList() {
 
           <div style="display:flex; justify-content:space-between; align-items:center;">
 
-            <span style="font-size:12.5px; font-weight:900; color:#56BC37;"><i class="fa-solid fa-box"></i> Pedido Local (Caché)</span>
+            <span style="font-size:16px; font-weight:900; color:#56BC37;"><i class="fa-solid fa-box"></i> Pedido Local (Caché)</span>
 
-            <span style="font-size:10px; background:rgba(86,188,55,0.2); color:#56BC37; padding:2px 6px; border-radius:4px; font-weight:700;">⏱ Hace ${formatTimeStr(mins)}</span>
+            <span style="font-size:16px; background:rgba(86,188,55,0.2); color:#56BC37; padding:2px 6px; border-radius:4px; font-weight:700;">⏱ Hace ${formatTimeStr(mins)}</span>
 
           </div>
 
-          <div style="font-size:11.5px; color:#2F3C45; margin-top:6px;">
+          <div style="font-size:16px; color:#2F3C45; margin-top:6px;">
 
             <strong>Producto:</strong> ${escapeHtmlStr(order.categoria)} (${escapeHtmlStr(order.cantidad || '1 un')})<br>
 
@@ -951,11 +951,11 @@ async function renderAdminOrdersList() {
 
             <strong>Teléfono:</strong> <span style="color:#56BC37; font-weight:800;">${escapeHtmlStr(order.telefono || 'No especificado')}</span><br>
 
-            <span style="font-size:10px; color:#64748B;">Coordenadas: Lat ${order.lat ? order.lat.toFixed(5) : '-'}, Lng ${order.lng ? order.lng.toFixed(5) : '-'}</span>
+            <span style="font-size:16px; color:#64748B;">Coordenadas: Lat ${order.lat ? order.lat.toFixed(5) : '-'}, Lng ${order.lng ? order.lng.toFixed(5) : '-'}</span>
 
           </div>
 
-          <button data-action="borrarPedidoFantasmaAdmin" data-type="active_order" style="margin-top:8px; width:100%; background:linear-gradient(135deg, #D32F2F, #B71C1C); color:white; border:none; padding:6px 12px; border-radius:8px; font-weight:800; font-size:11px; cursor:pointer;">
+          <button data-action="borrarPedidoFantasmaAdmin" data-type="active_order" style="margin-top:8px; width:100%; background:linear-gradient(135deg, #D32F2F, #B71C1C); color:white; border:none; padding:6px 12px; border-radius:8px; font-weight:800; font-size:16px; cursor:pointer;">
 
             <i class="fa-solid fa-trash-can"></i> 🗑️ Borrar Pedido (Local)
 
@@ -991,21 +991,21 @@ async function renderAdminOrdersList() {
 
         <div style="display:flex; justify-content:space-between; align-items:center;">
 
-          <span style="font-size:12px; font-weight:800; color:#56BC37;"><i class="fa-solid fa-bell"></i> Alerta Camión Oído / Visto</span>
+          <span style="font-size:16px; font-weight:800; color:#56BC37;"><i class="fa-solid fa-bell"></i> Alerta Camión Oído / Visto</span>
 
-          <span style="font-size:10px; background:rgba(86,188,55,0.15); color:#56BC37; padding:2px 6px; border-radius:4px; font-weight:700;">Hace ${formatTimeStr(mins)}</span>
+          <span style="font-size:16px; background:rgba(86,188,55,0.15); color:#56BC37; padding:2px 6px; border-radius:4px; font-weight:700;">Hace ${formatTimeStr(mins)}</span>
 
         </div>
 
-        <div style="font-size:11px; color:#2F3C45; margin-top:4px;">
+        <div style="font-size:16px; color:#2F3C45; margin-top:4px;">
 
           <strong>Reportado por:</strong> ${escapeHtmlStr(t.reporter || 'Vecino')}<br>
 
-          <span style="font-size:10px; color:#64748B;">Coordenadas: Lat ${t.lat ? t.lat.toFixed(5) : '-'}, Lng ${t.lng ? t.lng.toFixed(5) : '-'}</span>
+          <span style="font-size:16px; color:#64748B;">Coordenadas: Lat ${t.lat ? t.lat.toFixed(5) : '-'}, Lng ${t.lng ? t.lng.toFixed(5) : '-'}</span>
 
         </div>
 
-        <button data-action="borrarPedidoFantasmaAdmin" data-type="truck_report" data-idx="${idx}" style="margin-top:8px; width:100%; background:rgba(211,47,47,0.8); color:white; border:none; padding:6px 12px; border-radius:8px; font-weight:800; font-size:10px; cursor:pointer;">
+        <button data-action="borrarPedidoFantasmaAdmin" data-type="truck_report" data-idx="${idx}" style="margin-top:8px; width:100%; background:rgba(211,47,47,0.8); color:white; border:none; padding:6px 12px; border-radius:8px; font-weight:800; font-size:16px; cursor:pointer;">
 
           <i class="fa-solid fa-trash-can"></i> 🗑️ Borrar Alerta Fantasma
 
@@ -1020,13 +1020,13 @@ async function renderAdminOrdersList() {
   if (totalCount === 0) {
     container.innerHTML = `
 
-      <div style="text-align:center; padding:24px 12px; color:#64748B; font-size:12px; background:#FFFFFF; border-radius:10px; border:1px dashed rgba(0,0,0,0.15);">
+      <div style="text-align:center; padding:24px 12px; color:#64748B; font-size:16px; background:#FFFFFF; border-radius:10px; border:1px dashed rgba(0,0,0,0.15);">
 
         <i class="fa-solid fa-box-open" style="font-size:28px; color:#56BC37; margin-bottom:8px;"></i><br>
 
         <strong style="color:#2F3C45;">No hay pedidos activos ni alertas en el mapa.</strong><br>
 
-        <span style="font-size:10px;">El mapa está limpio. Todos los pedidos de Supabase se mostrarán aquí.</span>
+        <span style="font-size:16px;">El mapa está limpio. Todos los pedidos de Supabase se mostrarán aquí.</span>
 
       </div>
 
@@ -1805,10 +1805,10 @@ async function renderAdminReports() {
 
     reports.forEach((rep) => {
       const telSnippet = rep.telefono_denunciado
-        ? `<div style="font-size:10.5px; color:#22C55E; margin-top:2px; font-weight:700;"><i class="fa-brands fa-whatsapp"></i> Tel: <a href="https://wa.me/51${String(rep.telefono_denunciado).replace(/\\D/g,'')}" target="_blank" style="color:#86EFAC; text-decoration:underline;">${escapeHtmlStr(rep.telefono_denunciado)}</a></div>`
+        ? `<div style="font-size:16px; color:#22C55E; margin-top:2px; font-weight:700;"><i class="fa-brands fa-whatsapp"></i> Tel: <a href="https://wa.me/51${String(rep.telefono_denunciado).replace(/\\D/g,'')}" target="_blank" style="color:#86EFAC; text-decoration:underline;">${escapeHtmlStr(rep.telefono_denunciado)}</a></div>`
         : '';
       const priceSnippet = rep.precio_publicado !== null && rep.precio_reportado !== null
-        ? `<div style="font-size:10.5px; color:#FCD34D; margin-top:2px; font-weight:700;">Publicado: Bs ${escapeHtmlStr(String(rep.precio_publicado))} · Reportado: Bs ${escapeHtmlStr(String(rep.precio_reportado))}</div>`
+        ? `<div style="font-size:16px; color:#FCD34D; margin-top:2px; font-weight:700;">Publicado: Bs ${escapeHtmlStr(String(rep.precio_publicado))} · Reportado: Bs ${escapeHtmlStr(String(rep.precio_reportado))}</div>`
         : '';
 
       html += `
@@ -1820,15 +1820,15 @@ async function renderAdminReports() {
             <strong style="color:#F8FAFC;">${escapeHtmlStr(rep.denunciado_id || 'Publicación')}</strong>: <span style="color:#FDE047;">${escapeHtmlStr(rep.motivo)}</span>
             ${telSnippet}
             ${priceSnippet}
-            <div style="font-size:10px; color:#94A3B8; margin-top:2px;">${escapeHtmlStr(rep.detalles || 'Sin detalle')}</div>
+            <div style="font-size:16px; color:#94A3B8; margin-top:2px;">${escapeHtmlStr(rep.detalles || 'Sin detalle')}</div>
 
           </div>
 
           <div style="display:flex; gap:4px;">
 
-            <button data-action="borrarDenunciaAdmin" data-id="${rep.id}" style="background:#0288D1; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; cursor:pointer;" title="Desestimar">👍 Ok</button>
+            <button data-action="borrarDenunciaAdmin" data-id="${rep.id}" style="background:#0288D1; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:16px; cursor:pointer;" title="Desestimar">👍 Ok</button>
 
-            <button data-action="banearUsuarioAdmin" data-id="${escapeHtmlStr(rep.denunciado_id)}" style="background:#D32F2F; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:9px; cursor:pointer;" title="Banear Usuario">🚫 Banear</button>
+            <button data-action="banearUsuarioAdmin" data-id="${escapeHtmlStr(rep.denunciado_id)}" style="background:#D32F2F; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:16px; cursor:pointer;" title="Banear Usuario">🚫 Banear</button>
 
           </div>
 
@@ -1862,9 +1862,9 @@ async function renderAdminReports() {
 
         <div style="display:flex; justify-content:space-between; align-items:center; background:#1E293B; padding:4px 8px; border-radius:4px; margin-bottom:4px;">
 
-          <span style="font-size:11px;">🚫 ${escapeHtmlStr(uIdentificador)}</span>
+          <span style="font-size:16px;">🚫 ${escapeHtmlStr(uIdentificador)}</span>
 
-          <button data-action="desbanearUsuarioAdmin" data-id="${u.id}" style="background:#00E676; color:#0F172A; border:none; padding:2px 6px; border-radius:4px; font-weight:700; font-size:9px; cursor:pointer;">Desbanear</button>
+          <button data-action="desbanearUsuarioAdmin" data-id="${u.id}" style="background:#00E676; color:#0F172A; border:none; padding:2px 6px; border-radius:4px; font-weight:700; font-size:16px; cursor:pointer;">Desbanear</button>
 
         </div>
 
@@ -2161,34 +2161,34 @@ function filtrarYRenderizarAvisosAdmin(filtro = '') {
       <div style="background:#1E293B; border-radius:8px; padding:10px 12px; border:1px solid rgba(255,255,255,0.08); display:flex; flex-direction:column; gap:6px;">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
           <div style="display:flex; gap:6px; align-items:center;">
-            <span style="font-size:10px; font-weight:800; background:rgba(245,158,11,0.2); color:#F59E0B; padding:2px 7px; border-radius:4px;">${escapeHtmlStr(p.categoria || 'AVISO')}</span>
-            <span style="font-size:10px; font-weight:700; background:rgba(56,189,248,0.15); color:#38BDF8; padding:2px 7px; border-radius:4px;">📍 ${escapeHtmlStr(String(p.ciudad || 'Global').toUpperCase())}</span>
-            ${isExpired ? '<span style="font-size:9.5px; background:rgba(239,68,68,0.2); color:#F87171; padding:2px 5px; border-radius:4px;">⚠️ Expirado (+24h)</span>' : ''}
+            <span style="font-size:16px; font-weight:800; background:rgba(245,158,11,0.2); color:#F59E0B; padding:2px 7px; border-radius:4px;">${escapeHtmlStr(p.categoria || 'AVISO')}</span>
+            <span style="font-size:16px; font-weight:700; background:rgba(56,189,248,0.15); color:#38BDF8; padding:2px 7px; border-radius:4px;">📍 ${escapeHtmlStr(String(p.ciudad || 'Global').toUpperCase())}</span>
+            ${isExpired ? '<span style="font-size:16px; background:rgba(239,68,68,0.2); color:#F87171; padding:2px 5px; border-radius:4px;">⚠️ Expirado (+24h)</span>' : ''}
           </div>
-          <div style="font-size:10px; color:#94A3B8;">
+          <div style="font-size:16px; color:#94A3B8;">
             <i class="fa-regular fa-clock"></i> ${escapeHtmlStr(timeStr)}
           </div>
         </div>
 
-        <div style="font-weight:800; font-size:12.5px; color:white;">
+        <div style="font-weight:800; font-size:16px; color:white;">
           ${escapeHtmlStr(p.titulo || 'Sin título')}
         </div>
 
-        <div style="font-size:11px; color:#CBD5E1; line-height:1.4;">
+        <div style="font-size:16px; color:#CBD5E1; line-height:1.4;">
           ${escapeHtmlStr(p.descripcion || '')}
         </div>
 
         <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(255,255,255,0.05); padding-top:6px; margin-top:2px;">
-          <div style="font-size:10.5px; color:#94A3B8; display:flex; gap:10px; align-items:center;">
+          <div style="font-size:16px; color:#94A3B8; display:flex; gap:10px; align-items:center;">
             <span>👤 <strong>${escapeHtmlStr(p.autor || 'Vecino')}</strong></span>
             <span>👍 ${p.votos ?? 1} votos</span>
             <span>💬 ${commentCount} comentarios</span>
           </div>
           <div style="display:flex; gap:6px;">
-            <button type="button" data-action="abrirModalEditarPost" data-id="${p.id}" data-title="${safeTitle}" data-desc="${safeDesc}" data-cat="${safeCat}" style="background:rgba(14,165,233,0.2); color:#38BDF8; border:1px solid rgba(14,165,233,0.4); padding:4px 8px; border-radius:4px; font-size:10.5px; font-weight:700; cursor:pointer;">
+            <button type="button" data-action="abrirModalEditarPost" data-id="${p.id}" data-title="${safeTitle}" data-desc="${safeDesc}" data-cat="${safeCat}" style="background:rgba(14,165,233,0.2); color:#38BDF8; border:1px solid rgba(14,165,233,0.4); padding:4px 8px; border-radius:4px; font-size:16px; font-weight:700; cursor:pointer;">
               <i class="fa-solid fa-pen-to-square"></i> Editar
             </button>
-            <button type="button" data-action="borrarPostForumAdmin" data-id="${p.id}" style="background:rgba(239,68,68,0.2); color:#F87171; border:1px solid rgba(239,68,68,0.4); padding:4px 8px; border-radius:4px; font-size:10.5px; font-weight:700; cursor:pointer;">
+            <button type="button" data-action="borrarPostForumAdmin" data-id="${p.id}" style="background:rgba(239,68,68,0.2); color:#F87171; border:1px solid rgba(239,68,68,0.4); padding:4px 8px; border-radius:4px; font-size:16px; font-weight:700; cursor:pointer;">
               <i class="fa-solid fa-trash"></i> Borrar
             </button>
           </div>

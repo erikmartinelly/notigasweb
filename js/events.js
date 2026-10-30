@@ -171,6 +171,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_auto_event_6 = document.getElementById('auto-event-6');
     if (el_auto_event_6) el_auto_event_6.addEventListener('click', () => { safeCall('conectarGPSAuto', true); });
 
+    const el_btnCloseGpsFloating = document.getElementById('btnCloseGpsFloating');
+    if (el_btnCloseGpsFloating) el_btnCloseGpsFloating.addEventListener('click', () => {
+      const banner = document.getElementById('gpsFloatingBanner');
+      if (banner) banner.style.display = 'none';
+    });
+
     const el_selectCiudadCapital = document.getElementById('selectCiudadCapital');
     if (el_selectCiudadCapital) el_selectCiudadCapital.addEventListener('change', (event) => {
       safeCall('cambiarCiudadCapital', event.target.value);
@@ -245,7 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (el_auto_event_15) el_auto_event_15.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'chatarra', e.currentTarget); });
 
     const el_auto_event_72 = document.getElementById('auto-event-72');
-    if (el_auto_event_72) el_auto_event_72.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'botellas', e.currentTarget); });
+    if (el_auto_event_72) el_auto_event_72.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'vidrio', e.currentTarget); });
 
     const el_auto_event_91 = document.getElementById('auto-event-91');
     if (el_auto_event_91) el_auto_event_91.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'organico', e.currentTarget); });

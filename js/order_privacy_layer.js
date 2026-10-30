@@ -126,11 +126,11 @@
     let action = '';
     if (isDriverMode()) {
       if (esAdminActivo()) {
-        action = `<div style="margin-top:8px;padding:7px 9px;border-radius:7px;font-size:11px;font-weight:800;">Vista administrador: puedes ver la zona. Tomar pedidos requiere una cuenta de repartidor habilitada.</div>`;
+        action = `<div style="margin-top:8px;padding:7px 9px;border-radius:7px;font-size:16px;font-weight:800;">Vista administrador: puedes ver la zona. Tomar pedidos requiere una cuenta de repartidor habilitada.</div>`;
       } else if (driverCanTakeOrders) {
         action = `<button type="button" style="margin-top:8px;width:100%;padding:7px 10px;border:0;border-radius:7px;font-weight:800;cursor:pointer;" onclick="window.tomarPedidoDesdeZonaPrivada('${escapeHtml(row.order_id)}',${Number(row.latitude)},${Number(row.longitude)})">Tomar pedido</button>`;
       } else {
-        action = `<div style="margin-top:8px;padding:7px 9px;border-radius:7px;font-size:11px;font-weight:800;">Cuenta suspendida: puedes ver la zona, pero no tomar nuevos pedidos.</div>`;
+        action = `<div style="margin-top:8px;padding:7px 9px;border-radius:7px;font-size:16px;font-weight:800;">Cuenta suspendida: puedes ver la zona, pero no tomar nuevos pedidos.</div>`;
       }
     }
     return `<div style="min-width:180px;line-height:1.4;"><strong>Pedido disponible</strong><br><span>Ubicación aproximada dentro de un área de ${radius} m.</span>${action}</div>`;
@@ -271,13 +271,13 @@
     let html = '<div style="padding:10px 0 6px;font-weight:900;">Pedidos</div>';
 
     if (!access.canTake && !esAdmin) {
-      html += `<div style="padding:10px;margin:8px 0 12px;border:1px solid rgba(239,68,68,.55);border-radius:8px;background:rgba(239,68,68,.10);font-size:11px;line-height:1.45;"><strong>Cuenta suspendida para nuevos pedidos.</strong><br>${escapeHtml(access.reason || driverSuspensionReason)}</div>`;
+      html += `<div style="padding:10px;margin:8px 0 12px;border:1px solid rgba(239,68,68,.55);border-radius:8px;background:rgba(239,68,68,.10);font-size:16px;line-height:1.45;"><strong>Cuenta suspendida para nuevos pedidos.</strong><br>${escapeHtml(access.reason || driverSuspensionReason)}</div>`;
     }
 
     if (assigned.length) {
       html += esAdmin
-        ? '<div style="font-size:11px;font-weight:800;margin:8px 0;">PEDIDOS ASIGNADOS · VISTA ADMIN (todos los repartidores)</div>'
-        : '<div style="font-size:11px;font-weight:800;margin:8px 0;">MIS PEDIDOS TOMADOS</div>';
+        ? '<div style="font-size:16px;font-weight:800;margin:8px 0;">PEDIDOS ASIGNADOS · VISTA ADMIN (todos los repartidores)</div>'
+        : '<div style="font-size:16px;font-weight:800;margin:8px 0;">MIS PEDIDOS TOMADOS</div>';
       assigned.forEach((o) => {
         const lat = Number(o.latitude || 0);
         const lng = Number(o.longitude || 0);
@@ -302,7 +302,7 @@
       });
     }
 
-    html += '<div style="font-size:11px;font-weight:800;margin:12px 0 8px;">PEDIDOS LIBRES</div>';
+    html += '<div style="font-size:16px;font-weight:800;margin:12px 0 8px;">PEDIDOS LIBRES</div>';
     if (!available.length) {
       html += '<div style="padding:16px;text-align:center;opacity:.75;">No hay pedidos libres en tu zona.</div>';
     } else {
@@ -315,7 +315,7 @@
           : '';
         html += `<div style="padding:10px;margin-bottom:8px;border:1px solid rgba(255,255,255,.12);border-radius:8px;">
           <div style="font-weight:800;">Pedido disponible</div>
-          <div style="font-size:11px;margin-top:3px;opacity:.8;">Solo se muestra un área aproximada de ${radius} m. Los datos del pedido se habilitan únicamente si lo tomas.</div>
+          <div style="font-size:16px;margin-top:3px;opacity:.8;">Solo se muestra un área aproximada de ${radius} m. Los datos del pedido se habilitan únicamente si lo tomas.</div>
           <div style="display:flex;gap:6px;margin-top:8px;">
             <button type="button" onclick="window.centrarZonaPedidoAproximada('${escapeHtml(o.order_id)}',${lat},${lng})" style="padding:6px 9px;border-radius:6px;border:0;font-weight:800;cursor:pointer;">Ver zona</button>
             ${takeButton}
