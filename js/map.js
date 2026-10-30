@@ -715,7 +715,7 @@ function renderOrderRadarsOnMap(orders) {
 
     if (units >= 8 || count >= 5) {
       densityClass = 'density-high';
-      densityBadge = `<div class="demand-cluster-badge badge-fire">🔥 <strong>${units}</strong> <small>un</small></div>`;
+      densityBadge = `<div class="demand-cluster-badge badge-fire">♻️ <strong>${units}</strong> <small>un</small></div>`;
       radarPulseColor = '#FF1744';
       ringSize = 90;
     } else if (units >= 3 || count >= 2) {
