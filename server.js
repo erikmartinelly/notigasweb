@@ -210,7 +210,11 @@ app.use(express.static(__dirname, {
   }
 }));
 
-app.get('*', sendIndex);
+// Fallback de la PWA. Se usa una expresion regular en vez del comodin '*' porque
+// Express 5 (path-to-regexp v8) rechaza los comodines sin nombre y el servidor no
+// arrancaria con "TypeError: Missing parameter name". La ruta /.*/ es valida
+// tanto en Express 4 como en Express 5.
+app.get(/.*/, sendIndex);
 
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log('NOTIGAS iniciado exitosamente en puerto ' + PORT);

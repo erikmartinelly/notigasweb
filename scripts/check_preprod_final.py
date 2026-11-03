@@ -243,6 +243,10 @@ def main() -> int:
     must(rx(monitoring, r"if \(!dsn\)"), "el monitoreo de Sentry se activa solo cuando hay DSN")
     must("browser.sentry-cdn.com" in server and "browser.sentry-cdn.com" in htaccess,
          "CSP autoriza el CDN de Sentry en servidor y Apache")
+    must(not rx(server, r"app\.get\(\s*['\"]\*['\"]\s*,"),
+         'el fallback de rutas no usa el comodín "*" (incompatible con Express 5)')
+    must(rx(server, r"app\.get\(\s*/\.\*/\s*,\s*sendIndex\s*\)"),
+         'el fallback de la PWA usa una ruta válida en Express 4 y 5')
     must(not rx(supabaseConfig, r"sb_publishable_[A-Za-z0-9_-]+"), "clave publicable no queda escrita en el frontend")
     must(rx(server, r"express\.static\(__dirname,\s*\{[\s\S]*?index:\s*false[\s\S]*?maxAge:\s*STATIC_CACHE_MAX_AGE_MS"),
          "index se sirve por ruta saneada y estáticos usan cache explícito")
