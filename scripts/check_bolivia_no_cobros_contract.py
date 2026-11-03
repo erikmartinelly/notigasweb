@@ -76,7 +76,7 @@ mapa_js = leer("js/map.js")
 todo_js = "\n".join(codigo.values())
 
 # --- 1. Moneda: nada de soles -------------------------------------------
-print("\n[1/9] Moneda boliviana (Bs), sin soles")
+print("\n[1/10] Moneda boliviana (Bs), sin soles")
 revisar(
     "js/ no usa el simbolo de soles (S/importe)",
     not re.search(r"S/\s*\d", todo_js),
@@ -98,7 +98,7 @@ revisar(
 )
 
 # --- 2. Yape fuera del flujo de pago ------------------------------------
-print("\n[2/9] Yape fuera del flujo de pago")
+print("\n[2/10] Yape fuera del flujo de pago")
 revisar(
     "js/driver_payments.js no menciona Yape",
     not re.search(r"yape", driver_pagos, re.IGNORECASE),
@@ -123,7 +123,7 @@ revisar(
 )
 
 # --- 3. Nada de llamadas a objetos ya eliminados -------------------------
-print("\n[3/9] Sin llamadas a tablas/RPCs de comisiones (eliminados en BD)")
+print("\n[3/10] Sin llamadas a tablas/RPCs de comisiones (eliminados en BD)")
 ELIMINADOS = [
     "rpc_generar_cobro_comisiones",
     "rpc_liquidar_comisiones_chofer",
@@ -142,7 +142,7 @@ for rpc in ELIMINADOS:
     )
 
 # --- 4. Ciudad por defecto Bolivia --------------------------------------
-print("\n[4/9] Ciudad por defecto: Cochabamba, no Lima")
+print("\n[4/10] Ciudad por defecto: Cochabamba, no Lima")
 revisar(
     "js/ no usa 'lima' como valor de ciudad",
     not re.search(r"""['\"]lima['\"]""", todo_js),
@@ -159,7 +159,7 @@ revisar(
 )
 
 # --- 5. Identidad de Bolivia ---------------------------------------------
-print("\n[5/9] Identidad de Bolivia")
+print("\n[5/10] Identidad de Bolivia")
 for etiqueta, patron in [
     ("prefijo telefonico +591", r"\+591|['\"]591['\"]"),
     ("moneda BOB", r"BOB"),
@@ -170,7 +170,7 @@ for etiqueta, patron in [
     revisar("js/notigas_bo.js declara %s" % etiqueta, re.search(patron, notigas_bo))
 
 # --- 6. Las 9 ciudades de Bolivia ---------------------------------------
-print("\n[6/9] Las 9 ciudades de Bolivia en mapa y selector")
+print("\n[6/10] Las 9 ciudades de Bolivia en mapa y selector")
 CIUDADES = [
     "cochabamba", "lapaz", "santacruz", "sucre",
     "oruro", "potosi", "tarija", "trinidad", "cobija",
@@ -185,7 +185,7 @@ revisar(
 )
 
 # --- 7. Sin cobros: coherencia de mensajes -------------------------------
-print("\n[7/9] Coherencia del mensaje 'sin cobros'")
+print("\n[7/10] Coherencia del mensaje 'sin cobros'")
 revisar(
     "index.html declara que NOTIGAS no procesa ni custodia fondos",
     re.search(r"no procesa, recauda ni custodia fondos", index_html, re.IGNORECASE),
@@ -217,7 +217,7 @@ revisar(
 )
 
 # --- 8. Materiales del recolector (multi-material de reciclaje) -----------
-print("\n[8/9] Materiales del recolector (multi-material de reciclaje)")
+print("\n[8/10] Materiales del recolector (multi-material de reciclaje)")
 revisar(
     "index.html ofrece seleccion de materiales de reciclaje",
     'id="driverMaterialesPicker"' in index_html,
@@ -232,7 +232,7 @@ revisar(
 )
 
 # --- 9. Migraciones nuevas de Bolivia ------------------------------------
-print("\n[9/9] Migraciones de Bolivia aplicadas y coherentes")
+print("\n[9/10] Migraciones de Bolivia aplicadas y coherentes")
 mig_dir = os.path.join(RAIZ, "supabase", "migrations")
 migs = sorted(f for f in os.listdir(mig_dir) if f.endswith(".sql"))
 
@@ -267,6 +267,69 @@ if mig_contacto:
     revisar(
         "la migracion de contacto crea la politica de repartidores",
         re.search(r"pedidos_select_drivers_contacto", txt),
+    )
+
+# --- 10. rpc_assign_order vigente sin puertas de cobro --------------------
+print("\n[10/10] rpc_assign_order vigente sin puertas de cobro")
+
+definiciones = []
+for f in migs:
+    txt = leer("supabase/migrations/" + f)
+    for m in re.finditer(
+        r"create\s+or\s+replace\s+function\s+public\.rpc_assign_order\s*\(",
+        txt,
+        re.IGNORECASE,
+    ):
+        definiciones.append((f, m.start(), txt))
+
+revisar("existe una definicion de rpc_assign_order", bool(definiciones))
+
+if definiciones:
+    archivo, inicio, txt = definiciones[-1]
+    apertura = re.search(r"\bas\s+(\$[A-Za-z_]*\$)", txt[inicio:], re.IGNORECASE)
+    if apertura:
+        etiqueta = apertura.group(1)
+        desde = inicio + apertura.end()
+        cierre = txt.find(etiqueta, desde)
+        cuerpo = txt[desde:cierre if cierre != -1 else len(txt)]
+    else:
+        cuerpo = txt[inicio:]
+
+    revisar(
+        "la definicion vigente de rpc_assign_order no exige pago de S/ 50",
+        not re.search(r"S/\s*\d", cuerpo),
+        citas(cuerpo, r"S/\s*\d"),
+    )
+    revisar(
+        "la definicion vigente de rpc_assign_order no pide remesas Yape",
+        not re.search(r"yape", cuerpo, re.IGNORECASE),
+        citas(cuerpo, r"yape"),
+    )
+    revisar(
+        "la definicion vigente de rpc_assign_order no bloquea por ciclo de 250 pedidos",
+        not re.search(r"pedidos_credito_ciclo", cuerpo, re.IGNORECASE),
+        citas(cuerpo, r"pedidos_credito_ciclo"),
+    )
+    revisar(
+        "la definicion vigente de rpc_assign_order no bloquea por comisiones pendientes",
+        not re.search(r"comisiones_pendientes", cuerpo, re.IGNORECASE),
+        citas(cuerpo, r"comisiones_pendientes"),
+    )
+    revisar(
+        "la definicion vigente de rpc_assign_order valida la categoria con el catalogo vigente",
+        "driver_matches_order_category" in cuerpo,
+    )
+    revisar(
+        "la definicion vigente de rpc_assign_order conserva autenticacion y baneo",
+        "auth.uid()" in cuerpo and "is_banned" in cuerpo,
+    )
+    revisar(
+        "la definicion vigente de rpc_assign_order conserva ciudad y habilitacion",
+        "ciudad" in cuerpo and "estado_verificacion" in cuerpo,
+    )
+    revisar(
+        "la definicion vigente de rpc_assign_order conserva el plazo de 24h sin comision",
+        "driver_assigned_at" in cuerpo and "comision_entrega = 0" in cuerpo,
     )
 
 # --- Extra: cache-bust coherente -----------------------------------------

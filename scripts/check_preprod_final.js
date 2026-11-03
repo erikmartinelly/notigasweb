@@ -152,6 +152,8 @@ must(/browser\.sentry-cdn\.com/.test(server) && /browser\.sentry-cdn\.com/.test(
 must(!/sb_publishable_[A-Za-z0-9_-]+/.test(read('js/supabase-config.js')), 'clave publicable no queda escrita en el frontend');
 must(/express\.static\(__dirname,\s*\{[\s\S]*?index:\s*false[\s\S]*?maxAge:\s*STATIC_CACHE_MAX_AGE_MS/.test(server), 'index se sirve por ruta saneada y estáticos usan cache explícito');
 must(/stale-while-revalidate=86400/.test(server), 'servidor permite reutilizar estáticos mientras revalida en segundo plano');
+must(!/app\.get\(\s*['"]\*['"]\s*,/.test(server), 'el fallback de rutas no usa el comodín "*" (incompatible con Express 5)');
+must(/app\.get\(\s*\/\.\*\/\s*,\s*sendIndex\s*\)/.test(server), 'el fallback de la PWA usa una ruta válida en Express 4 y 5');
 must(adminPaymentConfig.includes('window.rechazarSuscripcionPremiumAdmin = retired'), 'rechazo Premium legacy ya no llama RPC eliminado');
 
 for (const required of [
