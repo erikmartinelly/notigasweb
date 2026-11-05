@@ -199,8 +199,10 @@ function renderVendorCards(filterCat) {
       const cats = (Array.isArray(vendor.categoryList) && vendor.categoryList.length) ? vendor.categoryList : [vendor.category];
       const bo = window.NOTIGAS_BO;
       return cats.map((c) => {
-        const item = bo && typeof bo.categoriaPorCodigo === 'function' ? bo.categoriaPorCodigo(c) : null;
-        return (item && item.etiqueta) ? item.etiqueta : String(c || '');
+        // Solo etiquetas del catalogo vigente: un material retirado (aceite,
+        // organico) no debe aparecer como si fuera plastico por el fallback.
+        const item = (bo && bo.CATEGORIAS_POR_CODIGO) ? bo.CATEGORIAS_POR_CODIGO[c] : null;
+        return (item && item.etiqueta) ? item.etiqueta : '';
       }).filter(Boolean).join(' • ');
     })();
       // Calificacion de cumplimiento (0 a 5 estrellas) definida por el backend:
@@ -248,12 +250,11 @@ function getIconForCategory(cat) {
   if (c.includes('papel') || c.includes('carton') || c.includes('cartón')) return '📄';
   if (c.includes('vidrio')) return '🍾';
   if (c.includes('botella')) return '♻️';
-  if (c.includes('organico') || c.includes('orgánico')) return '🌿';
-  if (c.includes('aceit') || c.includes('grasa') || c.includes('oil')) return '🛢️';
   if (c.includes('plastico') || c.includes('plástico')) return '♻️';
   if (c.includes('detergente') || c.includes('limpieza')) return '🧽';
-  // Categorias retiradas (agua, frutas, sal, afilado, gas, carbon): sin icono
-  // propio, para no sugerir un material que NOTIGAS ya no maneja.
+  // Categorias retiradas (organico, aceite usado, agua, frutas, sal, afilado,
+  // gas, carbon): sin icono propio, para no sugerir un material que NOTIGAS ya
+  // no maneja.
   return '📦';
 }
 

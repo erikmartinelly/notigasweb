@@ -422,7 +422,7 @@ try {
     }
   }
   for (const [category, label] of [
-    ['plastico', 'RECOGER'], ['aceite', 'RECOGER'], ['otros', 'RECOGER'], ['detergentes', 'PEDIDO']
+    ['plastico', 'RECOGER'], ['vidrio', 'RECOGER'], ['otros', 'RECOGER'], ['detergentes', 'PEDIDO']
   ]) {
     const icon = context.obtenerIconoCategoriaMapa(category);
     if (!icon.html.includes(label)) throw new Error(`Tipo incorrecto en pin público de ${category}`);

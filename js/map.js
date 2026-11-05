@@ -316,18 +316,16 @@ window.normalizeCategoryCode = function(cat) {
   // vea pedidos de un material que no recoge.
   if (c.includes('chatarra') || c.includes('metal')) return 'chatarra';
   if (c.includes('papel') || c.includes('carton') || c.includes('cartón')) return 'papel';
-  if (c.includes('organico') || c.includes('orgánico')) return 'organico';
-  if (c.includes('aceit') || c.includes('grasa') || c.includes('oil')) return 'aceite';
   if (c.includes('vidrio') || c.includes('glass')) return 'vidrio';
   if (c.includes('botell')) return 'plastico';
   if (c.includes('plastico') || c.includes('plástic') || c.includes('plast')) return 'plastico';
   if (c.includes('deterg') || c.includes('limpieza')) return 'detergentes';
 
-  // 4. Categorías RETIRADAS del catálogo (frutas, gas, sal, afilado, agua,
-  // carbón, leña). Se devuelven como marcador de "no es un material actual":
-  // así un registro legacy NO coincide con ningún material y no se muestra
-  // como plástico por accidente. Los llamadores de icono ya traen su propio
-  // fallback neutro para este caso.
+  // 4. Categorías RETIRADAS del catálogo (orgánico, aceite usado, frutas, gas,
+  // sal, afilado, agua, carbón, leña). Se devuelven como marcador de "no es un
+  // material actual": así un registro legacy NO coincide con ningún material y
+  // no se muestra como plástico por accidente. Los llamadores de icono ya traen
+  // su propio fallback neutro para este caso.
   return window.CATEGORIA_RETIRADA;
 };
 
@@ -456,8 +454,6 @@ const ICONOS_FONTAWESOME_POR_CATEGORIA = {
   papel:       'fa-newspaper',
   chatarra:    'fa-gears',
   vidrio:      'fa-wine-bottle',
-  organico:    'fa-seedling',
-  aceite:      'fa-oil-can',
   detergentes: 'fa-pump-soap',
   otros:       'fa-box'
 };

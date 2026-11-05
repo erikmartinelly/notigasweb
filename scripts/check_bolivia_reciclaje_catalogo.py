@@ -22,20 +22,23 @@ OK = 0
 # Orden canonico acordado. El indice importa: es el orden de la UI.
 #
 # NOTIGAS es un servicio de reciclaje. Del grupo de compras solo sobreviven los
-# detergentes: sal, afilado y agua se retiraron como categorias de pedido. Se
-# sumo "aceite" (aceite de cocina usado) como material de recogida, y "otros"
-# dejo de ser una peticion de estadistica para pasar a ser un pedido real de
-# recogida: el vecino describe que material tiene y se publica como pedido.
-# public.solicitudes_otros se conserva solo como historico.
+# detergentes: sal, afilado y agua se retiraron como categorias de pedido. En
+# 2026-11 se retiraron tambien "organico" y "aceite" (aceite de cocina usado) de
+# las fichas de recolectores y de los pedidos de los vecinos: el historico SQL
+# los conserva para que los pedidos antiguos sigan siendo validos, pero ya no
+# se ofrecen. "otros" dejo de ser una peticion de estadistica para pasar a ser
+# un pedido real de recogida.
 CATALOGO_ESPERADO = [
     ("plastico", "recogida"),
     ("papel", "recogida"),
     ("chatarra", "recogida"),
     ("vidrio", "recogida"),
-    ("organico", "recogida"),
-    ("aceite", "recogida"),
     ("detergentes", "compra"),
 ]
+
+# Materiales retirados del producto en 2026-11: no pueden reaparecer como
+# opcion en el cliente ni en el catalogo activo del servidor.
+RETIRADOS = ("organico", "aceite")
 
 # Categorias de compra o retiradas. Deben seguir ausentes del cliente y del
 # catalogo activo del servidor, aunque el historico las conserve para que los
@@ -99,6 +102,30 @@ def bloque_sql_catalogo(texto: str) -> List[Tuple[str, str]]:
     return [(c, mapa.get(c, "?")) for c in codigos]
 
 
+def ultimo_cuerpo(sql: str, nombre: str) -> str:
+    """Devuelve el cuerpo $$...$$ de la ULTIMA definicion de una funcion.
+
+    Las migraciones son un registro historico: importa lo que diga la version
+    vigente, no las anteriores. Se busca por nombre exacto para que
+    notigas_catalogo_categorias no capture a ..._historico.
+    """
+    patron = re.compile(
+        r"create\s+or\s+replace\s+function\s+public\." + re.escape(nombre) + r"\b",
+        re.IGNORECASE,
+    )
+    posiciones = [m.start() for m in patron.finditer(sql)]
+    if not posiciones:
+        return ""
+    resto = sql[posiciones[-1]:]
+    apertura = re.search(r"\bas\s+(\$[A-Za-z_]*\$)", resto, re.IGNORECASE)
+    if not apertura:
+        return ""
+    etiqueta = apertura.group(1)
+    desde = apertura.end()
+    cierre = resto.find(etiqueta, desde)
+    return resto[desde:cierre if cierre != -1 else len(resto)]
+
+
 def sin_comentarios(texto: str) -> str:
     """Quita comentarios de linea y de bloque.
 
@@ -147,12 +174,26 @@ def main() -> int:
 
     for cod, tipo in CATALOGO_ESPERADO:
         ok(cod in bo, f"el catalogo declara '{cod}'")
-    ok(len([c for c, t in cat if t == "recogida"]) == 6, "seis categorias son recogida")
+    ok(len([c for c, t in cat if t == "recogida"]) == 4, "cuatro categorias son recogida")
     ok(len([c for c, t in cat if t == "compra"]) == 1, "solo los detergentes siguen siendo compra")
 
     # Las compras retiradas no pueden reaparecer como categoria de pedido.
     for cod in COMPRAS_RETIRADAS:
         ok(cod not in [c for c, _ in cat], f"'{cod}' ya no es una categoria de pedido")
+
+    # Organico y aceite usado se retiraron en 2026-11 de las fichas de
+    # recolectores y de los pedidos de los vecinos. No pueden reaparecer como
+    # opcion en el cliente ni en el catalogo activo del servidor; el historico
+    # SQL los conserva para validar los pedidos antiguos.
+    for cod in RETIRADOS:
+        ok(cod not in [c for c, _ in cat], f"'{cod}' ya no es una categoria de pedido")
+        ok(f'name="driverMaterial" value="{cod}"' not in idx,
+           f"la ficha del recolector ya no ofrece '{cod}'")
+        ok(f'name="userMaterial" value="{cod}"' not in idx,
+           f"la ficha de pedido del vecino ya no ofrece '{cod}'")
+        ok(f'value="{cod}"' not in idx, f"index.html ya no ofrece '{cod}'")
+    ok("fa-seedling" not in appj and "fa-oil-can" not in appj,
+       "los iconos de organico/aceite salieron del cliente")
 
     # el servidor debe derivar el mismo tipo
     migs = sorted((RAIZ / "supabase/migrations").glob("*.sql"))
@@ -160,6 +201,18 @@ def main() -> int:
     ok("notigas_tipo_de_categoria" in sql, "el servidor deriva el tipo desde la categoría")
     ok("pedidos_categoria_catalogo_chk" in sql, "existe el CHECK de catálogo en pedidos")
     ok("tipo_solicitud" in sql, "existe la columna tipo_solicitud")
+
+    # La ultima definicion de cada catalogo manda: el activo no puede listar los
+    # materiales retirados y el historico debe conservarlos.
+    activo_sql = ultimo_cuerpo(sql, "notigas_catalogo_categorias")
+    historico_sql = ultimo_cuerpo(sql, "notigas_catalogo_categorias_historico")
+    ok(bool(activo_sql), "el catalogo activo del servidor esta definido en migraciones")
+    ok(bool(historico_sql), "el catalogo historico del servidor esta definido en migraciones")
+    for cod in RETIRADOS:
+        ok(f"'{cod}'" not in activo_sql,
+           f"el catalogo activo SQL ya no incluye '{cod}'")
+        ok(f"'{cod}'" in historico_sql,
+           f"el catalogo historico SQL conserva '{cod}'")
 
     # ------------------------------------------------------- residuos heredados
     #

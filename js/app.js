@@ -422,8 +422,6 @@ const CATEGORIA_ICONO_FONTAWESOME = {
   papel:       'fa-newspaper',
   chatarra:    'fa-gears',
   vidrio:      'fa-wine-bottle',
-  organico:    'fa-seedling',
-  aceite:      'fa-oil-can',
   detergentes: 'fa-pump-soap',
   otros:       'fa-box'
 };
@@ -463,14 +461,14 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
           color: uData.color_camion
         });
       } else {
-        favEl.href = "icons/camion_reciclaje.svg?v=177";
+        favEl.href = "icons/camion_reciclaje.svg?v=178";
       }
       document.title = "🚛 RECOLECTOR REGISTRADO";
     } else {
       if (typeof window.restaurarFaviconDefault === 'function') {
         window.restaurarFaviconDefault();
       } else {
-        favEl.href = "icons/camion_reciclaje.svg?v=177";
+        favEl.href = "icons/camion_reciclaje.svg?v=178";
       }
       document.title = "♻️ RECOJO RECICLABLES";
     }
@@ -507,8 +505,6 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
     papel:       '<rect x="26" y="20" width="48" height="60" rx="4" fill="#FFF"/><line x1="35" y1="36" x2="65" y2="36" stroke="#00000030" stroke-width="4"/><line x1="35" y1="50" x2="65" y2="50" stroke="#00000030" stroke-width="4"/><line x1="35" y1="64" x2="55" y2="64" stroke="#00000030" stroke-width="4"/>',
     chatarra:    '<path d="M50 15 L65 40 H35 Z M20 50 L35 75 H5 Z M80 50 L95 75 H65 Z" fill="#FFF"/>',
     vidrio:      '<path d="M44 12h12v8H44z" fill="#FFF"/><path d="M43 20h14v56a8 8 0 0 1-8 8H51a8 8 0 0 1-8-8V20z" fill="#FFF"/>',
-    organico:    '<path d="M50 82 V44" stroke="#FFF" stroke-width="7" stroke-linecap="round"/><path d="M50 50 C30 50 22 36 24 22 C40 22 50 32 50 50 Z" fill="#FFF"/><path d="M50 58 C70 58 78 44 76 30 C60 30 50 40 50 58 Z" fill="#FFF"/>',
-    aceite:      '<path d="M34 34h32v46a6 6 0 0 1-6 6H40a6 6 0 0 1-6-6z" fill="#FFF"/><path d="M40 34l6-14h8l6 14z" fill="#FFF"/><rect x="46" y="12" width="8" height="6" rx="2" fill="#FFF"/>',
     detergentes: '<path d="M40 12h20v14H40z" fill="#FFF"/><path d="M36 26h28v56H36z" fill="#FFF"/><circle cx="50" cy="54" r="9" fill="#00000030"/>',
     otros:       '<rect x="20" y="36" width="60" height="44" fill="#FFF"/><path d="M14 36 L50 16 L86 36 Z" fill="#FFF"/>'
   };

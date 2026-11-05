@@ -253,12 +253,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_auto_event_72 = document.getElementById('auto-event-72');
     if (el_auto_event_72) el_auto_event_72.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'vidrio', e.currentTarget); });
 
-    const el_auto_event_91 = document.getElementById('auto-event-91');
-    if (el_auto_event_91) el_auto_event_91.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'organico', e.currentTarget); });
-
-    const el_auto_event_92 = document.getElementById('auto-event-92');
-    if (el_auto_event_92) el_auto_event_92.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'aceite', e.currentTarget); });
-
     const el_auto_event_18 = document.getElementById('auto-event-18');
     if (el_auto_event_18) el_auto_event_18.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'detergentes', e.currentTarget); });
 

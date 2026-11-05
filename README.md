@@ -39,18 +39,17 @@ Engineered with **Vanilla JavaScript**, **Supabase PostgreSQL with PostGIS**, an
 
 NOTIGAS operates in **Bolivia**, starting in **Cochabamba**, as a neighborhood recycling and services platform. The platform's single source of truth for the catalog is `window.NOTIGAS_BO.CATEGORIAS` in `js/notigas_bo.js`.
 
-There are exactly **6 active categories**, and each one has a fixed operation type:
+There are exactly **5 client categories**, and each one has a fixed operation type:
 
 | # | Code | Label | Type | Meaning |
 | :-- | :--- | :--- | :--- | :--- |
 | 1 | `plastico` | Plástico | `recogida` | A driver comes to pick it up |
 | 2 | `papel` | Papel y cartón | `recogida` | A driver comes to pick it up |
-| 3 | `chatarra` | Chatarra y metal | `recogida` | A driver comes to pick it up |
-| 4 | `botellas` | Botellas y vidrio | `recogida` | A driver comes to pick it up |
-| 5 | `organico` | Orgánico | `recogida` | A driver comes to pick it up |
-| 6 | `detergentes` | Detergentes | `compra` | A driver brings it to you |
+| 3 | `chatarra` | Metales / Chatarra | `recogida` | A driver comes to pick it up |
+| 4 | `vidrio` | Vidrio | `recogida` | A driver comes to pick it up |
+| 5 | `detergentes` | Detergentes | `compra` | A driver brings it to you |
 
-*Note: Free requests for other materials (`otros`) are routed to `solicitudes_otros` for demand intelligence and do not create public orders. Retired services (sal, afilado, agua, frutas) remain in historical logs to preserve legacy references.*
+*Note: the server-side active catalog also keeps `otros` (free-text "other material") as a real pickup order. `organico` and `aceite` (used cooking oil) were retired in 2026-11: they no longer appear on driver cards or neighbor order cards, new orders with them are rejected, and they remain only in the historical catalog so old orders stay valid. Other retired services (sal, afilado, agua, frutas) remain in historical logs to preserve legacy references.*
 
 **NOTIGAS does not charge.** There is no subscription, no commission, no credit cycle, and no price displayed anywhere in the interface. The agreement is made **directly between neighbor and collector**. Drivers compete on availability, coverage, and service, never on platform fees.
 

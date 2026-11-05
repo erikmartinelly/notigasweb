@@ -803,7 +803,6 @@ async function guardarRegistroUnico() {
     else if (categoria === 'chatarra') productos = 'Compra de Metales / Chatarra';
     else if (categoria === 'papel') productos = 'Papel, Cartón y Reciclaje';
     else if (categoria === 'vidrio') productos = 'Recolección de Vidrio';
-    else if (categoria === 'organico') productos = 'Orgánico Seleccionado';
     else productos = 'Varios';
 
     const schedule = (document.getElementById('regSchedule')?.value || '').trim() || 'Lunes a Sábado: 07:00 a 18:00';

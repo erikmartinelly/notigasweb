@@ -91,8 +91,8 @@ revisar("el material 'plastico' esta disponible", "plastico" in cbs)
 revisar("el material 'papel' esta disponible", "papel" in cbs)
 revisar("el material 'chatarra' esta disponible", "chatarra" in cbs)
 revisar("el material 'vidrio' esta disponible", "vidrio" in cbs)
-revisar("el material 'organico' esta disponible", "organico" in cbs)
-revisar("el material 'aceite' esta disponible", "aceite" in cbs)
+revisar("'organico' ya no se ofrece en la ficha del recolector", "organico" not in cbs)
+revisar("'aceite' ya no se ofrece en la ficha del recolector", "aceite" not in cbs)
 revisar(
     "el picker de materiales driverMaterialesPicker existe",
     'id="driverMaterialesPicker"' in index_html,
