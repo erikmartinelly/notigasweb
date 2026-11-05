@@ -1161,8 +1161,7 @@ window.seleccionarYPedirDirecto = seleccionarYPedirDirecto;
 /* El submenu de "PEDIR RECOJO DE RECICLABLES" deja Forzar una sola categoria por
    pedido: sus tarjetas eran un atajo a seleccionarYPedirDirecto(codigo). Ahora el
    usuario marca varios materiales y este los traslada al formulario de pedido,
-   que ya sabe serializarlos en una sola categoria ("plastico, papel").
-   La recarga de detergentes no aparece aqui porque tiene su propio boton. */
+   que ya sabe serializarlos en una sola categoria ("plastico, papel"). */
 async function abrirPedidoRecogidaMultiple() {
   if (typeof window.verificarPermisoOperarEnCiudad === 'function' && !window.verificarPermisoOperarEnCiudad('crear un pedido')) {
     return;
@@ -1228,7 +1227,12 @@ function categoriasDisponibles(tipo) {
 }
 
 function setTipoSolicitud(tipo) {
-  tipo = (tipo === 'compra') ? 'compra' : 'recogida';
+  // Todas las categorias vigentes son de recogida: la recarga de detergentes
+  // se retiro, asi que el flujo de compra ya no tiene opciones. Si llega un
+  // tipo 'compra' (por un registro legacy) se fuerza recogida para no mostrar
+  // un formulario vacio.
+  const hayCompra = categoriasDisponibles('compra').length > 0;
+  tipo = (tipo === 'compra' && hayCompra) ? 'compra' : 'recogida';
   tipoSolicitudActual = tipo;
   const esRecogida = (tipo === 'recogida');
 
@@ -1239,11 +1243,11 @@ function setTipoSolicitud(tipo) {
     b.style.color       = on ? (esRecogida ? '#BBF7D0' : '#BAE6FD') : '#94A3B8';
   });
 
-  // La opcion de compra solo aplica a productos (hoy: Recarga de Detergentes).
-  // En el flujo de reciclaje (recogida) se oculta para que no aparezca
-  // "COMPRAR / PEDIR"; y al comprar se oculta "RECOGER MATERIAL". Se usa
-  // querySelector (no querySelectorAll) porque el sandbox de check_runtime.js
-  // devuelve null de forma segura.
+  // Ya no quedan categorias de compra: la recarga de detergentes se retiro.
+  // El boton de compra desaparecio del HTML y, si un cliente viejo lo trae, se
+  // oculta. El boton de recogida queda siempre visible. Se usa querySelector
+  // (no querySelectorAll) porque el sandbox de check_runtime.js devuelve null
+  // de forma segura.
   const btnTipoCompra = document.querySelector('#tipoSolicitudToggle button[data-tipo="compra"]');
   if (btnTipoCompra) btnTipoCompra.style.display = (tipo === 'compra') ? 'flex' : 'none';
   const btnTipoRecogida = document.querySelector('#tipoSolicitudToggle button[data-tipo="recogida"]');
@@ -1356,7 +1360,7 @@ function confirmarPedido() {
       return;
     }
   } else {
-    categoria = selectCategoria && selectCategoria.value ? selectCategoria.value : 'detergentes';
+    categoria = selectCategoria && selectCategoria.value ? selectCategoria.value : 'plastico';
   }
 
   const primerCodigo = categoria.split(',')[0].trim();

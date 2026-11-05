@@ -196,7 +196,7 @@ def main() -> int:
     TITULO = "\u267B\uFE0F RECOJO RECICLABLES"
     DESCRIPCION = (
         "NOTIGAS - Bolivia \U0001F1E7\U0001F1F4 | \U0001F5D1\uFE0F Generadores de residuos"
-        " | \u267B\uFE0F Reciclaje | \U0001F69B Repartidores | \U0001F9F4 Detergentes"
+        " | \u267B\uFE0F Reciclaje | \U0001F69B Repartidores"
     )
     m = re.search(r"<title>(.*?)</title>", html, re.S)
     ok(m is not None and m.group(1).strip() == TITULO,

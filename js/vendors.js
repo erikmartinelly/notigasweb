@@ -248,13 +248,11 @@ function getIconForCategory(cat) {
   }
   if (c.includes('chatarra') || c.includes('metal')) return '⚙️';
   if (c.includes('papel') || c.includes('carton') || c.includes('cartón')) return '📄';
-  if (c.includes('vidrio')) return '🍾';
   if (c.includes('botella')) return '♻️';
   if (c.includes('plastico') || c.includes('plástico')) return '♻️';
-  if (c.includes('detergente') || c.includes('limpieza')) return '🧽';
-  // Categorias retiradas (organico, aceite usado, agua, frutas, sal, afilado,
-  // gas, carbon): sin icono propio, para no sugerir un material que NOTIGAS ya
-  // no maneja.
+  // Categorias retiradas (organico, aceite usado, vidrio, detergentes, agua,
+  // frutas, sal, afilado, gas, carbon): sin icono propio, para no sugerir un
+  // material que NOTIGAS ya no maneja.
   return '📦';
 }
 

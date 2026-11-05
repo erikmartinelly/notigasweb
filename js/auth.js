@@ -799,10 +799,8 @@ async function guardarRegistroUnico() {
 
     let productos = 'Varios';
     if (categoria === 'plastico') productos = 'Recolección de material reciclable';
-    else if (categoria === 'detergentes') productos = 'Recarga de Detergentes';
     else if (categoria === 'chatarra') productos = 'Compra de Metales / Chatarra';
     else if (categoria === 'papel') productos = 'Papel, Cartón y Reciclaje';
-    else if (categoria === 'vidrio') productos = 'Recolección de Vidrio';
     else productos = 'Varios';
 
     const schedule = (document.getElementById('regSchedule')?.value || '').trim() || 'Lunes a Sábado: 07:00 a 18:00';

@@ -196,9 +196,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_btnMainOrder = document.getElementById('btnMainOrder');
     if (el_btnMainOrder) el_btnMainOrder.addEventListener('click', () => { safeCall('abrirSubmenuPedidos'); });
 
-    const el_auto_event_7 = document.getElementById('auto-event-7');
-    if (el_auto_event_7) el_auto_event_7.addEventListener('click', () => { safeCall('seleccionarYPedirDirecto', 'detergentes'); });
-
     const el_auto_event_8 = document.getElementById('auto-event-8');
     if (el_auto_event_8) el_auto_event_8.addEventListener('click', () => { safeCall('notificarEscucheCamion'); });
 
@@ -249,12 +246,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const el_auto_event_15 = document.getElementById('auto-event-15');
     if (el_auto_event_15) el_auto_event_15.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'chatarra', e.currentTarget); });
-
-    const el_auto_event_72 = document.getElementById('auto-event-72');
-    if (el_auto_event_72) el_auto_event_72.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'vidrio', e.currentTarget); });
-
-    const el_auto_event_18 = document.getElementById('auto-event-18');
-    if (el_auto_event_18) el_auto_event_18.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'detergentes', e.currentTarget); });
 
     const el_auto_event_21 = document.getElementById('auto-event-21');
     if (el_auto_event_21) el_auto_event_21.addEventListener('click', () => { safeCall('abrirModalNuevoPost'); });

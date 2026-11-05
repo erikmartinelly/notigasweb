@@ -101,7 +101,7 @@ async function main() {
     });
     assert(res.data.version === expected.version,
       `Contrato vivo ${res.data.version || 'sin versión'} no coincide con main ${expected.version || 'sin versión'} (${expected.file})`);
-    assert(Array.isArray(res.data.categorias) && res.data.categorias.length >= 5, 'Contrato vivo no devuelve categorías de reciclaje');
+    assert(Array.isArray(res.data.categorias) && res.data.categorias.length >= 4, 'Contrato vivo no devuelve categorías de reciclaje');
     // El contrato no debe volver a anunciar una cola de pagos: las tablas
     // pagos_comisiones y registro_comisiones fueron eliminadas.
     assert(res.data.payment_admin_queue === undefined, 'El contrato vivo todavía expone una cola de cobros');

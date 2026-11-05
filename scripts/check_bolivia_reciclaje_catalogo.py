@@ -21,24 +21,23 @@ OK = 0
 
 # Orden canonico acordado. El indice importa: es el orden de la UI.
 #
-# NOTIGAS es un servicio de reciclaje. Del grupo de compras solo sobreviven los
-# detergentes: sal, afilado y agua se retiraron como categorias de pedido. En
-# 2026-11 se retiraron tambien "organico" y "aceite" (aceite de cocina usado) de
-# las fichas de recolectores y de los pedidos de los vecinos: el historico SQL
-# los conserva para que los pedidos antiguos sigan siendo validos, pero ya no
-# se ofrecen. "otros" dejo de ser una peticion de estadistica para pasar a ser
-# un pedido real de recogida.
+# NOTIGAS es un servicio de reciclaje. Sal, afilado, agua y frutas se retiraron
+# como categorias de pedido. En 2026-11 se retiraron "organico", "aceite"
+# (aceite de cocina usado), "vidrio" y "detergentes" (recarga) de las fichas de
+# recolectores y de los pedidos de los vecinos: el historico SQL los conserva
+# para que los pedidos antiguos sigan siendo validos, pero ya no se ofrecen. Al
+# retirarse detergentes ya no queda ninguna categoria de compra. "otros" dejo
+# de ser una peticion de estadistica para pasar a ser un pedido real de
+# recogida; se agrega al select en tiempo de ejecucion, no vive en CATEGORIAS.
 CATALOGO_ESPERADO = [
     ("plastico", "recogida"),
     ("papel", "recogida"),
     ("chatarra", "recogida"),
-    ("vidrio", "recogida"),
-    ("detergentes", "compra"),
 ]
 
 # Materiales retirados del producto en 2026-11: no pueden reaparecer como
 # opcion en el cliente ni en el catalogo activo del servidor.
-RETIRADOS = ("organico", "aceite")
+RETIRADOS = ("organico", "aceite", "vidrio", "detergentes")
 
 # Categorias de compra o retiradas. Deben seguir ausentes del cliente y del
 # catalogo activo del servidor, aunque el historico las conserve para que los
@@ -174,8 +173,8 @@ def main() -> int:
 
     for cod, tipo in CATALOGO_ESPERADO:
         ok(cod in bo, f"el catalogo declara '{cod}'")
-    ok(len([c for c, t in cat if t == "recogida"]) == 4, "cuatro categorias son recogida")
-    ok(len([c for c, t in cat if t == "compra"]) == 1, "solo los detergentes siguen siendo compra")
+    ok(len([c for c, t in cat if t == "recogida"]) == 3, "tres categorias son recogida")
+    ok(len([c for c, t in cat if t == "compra"]) == 0, "ninguna categoria es compra")
 
     # Las compras retiradas no pueden reaparecer como categoria de pedido.
     for cod in COMPRAS_RETIRADAS:
@@ -194,6 +193,8 @@ def main() -> int:
         ok(f'value="{cod}"' not in idx, f"index.html ya no ofrece '{cod}'")
     ok("fa-seedling" not in appj and "fa-oil-can" not in appj,
        "los iconos de organico/aceite salieron del cliente")
+    ok("fa-wine-bottle" not in appj and "fa-pump-soap" not in appj,
+       "los iconos de vidrio/detergentes salieron del cliente")
 
     # el servidor debe derivar el mismo tipo
     migs = sorted((RAIZ / "supabase/migrations").glob("*.sql"))
@@ -291,7 +292,7 @@ def main() -> int:
         retornos = set(re.findall(r"return\s+'([a-z]+)';", cuerpo))
         ok("gas" not in retornos, "normalizeCategoryCode nunca devuelve 'gas'")
         ok("carbon" not in retornos, "normalizeCategoryCode nunca devuelve 'carbon'")
-        ok(bool(retornos & {"plastico", "papel", "chatarra", "vidrio"}),
+        ok(bool(retornos & {"plastico", "papel", "chatarra"}),
            "normalizeCategoryCode devuelve códigos del catálogo")
 
     # ------------------------------------------------------------------ iconos

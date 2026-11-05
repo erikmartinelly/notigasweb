@@ -5,11 +5,11 @@
    - Teléfono: +591 (8 dígitos, prefijo móvil 6 u 7)
    - Documento: CI (cédula de identidad) o NIT
    - Pagos: solo QR local (Simple / Banesco QR). Sin comisión por cobro.
-   - Categorías: primero los recolectores (chatarra, papel, vidrio y
-      plástico); al final detergentes.
-   - Retiradas del catálogo: 'organico' y 'aceite' ya no se ofrecen en las
-      fichas de recolectores ni en los pedidos de los vecinos. El histórico SQL
-      las conserva para que los pedidos antiguos sigan siendo válidos.
+   - Categorías: recogida de chatarra, papel y plástico.
+   - Retiradas del catálogo: 'organico', 'aceite', 'vidrio' y 'detergentes'
+      ya no se ofrecen en las fichas de recolectores ni en los pedidos de los
+      vecinos. El histórico SQL las conserva para que los pedidos antiguos
+      sigan siendo válidos.
    ========================================================================== */
 (function () {
   'use strict';
@@ -51,18 +51,17 @@
   const CATEGORIAS = [
     { codigo: 'plastico',     etiqueta: '♻️  Plástico',                  chip: 'Plástico',   grupo: 'recolector',  icono: '♻️',  color: '#22C55E', tipo_solicitud: 'recogida' },
     { codigo: 'papel',        etiqueta: '📄 Papel / Cartón',            chip: 'Papel',      grupo: 'recolector',  icono: '📄',  color: '#F59E0B', tipo_solicitud: 'recogida' },
-    { codigo: 'chatarra',     etiqueta: '⚙️  Metales / Chatarra',        chip: 'Metales / Chatarra', grupo: 'recolector',  icono: '⚙️',  color: '#94A3B8', tipo_solicitud: 'recogida' },
-    { codigo: 'vidrio',       etiqueta: '🍾 Vidrio',                      chip: 'Vidrio',     grupo: 'recolector',  icono: '🍾',  color: '#38BDF8', tipo_solicitud: 'recogida' },
-    { codigo: 'detergentes',  etiqueta: '🧴 Recarga de Detergentes',        chip: 'Recarga Deterg.', grupo: 'compra',     icono: '🧴',  color: '#0EA5E9', tipo_solicitud: 'compra' }
+    { codigo: 'chatarra',     etiqueta: '⚙️  Metales / Chatarra',        chip: 'Metales / Chatarra', grupo: 'recolector',  icono: '⚙️',  color: '#94A3B8', tipo_solicitud: 'recogida' }
   ];
 
   const CODIGOS_CATEGORIA = CATEGORIAS.map((c) => c.codigo);
 
   const CATEGORIAS_POR_CODIGO = CATEGORIAS.reduce((acc, c) => { acc[c.codigo] = c; return acc; }, {});
 
-  /* Categorías que aparecen según el tipo de solicitud elegido. El grupo
-     "recolector" es el de las recogidas; "compra" agrupa los productos que
-     el recolector lleva al domicilio (hoy solo detergentes). */
+  /* Categorías que aparecen según el tipo de solicitud elegido. Hoy todas las
+     categorías del catálogo son de recogida: el grupo "compra" quedó vacío al
+     retirarse la recarga de detergentes, así que categoriasPorTipo('compra')
+     devuelve una lista vacía. */
   const categoriasPorTipo = (tipo) => CATEGORIAS.filter(
     (c) => (tipo === 'recogida' ? c.grupo === 'recolector' : c.grupo !== 'recolector')
   );

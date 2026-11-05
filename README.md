@@ -39,17 +39,15 @@ Engineered with **Vanilla JavaScript**, **Supabase PostgreSQL with PostGIS**, an
 
 NOTIGAS operates in **Bolivia**, starting in **Cochabamba**, as a neighborhood recycling and services platform. The platform's single source of truth for the catalog is `window.NOTIGAS_BO.CATEGORIAS` in `js/notigas_bo.js`.
 
-There are exactly **5 client categories**, and each one has a fixed operation type:
+There are exactly **3 client categories**, and each one has a fixed operation type:
 
 | # | Code | Label | Type | Meaning |
 | :-- | :--- | :--- | :--- | :--- |
 | 1 | `plastico` | Plástico | `recogida` | A driver comes to pick it up |
 | 2 | `papel` | Papel y cartón | `recogida` | A driver comes to pick it up |
 | 3 | `chatarra` | Metales / Chatarra | `recogida` | A driver comes to pick it up |
-| 4 | `vidrio` | Vidrio | `recogida` | A driver comes to pick it up |
-| 5 | `detergentes` | Detergentes | `compra` | A driver brings it to you |
 
-*Note: the server-side active catalog also keeps `otros` (free-text "other material") as a real pickup order. `organico` and `aceite` (used cooking oil) were retired in 2026-11: they no longer appear on driver cards or neighbor order cards, new orders with them are rejected, and they remain only in the historical catalog so old orders stay valid. Other retired services (sal, afilado, agua, frutas) remain in historical logs to preserve legacy references.*
+*Note: the server-side active catalog also keeps `otros` (free-text "other material") as a real pickup order, so it has 4 categories. `organico`, `aceite` (used cooking oil), `vidrio` and `detergentes` (refill) were retired in 2026-11: they no longer appear on driver cards or neighbor order cards, new orders with them are rejected, and they remain only in the historical catalog so old orders stay valid. Retiring `detergentes` also removed the last `compra` category. Other retired services (sal, afilado, agua, frutas) remain in historical logs to preserve legacy references.*
 
 **NOTIGAS does not charge.** There is no subscription, no commission, no credit cycle, and no price displayed anywhere in the interface. The agreement is made **directly between neighbor and collector**. Drivers compete on availability, coverage, and service, never on platform fees.
 
@@ -121,7 +119,7 @@ cd notigasweb
 
 ### 2. Configure Database & Backend (Supabase)
 * Create a new project at [Supabase](https://supabase.com/).
-* **Canonical deployment:** apply every file in `supabase/migrations/` in ascending order using the project migration workflow. The remote migration history must match Git. The current recycling catalog lives in `supabase/migrations/20260926090000_bolivia_catalogo_reciclaje.sql`.
+* **Canonical deployment:** apply every file in `supabase/migrations/` in ascending order using the project migration workflow. The remote migration history must match Git. The current recycling catalog lives in `supabase/migrations/20261105130000_bolivia_retira_vidrio_y_detergentes.sql`.
 * `supabase/full_production_schema.sql` is intentionally deprecated and aborts if executed; it must never be used for production, staging, recovery, or a fresh install.
 * Configure `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` as environment variables in the hosting runtime. `server.js` builds `/runtime-config.js` from those variables on each request; the static `runtime-config.js` file in the repository is a security placeholder with no credentials and will fail explicitly if loaded by a pure Apache deployment. A publishable/anon key is intentionally public and remains constrained by RLS; never configure or commit `SUPABASE_SERVICE_ROLE_KEY` in this app.
 * Payment details do not belong in the platform. Do not commit any beneficiary, wallet, or bank data.
@@ -171,7 +169,7 @@ python scripts/test_guard_estructura.py               # proves the structure gua
 * **Strict Category & City Isolation:** Drivers exclusively access posts and telemetry matching their registered category and their registered operational city, preventing cross-category interference.
 
 ### Catalog Integrity
-* **One source of truth:** `window.NOTIGAS_BO.CATEGORIAS` in `js/notigas_bo.js` defines code, label, type, color, and icon for all 11 categories. The UI, the map badges, the map signage, and the PWA favicon are all generated from it.
+* **One source of truth:** `window.NOTIGAS_BO.CATEGORIAS` in `js/notigas_bo.js` defines code, label, type, color, and icon for all client categories. The UI, the map badges, and the PWA favicon are all generated from it.
 * **Server-derived type:** `tipo_solicitud` is computed by the database from `categoria`; a client cannot forge it.
 * **Database constraint:** `pedidos.categoria` has a `CHECK` against the canonical catalog, so an out-of-catalog value is rejected at the storage layer rather than silently persisting.
 * **No prices in the interface:** the driver avatar, the driver card, the live vendor list, and the map truck popup deliberately render no price. Guards fail the build if a price badge reappears.

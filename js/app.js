@@ -421,8 +421,6 @@ const CATEGORIA_ICONO_FONTAWESOME = {
   plastico:    'fa-recycle',
   papel:       'fa-newspaper',
   chatarra:    'fa-gears',
-  vidrio:      'fa-wine-bottle',
-  detergentes: 'fa-pump-soap',
   otros:       'fa-box'
 };
 
@@ -461,14 +459,14 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
           color: uData.color_camion
         });
       } else {
-        favEl.href = "icons/camion_reciclaje.svg?v=178";
+        favEl.href = "icons/camion_reciclaje.svg?v=179";
       }
       document.title = "🚛 RECOLECTOR REGISTRADO";
     } else {
       if (typeof window.restaurarFaviconDefault === 'function') {
         window.restaurarFaviconDefault();
       } else {
-        favEl.href = "icons/camion_reciclaje.svg?v=178";
+        favEl.href = "icons/camion_reciclaje.svg?v=179";
       }
       document.title = "♻️ RECOJO RECICLABLES";
     }
@@ -504,8 +502,6 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
     plastico:    '<path d="M50 18 L64 40 H36 Z M22 50 L36 74 H8 Z M78 50 L92 74 H64 Z" fill="#FFF"/>',
     papel:       '<rect x="26" y="20" width="48" height="60" rx="4" fill="#FFF"/><line x1="35" y1="36" x2="65" y2="36" stroke="#00000030" stroke-width="4"/><line x1="35" y1="50" x2="65" y2="50" stroke="#00000030" stroke-width="4"/><line x1="35" y1="64" x2="55" y2="64" stroke="#00000030" stroke-width="4"/>',
     chatarra:    '<path d="M50 15 L65 40 H35 Z M20 50 L35 75 H5 Z M80 50 L95 75 H65 Z" fill="#FFF"/>',
-    vidrio:      '<path d="M44 12h12v8H44z" fill="#FFF"/><path d="M43 20h14v56a8 8 0 0 1-8 8H51a8 8 0 0 1-8-8V20z" fill="#FFF"/>',
-    detergentes: '<path d="M40 12h20v14H40z" fill="#FFF"/><path d="M36 26h28v56H36z" fill="#FFF"/><circle cx="50" cy="54" r="9" fill="#00000030"/>',
     otros:       '<rect x="20" y="36" width="60" height="44" fill="#FFF"/><path d="M14 36 L50 16 L86 36 Z" fill="#FFF"/>'
   };
 

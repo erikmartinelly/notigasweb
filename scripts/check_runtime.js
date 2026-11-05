@@ -422,7 +422,7 @@ try {
     }
   }
   for (const [category, label] of [
-    ['plastico', 'RECOGER'], ['vidrio', 'RECOGER'], ['otros', 'RECOGER'], ['detergentes', 'PEDIDO']
+    ['plastico', 'RECOGER'], ['papel', 'RECOGER'], ['chatarra', 'RECOGER'], ['otros', 'RECOGER']
   ]) {
     const icon = context.obtenerIconoCategoriaMapa(category);
     if (!icon.html.includes(label)) throw new Error(`Tipo incorrecto en pin público de ${category}`);
@@ -582,10 +582,13 @@ try {
   console.log(`  ${opcionOtrosRecogida ? '✅' : '❌'} "otros" sigue disponible al publicar material`);
   if (!opcionOtrosRecogida) throw new Error('setTipoSolicitud("recogida") eliminó la opción "otros".');
 
+  // Ya no quedan categorias de compra (la recarga de detergentes se retiro).
+  // Un cliente viejo que pida 'compra' debe caer en recogida, no mostrar un
+  // formulario vacio.
   win.setTipoSolicitud('compra');
   const opcionOtrosCompra = /<option value="otros">/.test(selectCategoria.innerHTML);
-  console.log(`  ${!opcionOtrosCompra ? '✅' : '❌'} "otros" no aparece al comprar`);
-  if (opcionOtrosCompra) throw new Error('"otros" no debería ofrecerse en el flujo de compra.');
+  console.log(`  ${opcionOtrosCompra ? '✅' : '❌'} "compra" se fuerza a recogida y ofrece "otros"`);
+  if (!opcionOtrosCompra) throw new Error('setTipoSolicitud("compra") debería caer en recogida.');
 
   win.setTipoSolicitud('recogida');
   selectCategoria.value = 'otros';
