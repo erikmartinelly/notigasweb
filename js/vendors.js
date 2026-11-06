@@ -199,7 +199,7 @@ function renderVendorCards(filterCat) {
       const cats = (Array.isArray(vendor.categoryList) && vendor.categoryList.length) ? vendor.categoryList : [vendor.category];
       const bo = window.NOTIGAS_BO;
       return cats.map((c) => {
-        // Solo etiquetas del catalogo vigente: un material retirado (aceite,
+        // Solo etiquetas del catalogo vigente: un material retirado (detergentes,
         // organico) no debe aparecer como si fuera plastico por el fallback.
         const item = (bo && bo.CATEGORIAS_POR_CODIGO) ? bo.CATEGORIAS_POR_CODIGO[c] : null;
         return (item && item.etiqueta) ? item.etiqueta : '';
@@ -248,11 +248,13 @@ function getIconForCategory(cat) {
   }
   if (c.includes('chatarra') || c.includes('metal')) return '⚙️';
   if (c.includes('papel') || c.includes('carton') || c.includes('cartón')) return '📄';
+  if (c.includes('vidrio') || c.includes('glass')) return '🍾';
+  if (c.includes('aceit') || c.includes('grasa') || c.includes('oil')) return '🛢️';
   if (c.includes('botella')) return '♻️';
   if (c.includes('plastico') || c.includes('plástico')) return '♻️';
-  // Categorias retiradas (organico, aceite usado, vidrio, detergentes, agua,
-  // frutas, sal, afilado, gas, carbon): sin icono propio, para no sugerir un
-  // material que NOTIGAS ya no maneja.
+  // Categorias retiradas (organico, detergentes, agua, frutas, sal, afilado,
+  // gas, carbon): sin icono propio, para no sugerir un material que NOTIGAS ya
+  // no maneja.
   return '📦';
 }
 

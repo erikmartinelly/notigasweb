@@ -247,6 +247,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_auto_event_15 = document.getElementById('auto-event-15');
     if (el_auto_event_15) el_auto_event_15.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'chatarra', e.currentTarget); });
 
+    const el_auto_event_72 = document.getElementById('auto-event-72');
+    if (el_auto_event_72) el_auto_event_72.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'vidrio', e.currentTarget); });
+
+    const el_auto_event_92 = document.getElementById('auto-event-92');
+    if (el_auto_event_92) el_auto_event_92.addEventListener('click', (e) => { safeCall('filterVendorCategory', 'aceite', e.currentTarget); });
+
     const el_auto_event_21 = document.getElementById('auto-event-21');
     if (el_auto_event_21) el_auto_event_21.addEventListener('click', () => { safeCall('abrirModalNuevoPost'); });
 
