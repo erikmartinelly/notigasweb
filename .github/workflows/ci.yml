@@ -161,4 +161,14 @@ jobs:
             echo "::warning::Se omitió la comprobación viva de Supabase: configura los secretos SUPABASE_URL y SUPABASE_PUBLISHABLE_KEY para activarla."
             exit 0
           fi
-          node scripts/test_db_integration.js
+          # PostgREST refresca su cache de esquema de forma asíncrona después de
+          # `supabase db push`. Sin esta espera el contrato recién aplicado puede
+          # leerse como la versión anterior y el job falla por una carrera.
+          for intento in 1 2 3 4 5; do
+            if node scripts/test_db_integration.js; then
+              exit 0
+            fi
+            echo "::warning::El contrato vivo aún no refleja la migración (intento $intento/5). Reintentando en 10s..."
+            sleep 10
+          done
+          exit 1
