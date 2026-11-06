@@ -5,7 +5,8 @@
    - Teléfono: +591 (8 dígitos, prefijo móvil 6 u 7)
    - Documento: CI (cédula de identidad) o NIT
    - Pagos: solo QR local (Simple / Banesco QR). Sin comisión por cobro.
-   - Categorías: recogida de chatarra, papel, plástico, vidrio y aceite usado.
+   - Categorías: recogida de metal / chatarra, papel, plástico, vidrio y
+     aceite usado.
    - Retiradas del catálogo: 'organico' y 'detergentes' ya no se ofrecen en las
       fichas de recolectores ni en los pedidos de los vecinos. El histórico SQL
       las conserva para que los pedidos antiguos sigan siendo válidos.
@@ -50,7 +51,7 @@
   const CATEGORIAS = [
     { codigo: 'plastico',     etiqueta: '♻️  Plástico',                  chip: 'Plástico',   grupo: 'recolector',  icono: '♻️',  color: '#22C55E', tipo_solicitud: 'recogida' },
     { codigo: 'papel',        etiqueta: '📄 Papel / Cartón',            chip: 'Papel',      grupo: 'recolector',  icono: '📄',  color: '#F59E0B', tipo_solicitud: 'recogida' },
-    { codigo: 'chatarra',     etiqueta: '⚙️  Metales / Chatarra',        chip: 'Metales / Chatarra', grupo: 'recolector',  icono: '⚙️',  color: '#94A3B8', tipo_solicitud: 'recogida' },
+    { codigo: 'chatarra',     etiqueta: '⚙️  Metal / Chatarra',          chip: 'Metal / Chatarra', grupo: 'recolector',  icono: '⚙️',  color: '#94A3B8', tipo_solicitud: 'recogida' },
     { codigo: 'vidrio',       etiqueta: '🍾 Vidrio',                      chip: 'Vidrio',     grupo: 'recolector',  icono: '🍾',  color: '#38BDF8', tipo_solicitud: 'recogida' },
     { codigo: 'aceite',       etiqueta: '🛢️ Aceite de cocina usado',     chip: 'Aceite usado', grupo: 'recolector', icono: '🛢️',  color: '#A16207', tipo_solicitud: 'recogida' }
   ];

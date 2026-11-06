@@ -461,14 +461,14 @@ function actualizarFaviconSegunPedido(categoria, estado = 'pendiente') {
           color: uData.color_camion
         });
       } else {
-        favEl.href = "icons/camion_reciclaje.svg?v=180";
+        favEl.href = "icons/camion_reciclaje.svg?v=181";
       }
       document.title = "🚛 RECOLECTOR REGISTRADO";
     } else {
       if (typeof window.restaurarFaviconDefault === 'function') {
         window.restaurarFaviconDefault();
       } else {
-        favEl.href = "icons/camion_reciclaje.svg?v=180";
+        favEl.href = "icons/camion_reciclaje.svg?v=181";
       }
       document.title = "♻️ RECOJO RECICLABLES";
     }

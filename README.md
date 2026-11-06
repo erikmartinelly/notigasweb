@@ -45,7 +45,7 @@ There are exactly **5 client categories**, and each one has a fixed operation ty
 | :-- | :--- | :--- | :--- | :--- |
 | 1 | `plastico` | Plástico | `recogida` | A driver comes to pick it up |
 | 2 | `papel` | Papel y cartón | `recogida` | A driver comes to pick it up |
-| 3 | `chatarra` | Metales / Chatarra | `recogida` | A driver comes to pick it up |
+| 3 | `chatarra` | Metal / Chatarra | `recogida` | A driver comes to pick it up |
 | 4 | `vidrio` | Vidrio | `recogida` | A driver comes to pick it up |
 | 5 | `aceite` | Aceite de cocina usado | `recogida` | A driver comes to pick it up |
 
