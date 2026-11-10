@@ -111,11 +111,11 @@
 
   <link rel="manifest" href="manifest.json">
 
-  <link id="dynamicFavicon" rel="icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=181"/>
+  <link id="dynamicFavicon" rel="icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=182"/>
 
-  <link rel="icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=181"/>
+  <link rel="icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=182"/>
 
-  <link rel="shortcut icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=181"/>
+  <link rel="shortcut icon" type="image/svg+xml" href="icons/camion_reciclaje.svg?v=182"/>
 
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
@@ -139,7 +139,7 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="styles/main.css?v=181">
+  <link rel="stylesheet" href="styles/main.css?v=182">
 
   <!-- SERVICIOS EXTERNOS -->
 
@@ -280,6 +280,66 @@
 
       </aside>
 
+      <!-- HUD FLOTANTE DE RUTA EN MAPA PARA RECOLECTOR -->
+
+      <div class="driver-route-hud" id="driverRouteHud" style="display: none;" role="region" aria-label="Ruta de recolección en mapa">
+
+        <div class="driver-route-hud-header">
+
+          <div class="driver-route-hud-badge">
+
+            <i class="fa-solid fa-route"></i> <span id="driverRouteHudBadge">EN RUTA</span>
+
+          </div>
+
+          <button type="button" class="driver-route-hud-close" id="btnCerrarRutaHud" title="Cerrar trazado de ruta" aria-label="Cerrar trazado">✖</button>
+
+        </div>
+
+        <div class="driver-route-hud-main">
+
+          <div class="driver-route-hud-dest" id="driverRouteHudMaterial">♻️ Recogida de Material</div>
+
+          <div class="driver-route-hud-meta">
+
+            <span id="driverRouteHudDist" class="driver-route-hud-dist"><i class="fa-solid fa-location-arrow"></i> Calculando distancia...</span>
+
+            <span id="driverRouteHudAddress" class="driver-route-hud-addr">📍 Ubicación en mapa</span>
+
+          </div>
+
+        </div>
+
+        <div class="driver-route-hud-actions">
+
+          <button type="button" class="btn-hud-action btn-hud-center" id="btnHudCentrarRuta" title="Centrar mi camión y el destino">
+
+            <i class="fa-solid fa-crosshairs"></i> Centrar Ruta
+
+          </button>
+
+          <button type="button" class="btn-hud-action btn-hud-puerta" id="btnHudEnPuerta" title="Avisar que estás en la puerta">
+
+            <i class="fa-solid fa-bell"></i> En puerta
+
+          </button>
+
+          <button type="button" class="btn-hud-action btn-hud-gmaps" id="btnHudGoogleMaps" title="Abrir en Google Maps externo si deseas navegación paso a paso">
+
+            <i class="fa-solid fa-diamond-turn-right"></i> Google Maps
+
+          </button>
+
+          <button type="button" class="btn-hud-action btn-hud-wa" id="btnHudWhatsapp" style="display:none;" title="Coordinar por WhatsApp">
+
+            <i class="fa-brands fa-whatsapp"></i> WhatsApp
+
+          </button>
+
+        </div>
+
+      </div>
+
       <!-- BANNER DE ACTIVACIÓN OBLIGATORIA DE GPS EN MÓVILES/ANDROID -->
 
       <div class="gps-floating-banner" id="gpsFloatingBanner" role="alertdialog" aria-labelledby="gpsFloatingTitle">
@@ -375,6 +435,12 @@
           </span>
 
           <span><i class="fa-solid fa-recycle" style="color:#22C55E;"></i> PEDIR RECOJO DE RECICLABLES</span>
+
+        </button>
+
+        <button class="btn-my-orders" id="btnMisPedidos" title="Ver mis pedidos y confirmar recogidas">
+
+          <i class="fa-solid fa-clipboard-list"></i> MIS PEDIDOS
 
         </button>
 
@@ -1696,9 +1762,21 @@
 
       <div class="form-group">
 
-        <label>📝 Detalle o Referencia (Opcional):</label>
+        <label for="inputOrderHorario">🕒 ¿En qué horario puede pasar el recolector?</label>
 
-        <input type="text" id="inputOrderDescripcion" maxlength="200">
+        <select id="inputOrderHorario">
+
+          <option value="">Lo antes posible</option>
+
+          <option value="Mañanas (07:00 a 12:00)">🌅 Mañanas</option>
+
+          <option value="Mediodía (12:00 a 15:00)">☀️ Mediodía</option>
+
+          <option value="Tardes (15:00 a 20:00)">🌇 Tardes</option>
+
+        </select>
+
+        <p class="form-hint">Elige el horario en el que estarás en casa para entregar el material.</p>
 
       </div>
 
@@ -1712,13 +1790,40 @@
 
       <div class="form-group">
 
-        <label>📞 Teléfono o WhatsApp de Contacto (Opcional):</label>
+        <label for="inputTelefonoComprador">📞 Teléfono o WhatsApp de Contacto (Obligatorio):</label>
 
-        <input type="tel" id="inputTelefonoComprador" placeholder="Ej: 987654321 (WhatsApp)">
+        <input type="tel" id="inputTelefonoComprador" placeholder="Ej: 70123456 (WhatsApp obligatorio)" autocomplete="tel" inputmode="numeric" maxlength="13" required>
 
       </div>
 
       <button class="btn-submit"  id="auto-event-48" ><i class="fa-solid fa-recycle" style="color:#22C55E;"></i> <span id="btnPedidoTexto">Publicar Recogida</span></button>
+
+    </div>
+
+  </div>
+
+  <!-- FICHA DE PEDIDOS DEL VECINO -->
+
+  <div class="modal" id="modalMisPedidos">
+
+    <div class="modal-content">
+
+      <div class="modal-title">
+
+        <span><i class="fa-solid fa-clipboard-list"></i> Mis Pedidos</span>
+
+        <button class="btn-close" id="btnCerrarMisPedidos" title="Cerrar">✖</button>
+
+      </div>
+
+      <p style="margin:0 0 12px; color:#94A3B8; font-size:16px; line-height:1.45;">
+        Aquí ves todos tus pedidos. Cuando el recolector ya haya recogido tu material, pulsa
+        <strong style="color:#10B981;">“Ya fue recogido”</strong> y el pedido se quitará del mapa.
+      </p>
+
+      <div id="bodyMisPedidos">
+        <div style="text-align:center; padding:20px; color:#94A3B8; font-size:16px;">Cargando tus pedidos...</div>
+      </div>
 
     </div>
 
@@ -2847,33 +2952,33 @@
 
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3/dist/umd/supabase.min.js" integrity="sha384-l8ah+VgaWtk1mvOe9VC+OirC6qHFF4yH7l7mKRidV9MSti3E9F463bMp6ZVN4kuC" crossorigin="anonymous"></script>
 
-  <script defer src="js/notigas_bo.js?v=181"></script>
-  <script defer src="js/driver_icons.js?v=181"></script>
-  <script defer src="js/state.js?v=181"></script>
+  <script defer src="js/notigas_bo.js?v=182"></script>
+  <script defer src="js/driver_icons.js?v=182"></script>
+  <script defer src="js/state.js?v=182"></script>
 
-  <script defer src="js/ui.js?v=181"></script>
+  <script defer src="js/ui.js?v=182"></script>
 
-  <script defer src="/runtime-config.js?v=181"></script>
-  <script defer src="js/monitoring.js?v=181"></script>
-  <script defer src="js/supabase-config.js?v=181"></script>
+  <script defer src="runtime-config.js?v=182"></script>
+  <script defer src="js/monitoring.js?v=182"></script>
+  <script defer src="js/supabase-config.js?v=182"></script>
 
-  <script defer src="js/device_security.js?v=181"></script>
+  <script defer src="js/device_security.js?v=182"></script>
 
-  <script defer src="js/auth.js?v=181"></script>
+  <script defer src="js/auth.js?v=182"></script>
 
-  <script defer src="js/vendors.js?v=181"></script>
+  <script defer src="js/vendors.js?v=182"></script>
 
-  <script defer src="js/map.js?v=181"></script>
+  <script defer src="js/map.js?v=182"></script>
 
-  <script defer src="js/map_search.js?v=181"></script>
+  <script defer src="js/map_search.js?v=182"></script>
 
-  <script defer src="js/map_gps.js?v=181"></script>
+  <script defer src="js/map_gps.js?v=182"></script>
 
-  <script defer src="js/orders.js?v=181"></script>
+  <script defer src="js/orders.js?v=182"></script>
 
-  <script defer src="js/app.js?v=181"></script>
+  <script defer src="js/app.js?v=182"></script>
 
-  <script defer src="js/events.js?v=181"></script>
+  <script defer src="js/events.js?v=182"></script>
 
 </body>
 

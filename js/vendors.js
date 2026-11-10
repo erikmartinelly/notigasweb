@@ -68,6 +68,7 @@ function renderLiveDriverFallback(vendors) {
 
 async function actualizarFallbackRepartidoresEnVivo() {
   if (_liveDriverFallbackBusy || !window.supabaseClient) return;
+  if (typeof document !== 'undefined' && document.hidden) return;
   const tab = document.getElementById('tab0');
   if (!tab || !tab.classList.contains('active')) {
     hideLiveDriverFallback();
@@ -290,7 +291,20 @@ function instalarFlujoSolicitudDistribuidor() {
       : ((target.category && String(target.category).toLowerCase()) || 'plastico');
     const cantidad = inputCantidad ? inputCantidad.value.trim() : '1 unidad';
     const calle = inputCalle ? inputCalle.value.trim() : '';
-    const telefono = inputTel ? inputTel.value.trim() : '';
+    const telefonoCrudo = inputTel ? inputTel.value.trim() : '';
+    const boPhone = window.NOTIGAS_BO;
+    const telefono = (boPhone && typeof boPhone.normalizarTelefono === 'function')
+      ? boPhone.normalizarTelefono(telefonoCrudo)
+      : telefonoCrudo.replace(/[^0-9]/g, '');
+    const telefonoValido = (boPhone && typeof boPhone.esTelefonoValido === 'function')
+      ? boPhone.esTelefonoValido(telefono)
+      : /^[0-9]{8}$/.test(telefono);
+    if (!telefonoValido) {
+      if (typeof showToast === 'function') showToast('📞 Falta tu WhatsApp', 'Escribe tu número boliviano de 8 dígitos para que el recolector coordine la recogida.', 'warning', 5000);
+      if (inputTel && typeof inputTel.focus === 'function') inputTel.focus();
+      return;
+    }
+    if (inputTel && typeof inputTel.value === 'string') inputTel.value = telefono;
     const activePos = typeof window.getActiveUserLocation === 'function' ? window.getActiveUserLocation() : (typeof AppState !== 'undefined' ? AppState.get('userLocation') : null);
     const lat = Number(activePos ? (activePos.lat ?? activePos.latitude ?? window.currentGpsLat) : window.currentGpsLat);
     const lng = Number(activePos ? (activePos.lng ?? activePos.longitude ?? window.currentGpsLng) : window.currentGpsLng);
@@ -301,7 +315,7 @@ function instalarFlujoSolicitudDistribuidor() {
     const currentCity = typeof AppState !== 'undefined' ? (AppState.get('city') || '') : '';
     showLoadingOverlay('Enviando solicitud al distribuidor...');
     try {
-      const {data, error} = await window.supabaseClient.rpc('rpc_request_order_to_driver', {p_driver_id: target.driverId, p_categoria: categoria, p_titulo: `Pedido de ${categoria}`, p_cantidad: cantidad ? `${cantidad} un` : '1 un', p_direccion: calle || 'Ubicación GPS indicada en el mapa', p_telefono: telefono || null, p_ciudad: currentCity, p_barrio_otb: null, p_latitude: lat, p_longitude: lng});
+      const {data, error} = await window.supabaseClient.rpc('rpc_request_order_to_driver', {p_driver_id: target.driverId, p_categoria: categoria, p_titulo: `Pedido de ${categoria}`, p_cantidad: cantidad ? `${cantidad} un` : '1 un', p_direccion: calle || 'Ubicación GPS indicada en el mapa', p_telefono: telefono, p_ciudad: currentCity, p_barrio_otb: null, p_latitude: lat, p_longitude: lng});
       hideLoadingOverlay();
       if (error) { console.error('[NOTIGAS] Error en solicitud dirigida:', error); if (typeof showToast === 'function') showToast('No se pudo enviar', error.message || 'El distribuidor no está disponible.', 'error', 5000); return; }
       const order = data; order.user_id = userId; order.timestamp = Date.now(); AppState.set('activeOrder', order); closePedidoModal(); _directDistributorTarget = null;

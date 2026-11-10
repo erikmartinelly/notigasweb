@@ -64,6 +64,27 @@ function solicitarGeolocalizacionNativaNavegador(
                 resolve(position);
             },
             error => {
+                // Si la alta precisión falló o demoró demasiado en interiores, reintentar con baja precisión (WiFi/celular) de inmediato
+                if (error && (error.code === error.TIMEOUT || error.code === error.POSITION_UNAVAILABLE) && isMobile) {
+                    navigator.geolocation.getCurrentPosition(
+                        pos => {
+                            applyGpsPosition(
+                                pos.coords.latitude,
+                                pos.coords.longitude,
+                                'Ubicación aproximada del navegador',
+                                forceReset,
+                                false
+                            );
+                            resolve(pos);
+                        },
+                        err2 => {
+                            console.log('GPS nativo no disponible; usando ubicación aproximada por IP:', err2.message);
+                            reject(err2);
+                        },
+                        { enableHighAccuracy: false, timeout: 3500, maximumAge: 60000 }
+                    );
+                    return;
+                }
                 console.log('GPS nativo no disponible; usando ubicación aproximada por IP:', error.message);
                 reject(error);
             },

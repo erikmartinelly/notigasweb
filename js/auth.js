@@ -365,7 +365,7 @@ async function solicitarYGuardarUbicacionHabitual(user) {
 
     // El admin no necesita habilitar GPS: se ubica directo al centro de Cochabamba, Bolivia.
     if (window.esAdminSesion && window.esAdminSesion()) {
-        await guardarUbicacionHabitualUsuario(user, -12.0460, -77.0306);
+        await guardarUbicacionHabitualUsuario(user, -17.3895, -66.1568);
         return true;
     }
 
@@ -380,7 +380,7 @@ async function solicitarYGuardarUbicacionHabitual(user) {
 
             if (locationPromise) {
                 try {
-                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2500));
+                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000));
                     const res = await Promise.race([locationPromise, timeoutPromise]);
                     if (res?.coords) {
                         lat = res.coords.latitude;

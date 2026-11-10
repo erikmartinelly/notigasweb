@@ -196,6 +196,76 @@ document.addEventListener('DOMContentLoaded', () => {
     const el_btnMainOrder = document.getElementById('btnMainOrder');
     if (el_btnMainOrder) el_btnMainOrder.addEventListener('click', () => { safeCall('abrirSubmenuPedidos'); });
 
+    const el_btnMisPedidos = document.getElementById('btnMisPedidos');
+    if (el_btnMisPedidos) el_btnMisPedidos.addEventListener('click', () => { safeCall('abrirMisPedidos'); });
+
+    const el_btnCerrarMisPedidos = document.getElementById('btnCerrarMisPedidos');
+    if (el_btnCerrarMisPedidos) el_btnCerrarMisPedidos.addEventListener('click', () => { safeCall('cerrarMisPedidos'); });
+
+    const el_modalMisPedidos = document.getElementById('modalMisPedidos');
+    if (el_modalMisPedidos) {
+      el_modalMisPedidos.addEventListener('click', (e) => {
+        if (e.target === el_modalMisPedidos) safeCall('cerrarMisPedidos');
+      });
+    }
+
+    const el_btnCerrarRutaHud = document.getElementById('btnCerrarRutaHud');
+    if (el_btnCerrarRutaHud) {
+      el_btnCerrarRutaHud.addEventListener('click', () => { safeCall('limpiarRutaEnMapa'); });
+    }
+
+    const el_btnHudCentrarRuta = document.getElementById('btnHudCentrarRuta');
+    if (el_btnHudCentrarRuta) {
+      el_btnHudCentrarRuta.addEventListener('click', () => {
+        if (window.activeDriverRoute) {
+          if (window.activeDriverRoute.multi) {
+            safeCall('trazarRutaMultiParada');
+          } else {
+            const r = window.activeDriverRoute;
+            if (typeof window.trazarRutaEnMapa === 'function') {
+              window.trazarRutaEnMapa(r.lat, r.lng, r.orderId, r.address, r.categoria, r.cantidad, r.telefono);
+            }
+          }
+        }
+      });
+    }
+
+    const el_btnHudGoogleMaps = document.getElementById('btnHudGoogleMaps');
+    if (el_btnHudGoogleMaps) {
+      el_btnHudGoogleMaps.addEventListener('click', () => {
+        const isMulti = el_btnHudGoogleMaps.getAttribute('data-multi') === '1';
+        const waypoints = el_btnHudGoogleMaps.getAttribute('data-waypoints');
+        const lat = el_btnHudGoogleMaps.getAttribute('data-lat');
+        const lng = el_btnHudGoogleMaps.getAttribute('data-lng');
+        const address = el_btnHudGoogleMaps.getAttribute('data-address');
+        if (typeof window.abrirNavegacionExterna === 'function') {
+          window.abrirNavegacionExterna(lat, lng, address, isMulti ? waypoints : null);
+        }
+      });
+    }
+
+    const el_btnHudEnPuerta = document.getElementById('btnHudEnPuerta');
+    if (el_btnHudEnPuerta) {
+      el_btnHudEnPuerta.addEventListener('click', () => {
+        const id = el_btnHudEnPuerta.getAttribute('data-id');
+        if (id && typeof window.cambiarEstadoRapidoPedido === 'function') {
+          window.cambiarEstadoRapidoPedido(id, 'en_puerta');
+        }
+      });
+    }
+
+    const el_btnHudWhatsapp = document.getElementById('btnHudWhatsapp');
+    if (el_btnHudWhatsapp) {
+      el_btnHudWhatsapp.addEventListener('click', () => {
+        const tel = el_btnHudWhatsapp.getAttribute('data-tel');
+        const address = el_btnHudWhatsapp.getAttribute('data-address');
+        const cat = el_btnHudWhatsapp.getAttribute('data-categoria');
+        if (tel && typeof window.abrirWhatsappDirecto === 'function') {
+          window.abrirWhatsappDirecto(tel, address, cat);
+        }
+      });
+    }
+
     const el_auto_event_8 = document.getElementById('auto-event-8');
     if (el_auto_event_8) el_auto_event_8.addEventListener('click', () => { safeCall('notificarEscucheCamion'); });
 
@@ -592,6 +662,10 @@ document.addEventListener('click', async (e) => {
       if (typeof window.confirmarRecepcionComprador === 'function') window.confirmarRecepcionComprador();
       if (typeof window.cerrarPanoramicaPedidos === 'function') window.cerrarPanoramicaPedidos();
     }
+    else if (action === 'confirmarRecogidaPedido') {
+      const id = btn.getAttribute('data-id');
+      if (typeof window.confirmarRecogidaPedido === 'function') window.confirmarRecogidaPedido(id);
+    }
     else if (action === 'reportarIncumplimientoPrecio') {
       if (typeof window.reportarIncumplimientoPrecio === 'function') window.reportarIncumplimientoPrecio();
       if (typeof window.cerrarPanoramicaPedidos === 'function') window.cerrarPanoramicaPedidos();
@@ -730,15 +804,37 @@ document.addEventListener('click', async (e) => {
       const cat = decodeURIComponent(btn.getAttribute('data-cat') || '');
       if (typeof window.seleccionarYPedirDirecto === 'function') window.seleccionarYPedirDirecto(cat);
     }
-    else if (action === 'abrirRutaGoogleMaps') {
+    else if (action === 'trazarRutaEnMapa') {
       e.preventDefault();
       e.stopPropagation();
       const lat = parseFloat(btn.getAttribute('data-lat'));
       const lng = parseFloat(btn.getAttribute('data-lng'));
       const id = btn.getAttribute('data-id');
       const address = btn.getAttribute('data-address') || '';
-      if (typeof window.abrirRutaGoogleMaps === 'function') {
-        window.abrirRutaGoogleMaps(lat, lng, id, address);
+      const categoria = btn.getAttribute('data-categoria') || '';
+      const cantidad = btn.getAttribute('data-cantidad') || '';
+      const tel = btn.getAttribute('data-tel') || '';
+      if (typeof window.trazarRutaEnMapa === 'function') {
+        window.trazarRutaEnMapa(lat, lng, id, address, categoria, cantidad, tel);
+      }
+    }
+    else if (action === 'trazarRutaMultiParada') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (typeof window.trazarRutaMultiParada === 'function') {
+        window.trazarRutaMultiParada();
+      }
+    }
+    else if (action === 'abrirRutaGoogleMaps') {
+      e.preventDefault();
+      e.stopPropagation();
+      const lat = parseFloat(btn.getAttribute('data-lat'));
+      const lng = parseFloat(btn.getAttribute('data-lng'));
+      const address = btn.getAttribute('data-address') || '';
+      if (typeof window.abrirNavegacionExterna === 'function') {
+        window.abrirNavegacionExterna(lat, lng, address);
+      } else if (typeof window.abrirRutaGoogleMaps === 'function') {
+        window.abrirRutaGoogleMaps(lat, lng, null, address);
       }
     }
     else if (action === 'switchPromoSubTab') {

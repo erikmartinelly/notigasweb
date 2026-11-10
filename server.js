@@ -1,5 +1,7 @@
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
+const zlib = require('zlib');
 
 const app = express();
 const PORT = process.env.PORT || process.env.SERVER_PORT || 3000;
@@ -27,9 +29,7 @@ app.disable('x-powered-by');
 app.set('trust proxy', 1);
 
 function limpiarContadoresExpirados(now) {
-  // Ejecutar el barrido completo como máximo una vez por intervalo para evitar
-  // el costo O(n) en cada solicitud cuando el mapa crece.
-  if (requestCounters.size < 1000) return;
+  // Ejecutar el barrido completo periódicamente para liberar memoria sin costo O(n) por cada solicitud
   if (now - lastCountersCleanupAt < RATE_LIMIT_CLEANUP_INTERVAL_MS) return;
   lastCountersCleanupAt = now;
   for (const [key, value] of requestCounters.entries()) {
@@ -167,7 +167,11 @@ const FORBIDDEN_STATIC_DIRS = [
 app.use((req, res, next) => {
   let reqPath = req.path;
   try { reqPath = decodeURIComponent(reqPath); } catch (_) {}
-  const lower = reqPath.toLowerCase();
+  if (reqPath.includes('\0')) {
+    return res.status(400).json({ error: 'Ruta no válida.' });
+  }
+  const normalizedPath = reqPath.replace(/\\/g, '/');
+  const lower = normalizedPath.toLowerCase();
 
   for (const dir of FORBIDDEN_STATIC_DIRS) {
     if (lower === dir || lower.startsWith(`${dir}/`)) {
@@ -194,10 +198,49 @@ app.use((req, res, next) => {
 
 function sendIndex(req, res) {
   res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+  const acceptEncoding = String(req.headers['accept-encoding'] || '');
+  if (/\bgzip\b/i.test(acceptEncoding)) {
+    res.setHeader('Content-Encoding', 'gzip');
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Vary', 'Accept-Encoding');
+    fs.createReadStream(path.join(__dirname, 'index.html'))
+      .pipe(zlib.createGzip({ level: 6 }))
+      .pipe(res);
+    return;
+  }
   res.sendFile(path.join(__dirname, 'index.html'));
 }
 
 app.get(['/', '/index.html'], sendIndex);
+
+const GZIP_TEXT_EXTENSIONS = new Set(['.css', '.js', '.mjs', '.svg', '.json', '.xml', '.txt']);
+app.use((req, res, next) => {
+  const acceptEncoding = String(req.headers['accept-encoding'] || '');
+  if (!/\bgzip\b/i.test(acceptEncoding)) return next();
+  let cleanPath = req.path;
+  try { cleanPath = decodeURIComponent(cleanPath); } catch (_) {}
+  const ext = path.extname(cleanPath).toLowerCase();
+  if (!GZIP_TEXT_EXTENSIONS.has(ext)) return next();
+
+  const safePath = path.normalize(path.join(__dirname, cleanPath));
+  if (!safePath.startsWith(__dirname)) return next();
+  if (!fs.existsSync(safePath)) return next();
+
+  res.setHeader('Content-Encoding', 'gzip');
+  res.setHeader('Vary', 'Accept-Encoding');
+  res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+  const mimeTypes = {
+    '.css': 'text/css; charset=utf-8',
+    '.js': 'application/javascript; charset=utf-8',
+    '.mjs': 'application/javascript; charset=utf-8',
+    '.svg': 'image/svg+xml; charset=utf-8',
+    '.json': 'application/json; charset=utf-8',
+    '.xml': 'application/xml; charset=utf-8',
+    '.txt': 'text/plain; charset=utf-8'
+  };
+  if (mimeTypes[ext]) res.setHeader('Content-Type', mimeTypes[ext]);
+  fs.createReadStream(safePath).pipe(zlib.createGzip({ level: 6 })).pipe(res);
+});
 
 const STATIC_CACHE_MAX_AGE_MS = 60 * 60 * 1000;
 app.use(express.static(__dirname, {

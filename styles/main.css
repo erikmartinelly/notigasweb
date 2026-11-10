@@ -964,6 +964,280 @@ main {
 
 }
 
+.btn-my-orders {
+
+  width: 100%;
+
+  background: linear-gradient(135deg, #0F766E 0%, #115E59 100%);
+
+  color: #FFFFFF;
+
+  border: 1.5px solid #14B8A6;
+
+  padding: 12px 14px;
+
+  border-radius: 14px;
+
+  font-size: var(--font-size-btn);
+
+  font-weight: 900;
+
+  cursor: pointer;
+
+  box-shadow: 0 4px 18px rgba(15, 118, 110, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 8px;
+
+  letter-spacing: 0.4px;
+
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+}
+
+.btn-my-orders:hover {
+
+  transform: translateY(-2px);
+
+  background: linear-gradient(135deg, #0D9488 0%, #134E4A 100%);
+
+  box-shadow: 0 8px 24px rgba(20, 184, 166, 0.55);
+
+}
+
+.btn-my-orders:focus-visible {
+
+  outline: 3px solid #5EEAD4;
+
+  outline-offset: 2px;
+
+}
+
+.driver-route-hud {
+
+  position: absolute;
+
+  top: 14px;
+
+  left: 50%;
+
+  transform: translateX(-50%);
+
+  width: calc(100% - 24px);
+
+  max-width: 440px;
+
+  background: rgba(15, 23, 42, 0.94);
+
+  backdrop-filter: blur(8px);
+
+  -webkit-backdrop-filter: blur(8px);
+
+  border: 1.5px solid #10B981;
+
+  border-radius: 14px;
+
+  padding: 12px 14px;
+
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.55), 0 0 15px rgba(16, 185, 129, 0.25);
+
+  z-index: 950;
+
+  color: #F8FAFC;
+
+  box-sizing: border-box;
+
+}
+
+.driver-route-hud-header {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  margin-bottom: 8px;
+
+}
+
+.driver-route-hud-badge {
+
+  font-size: 11px;
+
+  font-weight: 900;
+
+  color: #10B981;
+
+  background: rgba(16, 185, 129, 0.15);
+
+  border: 1px solid rgba(16, 185, 129, 0.4);
+
+  padding: 3px 8px;
+
+  border-radius: 999px;
+
+  letter-spacing: 0.5px;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 5px;
+
+}
+
+.driver-route-hud-close {
+
+  background: transparent;
+
+  border: none;
+
+  color: #94A3B8;
+
+  font-size: 18px;
+
+  cursor: pointer;
+
+  padding: 0 4px;
+
+  line-height: 1;
+
+}
+
+.driver-route-hud-close:hover {
+
+  color: #F8FAFC;
+
+}
+
+.driver-route-hud-dest {
+
+  font-size: 15px;
+
+  font-weight: 800;
+
+  color: #F8FAFC;
+
+  line-height: 1.3;
+
+}
+
+.driver-route-hud-meta {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 2px;
+
+  margin-top: 4px;
+
+  font-size: 13px;
+
+  color: #CBD5E1;
+
+}
+
+.driver-route-hud-dist {
+
+  color: #38BDF8;
+
+  font-weight: 700;
+
+}
+
+.driver-route-hud-addr {
+
+  color: #94A3B8;
+
+}
+
+.driver-route-hud-actions {
+
+  display: flex;
+
+  gap: 6px;
+
+  margin-top: 10px;
+
+}
+
+.btn-hud-action {
+
+  flex: 1;
+
+  border: none;
+
+  border-radius: 8px;
+
+  padding: 7px 10px;
+
+  font-size: 13px;
+
+  font-weight: 800;
+
+  cursor: pointer;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 5px;
+
+  transition: transform 0.15s ease, filter 0.15s ease;
+
+}
+
+.btn-hud-action:hover {
+
+  transform: translateY(-1px);
+
+  filter: brightness(1.1);
+
+}
+
+.btn-hud-center {
+
+  background: #1E293B;
+
+  color: #38BDF8;
+
+  border: 1px solid #38BDF8;
+
+}
+
+.btn-hud-puerta {
+
+  background: #D97706;
+
+  color: white;
+
+}
+
+.btn-hud-wa {
+
+  background: #25D366;
+
+  color: white;
+
+}
+
+.btn-hud-gmaps {
+
+  background: #0284C7;
+
+  color: white;
+
+}
+
 .btn-confirm-order-received {
 
   width: 100%;

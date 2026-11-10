@@ -1280,9 +1280,14 @@ function agregarPedidoVecinoEnMapa(order) {
   let orderAction = '';
   if (isAssignedToDriver) {
     orderAction = `
-      <a href="${mapsNavUrl}" target="_blank" rel="noopener noreferrer" data-action="abrirRutaGoogleMaps" data-lat="${lat}" data-lng="${lng}" data-id="${escapeFn(order.id)}" data-address="${escapeFn(order.direccion || '')}" class="btn-driver-route order-popup-action">
-        <i class="fa-solid fa-diamond-turn-right"></i> IR CON GOOGLE MAPS
-      </a>
+      <div style="display:flex; gap:6px; margin-top:6px;">
+        <button type="button" data-action="trazarRutaEnMapa" data-lat="${lat}" data-lng="${lng}" data-id="${escapeFn(order.id)}" data-address="${escapeFn(order.direccion || '')}" data-categoria="${escapeFn(order.categoria || '')}" class="btn-driver-route order-popup-action" style="flex:2; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:5px; background:linear-gradient(135deg, #10B981, #059669); color:white; border:none; padding:8px 10px; border-radius:8px; font-weight:800; font-size:14px;">
+          <i class="fa-solid fa-route"></i> VER EN MAPA
+        </button>
+        <a href="${mapsNavUrl}" target="_blank" rel="noopener noreferrer" data-action="abrirRutaGoogleMaps" data-lat="${lat}" data-lng="${lng}" data-address="${escapeFn(order.direccion || '')}" class="btn-driver-route order-popup-action" style="flex:1; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:4px; background:#1E293B; color:#38BDF8; border:1px solid #38BDF8; padding:8px 8px; border-radius:8px; font-weight:700; font-size:13px; text-decoration:none;" title="Abrir navegación externa en Google Maps">
+          <i class="fa-solid fa-diamond-turn-right"></i> Maps
+        </a>
+      </div>
       <div class="driver-quick-actions-container" style="margin-top:8px;">
         <div class="driver-quick-actions-title">⚡ Estado con Cliente:</div>
         <div class="driver-quick-actions-grid">
@@ -1690,6 +1695,10 @@ function applyGpsPosition(lat, lng, label, forceReset = false, isExact = true) {
       AppState.set('gpsLat', lat);
       AppState.set('gpsLng', lng);
     }
+  }
+
+  if (typeof window.actualizarRutaActivaConGps === 'function') {
+    window.actualizarRutaActivaConGps(lat, lng);
   }
 
   // Auto-detectar ciudad al obtener GPS inicial

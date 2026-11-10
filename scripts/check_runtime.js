@@ -82,6 +82,7 @@ class MockMap {
     return this;
   }
   flyToBounds() {}
+  fitBounds() {}
   getBounds() {
     return {
       pad: () => ({
@@ -323,6 +324,7 @@ const sandbox = {
     divIcon: (opts) => ({ ...opts, _isIcon: true }),
     tileLayer: () => ({ addTo: () => {}, on: () => {} }),
     layerGroup: () => new MockLayerGroup(),
+    polyline: () => ({ addTo: () => ({ setLatLngs: () => {} }), setLatLngs: () => {} }),
     latLngBounds: () => ({}),
     control: {
       zoom: () => ({ addTo: () => {} })
@@ -545,7 +547,8 @@ try {
   const inputOtros = mkEl();
   const inputCantidad = mkEl();
   const inputCalle = mkEl();
-  const inputDesc = mkEl();
+  const inputTel = mkEl({ value: '70123456' });
+  const inputHorario = mkEl({ value: '' });
 
   const porId = {
     selectCategoria,
@@ -553,7 +556,9 @@ try {
     inputOrderOtrosDetalle: inputOtros,
     inputCantidad,
     inputCallePrincipal: inputCalle,
-    inputOrderDescripcion: inputDesc,
+    inputTelefonoComprador: inputTel,
+    inputTelefono: inputTel,
+    inputOrderHorario: inputHorario,
     tipoSolicitudAyuda: mkEl(),
     labelCategoria: mkEl(),
     labelCantidad: mkEl(),
@@ -603,7 +608,7 @@ try {
   inputOtros.value = '   Tapas de plastico   ';
   inputCantidad.value = '2 bolsas';
   inputCalle.value = '';
-  inputDesc.value = '';
+  inputHorario.value = '';
   consultasMock.length = 0;
   await win.confirmarPedido();
   await new Promise((r) => setTimeout(r, 60));

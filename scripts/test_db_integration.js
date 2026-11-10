@@ -179,6 +179,13 @@ async function main() {
     }), 'rpc_get_driver_available_orders');
   });
 
+  await test('rpc_user_confirm_pickup exige sesión real', async () => {
+    assertDenied(await request('rpc/rpc_user_confirm_pickup', {
+      method: 'POST',
+      body: JSON.stringify({ p_order_id: '00000000-0000-0000-0000-000000000000' })
+    }), 'rpc_user_confirm_pickup');
+  });
+
   await test('Instrucciones de pago requieren sesión', async () => {
     assertDenied(await request('rpc/rpc_get_payment_instructions', { method: 'POST', body: '{}' }), 'rpc_get_payment_instructions');
   });

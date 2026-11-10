@@ -21,6 +21,7 @@
 
   let radarChannel = null;
   let overrideTimer = null;
+  let radarRefreshTimer = null;
   let authListener = null;
   let driverCanTakeOrders = false;
   let driverSuspensionReason = '';
@@ -45,6 +46,45 @@
   function currentCity() {
     const raw = (typeof AppState !== 'undefined' && AppState.get('city')) || 'cochabamba';
     return String(raw || 'cochabamba').toLowerCase().trim();
+  }
+
+  /* Posicion del recolector para ordenar el radar de cercanos a lejanos. La
+     expansion del radio la decide el servidor; aqui solo se prioriza la lista. */
+  function getDriverPosition() {
+    let loc = null;
+    if (typeof AppState !== 'undefined') {
+      loc = AppState.get('userLocation') || AppState.get('driverLocation') || null;
+    }
+    const lat = Number(loc?.lat ?? loc?.latitude ?? (typeof window.currentGpsLat !== 'undefined' ? window.currentGpsLat : NaN));
+    const lng = Number(loc?.lng ?? loc?.longitude ?? (typeof window.currentGpsLng !== 'undefined' ? window.currentGpsLng : NaN));
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+    return { lat, lng };
+  }
+
+  function distanceMeters(lat1, lng1, lat2, lng2) {
+    const rad = Math.PI / 180;
+    const dLat = (lat2 - lat1) * rad;
+    const dLng = (lng2 - lng1) * rad;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLng / 2) ** 2;
+    return 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  function distanceLabel(meters) {
+    if (!Number.isFinite(meters)) return '';
+    return meters < 1000 ? `${Math.round(meters)} m` : `${(meters / 1000).toFixed(1)} km`;
+  }
+
+  function sortRadarByDistance(rows) {
+    const list = Array.isArray(rows) ? rows.slice() : [];
+    const pos = getDriverPosition();
+    if (!pos) return list;
+    return list.sort((a, b) => {
+      const da = distanceMeters(pos.lat, pos.lng, Number(a.latitude), Number(a.longitude));
+      const db = distanceMeters(pos.lat, pos.lng, Number(b.latitude), Number(b.longitude));
+      const va = Number.isFinite(da) ? da : Number.POSITIVE_INFINITY;
+      const vb = Number.isFinite(db) ? db : Number.POSITIVE_INFINITY;
+      return va - vb;
+    });
   }
 
   function isDriverMode() {
@@ -141,7 +181,7 @@
     if (!mapRef || typeof L === 'undefined') return;
 
     clearRadarLayers();
-    (rows || []).forEach((row) => {
+    sortRadarByDistance(rows).forEach((row) => {
       const lat = Number(row.latitude);
       const lng = Number(row.longitude);
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
@@ -267,7 +307,7 @@
     if (assignedRes.error) console.warn('[OrderPrivacy] Asignados:', assignedRes.error.message || assignedRes.error);
 
     const assigned = assignedRes.data || [];
-    const available = radarRes.data || [];
+    const available = sortRadarByDistance(radarRes.data || []);
     let html = '<div style="padding:10px 0 6px;font-weight:900;">Pedidos</div>';
 
     if (!access.canTake && !esAdmin) {
@@ -302,19 +342,22 @@
       });
     }
 
-    html += '<div style="font-size:16px;font-weight:800;margin:12px 0 8px;">PEDIDOS LIBRES</div>';
+    html += '<div style="font-size:16px;font-weight:800;margin:12px 0 8px;">PEDIDOS LIBRES · MÁS CERCANOS PRIMERO</div>';
     if (!available.length) {
       html += '<div style="padding:16px;text-align:center;opacity:.75;">No hay pedidos libres en tu zona.</div>';
     } else {
+      const driverPos = getDriverPosition();
       available.forEach((o) => {
         const lat = Number(o.latitude);
         const lng = Number(o.longitude);
         const radius = Number(o.radius_m || 50);
+        const dist = driverPos ? distanceMeters(driverPos.lat, driverPos.lng, lat, lng) : NaN;
+        const distText = Number.isFinite(dist) ? ` · a ${distanceLabel(dist)}` : '';
         const takeButton = access.canTake
           ? `<button type="button" onclick="window.tomarPedidoDesdeZonaPrivada('${escapeHtml(o.order_id)}',${lat},${lng})" style="padding:6px 9px;border-radius:6px;border:0;font-weight:800;cursor:pointer;">Tomar</button>`
           : '';
         html += `<div style="padding:10px;margin-bottom:8px;border:1px solid rgba(255,255,255,.12);border-radius:8px;">
-          <div style="font-weight:800;">Pedido disponible</div>
+          <div style="font-weight:800;">Pedido disponible${distText}</div>
           <div style="font-size:16px;margin-top:3px;opacity:.8;">Solo se muestra un área aproximada de ${radius} m. Los datos del pedido se habilitan únicamente si lo tomas.</div>
           <div style="display:flex;gap:6px;margin-top:8px;">
             <button type="button" onclick="window.centrarZonaPedidoAproximada('${escapeHtml(o.order_id)}',${lat},${lng})" style="padding:6px 9px;border-radius:6px;border:0;font-weight:800;cursor:pointer;">Ver zona</button>
@@ -355,6 +398,19 @@
     await loadOrderRadar();
     subscribeRadar();
 
+    // El buffer del servidor se amplia con el tiempo. Reconsultamos el radar
+    // cada 30 s para que el recolector vea el pedido cuando entra en su anillo.
+    if (radarRefreshTimer) clearInterval(radarRefreshTimer);
+    radarRefreshTimer = setInterval(() => {
+      if (!isDriverMode()) return;
+      loadOrderRadar();
+      const modal = document.getElementById('modalDriverOrders');
+      if (modal && modal.style.display && modal.style.display !== 'none'
+          && typeof window.renderDriverOrdersList === 'function') {
+        window.renderDriverOrdersList();
+      }
+    }, 30000);
+
     if (typeof AppState !== 'undefined' && typeof AppState.on === 'function') {
       AppState.on('city', () => {
         loadOrderRadar();
@@ -387,6 +443,7 @@
 
   window.addEventListener?.('beforeunload', () => {
     if (overrideTimer) clearInterval(overrideTimer);
+    if (radarRefreshTimer) clearInterval(radarRefreshTimer);
     try { authListener?.unsubscribe?.(); } catch (_) {}
     try { if (radarChannel && window.supabaseClient) window.supabaseClient.removeChannel(radarChannel); } catch (_) {}
   });

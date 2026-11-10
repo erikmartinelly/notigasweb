@@ -270,6 +270,13 @@ async function renderDriverOrdersList() {
   const myAssigned = orders.filter(o => o.estado === 'asignado' && o.driver_id === localUserId);
   if (myAssigned.length > 0) {
     html += '<div class="demand-section-title" style="color:#10B981; margin-bottom:8px;"><i class="fa-solid fa-truck-fast"></i> Mis Pedidos en Camino</div>';
+    if (myAssigned.length > 1) {
+      html += `
+        <button type="button" class="btn-action" style="width:100%; margin-bottom:12px; background:linear-gradient(135deg, #10B981, #059669); color:white; border:1.5px solid #6EE7B7; padding:10px; border-radius:10px; font-size:15px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:7px; box-shadow:0 4px 15px rgba(16,185,129,0.35);" data-action="trazarRutaMultiParada">
+          <i class="fa-solid fa-signs-post"></i> TRAZAR CIRCUITO COMPLETO (${myAssigned.length} RECOGIDAS)
+        </button>
+      `;
+    }
     myAssigned.forEach(o => {
       const antiguedad = formatearAntiguedadPedido(o.created_at);
       const street = o.direccion ? escapeHtmlStr(o.direccion) : (o.barrio_otb ? escapeHtmlStr(o.barrio_otb) : 'Ubicación GPS en Mapa');
@@ -325,14 +332,17 @@ async function renderDriverOrdersList() {
             </div>
           </div>
 
-          <div class="demand-card-actions" style="margin-top:8px; display:flex; gap:6px;">
-            <button type="button" class="btn-action" style="background:#0284C7; color:white; padding:6px 10px; border-radius:6px; font-size:16px; font-weight:700; border:none; cursor:pointer; flex:1; display:inline-flex; align-items:center; justify-content:center; gap:5px;" data-action="centrarPedidoEnMapa" data-lat="${lat}" data-lng="${lng}" data-order-id="${o.id}">
-              <i class="fa-solid fa-map-location-dot"></i> VER EN EL MAPA
+          <div class="demand-card-actions" style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
+            <button type="button" class="btn-action" style="background:#0284C7; color:white; padding:6px 10px; border-radius:6px; font-size:15px; font-weight:700; border:none; cursor:pointer; flex:1; min-width:120px; display:inline-flex; align-items:center; justify-content:center; gap:5px;" data-action="trazarRutaEnMapa" data-lat="${lat}" data-lng="${lng}" data-id="${o.id}" data-address="${escapeHtmlStr(street)}" data-categoria="${escapeHtmlStr(o.categoria || '')}" data-cantidad="${escapeHtmlStr(o.cantidad || '')}" data-tel="${escapeHtmlStr(tel)}" title="Ver en el mapa de NOTIGAS">
+              <i class="fa-solid fa-route"></i> VER EN MAPA
             </button>
-            <button type="button" class="btn-action" style="background:#10B981; color:white; padding:6px 10px; border-radius:6px; font-size:16px; font-weight:700; border:none; cursor:pointer; flex:1; display:inline-flex; align-items:center; justify-content:center; gap:5px;" data-action="confirmarEntregaPedido" data-id="${o.id}">
+            <button type="button" class="btn-action" style="background:#1E293B; color:#38BDF8; border:1px solid #38BDF8; padding:6px 9px; border-radius:6px; font-size:13px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:4px;" data-action="abrirRutaGoogleMaps" data-lat="${lat}" data-lng="${lng}" data-address="${escapeHtmlStr(street)}" title="Navegar con Google Maps externo (opcional)">
+              <i class="fa-solid fa-diamond-turn-right"></i> Maps
+            </button>
+            <button type="button" class="btn-action" style="background:#10B981; color:white; padding:6px 10px; border-radius:6px; font-size:15px; font-weight:700; border:none; cursor:pointer; flex:1; min-width:105px; display:inline-flex; align-items:center; justify-content:center; gap:5px;" data-action="confirmarEntregaPedido" data-id="${o.id}">
               <i class="fa-solid fa-circle-check"></i> Entregado
             </button>
-            <button type="button" class="btn-action" style="background:rgba(239,68,68,0.2); color:#FCA5A5; border:1px solid #EF4444; padding:6px 10px; border-radius:6px; font-size:16px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:4px;" data-action="denunciarPedidoFalso" data-id="${o.id}" data-buyer="${encodeURIComponent(o.cliente_nombre || o.nombre || 'Comprador')}" data-tel="${encodeURIComponent(tel || '')}" title="Denunciar que este pedido es falso o fraude">
+            <button type="button" class="btn-action" style="background:rgba(239,68,68,0.2); color:#FCA5A5; border:1px solid #EF4444; padding:6px 10px; border-radius:6px; font-size:15px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:4px;" data-action="denunciarPedidoFalso" data-id="${o.id}" data-buyer="${encodeURIComponent(o.cliente_nombre || o.nombre || 'Comprador')}" data-tel="${encodeURIComponent(tel || '')}" title="Denunciar que este pedido es falso o fraude">
               <i class="fa-solid fa-triangle-exclamation"></i> Falso
             </button>
           </div>
@@ -484,74 +494,445 @@ window.aceptarPedidoRepartidor = function(orderId, lat, lng, address) {
 
     if (typeof closeDriverOrdersModal === 'function') closeDriverOrdersModal();
     if (typeof showToast === 'function') {
-      showToast('Pedido Asignado', 'Abriendo la ruta en Google Maps.', 'success');
+      showToast('✅ Pedido Tomado', 'Mostrando punto de recojo en tu mapa.', 'success');
     }
     if (typeof cargarPedidosVecinalesEnVivo === 'function') cargarPedidosVecinalesEnVivo();
     if (typeof renderDriverOrdersList === 'function') renderDriverOrdersList();
-    window.abrirRutaGoogleMaps(lat, lng, orderId, address || '');
+    if (typeof window.trazarRutaEnMapa === 'function') {
+      window.trazarRutaEnMapa(lat, lng, orderId, address || '');
+    }
   });
 };
 
-window.abrirRutaGoogleMaps = function (a, b, c, d) {
-  let lat = null;
-  let lng = null;
-  let orderId = null;
-  let address = '';
+/* ==========================================================================
+   SISTEMA DE RUTAS Y NAVEGACIÓN INTERNA EN MAPA
+   Permite al repartidor ver su camión y hacia dónde debe ir directamente
+   dentro de NOTIGAS (Leaflet). Ofrece un botón opcional para abrir en
+   Google Maps externo si el chofer requiere navegación giro a giro.
+   ========================================================================== */
 
+window.activeDriverRoute = null;
+window.activeDriverRoutePolyline = null;
+window.activeDriverRouteGlow = null;
+
+function limpiarCapasRuta(mapInstance) {
+  const m = mapInstance || (typeof map !== 'undefined' ? map : window.map);
+  if (!m) return;
+  if (window.activeDriverRoutePolyline && typeof m.removeLayer === 'function' && m.hasLayer(window.activeDriverRoutePolyline)) {
+    m.removeLayer(window.activeDriverRoutePolyline);
+  }
+  window.activeDriverRoutePolyline = null;
+  if (window.activeDriverRouteGlow && typeof m.removeLayer === 'function' && m.hasLayer(window.activeDriverRouteGlow)) {
+    m.removeLayer(window.activeDriverRouteGlow);
+  }
+  window.activeDriverRouteGlow = null;
+}
+
+function limpiarRutaEnMapa() {
+  limpiarCapasRuta();
+  window.activeDriverRoute = null;
+  const hud = document.getElementById('driverRouteHud');
+  if (hud) hud.style.display = 'none';
+}
+window.limpiarRutaEnMapa = limpiarRutaEnMapa;
+
+function mostrarHudRuta(info) {
+  const hud = document.getElementById('driverRouteHud');
+  if (!hud) return;
+
+  const badge = document.getElementById('driverRouteHudBadge');
+  const mat = document.getElementById('driverRouteHudMaterial');
+  const dist = document.getElementById('driverRouteHudDist');
+  const addr = document.getElementById('driverRouteHudAddress');
+  const btnWa = document.getElementById('btnHudWhatsapp');
+  const btnPuerta = document.getElementById('btnHudEnPuerta');
+  const btnGmaps = document.getElementById('btnHudGoogleMaps');
+
+  if (badge) badge.textContent = info.title || 'EN RUTA';
+  if (mat) mat.textContent = info.material || '♻️ Recogida de Material';
+  if (addr) addr.textContent = info.address ? `📍 ${info.address}` : '📍 Ubicación GPS';
+
+  if (dist) {
+    if (Number.isFinite(info.distMetros)) {
+      const d = info.distMetros;
+      dist.innerHTML = `<i class="fa-solid fa-location-arrow"></i> Distancia: <strong>${d < 1000 ? `${d} m` : `${(d / 1000).toFixed(1)} km`}</strong>`;
+    } else {
+      dist.innerHTML = '<i class="fa-solid fa-location-arrow"></i> Activa tu ubicación para medir distancia';
+    }
+  }
+
+  if (btnWa) {
+    if (info.telefono) {
+      btnWa.style.display = 'inline-flex';
+      btnWa.setAttribute('data-tel', info.telefono);
+      btnWa.setAttribute('data-address', info.address || '');
+      btnWa.setAttribute('data-categoria', info.categoria || '');
+    } else {
+      btnWa.style.display = 'none';
+    }
+  }
+
+  if (btnPuerta && info.orderId) {
+    btnPuerta.setAttribute('data-id', info.orderId);
+  }
+
+  if (btnGmaps) {
+    btnGmaps.setAttribute('data-lat', String(info.destLat || ''));
+    btnGmaps.setAttribute('data-lng', String(info.destLng || ''));
+    btnGmaps.setAttribute('data-address', info.address || '');
+    if (!info.isMulti) {
+      btnGmaps.removeAttribute('data-multi');
+      btnGmaps.removeAttribute('data-waypoints');
+    }
+  }
+
+  hud.style.display = 'block';
+}
+
+function trazarRutaEnMapa(lat, lng, orderId, address, categoria, cantidad, telefono) {
+  if (typeof closeDriverOrdersModal === 'function') closeDriverOrdersModal();
+  const modalPan = document.getElementById('modalPanoramicaPedidos');
+  if (modalPan) modalPan.style.display = 'none';
+
+  if (typeof switchTab === 'function') switchTab(0);
+
+  const mapInstance = (typeof map !== 'undefined' && map) || window.map || null;
+  if (!mapInstance) {
+    if (typeof showToast === 'function') showToast('Mapa no disponible', 'Espera a que cargue el mapa.', 'warning');
+    return;
+  }
+
+  const destLat = Number(lat);
+  const destLng = Number(lng);
+  if (!Number.isFinite(destLat) || !Number.isFinite(destLng) || destLat === 0 || destLng === 0) {
+    if (typeof showToast === 'function') showToast('Ubicación No Disponible', 'El pedido no cuenta con coordenadas válidas.', 'warning', 3500);
+    return;
+  }
+
+  limpiarCapasRuta(mapInstance);
+
+  let driverLat = (typeof window.currentGpsLat === 'number' && Number.isFinite(window.currentGpsLat))
+    ? window.currentGpsLat
+    : null;
+  let driverLng = (typeof window.currentGpsLng === 'number' && Number.isFinite(window.currentGpsLng))
+    ? window.currentGpsLng
+    : null;
+
+  if ((driverLat === null || driverLng === null) && window.userMarker && typeof window.userMarker.getLatLng === 'function') {
+    const pos = window.userMarker.getLatLng();
+    if (pos && Number.isFinite(pos.lat) && Number.isFinite(pos.lng)) {
+      driverLat = pos.lat;
+      driverLng = pos.lng;
+    }
+  }
+
+  let distMetros = null;
+  const tieneGpsChofer = Number.isFinite(driverLat) && Number.isFinite(driverLng) && (driverLat !== 0 || driverLng !== 0);
+
+  if (tieneGpsChofer) {
+    if (typeof window.calcularDistanciaMetros === 'function') {
+      distMetros = window.calcularDistanciaMetros(driverLat, driverLng, destLat, destLng);
+    }
+
+    if (window.L && typeof window.L.polyline === 'function') {
+      window.activeDriverRouteGlow = window.L.polyline([[driverLat, driverLng], [destLat, destLng]], {
+        color: '#38BDF8',
+        weight: 8,
+        opacity: 0.35,
+        lineCap: 'round',
+        lineJoin: 'round'
+      });
+      if (typeof window.activeDriverRouteGlow.addTo === 'function') window.activeDriverRouteGlow.addTo(mapInstance);
+
+      window.activeDriverRoutePolyline = window.L.polyline([[driverLat, driverLng], [destLat, destLng]], {
+        color: '#10B981',
+        weight: 4,
+        dashArray: '8, 8',
+        opacity: 0.95,
+        lineCap: 'round',
+        lineJoin: 'round'
+      });
+      if (typeof window.activeDriverRoutePolyline.addTo === 'function') window.activeDriverRoutePolyline.addTo(mapInstance);
+    }
+
+    if (typeof mapInstance.fitBounds === 'function') {
+      try {
+        mapInstance.fitBounds([[driverLat, driverLng], [destLat, destLng]], {
+          padding: [80, 80],
+          maxZoom: 16,
+          animate: true
+        });
+      } catch (_) {
+        if (typeof mapInstance.flyTo === 'function') mapInstance.flyTo([destLat, destLng], 15);
+      }
+    } else if (typeof mapInstance.flyTo === 'function') {
+      mapInstance.flyTo([destLat, destLng], 15);
+    }
+  } else {
+    if (typeof mapInstance.flyTo === 'function') {
+      mapInstance.flyTo([destLat, destLng], 16, { duration: 1.2 });
+    }
+    if (typeof showToast === 'function') {
+      showToast('📍 Punto de Recojo', 'Centrando en el destino. Activa tu GPS para ver tu camión en vivo.', 'info', 4000);
+    }
+  }
+
+  setTimeout(() => {
+    if (orderId && window.neighborOrderMarkers && window.neighborOrderMarkers[orderId]) {
+      try { window.neighborOrderMarkers[orderId].openPopup(); } catch (_) {}
+    }
+  }, 800);
+
+  window.activeDriverRoute = {
+    orderId,
+    lat: destLat,
+    lng: destLng,
+    address: address || '',
+    categoria: categoria || 'Material',
+    cantidad: cantidad || '',
+    telefono: telefono || '',
+    multi: false
+  };
+
+  mostrarHudRuta({
+    title: 'EN RUTA DE RECOLECCIÓN',
+    material: `${categoria ? ('♻️ ' + categoria) : '♻️ Recogida de Material'}${cantidad ? ` (${cantidad})` : ''}`,
+    address: address || 'Ubicación fijada en mapa GPS',
+    distMetros,
+    telefono: telefono || '',
+    categoria: categoria || '',
+    orderId,
+    destLat,
+    destLng
+  });
+}
+window.trazarRutaEnMapa = trazarRutaEnMapa;
+
+function trazarRutaMultiParada() {
+  if (typeof closeDriverOrdersModal === 'function') closeDriverOrdersModal();
+  if (typeof switchTab === 'function') switchTab(0);
+
+  const mapInstance = (typeof map !== 'undefined' && map) || window.map || null;
+  if (!mapInstance) return;
+
+  const rawOrders = (typeof AppState !== 'undefined') ? AppState.get('neighborOrders') : [];
+  let localUserId = null;
+  try {
+    localUserId = (typeof getAuthenticatedUserId === 'function')
+      ? (window.currentAuthUserId || AppState.get('userData')?.id)
+      : null;
+  } catch (_) {}
+
+  const myAssigned = (Array.isArray(rawOrders) ? rawOrders : []).filter(o =>
+    o && o.estado === 'asignado' && (!localUserId || o.driver_id === localUserId) &&
+    Number.isFinite(Number(o.latitude)) && Number.isFinite(Number(o.longitude))
+  );
+
+  if (!myAssigned.length) {
+    if (typeof showToast === 'function') showToast('Sin pedidos en camino', 'No tienes pedidos asignados actualmente.', 'info');
+    return;
+  }
+
+  limpiarCapasRuta(mapInstance);
+
+  let curLat = (typeof window.currentGpsLat === 'number' && Number.isFinite(window.currentGpsLat))
+    ? window.currentGpsLat
+    : (window.userMarker?.getLatLng?.()?.lat ?? null);
+  let curLng = (typeof window.currentGpsLng === 'number' && Number.isFinite(window.currentGpsLng))
+    ? window.currentGpsLng
+    : (window.userMarker?.getLatLng?.()?.lng ?? null);
+
+  const tieneChofer = Number.isFinite(curLat) && Number.isFinite(curLng) && (curLat !== 0 || curLng !== 0);
+
+  let remaining = [...myAssigned];
+  const orderedStops = [];
+  let pLat = tieneChofer ? curLat : Number(remaining[0].latitude);
+  let pLng = tieneChofer ? curLng : Number(remaining[0].longitude);
+
+  let totalDist = 0;
+  while (remaining.length > 0) {
+    let nearestIdx = 0;
+    let minDist = Infinity;
+    for (let i = 0; i < remaining.length; i++) {
+      const o = remaining[i];
+      const d = (typeof window.calcularDistanciaMetros === 'function')
+        ? window.calcularDistanciaMetros(pLat, pLng, Number(o.latitude), Number(o.longitude))
+        : Math.hypot(Number(o.latitude) - pLat, Number(o.longitude) - pLng);
+      if (d !== null && d < minDist) {
+        minDist = d;
+        nearestIdx = i;
+      }
+    }
+    const nextStop = remaining.splice(nearestIdx, 1)[0];
+    orderedStops.push(nextStop);
+    totalDist += (minDist !== Infinity ? minDist : 0);
+    pLat = Number(nextStop.latitude);
+    pLng = Number(nextStop.longitude);
+  }
+
+  const polyPoints = [];
+  if (tieneChofer) polyPoints.push([curLat, curLng]);
+  orderedStops.forEach(s => polyPoints.push([Number(s.latitude), Number(s.longitude)]));
+
+  if (window.L && typeof window.L.polyline === 'function' && polyPoints.length > 1) {
+    window.activeDriverRouteGlow = window.L.polyline(polyPoints, {
+      color: '#38BDF8',
+      weight: 8,
+      opacity: 0.35,
+      lineCap: 'round',
+      lineJoin: 'round'
+    });
+    if (typeof window.activeDriverRouteGlow.addTo === 'function') window.activeDriverRouteGlow.addTo(mapInstance);
+
+    window.activeDriverRoutePolyline = window.L.polyline(polyPoints, {
+      color: '#10B981',
+      weight: 4,
+      dashArray: '8, 8',
+      opacity: 0.95,
+      lineCap: 'round',
+      lineJoin: 'round'
+    });
+    if (typeof window.activeDriverRoutePolyline.addTo === 'function') window.activeDriverRoutePolyline.addTo(mapInstance);
+  }
+
+  if (typeof mapInstance.fitBounds === 'function' && polyPoints.length > 1) {
+    try {
+      mapInstance.fitBounds(polyPoints, { padding: [70, 70], maxZoom: 16 });
+    } catch (_) {}
+  }
+
+  window.activeDriverRoute = {
+    multi: true,
+    stops: orderedStops,
+    totalDist
+  };
+
+  const primeraParada = orderedStops[0];
+  const gmapsWaypoints = orderedStops.map(s => `${s.latitude},${s.longitude}`).join('|');
+
+  mostrarHudRuta({
+    title: `CIRCUITO: ${orderedStops.length} PARADAS`,
+    material: `1ª Parada: ${primeraParada.categoria || 'Recogida'} (${primeraParada.cantidad || '1 un'})`,
+    address: `${orderedStops.length} paradas organizadas en orden de cercanía`,
+    distMetros: totalDist,
+    telefono: primeraParada.telefono || '',
+    categoria: primeraParada.categoria || '',
+    orderId: primeraParada.id,
+    destLat: primeraParada.latitude,
+    destLng: primeraParada.longitude,
+    isMulti: true
+  });
+
+  const btnGmaps = document.getElementById('btnHudGoogleMaps');
+  if (btnGmaps) {
+    btnGmaps.setAttribute('data-multi', '1');
+    btnGmaps.setAttribute('data-waypoints', gmapsWaypoints);
+  }
+
+  if (typeof showToast === 'function') {
+    const kmText = totalDist < 1000 ? `${totalDist} m` : `${(totalDist / 1000).toFixed(1)} km`;
+    showToast('🧭 Circuito Organizado', `${orderedStops.length} paradas trazadas en orden óptimo (~${kmText} totales).`, 'success', 4500);
+  }
+}
+window.trazarRutaMultiParada = trazarRutaMultiParada;
+
+function actualizarRutaActivaConGps(lat, lng) {
+  if (!window.activeDriverRoute) return;
+  const mapInstance = (typeof map !== 'undefined' && map) || window.map || null;
+  if (!mapInstance) return;
+
+  const truckLat = Number(lat);
+  const truckLng = Number(lng);
+  if (!Number.isFinite(truckLat) || !Number.isFinite(truckLng)) return;
+
+  if (window.activeDriverRoute.multi) {
+    const stops = window.activeDriverRoute.stops || [];
+    if (stops.length && window.activeDriverRoutePolyline && typeof window.activeDriverRoutePolyline.setLatLngs === 'function') {
+      const polyPoints = [[truckLat, truckLng], ...stops.map(s => [Number(s.latitude), Number(s.longitude)])];
+      window.activeDriverRoutePolyline.setLatLngs(polyPoints);
+      if (window.activeDriverRouteGlow && typeof window.activeDriverRouteGlow.setLatLngs === 'function') {
+        window.activeDriverRouteGlow.setLatLngs(polyPoints);
+      }
+    }
+  } else {
+    const destLat = window.activeDriverRoute.lat;
+    const destLng = window.activeDriverRoute.lng;
+    if (Number.isFinite(destLat) && Number.isFinite(destLng)) {
+      if (window.activeDriverRoutePolyline && typeof window.activeDriverRoutePolyline.setLatLngs === 'function') {
+        window.activeDriverRoutePolyline.setLatLngs([[truckLat, truckLng], [destLat, destLng]]);
+        if (window.activeDriverRouteGlow && typeof window.activeDriverRouteGlow.setLatLngs === 'function') {
+          window.activeDriverRouteGlow.setLatLngs([[truckLat, truckLng], [destLat, destLng]]);
+        }
+      }
+      if (typeof window.calcularDistanciaMetros === 'function') {
+        const dist = window.calcularDistanciaMetros(truckLat, truckLng, destLat, destLng);
+        const distEl = document.getElementById('driverRouteHudDist');
+        if (distEl && dist !== null) {
+          distEl.innerHTML = `<i class="fa-solid fa-location-arrow"></i> Distancia: <strong>${dist < 1000 ? `${dist} m` : `${(dist / 1000).toFixed(1)} km`}</strong>`;
+        }
+      }
+    }
+  }
+}
+window.actualizarRutaActivaConGps = actualizarRutaActivaConGps;
+
+function abrirNavegacionExterna(lat, lng, address, waypoints) {
+  let url = '';
+  if (waypoints && typeof waypoints === 'string') {
+    const parts = waypoints.split('|').filter(Boolean);
+    if (parts.length > 1) {
+      const dest = parts[parts.length - 1];
+      const middle = parts.slice(0, parts.length - 1).join('|');
+      url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest)}&waypoints=${encodeURIComponent(middle)}&travelmode=driving`;
+    } else if (parts.length === 1) {
+      url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(parts[0])}&travelmode=driving`;
+    }
+  }
+
+  if (!url) {
+    const dLat = Number(lat);
+    const dLng = Number(lng);
+    let destination = '';
+    if (Number.isFinite(dLat) && Number.isFinite(dLng) && dLat !== 0 && dLng !== 0) {
+      destination = `${dLat},${dLng}`;
+    } else if (address) {
+      const city = (typeof AppState !== 'undefined') ? (AppState.get('city') || '') : '';
+      destination = `${address}, ${city}, Bolivia`;
+    }
+    if (destination) {
+      url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}&travelmode=driving`;
+    }
+  }
+
+  if (url) {
+    try {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } catch (_) {
+      window.location.href = url;
+    }
+    if (typeof showToast === 'function') {
+      showToast('🚀 Google Maps', 'Abriendo navegación en Google Maps externo...', 'info', 3000);
+    }
+  } else {
+    if (typeof showToast === 'function') showToast('Ubicación no disponible', 'No hay coordenadas para abrir Google Maps.', 'warning');
+  }
+}
+window.abrirNavegacionExterna = abrirNavegacionExterna;
+
+window.abrirRutaGoogleMaps = function (a, b, c, d) {
+  let lat = null, lng = null, orderId = null, address = '';
   if (typeof a === 'object' && a !== null) {
     lat = Number(a.latitude ?? a.lat);
     lng = Number(a.longitude ?? a.lng);
     orderId = a.id || a.order_id || null;
     address = a.direccion || a.address || '';
   } else if (typeof a === 'string' && isNaN(Number(a)) && (a.includes('-') || a.length > 15)) {
-    orderId = a;
-    lat = Number(b);
-    lng = Number(c);
-    address = d || '';
+    orderId = a; lat = Number(b); lng = Number(c); address = d || '';
   } else {
-    lat = Number(a);
-    lng = Number(b);
-    orderId = c || null;
-    address = d || '';
+    lat = Number(a); lng = Number(b); orderId = c || null; address = d || '';
   }
-
-  if (typeof closeDriverOrdersModal === 'function') {
-    closeDriverOrdersModal();
-  }
-
-  let destination = '';
-  if (lat != null && lng != null && !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
-    destination = `${lat},${lng}`;
-  } else if (address && String(address).trim() !== '') {
-    const activeCity = (typeof AppState !== 'undefined') ? (AppState.get('city') || '') : '';
-    destination = `${String(address).trim()}, ${activeCity}, Bolivia`;
-  } else {
-    console.error('Coordenadas o dirección no válidas para Google Maps:', { orderId, lat, lng, address });
-    if (typeof showToast === 'function') {
-      showToast('Ubicación No Disponible', 'El pedido no cuenta con coordenadas válidas.', 'warning', 3500);
-    }
-    return;
-  }
-
-  const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
-
-  try {
-    const newWin = window.open(mapsUrl, '_blank');
-    if (!newWin) {
-      const link = document.createElement('a');
-      link.href = mapsUrl;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-  } catch (e) {
-    window.location.href = mapsUrl;
-  }
-
-  if (typeof showToast === 'function') {
-    showToast('🚀 En Ruta', 'Abriendo navegación en Google Maps...', 'success', 2500);
+  if (lat && lng && Number.isFinite(Number(lat)) && Number.isFinite(Number(lng))) {
+    abrirNavegacionExterna(lat, lng, address);
   }
 };
 
@@ -697,17 +1078,23 @@ function abrirWhatsappDirecto(rawTel, direccion, categoria) {
     return;
   }
 
-  let cleanTel = String(rawTel).replace(/[^0-9]/g, '');
-  if (cleanTel.length === 9 && !cleanTel.startsWith('51')) {
-    cleanTel = '51' + cleanTel;
-  } else if (!cleanTel.startsWith('51') && cleanTel.length <= 10) {
-    cleanTel = '51' + cleanTel;
-  }
-
   const catName = categoria || 'plastico';
-  const dirText = direccion ? ` para entrega en *${direccion}*` : '';
-  const msg = encodeURIComponent(`Hola! 👋 Te escribo desde NOTIGAS sobre tu pedido de *${catName}*${dirText}. Estoy coordinando tu entrega.`);
-  const waUrl = `https://wa.me/${cleanTel}?text=${msg}`;
+  const dirText = direccion ? ` para la recogida en *${direccion}*` : '';
+  const msg = `Hola! 👋 Te escribo desde NOTIGAS sobre tu pedido de *${catName}*${dirText}. Estoy coordinando la recogida.`;
+
+  /* Bolivia usa +591. Antes este enlace armaba +51 (Perú), por lo que WhatsApp
+     abría un número inexistente. NOTIGAS_BO normaliza 8 dígitos locales o un
+     número que ya venga con el prefijo 591. */
+  const boPhone = window.NOTIGAS_BO;
+  let waUrl = '';
+  if (boPhone && typeof boPhone.whatsappUrl === 'function') {
+    waUrl = boPhone.whatsappUrl(rawTel, msg);
+  } else {
+    let cleanTel = String(rawTel).replace(/[^0-9]/g, '');
+    if (cleanTel.startsWith('591') && cleanTel.length > 8) cleanTel = cleanTel.slice(3);
+    if (cleanTel.length === 8) cleanTel = '591' + cleanTel;
+    waUrl = `https://wa.me/${cleanTel}?text=${encodeURIComponent(msg)}`;
+  }
 
   window.open(waUrl, '_blank', 'noopener,noreferrer');
 }
@@ -1338,7 +1725,7 @@ function confirmarPedido() {
   const inputCantidad = document.getElementById('inputCantidad');
   const inputCalle = document.getElementById('inputCallePrincipal');
   const inputTel = document.getElementById('inputTelefonoComprador') || document.getElementById('inputTelefono');
-  const inputDesc = document.getElementById('inputOrderDescripcion');
+  const inputHorario = document.getElementById('inputOrderHorario');
   const inputOtros = document.getElementById('inputOrderOtrosDetalle');
 
   const esRecogida = (tipoSolicitudActual === 'recogida');
@@ -1369,16 +1756,48 @@ function confirmarPedido() {
   const tipoSolicitud = (categoria === 'otros') ? 'recogida' : (boCat ? boCat.tipo_solicitud : (tipoSolicitudActual || 'compra'));
   const cantidad = inputCantidad ? inputCantidad.value.trim() : '';
   const calle = inputCalle ? inputCalle.value.trim() : '';
-  const telefono = inputTel ? inputTel.value.trim() : '';
-  const descripcion = (categoria === 'otros' && inputOtros ? inputOtros.value.trim() : (inputDesc ? inputDesc.value.trim() : ''));
+  const telefonoCrudo = inputTel ? inputTel.value.trim() : '';
+  const boPhone = window.NOTIGAS_BO;
+  const telefono = (boPhone && typeof boPhone.normalizarTelefono === 'function')
+    ? boPhone.normalizarTelefono(telefonoCrudo)
+    : telefonoCrudo.replace(/[^0-9]/g, '');
+  const telefonoValido = (boPhone && typeof boPhone.esTelefonoValido === 'function')
+    ? boPhone.esTelefonoValido(telefono)
+    : /^[0-9]{8}$/.test(telefono);
+
+  /* El WhatsApp es obligatorio: es el único canal para coordinar la recogida
+     cuando el recolector llega al domicilio. No se aceptan pedidos sin número. */
+  if (!telefonoValido) {
+    if (typeof showToast === 'function') {
+      showToast('📞 Falta tu WhatsApp', 'Escribe tu número boliviano de 8 dígitos. Lo necesitamos para coordinar la recogida.', 'warning', 5000);
+    }
+    if (inputTel) {
+      if (typeof inputTel.focus === 'function') inputTel.focus();
+      if (typeof inputTel.scrollIntoView === 'function') inputTel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    return;
+  }
+
+  if (inputTel && typeof inputTel.value === 'string') inputTel.value = telefono;
+
+  const horarioSeleccionado = inputHorario ? String(inputHorario.value || '').trim() : '';
+  const otrosDetalle = (categoria === 'otros' && inputOtros) ? inputOtros.value.trim() : '';
 
   /* "otros" es un pedido real de recogida: el vecino describe que material
      tiene y se publica como cualquier otra recogida (con GPS y cantidad). */
-  if (categoria === 'otros' && descripcion.length < 3) {
+  if (categoria === 'otros' && otrosDetalle.length < 3) {
     showToast('💬 Cuéntanos qué material tienes', 'Escribe al menos 3 caracteres para publicar tu recogida.', 'warning', 4000);
     if (inputOtros) inputOtros.focus();
     return;
   }
+
+  /* El horario elegido viaja en descripcion porque es el campo que ya leen las
+     tarjetas del recolector y la vista publica. Para "otros" se conserva el
+     material descrito y se agrega el horario sin pisarlo. */
+  const partesDescripcion = [];
+  if (categoria === 'otros' && otrosDetalle) partesDescripcion.push(otrosDetalle);
+  if (horarioSeleccionado) partesDescripcion.push(`Horario para pasar: ${horarioSeleccionado}`);
+  const descripcion = partesDescripcion.join(' · ');
 
   if (!cantidad) {
     if (typeof showToast === 'function') {
@@ -1652,6 +2071,208 @@ async function confirmarRecepcionComprador() {
   );
 }
 window.confirmarRecepcionComprador = confirmarRecepcionComprador;
+
+/* ==========================================================================
+   MIS PEDIDOS (ficha del vecino)
+   Cada usuario ve aqui SUS pedidos y puede confirmar "Ya fue recogido".
+   La confirmacion pasa por rpc_user_confirm_pickup, que valida al propietario,
+   acepta pedidos en pendiente/visto/asignado y deja el pedido en 'entregado'.
+   Al confirmarlo se quita del mapa y de la lista de pedidos libres.
+   ========================================================================== */
+
+const MIS_PEDIDOS_ESTADO_UI = {
+  pendiente: { label: 'Buscando recolector', color: '#FF8F00', bg: 'rgba(255,143,0,.14)' },
+  visto:     { label: 'Visto por un recolector', color: '#F59E0B', bg: 'rgba(245,158,11,.14)' },
+  asignado:  { label: 'Recolector en camino', color: '#10B981', bg: 'rgba(16,185,129,.16)' },
+  entregado: { label: 'Recogido', color: '#22C55E', bg: 'rgba(34,197,94,.16)' },
+  recibido:  { label: 'Recibido', color: '#22C55E', bg: 'rgba(34,197,94,.16)' },
+  cancelado: { label: 'Cancelado', color: '#EF4444', bg: 'rgba(239,68,68,.14)' }
+};
+
+function etiquetaCategoriaMisPedidos(categoria) {
+  const codigos = String(categoria || '').split(',').map(c => c.trim().toLowerCase()).filter(Boolean);
+  if (!codigos.length) return 'Material';
+  const bo = window.NOTIGAS_BO;
+  const mapa = (bo && bo.CATEGORIAS_POR_CODIGO) ? bo.CATEGORIAS_POR_CODIGO : {};
+  return codigos.map(codigo => {
+    if (codigo === 'otros') return 'Otros';
+    return (mapa[codigo] && mapa[codigo].chip) ? mapa[codigo].chip : codigo;
+  }).join(' · ');
+}
+
+function fechaCortaMisPedidos(valor) {
+  if (!valor) return 'Fecha no disponible';
+  try {
+    return new Date(valor).toLocaleString('es-BO', {
+      day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
+  } catch (_) {
+    return String(valor);
+  }
+}
+
+async function abrirMisPedidos() {
+  const modal = document.getElementById('modalMisPedidos');
+  if (modal) modal.style.display = 'flex';
+  await renderMisPedidos();
+}
+window.abrirMisPedidos = abrirMisPedidos;
+
+function cerrarMisPedidos() {
+  const modal = document.getElementById('modalMisPedidos');
+  if (modal) modal.style.display = 'none';
+}
+window.cerrarMisPedidos = cerrarMisPedidos;
+
+async function renderMisPedidos() {
+  const body = document.getElementById('bodyMisPedidos');
+  if (!body) return;
+
+  if (!window.supabaseClient) {
+    body.innerHTML = '<div style="text-align:center;padding:18px;color:#FCA5A5;font-size:16px;">Sin conexión con el servidor. Intenta de nuevo en un momento.</div>';
+    return;
+  }
+
+  body.innerHTML = '<div style="text-align:center;padding:20px;color:#94A3B8;font-size:16px;">Cargando tus pedidos...</div>';
+
+  let userId = null;
+  try {
+    userId = (typeof getAuthenticatedUserId === 'function') ? await getAuthenticatedUserId() : null;
+  } catch (_) {}
+
+  if (!userId) {
+    body.innerHTML = '<div style="text-align:center;padding:18px;color:#FCD34D;font-size:16px;line-height:1.5;">Inicia sesión para ver tus pedidos y confirmar cuando ya fueron recogidos.</div>';
+    return;
+  }
+
+  const escape = typeof escapeHtmlStr === 'function' ? escapeHtmlStr : (v) => String(v ?? '');
+  const { data, error } = await window.supabaseClient
+    .from('pedidos')
+    .select('id, categoria, cantidad, descripcion, direccion, telefono, estado, created_at, driver_id')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(60);
+
+  if (error) {
+    console.error('[NOTIGAS] No se pudieron cargar los pedidos del vecino:', error);
+    body.innerHTML = `<div style="text-align:center;padding:18px;color:#FCA5A5;font-size:16px;">No se pudieron cargar tus pedidos.<br>${escape(error.message || 'Intenta de nuevo.')}</div>`;
+    return;
+  }
+
+  const pedidos = Array.isArray(data) ? data : [];
+  if (!pedidos.length) {
+    body.innerHTML = '<div style="text-align:center;padding:24px 12px;color:#94A3B8;font-size:16px;line-height:1.5;">Todavía no tienes pedidos publicados.<br>Cuando publiques una recogida aparecerá aquí.</div>';
+    return;
+  }
+
+  const activos = pedidos.filter(p => ['pendiente', 'visto', 'asignado'].includes(String(p.estado || '').toLowerCase()));
+  const historial = pedidos.filter(p => !activos.includes(p));
+
+  const tarjeta = (pedido) => {
+    const estado = String(pedido.estado || 'pendiente').toLowerCase();
+    const ui = MIS_PEDIDOS_ESTADO_UI[estado] || MIS_PEDIDOS_ESTADO_UI.pendiente;
+    const puedeConfirmar = ['pendiente', 'visto', 'asignado'].includes(estado);
+    const descripcion = String(pedido.descripcion || '').trim();
+    const cantidad = String(pedido.cantidad || '1 unidad').trim();
+    const direccion = String(pedido.direccion || 'Ubicación GPS indicada en el mapa').trim();
+
+    return `
+      <article style="background:#1E293B;border:1px solid #334155;border-radius:14px;padding:12px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+          <div style="min-width:0;">
+            <div style="font-size:17px;font-weight:900;color:#F8FAFC;line-height:1.25;">♻️ ${escape(etiquetaCategoriaMisPedidos(pedido.categoria))}</div>
+            <div style="font-size:16px;color:#CBD5E1;margin-top:3px;">📦 ${escape(cantidad)}</div>
+          </div>
+          <span style="flex:0 0 auto;background:${ui.bg};border:1px solid ${ui.color};color:${ui.color};border-radius:999px;padding:4px 9px;font-size:14px;font-weight:900;white-space:nowrap;">${escape(ui.label)}</span>
+        </div>
+        ${descripcion ? `<div style="font-size:16px;color:#FDA4AF;margin-top:8px;line-height:1.4;">🕒 ${escape(descripcion)}</div>` : ''}
+        <div style="font-size:16px;color:#94A3B8;margin-top:6px;line-height:1.4;">📍 ${escape(direccion)}</div>
+        <div style="font-size:15px;color:#64748B;margin-top:5px;">📅 ${escape(fechaCortaMisPedidos(pedido.created_at))}</div>
+        ${puedeConfirmar ? `
+          <button type="button" data-action="confirmarRecogidaPedido" data-id="${escape(pedido.id)}" style="width:100%;margin-top:10px;background:linear-gradient(135deg,#10B981,#059669);color:#FFFFFF;border:1px solid #6EE7B7;border-radius:10px;padding:10px;font-size:16px;font-weight:900;cursor:pointer;">
+            <i class="fa-solid fa-circle-check"></i> Ya fue recogido
+          </button>
+        ` : ''}
+      </article>`;
+  };
+
+  body.innerHTML = `
+    ${activos.length ? `
+      <div style="font-size:15px;font-weight:900;color:#94A3B8;letter-spacing:.4px;margin:2px 0 8px;">PEDIDOS ACTIVOS</div>
+      ${activos.map(tarjeta).join('')}
+    ` : '<div style="text-align:center;padding:16px 10px;color:#94A3B8;font-size:16px;">No tienes pedidos activos.</div>'}
+    ${historial.length ? `
+      <div style="font-size:15px;font-weight:900;color:#94A3B8;letter-spacing:.4px;margin:14px 0 8px;">HISTORIAL</div>
+      ${historial.map(tarjeta).join('')}
+    ` : ''}
+  `;
+}
+window.renderMisPedidos = renderMisPedidos;
+
+async function confirmarRecogidaPedido(orderId) {
+  if (!orderId) return;
+
+  const ejecutar = async () => {
+    if (!window.supabaseClient) {
+      if (typeof showToast === 'function') showToast('Sin conexión', 'No hay conexión con el servidor.', 'error', 4000);
+      return;
+    }
+
+    if (typeof showLoadingOverlay === 'function') showLoadingOverlay('Confirmando recogida...');
+    try {
+      const { data, error } = await window.supabaseClient.rpc('rpc_user_confirm_pickup', {
+        p_order_id: orderId
+      });
+
+      if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+
+      if (error) {
+        console.error('[NOTIGAS] Error confirmando recogida:', error);
+        if (typeof showToast === 'function') showToast('No se pudo confirmar', error.message || 'Intenta de nuevo.', 'error', 4500);
+        return;
+      }
+
+      const rawActive = (typeof AppState !== 'undefined') ? AppState.get('activeOrder') : null;
+      let activeOrder = null;
+      try {
+        activeOrder = (typeof rawActive === 'string') ? JSON.parse(rawActive) : rawActive;
+      } catch (_) {}
+      if (activeOrder && String(activeOrder.id) === String(orderId)) {
+        AppState.set('activeOrder', null);
+      }
+
+      if (typeof window.removerPedidoDeMapa === 'function') window.removerPedidoDeMapa(orderId);
+      if (typeof renderActiveOrdersMap === 'function') renderActiveOrdersMap();
+      if (typeof checkActiveOrderStatus === 'function') checkActiveOrderStatus();
+      if (typeof window.cargarPedidosVecinalesEnVivo === 'function') window.cargarPedidosVecinalesEnVivo();
+      if (typeof renderDriverDemandByZoom === 'function') renderDriverDemandByZoom();
+
+      await renderMisPedidos();
+
+      if (typeof showToast === 'function') {
+        showToast('✅ ¡Gracias!', 'Pedido confirmado como recogido. Ya no aparece en el mapa.', 'success', 5000);
+      }
+    } catch (e) {
+      if (typeof hideLoadingOverlay === 'function') hideLoadingOverlay();
+      console.error('[NOTIGAS] Excepción confirmando recogida:', e);
+      if (typeof showToast === 'function') showToast('Error', 'No se pudo confirmar la recogida.', 'error', 4000);
+    }
+  };
+
+  if (typeof window.showConfirmModal === 'function') {
+    window.showConfirmModal(
+      '♻️',
+      '¿Ya fue recogido?',
+      'Confirma solo cuando el recolector ya haya retirado tu material. El pedido desaparecerá del mapa y de la lista de recolectores.',
+      'Sí, ya fue recogido',
+      ejecutar,
+      'Volver'
+    );
+  } else {
+    await ejecutar();
+  }
+}
+window.confirmarRecogidaPedido = confirmarRecogidaPedido;
 
 async function reportarIncumplimientoPrecio() {
   const rawOrder = (typeof AppState !== 'undefined') ? AppState.get('activeOrder') : null;
